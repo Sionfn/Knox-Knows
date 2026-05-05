@@ -1748,6 +1748,12 @@
 </div>
 
 <!-- ===================== FIREBASE ===================== -->
+<script>
+  // Global state accessible across module and non-module scripts
+  var userPlan = 'free';
+  window.userPlan = 'free';
+  window.currentUser = null;
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
@@ -1863,6 +1869,97 @@
 
   function toggleDropdown(e) { e.stopPropagation(); document.getElementById('accountDropdown').classList.toggle('open'); }
   function closeDropdown() { const d = document.getElementById('accountDropdown'); if (d) d.classList.remove('open'); }
+
+  // ── Login Modal ───────────────────────────────────────────────────────────
+  function openLoginModal() {
+    document.getElementById('loginModal').classList.add('open');
+    clearLoginMessages();
+  }
+  function closeLoginModal() {
+    document.getElementById('loginModal').classList.remove('open');
+    clearLoginMessages();
+  }
+  function switchLoginTab(tab) {
+    const si = document.getElementById('signinForm');
+    const su = document.getElementById('signupForm');
+    const fp = document.getElementById('forgotForm');
+    if (si) si.style.display = tab === 'signin' ? 'block' : 'none';
+    if (su) su.style.display = tab === 'signup' ? 'block' : 'none';
+    if (fp) fp.style.display = tab === 'forgot'  ? 'block' : 'none';
+    const siBtn = document.getElementById('tabSignIn');
+    const suBtn = document.getElementById('tabSignUp');
+    const activeStyle = (c,s) => `flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:${c};color:white;box-shadow:0 3px 0 ${s};`;
+    const inactiveStyle = 'flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:transparent;color:#9CA3AF;box-shadow:none;';
+    if (siBtn) siBtn.style.cssText = tab === 'signin' ? activeStyle('#FF6B00','#CC5500') : inactiveStyle;
+    if (suBtn) suBtn.style.cssText = tab === 'signup' ? activeStyle('#1CB0F6','#0A85C2') : inactiveStyle;
+    clearLoginMessages();
+  }
+  function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    if (el) { el.textContent = msg; el.classList.add('show'); }
+    const ok = document.getElementById('loginSuccess');
+    if (ok) ok.classList.remove('show');
+  }
+  function showLoginSuccess(msg) {
+    const el = document.getElementById('loginSuccess');
+    if (el) { el.textContent = msg; el.classList.add('show'); }
+    const err = document.getElementById('loginError');
+    if (err) err.classList.remove('show');
+  }
+  function clearLoginMessages() {
+    document.getElementById('loginError')?.classList.remove('show');
+    document.getElementById('loginSuccess')?.classList.remove('show');
+  }
+  function updateLoginUI() {
+    const loginBtn       = document.getElementById('loginBtn');
+    const accountWrapper = document.getElementById('accountDropdownWrapper');
+    const proBadge       = document.getElementById('proBadge');
+    if (!window.currentUser) {
+      if (loginBtn)       loginBtn.style.display       = 'inline-flex';
+      if (accountWrapper) accountWrapper.style.display = 'none';
+      if (proBadge)       proBadge.style.display       = 'inline-flex';
+      return;
+    }
+    const { displayName, email, photoURL } = window.currentUser;
+    const name = displayName || email || 'Account';
+    if (loginBtn)       loginBtn.style.display       = 'none';
+    if (accountWrapper) accountWrapper.style.display = 'block';
+    const nameEl  = document.getElementById('accountName');
+    const dName   = document.getElementById('dropdownName');
+    const dEmail  = document.getElementById('dropdownEmail');
+    const dPlan   = document.getElementById('dropdownPlan');
+    const iconEl  = document.getElementById('accountIcon');
+    if (nameEl)  nameEl.textContent  = name.split(' ')[0];
+    if (dName)   dName.textContent   = name;
+    if (dEmail)  dEmail.textContent  = email || '';
+    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : userPlan === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
+    if (dPlan)  dPlan.textContent  = planLabel;
+    if (iconEl) {
+      if (photoURL) {
+        iconEl.innerHTML = `<img src="${photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        iconEl.innerHTML = `<div class="default-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
+      }
+    }
+    if (proBadge) proBadge.style.display = (userPlan === 'free') ? 'inline-flex' : 'none';
+  }
+  window.openLoginModal   = openLoginModal;
+  window.closeLoginModal  = closeLoginModal;
+  window.switchLoginTab   = switchLoginTab;
+  window.showLoginError   = showLoginError;
+  window.showLoginSuccess = showLoginSuccess;
+  window.clearLoginMessages = clearLoginMessages;
+  window.updateLoginUI    = updateLoginUI;
+
+  // Keyboard enter on login modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    if (!document.getElementById('loginModal')?.classList.contains('open')) return;
+    if (document.getElementById('signinForm')?.style.display !== 'none') window.handleEmailSignIn?.();
+    else if (document.getElementById('signupForm')?.style.display !== 'none') window.handleEmailSignUp?.();
+    else if (document.getElementById('forgotForm')?.style.display !== 'none') window.handleForgotPassword?.();
+  });
+
   function toggleMobileNav() { document.getElementById('mobileNav').classList.toggle('open'); }
   function closeMobileNav() { document.getElementById('mobileNav').classList.remove('open'); }
 
@@ -2257,7 +2354,7 @@
 
   // userPlan is set by the Firebase module script and exposed via window.userPlan
   // Reading it here ensures the global script always sees the correct value
-  userPlan = window.userPlan || 'free';
+  userPlan = window.userPlan || 'free'; // synced from global
 
   function updateUsageCounter() {
     userPlan = window.userPlan || userPlan; // stay in sync with module scope
