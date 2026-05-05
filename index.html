@@ -1847,8 +1847,21 @@
   window.handleSwitchAccount = async function() {
     await signOut(auth);
     window.currentUser = null;
+    window.closeDropdown?.();
     window.updateLoginUI?.();
+    // Open login modal and show Google account chooser immediately
     window.openLoginModal?.();
+    // Trigger Google sign-in popup straight away so user picks an account
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      // User cancelled or chose email — modal stays open for manual login
+    }
   };
 
   // ── Expose getIdToken for Stripe checkout ────────────────────────────────
