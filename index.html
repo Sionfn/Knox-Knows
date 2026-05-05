@@ -1414,7 +1414,7 @@
     </div>
 
     <!-- 3 cards in a row -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch;" class="grid-3">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;" class="grid-4">
 
       <!-- FREE -->
       <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 4px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;">
@@ -1487,8 +1487,32 @@
         <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox →</button>
       </div>
 
-    </div>
 
+      <!-- FAMILY KNOX -->
+      <div class="reveal delay-4" style="background:linear-gradient(160deg,#7C3AED,#A855F7);border-radius:20px;border:2px solid #6D28D9;box-shadow:0 6px 0 #5B21B6;padding:24px;display:flex;flex-direction:column;">
+        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">👨‍👩‍👧‍👦 Family Knox</div>
+        <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="familyPrice">$24.99</div>
+        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="familyPeriod">/month</div>
+        <div class="yearly-note" id="familyYearlyNote" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px;">$199.99/yr — save $99.89</div>
+        <div style="font-size:14px;font-weight:800;color:white;margin:12px 0 8px;line-height:1.4;">One plan for the whole family</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;color:white;margin-bottom:16px;width:fit-content;">
+          👤 Up to 5 members
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>5 separate accounts</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span><strong>Super Knox</strong> for each member</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>25 questions/day per member</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>All subjects K-12 → college</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>One simple monthly bill</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Streaks, leagues &amp; Know Points</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);border-radius:14px;padding:12px 14px;margin-bottom:16px;text-align:center;">
+          <div style="font-size:13px;font-weight:800;color:white;line-height:1.5;">Only <span style="font-size:18px;color:#FDE68A;">$5/mo</span> per member — cheaper than one Super Knox alone</div>
+        </div>
+        <button onclick="handlePurchase('Family')" id="familyCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#7C3AED;cursor:pointer;box-shadow:0 4px 0 #5B21B6;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #5B21B6'">Get Family Knox →</button>
+      </div>
+
+    </div>
     <p style="text-align:center;margin-top:24px;font-size:13px;font-weight:700;color:#9CA3AF;">All plans · Every subject · No hidden fees · Cancel anytime</p>
   </div>
 </section>
@@ -2077,6 +2101,16 @@
     if (maxPrice) maxPrice.textContent  = type === 'monthly' ? '$19.99' : '$13.99';
     if (maxNote)  maxNote.style.display = type === 'yearly'  ? 'block'  : 'none';
     if (maxBtn)   maxBtn.textContent    = type === 'monthly' ? 'Get Max Knox →' : 'Get Max Knox Yearly →';
+
+    // Family Knox pricing
+    const familyPrice  = document.getElementById('familyPrice');
+    const familyPeriod = document.getElementById('familyPeriod');
+    const familyNote   = document.getElementById('familyYearlyNote');
+    const familyBtn    = document.getElementById('familyCTABtn');
+    if (familyPrice)  familyPrice.textContent  = type === 'monthly' ? '$24.99' : '$16.99';
+    if (familyPeriod) familyPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
+    if (familyNote)   familyNote.style.display = type === 'yearly'  ? 'block'  : 'none';
+    if (familyBtn)    familyBtn.textContent    = type === 'monthly' ? 'Get Family Knox →' : 'Get Family Knox Yearly →';
 
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
   }
