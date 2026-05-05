@@ -5,7 +5,7 @@
   <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
   <link rel="apple-touch-icon" href="/knox-logo.jpg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Knox Knows — Stop Guessing. Start Knowing.</title>
+  <title>Knox Knows — AI Homework Help</title>
   <meta name="description" content="Knox Knows is your AI study companion. Get instant answers or learn step-by-step with Knox the Fox — from K-12 through college.">
   <meta name="keywords" content="homework help, AI tutor, study helper, Knox Knows, math solver, learning app">
   <meta property="og:title" content="Knox Knows — AI Homework Help">
@@ -3607,36 +3607,42 @@
   // ======= SETTINGS MODAL =======
   window.openSettings = function() {
     closeDropdown();
-    userPlan = window.userPlan || userPlan; // sync from module scope
+    const _plan = window.userPlan || userPlan || 'free';
+    userPlan = _plan;
     const usage = getUsageData();
-    const planLabel = (window.userPlan||userPlan) === 'max' ? '🚀 Max Knox' : (window.userPlan||userPlan) === 'super' ? '⚡ Super Knox' : (window.userPlan||userPlan) === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
-    const planColor = userPlan === 'pro_plus' ? '#FF6B00' : userPlan === 'pro' ? '#58CC02' : '#1CB0F6';
+
+    // Plan label + color
+    const planLabel = _plan === 'max' ? '🚀 Max Knox' : _plan === 'super' ? '⚡ Super Knox' : _plan === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
+    const planColor = _plan === 'max' ? '#FF6B00' : _plan === 'super' ? '#58CC02' : _plan === 'family' ? '#7C3AED' : '#1CB0F6';
     document.getElementById('settingsPlanBadge').innerHTML = `<span style="background:${planColor};color:white;padding:4px 12px;border-radius:8px;font-size:13px;">${planLabel}</span>`;
 
-    const isPaid = userPlan === 'pro' || userPlan === 'pro_plus';
-    document.getElementById('settingsRenewalRow').style.display = isPaid ? 'flex' : 'none';
-    document.getElementById('settingsCancelBtn').style.display = isPaid ? 'flex' : 'none';
-    document.getElementById('settingsUpgradeBtn').style.display = isPaid ? 'none' : 'flex';
+    const isPaid = _plan === 'super' || _plan === 'max' || _plan === 'family';
 
-    if (isPaid) {
-      // Show real renewal date if available from Stripe (stored via webhook)
-      const renewalRow = document.getElementById('settingsRenewalRow');
-      const renewalDateEl = document.getElementById('settingsRenewalDate');
-      if (window.userRenewalDate) {
-        // Stripe stores current_period_end as a Unix timestamp (seconds)
-        const d = new Date(window.userRenewalDate * 1000);
-        renewalDateEl.textContent = d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-        renewalRow.style.display = 'flex';
+    // Upgrade vs Manage Billing button
+    const upgradeBtn = document.getElementById('settingsUpgradeBtn');
+    if (upgradeBtn) {
+      if (isPaid) {
+        upgradeBtn.textContent = '⚙️ Manage Billing';
+        upgradeBtn.onclick = () => { closeSettings(); window.openCustomerPortal(); };
       } else {
-        renewalRow.style.display = 'none';
+        upgradeBtn.textContent = 'Upgrade Plan';
+        upgradeBtn.onclick = () => { closeSettings(); scrollToPricing(); };
       }
+      upgradeBtn.style.display = 'flex';
     }
 
+    // Renewal row
+    document.getElementById('settingsRenewalRow').style.display = 'none';
+
+    // Questions display
     const questionsUsed = usage.count || 0;
-    const questionsLeft = userPlan === 'pro' || userPlan === 'pro_plus' ? '∞' : Math.max(0, DAILY_LIMIT - questionsUsed);
-    const planLimit = userPlan === 'pro_plus' ? 40 : userPlan === 'pro' ? 25 : 0;
-    document.getElementById('settingsUsage').textContent = isPaid ? `${planLimit} questions/day (rolling 24hr)` : `${questionsLeft} of 5 remaining`;
-    // Show countdown row if at limit
+    let usageText;
+    if (_plan === 'max') usageText = '♾️ Unlimited';
+    else if (_plan === 'super') usageText = `${questionsUsed} of 25 used today`;
+    else if (_plan === 'family') usageText = `${questionsUsed} of 25 used today`;
+    else usageText = `${Math.max(0, DAILY_LIMIT - questionsUsed)} of 5 remaining`;
+    document.getElementById('settingsUsage').textContent = usageText;
+
     const cdRow = document.getElementById('settingsCountdownRow');
     if (cdRow) cdRow.style.display = 'none';
 
@@ -3721,7 +3727,7 @@
 
       <!-- Buttons -->
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
-        <button id="settingsUpgradeBtn" onclick="closeSettings();scrollToPricing();" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">Upgrade Plan</button>
+        <button id="settingsUpgradeBtn" onclick="" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">Upgrade Plan</button>
         <button id="settingsCancelBtn" onclick="handleCancelSubscription()" style="display:none;width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;border:2px solid #fca5a5;background:#fef2f2;color:#dc2626;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">Cancel Subscription</button>
       </div>
     </div>
