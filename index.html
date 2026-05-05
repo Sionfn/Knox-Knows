@@ -1757,6 +1757,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
@@ -1769,11 +1770,39 @@
 
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // ── Fetch plan from Firestore ─────────────────────────────────────────────
+  async function fetchAndSetPlan(uid) {
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        const plan = data.plan || "free";
+        window.userPlan = plan;
+        userPlan = plan;
+      } else {
+        window.userPlan = "free";
+        userPlan = "free";
+      }
+    } catch (err) {
+      console.warn("Could not fetch plan:", err.message);
+      window.userPlan = "free";
+      userPlan = "free";
+    }
+    if (window.updateLoginUI) window.updateLoginUI();
+  }
 
   // ── Auth state listener ───────────────────────────────────────────────────
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     window.currentUser = user || null;
-    if (window.updateLoginUI) window.updateLoginUI();
+    if (user) {
+      await fetchAndSetPlan(user.uid);
+    } else {
+      window.userPlan = "free";
+      userPlan = "free";
+      if (window.updateLoginUI) window.updateLoginUI();
+    }
   });
 
   // ── Google Sign In ────────────────────────────────────────────────────────
