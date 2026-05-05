@@ -2121,38 +2121,57 @@
     scrollToAI();
   }
 
-  function handlePurchase(plan) {
+  async function handlePurchase(planName) {
     if (!window.currentUser) { openLoginModal(); return; }
-    // ── MOCK: Simulate plan upgrade without Stripe ──────────────────────────
-    const planMap = { 'Wonder': 'pro', 'Super': 'pro', 'Max': 'pro_plus' };
-    const newPlan = planMap[plan] || 'pro';
-    userPlan = newPlan; window.userPlan = newPlan;
 
-    const planNames = { pro: '⚡ Pro Knox', pro_plus: '⭐ Pro Knox' };
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
-    modal.innerHTML = `<div style="background:white;max-width:400px;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-      <div style="background:#58CC02;padding:28px;text-align:center;">
-        <div style="font-size:52px;margin-bottom:12px;">🎉</div>
-        <h3 style="font-size:22px;font-weight:900;color:white;">You're on ${planNames[newPlan]}!</h3>
-        <p style="font-size:14px;color:rgba(255,255,255,0.9);font-weight:600;margin-top:6px;">Demo mode — plan upgraded successfully. Enjoy all the features!</p>
-      </div>
-      <div style="padding:24px 28px;">
-        <button onclick="this.closest('div[style*=fixed]').remove();" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;">Start Using Knox →</button>
-      </div>
-    </div>`;
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
-    updateLoginUI();
-    if (window.updateUsageBar) {
-      const hwLimit = newPlan === 'pro_plus' ? 40 : 25;
-      const csLimit = newPlan === 'pro_plus' ? 999 : 50;
-      window.updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
+    // Map button plan names to API plan keys and current billing period
+    const planKey = planName === 'Super' ? 'super' : planName === 'Max' ? 'max' : 'family';
+    const billingPeriod = billing || 'monthly';
+
+    // Show loading state on the button
+    const btnMap = { Super: 'proCTABtn', Max: 'maxCTABtn', Family: 'familyCTABtn' };
+    const btn = document.getElementById(btnMap[planName]);
+    const originalText = btn?.textContent;
+    if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
+
+    try {
+      const idToken = await window.currentUser.getIdToken();
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ plan: planKey, billing: billingPeriod }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+
+    } catch (err) {
+      console.error('Checkout error:', err);
+      alert('Could not open checkout — please try again.');
+      if (btn) { btn.textContent = originalText; btn.disabled = false; }
     }
   }
 
-  window.openCustomerPortal = function() {
-    alert('Demo mode — billing portal not available.');
+  window.openCustomerPortal = async function() {
+    if (!window.currentUser) { openLoginModal(); return; }
+    try {
+      const idToken = await window.currentUser.getIdToken();
+      const res = await fetch('/api/customer-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      alert('Could not open billing portal — please try again.');
+    }
   };
 
   function showPaymentToast(type) {
