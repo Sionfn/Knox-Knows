@@ -1,0 +1,13 @@
+{
+  "name": "knox-knows",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "stripe": "^14.21.0",
+    "firebase-admin": "^12.1.0"
+  }
+}
