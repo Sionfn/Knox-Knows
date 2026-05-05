@@ -1748,114 +1748,105 @@
 </div>
 
 <!-- ===================== FIREBASE ===================== -->
-<script>
-  // ── MOCK AUTH (no real Firebase) ──────────────────────────────────────────
-  let userPlan = 'free';
-  window.userPlan = 'free';
-  window.currentUser = null;
-  window.userRenewalDate = null;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
-  function updateLoginUI() {
-    const loginBtn = document.getElementById('loginBtn');
-    const accountWrapper = document.getElementById('accountDropdownWrapper');
-    const proBadge = document.getElementById('proBadge');
-    if (window.currentUser) {
-      loginBtn.style.display = 'none';
-      accountWrapper.style.display = 'block';
-      const { displayName, email, photoURL } = window.currentUser;
-      const name = displayName || email || 'Account';
-      document.getElementById('accountName').textContent = name.split(' ')[0];
-      document.getElementById('dropdownName').textContent = name;
-      document.getElementById('dropdownEmail').textContent = email || '';
-      document.getElementById('accountIcon').innerHTML = `<div class="default-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
-      const planLabel = userPlan === 'pro_plus' ? '⭐ Pro+' : userPlan === 'pro' ? '⚡ Pro' : '🆓 Free';
-      document.getElementById('dropdownPlan').textContent = planLabel;
-      if (proBadge) proBadge.style.display = (userPlan === 'pro' || userPlan === 'pro_plus') ? 'none' : 'inline-flex';
-    } else {
-      loginBtn.style.display = 'inline-flex';
-      accountWrapper.style.display = 'none';
-      userPlan = 'free'; window.userPlan = 'free';
-      if (proBadge) proBadge.style.display = 'inline-flex';
-    }
-    if (window.updateUsageCounter) window.updateUsageCounter();
-  }
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
+    authDomain:        "knox-knows.firebaseapp.com",
+    projectId:         "knox-knows",
+    storageBucket:     "knox-knows.firebasestorage.app",
+    messagingSenderId: "217543758511",
+    appId:             "1:217543758511:web:f5451b30eea1918caa3a5a",
+  };
 
-  function fakeSignIn(name, email) {
-    window.currentUser = { displayName: name, email: email };
-    closeLoginModal();
-    updateLoginUI();
-    if (window.updateUsageBar) {
-      const hwLimit = userPlan === 'pro_plus' ? 40 : userPlan === 'pro' ? 25 : 5;
-      const csLimit = userPlan === 'pro' ? 50 : 20;
-      window.updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
-    }
-  }
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-  window.handleGoogleLogin = function() {
-    fakeSignIn('Alex Johnson', 'alex@example.com');
-  };
-  window.handleMicrosoftLogin = function() {
-    fakeSignIn('Alex Johnson', 'alex@school.edu');
-  };
-  window.handleEmailSignIn = function() {
-    const email = document.getElementById('siEmail')?.value || 'user@example.com';
-    const pw = document.getElementById('siPassword')?.value || '';
-    if (!email || !pw) { showLoginError('Please enter your email and password.'); return; }
-    fakeSignIn(email.split('@')[0], email);
-  };
-  window.handleEmailSignUp = function() {
-    const name = document.getElementById('suName')?.value || 'Student';
-    const email = document.getElementById('suEmail')?.value || 'student@example.com';
-    const pw = document.getElementById('suPassword')?.value || '';
-    if (!name || !email || !pw) { showLoginError('Please fill in all fields.'); return; }
-    fakeSignIn(name, email);
-  };
-  window.handleForgotPassword = function() {
-    const email = document.getElementById('fpEmail')?.value || '';
-    if (!email) { showLoginError('Please enter your email.'); return; }
-    showLoginSuccess('Reset link sent! (Demo mode — no real email sent)');
-  };
-  window.handleLogout = function() {
-    window.currentUser = null;
-    userPlan = 'free'; window.userPlan = 'free';
-    closeDropdown();
-    updateLoginUI();
-    if (window.updateUsageBar) window.updateUsageBar({ hw: 0, hwLimit: 1, casual: 0, casualLimit: 1, nextUnlock: null, csNextUnlock: null });
-  };
-  window.handleSwitchAccount = function() {
-    window.handleLogout();
-    openLoginModal();
-  };
-  window.openLoginModal = function() {
-    document.getElementById('loginModal').classList.add('open');
-    clearLoginMessages();
-  };
-  window.closeLoginModal = function() {
-    document.getElementById('loginModal').classList.remove('open');
-    clearLoginMessages();
-  };
-  window.switchLoginTab = function(tab) {
-    document.getElementById('signinForm').style.display  = tab === 'signin'  ? 'block' : 'none';
-    document.getElementById('signupForm').style.display  = tab === 'signup'  ? 'block' : 'none';
-    document.getElementById('forgotForm').style.display  = tab === 'forgot'  ? 'block' : 'none';
-    const _siBtn = document.getElementById('tabSignIn');
-    const _suBtn = document.getElementById('tabSignUp');
-    const _activeStyle = (color, shadow) => `flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:${color};color:white;box-shadow:0 3px 0 ${shadow};`;
-    const _inactiveStyle = 'flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:transparent;color:#9CA3AF;box-shadow:none;';
-    if (_siBtn) _siBtn.style.cssText = tab === 'signin' ? _activeStyle('#FF6B00','#CC5500') : _inactiveStyle;
-    if (_suBtn) _suBtn.style.cssText = tab === 'signup' ? _activeStyle('#1CB0F6','#0A85C2') : _inactiveStyle;
-    clearLoginMessages();
-  };
-  function showLoginError(msg) { const el = document.getElementById('loginError'); el.textContent = msg; el.classList.add('show'); document.getElementById('loginSuccess').classList.remove('show'); }
-  function showLoginSuccess(msg) { const el = document.getElementById('loginSuccess'); el.textContent = msg; el.classList.add('show'); document.getElementById('loginError').classList.remove('show'); }
-  function clearLoginMessages() { document.getElementById('loginError')?.classList.remove('show'); document.getElementById('loginSuccess')?.classList.remove('show'); }
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    if (!document.getElementById('loginModal')?.classList.contains('open')) return;
-    if (document.getElementById('signinForm')?.style.display !== 'none') handleEmailSignIn();
-    else if (document.getElementById('signupForm')?.style.display !== 'none') handleEmailSignUp();
-    else if (document.getElementById('forgotForm')?.style.display !== 'none') handleForgotPassword();
+  // ── Auth state listener ───────────────────────────────────────────────────
+  onAuthStateChanged(auth, (user) => {
+    window.currentUser = user || null;
+    if (window.updateLoginUI) window.updateLoginUI();
   });
+
+  // ── Google Sign In ────────────────────────────────────────────────────────
+  window.handleGoogleLogin = async function() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      window.showLoginError?.(err.message);
+    }
+  };
+
+  // ── Email Sign In ─────────────────────────────────────────────────────────
+  window.handleEmailSignIn = async function() {
+    const email = document.getElementById('siEmail')?.value?.trim();
+    const pw    = document.getElementById('siPassword')?.value;
+    if (!email || !pw) { window.showLoginError?.('Please enter your email and password.'); return; }
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, pw);
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      const msg = err.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : err.message;
+      window.showLoginError?.(msg);
+    }
+  };
+
+  // ── Email Sign Up ─────────────────────────────────────────────────────────
+  window.handleEmailSignUp = async function() {
+    const name  = document.getElementById('suName')?.value?.trim();
+    const email = document.getElementById('suEmail')?.value?.trim();
+    const pw    = document.getElementById('suPassword')?.value;
+    if (!name || !email || !pw) { window.showLoginError?.('Please fill in all fields.'); return; }
+    if (pw.length < 6) { window.showLoginError?.('Password must be at least 6 characters.'); return; }
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, pw);
+      await updateProfile(result.user, { displayName: name });
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : err.message;
+      window.showLoginError?.(msg);
+    }
+  };
+
+  // ── Forgot Password ───────────────────────────────────────────────────────
+  window.handleForgotPassword = async function() {
+    const email = document.getElementById('fpEmail')?.value?.trim();
+    if (!email) { window.showLoginError?.('Please enter your email address.'); return; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      window.showLoginSuccess?.('Password reset email sent! Check your inbox.');
+    } catch (err) {
+      window.showLoginError?.(err.message);
+    }
+  };
+
+  // ── Sign Out ──────────────────────────────────────────────────────────────
+  window.handleLogout = async function() {
+    await signOut(auth);
+    window.currentUser = null;
+    window.closeDropdown?.();
+    window.updateLoginUI?.();
+  };
+
+  window.handleSwitchAccount = async function() {
+    await signOut(auth);
+    window.currentUser = null;
+    window.updateLoginUI?.();
+    window.openLoginModal?.();
+  };
+
+  // ── Expose getIdToken for Stripe checkout ────────────────────────────────
+  // window.currentUser.getIdToken() is already available via the Firebase user object
 </script>
 
 <!-- ===================== APP JS ===================== -->
