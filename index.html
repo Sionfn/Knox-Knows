@@ -5,7 +5,7 @@
   <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
   <link rel="apple-touch-icon" href="/knox-logo.jpg">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Knox Knows — AI Homework Help</title>
+  <title>Knox Knows — Stop Guessing. Start Knowing.</title>
   <meta name="description" content="Knox Knows is your AI study companion. Get instant answers or learn step-by-step with Knox the Fox — from K-12 through college.">
   <meta name="keywords" content="homework help, AI tutor, study helper, Knox Knows, math solver, learning app">
   <meta property="og:title" content="Knox Knows — AI Homework Help">
@@ -3609,7 +3609,7 @@
     closeDropdown();
     userPlan = window.userPlan || userPlan; // sync from module scope
     const usage = getUsageData();
-    const planLabel = userPlan === 'pro_plus' ? '⭐ Pro+' : userPlan === 'pro' ? '⚡ Pro' : '🆓 Free';
+    const planLabel = (window.userPlan||userPlan) === 'max' ? '🚀 Max Knox' : (window.userPlan||userPlan) === 'super' ? '⚡ Super Knox' : (window.userPlan||userPlan) === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
     const planColor = userPlan === 'pro_plus' ? '#FF6B00' : userPlan === 'pro' ? '#58CC02' : '#1CB0F6';
     document.getElementById('settingsPlanBadge').innerHTML = `<span style="background:${planColor};color:white;padding:4px 12px;border-radius:8px;font-size:13px;">${planLabel}</span>`;
 
