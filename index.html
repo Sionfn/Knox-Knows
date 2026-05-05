@@ -1756,7 +1756,7 @@
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
@@ -1786,6 +1786,22 @@
       window.updateLoginUI?.();
     } catch (err) {
       window.showLoginError?.(err.message);
+    }
+  };
+
+  // ── Microsoft Sign In ─────────────────────────────────────────────────────
+  window.handleMicrosoftLogin = async function() {
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        window.showLoginError?.(err.message);
+      }
     }
   };
 
@@ -1833,6 +1849,22 @@
       window.showLoginSuccess?.('Password reset email sent! Check your inbox.');
     } catch (err) {
       window.showLoginError?.(err.message);
+    }
+  };
+
+  // ── Microsoft Sign In ─────────────────────────────────────────────────────
+  window.handleMicrosoftLogin = async function() {
+    try {
+      const provider = new OAuthProvider('microsoft.com');
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      window.closeLoginModal?.();
+      window.updateLoginUI?.();
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        window.showLoginError?.(err.message);
+      }
     }
   };
 
