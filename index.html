@@ -51,7 +51,7 @@
     }
 
     * { margin:0; padding:0; box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
+    html { scroll-behavior:smooth; overflow-x:hidden; }
     html, body { max-width:100%; overflow-x:hidden; }
     button { font-family:inherit; cursor:pointer; }
 
@@ -180,18 +180,22 @@
       .grid-3 { grid-template-columns:1fr 1fr; }
     }
     @media (max-width:640px) {
-      .grid-2 { grid-template-columns:1fr !important; }
-      .grid-3 { grid-template-columns:1fr !important; }
-      .grid-4 { grid-template-columns:1fr !important; }
-      .pricing-grid { grid-template-columns:1fr !important; }
-      .section { padding:56px 20px; }
+      .section { padding:40px 16px !important; }
       .display { font-size:36px; }
+      .header-logo-text { font-size:16px; }
+      /* All grids go single column on small phones */
+      .grid-2, .grid-3, .grid-4, .pricing-grid {
+        grid-template-columns: 1fr !important;
+      }
+      /* Chat UI fixes */
+      #ai-helper { padding:40px 12px !important; }
+      /* Hero fixes */
+      .hero-btns { flex-direction:column; gap:10px; }
     }
 
-    @media (max-width:900px) {
-      .grid-4 { grid-template-columns:1fr 1fr !important; }
-      .pricing-grid { grid-template-columns:1fr 1fr !important; }
-      .grid-3 { grid-template-columns:1fr !important; }
+    @media (max-width:480px) {
+      /* Billing toggle wraps */
+      .billing-toggle { flex-direction:column; gap:8px; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
@@ -1098,7 +1102,7 @@
       Knox knows every subject — math, science, history, English and more. From K-12 through college.
     </p>
 
-    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:36px;">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
       <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('answer')">Get the Answer</button>
       <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('learn')">Learn with Knox</button>
     </div>
@@ -1106,9 +1110,9 @@
     <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account — 5 questions every day, no credit card needed</p>
 
     <!-- Social proof row with running Knox -->
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:32px;margin-top:40px;">
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
       <img src="./knox-run.png" alt="Knox running" style="width:90px;height:auto;object-fit:contain;" onerror="this.style.display='none'">
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:24px;">
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
           <span style="font-size:20px;">📚</span> Every subject K-12 → College
         </div>
@@ -1391,7 +1395,7 @@
     <!-- Try asking chips -->
     <div style="margin-top:20px;">
       <div style="font-size:13px;font-weight:800;color:#9CA3AF;margin-bottom:10px;">Try asking Knox:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;max-width:100%;">
         <button onclick="setQuestion('Explain the quadratic formula')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Quadratic formula</button>
         <button onclick="setQuestion('How does photosynthesis work?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Photosynthesis</button>
         <button onclick="setQuestion('What caused World War 1?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">World War 1</button>
@@ -1429,7 +1433,7 @@
     </div>
 
     <!-- 3 cards in a row -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;" class="grid-4 pricing-grid">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:stretch;" class="grid-4 pricing-grid">
 
       <!-- FREE -->
       <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;">
@@ -1623,7 +1627,7 @@
     <img src="./knox-love.png" alt="Knox" style="width:130px;height:auto;margin-bottom:16px;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.2));" onerror="this.outerHTML='<div style=\'font-size:80px;\'>🦊</div>'">
     <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Knox is ready when you are.</h2>
     <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Start free, no credit card needed. Knox knows the answer.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:32px;">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
       <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI()">Start for Free</button>
       <button onclick="scrollToPricing()" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:15px 28px;font-size:17px;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">View Plans →</button>
     </div>
