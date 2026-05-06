@@ -179,23 +179,23 @@
       .grid-4 { grid-template-columns:repeat(2,1fr); }
       .grid-3 { grid-template-columns:1fr 1fr; }
     }
-    @media (max-width:640px) {
-      .section { padding:40px 16px !important; }
-      .display { font-size:36px; }
-      .header-logo-text { font-size:16px; }
-      /* All grids go single column on small phones */
-      .grid-2, .grid-3, .grid-4, .pricing-grid {
-        grid-template-columns: 1fr !important;
-      }
-      /* Chat UI fixes */
-      #ai-helper { padding:40px 12px !important; }
-      /* Hero fixes */
-      .hero-btns { flex-direction:column; gap:10px; }
+    @media (max-width:768px) {
+      .gamification-grid { grid-template-columns: 1fr !important; }
+      .footer-grid { grid-template-columns: 1fr 1fr !important; }
+      .subjects-grid { grid-template-columns: 1fr 1fr !important; }
+      .pricing-grid { grid-template-columns: 1fr 1fr !important; }
+      .grid-2 { grid-template-columns: 1fr !important; }
+      .grid-3 { grid-template-columns: 1fr !important; }
     }
 
-    @media (max-width:480px) {
-      /* Billing toggle wraps */
-      .billing-toggle { flex-direction:column; gap:8px; }
+    @media (max-width:500px) {
+      .section { padding:40px 16px !important; }
+      .display { font-size:36px; }
+      .subjects-grid { grid-template-columns: 1fr 1fr !important; }
+      .pricing-grid { grid-template-columns: 1fr !important; }
+      .footer-grid { grid-template-columns: 1fr 1fr !important; }
+      .gamification-grid { grid-template-columns: 1fr !important; }
+      #ai-helper { padding:40px 12px !important; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
