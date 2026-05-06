@@ -2067,11 +2067,11 @@
     document.getElementById('loginModal').classList.add('open');
     clearLoginMessages();
   }
-  function closeLoginModal() {
+  function closeLoginModal(scrollTop) {
     document.getElementById('loginModal').classList.remove('open');
     clearLoginMessages();
-    // Scroll back to top so user sees the homepage after login
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Only scroll to top if explicitly requested (login from header, not from chat)
+    if (scrollTop) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function switchLoginTab(tab) {
     const si = document.getElementById('signinForm');
@@ -3391,6 +3391,14 @@
       }
       visualHtml += `</div>`;
       html += visualHtml;
+    }
+
+    // Green upgrade bar for free plan
+    if (plan === 'free') {
+      html += `<div style="margin:10px 14px;padding:12px 14px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:700;color:#166534;">⚡ Get step-by-step breakdowns &amp; smarter answers</span>
+        <button onclick="scrollToPricing()" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:900;font-family:inherit;border:none;background:#58CC02;color:white;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #2D6A00;">Upgrade →</button>
+      </div>`;
     }
 
     html += `<div style="height:12px;"></div>`;
