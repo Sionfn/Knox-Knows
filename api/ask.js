@@ -26,7 +26,7 @@ const PLAN_CONFIG = {
     maxOutput:  800,
     systemPrompt: `You are Knox, a friendly AI homework helper. The user is on the FREE plan.
 
-Never use LaTeX — write math in plain text using symbols like ×, ÷, ², √, π.
+Never use LaTeX or special math notation like n! for factorial. Write math in plain text using symbols like ×, ÷, ², √, π. Write factorial as 'factorial of n' or 'n × (n-1) × ... × 1'.
 
 Always include:
 - Final Answer: [the direct answer — always required, no exceptions]
@@ -46,7 +46,7 @@ No step-by-step, no tips, no deep insights.`,
     maxOutput:  800,
     systemPrompt: `You are Knox, a friendly and smart AI tutor. The user is on the SUPER KNOX plan.
 
-Never use LaTeX — write math in plain text using symbols like ×, ÷, ², √, π.
+Never use LaTeX or special math notation like n! for factorial. Write math in plain text using symbols like ×, ÷, ², √, π. Write factorial as 'factorial of n' or 'n × (n-1) × ... × 1'.
 
 Always include:
 - Final Answer: [the direct answer — always required, no exceptions]
@@ -182,17 +182,56 @@ export default async function handler(req, res) {
     const data   = await response.json();
     const answer = data.choices?.[0]?.message?.content || "";
 
+    // Global: clean up any LaTeX or math notation the AI uses
+    answer = answer
+      .replace(/\\\(/g, '').replace(/\\\)/g, '')
+      .replace(/\\\[/g, '').replace(/\\\]/g, '')
+      .replace(/\\times/g, '×')
+      .replace(/\\div/g, '÷')
+      .replace(/\\cdot/g, '·')
+      .replace(/\\pm/g, '±')
+      .replace(/\\neq/g, '≠')
+      .replace(/\\leq/g, '≤')
+      .replace(/\\geq/g, '≥')
+      .replace(/\\approx/g, '≈')
+      .replace(/\\pi/g, 'π')
+      .replace(/\\infty/g, '∞')
+      .replace(/\\/g, '');
+
     // For free plan: strip any upgrade text that leaked into the explanation
     // and ensure the upgrade nudge is always on its own line at the end
     let cleanAnswer = answer;
     if (plan === 'free') {
       const upgradeText = '💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.';
       // Remove upgrade text from wherever it appears in the answer
-      cleanAnswer = cleanAnswer.split('\n').filter(function(l){return l.indexOf('💡') === -1;}).join('\n').trim();
-      // Add it back cleanly at the end
-      cleanAnswer += `
-
-Upgrade: ${upgradeText}`;
+      // Remove any mention of upgrading from the entire answer
+      const upgradePatterns = [
+        'Upgrade to Super Knox',
+        'upgrade to Super Knox', 
+        'Upgrade to Knox',
+        'Super Knox for full',
+        'step-by-step breakdowns, tips, and smarter',
+        '💡 Upgrade',
+      ];
+      upgradePatterns.forEach(function(p) {
+        // Remove the pattern and everything after it on the same line up to period
+        while (cleanAnswer.indexOf(p) !== -1) {
+          var idx = cleanAnswer.indexOf(p);
+          var lineStart = cleanAnswer.lastIndexOf('\n', idx);
+          var lineEnd = cleanAnswer.indexOf('\n', idx);
+          if (lineEnd === -1) lineEnd = cleanAnswer.length;
+          // If the whole line is about upgrading, remove the line
+          var line = cleanAnswer.substring(lineStart, lineEnd);
+          if (line.indexOf(p) !== -1) {
+            cleanAnswer = cleanAnswer.substring(0, lineStart) + cleanAnswer.substring(lineEnd);
+          } else {
+            break;
+          }
+        }
+      });
+      cleanAnswer = cleanAnswer.trim();
+      // Add upgrade nudge cleanly at end
+      cleanAnswer += '\n\nUpgrade: ' + upgradeText;
     }
 
     return res.status(200).json({
