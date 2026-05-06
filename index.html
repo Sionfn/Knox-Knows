@@ -1821,6 +1821,8 @@
       userPlan = "free";
     }
     if (window.updateLoginUI) window.updateLoginUI();
+    // Refresh bars after plan is loaded from Firestore
+    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 100);
   }
 
   // ── Auth state listener ───────────────────────────────────────────────────
@@ -1957,8 +1959,12 @@
   window.handleLogout = async function() {
     await signOut(auth);
     window.currentUser = null;
+    window.userPlan = 'free';
+    userPlan = 'free';
     window.closeDropdown?.();
     window.updateLoginUI?.();
+    // Reset bars to guest state immediately
+    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 50);
   };
 
   window.handleSwitchAccount = async function() {
@@ -3699,19 +3705,22 @@
   };
 
   function getTodayKey() { return new Date().toISOString().split('T')[0]; }
+  function getUsageKey() {
+    const uid = window.currentUser ? window.currentUser.uid : 'guest';
+    return 'knox_usage_' + uid;
+  }
   function getUsageData() {
-    const stored = localStorage.getItem('homeworkai_usage');
+    const stored = localStorage.getItem(getUsageKey());
     if (stored) {
       const data = JSON.parse(stored);
-      if (data.date !== getTodayKey()) return { date: getTodayKey(), count: 0, freeUsed: false };
+      if (data.date !== getTodayKey()) return { date: getTodayKey(), count: 0, casual: 0, freeUsed: false };
       return data;
     }
-    return { date: getTodayKey(), count: 0, freeUsed: false };
+    return { date: getTodayKey(), count: 0, casual: 0, freeUsed: false };
   }
   function setUsageData(data) {
     if (!data.casual) data.casual = 0;
-    localStorage.setItem('homeworkai_usage', JSON.stringify(data));
-    // Keep bars in sync
+    localStorage.setItem(getUsageKey(), JSON.stringify(data));
     if (window.refreshUsageBars) window.refreshUsageBars();
   }
 
