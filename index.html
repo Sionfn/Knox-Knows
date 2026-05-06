@@ -2022,23 +2022,25 @@
     window.userPlan = 'free';
     userPlan = 'free';
     window.closeDropdown?.();
+    if (window.clearChat) window.clearChat();
     window.updateLoginUI?.();
-    // Reset bars to guest state immediately
     setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 50);
   };
 
   window.handleSwitchAccount = async function() {
     window.closeDropdown?.();
-    // Try to get a new account FIRST — only sign out if they actually pick one
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
-      // Success — now they're signed in as the new account
       window.currentUser = result.user;
+      window.userPlan = 'free';
+      userPlan = 'free';
+      // Clear chat thread for new account
+      if (window.clearChat) window.clearChat();
       window.updateLoginUI?.();
     } catch (err) {
-      // Cancelled or closed popup — stay signed in as current user, do nothing
+      // Cancelled — stay signed in as current user
     }
   };
 
