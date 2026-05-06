@@ -3639,10 +3639,73 @@
     catch(e) { return []; }
   }
 
-  window.openHistory = function() {
-    renderHistoryList();
-    const _m = document.getElementById('historyModal'); if(_m) _m.style.display='flex';
+  window.openHistory = async function() {
+    const modal = document.getElementById('historyModal');
+    if (modal) modal.style.display = 'flex';
+    const list  = document.getElementById('historyList');
+    if (list) list.innerHTML = '<div style="text-align:center;padding:32px;color:#9CA3AF;font-size:14px;font-weight:600;">Loading...</div>';
+
+    // Load from Firestore if logged in
+    if (window.currentUser && window.loadFirestoreHistory) {
+      try {
+        const items = await window.loadFirestoreHistory();
+        renderFirestoreHistory(items);
+        return;
+      } catch(e) { console.warn('Firestore history failed:', e); }
+    }
+
+    // Fall back to localStorage
+    const history = getHistory();
+    const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
+    if (!list) return;
+    if (history.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
+      return;
+    }
+    list.innerHTML = history.map((item, i) => {
+      const plan = item.plan || 'free';
+      const color = planColors[plan] || '#1CB0F6';
+      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      const date = item.date || '';
+      return `<div style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;flex:1;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <button onclick="deleteHistoryItem(${i});window.openHistory();" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:#FEE2E2;color:#DC2626;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:${color};color:white;font-size:10px;font-weight:900;padding:2px 8px;border-radius:999px;">${planLabel}</span>
+          <span style="font-size:12px;font-weight:600;color:#9CA3AF;">${date}</span>
+        </div>
+      </div>`;
+    }).join('');
   };
+
+  function renderFirestoreHistory(items) {
+    const list = document.getElementById('historyList');
+    if (!list) return;
+    const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
+    if (items.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+      const plan  = item.plan || 'free';
+      const color = planColors[plan] || '#1CB0F6';
+      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      return `<div style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;transition:box-shadow 0.15s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;">
+          <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;flex:1;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          <button onclick="if(window.deleteFirestoreHistory)window.deleteFirestoreHistory('${item.id}').then(()=>window.openHistory())" style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:#FEE2E2;color:#DC2626;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:${color};color:white;font-size:10px;font-weight:900;padding:2px 8px;border-radius:999px;">${planLabel}</span>
+          <span style="font-size:12px;font-weight:600;color:#9CA3AF;">${date}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   window.closeHistory = function() {
     const modal = document.getElementById('historyModal');
     if (modal) modal.style.display = 'none';
