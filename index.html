@@ -2070,16 +2070,19 @@
     }
     if (proBadge) proBadge.style.display = (userPlan === 'free') ? 'inline-flex' : 'none';
   }
+  // Called after login state changes to refresh bars with correct plan limits
+  function refreshAfterPlanLoad() {
+    if (window.refreshUsageBars) window.refreshUsageBars();
+  }
+  window.refreshAfterPlanLoad = refreshAfterPlanLoad;
+
   window.openLoginModal   = openLoginModal;
   window.closeLoginModal  = closeLoginModal;
   window.switchLoginTab   = switchLoginTab;
   window.showLoginError   = showLoginError;
   window.showLoginSuccess = showLoginSuccess;
   window.clearLoginMessages = clearLoginMessages;
-  window.updateLoginUI    = function() {
-    updateLoginUI();
-    if (window.refreshUsageBars) window.refreshUsageBars();
-  };
+  window.updateLoginUI    = updateLoginUI;
 
   // Keyboard enter on login modal
   document.addEventListener('keydown', (e) => {
