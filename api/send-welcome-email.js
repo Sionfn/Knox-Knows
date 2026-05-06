@@ -46,7 +46,6 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         personalizations: [{
           to: [{ email, name: displayName }],
-          dynamic_template_data: { firstName },
         }],
         from: {
           email: process.env.SENDGRID_FROM_EMAIL || "support@knoxknowsapp.com",
