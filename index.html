@@ -2897,56 +2897,57 @@
     if (idToken) reqHeaders["Authorization"] = `Bearer ${idToken}`;
 
     try {
-      // ── MOCK RESPONSE (no real API call) ─────────────────────────────────
-      await new Promise(r => setTimeout(r, 900 + Math.random() * 700)); // simulate latency
-
-      const mockPlan = userPlan || 'free';
-      const q = (typedQuestion || 'question').toLowerCase();
-
-      // Build a realistic-looking structured response
-      function mockAnswer(q) {
-        const greetings = ['hey','hi','hello',"what's up",'how are'];
-        if (greetings.some(g => q.startsWith(g))) {
-          return { isCasual: true, answer: "Hey! I'm Knox 🦊 I'm doing great and ready to help. Ask me anything — math, science, history, English, or any subject you're working on!" };
-        }
-        const subjects = [
-          { k: ['pythagorean','a² + b²','right triangle'], answer: `Final Answer: a² + b² = c²\nExplanation: The Pythagorean theorem relates the three sides of a right triangle. The hypotenuse (c) is the longest side, opposite the right angle. The theorem states that the square of the hypotenuse equals the sum of the squares of the other two sides.\nStep-by-step:\n1. Identify the right angle in the triangle\n2. Label the two shorter sides as a and b\n3. Label the hypotenuse (longest side) as c\n4. Apply the formula: a² + b² = c²\nTip: The most common Pythagorean triples are 3-4-5 and 5-12-13.` },
-          { k: ['quadratic','ax²','parabola'], answer: `Final Answer: x = (-b ± √(b²-4ac)) / 2a\nExplanation: The quadratic formula solves any equation of the form ax² + bx + c = 0, where a, b, and c are constants and a ≠ 0.\nStep-by-step:\n1. Write the equation in standard form: ax² + bx + c = 0\n2. Identify the values of a, b, and c\n3. Substitute into the formula: x = (-b ± √(b²-4ac)) / 2a\n4. Calculate the discriminant (b²-4ac) first\n5. Solve for both + and − cases\nInsight: The discriminant tells you how many solutions exist. Positive = 2 real solutions, zero = 1 solution, negative = no real solutions.` },
-          { k: ['photosynthesis','chlorophyll','plant','sunlight'], answer: `Final Answer: Photosynthesis converts sunlight, CO₂, and water into glucose and oxygen.\nExplanation: Plants use chlorophyll in their chloroplasts to capture light energy. This energy drives the conversion of carbon dioxide from the air and water from the soil into glucose (food) and oxygen (released as a byproduct).\nStep-by-step:\n1. Light is absorbed by chlorophyll in the chloroplasts\n2. Water molecules are split, releasing oxygen into the air\n3. CO₂ from the air enters through tiny pores called stomata\n4. Light energy converts CO₂ + H₂O into glucose (C₆H₁₂O₆)\nKey Points:\n- The overall equation is: 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂\n- Occurs in two stages: light-dependent reactions and the Calvin cycle\n- Chlorophyll absorbs red and blue light most efficiently` },
-          { k: ['world war','ww1','ww2','world war 1','world war 2','wwi','wwii'], answer: `Final Answer: World War I (1914–1918) was triggered by the assassination of Archduke Franz Ferdinand and fueled by nationalism, imperial rivalry, and a complex web of alliances.\nExplanation: The war began in Europe and eventually involved most of the world's major powers. It resulted in approximately 20 million deaths and reshaped the political map of Europe.\nStep-by-step:\n1. June 1914: Archduke Franz Ferdinand of Austria-Hungary assassinated\n2. Austria-Hungary declared war on Serbia, triggering the alliance system\n3. Germany, Austria-Hungary and the Ottoman Empire (Central Powers) vs. France, Britain, Russia, and later the US (Allied Powers)\n4. Four years of brutal trench warfare followed\n5. The war ended with the Treaty of Versailles in 1919\nInsight: The harsh terms of the Treaty of Versailles planted the seeds for World War II just 20 years later.` },
-          { k: ['derivative','calculus','differentiate','dy/dx','slope'], answer: `Final Answer: A derivative measures the instantaneous rate of change of a function at any given point.\nExplanation: In calculus, the derivative of a function f(x) tells you how steeply the function is rising or falling at each x value. It is the slope of the tangent line to the curve at that point.\nStep-by-step:\n1. The derivative is defined as: f'(x) = lim(h→0) [f(x+h) - f(x)] / h\n2. For power functions: if f(x) = xⁿ, then f'(x) = nxⁿ⁻¹\n3. For example: the derivative of x³ is 3x²\n4. For constants: the derivative is always 0\nTip: Remember the power rule, product rule, quotient rule, and chain rule as your main tools.` },
-          { k: ['newton','force','mass','acceleration','f=ma'], answer: `Final Answer: Newton's Second Law states that F = ma (Force = mass × acceleration).\nExplanation: This law means that the net force acting on an object equals its mass times its acceleration. A larger force produces greater acceleration; a heavier object requires more force to achieve the same acceleration.\nStep-by-step:\n1. Identify all forces acting on the object\n2. Calculate the net force (sum of all forces, with direction)\n3. Identify the mass of the object (in kg)\n4. Apply F = ma to find acceleration, or rearrange as a = F/m or m = F/a\nCommon Mistake: Forgetting to account for direction — force and acceleration are both vectors.` },
-          { k: ['thesis','essay','argument','introduction','paragraph'], answer: `Final Answer: A strong thesis statement makes a specific, arguable claim that previews the main points of your essay.\nExplanation: The thesis is the spine of your essay. Every paragraph should connect back to it. It should be debatable (not just a fact) and specific enough to be proven with evidence.\nStep-by-step:\n1. Identify your topic and the question your essay answers\n2. Take a clear position or make a specific claim\n3. Include your main supporting reasons (usually 2-3)\n4. Keep it to 1-2 sentences, placed at the end of your intro\nTip: A weak thesis: "World War II was bad." A strong thesis: "The Allied victory in WWII was secured by three key factors: industrial output, code-breaking, and the Eastern Front."` },
-          { k: ['mitosis','meiosis','cell division','chromosome'], answer: `Final Answer: Mitosis produces 2 identical diploid cells for growth/repair; meiosis produces 4 genetically diverse haploid cells for reproduction.\nExplanation: Both are types of cell division, but they serve different purposes. Mitosis copies cells exactly, while meiosis creates sex cells (sperm and eggs) with half the chromosomes.\nStep-by-step:\n1. Mitosis phases: Prophase → Metaphase → Anaphase → Telophase → Cytokinesis\n2. Meiosis goes through TWO rounds: Meiosis I and Meiosis II\n3. Crossing over during Meiosis I creates genetic variation\n4. End result of mitosis: 2 cells with 46 chromosomes each\n5. End result of meiosis: 4 cells with 23 chromosomes each\nKey Points:\n- Mitosis = growth, repair, asexual reproduction\n- Meiosis = sexual reproduction only` },
-        ];
-        for (const s of subjects) {
-          if (s.k.some(k => q.includes(k))) return { answer: s.answer };
-        }
-        return { answer: `Final Answer: Great question! Here is a clear explanation of "${typedQuestion.substring(0,60)}${typedQuestion.length>60?'…':''}"\nExplanation: This topic involves several key concepts that are important to understand. Let me break it down step by step so it makes complete sense.\nStep-by-step:\n1. First, identify the core concept or question being asked\n2. Break the problem into smaller, manageable parts\n3. Apply the relevant formulas, rules, or principles\n4. Check your work and make sure your answer makes sense\nTip: Always write out your reasoning — it helps you catch mistakes and shows your teacher you understand the material.\nKey Points:\n- Understanding the "why" is just as important as knowing the answer\n- Practice similar problems to reinforce your understanding\n- Ask Knox for more examples if you need them!` };
+      // ── REAL API CALL ─────────────────────────────────────────────────────
+      const reqHeaders = { "Content-Type": "application/json" };
+      if (window.currentUser) {
+        const idToken = await window.currentUser.getIdToken();
+        reqHeaders["Authorization"] = `Bearer ${idToken}`;
       }
 
-      const mockData = mockAnswer(q);
-      mockData.plan = mockPlan;
-      // usage tracking handled by handleAskQuestion via setUsageData
+      const res = await fetch("/api/ask", {
+        method:  "POST",
+        headers: reqHeaders,
+        body: JSON.stringify({
+          question: typedQuestion,
+          history:  conversationHistory.slice(-6),
+        }),
+      });
 
-      let responseHtml;
-      if (mockData.isCasual) {
-        responseHtml = `<div style="padding:14px 18px 16px;font-size:15px;font-weight:500;color:#3C3C3C;line-height:1.65;">${mockData.answer.replace(/\n/g,'<br>')}</div>`;
-      } else {
-        responseHtml = renderResponse(mockData.answer, [], mockPlan, {});
+      if (res.status === 401) {
+        const _old401 = document.getElementById('knoxThinkingRow');
+        if (_old401) _old401.remove();
+        resetBtn();
+        appendKnoxSignUpPrompt();
+        return;
       }
 
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        replaceThinkingWithResponse(`<div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:14px;font-weight:700;color:#DC2626;line-height:1.6;">😬 ${errData.error || 'Knox couldn\'t reach the server — check your connection and try again.'}</div>
+          <button onclick="handleAskQuestion()" style="padding:10px 18px;border-radius:10px;font-size:13px;font-weight:800;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;align-self:flex-start;">↩ Try Again</button>
+        </div>`, true);
+        return;
+      }
+
+      const data   = await res.json();
+      const answer = data.answer || '';
+      const plan   = data.plan   || window.userPlan || 'free';
+
+      const responseHtml = renderResponse(answer, [], plan, {});
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
       // Auto-save to history
       if (window.currentUser && typedQuestion) {
-        saveToHistory(typedQuestion, mockData.answer || '', mockPlan);
+        saveToHistory(typedQuestion, answer, plan);
       }
 
-      // bars already updated by setUsageData → refreshUsageBars
-      conversationHistory.push({ role: 'user', content: typedQuestion || 'question' }, { role: 'assistant', content: mockData.answer || '' });
-      if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
       updateConversationIndicator();
+      conversationHistory.push(
+        { role: 'user',      content: typedQuestion },
+        { role: 'assistant', content: answer }
+      );
+      if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
 
     } catch (err) {
       replaceThinkingWithResponse(`<div style="padding:16px 18px;font-size:14px;font-weight:700;color:#DC2626;">😬 Something went wrong. Please try again.</div>`, true);
