@@ -2034,13 +2034,8 @@
       window.currentUser = result.user;
       window.userPlan = 'free';
       userPlan = 'free';
-      // Clear chat but don't scroll - just reset the thread silently
-      const thread = document.getElementById('chatThread');
-      if (thread) {
-        const greeting = thread.querySelector('.knox-greeting');
-        thread.innerHTML = '';
-        if (greeting) thread.appendChild(greeting);
-      }
+      // Reset chat silently (no scroll)
+      if (window.startNewChat) window.startNewChat();
       window.updateLoginUI?.();
     } catch (err) {
       // Cancelled — stay signed in as current user
