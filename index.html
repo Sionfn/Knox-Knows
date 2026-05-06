@@ -2530,46 +2530,49 @@
     // Determine if this is a casual chat message (learn mode or conversational)
     const _isLearn = currentMode === 'learn';
 
-    // Max Knox — 100 hw/day, unlimited casual
+    // Max Knox — 100 hw/day (Get Answer + Learn with Knox), unlimited casual
     if (_plan === 'max') {
-      if (!_isLearn) {
+      if (!_isLearn || currentMode === 'learn') {
+        // Both Get Answer and Learn with Knox count as homework questions
         const used = usage.count || 0;
         if (used >= 100) { appendKnoxLimitReached('max'); return; }
         usage.count = used + 1;
       } else {
-        // Truly unlimited casual for Max
+        // Casual chat — unlimited for Max
+        const csUsed = usage.casual || 0;
+        usage.casual = csUsed + 1;
       }
       setUsageData(usage);
       updateUsageCounter();
       executeAskQuestion(); return;
     }
 
-    // Super Knox — 25 hw/day, 50 casual/day
+    // Super Knox — 25 hw/day (Get Answer + Learn with Knox), 50 casual/day
     if (_plan === 'super') {
-      if (_isLearn) {
-        const csUsed = usage.casual || 0;
-        if (csUsed >= 50) { appendKnoxCasualLimitReached('super'); return; }
-        usage.casual = csUsed + 1;
-      } else {
+      if (currentMode === 'learn' || !_isLearn) {
         const used = usage.count || 0;
         if (used >= 25) { appendKnoxLimitReached('super'); return; }
         usage.count = used + 1;
+      } else {
+        const csUsed = usage.casual || 0;
+        if (csUsed >= 50) { appendKnoxCasualLimitReached('super'); return; }
+        usage.casual = csUsed + 1;
       }
       setUsageData(usage);
       updateUsageCounter();
       executeAskQuestion(); return;
     }
 
-    // Family Knox — 25 hw/day, 50 casual/day per member
+    // Family Knox — 25 hw/day (Get Answer + Learn with Knox), 50 casual/day per member
     if (_plan === 'family') {
-      if (_isLearn) {
-        const csUsed = usage.casual || 0;
-        if (csUsed >= 50) { appendKnoxCasualLimitReached('family'); return; }
-        usage.casual = csUsed + 1;
-      } else {
+      if (currentMode === 'learn' || !_isLearn) {
         const used = usage.count || 0;
         if (used >= 25) { appendKnoxLimitReached('family'); return; }
         usage.count = used + 1;
+      } else {
+        const csUsed = usage.casual || 0;
+        if (csUsed >= 50) { appendKnoxCasualLimitReached('family'); return; }
+        usage.casual = csUsed + 1;
       }
       setUsageData(usage);
       updateUsageCounter();
@@ -2587,15 +2590,15 @@
       return;
     }
 
-    // Free plan — 5 hw/day, 20 casual/day
-    if (_isLearn) {
-      const csUsed = usage.casual || 0;
-      if (csUsed >= 20) { appendKnoxCasualLimitReached('free'); return; }
-      usage.casual = csUsed + 1;
-    } else {
+    // Free plan — 5 hw/day (Get Answer + Learn with Knox), 20 casual/day
+    if (currentMode === 'learn' || !_isLearn) {
       const used = usage.count || 0;
       if (used >= DAILY_LIMIT) { appendKnoxLimitReached('free'); return; }
       usage.count = used + 1;
+    } else {
+      const csUsed = usage.casual || 0;
+      if (csUsed >= 20) { appendKnoxCasualLimitReached('free'); return; }
+      usage.casual = csUsed + 1;
     }
     setUsageData(usage);
     updateUsageCounter();
