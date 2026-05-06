@@ -31,8 +31,9 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { email, name } = decodedToken;
-  const displayName = name || req.body?.name || email?.split("@")[0] || "there";
+  const { email, name: tokenName } = decodedToken;
+  const bodyName = req.body?.name;
+  const displayName = bodyName || tokenName || email?.split("@")[0] || "there";
   const firstName   = displayName.split(" ")[0];
 
   try {
