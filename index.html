@@ -2930,15 +2930,10 @@
 
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
-      // Save button
-      const saveBtn = document.createElement('button');
-      saveBtn.style.cssText = 'display:flex;align-items:center;gap:6px;margin:0 16px 16px;padding:8px 14px;background:var(--gray);border:2px solid var(--border);border-radius:10px;font-size:12px;font-weight:800;color:#777;cursor:pointer;font-family:inherit;transition:all 0.15s;';
-      saveBtn.innerHTML = '💾 Save';
-      saveBtn.onmouseover = () => { saveBtn.style.borderColor = 'var(--orange)'; saveBtn.style.color = 'var(--orange)'; };
-      saveBtn.onmouseout  = () => { saveBtn.style.borderColor = 'var(--border)'; saveBtn.style.color = '#777'; };
-      saveBtn.onclick = () => { saveToHistory(typedQuestion, mockData.answer || '', mockPlan); saveBtn.innerHTML = '✓ Saved'; saveBtn.style.color = 'var(--green-dark)'; saveBtn.style.borderColor = 'var(--green)'; };
-      const bubble = knoxRow.querySelector('div[style*="border:2px solid"]');
-      if (bubble) bubble.appendChild(saveBtn);
+      // Auto-save to history
+      if (window.currentUser && typedQuestion) {
+        saveToHistory(typedQuestion, mockData.answer || '', mockPlan);
+      }
 
       // bars already updated by setUsageData → refreshUsageBars
       conversationHistory.push({ role: 'user', content: typedQuestion || 'question' }, { role: 'assistant', content: mockData.answer || '' });
