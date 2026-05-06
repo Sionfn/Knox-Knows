@@ -188,8 +188,7 @@ export default async function handler(req, res) {
     if (plan === 'free') {
       const upgradeText = '💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.';
       // Remove upgrade text from wherever it appears in the answer
-      cleanAnswer = cleanAnswer.replace(/💡\s*Upgrade to Super Knox[^
-]*/gi, '').trim();
+      cleanAnswer = cleanAnswer.split('\n').filter(function(l){return l.indexOf('💡') === -1;}).join('\n').trim();
       // Add it back cleanly at the end
       cleanAnswer += `
 
