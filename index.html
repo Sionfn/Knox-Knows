@@ -2076,7 +2076,10 @@
   window.showLoginError   = showLoginError;
   window.showLoginSuccess = showLoginSuccess;
   window.clearLoginMessages = clearLoginMessages;
-  window.updateLoginUI    = updateLoginUI;
+  window.updateLoginUI    = function() {
+    updateLoginUI();
+    if (window.refreshUsageBars) window.refreshUsageBars();
+  };
 
   // Keyboard enter on login modal
   document.addEventListener('keydown', (e) => {
@@ -2210,21 +2213,28 @@
   }
 
   window.updateUsageBar = updateUsageBar;
-  (function initBarsFromCache() {
-    // Guests: show 1 use limit for both bars
+  function refreshUsageBars() {
     if (!window.currentUser) {
-      updateUsageBar({ hw: 0, hwLimit: 1, casual: 0, casualLimit: 1, nextUnlock: null, csNextUnlock: null });
+      updateUsageBar({ hw: 0, hwLimit: 5, casual: 0, casualLimit: 20, nextUnlock: null, csNextUnlock: null });
       return;
     }
-    const cached = loadUsageCache();
+    const uPlan  = window.userPlan || 'free';
+    const hwLimit = PLAN_LIMITS[uPlan]   || 5;
+    const csLimit = CASUAL_LIMITS[uPlan] || 20;
+    const cached  = loadUsageCache();
     if (cached) {
+      // Override the limits with the correct plan limits in case they changed
+      cached.hwLimit    = hwLimit;
+      cached.casualLimit = csLimit;
       updateUsageBar(cached);
     } else {
-      const uPlan = window.userPlan || 'free';
-      const hwLimit = uPlan === 'max' ? 100 : uPlan === 'super' ? 25 : uPlan === 'family' ? 25 : 5;
-      const csLimit = CASUAL_LIMITS[uPlan] || 20;
       updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
     }
+  }
+  window.refreshUsageBars = refreshUsageBars;
+
+  (function initBarsFromCache() {
+    refreshUsageBars();
   })();
 
   // ── Show limit reached modal with countdown ───────────────────────────────
