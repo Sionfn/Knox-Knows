@@ -1841,6 +1841,9 @@
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       window.currentUser = result.user;
+      // Send welcome email only for new Google users
+      const isNewUser = result._tokenResponse?.isNewUser;
+      if (isNewUser) sendWelcomeEmail(result.user);
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
@@ -1893,11 +1896,29 @@
       window.currentUser = result.user;
       window.closeLoginModal?.();
       window.updateLoginUI?.();
+      sendWelcomeEmail(result.user);
     } catch (err) {
       const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : err.message;
       window.showLoginError?.(msg);
     }
   };
+
+  // ── Send welcome email ────────────────────────────────────────────────────
+  async function sendWelcomeEmail(user) {
+    try {
+      const idToken = await user.getIdToken();
+      await fetch('/api/send-welcome-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ name: user.displayName || '' }),
+      });
+    } catch (err) {
+      console.warn('Welcome email failed:', err.message);
+    }
+  }
 
   // ── Forgot Password ───────────────────────────────────────────────────────
   window.handleForgotPassword = async function() {
