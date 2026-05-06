@@ -180,7 +180,7 @@ export default async function handler(req, res) {
     }
 
     const data   = await response.json();
-    const answer = data.choices?.[0]?.message?.content || "";
+    let answer = data.choices?.[0]?.message?.content || "";
 
     // Global: clean up any LaTeX or math notation the AI uses
     answer = answer
