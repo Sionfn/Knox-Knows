@@ -1882,7 +1882,7 @@
     }
     if (window.updateLoginUI) window.updateLoginUI();
     // Refresh bars after plan is loaded from Firestore
-    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 100);
+    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 150);
   }
 
   // ── Auth state listener ───────────────────────────────────────────────────
@@ -2036,7 +2036,6 @@
       window.currentUser = result.user;
       window.userPlan = 'free';
       userPlan = 'free';
-      // Clear chat thread for new account
       if (window.startNewChat) window.startNewChat();
       window.updateLoginUI?.();
     } catch (err) {
@@ -2303,6 +2302,9 @@
 
   (function initBarsFromCache() {
     refreshUsageBars();
+    // Also refresh after 1s to catch plan loaded from Firestore
+    setTimeout(() => { refreshUsageBars(); }, 1000);
+    setTimeout(() => { refreshUsageBars(); }, 2500);
   })();
 
   // ── Show limit reached modal with countdown ───────────────────────────────
