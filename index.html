@@ -1903,7 +1903,6 @@
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       window.currentUser = result.user;
-      // Send welcome email only for new Google users
       const isNewUser = result._tokenResponse?.isNewUser;
       if (isNewUser) sendWelcomeEmail(result.user);
       window.closeLoginModal?.();
@@ -1959,7 +1958,6 @@
       window.currentUser = result.user;
       window.closeLoginModal?.();
       window.updateLoginUI?.();
-      sendWelcomeEmail(result.user, name);
     } catch (err) {
       const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : err.message;
       window.showLoginError?.(msg);
@@ -2072,6 +2070,8 @@
   function closeLoginModal() {
     document.getElementById('loginModal').classList.remove('open');
     clearLoginMessages();
+    // Scroll back to top so user sees the homepage after login
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function switchLoginTab(tab) {
     const si = document.getElementById('signinForm');
