@@ -32,10 +32,7 @@ Always include:
 - Final Answer: [the direct answer — always required, no exceptions]
 - Explanation: [1-3 sentences explaining why or how — always include, even for simple questions. Keep the explanation clean with NO mention of upgrading inside it.]
 
-IMPORTANT: The Explanation must contain ONLY the educational content. Do NOT mention upgrading, Super Knox, or any plans inside the Explanation section.
-
-After the explanation is fully done, add this on its own line with no other text mixed in:
-Upgrade: 💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.
+IMPORTANT: Do NOT mention upgrading, Super Knox, or any other plans anywhere in your response. Keep it purely educational.
 
 No step-by-step, no tips, no deep insights.`,
   },
@@ -198,44 +195,17 @@ export default async function handler(req, res) {
       .replace(/\\infty/g, '∞')
       .replace(/\\/g, '');
 
-    // For free plan: strip any upgrade text that leaked into the explanation
-    // and ensure the upgrade nudge is always on its own line at the end
-    let cleanAnswer = answer;
+    // For free plan: strip any upgrade/upsell text the AI added
     if (plan === 'free') {
-      const upgradeText = '💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.';
-      // Remove upgrade text from wherever it appears in the answer
-      // Remove any mention of upgrading from the entire answer
-      const upgradePatterns = [
-        'Upgrade to Super Knox',
-        'upgrade to Super Knox', 
-        'Upgrade to Knox',
-        'Super Knox for full',
-        'step-by-step breakdowns, tips, and smarter',
-        '💡 Upgrade',
-      ];
-      upgradePatterns.forEach(function(p) {
-        // Remove the pattern and everything after it on the same line up to period
-        while (cleanAnswer.indexOf(p) !== -1) {
-          var idx = cleanAnswer.indexOf(p);
-          var lineStart = cleanAnswer.lastIndexOf('\n', idx);
-          var lineEnd = cleanAnswer.indexOf('\n', idx);
-          if (lineEnd === -1) lineEnd = cleanAnswer.length;
-          // If the whole line is about upgrading, remove the line
-          var line = cleanAnswer.substring(lineStart, lineEnd);
-          if (line.indexOf(p) !== -1) {
-            cleanAnswer = cleanAnswer.substring(0, lineStart) + cleanAnswer.substring(lineEnd);
-          } else {
-            break;
-          }
-        }
-      });
-      cleanAnswer = cleanAnswer.trim();
-      // Add upgrade nudge cleanly at end
-      cleanAnswer += '\n\nUpgrade: ' + upgradeText;
+      const upsellPhrases = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade', 'step-by-step breakdowns, tips, and smarter'];
+      const lines = answer.split('\n');
+      answer = lines.filter(function(l) {
+        return !upsellPhrases.some(function(p) { return l.indexOf(p) !== -1; });
+      }).join('\n').trim();
     }
 
     return res.status(200).json({
-      answer: cleanAnswer,
+      answer,
       plan,
       model: config.model,
       usage: data.usage,
