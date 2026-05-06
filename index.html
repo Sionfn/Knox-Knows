@@ -2934,7 +2934,7 @@
 
       const data   = await res.json();
       const answer = data.answer || '';
-      const plan   = data.plan   || window.userPlan || 'free';
+      const plan   = window.userPlan || data.plan || 'free';
 
       // Clean LaTeX notation to plain text
       const cleanedAnswer = (function(text) {
