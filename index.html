@@ -2050,7 +2050,7 @@
   let csUsedCount = 0;
   const DAILY_LIMIT = 5; // free plan
   const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100, family: 25 };
-  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 99999, family: 50 };
+  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 999999, family: 50 };
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -2265,7 +2265,9 @@
       const csLeft  = Math.max(0, csLimit - csUsed);
       const csPct   = Math.min((csUsed / csLimit) * 100, 100);
 
-      if (csLabel) csLabel.textContent = `${csUsed} / ${csLimit} chat messages used`;
+      const csDisplay = csLimit >= 9999 ? 'Unlimited' : csLimit;
+      const csUsedDisplay = csLimit >= 9999 ? '' : `${csUsed} / `;
+      if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat messages' : `${csUsed} / ${csLimit} chat messages used`;
       if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill cs-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
       if (csCd)    { csCd.textContent = csLeft === 1 ? '1 left!' : ''; csCd.style.color = '#F59E0B'; }
 
@@ -2934,7 +2936,19 @@
       const answer = data.answer || '';
       const plan   = data.plan   || window.userPlan || 'free';
 
-      const responseHtml = renderResponse(answer, [], plan, {});
+      // Clean LaTeX notation to plain text
+      const cleanedAnswer = (function(text) {
+        return text
+          .replace(/\\\(|\\\)/g, '')
+          .replace(/\\\[|\\\]/g, '')
+          .replace(/\$\$([^$]+)\$\$/g, '$1')
+          .replace(/\$([^$]+)\$/g, '$1')
+          .replace(/\\times/g, '×')
+          .replace(/\\div/g, '÷')
+          .replace(/\\pm/g, '±')
+          .replace(/\\/g, '');
+      })(answer);
+      const responseHtml = renderResponse(cleanedAnswer, [], plan, {});
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
       // Auto-save to history
