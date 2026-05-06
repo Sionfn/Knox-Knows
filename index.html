@@ -1787,7 +1787,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, getDocs, query, where, orderBy, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
@@ -1801,6 +1801,55 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
+
+  // ── History: save question + answer to Firestore ──────────────────────────
+  window.saveToFirestoreHistory = async function(question, answer) {
+    if (!window.currentUser) return;
+    try {
+      const uid      = window.currentUser.uid;
+      const histRef  = collection(db, "users", uid, "history");
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      await addDoc(histRef, {
+        question: question.substring(0, 500),
+        answer:   answer.substring(0, 2000),
+        plan:     window.userPlan || 'free',
+        ts:       Date.now(),
+      });
+      // Clean up entries older than 30 days
+      const oldQuery = query(histRef, where('ts', '<', thirtyDaysAgo));
+      const oldSnap  = await getDocs(oldQuery);
+      oldSnap.forEach(d => deleteDoc(d.ref));
+    } catch (err) {
+      console.warn('History save failed:', err.message);
+    }
+  };
+
+  // ── History: load from Firestore ──────────────────────────────────────────
+  window.loadFirestoreHistory = async function() {
+    if (!window.currentUser) return [];
+    try {
+      const uid     = window.currentUser.uid;
+      const histRef = collection(db, "users", uid, "history");
+      const q       = query(histRef, orderBy('ts', 'desc'), limit(50));
+      const snap    = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (err) {
+      console.warn('History load failed:', err.message);
+      return [];
+    }
+  };
+
+  // ── History: delete one entry ─────────────────────────────────────────────
+  window.deleteFirestoreHistory = async function(docId) {
+    if (!window.currentUser) return;
+    try {
+      const uid    = window.currentUser.uid;
+      const docRef = doc(db, "users", uid, "history", docId);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.warn('History delete failed:', err.message);
+    }
+  };
 
   // ── Fetch plan from Firestore ─────────────────────────────────────────────
   async function fetchAndSetPlan(uid) {
@@ -3582,6 +3631,8 @@
   const HISTORY_KEY = 'homeworkai_history';
 
   function saveToHistory(question, answer, plan) {
+    // Also save to Firestore if user is logged in
+    if (window.saveToFirestoreHistory) window.saveToFirestoreHistory(question, answer);
     let history = getHistory();
     history.unshift({ question: question.substring(0, 300), answer, plan, time: new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) });
     history = history.slice(0, 10);
