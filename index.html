@@ -1985,7 +1985,8 @@
   let billing = 'monthly';
   let hwUsedCount = 0;
   let csUsedCount = 0;
-  const DAILY_LIMIT = 5;
+  const DAILY_LIMIT = 5; // free plan
+  const PLAN_LIMITS = { free: 5, super: 25, max: 100, family: 25 };
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -2219,7 +2220,7 @@
       updateUsageBar(cached);
     } else {
       const uPlan = window.userPlan || 'free';
-      const hwLimit = uPlan === 'pro_plus' ? 40 : uPlan === 'pro' ? 25 : 5;
+      const hwLimit = uPlan === 'max' ? 100 : uPlan === 'super' ? 25 : uPlan === 'family' ? 25 : 5;
       const csLimit = uPlan === 'pro' ? 50 : 20;
       updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
     }
@@ -2489,10 +2490,13 @@
     // Update plan banner — clean subtle bar
     const banner = document.getElementById('planBanner');
     if (banner) {
-      if (userPlan === 'pro_plus') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#FFF4EC;border-top:1.5px solid #FFCFA0;border-bottom:1.5px solid #FFCFA0;"><div style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#CC5500;letter-spacing:0.01em;">Pro+ Plan &nbsp;·&nbsp; 40 questions/day &nbsp;·&nbsp; Best AI &nbsp;·&nbsp; Unlimited Chat</span></div>';
-      } else if (userPlan === 'pro') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">Pro Plan &nbsp;·&nbsp; 25 questions/day &nbsp;·&nbsp; Smarter AI &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="scrollToPricing()">Upgrade to Pro+</span></span></div>';
+      const _bp = window.userPlan || userPlan || 'free';
+      if (_bp === 'max') {
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#FFF4EC;border-top:1.5px solid #FFCFA0;border-bottom:1.5px solid #FFCFA0;"><div style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#CC5500;letter-spacing:0.01em;">🚀 Max Knox &nbsp;·&nbsp; 100 questions/day &nbsp;·&nbsp; Best AI</span></div>';
+      } else if (_bp === 'super') {
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Super Knox &nbsp;·&nbsp; 25 questions/day &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="scrollToPricing()">Upgrade to Max Knox</span></span></div>';
+      } else if (_bp === 'family') {
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F5F3FF;border-top:1.5px solid #C4B5FD;border-bottom:1.5px solid #C4B5FD;"><div style="width:7px;height:7px;border-radius:50%;background:#7C3AED;flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#5B21B6;letter-spacing:0.01em;">👨‍👩‍👧‍👦 Family Knox &nbsp;·&nbsp; 25 questions/day per member</span></div>';
       } else {
         banner.innerHTML = '';
       }
@@ -2504,7 +2508,7 @@
       counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 5 questions/day ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
-      const left = Math.max(0, DAILY_LIMIT - (usage.count || 0));
+      const _pl = window.userPlan || userPlan || 'free'; const _lim = PLAN_LIMITS[_pl] || 5; const left = Math.max(0, _lim - (usage.count || 0));
       counter.innerHTML = `Daily questions left: ${left} &nbsp;·&nbsp; <span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">Upgrade for unlimited ⚡</span>`;
       counter.style.color = left <= 2 ? '#dc2626' : '#4b5563';
     }
@@ -2519,29 +2523,111 @@
     if (!question && !pendingImageBase64) return;
     const usage = getUsageData();
 
-    // Pro/Pro+ users skip ALL limits
-    if (userPlan === 'pro' || userPlan === 'pro_plus') {
+    const _plan = window.userPlan || userPlan || 'free';
+    const _limit = PLAN_LIMITS[_plan] || 5;
+
+    // Max Knox — 100 questions/day hard cap
+    if (_plan === 'max') {
+      const used = usage.count || 0;
+      if (used >= 100) {
+        appendKnoxLimitReached('max'); return;
+      }
+      usage.count = used + 1;
+      setUsageData(usage);
+      updateUsageCounter();
       executeAskQuestion(); return;
     }
 
-    // GUEST: allow exactly 1 question, then Knox prompts sign up inline
+    // Super Knox — 25/day
+    if (_plan === 'super') {
+      const used = usage.count || 0;
+      if (used >= 25) {
+        appendKnoxLimitReached('super'); return;
+      }
+      usage.count = used + 1;
+      setUsageData(usage);
+      updateUsageCounter();
+      executeAskQuestion(); return;
+    }
+
+    // Family Knox — 25/day per account
+    if (_plan === 'family') {
+      const used = usage.count || 0;
+      if (used >= 25) {
+        appendKnoxLimitReached('family'); return;
+      }
+      usage.count = used + 1;
+      setUsageData(usage);
+      updateUsageCounter();
+      executeAskQuestion(); return;
+    }
+
+    // GUEST: allow exactly 1 question, then prompt sign up
     if (!window.currentUser) {
       if (guestQuestionUsed) {
-        // Already used their one free shot — show Knox sign-up prompt in chat
-        appendKnoxSignUpPrompt();
-        return;
+        appendKnoxSignUpPrompt(); return;
       }
-      // First question — let it through, flag it, then show sign-up after answer
       guestQuestionUsed = true;
       updateUsageBar({ hw: 1, hwLimit: 1, casual: 0, casualLimit: 1, nextUnlock: null, csNextUnlock: null });
-      executeAskQuestion(/* afterCallback */ () => appendKnoxSignUpPrompt(true));
+      executeAskQuestion(() => appendKnoxSignUpPrompt(true));
       return;
     }
 
-    usage.count = (usage.count || 0) + 1;
+    // Free plan — 5/day
+    const used = usage.count || 0;
+    if (used >= DAILY_LIMIT) {
+      appendKnoxLimitReached('free'); return;
+    }
+    usage.count = used + 1;
     setUsageData(usage);
     updateUsageCounter();
     executeAskQuestion();
+  }
+
+  function appendKnoxLimitReached(plan) {
+    const msgs = {
+      free: {
+        title: "You've used all 5 free questions today 🦊",
+        sub: "Your questions reset tomorrow — or upgrade to Super Knox for 25 questions every day, step-by-step breakdowns, and smarter AI.",
+        btn: "Upgrade to Super Knox ⚡",
+        btn2: null,
+        color: "#58CC02", shadow: "#2D6A00"
+      },
+      super: {
+        title: "You've used all 25 questions today ⚡",
+        sub: "Your questions reset tomorrow — or upgrade to Max Knox for 100 questions every day, best-in-class AI, and no daily stress.",
+        btn: "Upgrade to Max Knox 🚀",
+        btn2: null,
+        color: "#FF6B00", shadow: "#CC5500"
+      },
+      family: {
+        title: "You've used all 25 questions today 👨‍👩‍👧‍👦",
+        sub: "Each family member gets 25 questions per day. Your questions reset tomorrow — see you then!",
+        btn: null,
+        btn2: null,
+        color: "#7C3AED", shadow: "#5B21B6"
+      },
+      max: {
+        title: "You've used all 100 questions today 🚀",
+        sub: "You're a power user! Your questions reset tomorrow. Knox will be ready and waiting.",
+        btn: null,
+        btn2: null,
+        color: "#FF6B00", shadow: "#CC5500"
+      },
+    };
+    const m = msgs[plan] || msgs.free;
+    const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
+    if (!chatThread) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin:8px 0;';
+    row.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="./knox-logo.jpg" style="width:100%;height:100%;object-fit:cover;"></div>
+      <div style="background:white;border:2px solid #E5E7EB;border-radius:4px 20px 20px 20px;padding:16px 18px;max-width:85%;">
+        <div style="font-size:15px;font-weight:900;color:#1f2937;margin-bottom:6px;">${m.title}</div>
+        <div style="font-size:14px;font-weight:600;color:#6B7280;line-height:1.6;margin-bottom:${m.btn ? '14px' : '0'}">${m.sub}</div>
+        ${m.btn ? `<button onclick="closeSettings();scrollToPricing();" style="padding:10px 20px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:${m.color};color:white;cursor:pointer;box-shadow:0 3px 0 ${m.shadow};">${m.btn}</button>` : ''}
+      </div>`;
+    chatThread.appendChild(row);
+    chatThread.scrollTop = chatThread.scrollHeight;
   }
 
   // Knox sends a sign-up message in the chat thread
@@ -2730,7 +2816,7 @@
       mockData.plan = mockPlan;
       mockData.usage = {
         hw: (hwUsedCount = (hwUsedCount||0) + (mockData.isCasual ? 0 : 1)),
-        hwLimit: mockPlan === 'pro_plus' ? 40 : mockPlan === 'pro' ? 25 : 5,
+        hwLimit: mockPlan === 'max' ? 100 : mockPlan === 'super' ? 25 : mockPlan === 'family' ? 25 : 5,
         casual: (csUsedCount = (csUsedCount||0) + (mockData.isCasual ? 1 : 0)),
         casualLimit: mockPlan === 'pro' ? 50 : 20,
         nextUnlock: null,
