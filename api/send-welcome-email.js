@@ -78,8 +78,14 @@ export default async function handler(req, res) {
 
           <!-- Header -->
           <tr>
-            <td align="center" style="background:#FF6B00;border-radius:20px 20px 0 0;padding:32px 40px;">
-              <img src="https://knoxknowsapp.com/knox-logo.jpg" alt="Knox" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 16px;">
+            <td align="center" style="background:#FF6B00;border-radius:20px 20px 0 0;padding:32px 40px;border-bottom:4px solid #CC5500;">
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+                <tr>
+                  <td width="80" height="80" style="width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,0.4);background:#2BBFEF;">
+                    <img src="https://knoxknowsapp.com/knox-logo.jpg" alt="Knox" width="120" height="80" style="display:block;margin-left:-20px;">
+                  </td>
+                </tr>
+              </table>
               <h1 style="margin:0;font-size:28px;font-weight:900;color:white;letter-spacing:-0.02em;">Knox Knows</h1>
               <p style="margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.85);font-weight:600;">Your AI study companion 🦊</p>
             </td>
