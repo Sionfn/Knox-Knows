@@ -182,8 +182,22 @@ export default async function handler(req, res) {
     const data   = await response.json();
     const answer = data.choices?.[0]?.message?.content || "";
 
+    // For free plan: strip any upgrade text that leaked into the explanation
+    // and ensure the upgrade nudge is always on its own line at the end
+    let cleanAnswer = answer;
+    if (plan === 'free') {
+      const upgradeText = '💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.';
+      // Remove upgrade text from wherever it appears in the answer
+      cleanAnswer = cleanAnswer.replace(/💡\s*Upgrade to Super Knox[^
+]*/gi, '').trim();
+      // Add it back cleanly at the end
+      cleanAnswer += `
+
+Upgrade: ${upgradeText}`;
+    }
+
     return res.status(200).json({
-      answer,
+      answer: cleanAnswer,
       plan,
       model: config.model,
       usage: data.usage,
