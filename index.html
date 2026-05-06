@@ -1893,10 +1893,11 @@
     try {
       const result = await createUserWithEmailAndPassword(auth, email, pw);
       await updateProfile(result.user, { displayName: name });
+      await result.user.getIdToken(true); // force token refresh with new displayName
       window.currentUser = result.user;
       window.closeLoginModal?.();
       window.updateLoginUI?.();
-      sendWelcomeEmail(result.user);
+      sendWelcomeEmail(result.user, name);
     } catch (err) {
       const msg = err.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : err.message;
       window.showLoginError?.(msg);
@@ -1904,17 +1905,21 @@
   };
 
   // ── Send welcome email ────────────────────────────────────────────────────
-  async function sendWelcomeEmail(user) {
+  async function sendWelcomeEmail(user, overrideName) {
     try {
-      const idToken = await user.getIdToken();
-      await fetch('/api/send-welcome-email', {
+      const idToken = await user.getIdToken(true);
+      const res = await fetch('/api/send-welcome-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ name: user.displayName || '' }),
+        body: JSON.stringify({ name: overrideName || user.displayName || user.email?.split('@')[0] || '' }),
       });
+      if (!res.ok) {
+        const err = await res.json();
+        console.warn('Welcome email error:', err);
+      }
     } catch (err) {
       console.warn('Welcome email failed:', err.message);
     }
