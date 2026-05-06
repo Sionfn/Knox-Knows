@@ -2022,7 +2022,7 @@
     window.userPlan = 'free';
     userPlan = 'free';
     window.closeDropdown?.();
-    if (window.clearChat) window.clearChat();
+    if (window.startNewChat) window.startNewChat();
     window.updateLoginUI?.();
     setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 50);
   };
@@ -2037,7 +2037,7 @@
       window.userPlan = 'free';
       userPlan = 'free';
       // Clear chat thread for new account
-      if (window.clearChat) window.clearChat();
+      if (window.startNewChat) window.startNewChat();
       window.updateLoginUI?.();
     } catch (err) {
       // Cancelled — stay signed in as current user
