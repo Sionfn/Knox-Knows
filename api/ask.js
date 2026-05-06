@@ -32,7 +32,9 @@ Always include:
 - Final Answer: [the direct answer — always required, no exceptions]
 - Explanation: [1-3 sentences explaining why or how — always include, even for simple questions. Keep the explanation clean with NO mention of upgrading inside it.]
 
-Then after the explanation, on its own separate line, always add:
+IMPORTANT: The Explanation must contain ONLY the educational content. Do NOT mention upgrading, Super Knox, or any plans inside the Explanation section.
+
+After the explanation is fully done, add this on its own line with no other text mixed in:
 Upgrade: 💡 Upgrade to Super Knox for full step-by-step breakdowns, tips, and smarter explanations.
 
 No step-by-step, no tips, no deep insights.`,
