@@ -1986,7 +1986,8 @@
   let hwUsedCount = 0;
   let csUsedCount = 0;
   const DAILY_LIMIT = 5; // free plan
-  const PLAN_LIMITS = { free: 5, super: 25, max: 100, family: 25 };
+  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100, family: 25 };
+  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 99999, family: 50 };
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -2191,7 +2192,7 @@
     } else {
       if (casualSection) casualSection.style.display = 'block';
       const csUsed  = usage.casual      || 0;
-      const csLimit = usage.casualLimit || (uPlan === 'pro' ? 50 : 20);
+      const csLimit = usage.casualLimit || CASUAL_LIMITS[uPlan] || 20;
       const csLeft  = Math.max(0, csLimit - csUsed);
       const csPct   = Math.min((csUsed / csLimit) * 100, 100);
 
@@ -2221,7 +2222,7 @@
     } else {
       const uPlan = window.userPlan || 'free';
       const hwLimit = uPlan === 'max' ? 100 : uPlan === 'super' ? 25 : uPlan === 'family' ? 25 : 5;
-      const csLimit = uPlan === 'pro' ? 50 : 20;
+      const csLimit = CASUAL_LIMITS[uPlan] || 20;
       updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
     }
   })();
@@ -2526,37 +2527,50 @@
     const _plan = window.userPlan || userPlan || 'free';
     const _limit = PLAN_LIMITS[_plan] || 5;
 
-    // Max Knox — 100 questions/day hard cap
+    // Determine if this is a casual chat message (learn mode or conversational)
+    const _isLearn = currentMode === 'learn';
+
+    // Max Knox — 100 hw/day, unlimited casual
     if (_plan === 'max') {
-      const used = usage.count || 0;
-      if (used >= 100) {
-        appendKnoxLimitReached('max'); return;
+      if (!_isLearn) {
+        const used = usage.count || 0;
+        if (used >= 100) { appendKnoxLimitReached('max'); return; }
+        usage.count = used + 1;
+      } else {
+        // Truly unlimited casual for Max
       }
-      usage.count = used + 1;
       setUsageData(usage);
       updateUsageCounter();
       executeAskQuestion(); return;
     }
 
-    // Super Knox — 25/day
+    // Super Knox — 25 hw/day, 50 casual/day
     if (_plan === 'super') {
-      const used = usage.count || 0;
-      if (used >= 25) {
-        appendKnoxLimitReached('super'); return;
+      if (_isLearn) {
+        const csUsed = usage.casual || 0;
+        if (csUsed >= 50) { appendKnoxCasualLimitReached('super'); return; }
+        usage.casual = csUsed + 1;
+      } else {
+        const used = usage.count || 0;
+        if (used >= 25) { appendKnoxLimitReached('super'); return; }
+        usage.count = used + 1;
       }
-      usage.count = used + 1;
       setUsageData(usage);
       updateUsageCounter();
       executeAskQuestion(); return;
     }
 
-    // Family Knox — 25/day per account
+    // Family Knox — 25 hw/day, 50 casual/day per member
     if (_plan === 'family') {
-      const used = usage.count || 0;
-      if (used >= 25) {
-        appendKnoxLimitReached('family'); return;
+      if (_isLearn) {
+        const csUsed = usage.casual || 0;
+        if (csUsed >= 50) { appendKnoxCasualLimitReached('family'); return; }
+        usage.casual = csUsed + 1;
+      } else {
+        const used = usage.count || 0;
+        if (used >= 25) { appendKnoxLimitReached('family'); return; }
+        usage.count = used + 1;
       }
-      usage.count = used + 1;
       setUsageData(usage);
       updateUsageCounter();
       executeAskQuestion(); return;
@@ -2573,15 +2587,40 @@
       return;
     }
 
-    // Free plan — 5/day
-    const used = usage.count || 0;
-    if (used >= DAILY_LIMIT) {
-      appendKnoxLimitReached('free'); return;
+    // Free plan — 5 hw/day, 20 casual/day
+    if (_isLearn) {
+      const csUsed = usage.casual || 0;
+      if (csUsed >= 20) { appendKnoxCasualLimitReached('free'); return; }
+      usage.casual = csUsed + 1;
+    } else {
+      const used = usage.count || 0;
+      if (used >= DAILY_LIMIT) { appendKnoxLimitReached('free'); return; }
+      usage.count = used + 1;
     }
-    usage.count = used + 1;
     setUsageData(usage);
     updateUsageCounter();
     executeAskQuestion();
+  }
+
+  function appendKnoxCasualLimitReached(plan) {
+    const msgs = {
+      free:   { title: "You've used all 20 chat messages today 💬", sub: "Your messages reset tomorrow — or upgrade to Super Knox for 50 chat messages every day plus 25 homework questions.", btn: "Upgrade to Super Knox ⚡", color: "#58CC02", shadow: "#2D6A00" },
+      super:  { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for unlimited chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
+      family: { title: "You've used all 50 chat messages today 👨‍👩‍👧‍👦", sub: "Each family member gets 50 chat messages per day. Your messages reset tomorrow!", btn: null, color: "#7C3AED", shadow: "#5B21B6" },
+    };
+    const m = msgs[plan] || msgs.free;
+    const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
+    if (!chatThread) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin:8px 0;';
+    row.innerHTML = \`<div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="./knox-logo.jpg" style="width:100%;height:100%;object-fit:cover;"></div>
+      <div style="background:white;border:2px solid #E5E7EB;border-radius:4px 20px 20px 20px;padding:16px 18px;max-width:85%;">
+        <div style="font-size:15px;font-weight:900;color:#1f2937;margin-bottom:6px;">\${m.title}</div>
+        <div style="font-size:14px;font-weight:600;color:#6B7280;line-height:1.6;margin-bottom:\${m.btn ? '14px' : '0'}">\${m.sub}</div>
+        \${m.btn ? \`<button onclick="closeSettings();scrollToPricing();" style="padding:10px 20px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:\${m.color};color:white;cursor:pointer;box-shadow:0 3px 0 \${m.shadow};">\${m.btn}</button>\` : ''}
+      </div>\`;
+    chatThread.appendChild(row);
+    chatThread.scrollTop = chatThread.scrollHeight;
   }
 
   function appendKnoxLimitReached(plan) {
@@ -2818,7 +2857,7 @@
         hw: (hwUsedCount = (hwUsedCount||0) + (mockData.isCasual ? 0 : 1)),
         hwLimit: mockPlan === 'max' ? 100 : mockPlan === 'super' ? 25 : mockPlan === 'family' ? 25 : 5,
         casual: (csUsedCount = (csUsedCount||0) + (mockData.isCasual ? 1 : 0)),
-        casualLimit: mockPlan === 'pro' ? 50 : 20,
+        casualLimit: CASUAL_LIMITS[mockPlan] || 20,
         nextUnlock: null,
         csNextUnlock: null
       };
