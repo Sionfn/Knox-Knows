@@ -2842,7 +2842,23 @@
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
       row.id = 'knoxThinkingRow';
-      const label = currentMode === 'learn' ? 'Knox is working it out' : 'Knox is finding the answer';
+      const _plan = window.userPlan || 'free';
+      const loadingMessages = {
+        answer: {
+          max:    'Knox is diving deep on this one 🚀',
+          super:  'Knox is on it ⚡',
+          family: 'Knox is figuring it out 🦊',
+          free:   'Knox is looking that up 🔍',
+        },
+        learn: {
+          max:    'Knox is crafting the perfect lesson 🚀',
+          super:  'Knox is thinking through how to teach this ⚡',
+          family: 'Knox is getting ready to guide you 🦊',
+          free:   'Knox is preparing a hint 💡',
+        },
+      };
+      const modeKey = currentMode === 'learn' ? 'learn' : 'answer';
+      const label = loadingMessages[modeKey][_plan] || loadingMessages[modeKey].free;
       row.innerHTML = `
         <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
         <div style="background:white;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
@@ -3248,20 +3264,20 @@
 
     // ── Fallback: nothing structured parsed → use smart freeform renderer ─────
     if (!finalAnswerText && !stepsHtml && paragraphs.length === 0 && !tipText && !insightText && !commonMistakeText && keyPointsBullets.length === 0) {
-      const planTagClass2 = plan === 'pro_plus' ? 'tag-pro-plus' : plan === 'pro' ? 'tag-pro' : 'tag-free';
-      const planTag2 = plan === 'pro_plus' ? 'Pro+' : plan === 'pro' ? 'Pro' : 'Free';
+      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(answer, plan)}<div style="height:10px;"></div>`;
     }
 
     // ── Only paragraphs (no Final Answer) → smart freeform ───────────────────
     if (!finalAnswerText && paragraphs.length > 0 && !stepsHtml) {
       const allText = paragraphs.map(p => p.text).join('\n\n');
-      const planTagClass2 = plan === 'pro_plus' ? 'tag-pro-plus' : plan === 'pro' ? 'tag-pro' : 'tag-free';
-      const planTag2 = plan === 'pro_plus' ? 'Pro+' : plan === 'pro' ? 'Pro' : 'Free';
+      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(allText, plan)}<div style="height:10px;"></div>`;
     }
-    const planTag      = plan === "pro_plus" ? "Pro+" : plan === "pro" ? "Pro" : "Free";
-    const planTagClass = plan === "pro_plus" ? "tag-pro-plus" : plan === "pro" ? "tag-pro" : "tag-free";
+    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : plan === "family" ? "👨‍👩‍👧‍👦 Family" : "🆓 Free";
+    const planTagClass = plan === "max" ? "tag-max" : plan === "super" ? "tag-super" : plan === "family" ? "tag-family" : "tag-free";
     let html = ``;
 
     // ── Thin plan tag bar at top ──────────────────────────────────────────
