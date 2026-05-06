@@ -2870,14 +2870,7 @@
 
       const mockData = mockAnswer(q);
       mockData.plan = mockPlan;
-      mockData.usage = {
-        hw: (hwUsedCount = (hwUsedCount||0) + (mockData.isCasual ? 0 : 1)),
-        hwLimit: mockPlan === 'max' ? 100 : mockPlan === 'super' ? 25 : mockPlan === 'family' ? 25 : 5,
-        casual: (csUsedCount = (csUsedCount||0) + (mockData.isCasual ? 1 : 0)),
-        casualLimit: CASUAL_LIMITS[mockPlan] || 20,
-        nextUnlock: null,
-        csNextUnlock: null
-      };
+      // usage tracking handled by handleAskQuestion via setUsageData
 
       let responseHtml;
       if (mockData.isCasual) {
@@ -2898,7 +2891,7 @@
       const bubble = knoxRow.querySelector('div[style*="border:2px solid"]');
       if (bubble) bubble.appendChild(saveBtn);
 
-      updateUsageBar(mockData.usage);
+      // bars already updated by setUsageData → refreshUsageBars
       conversationHistory.push({ role: 'user', content: typedQuestion || 'question' }, { role: 'assistant', content: mockData.answer || '' });
       if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
       updateConversationIndicator();
