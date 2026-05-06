@@ -180,11 +180,18 @@
       .grid-3 { grid-template-columns:1fr 1fr; }
     }
     @media (max-width:640px) {
-      .grid-2 { grid-template-columns:1fr; }
-      .grid-3 { grid-template-columns:1fr; }
-      .grid-4 { grid-template-columns:1fr 1fr; }
+      .grid-2 { grid-template-columns:1fr !important; }
+      .grid-3 { grid-template-columns:1fr !important; }
+      .grid-4 { grid-template-columns:1fr !important; }
+      .pricing-grid { grid-template-columns:1fr !important; }
       .section { padding:56px 20px; }
       .display { font-size:36px; }
+    }
+
+    @media (max-width:900px) {
+      .grid-4 { grid-template-columns:1fr 1fr !important; }
+      .pricing-grid { grid-template-columns:1fr 1fr !important; }
+      .grid-3 { grid-template-columns:1fr !important; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
@@ -1422,7 +1429,7 @@
     </div>
 
     <!-- 3 cards in a row -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;" class="grid-4">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;" class="grid-4 pricing-grid">
 
       <!-- FREE -->
       <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;">
