@@ -2217,22 +2217,17 @@
 
   window.updateUsageBar = updateUsageBar;
   function refreshUsageBars() {
-    if (!window.currentUser) {
-      updateUsageBar({ hw: 0, hwLimit: 5, casual: 0, casualLimit: 20, nextUnlock: null, csNextUnlock: null });
-      return;
-    }
-    const uPlan  = window.userPlan || 'free';
+    const uPlan   = window.userPlan || 'free';
     const hwLimit = PLAN_LIMITS[uPlan]   || 5;
     const csLimit = CASUAL_LIMITS[uPlan] || 20;
-    const cached  = loadUsageCache();
-    if (cached) {
-      // Override the limits with the correct plan limits in case they changed
-      cached.hwLimit    = hwLimit;
-      cached.casualLimit = csLimit;
-      updateUsageBar(cached);
-    } else {
-      updateUsageBar({ hw: 0, hwLimit, casual: 0, casualLimit: csLimit, nextUnlock: null, csNextUnlock: null });
-    }
+    const usage   = getUsageData();
+    const hwUsed  = usage.count   || 0;
+    const csUsed  = usage.casual  || 0;
+    updateUsageBar({
+      hw: hwUsed, hwLimit,
+      casual: csUsed, casualLimit: csLimit,
+      nextUnlock: null, csNextUnlock: null
+    });
   }
   window.refreshUsageBars = refreshUsageBars;
 
@@ -3713,7 +3708,12 @@
     }
     return { date: getTodayKey(), count: 0, freeUsed: false };
   }
-  function setUsageData(data) { localStorage.setItem('homeworkai_usage', JSON.stringify(data)); }
+  function setUsageData(data) {
+    if (!data.casual) data.casual = 0;
+    localStorage.setItem('homeworkai_usage', JSON.stringify(data));
+    // Keep bars in sync
+    if (window.refreshUsageBars) window.refreshUsageBars();
+  }
 
   let pendingImageBase64 = null;
   let pendingImageType = null;
