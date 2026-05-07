@@ -3113,11 +3113,8 @@
     // Clean plain text response — no structured sections, just Knox talking
     const escaped = text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/
-
-/g, '</p><p style="margin:8px 0 0;">')
-      .replace(/
-/g, '<br>');
+      .replace(/\n\n/g, '</p><p style="margin:8px 0 0;">')
+      .replace(/\n/g, '<br>');
     const planTagClass = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
     const planTag = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
     return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 6px;">
@@ -3132,7 +3129,7 @@
     const { learningStyle, embeddedVideo, imageSearchQuery } = extras;
 
     // Pre-pass: ensure Resources: is always on its own line
-    answer = answer.replace(/([^\n])(Resources:)/g, '$1\n\nResources:');
+    answer = answer.replace(/(.)\n?(Resources:)/g, '$1\n\n$2');
 
     // ── Normalise section headers — map ALL known variants to canonical names ──
     function normalizeSections(text) {
