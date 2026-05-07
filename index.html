@@ -2611,52 +2611,26 @@
     // Determine if this is a casual chat message (learn mode or conversational)
     const _isLearn = currentMode === 'learn';
 
-    // Max Knox — 100 hw/day (Get Answer + Learn with Knox), unlimited casual
+    // Max Knox — check limits
     if (_plan === 'max') {
-      if (!_isLearn || currentMode === 'learn') {
-        // Both Get Answer and Learn with Knox count as homework questions
-        const used = usage.count || 0;
-        if (used >= 100) { appendKnoxLimitReached('max'); return; }
-        usage.count = used + 1;
-      } else {
-        // Casual chat — unlimited for Max
-        const csUsed = usage.casual || 0;
-        usage.casual = csUsed + 1;
-      }
-      setUsageData(usage);
-      updateUsageCounter();
+      const used = usage.count || 0;
+      if (used >= 100) { appendKnoxLimitReached('max'); return; }
       executeAskQuestion(); return;
     }
 
-    // Super Knox — 25 hw/day (Get Answer + Learn with Knox), 50 casual/day
+    // Super Knox — check limits
     if (_plan === 'super') {
-      if (currentMode === 'learn' || !_isLearn) {
-        const used = usage.count || 0;
-        if (used >= 25) { appendKnoxLimitReached('super'); return; }
-        usage.count = used + 1;
-      } else {
-        const csUsed = usage.casual || 0;
-        if (csUsed >= 50) { appendKnoxCasualLimitReached('super'); return; }
-        usage.casual = csUsed + 1;
-      }
-      setUsageData(usage);
-      updateUsageCounter();
+      const used   = usage.count   || 0;
+      const csUsed = usage.casual  || 0;
+      if (used >= 25 && csUsed >= 50) { appendKnoxLimitReached('super'); return; }
       executeAskQuestion(); return;
     }
 
-    // Family Knox — 25 hw/day (Get Answer + Learn with Knox), 50 casual/day per member
+    // Family Knox — check limits
     if (_plan === 'family') {
-      if (currentMode === 'learn' || !_isLearn) {
-        const used = usage.count || 0;
-        if (used >= 25) { appendKnoxLimitReached('family'); return; }
-        usage.count = used + 1;
-      } else {
-        const csUsed = usage.casual || 0;
-        if (csUsed >= 50) { appendKnoxCasualLimitReached('family'); return; }
-        usage.casual = csUsed + 1;
-      }
-      setUsageData(usage);
-      updateUsageCounter();
+      const used   = usage.count  || 0;
+      const csUsed = usage.casual || 0;
+      if (used >= 25 && csUsed >= 50) { appendKnoxLimitReached('family'); return; }
       executeAskQuestion(); return;
     }
 
@@ -2671,18 +2645,14 @@
       return;
     }
 
-    // Free plan — 5 hw/day (Get Answer + Learn with Knox), 20 casual/day
-    if (currentMode === 'learn' || !_isLearn) {
-      const used = usage.count || 0;
-      if (used >= DAILY_LIMIT) { appendKnoxLimitReached('free'); return; }
-      usage.count = used + 1;
-    } else {
-      const csUsed = usage.casual || 0;
-      if (csUsed >= 20) { appendKnoxCasualLimitReached('free'); return; }
-      usage.casual = csUsed + 1;
+    // Free plan — check limits but don't increment yet (increment after API tells us if casual)
+    // For now: check both limits, use homework limit as default gate
+    const _hwUsed = usage.count || 0;
+    const _csUsed = usage.casual || 0;
+    if (_hwUsed >= DAILY_LIMIT && _csUsed >= 20) {
+      // Both limits hit - check which type might be asked
+      appendKnoxLimitReached('free'); return;
     }
-    setUsageData(usage);
-    updateUsageCounter();
     executeAskQuestion();
   }
 
@@ -2958,8 +2928,22 @@
           .replace(/\\pm/g, '±')
           .replace(/\\/g, '');
       })(answer);
-      const responseHtml = renderResponse(cleanedAnswer, [], plan, {});
+      const responseHtml = isCasual 
+        ? renderCasualResponse(cleanedAnswer, plan)
+        : renderResponse(cleanedAnswer, [], plan, {});
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
+
+      // Increment correct usage counter based on whether it was casual
+      const _usage2 = getUsageData();
+      const _plan2  = window.userPlan || 'free';
+      const _hwLim  = PLAN_LIMITS[_plan2]   || 5;
+      const _csLim  = CASUAL_LIMITS[_plan2] || 20;
+      if (isCasual) {
+        _usage2.casual = (_usage2.casual || 0) + 1;
+      } else {
+        _usage2.count = (_usage2.count || 0) + 1;
+      }
+      setUsageData(_usage2);
 
       // Auto-save to history
       if (window.currentUser && typedQuestion) {
@@ -2968,8 +2952,8 @@
 
       updateConversationIndicator();
       conversationHistory.push(
-        { role: 'user',      content: typedQuestion },
-        { role: 'assistant', content: answer }
+        { role: 'user',      content: typedQuestion, isCasual },
+        { role: 'assistant', content: answer,        isCasual }
       );
       if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
 
@@ -3125,6 +3109,25 @@
     }
 
   // ── RENDER RESPONSE ───────────────────────────────────────────────────────
+  function renderCasualResponse(text, plan) {
+    // Clean plain text response — no structured sections, just Knox talking
+    const escaped = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/
+
+/g, '</p><p style="margin:8px 0 0;">')
+      .replace(/
+/g, '<br>');
+    const planTagClass = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
+    const planTag = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+    return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 6px;">
+      <span class="resp-plan-tag ${planTagClass}">${planTag}</span>
+    </div>
+    <div style="padding:4px 18px 16px;font-size:15px;font-weight:500;color:#1f2937;line-height:1.65;">
+      <p style="margin:0;">${escaped}</p>
+    </div>`;
+  }
+
   function renderResponse(answer, resources, plan, extras = {}) {
     const { learningStyle, embeddedVideo, imageSearchQuery } = extras;
 
