@@ -111,53 +111,46 @@ You never:
 
 You're Knox. Smart, caring, a little sly, always real. 🦊`;
 
-function isCasualMessage(question, history) {
-  const q = (question || '').toLowerCase().trim();
+// AI-powered intent classifier
+async function isCasualMessage(question, history) {
+  const q = (question || '').trim();
+  if (!q) return true;
 
-  // Homework always wins — check these first
-  const homeworkPatterns = [
-    /\b(solve|calculate|compute|prove|simplify|factor|expand|evaluate|integrate|differentiate)\b/i,
-    /\b(equation|formula|theorem|hypothesis|molecule|element|derivative|integral)\b/i,
-    /\b(algebra|geometry|calculus|trigonometry|chemistry|physics|biology|photosynthesis|mitosis)\b/i,
-    /^(what is my homework|help with my homework|do my homework|my homework is|the homework is|homework question|homework problem|homework help)/i,
-    /\b(solve for|find x|find y|what is the value)\b/i,
-    /^(what is|what are|how does|why does|explain|define|describe|what causes|what happened|who was|when did)\s.{8,}/i,
-    /[0-9]+\s*[×÷+\-*/^x]\s*[0-9]+/,
-    /\b(percent|fraction|decimal|perimeter|area|volume|velocity|force|atom|cell|dna|revolution|capital of|population)\b/i,
-    /\b(thesis|essay|paragraph|introduction|conclusion|outline|summary|analysis|compare|contrast|argument|evidence|cite|citation|bibliography)\b/i,
-    /\b(write|draft|compose|proofread|edit|rewrite)\b.{0,30}\b(essay|paragraph|introduction|conclusion|thesis|statement|paper|report|story|poem)\b/i,
-    /\b(help me write|write me|help me with|how do i write|how to write)\b/i,
-    /\b(grammar|punctuation|syntax|vocabulary|spelling|literature|novel|poem|shakespeare|character|plot|theme|symbolism)\b/i,
-  ];
+  // Build recent context
+  const recentCtx = (history || []).slice(-4)
+    .map(m => `${m.role === 'user' ? 'User' : 'Knox'}: ${(m.content || '').substring(0, 80)}`)
+    .join('\n');
 
-  const hs = homeworkPatterns.filter(p => p.test(q)).length;
-  if (hs >= 1) return false; // Always homework
+  const prompt = `Classify this message as "casual" or "homework".
 
-  // Clear casual signals
-  const casualPatterns = [
-    /^(hey|hi|hello|sup|yo|heyy|heyyy?)(\s|!|$)/i,
-    /^(how are you|how's it|what's up|whats up|wyd|wassup)/i,
-    /^(lol|lmao|haha|omg|ngl|fr|istg|no way|really|wait|same|true|facts|bet)(\s|!|$)/i,
-    /^(thanks|thank you|ty|thx)(\s|!|$)/i,
-    /^(ok|okay|cool|nice|got it|makes sense|i see|wow|damn|crazy|wild)(\s|!|$)/i,
-    /^(i'm |i am |i feel |i think |i just |i can't |i don't |i love |i hate )/i,
-    /\b(favorite|bored|stressed|tired|excited|funny|joke|opinion|mood|vibe)\b/i,
-    /^(that's |that was |this is )(funny|hilarious|wild|crazy|cool|amazing|sad|rough)/i,
-  ];
+casual = chitchat, greetings, reactions, feelings, opinions, jokes, random talk
+homework = any school subject, math, science, history, writing help, essays, definitions, study topics
 
-  const cs = casualPatterns.filter(p => p.test(q)).length;
-  if (cs >= 1) return true;
+${recentCtx ? 'Recent context:\n' + recentCtx + '\n' : ''}Message: "${q}"
 
-  // Very short with no numbers = casual
-  if (q.length <= 12 && !/[0-9]/.test(q)) return true;
+Reply with ONE word only: casual or homework`;
 
-  // Keep casual vibe if mid casual convo and no homework signals
-  if (history && history.length > 0) {
-    const last = [...history].reverse().find(m => m.role === 'assistant');
-    if (last && last.isCasual === true) return true;
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3,
+        temperature: 0,
+      }),
+    });
+    const data = await res.json();
+    const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
+    console.log('classifier:', verdict, '| q:', q.substring(0, 40));
+    return verdict === 'casual';
+  } catch(e) {
+    console.error('Classifier failed:', e.message);
+    // Simple fallback
+    const short = q.length <= 15 && !/[0-9+\-*/=]/.test(q);
+    return short;
   }
-
-  return false;
 }
 
 const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
