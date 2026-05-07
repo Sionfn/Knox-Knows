@@ -94,7 +94,7 @@ function isCasualMessage(question, history) {
     /\b(solve|calculate|compute|prove|simplify|factor|expand|evaluate|integrate|differentiate)\b/i,
     /\b(equation|formula|theorem|hypothesis|molecule|element|derivative|integral)\b/i,
     /\b(algebra|geometry|calculus|trigonometry|chemistry|physics|biology|photosynthesis|mitosis)\b/i,
-    /\b(homework|assignment|test|quiz|exam|worksheet|essay)\b/i,
+    /^(what is my homework|help with my homework|do my homework|my homework is|the homework is|homework question|homework problem|homework help)/i,
     /\b(solve for|find x|find y|what is the value)\b/i,
     /^(what is|what are|how does|why does|explain|define|describe|what causes|what happened|who was|when did)\s.{8,}/i,
     /[0-9]+\s*[×÷+\-*/^]\s*[0-9]+/,
