@@ -2905,6 +2905,7 @@
       const answer   = data.answer   || '';
       const plan     = window.userPlan || data.plan || 'free';
       const isCasual = !!data.isCasual;
+      const isLearn  = !!data.isLearn;
 
       // Clean LaTeX notation to plain text
       const cleanedAnswer = (function(text) {
