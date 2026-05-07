@@ -2920,6 +2920,8 @@
         body: JSON.stringify({
           question: typedQuestion,
           history:  conversationHistory.slice(-6),
+          image:    pendingImageBase64 || null,
+          imageType: pendingImageType || null,
         }),
       });
 
