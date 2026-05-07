@@ -2912,9 +2912,10 @@
         return;
       }
 
-      const data   = await res.json();
-      const answer = data.answer || '';
-      const plan   = window.userPlan || data.plan || 'free';
+      const data     = await res.json();
+      const answer   = data.answer   || '';
+      const plan     = window.userPlan || data.plan || 'free';
+      const isCasual = !!data.isCasual;
 
       // Clean LaTeX notation to plain text
       const cleanedAnswer = (function(text) {
