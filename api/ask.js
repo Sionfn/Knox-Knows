@@ -187,7 +187,7 @@ export default async function handler(req, res) {
 
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
-  const casual = !image && isCasualMessage(trimmedQuestion, history);
+  const casual = !image && await isCasualMessage(trimmedQuestion, history);
 
   console.log("ask.js v3:", { plan, casual, q: trimmedQuestion.substring(0, 60) });
 
