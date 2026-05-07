@@ -3883,15 +3883,13 @@
     const reader = new FileReader();
     reader.onload = function(ev) {
       pendingImageBase64 = ev.target.result.split(',')[1];
-      const existing = document.getElementById('imagePill');
-      if (existing) existing.remove();
-      const pill = document.createElement('div');
-      pill.id = 'imagePill';
-      pill.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:var(--blue);border:2px solid black;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;margin-top:8px;max-width:100%;';
-      pill.innerHTML = '<img src="' + ev.target.result + '" style="width:32px;height:32px;object-fit:cover;border-radius:4px;border:1px solid black;flex-shrink:0;"> <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📎 ' + file.name + '</span> <button onclick="clearImage()" style="background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0;">×</button>';
-      // Insert after the div.relative wrapper (parent of textarea), not the textarea itself
-      const relativeWrapper = document.getElementById('questionInput').closest('.relative');
-      relativeWrapper.insertAdjacentElement('afterend', pill);
+      // Show the existing imagePill element
+      const pill = document.getElementById('imagePill');
+      const pillName = document.getElementById('imagePillName');
+      if (pill) {
+        pill.style.display = 'inline-flex';
+        if (pillName) pillName.textContent = file.name.length > 25 ? file.name.substring(0, 25) + '...' : file.name;
+      }
     };
     reader.readAsDataURL(file);
   });
@@ -3901,7 +3899,7 @@
     const fi = document.getElementById('fileInput');
     try { fi.value = ''; } catch(e) { fi.type='text'; fi.type='file'; }
     const pill = document.getElementById('imagePill');
-    if (pill) pill.remove();
+    if (pill) pill.style.display = 'none';
   };
 
   // ======= REVIEWS =======
