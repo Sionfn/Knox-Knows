@@ -3428,13 +3428,16 @@
 
   window.calcSetMode = function(mode) {
     calcMode = mode;
-    document.getElementById('calcStandardGrid').style.display = mode === 'standard' ? '' : 'none';
-    document.getElementById('calcScientificGrid').style.display = mode === 'scientific' ? '' : 'none';
-    document.getElementById('calcAdvancedGrid').style.display = mode === 'advanced' ? '' : 'none';
-    document.getElementById('calcDegToggle').style.display = mode !== 'standard' ? '' : 'none';
-    ['tabStd','tabSci','tabAdv'].forEach((id,i) => {
-      document.getElementById(id).classList.toggle('active', ['standard','scientific','advanced'][i] === mode);
-    });
+    const bg = document.getElementById('calcGridBasic');
+    const sg = document.getElementById('calcGridSci');
+    const dg = document.getElementById('calcDegToggle');
+    const bt = document.getElementById('calcTabBasic');
+    const st = document.getElementById('calcTabSci');
+    if (bg) bg.style.display = mode === 'standard'   ? 'grid' : 'none';
+    if (sg) sg.style.display = mode === 'scientific' ? 'grid' : 'none';
+    if (dg) dg.style.display = mode === 'scientific' ? 'block' : 'none';
+    if (bt) { bt.style.background = mode==='standard'   ? '#FF6B00':'transparent'; bt.style.color = mode==='standard'   ?'white':'#9CA3AF'; }
+    if (st) { st.style.background = mode==='scientific' ? '#FF6B00':'transparent'; st.style.color = mode==='scientific' ?'white':'#9CA3AF'; }
   };
 
   window.calcToggleDeg = function() {
