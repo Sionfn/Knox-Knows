@@ -202,8 +202,8 @@ export default async function handler(req, res) {
   const config = getConfig(plan);
 
   // Trim question to max input tokens (rough char estimate: 1 token ≈ 4 chars)
-  const maxInputChars  = config.maxInput  * 4;
-  const trimmedQuestion = question.substring(0, maxInputChars);
+  const maxInputChars   = config.maxInput  * 4;
+  const trimmedQuestion = (question || '').substring(0, maxInputChars);
 
   // ── 3. Detect casual vs homework ─────────────────────────────────────────
   const casual = !image && isCasualMessage(trimmedQuestion, history);
@@ -286,12 +286,14 @@ export default async function handler(req, res) {
       .replace(/\\/g, '');
 
     // For free plan: strip any upgrade/upsell text the AI added
-    if (plan === 'free') {
-      const upsellPhrases = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade', 'step-by-step breakdowns, tips, and smarter'];
-      const lines = answer.split('\n');
-      answer = lines.filter(function(l) {
-        return !upsellPhrases.some(function(p) { return l.indexOf(p) !== -1; });
-      }).join('\n').trim();
+    if (plan === 'free' && !casual) {
+      try {
+        const upsellPhrases = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade'];
+        const lines = answer.split('\n');
+        answer = lines.filter(function(l) {
+          return !upsellPhrases.some(function(p) { return l.indexOf(p) !== -1; });
+        }).join('\n').trim();
+      } catch(e) { /* ignore cleanup errors */ }
     }
 
     return res.status(200).json({
