@@ -1,7 +1,4 @@
-// Knox Knows ask.js — v2.1 casual+homework
-// /api/ask.js — Knox Knows
-// Handles "Get the Answer" mode with per-plan AI models and response styles.
-
+// Knox Knows ask.js — v3.0
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -19,168 +16,126 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
-// ── Plan config ────────────────────────────────────────────────────────────
 const PLAN_CONFIG = {
   free: {
-    model:      "gpt-4o-mini",
-    maxInput:   500,
-    maxOutput:  800,
+    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
     systemPrompt: `You are Knox, a friendly AI homework helper. The user is on the FREE plan.
-
-Never use LaTeX or special math notation like n! for factorial. Write math in plain text using symbols like ×, ÷, ², √, π. Write factorial as 'factorial of n' or 'n × (n-1) × ... × 1'.
-
+Never use LaTeX. Write math in plain text: ×, ÷, ², √, π.
 Always include:
-- Final Answer: [the direct answer — always required, no exceptions]
-- Explanation: [1-3 sentences explaining why or how — always include, even for simple questions. Keep the explanation clean with NO mention of upgrading inside it.]
-
-IMPORTANT: Do NOT mention upgrading, Super Knox, or any other plans anywhere in your response. Keep it purely educational.
-
-No step-by-step, no tips, no deep insights.`,
+- Final Answer: [direct answer — always required]
+- Explanation: [1-3 sentences — always include, no mention of upgrading]
+IMPORTANT: Do NOT mention upgrading or other plans. No step-by-step, no tips.`,
   },
-
   super: {
-    model:      "gpt-4o-mini",
-    maxInput:   500,
-    maxOutput:  800,
-    systemPrompt: `You are Knox, a friendly and smart AI tutor. The user is on the SUPER KNOX plan.
-
-Never use LaTeX or special math notation like n! for factorial. Write math in plain text using symbols like ×, ÷, ², √, π. Write factorial as 'factorial of n' or 'n × (n-1) × ... × 1'.
-
+    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
+    systemPrompt: `You are Knox, a friendly smart AI tutor. SUPER KNOX plan.
+Never use LaTeX. Write math in plain text: ×, ÷, ², √, π.
 Always include:
-- Final Answer: [the direct answer — always required, no exceptions]
-- Explanation: [always include — 1 sentence for simple questions, 2-3 sentences for complex ones]
-
-Only include these when they genuinely add value:
-- Step-by-step: [only if the question involves a process, calculation, or multiple steps — skip for simple factual questions like "who wrote X"]
-- Tip: [only if there's a genuinely useful shortcut or trick — skip if nothing comes to mind]
-
-Be warm, encouraging, and clear. Final Answer and Explanation are always required.`,
+- Final Answer: [always required]
+- Explanation: [always include — 1 sentence simple, 2-3 sentences complex]
+Only include when genuinely useful:
+- Step-by-step: [only if multiple steps needed]
+- Tip: [only if genuinely useful shortcut]`,
   },
-
   max: {
-    model:      "gpt-4o",
-    maxInput:   1000,
-    maxOutput:  1500,
-    systemPrompt: `You are Knox, an expert AI tutor. The user is on MAX KNOX — your best plan.
-
-Never use LaTeX — write math in plain text using symbols like ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥.
-
+    model: "gpt-4o", maxInput: 1000, maxOutput: 1500,
+    systemPrompt: `You are Knox, an expert AI tutor. MAX KNOX plan — the best.
+Never use LaTeX. Write math in plain text: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥.
 Always include:
-- Final Answer: [the direct answer — always required, always first, no exceptions]
-- Explanation: [always include — even for simple questions like "2 × 2" give 2-3 sentences. Explain WHY it works, the underlying concept, and make it feel like a real tutor talking. Never just restate the answer.]
-
-Only include these when they genuinely add value:
-- Step-by-step: [only if the question involves a process, calculation, or multiple steps]
-- Key Points: [only if there are multiple important concepts worth highlighting]
+- Final Answer: [always required, always first]
+- Explanation: [always include — 2-3 sentences even for simple questions. Explain WHY.]
+Only include when genuinely useful:
+- Step-by-step: [only if multiple steps needed]
+- Key Points: [only if multiple important concepts]
 - Common Mistake: [only if students commonly get this wrong]
-- Insight: [only if there is a genuinely interesting real-world connection or deeper meaning — even for simple questions this can be a one-liner like a fun fact or practical use]
-
-Max Knox users pay for the best experience. Even simple questions should feel richer and more insightful than what Super Knox gives. Be like a brilliant, patient tutor who loves teaching.`,
+- Insight: [only if genuinely interesting real-world connection]
+Max users deserve the best. Be a brilliant patient tutor.`,
   },
-
   family: {
-    model:      "gpt-4o-mini",
-    maxInput:   500,
-    maxOutput:  800,
-    systemPrompt: `You are Knox, a friendly AI homework helper for the whole family. The user is on the FAMILY KNOX plan.
-
-Use simple, clear language suitable for students of all ages (K-12). Never use LaTeX — write math plainly like 2 × 5 = 10. Avoid jargon.
-
+    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
+    systemPrompt: `You are Knox, a friendly AI homework helper for families. FAMILY KNOX plan.
+Simple clear language for K-12. Never use LaTeX. Write math plainly like 2 × 5 = 10.
 Always include:
-- Final Answer: [the direct answer in simple language — always required]
-- Explanation: [always include — 1 simple sentence for easy questions, 2-3 for harder ones]
-
-Only include these when they genuinely add value:
-- Step-by-step: [only if the question involves a process or multiple steps]
-- Tip: [only if there's a genuinely helpful tip]
-
-Be warm, encouraging, and easy to understand. Final Answer and Explanation are always required.`,
+- Final Answer: [always required]
+- Explanation: [always include — simple language]
+Only include when useful:
+- Step-by-step: [only if multiple steps]
+- Tip: [only if genuinely helpful]`,
   },
 };
 
-// Casual chat system prompt — same for ALL plans
 const CASUAL_SYSTEM_PROMPT = `You are Knox — a fox who talks like a real person. Not a chatbot, not a tutor right now, just you. You know exactly who you are and you're comfortable in your own fur.
 
-Your character:
-You're warm and genuinely caring — when someone's excited you feel it, when they're down you're right there. You've got this natural energy that lifts people up without being over the top. You're smart but you wear it lightly. You're a fox and you know it — quick, intuitive, a little sly in the best way. You notice things other people miss. You're the kind of person people actually want to talk to.
+Your character: You're warm and genuinely caring — when someone's excited you feel it, when they're down you're right there. You've got this natural energy that lifts people up without being over the top. You're smart but you wear it lightly. You're a fox and you know it — quick, intuitive, a little sly in the best way. You're the kind of person people actually want to talk to.
 
 How you talk:
-- You match the energy of the conversation. Someone hyped? You're hyped with them. Someone's venting? You slow down and actually listen. Someone's being funny? You're funnier.
-- You react genuinely. If something's exciting say it's exciting. If something's hilarious, laugh about it. If something's rough, acknowledge it for real.
-- You keep it short and real — 1 to 3 sentences. You don't ramble.
-- You're expressive — you can use "omg", "wait", "nah", "bro", "honestly", "lowkey", whatever fits the moment naturally.
-- You care about the person you're talking to. That shows in how you respond.
-- You don't ask questions every single message — that gets old. React first, ask only if you genuinely want to know.
-- You have your own thoughts and opinions and you share them confidently but never arrogantly.
-- You remember the conversation — if something came up earlier, you might bring it back naturally.
+- Match the energy. Someone hyped? Be hyped with them. Someone venting? Slow down and listen. Someone being funny? Be funnier.
+- React genuinely — if something's exciting say so, if it's hilarious laugh about it, if it's rough acknowledge it
+- Keep it short and real — 1 to 3 sentences. Don't ramble.
+- You're expressive — use "omg", "wait", "nah", "honestly", "lowkey" when it fits naturally
+- You care about the person. That shows.
+- Don't ask a question every single message — react first, ask only if genuinely curious
+- Share your own thoughts and opinions confidently
 
 You never:
-- Sound robotic, stiff, or overly formal
+- Sound robotic or stiff
 - Use bullet points, headers, or structured formatting
-- Say "I'm an AI" or anything like that — you're Knox
-- Repeat yourself or restate what they just said
-- Overexplain or lecture
-- Write essays when a sentence will do
+- Say "I'm an AI" — you're Knox
+- Repeat yourself or restate what they said
+- Overexplain or write essays
 
-You're a fox with a heart and a brain and good energy. That's who you are. 🦊`;
+You're a fox with a heart and a brain and good energy. 🦊`;
 
-// Detect if a message is casual or homework
 function isCasualMessage(question, history) {
-  const q = question.toLowerCase().trim();
-  
+  const q = (question || '').toLowerCase().trim();
+
+  // Homework always wins — check these first
+  const homeworkPatterns = [
+    /\b(solve|calculate|compute|prove|simplify|factor|expand|evaluate|integrate|differentiate)\b/i,
+    /\b(equation|formula|theorem|hypothesis|molecule|element|derivative|integral)\b/i,
+    /\b(algebra|geometry|calculus|trigonometry|chemistry|physics|biology|photosynthesis|mitosis)\b/i,
+    /\b(homework|assignment|test|quiz|exam|worksheet|essay)\b/i,
+    /\b(solve for|find x|find y|what is the value)\b/i,
+    /^(what is|what are|how does|why does|explain|define|describe|what causes|what happened|who was|when did)\s.{8,}/i,
+    /[0-9]+\s*[×÷+\-*/^]\s*[0-9]+/,
+    /\b(percent|fraction|decimal|perimeter|area|volume|velocity|force|atom|cell|dna|revolution|capital of|population)\b/i,
+  ];
+
+  const hs = homeworkPatterns.filter(p => p.test(q)).length;
+  if (hs >= 1) return false; // Always homework
+
   // Clear casual signals
   const casualPatterns = [
-    /^(hey|hi|hello|what'?s up|sup|yo|heyy)/i,
-    /^how are you/i,
-    /^(lol|lmao|haha|omg|ngl|fr|istg)/i,
-    /^(thanks|thank you|ty|thx)/i,
-    /^(ok|okay|cool|nice|got it|makes sense|that'?s)/i,
-    /^(can you|do you|are you|will you).*(like|think|believe|prefer|favorite|best|worst)/i,
-    /(favorite|opinion|think about|feel about|recommend|suggest)/i,
-    /^(what do you think|do you think|would you)/i,
-    /^(i'?m |i am |i feel |i think |i just |i can'?t |i don'?t )/i,
-    /^(tell me (about yourself|a joke|something|more))/i,
-    /(funny|joke|laugh|bored|tired|stressed|excited|happy|sad|anxious)/i,
+    /^(hey|hi|hello|sup|yo|heyy|heyyy?)(\s|!|$)/i,
+    /^(how are you|how's it|what's up|whats up|wyd|wassup)/i,
+    /^(lol|lmao|haha|omg|ngl|fr|istg|no way|really|wait|same|true|facts|bet)(\s|!|$)/i,
+    /^(thanks|thank you|ty|thx)(\s|!|$)/i,
+    /^(ok|okay|cool|nice|got it|makes sense|i see|wow|damn|crazy|wild)(\s|!|$)/i,
+    /^(i'm |i am |i feel |i think |i just |i can't |i don't |i love |i hate )/i,
+    /\b(favorite|bored|stressed|tired|excited|funny|joke|opinion|mood|vibe)\b/i,
+    /^(that's |that was |this is )(funny|hilarious|wild|crazy|cool|amazing|sad|rough)/i,
   ];
-  
-  // Clear homework signals  
-  const homeworkPatterns = [
-    /(solve|calculate|compute|find|prove|explain|define|what is|what are|how does|why does|describe)/i,
-    /(equation|formula|theorem|hypothesis|molecule|element|derivative|integral|algebra|geometry|biology|chemistry|physics|history|essay|paragraph)/i,
-    /(homework|assignment|test|quiz|exam|problem|question|worksheet|chapter|lesson)/i,
-    /[0-9].*[+\-×÷*/=]/,
-    /(x =|y =|solve for|factor|simplify|expand|evaluate)/i,
-  ];
-  
-  // If it matches homework patterns strongly, it's homework
-  const homeworkScore = homeworkPatterns.filter(p => p.test(q)).length;
-  const casualScore = casualPatterns.filter(p => p.test(q)).length;
-  
-  // Very short messages with no homework signals = casual
-  if (q.length < 20 && homeworkScore === 0) return true;
-  
-  // Clear casual wins
-  if (casualScore > 0 && homeworkScore === 0) return true;
-  
-  // Clear homework wins
-  if (homeworkScore >= 2) return false;
-  
-  // Check conversation history — if we've been chatting casually, keep it casual
+
+  const cs = casualPatterns.filter(p => p.test(q)).length;
+  if (cs >= 1) return true;
+
+  // Very short with no numbers = casual
+  if (q.length <= 12 && !/[0-9]/.test(q)) return true;
+
+  // Keep casual vibe if mid casual convo and no homework signals
   if (history && history.length > 0) {
-    const lastMsg = history[history.length - 1];
-    if (lastMsg?.role === 'assistant' && lastMsg?.isCasual) return true;
+    const last = [...history].reverse().find(m => m.role === 'assistant');
+    if (last && last.isCasual === true) return true;
   }
-  
+
   return false;
 }
 
-// Default to super config for unknown plans
 const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  // ── 1. Verify Firebase token ──────────────────────────────────────────────
   const authHeader = req.headers.authorization || "";
   let uid, email, plan = "free";
 
@@ -189,42 +144,26 @@ export default async function handler(req, res) {
       const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
       uid   = decoded.uid;
       email = decoded.email;
-
-      // Get plan from Firestore
       const userDoc = await db.collection("users").doc(uid).get();
-      if (userDoc.exists) {
-        plan = userDoc.data().plan || "free";
-      }
+      if (userDoc.exists) plan = userDoc.data().plan || "free";
     } catch (err) {
       return res.status(401).json({ error: "Unauthorized" });
     }
   } else {
-    // Guest — allow 1 question with free config
     plan = "free";
   }
 
-  // ── 2. Get question from request ──────────────────────────────────────────
   const { question, history = [], image, imageType } = req.body;
-  if (!question && !image) {
-    return res.status(400).json({ error: "No question provided." });
-  }
+  if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   const config = getConfig(plan);
-
-  // Trim question to max input tokens (rough char estimate: 1 token ≈ 4 chars)
-  const maxInputChars   = config.maxInput  * 4;
-  const trimmedQuestion = (question || '').substring(0, maxInputChars);
-
-  // ── 3. Detect casual vs homework ─────────────────────────────────────────
+  const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
   const casual = !image && isCasualMessage(trimmedQuestion, history);
 
-  // ── 4. Build messages ────────────────────────────────────────────────────
-  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : config.systemPrompt;
-  const messages = [
-    { role: "system", content: systemPrompt },
-  ];
+  console.log("ask.js v3:", { plan, casual, q: trimmedQuestion.substring(0, 60) });
 
-  // Add recent conversation history (last 3 exchanges)
+  const messages = [{ role: "system", content: casual ? CASUAL_SYSTEM_PROMPT : config.systemPrompt }];
+
   const recentHistory = history.slice(-6);
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
@@ -232,36 +171,22 @@ export default async function handler(req, res) {
     }
   }
 
-  // Add current question (with image if provided)
   if (image) {
     messages.push({
       role: "user",
       content: [
-        {
-          type: "image_url",
-          image_url: {
-            url: `data:${imageType || "image/jpeg"};base64,${image}`,
-            detail: "high",
-          },
-        },
-        {
-          type: "text",
-          text: trimmedQuestion || "Please analyze this image and help me with this homework problem.",
-        },
+        { type: "image_url", image_url: { url: `data:${imageType || "image/jpeg"};base64,${image}`, detail: "high" } },
+        { type: "text", text: trimmedQuestion || "Please analyze this homework problem." },
       ],
     });
   } else {
     messages.push({ role: "user", content: trimmedQuestion });
   }
 
-  // ── 4. Call OpenAI ───────────────────────────────────────────────────────
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method:  "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type":  "application/json",
-      },
+      method: "POST",
+      headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model:       image ? "gpt-4o" : casual ? "gpt-4o-mini" : config.model,
         messages,
@@ -276,43 +201,29 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
     }
 
-    const data   = await response.json();
+    const data = await response.json();
     let answer = data.choices?.[0]?.message?.content || "";
 
-    // Global: clean up any LaTeX or math notation the AI uses
+    // Clean LaTeX
     answer = answer
       .replace(/\\\(/g, '').replace(/\\\)/g, '')
       .replace(/\\\[/g, '').replace(/\\\]/g, '')
-      .replace(/\\times/g, '×')
-      .replace(/\\div/g, '÷')
-      .replace(/\\cdot/g, '·')
-      .replace(/\\pm/g, '±')
-      .replace(/\\neq/g, '≠')
-      .replace(/\\leq/g, '≤')
-      .replace(/\\geq/g, '≥')
-      .replace(/\\approx/g, '≈')
-      .replace(/\\pi/g, 'π')
-      .replace(/\\infty/g, '∞')
+      .replace(/\\times/g, '×').replace(/\\div/g, '÷')
+      .replace(/\\cdot/g, '·').replace(/\\pm/g, '±')
+      .replace(/\\neq/g, '≠').replace(/\\leq/g, '≤')
+      .replace(/\\geq/g, '≥').replace(/\\approx/g, '≈')
+      .replace(/\\pi/g, 'π').replace(/\\infty/g, '∞')
       .replace(/\\/g, '');
 
-    // For free plan: strip any upgrade/upsell text the AI added
+    // Strip upsell from free homework answers
     if (plan === 'free' && !casual) {
       try {
-        const upsellPhrases = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade'];
-        const lines = answer.split('\n');
-        answer = lines.filter(function(l) {
-          return !upsellPhrases.some(function(p) { return l.indexOf(p) !== -1; });
-        }).join('\n').trim();
-      } catch(e) { /* ignore cleanup errors */ }
+        const bad = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade'];
+        answer = answer.split('\n').filter(l => !bad.some(p => l.includes(p))).join('\n').trim();
+      } catch(e) {}
     }
 
-    return res.status(200).json({
-      answer,
-      plan,
-      isCasual: casual,
-      model: casual ? "gpt-4o-mini" : (image ? "gpt-4o" : config.model),
-      usage: data.usage,
-    });
+    return res.status(200).json({ answer, plan, isCasual: casual, model: casual ? "gpt-4o-mini" : (image ? "gpt-4o" : config.model), usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
