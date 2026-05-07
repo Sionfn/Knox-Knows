@@ -1,3 +1,4 @@
+// Knox Knows ask.js — v2.1 casual+homework
 // /api/ask.js — Knox Knows
 // Handles "Get the Answer" mode with per-plan AI models and response styles.
 
