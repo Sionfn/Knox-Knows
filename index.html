@@ -2889,7 +2889,7 @@
         headers: reqHeaders,
         body: JSON.stringify({
           question: typedQuestion,
-          history:  conversationHistory.slice(-6),
+          history:  conversationHistory.slice(-20),
           image:    pendingImageBase64 || null,
           imageType: pendingImageType || null,
         }),
@@ -2958,7 +2958,7 @@
         { role: 'user',      content: typedQuestion, isCasual },
         { role: 'assistant', content: answer,        isCasual }
       );
-      if (conversationHistory.length > 6) conversationHistory = conversationHistory.slice(-6);
+      if (conversationHistory.length > 40) conversationHistory = conversationHistory.slice(-40);
 
     } catch (err) {
       replaceThinkingWithResponse(`<div style="padding:16px 18px;font-size:14px;font-weight:700;color:#DC2626;">😬 Something went wrong. Please try again.</div>`, true);
