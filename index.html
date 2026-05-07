@@ -3661,11 +3661,15 @@
   }
 
   window.calcInsert = function() {
-    if (!calcExpr || calcExpr === 'Error') return;
-    const ta = document.getElementById('questionInput');
-    ta.value = ta.value ? ta.value + ' ' + calcExpr : calcExpr;
+    const result = document.getElementById('calcDisplay')?.textContent;
+    if (!result || result === '0' || result === 'Error') return;
+    const ta = document.getElementById('chatInput');
+    if (ta) {
+      ta.value = ta.value ? ta.value + ' ' + result : result;
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+    }
     closeCalc();
-    ta.focus();
   };
 
   // ── HISTORY ───────────────────────────────────────────────────────────────
