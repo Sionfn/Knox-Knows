@@ -3111,19 +3111,10 @@
 
   // ── RENDER RESPONSE ───────────────────────────────────────────────────────
   function renderCasualResponse(text, plan) {
-    // Clean plain text response — no structured sections, just Knox talking
-    const escaped = text
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\n\n/g, '</p><p style="margin:8px 0 0;">')
-      .replace(/\n/g, '<br>');
-    const planTagClass = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
-    const planTag = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
-    return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 6px;">
-      <span class="resp-plan-tag ${planTagClass}">${planTag}</span>
-    </div>
-    <div style="padding:4px 18px 16px;font-size:15px;font-weight:500;color:#1f2937;line-height:1.65;">
-      <p style="margin:0;">${escaped}</p>
-    </div>`;
+    // Plain text like a text message — no structured sections
+    const lines = text.split('\n').filter(l => l.trim());
+    const html = lines.map(l => `<p style="margin:0 0 6px;line-height:1.6;">${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`).join('');
+    return `<div style="padding:14px 18px 14px;font-size:15px;font-weight:500;color:#1f2937;">${html}</div>`;
   }
 
   function renderResponse(answer, resources, plan, extras = {}) {
