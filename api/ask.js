@@ -97,6 +97,73 @@ Be warm, encouraging, and easy to understand. Final Answer and Explanation are a
   },
 };
 
+// Casual chat system prompt — same for ALL plans
+const CASUAL_SYSTEM_PROMPT = `You are Knox, a smart and chill best friend who happens to know a lot. You're talking casually with someone — this is NOT a homework question.
+
+Talk exactly like a real best friend would text: natural, warm, sometimes funny, never robotic. Keep it conversational and real.
+
+Rules:
+- Sound like a human best friend, NOT an AI assistant
+- No bullet points, no structured sections, no "Final Answer:" labels
+- Keep responses relatively short — like a real text conversation
+- If they ask your opinion, give one like a friend would
+- If they say something funny, be funny back
+- If they're stressed, be supportive like a real friend
+- Never say "As an AI" or anything robotic
+- Use casual language naturally (but not forced slang)
+- You can ask them questions back to keep the convo going
+- If they ask something academic but casually (like "wait is pluto still a planet?"), answer it naturally like a friend explaining it, not like a tutor`;
+
+// Detect if a message is casual or homework
+function isCasualMessage(question, history) {
+  const q = question.toLowerCase().trim();
+  
+  // Clear casual signals
+  const casualPatterns = [
+    /^(hey|hi|hello|what'?s up|sup|yo|heyy)/i,
+    /^how are you/i,
+    /^(lol|lmao|haha|omg|ngl|fr|istg)/i,
+    /^(thanks|thank you|ty|thx)/i,
+    /^(ok|okay|cool|nice|got it|makes sense|that'?s)/i,
+    /^(can you|do you|are you|will you).*(like|think|believe|prefer|favorite|best|worst)/i,
+    /(favorite|opinion|think about|feel about|recommend|suggest)/i,
+    /^(what do you think|do you think|would you)/i,
+    /^(i'?m |i am |i feel |i think |i just |i can'?t |i don'?t )/i,
+    /^(tell me (about yourself|a joke|something|more))/i,
+    /(funny|joke|laugh|bored|tired|stressed|excited|happy|sad|anxious)/i,
+  ];
+  
+  // Clear homework signals  
+  const homeworkPatterns = [
+    /(solve|calculate|compute|find|prove|explain|define|what is|what are|how does|why does|describe)/i,
+    /(equation|formula|theorem|hypothesis|molecule|element|derivative|integral|algebra|geometry|biology|chemistry|physics|history|essay|paragraph)/i,
+    /(homework|assignment|test|quiz|exam|problem|question|worksheet|chapter|lesson)/i,
+    /[0-9].*[+\-×÷*/=]/,
+    /(x =|y =|solve for|factor|simplify|expand|evaluate)/i,
+  ];
+  
+  // If it matches homework patterns strongly, it's homework
+  const homeworkScore = homeworkPatterns.filter(p => p.test(q)).length;
+  const casualScore = casualPatterns.filter(p => p.test(q)).length;
+  
+  // Very short messages with no homework signals = casual
+  if (q.length < 20 && homeworkScore === 0) return true;
+  
+  // Clear casual wins
+  if (casualScore > 0 && homeworkScore === 0) return true;
+  
+  // Clear homework wins
+  if (homeworkScore >= 2) return false;
+  
+  // Check conversation history — if we've been chatting casually, keep it casual
+  if (history && history.length > 0) {
+    const lastMsg = history[history.length - 1];
+    if (lastMsg?.role === 'assistant' && lastMsg?.isCasual) return true;
+  }
+  
+  return false;
+}
+
 // Default to super config for unknown plans
 const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
 
@@ -138,9 +205,13 @@ export default async function handler(req, res) {
   const maxInputChars  = config.maxInput  * 4;
   const trimmedQuestion = question.substring(0, maxInputChars);
 
-  // ── 3. Build messages ────────────────────────────────────────────────────
+  // ── 3. Detect casual vs homework ─────────────────────────────────────────
+  const casual = !image && isCasualMessage(trimmedQuestion, history);
+
+  // ── 4. Build messages ────────────────────────────────────────────────────
+  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : config.systemPrompt;
   const messages = [
-    { role: "system", content: config.systemPrompt },
+    { role: "system", content: systemPrompt },
   ];
 
   // Add recent conversation history (last 3 exchanges)
@@ -182,10 +253,10 @@ export default async function handler(req, res) {
         "Content-Type":  "application/json",
       },
       body: JSON.stringify({
-        model:       image ? "gpt-4o" : config.model,
+        model:       image ? "gpt-4o" : casual ? "gpt-4o-mini" : config.model,
         messages,
-        max_tokens:  image ? 1500 : config.maxOutput,
-        temperature: 0.7,
+        max_tokens:  image ? 1500 : casual ? 300 : config.maxOutput,
+        temperature: casual ? 0.9 : 0.7,
       }),
     });
 
