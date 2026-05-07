@@ -1998,20 +1998,7 @@
   };
 
   // ── Microsoft Sign In ─────────────────────────────────────────────────────
-  window.handleMicrosoftLogin = async function() {
-    try {
-      const provider = new OAuthProvider('microsoft.com');
-      provider.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, provider);
-      window.currentUser = result.user;
-      window.closeLoginModal?.();
-      window.updateLoginUI?.();
-    } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        window.showLoginError?.(err.message);
-      }
-    }
-  };
+  
 
   // ── Sign Out ──────────────────────────────────────────────────────────────
   window.handleLogout = async function() {
@@ -2647,10 +2634,11 @@
 
     // Free plan — check limits but don't increment yet (increment after API tells us if casual)
     // For now: check both limits, use homework limit as default gate
-    const _hwUsed = usage.count || 0;
+    const _hwUsed = usage.count  || 0;
     const _csUsed = usage.casual || 0;
+    // Don't block yet — we need the API to tell us if it's casual or homework
+    // But if BOTH are maxed, definitely block
     if (_hwUsed >= DAILY_LIMIT && _csUsed >= 20) {
-      // Both limits hit - check which type might be asked
       appendKnoxLimitReached('free'); return;
     }
     executeAskQuestion();
@@ -2947,6 +2935,14 @@
         _usage2.count = (_usage2.count || 0) + 1;
       }
       setUsageData(_usage2);
+      refreshUsageBars();
+
+      // Check if limit just hit and show message for next time
+      const _hwNow = _usage2.count  || 0;
+      const _csNow = _usage2.casual || 0;
+      const _hwMax = PLAN_LIMITS[_plan2]   || 5;
+      const _csMax = CASUAL_LIMITS[_plan2] || 20;
+      // (limits enforced on next question, not retroactively)
 
       // Auto-save to history
       if (window.currentUser && typedQuestion) {
