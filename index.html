@@ -2929,9 +2929,11 @@
           .replace(/\\pm/g, '±')
           .replace(/\\/g, '');
       })(answer);
+      window._isCasualResponse = isCasual;
       const responseHtml = isCasual 
         ? renderCasualResponse(cleanedAnswer, plan)
         : renderResponse(cleanedAnswer, [], plan, {});
+      window._isCasualResponse = false;
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
       // Increment correct usage counter based on whether it was casual
@@ -3388,8 +3390,8 @@
       html += visualHtml;
     }
 
-    // Green upgrade bar for free plan
-    if (plan === 'free') {
+    // Green upgrade bar for free plan (not on casual responses)
+    if (plan === 'free' && !window._isCasualResponse) {
       html += `<div style="margin:10px 14px;padding:12px 14px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
         <span style="font-size:13px;font-weight:700;color:#166534;">⚡ Get step-by-step breakdowns &amp; smarter answers</span>
         <button onclick="scrollToPricing()" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:900;font-family:inherit;border:none;background:#58CC02;color:white;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #2D6A00;">Upgrade →</button>
