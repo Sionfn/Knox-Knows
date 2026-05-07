@@ -67,11 +67,13 @@ Common Mistake: [only if there is a real mistake students commonly make on this 
 Insight: [only if there is something genuinely interesting — a real-world use, deeper meaning, or surprising fact]
 
 Examples of when to SKIP sections:
-- "What year did WW2 end?" → just Final Answer + Explanation. No steps, no insight needed.
-- "What is 2+2?" → just Final Answer + brief Explanation.
+- "What year did WW2 end?" → Final Answer + Explanation only.
+- "What is 2+2?" → Final Answer + brief Explanation only.
+- "Help me write a thesis statement" → Final Answer (give the actual thesis) + Explanation. No steps needed.
 - "How does photosynthesis work?" → use all sections, they all add value here.
 
-Use your judgment. Quality over quantity. Never pad a response with sections that don't help.`,
+For writing tasks: give the actual written content in Final Answer, explain it in Explanation. Skip Step-by-step unless they asked how to write it.
+Use your judgment. Quality over quantity.`,
   },
   family: {
     model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
@@ -122,6 +124,10 @@ function isCasualMessage(question, history) {
     /^(what is|what are|how does|why does|explain|define|describe|what causes|what happened|who was|when did)\s.{8,}/i,
     /[0-9]+\s*[×÷+\-*/^x]\s*[0-9]+/,
     /\b(percent|fraction|decimal|perimeter|area|volume|velocity|force|atom|cell|dna|revolution|capital of|population)\b/i,
+    /\b(thesis|essay|paragraph|introduction|conclusion|outline|summary|analysis|compare|contrast|argument|evidence|cite|citation|bibliography)\b/i,
+    /\b(write|draft|compose|proofread|edit|rewrite)\b.{0,30}\b(essay|paragraph|introduction|conclusion|thesis|statement|paper|report|story|poem)\b/i,
+    /\b(help me write|write me|help me with|how do i write|how to write)\b/i,
+    /\b(grammar|punctuation|syntax|vocabulary|spelling|literature|novel|poem|shakespeare|character|plot|theme|symbolism)\b/i,
   ];
 
   const hs = homeworkPatterns.filter(p => p.test(q)).length;
