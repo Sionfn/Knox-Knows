@@ -245,6 +245,7 @@ export default async function handler(req, res) {
   }
 
   // ── 4. Call OpenAI ───────────────────────────────────────────────────────
+  console.log("ask.js: plan=", plan, "casual=", casual, "question=", (trimmedQuestion||'').substring(0,50));
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method:  "POST",
