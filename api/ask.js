@@ -127,8 +127,8 @@ export default async function handler(req, res) {
   }
 
   // ── 2. Get question from request ──────────────────────────────────────────
-  const { question, history = [] } = req.body;
-  if (!question || question.trim().length === 0) {
+  const { question, history = [], image, imageType } = req.body;
+  if (!question && !image) {
     return res.status(400).json({ error: "No question provided." });
   }
 
@@ -151,8 +151,27 @@ export default async function handler(req, res) {
     }
   }
 
-  // Add current question
-  messages.push({ role: "user", content: trimmedQuestion });
+  // Add current question (with image if provided)
+  if (image) {
+    messages.push({
+      role: "user",
+      content: [
+        {
+          type: "image_url",
+          image_url: {
+            url: `data:${imageType || "image/jpeg"};base64,${image}`,
+            detail: "high",
+          },
+        },
+        {
+          type: "text",
+          text: trimmedQuestion || "Please analyze this image and help me with this homework problem.",
+        },
+      ],
+    });
+  } else {
+    messages.push({ role: "user", content: trimmedQuestion });
+  }
 
   // ── 4. Call OpenAI ───────────────────────────────────────────────────────
   try {
@@ -163,9 +182,9 @@ export default async function handler(req, res) {
         "Content-Type":  "application/json",
       },
       body: JSON.stringify({
-        model:       config.model,
+        model:       image ? "gpt-4o" : config.model,
         messages,
-        max_tokens:  config.maxOutput,
+        max_tokens:  image ? 1500 : config.maxOutput,
         temperature: 0.7,
       }),
     });
