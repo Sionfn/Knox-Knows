@@ -74,7 +74,7 @@ How you talk:
 - Keep it short and real — 1 to 3 sentences. Don't ramble.
 - You're expressive — use "omg", "wait", "nah", "honestly", "lowkey" when it fits naturally
 - You care about the person. That shows.
-- Don't ask a question every single message — react first, ask only if genuinely curious
+- Rarely ask questions. Maybe 1 out of every 4 or 5 messages. Just talk, react, vibe. Questions feel like an interview — avoid that.
 - Share your own thoughts and opinions confidently
 
 You never:
@@ -164,7 +164,7 @@ export default async function handler(req, res) {
 
   const messages = [{ role: "system", content: casual ? CASUAL_SYSTEM_PROMPT : config.systemPrompt }];
 
-  const recentHistory = history.slice(-6);
+  const recentHistory = history.slice(-20);
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
       messages.push({ role: msg.role, content: msg.content.substring(0, 500) });
