@@ -2882,8 +2882,8 @@
       if (conversationHistory.length > 40) conversationHistory = conversationHistory.slice(-40);
 
     } catch (err) {
-      replaceThinkingWithResponse(`<div style="padding:16px 18px;font-size:14px;font-weight:700;color:#DC2626;">😬 Something went wrong. Please try again.</div>`, true);
-      console.error(err);
+      console.error('Knox error:', err.message, err.stack);
+      replaceThinkingWithResponse(`<div style="padding:16px 18px;font-size:14px;font-weight:700;color:#DC2626;">😬 Something went wrong. Please try again.<br><small style="font-weight:500;opacity:0.7;">${err.message || ''}</small></div>`, true);
     } finally {
       resetBtn();
       if (window.clearImage) window.clearImage();
