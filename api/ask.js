@@ -305,7 +305,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       answer,
       plan,
-      model: config.model,
+      isCasual: casual,
+      model: casual ? "gpt-4o-mini" : (image ? "gpt-4o" : config.model),
       usage: data.usage,
     });
 
