@@ -267,9 +267,20 @@
       .header-logo-text { display:none; }
       .header-logo-img  { width:36px; height:36px; }
       #accountName { display:none; }
+      #headerNav { display:none !important; }
     }
     @media (max-width:380px) {
       .header-try-pro { display:none; }
+    }
+
+    .header-nav-link {
+      font-size:14px; font-weight:700; color:white;
+      text-decoration:none; opacity:0.85;
+      padding:7px 12px; border-radius:10px;
+      transition:all 0.15s;
+    }
+    .header-nav-link:hover {
+      opacity:1; background:rgba(255,255,255,0.15);
     }
 
     /* Account dropdown (existing JS relies on these) */
@@ -1061,6 +1072,13 @@
     <span class="header-logo-text">Knox Knows</span>
   </a>
 
+  <!-- ── NAV LINKS ── -->
+  <nav id="headerNav" style="display:flex;align-items:center;gap:4px;margin:0 auto;">
+    <a href="#how-it-works" onclick="smoothScroll('how-it-works')" class="header-nav-link">How it Works</a>
+    <a href="#subjects"     onclick="smoothScroll('subjects')"     class="header-nav-link">Subjects</a>
+    <a href="#pricing"      onclick="smoothScroll('pricing')"      class="header-nav-link">Pricing</a>
+  </nav>
+
   <div class="header-nav">
     <a href="#pricing" class="pro-badge" id="proBadge" style="text-decoration:none;">Try Pro</a>
 
@@ -1209,7 +1227,7 @@
 </section>
 
 <!-- ===================== SUBJECTS ===================== -->
-<section style="background:var(--gray);padding:72px 24px;border-top:2px solid var(--border);">
+<section id="subjects" style="background:var(--gray);padding:72px 24px;border-top:2px solid var(--border);">
   <div style="max-width:1100px;margin:0 auto;text-align:center;">
     <h2 class="section-title section-title-underline reveal" style="display:inline-block;">Every subject. Every grade.</h2>
     <p style="font-size:18px;font-weight:600;color:#666;margin-top:14px;">K-12 through college — Knox has you covered.</p>
@@ -2243,6 +2261,7 @@
 
   function scrollToAI() { document.getElementById('ai-helper').scrollIntoView({ behavior:'smooth' }); }
   function scrollToPricing() { document.getElementById('pricing').scrollIntoView({ behavior:'smooth' }); }
+  function smoothScroll(id) { event.preventDefault(); const el = document.getElementById(id); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
 
   let currentMode = 'answer';
   window.currentMode = 'answer';
