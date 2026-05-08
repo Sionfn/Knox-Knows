@@ -2290,9 +2290,11 @@
 
   let currentMode = 'answer';
   window.currentMode = 'answer';
+  let currentLearnSessionId = null; // tracks open learn session for credit-free follow-ups
   function setMode(mode) {
     currentMode = mode;
     window.currentMode = mode;
+    if (mode !== 'learn') currentLearnSessionId = null; // reset session on mode switch
     const aBtn         = document.getElementById('modeAnswerBtn');
     const lBtn         = document.getElementById('modeLearnBtn');
     const cBtn         = document.getElementById('modeChatBtn');
@@ -2750,6 +2752,7 @@
 
   window.startNewChat = function() {
     conversationHistory = [];
+    currentLearnSessionId = null; // reset learn session on new chat
     const chatInput = document.getElementById('chatInput');
     if (chatInput) { chatInput.value = ''; chatInput.style.height = 'auto'; }
     // Reset chat thread to just the greeting
@@ -2870,6 +2873,7 @@
           image:    pendingImageBase64 || null,
           imageType: pendingImageType || null,
           mode:     currentMode || 'answer',
+          learnSessionId: currentMode === 'learn' ? currentLearnSessionId : null,
         }),
       });
 
@@ -2893,8 +2897,13 @@
       const data     = await res.json();
       const answer   = data.answer   || '';
       const plan     = window.userPlan || data.plan || 'free';
-      const isCasual = !!data.isCasual;
-      const isLearn  = !!data.isLearn;
+      const isCasual         = !!data.isCasual;
+      const isLearn          = !!data.isLearn;
+      const chargeLearnCredit= data.chargeLearnCredit !== false; // default true if not returned
+      // Update learn session ID from server response
+      if (currentMode === 'learn' && data.learnSessionId) {
+        currentLearnSessionId = data.learnSessionId;
+      }
 
       // Clean LaTeX notation to plain text
       const cleanedAnswer = (function(text) {
@@ -2941,7 +2950,10 @@
       if (currentMode === 'chat') {
         _usage2.casual = (_usage2.casual || 0) + 1;
       } else if (currentMode === 'learn') {
-        _usage2.learn = (_usage2.learn || 0) + 1;
+        // Only count if server actually charged a learn credit (not a free follow-up)
+        if (chargeLearnCredit) {
+          _usage2.learn = (_usage2.learn || 0) + 1;
+        }
       } else {
         _usage2.count = (_usage2.count || 0) + 1;
       }
