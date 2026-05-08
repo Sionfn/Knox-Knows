@@ -1080,7 +1080,7 @@
   </nav>
 
   <div class="header-nav">
-    <a href="#pricing" class="pro-badge" id="proBadge" style="text-decoration:none;">Try Pro</a>
+    <a href="#pricing" class="pro-badge" id="proBadge" style="text-decoration:none;">⚡ Upgrade</a>
 
     <div class="account-dropdown-wrapper" id="accountDropdownWrapper" style="display:none;">
       <button id="accountBtn" onclick="toggleDropdown(event)" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:12px;padding:6px 12px 6px 6px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s;height:44px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -1558,7 +1558,7 @@
           <div style="font-size:22px;margin-bottom:6px;">♾️</div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">No daily limit. No countdown. Knox is yours — whenever, however much you need.</div>
         </div>
-        <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox →</button>
+        <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
       </div>
 
 
@@ -1583,7 +1583,7 @@
           <div style="font-size:22px;margin-bottom:6px;">👨‍👩‍👧‍👦</div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">One plan. Five learners. Less than $5/member/month — cheaper than a single Super Knox.</div>
         </div>
-        <button onclick="handlePurchase('Family')" id="familyCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#5B21B6;cursor:pointer;box-shadow:0 4px 0 #5B21B6;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #5B21B6'">Get Family Knox →</button>
+        <button onclick="handlePurchase('Family')" id="familyCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#5B21B6;cursor:pointer;box-shadow:0 4px 0 #5B21B6;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #5B21B6'">Get Family Knox</button>
       </div>
 </section>
 
@@ -2369,7 +2369,7 @@
     const maxBtn   = document.getElementById('maxCTABtn');
     if (maxPrice) maxPrice.textContent  = type === 'monthly' ? '$19.99' : '$13.99';
     if (maxNote)  maxNote.style.display = type === 'yearly'  ? 'block'  : 'none';
-    if (maxBtn)   maxBtn.textContent    = type === 'monthly' ? 'Get Max Knox →' : 'Get Max Knox Yearly →';
+    if (maxBtn)   maxBtn.textContent    = type === 'monthly' ? 'Get Max Knox' : 'Get Max Knox Yearly';
 
     // Family Knox pricing
     const familyPrice  = document.getElementById('familyPrice');
@@ -2379,7 +2379,7 @@
     if (familyPrice)  familyPrice.textContent  = type === 'monthly' ? '$24.99' : '$16.99';
     if (familyPeriod) familyPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
     if (familyNote)   familyNote.style.display = type === 'yearly'  ? 'block'  : 'none';
-    if (familyBtn)    familyBtn.textContent    = type === 'monthly' ? 'Get Family Knox →' : 'Get Family Knox Yearly →';
+    if (familyBtn)    familyBtn.textContent    = type === 'monthly' ? 'Get Family Knox' : 'Get Family Knox Yearly';
 
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
   }
@@ -2955,8 +2955,8 @@
       const _csMax = CASUAL_LIMITS[_plan2] || 20;
       // (limits enforced on next question, not retroactively)
 
-      // Auto-save to history
-      if (window.currentUser && typedQuestion) {
+      // Auto-save to history — always save to localStorage, also Firestore if logged in
+      if (typedQuestion) {
         saveToHistory(typedQuestion, answer, plan);
       }
 
