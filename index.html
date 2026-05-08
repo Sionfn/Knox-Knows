@@ -2865,20 +2865,15 @@
         reqHeaders["Authorization"] = `Bearer ${idToken}`;
       }
 
-      // Generate a learn session ID if this is the first message in learn mode
-      if (currentMode === 'learn' && !currentLearnSessionId) {
-        currentLearnSessionId = genSessionId();
-      }
-
       const res = await fetch("/api/ask", {
         method:  "POST",
         headers: reqHeaders,
         body: JSON.stringify({
-          question: typedQuestion,
-          history:  conversationHistory.slice(-20),
-          image:    pendingImageBase64 || null,
-          imageType: pendingImageType || null,
-          mode:     currentMode || 'answer',
+          question:      typedQuestion,
+          history:       conversationHistory.slice(-20),
+          image:         pendingImageBase64 || null,
+          imageType:     pendingImageType || null,
+          mode:          currentMode || 'answer',
           learnSessionId: currentMode === 'learn' ? currentLearnSessionId : null,
         }),
       });
@@ -2906,9 +2901,17 @@
       const isCasual          = !!data.isCasual;
       const isLearn           = !!data.isLearn;
       const chargeLearnCredit = data.chargeLearnCredit !== false;
-      // If server detected a new question mid-session, reset so next message opens a fresh session
-      if (currentMode === 'learn' && data.isNewLearnQuestion) {
-        currentLearnSessionId = null;
+      // Only open a session AFTER the server confirms a credit was charged.
+      // This ensures the server always sees learnSessionId=null on brand new questions.
+      if (currentMode === 'learn') {
+        if (data.isNewLearnQuestion || !chargeLearnCredit === false) {
+          // New question detected mid-session — reset so next message sends null
+          if (data.isNewLearnQuestion) currentLearnSessionId = null;
+        }
+        if (chargeLearnCredit && !currentLearnSessionId) {
+          // Server just charged a credit — open a session for follow-ups
+          currentLearnSessionId = genSessionId();
+        }
       }
 
       // Clean LaTeX notation to plain text
