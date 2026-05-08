@@ -1327,7 +1327,7 @@
             <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
           </div>
           <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
-            <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
+            <p id="knoxIntroText" style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
           </div>
         </div>
       </div>
@@ -2300,6 +2300,7 @@
     const aiHeaderDesc = document.getElementById('aiHeaderDesc');
     const aiBoxHeader  = document.getElementById('aiBoxHeader');
     const introBubble  = document.getElementById('knoxIntroBubble');
+    const introText    = document.getElementById('knoxIntroText');
     const inputWrapper = document.getElementById('chatInputWrapper');
     const qInput       = document.getElementById('chatInput') || document.getElementById('questionInput');
     const iconBtns     = document.querySelectorAll('.chat-icon-btn');
@@ -2314,6 +2315,7 @@
       if (askBtn) { askBtn.style.background='#FF6B00'; askBtn.style.boxShadow='0 3px 0 #CC5500'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #CC5500';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #CC5500';}; }
       if (aiBoxHeader) aiBoxHeader.style.background = '#FF6B00';
       if (introBubble) { introBubble.style.background='#FFF4EC'; introBubble.style.borderColor='#FFD0A0'; }
+      if (introText)   introText.innerHTML = '<strong>Hey! I\'m Knox.</strong> Drop your question — homework, essays, math, science, history. I\'ll give you the answer with a full explanation. 🦊';
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#FF6B00'; };
       iconBtns.forEach(b => { b.dataset.hoverColor='#FF6B00'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Ready to help you ace it';
@@ -2323,6 +2325,7 @@
       if (askBtn) { askBtn.style.background='#1CB0F6'; askBtn.style.boxShadow='0 3px 0 #0A85C2'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #0A85C2';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #0A85C2';}; }
       if (aiBoxHeader) aiBoxHeader.style.background = '#1CB0F6';
       if (introBubble) { introBubble.style.background='#EFF9FF'; introBubble.style.borderColor='#BAE6FD'; }
+      if (introText)   introText.innerHTML = '<strong>Let\'s figure it out together.</strong> Tell me what you\'re working on — I\'ll guide you to the answer step by step instead of just giving it away. 🧠';
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#1CB0F6'; };
       iconBtns.forEach(b => { b.dataset.hoverColor='#1CB0F6'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Knox will guide you step by step';
@@ -2332,6 +2335,7 @@
       if (askBtn) { askBtn.style.background='#58CC02'; askBtn.style.boxShadow='0 3px 0 #3D9900'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #3D9900';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #3D9900';}; }
       if (aiBoxHeader) aiBoxHeader.style.background = '#58CC02';
       if (introBubble) { introBubble.style.background='#F0FFF0'; introBubble.style.borderColor='#BBF7D0'; }
+      if (introText)   introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊';
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
       iconBtns.forEach(b => { b.dataset.hoverColor='#58CC02'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Just here to chat 🦊';
