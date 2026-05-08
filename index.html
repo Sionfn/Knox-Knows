@@ -3748,11 +3748,32 @@
       const delBtn = e.target.closest('.hist-del-btn');
       const askBtn = e.target.closest('.hist-ask-btn');
       if (delBtn) {
-        const idx = parseInt(delBtn.dataset.index);
-        let h = getHistory();
-        h.splice(idx, 1);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
-        window.openHistory();
+        const idx  = parseInt(delBtn.dataset.index);
+        const card = delBtn.closest('[data-index]');
+        // Animate out smoothly, then delete
+        if (card) {
+          card.style.transition = 'all 0.2s ease';
+          card.style.opacity    = '0';
+          card.style.transform  = 'scale(0.95)';
+          card.style.maxHeight  = card.offsetHeight + 'px';
+          setTimeout(() => {
+            card.style.maxHeight   = '0';
+            card.style.padding     = '0';
+            card.style.marginBottom= '0';
+            card.style.border      = 'none';
+            card.style.overflow    = 'hidden';
+          }, 150);
+          setTimeout(() => {
+            let h = getHistory();
+            h.splice(idx, 1);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
+            card.remove();
+            // If list is now empty, show empty state
+            if (list.querySelectorAll('[data-index]').length === 0) {
+              list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
+            }
+          }, 320);
+        }
       }
       if (askBtn) {
         const idx = parseInt(askBtn.dataset.index);
