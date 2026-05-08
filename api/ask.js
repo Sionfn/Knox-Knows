@@ -280,7 +280,90 @@ Reply with ONE word only: casual or homework`;
   }
 }
 
-const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
+// ── Learn session helpers ────────────────────────────────────────────────────
+// A "learn session" is opened when a new homework question starts in learn mode.
+// All follow-up messages (hints, attempts, "idk") within that session use chat
+// credits instead of homework credits.
+
+function generateSessionId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+// Returns true if the message is a continuation (student working through same problem)
+// rather than a brand-new question.
+async function isLearnContinuation(question, history) {
+  const q = (question || '').trim();
+  if (!q) return true;
+
+  // If there's no prior learn history, it must be a new question
+  const learnHistory = (history || []).filter(m => m.isLearn);
+  if (learnHistory.length === 0) return false;
+
+  const recentCtx = learnHistory.slice(-6)
+    .map(m => `${m.role === 'user' ? 'Student' : 'Knox'}: ${(m.content || '').substring(0, 100)}`)
+    .join('\n');
+
+  const prompt = `A student is working with an AI tutor. Determine if the latest message is a CONTINUATION of working through the same problem, or a BRAND NEW question.
+
+CONTINUATION examples: "idk", "I don't know", "can you give me a hint", "is it X?", "why?", "I'm confused", "ok", "that makes sense", "what about...", "so then...", partial answers, follow-up attempts, asking for more hints on the same topic.
+NEW QUESTION examples: starting an entirely different topic, a new math problem, a new subject, "now help me with...", "what is [completely different thing]".
+
+Recent conversation:
+${recentCtx}
+
+Latest message: "${q}"
+
+Reply with ONE word only: continuation or new`;
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3,
+        temperature: 0,
+      }),
+    });
+    const data = await res.json();
+    const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
+    console.log('session classifier:', verdict);
+    return verdict === 'continuation';
+  } catch (e) {
+    console.error('Session classifier failed:', e.message);
+    // Fallback: short messages are likely continuations
+    return q.length < 40;
+  }
+}
+
+// Store/validate a learn session in Firestore
+async function getOrCreateLearnSession(uid, sessionId, isNewQuestion) {
+  if (!uid) return { sessionId: generateSessionId(), isNew: true };
+
+  const sessRef = db.collection('users').doc(uid).collection('learnSessions').doc(sessionId || '_none');
+
+  if (!isNewQuestion && sessionId) {
+    // Check if this session exists and was opened today
+    try {
+      const snap = await sessRef.get();
+      if (snap.exists && snap.data().date === todayKey()) {
+        return { sessionId, isNew: false };
+      }
+    } catch (e) { /* fall through to new session */ }
+  }
+
+  // Start a new session
+  const newId = generateSessionId();
+  try {
+    await db.collection('users').doc(uid).collection('learnSessions').doc(newId).set({
+      date: todayKey(),
+      createdAt: new Date().toISOString(),
+    });
+  } catch (e) { console.error('Session create error:', e.message); }
+  return { sessionId: newId, isNew: true };
+}
+
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -307,16 +390,20 @@ export default async function handler(req, res) {
 
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
-  // Run casual classifier in ALL modes — even learn mode can get casual messages like "hey" or "thanks"
-  const casual = !image && await isCasualMessage(trimmedQuestion, history);
 
-  console.log("ask.js v3:", { plan, casual, mode });
+  // Billing is purely mode-based — chat mode uses chat credits, everything else uses homework credits
+  const isChatMode = mode === 'chat';
+
+  // Still run casual classifier for response style (not billing)
+  const casual = isChatMode || (!image && await isCasualMessage(trimmedQuestion, history));
+
+  console.log("ask.js v3:", { plan, mode, isChatMode, casual });
 
   // ── Server-side daily quota enforcement ──────────────────────────────────
   if (uid) {
-    const quota = await checkAndIncrementQuota(uid, plan, casual);
+    const quota = await checkAndIncrementQuota(uid, plan, isChatMode);
     if (!quota.allowed) {
-      const limitType = casual ? "casual chats" : "homework questions";
+      const limitType = isChatMode ? "chat messages" : "homework questions";
       return res.status(429).json({
         error: `Daily limit reached`,
         message: `You've used all ${quota.limit} ${limitType} for today. Resets at midnight UTC.`,
@@ -397,7 +484,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn' && !casual, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
