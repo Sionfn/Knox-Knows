@@ -3740,7 +3740,7 @@
       const color = planColors[plan] || '#1CB0F6';
       const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
       const q = (item.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      return `<div style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;" data-index="${i}">
+      return `<div class="hist-card" data-index="${i}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;">${q}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <div style="display:flex;align-items:center;gap:8px;">
@@ -3761,7 +3761,7 @@
       const askBtn = e.target.closest('.hist-ask-btn');
       if (delBtn) {
         const idx  = parseInt(delBtn.dataset.index);
-        const card = delBtn.closest('[data-index]');
+        const card = delBtn.closest('.hist-card');
         // Animate out smoothly, then delete
         if (card) {
           card.style.transition = 'all 0.2s ease';
@@ -3781,7 +3781,7 @@
             localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
             card.remove();
             // If list is now empty, show empty state
-            if (list.querySelectorAll('[data-index]').length === 0) {
+            if (list.querySelectorAll('.hist-card').length === 0) {
               list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
             }
           }, 320);
