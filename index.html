@@ -2290,7 +2290,8 @@
 
   let currentMode = 'answer';
   window.currentMode = 'answer';
-  let currentLearnSessionId = null; // tracks open learn session for credit-free follow-ups
+  let currentLearnSessionId = null;
+  function genSessionId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
   function setMode(mode) {
     currentMode = mode;
     window.currentMode = mode;
@@ -2864,6 +2865,11 @@
         reqHeaders["Authorization"] = `Bearer ${idToken}`;
       }
 
+      // Generate a learn session ID if this is the first message in learn mode
+      if (currentMode === 'learn' && !currentLearnSessionId) {
+        currentLearnSessionId = genSessionId();
+      }
+
       const res = await fetch("/api/ask", {
         method:  "POST",
         headers: reqHeaders,
@@ -2897,12 +2903,12 @@
       const data     = await res.json();
       const answer   = data.answer   || '';
       const plan     = window.userPlan || data.plan || 'free';
-      const isCasual         = !!data.isCasual;
-      const isLearn          = !!data.isLearn;
-      const chargeLearnCredit= data.chargeLearnCredit !== false; // default true if not returned
-      // Update learn session ID from server response
-      if (currentMode === 'learn' && data.learnSessionId) {
-        currentLearnSessionId = data.learnSessionId;
+      const isCasual          = !!data.isCasual;
+      const isLearn           = !!data.isLearn;
+      const chargeLearnCredit = data.chargeLearnCredit !== false;
+      // If server detected a new question mid-session, reset so next message opens a fresh session
+      if (currentMode === 'learn' && data.isNewLearnQuestion) {
+        currentLearnSessionId = null;
       }
 
       // Clean LaTeX notation to plain text
