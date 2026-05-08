@@ -1392,7 +1392,6 @@
           <div class="usage-bar-track orange">
             <div id="usageBarFill" class="usage-bar-fill hw-fill" style="width:0%;"></div>
           </div>
-          <!-- Live countdown clock -->
           <div id="hwClockWrap" style="display:none;margin-top:5px;padding:6px 10px;background:#FEF2F2;border-radius:8px;border:1.5px solid #FECACA;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <span style="font-size:11px;font-weight:700;color:#DC2626;">⏱ Next homework credit unlocks in:</span>
@@ -1400,23 +1399,34 @@
             </div>
           </div>
         </div>
-        <!-- Casual credits -->
+        <!-- Learn credits -->
+        <div id="learnBarSection" style="margin-bottom:10px;">
+          <div class="usage-bar-label">
+            <span style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:10px;">🧠</span>
+              <span id="learnBarLabel" style="color:#1CB0F6;font-weight:800;">0 / 10 learn exchanges used</span>
+            </span>
+          </div>
+          <div class="usage-bar-track blue">
+            <div id="learnBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div>
+          </div>
+        </div>
+        <!-- Chat credits -->
         <div id="casualBarSection">
           <div class="usage-bar-label">
             <span style="display:flex;align-items:center;gap:5px;">
               <span style="font-size:10px;">💬</span>
-              <span id="casualBarLabel" style="color:#1CB0F6;font-weight:800;">0 / 20 chat messages used</span>
+              <span id="casualBarLabel" style="color:#58CC02;font-weight:800;">0 / 20 chat messages used</span>
             </span>
             <span id="casualBarCountdown" style="font-size:11px;font-weight:800;"></span>
           </div>
-          <div class="usage-bar-track blue">
-            <div id="casualBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div>
+          <div class="usage-bar-track" style="background:#E5E7EB;border-radius:999px;height:8px;overflow:hidden;">
+            <div id="casualBarFill" style="height:100%;border-radius:999px;background:#58CC02;width:0%;transition:width 0.5s ease;"></div>
           </div>
-          <!-- Live countdown clock for casual -->
-          <div id="csClockWrap" style="display:none;margin-top:5px;padding:6px 10px;background:#EFF9FF;border-radius:8px;border:1.5px solid #BAE6FD;">
+          <div id="csClockWrap" style="display:none;margin-top:5px;padding:6px 10px;background:#F0FFF0;border-radius:8px;border:1.5px solid #BBF7D0;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
-              <span style="font-size:11px;font-weight:700;color:#0369A1;">⏱ Next chat credit unlocks in:</span>
-              <span id="csClockDisplay" style="font-size:13px;font-weight:900;color:#0369A1;font-variant-numeric:tabular-nums;letter-spacing:0.04em;">--:--:--</span>
+              <span style="font-size:11px;font-weight:700;color:#16A34A;">⏱ Next chat credit unlocks in:</span>
+              <span id="csClockDisplay" style="font-size:13px;font-weight:900;color:#16A34A;font-variant-numeric:tabular-nums;letter-spacing:0.04em;">--:--:--</span>
             </div>
           </div>
         </div>
@@ -1979,7 +1989,8 @@
   let hwUsedCount = 0;
   let csUsedCount = 0;
   const DAILY_LIMIT = 5; // free plan
-  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100, family: 25 };
+  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100,    family: 25 };
+  const LEARN_LIMITS   = { free: 10,  super: 50,  max: 999999, family: 50 };
   const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 999999, family: 50 };
 
   document.addEventListener('click', (e) => {
@@ -2214,17 +2225,27 @@
 
   window.updateUsageBar = updateUsageBar;
   function refreshUsageBars() {
-    const uPlan   = window.userPlan || 'free';
-    const hwLimit = PLAN_LIMITS[uPlan]   || 5;
-    const csLimit = CASUAL_LIMITS[uPlan] || 20;
-    const usage   = getUsageData();
-    const hwUsed  = usage.count   || 0;
-    const csUsed  = usage.casual  || 0;
+    const uPlan     = window.userPlan || 'free';
+    const hwLimit   = PLAN_LIMITS[uPlan]   || 5;
+    const learnLimit= LEARN_LIMITS[uPlan]  || 10;
+    const csLimit   = CASUAL_LIMITS[uPlan] || 20;
+    const usage     = getUsageData();
+    const hwUsed    = usage.count   || 0;
+    const learnUsed = usage.learn   || 0;
+    const csUsed    = usage.casual  || 0;
+
+    // Update homework bar
     updateUsageBar({
       hw: hwUsed, hwLimit,
       casual: csUsed, casualLimit: csLimit,
       nextUnlock: null, csNextUnlock: null
     });
+
+    // Update learn bar
+    const learnLabel = document.getElementById('learnBarLabel');
+    const learnFill  = document.getElementById('learnBarFill');
+    if (learnLabel) learnLabel.textContent = learnLimit >= 999999 ? 'Unlimited learn exchanges' : `${learnUsed} / ${learnLimit} learn exchanges used`;
+    if (learnFill)  learnFill.style.width  = learnLimit >= 999999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
   }
   window.refreshUsageBars = refreshUsageBars;
 
@@ -2892,13 +2913,13 @@
       window._isCasualResponse = false;
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
-      // Increment correct usage counter based on mode — chat mode = chat credit, everything else = homework credit
+      // Increment correct usage counter based on mode
       const _usage2 = getUsageData();
       const _plan2  = window.userPlan || 'free';
-      const _hwLim  = PLAN_LIMITS[_plan2]   || 5;
-      const _csLim  = CASUAL_LIMITS[_plan2] || 20;
       if (currentMode === 'chat') {
         _usage2.casual = (_usage2.casual || 0) + 1;
+      } else if (currentMode === 'learn') {
+        _usage2.learn = (_usage2.learn || 0) + 1;
       } else {
         _usage2.count = (_usage2.count || 0) + 1;
       }
