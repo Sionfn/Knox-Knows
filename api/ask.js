@@ -243,10 +243,15 @@ async function isCasualMessage(question, history) {
     .map(m => `${m.role === 'user' ? 'User' : 'Knox'}: ${(m.content || '').substring(0, 80)}`)
     .join('\n');
 
-  const prompt = `Classify this message as "casual" or "homework".
+  const prompt = `You are classifying a student's message to an AI tutor as either "casual" or "homework".
 
-casual = chitchat, greetings, reactions, feelings, opinions, jokes, random talk
-homework = any school subject, math, science, history, writing help, essays, definitions, study topics
+CASUAL = the user is chatting, greeting, reacting, expressing feelings, saying what they're up to, making small talk, or NOT actually asking a question that requires a subject-matter answer.
+Examples of casual: "hey", "thanks", "that makes sense", "nothing much just wanted to get some homework done", "I'm tired", "what's up", "you're helpful", "ok cool", "I'll try that"
+
+HOMEWORK = the user is actually asking a question or requesting help with a specific topic, subject, concept, problem, or task — even if phrased casually.
+Examples of homework: "what is photosynthesis", "help me solve 2x+3=7", "can you explain the civil war", "write me an intro paragraph", "what's the formula for area of a circle", "i need help with my essay"
+
+Key rule: mentioning homework/school in passing ("wanted to get some homework done", "I have an essay due") is CASUAL unless they actually ask a specific question.
 
 ${recentCtx ? 'Recent context:\n' + recentCtx + '\n' : ''}Message: "${q}"
 
@@ -269,8 +274,8 @@ Reply with ONE word only: casual or homework`;
     return verdict === 'casual';
   } catch(e) {
     console.error('Classifier failed:', e.message);
-    // Simple fallback
-    const short = q.length <= 15 && !/[0-9+\-*/=]/.test(q);
+    // Simple fallback — short messages with no numbers/operators are likely casual
+    const short = q.length <= 20 && !/[0-9+\-*/=?]/.test(q);
     return short;
   }
 }
