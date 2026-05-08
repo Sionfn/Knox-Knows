@@ -414,9 +414,9 @@ export default async function handler(req, res) {
     }
   }
 
-  // Select system prompt based on mode and casual detection
+  // Select system prompt based on mode
   let systemPrompt;
-  if (casual) {
+  if (isChatMode || casual) {
     systemPrompt = CASUAL_SYSTEM_PROMPT;
   } else if (mode === 'learn') {
     systemPrompt = LEARN_PROMPTS[plan] || LEARN_PROMPTS.super;
@@ -449,10 +449,10 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:       image ? "gpt-4o" : casual ? "gpt-4o-mini" : mode === 'learn' && plan === 'max' ? "gpt-4o" : config.model,
+        model:       image ? "gpt-4o" : (isChatMode || casual) ? "gpt-4o-mini" : mode === 'learn' && plan === 'max' ? "gpt-4o" : config.model,
         messages,
-        max_tokens:  image ? 1500 : casual ? 300 : mode === 'learn' ? 600 : config.maxOutput,
-        temperature: casual ? 1.0 : mode === 'learn' ? 0.8 : 0.7,
+        max_tokens:  image ? 1500 : (isChatMode || casual) ? 300 : mode === 'learn' ? 600 : config.maxOutput,
+        temperature: (isChatMode || casual) ? 1.0 : mode === 'learn' ? 0.8 : 0.7,
       }),
     });
 
