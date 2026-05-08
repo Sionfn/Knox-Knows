@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     const baseUrl = req.headers.origin || `https://${req.headers.host}`;
 
     // 3-day trial only on Super Knox monthly
-    let subscriptionData = { metadata: { plan, billing } };
+    let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === "super" && billing === "monthly") {
       subscriptionData.trial_period_days = 3;
     }
