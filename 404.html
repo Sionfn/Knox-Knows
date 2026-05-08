@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found — Knox Knows</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Nunito', system-ui, sans-serif;
+      background:white;
+      color:#3C3C3C;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      text-align:center;
+      -webkit-font-smoothing:antialiased;
+    }
+    .fox {
+      font-size:80px;
+      margin-bottom:8px;
+      animation:wobble 2.5s ease-in-out infinite;
+    }
+    @keyframes wobble {
+      0%,100% { transform:rotate(-4deg); }
+      50%      { transform:rotate(4deg); }
+    }
+    .code {
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:#FF6B00;
+      background:#FFF0E0;
+      border-radius:10px;
+      padding:6px 14px;
+      margin-bottom:20px;
+      display:inline-block;
+    }
+    h1 {
+      font-size:clamp(28px,5vw,48px);
+      font-weight:900;
+      line-height:1.1;
+      letter-spacing:-0.02em;
+      margin-bottom:12px;
+    }
+    p {
+      font-size:17px;
+      font-weight:600;
+      color:#777;
+      max-width:380px;
+      line-height:1.6;
+      margin-bottom:32px;
+    }
+    .btn {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:#FF6B00;
+      color:white;
+      border:none;
+      border-radius:16px;
+      padding:15px 28px;
+      font-size:16px;
+      font-weight:800;
+      font-family:inherit;
+      box-shadow:0 4px 0 #CC5500;
+      text-decoration:none;
+      cursor:pointer;
+      transition:all 0.15s;
+    }
+    .btn:hover  { transform:translateY(-2px); box-shadow:0 6px 0 #CC5500; }
+    .btn:active { transform:translateY(2px);  box-shadow:none; }
+  </style>
+</head>
+<body>
+  <div class="fox">🦊</div>
+  <div class="code">404 — Page not found</div>
+  <h1>Knox looked everywhere.<br>Nothing here.</h1>
+  <p>This page doesn't exist or may have moved. Let's get you back on track.</p>
+  <a href="/" class="btn">← Back to Knox Knows</a>
+</body>
+</html>
