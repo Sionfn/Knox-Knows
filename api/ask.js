@@ -392,28 +392,70 @@ export default async function handler(req, res) {
     plan = "free";
   }
 
-  const { question, history = [], image, imageType, mode = 'answer' } = req.body;
+  const { question, history = [], image, imageType, mode = 'answer', learnSessionId = null } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
 
-  // Billing is purely mode-based:
-  // chat mode → "chat" credit, learn mode → "learn" credit, everything else → "hw" credit
   const isChatMode  = mode === 'chat';
   const isLearnMode = mode === 'learn';
-  const creditType  = isChatMode ? 'chat' : isLearnMode ? 'learn' : 'hw';
 
-  // Still run casual classifier for response style (not billing)
+  // Still run casual classifier for response style
   const casual = isChatMode || (!image && await isCasualMessage(trimmedQuestion, history));
 
-  console.log("ask.js v3:", { plan, mode, creditType, casual });
+  // ── Learn session billing ──────────────────────────────────────────────────
+  // In learn mode, one credit opens a session. Follow-up messages are free until
+  // the student asks a new question or the session is reset.
+  let activeLearnSessionId = learnSessionId;
+  let chargeLearnCredit    = isLearnMode; // default: charge unless we find a valid session
+
+  if (isLearnMode && !casual) {
+    if (learnSessionId && uid) {
+      // Check if session exists and is from today
+      try {
+        const sessRef = db.collection('users').doc(uid).collection('learnSessions').doc(learnSessionId);
+        const snap    = await sessRef.get();
+        if (snap.exists && snap.data().date === todayKey()) {
+          // Valid session — check if it's a continuation or a new question
+          const isContinuation = await isLearnContinuation(trimmedQuestion, history);
+          if (isContinuation) {
+            chargeLearnCredit = false; // follow-up, no charge
+          } else {
+            // New question — close old session, will open a new one below
+            activeLearnSessionId = null;
+          }
+        }
+      } catch(e) { console.error('Session check error:', e.message); }
+    }
+
+    // Open a new session if needed
+    if (chargeLearnCredit && uid) {
+      const newId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      try {
+        await db.collection('users').doc(uid).collection('learnSessions').doc(newId).set({
+          date: todayKey(), createdAt: new Date().toISOString()
+        });
+        activeLearnSessionId = newId;
+      } catch(e) { console.error('Session create error:', e.message); }
+    }
+
+    // For guest users, always pass back a session ID so frontend tracks it
+    if (!uid) {
+      activeLearnSessionId = learnSessionId || (Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+      chargeLearnCredit = !learnSessionId; // charge only on first message
+    }
+  }
+
+  const creditType = isChatMode ? 'chat' : (isLearnMode && !chargeLearnCredit) ? null : isLearnMode ? 'learn' : 'hw';
+
+  console.log("ask.js v3:", { plan, mode, creditType, casual, chargeLearnCredit });
 
   // ── Server-side daily quota enforcement ──────────────────────────────────
-  if (uid) {
+  if (uid && creditType) {
     const quota = await checkAndIncrementQuota(uid, plan, creditType);
     if (!quota.allowed) {
-      const limitType = isChatMode ? "chat messages" : isLearnMode ? "Learn with Knox exchanges" : "homework questions";
+      const limitType = isChatMode ? "chat messages" : isLearnMode ? "Learn with Knox questions" : "homework questions";
       return res.status(429).json({
         error: `Daily limit reached`,
         message: `You've used all ${quota.limit} ${limitType} for today. Resets at midnight UTC.`,
@@ -494,7 +536,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, learnSessionId: activeLearnSessionId || null, chargeLearnCredit, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
