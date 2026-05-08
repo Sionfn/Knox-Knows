@@ -18,10 +18,10 @@ const db        = getFirestore();
 
 // ── Daily quota limits per plan ────────────────────────────────────────────
 const PLAN_QUOTAS = {
-  free:   { hw: 5,   chat: 20 },
-  super:  { hw: 25,  chat: 50 },
-  max:    { hw: 100, chat: 999 },
-  family: { hw: 25,  chat: 50 },
+  free:   { hw: 5,   learn: 10,  chat: 20  },
+  super:  { hw: 25,  learn: 50,  chat: 50  },
+  max:    { hw: 100, learn: 999, chat: 999 },
+  family: { hw: 25,  learn: 50,  chat: 50  },
 };
 
 // Returns today's date string in UTC, e.g. "2026-05-08"
@@ -30,18 +30,18 @@ function todayKey() {
 }
 
 // Checks and increments the user's daily usage in Firestore.
-// Returns { allowed: true } or { allowed: false, reason: string }
-async function checkAndIncrementQuota(uid, plan, isCasual) {
+// creditType: "hw" | "learn" | "chat"
+async function checkAndIncrementQuota(uid, plan, creditType) {
   const quota     = PLAN_QUOTAS[plan] || PLAN_QUOTAS.free;
-  const field     = isCasual ? "chat" : "hw";
-  const limit     = quota[field];
+  const field     = creditType;
+  const limit     = quota[field] || 999;
   const today     = todayKey();
   const usageRef  = db.collection("users").doc(uid).collection("usage").doc(today);
 
   try {
     const result = await db.runTransaction(async (tx) => {
       const snap  = await tx.get(usageRef);
-      const data  = snap.exists ? snap.data() : { hw: 0, chat: 0 };
+      const data  = snap.exists ? snap.data() : { hw: 0, learn: 0, chat: 0 };
       const count = data[field] || 0;
 
       if (count >= limit) {
@@ -54,7 +54,6 @@ async function checkAndIncrementQuota(uid, plan, isCasual) {
 
     return result;
   } catch (err) {
-    // If quota check fails, log and allow the request rather than breaking the app
     console.error("Quota check error:", err.message);
     return { allowed: true };
   }
@@ -399,19 +398,22 @@ export default async function handler(req, res) {
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
 
-  // Billing is purely mode-based — chat mode uses chat credits, everything else uses homework credits
-  const isChatMode = mode === 'chat';
+  // Billing is purely mode-based:
+  // chat mode → "chat" credit, learn mode → "learn" credit, everything else → "hw" credit
+  const isChatMode  = mode === 'chat';
+  const isLearnMode = mode === 'learn';
+  const creditType  = isChatMode ? 'chat' : isLearnMode ? 'learn' : 'hw';
 
   // Still run casual classifier for response style (not billing)
   const casual = isChatMode || (!image && await isCasualMessage(trimmedQuestion, history));
 
-  console.log("ask.js v3:", { plan, mode, isChatMode, casual });
+  console.log("ask.js v3:", { plan, mode, creditType, casual });
 
   // ── Server-side daily quota enforcement ──────────────────────────────────
   if (uid) {
-    const quota = await checkAndIncrementQuota(uid, plan, isChatMode);
+    const quota = await checkAndIncrementQuota(uid, plan, creditType);
     if (!quota.allowed) {
-      const limitType = isChatMode ? "chat messages" : "homework questions";
+      const limitType = isChatMode ? "chat messages" : isLearnMode ? "Learn with Knox exchanges" : "homework questions";
       return res.status(429).json({
         error: `Daily limit reached`,
         message: `You've used all ${quota.limit} ${limitType} for today. Resets at midnight UTC.`,
