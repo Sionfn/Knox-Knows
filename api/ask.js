@@ -401,55 +401,39 @@ export default async function handler(req, res) {
   const isChatMode  = mode === 'chat';
   const isLearnMode = mode === 'learn';
 
-  // Still run casual classifier for response style
+  // Run casual classifier for response style in all modes
   const casual = isChatMode || (!image && await isCasualMessage(trimmedQuestion, history));
 
   // ── Learn session billing ──────────────────────────────────────────────────
-  // In learn mode, one credit opens a session. Follow-up messages are free until
-  // the student asks a new question or the session is reset.
-  let activeLearnSessionId = learnSessionId;
-  let chargeLearnCredit    = isLearnMode; // default: charge unless we find a valid session
+  // How it works:
+  //   • Frontend generates a learnSessionId when the student asks the first question
+  //   • It sends that ID with every follow-up message
+  //   • If learnSessionId is present → run the continuation classifier
+  //     - continuation (hint request, attempt, "idk", etc.) → FREE, no credit
+  //     - new question detected → charge 1 credit, signal frontend to reset session
+  //   • If no learnSessionId → definitely a new question → charge 1 credit
+  //   • No Firestore session storage needed — classifier handles everything
+  let chargeLearnCredit = isLearnMode && !casual; // default: charge
+  let isNewLearnQuestion = false;
 
-  if (isLearnMode && !casual) {
-    if (learnSessionId && uid) {
-      // Check if session exists and is from today
-      try {
-        const sessRef = db.collection('users').doc(uid).collection('learnSessions').doc(learnSessionId);
-        const snap    = await sessRef.get();
-        if (snap.exists && snap.data().date === todayKey()) {
-          // Valid session — check if it's a continuation or a new question
-          const isContinuation = await isLearnContinuation(trimmedQuestion, history);
-          if (isContinuation) {
-            chargeLearnCredit = false; // follow-up, no charge
-          } else {
-            // New question — close old session, will open a new one below
-            activeLearnSessionId = null;
-          }
-        }
-      } catch(e) { console.error('Session check error:', e.message); }
-    }
-
-    // Open a new session if needed
-    if (chargeLearnCredit && uid) {
-      const newId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-      try {
-        await db.collection('users').doc(uid).collection('learnSessions').doc(newId).set({
-          date: todayKey(), createdAt: new Date().toISOString()
-        });
-        activeLearnSessionId = newId;
-      } catch(e) { console.error('Session create error:', e.message); }
-    }
-
-    // For guest users, always pass back a session ID so frontend tracks it
-    if (!uid) {
-      activeLearnSessionId = learnSessionId || (Date.now().toString(36) + Math.random().toString(36).slice(2,6));
-      chargeLearnCredit = !learnSessionId; // charge only on first message
+  if (isLearnMode && !casual && learnSessionId) {
+    // Session is open — check if this is a follow-up or a brand new question
+    const isContinuation = await isLearnContinuation(trimmedQuestion, history);
+    if (isContinuation) {
+      chargeLearnCredit = false; // follow-up — free
+    } else {
+      chargeLearnCredit  = true;  // new question — charge
+      isNewLearnQuestion = true;  // tell frontend to reset its session ID
     }
   }
 
-  const creditType = isChatMode ? 'chat' : (isLearnMode && !chargeLearnCredit) ? null : isLearnMode ? 'learn' : 'hw';
+  // Determine credit type — null means no charge
+  const creditType = isChatMode ? 'chat'
+    : (isLearnMode && !chargeLearnCredit) ? null
+    : isLearnMode ? 'learn'
+    : 'hw';
 
-  console.log("ask.js v3:", { plan, mode, creditType, casual, chargeLearnCredit });
+  console.log("ask.js v3:", { plan, mode, creditType, casual, chargeLearnCredit, learnSessionId: !!learnSessionId });
 
   // ── Server-side daily quota enforcement ──────────────────────────────────
   if (uid && creditType) {
@@ -536,7 +520,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, learnSessionId: activeLearnSessionId || null, chargeLearnCredit, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
