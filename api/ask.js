@@ -364,6 +364,7 @@ async function getOrCreateLearnSession(uid, sessionId, isNewQuestion) {
   return { sessionId: newId, isNew: true };
 }
 
+const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
 
 export default async function handler(req, res) {
   // Handle CORS preflight
