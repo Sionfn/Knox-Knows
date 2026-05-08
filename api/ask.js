@@ -16,6 +16,50 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
+// ── Daily quota limits per plan ────────────────────────────────────────────
+const PLAN_QUOTAS = {
+  free:   { hw: 5,   chat: 20 },
+  super:  { hw: 25,  chat: 50 },
+  max:    { hw: 100, chat: 999 },
+  family: { hw: 25,  chat: 50 },
+};
+
+// Returns today's date string in UTC, e.g. "2026-05-08"
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Checks and increments the user's daily usage in Firestore.
+// Returns { allowed: true } or { allowed: false, reason: string }
+async function checkAndIncrementQuota(uid, plan, isCasual) {
+  const quota     = PLAN_QUOTAS[plan] || PLAN_QUOTAS.free;
+  const field     = isCasual ? "chat" : "hw";
+  const limit     = quota[field];
+  const today     = todayKey();
+  const usageRef  = db.collection("users").doc(uid).collection("usage").doc(today);
+
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap  = await tx.get(usageRef);
+      const data  = snap.exists ? snap.data() : { hw: 0, chat: 0 };
+      const count = data[field] || 0;
+
+      if (count >= limit) {
+        return { allowed: false, count, limit };
+      }
+
+      tx.set(usageRef, { ...data, [field]: count + 1, updatedAt: new Date().toISOString() }, { merge: true });
+      return { allowed: true, count: count + 1, limit };
+    });
+
+    return result;
+  } catch (err) {
+    // If quota check fails, log and allow the request rather than breaking the app
+    console.error("Quota check error:", err.message);
+    return { allowed: true };
+  }
+}
+
 const PLAN_CONFIG = {
   free: {
     model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
@@ -221,7 +265,7 @@ Reply with ONE word only: casual or homework`;
     });
     const data = await res.json();
     const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
-    console.log('classifier:', verdict, '| q:', q.substring(0, 40));
+    console.log('classifier:', verdict);
     return verdict === 'casual';
   } catch(e) {
     console.error('Classifier failed:', e.message);
@@ -261,7 +305,22 @@ export default async function handler(req, res) {
   // Learn mode is never casual — skip classifier
   const casual = mode !== 'learn' && !image && await isCasualMessage(trimmedQuestion, history);
 
-  console.log("ask.js v3:", { plan, casual, q: trimmedQuestion.substring(0, 60) });
+  console.log("ask.js v3:", { plan, casual, mode });
+
+  // ── Server-side daily quota enforcement ──────────────────────────────────
+  if (uid) {
+    const quota = await checkAndIncrementQuota(uid, plan, casual);
+    if (!quota.allowed) {
+      const limitType = casual ? "casual chats" : "homework questions";
+      return res.status(429).json({
+        error: `Daily limit reached`,
+        message: `You've used all ${quota.limit} ${limitType} for today. Resets at midnight UTC.`,
+        limitReached: true,
+        limit: quota.limit,
+        used: quota.count,
+      });
+    }
+  }
 
   // Select system prompt based on mode and casual detection
   let systemPrompt;
