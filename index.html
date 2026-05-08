@@ -1272,7 +1272,7 @@
     <div style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;">
 
       <!-- ── HEADER ── -->
-      <div style="background:#FF6B00;padding:18px 20px;display:flex;align-items:center;gap:14px;">
+      <div id="aiBoxHeader" style="background:#FF6B00;padding:18px 20px;display:flex;align-items:center;gap:14px;">
         <div style="width:48px;height:48px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);overflow:hidden;background:#FED7AA;flex-shrink:0;">
           <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
         </div>
@@ -1305,7 +1305,7 @@
           <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
             <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
           </div>
-          <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
+          <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
             <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
           </div>
         </div>
@@ -1403,7 +1403,7 @@
 
       <!-- ── FOOTER ── -->
       <div style="padding:10px 16px;border-top:2px solid #F3F4F6;background:#F9FAFB;display:flex;align-items:center;">
-        <button onclick="openHistory()" style="display:inline-flex;align-items:center;gap:6px;background:white;border:2px solid #E5E7EB;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#6B7280;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
+        <button id="historyBtn" onclick="openHistory()" style="display:inline-flex;align-items:center;gap:6px;background:white;border:2px solid #E5E7EB;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#6B7280;transition:all 0.15s;" onmouseover="this.style.borderColor=(window.currentMode==='learn'?'#1CB0F6':'#FF6B00');this.style.color=(window.currentMode==='learn'?'#1CB0F6':'#FF6B00')" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           History
         </button>
@@ -1476,7 +1476,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full step-by-step breakdowns & tips</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full Socratic tutoring — unlimited hints</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>50 casual chats/day</div>
-        </div>
+        </div></div>
         <button onclick="scrollToAI()" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
       </div>
 
@@ -1521,7 +1521,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Full Socratic tutoring + session wrap-up</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>All subjects — math, science, history, essays & more</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Photo upload — snap your homework</div>
-        </div>
+        </div></div>
         <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:center;">
           <div style="font-size:22px;margin-bottom:6px;">♾️</div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">No daily limit. No countdown. Knox is yours — whenever, however much you need.</div>
@@ -1553,9 +1553,6 @@
         </div>
         <button onclick="handlePurchase('Family')" id="familyCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#5B21B6;cursor:pointer;box-shadow:0 4px 0 #5B21B6;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #5B21B6'">Get Family Knox →</button>
       </div>
-
-    </div><!-- /rg-pricing -->
-  </div><!-- /container -->
 </section>
 
 
@@ -2248,30 +2245,39 @@
   function scrollToPricing() { document.getElementById('pricing').scrollIntoView({ behavior:'smooth' }); }
 
   let currentMode = 'answer';
+  window.currentMode = 'answer';
   function setMode(mode) {
     currentMode = mode;
-    const aBtn    = document.getElementById('modeAnswerBtn');
-    const lBtn    = document.getElementById('modeLearnBtn');
-    const askBtn  = document.getElementById('askBtn');
+    window.currentMode = mode;
+    const aBtn         = document.getElementById('modeAnswerBtn');
+    const lBtn         = document.getElementById('modeLearnBtn');
+    const askBtn       = document.getElementById('askBtn');
     const aiHeaderDesc = document.getElementById('aiHeaderDesc');
-    const qInput  = document.getElementById('chatInput') || document.getElementById('questionInput');
-    const iconBtns = document.querySelectorAll('.chat-icon-btn');
+    const aiBoxHeader  = document.getElementById('aiBoxHeader');
+    const introBubble  = document.getElementById('knoxIntroBubble');
+    const inputWrapper = document.getElementById('chatInputWrapper');
+    const qInput       = document.getElementById('chatInput') || document.getElementById('questionInput');
+    const iconBtns     = document.querySelectorAll('.chat-icon-btn');
 
     const inactiveStyle = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;';
-
-    // Reset all tabs to inactive first
     if (aBtn) aBtn.style.cssText = inactiveStyle;
     if (lBtn) lBtn.style.cssText = inactiveStyle;
 
     if (mode === 'answer') {
       if (aBtn) aBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;';
       if (askBtn) { askBtn.style.background = '#FF6B00'; askBtn.style.boxShadow = '0 3px 0 #CC5500'; askBtn.onmouseover = () => { askBtn.style.transform='translateY(-1px)'; askBtn.style.boxShadow='0 5px 0 #CC5500'; }; askBtn.onmouseout = () => { askBtn.style.transform=''; askBtn.style.boxShadow='0 3px 0 #CC5500'; }; }
+      if (aiBoxHeader) aiBoxHeader.style.background = '#FF6B00';
+      if (introBubble) { introBubble.style.background = '#FFF4EC'; introBubble.style.borderColor = '#FFD0A0'; }
+      if (inputWrapper) { inputWrapper.onfocus = null; qInput && (qInput.onfocus = () => { inputWrapper.style.borderColor='#FF6B00'; }); }
       iconBtns.forEach(b => { b.dataset.hoverColor = '#FF6B00'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Ready to help you ace it';
       if (qInput) qInput.placeholder = 'Ask Knox anything — type or paste your question...';
     } else if (mode === 'learn') {
       if (lBtn) lBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#1CB0F6;color:white;box-shadow:0 3px 0 #0A85C2;transition:all 0.15s;line-height:1;';
       if (askBtn) { askBtn.style.background = '#1CB0F6'; askBtn.style.boxShadow = '0 3px 0 #0A85C2'; askBtn.onmouseover = () => { askBtn.style.transform='translateY(-1px)'; askBtn.style.boxShadow='0 5px 0 #0A85C2'; }; askBtn.onmouseout = () => { askBtn.style.transform=''; askBtn.style.boxShadow='0 3px 0 #0A85C2'; }; }
+      if (aiBoxHeader) aiBoxHeader.style.background = '#1CB0F6';
+      if (introBubble) { introBubble.style.background = '#EFF9FF'; introBubble.style.borderColor = '#BAE6FD'; }
+      if (qInput) qInput.onfocus = () => { inputWrapper && (inputWrapper.style.borderColor='#1CB0F6'); };
       iconBtns.forEach(b => { b.dataset.hoverColor = '#1CB0F6'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Knox will guide you step by step';
       if (qInput) qInput.placeholder = 'What would you like to learn? Knox will guide you step by step...';
@@ -2694,7 +2700,7 @@
         <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
           <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
         </div>
-        <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
+        <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
           <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
         </div>
       </div>`;
@@ -2719,7 +2725,10 @@
     function appendUserBubble(text) {
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:flex-end;';
-      row.innerHTML = `<div style="background:#FF6B00;color:white;padding:12px 18px;border-radius:18px 18px 4px 18px;max-width:82%;font-size:15px;font-weight:600;line-height:1.5;box-shadow:0 2px 8px rgba(255,107,0,0.2);">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+      const isLearnMode = currentMode === 'learn';
+      const bg = isLearnMode ? '#1CB0F6' : '#FF6B00';
+      const shadow = isLearnMode ? 'rgba(28,176,246,0.2)' : 'rgba(255,107,0,0.2)';
+      row.innerHTML = `<div style="background:${bg};color:white;padding:12px 18px;border-radius:18px 18px 4px 18px;max-width:82%;font-size:15px;font-weight:600;line-height:1.5;box-shadow:0 2px 8px ${shadow};">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
       chatThread.appendChild(row);
       scrollBottom();
     }
@@ -2730,14 +2739,15 @@
       row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
       row.id = 'knoxThinkingRow';
       const label = currentMode === 'learn' ? 'Knox is working it out' : 'Knox is thinking';
+      const dotColor = currentMode === 'learn' ? '#1CB0F6' : '#FF6B00';
       row.innerHTML = `
         <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
         <div style="background:white;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
           <span style="font-size:13px;font-weight:700;color:#9CA3AF;">${label}</span>
           <div style="display:flex;gap:5px;align-items:center;">
-            <span style="width:8px;height:8px;border-radius:50%;background:#FF6B00;display:inline-block;animation:chatDot 1.2s ease-in-out infinite;"></span>
-            <span style="width:8px;height:8px;border-radius:50%;background:#FF6B00;display:inline-block;animation:chatDot 1.2s ease-in-out 0.2s infinite;"></span>
-            <span style="width:8px;height:8px;border-radius:50%;background:#FF6B00;display:inline-block;animation:chatDot 1.2s ease-in-out 0.4s infinite;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out infinite;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out 0.2s infinite;"></span>
+            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out 0.4s infinite;"></span>
           </div>
         </div>`;
       chatThread.appendChild(row);
@@ -3034,10 +3044,9 @@
 
   // ── RENDER RESPONSE ───────────────────────────────────────────────────────
   function renderLearnResponse(text, plan) {
-    // Plain text like casual — no bubble, no border, just Knox talking
     const lines = text.split('\n').filter(l => l.trim());
     const html = lines.map(l => `<p style="margin:0 0 6px;line-height:1.6;">${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`).join('');
-    return `<div style="padding:14px 18px 14px;font-size:15px;font-weight:500;color:#1f2937;">${html}</div>`;
+    return `<div style="background:#EFF9FF;border:2px solid #BAE6FD;border-radius:4px 20px 20px 20px;padding:14px 18px;font-size:15px;font-weight:500;color:#0C4A6E;">${html}</div>`;
   }
 
   function renderCasualResponse(text, plan) {
