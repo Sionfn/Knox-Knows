@@ -2917,6 +2917,24 @@
       window._isCasualResponse = false;
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
+      // ── Casual nudge — show a soft suggestion to switch to Chat mode ─────
+      // Only shows in answer/learn mode when the classifier flagged it as casual
+      if (isCasual && currentMode !== 'chat' && knoxRow) {
+        const nudge = document.createElement('div');
+        nudge.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 0 0 46px;margin-top:-6px;';
+        nudge.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;background:#F0FFF0;border:1.5px solid #BBF7D0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:#16A34A;cursor:pointer;transition:all 0.15s;" 
+               onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FFF0'"
+               onclick="setMode('chat');this.closest('div').remove();">
+            💬 Switch to Chat with Knox — save your credits for homework
+          </div>
+          <span onclick="this.closest('div').remove();" style="font-size:16px;cursor:pointer;color:#9CA3AF;line-height:1;" title="Dismiss">×</span>`;
+        if (knoxRow.parentNode) {
+          knoxRow.parentNode.insertBefore(nudge, knoxRow.nextSibling);
+        }
+        if (chatThread) chatThread.scrollTop = chatThread.scrollHeight;
+      }
+
       // Increment correct usage counter based on mode
       const _usage2 = getUsageData();
       const _plan2  = window.userPlan || 'free';
