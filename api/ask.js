@@ -302,8 +302,8 @@ export default async function handler(req, res) {
 
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
-  // Learn mode is never casual — skip classifier
-  const casual = mode !== 'learn' && !image && await isCasualMessage(trimmedQuestion, history);
+  // Run casual classifier in ALL modes — even learn mode can get casual messages like "hey" or "thanks"
+  const casual = !image && await isCasualMessage(trimmedQuestion, history);
 
   console.log("ask.js v3:", { plan, casual, mode });
 
@@ -392,7 +392,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn' && !casual, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
