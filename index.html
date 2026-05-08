@@ -1305,14 +1305,17 @@
       <div style="padding:12px 16px;background:white;border-bottom:2px solid #F3F4F6;">
         <div style="display:flex;gap:6px;background:#F3F4F6;border-radius:12px;padding:4px;">
           <button id="modeAnswerBtn" onclick="setMode('answer')"
-            style="flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;">
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;">
             Get the Answer
           </button>
           <button id="modeLearnBtn" onclick="setMode('learn')"
-            style="flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
             Learn with Knox
           </button>
-
+          <button id="modeChatBtn" onclick="setMode('chat')"
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
+            Chat with Knox
+          </button>
         </div>
       </div>
 
@@ -1421,7 +1424,7 @@
 
       <!-- ── FOOTER ── -->
       <div style="padding:10px 16px;border-top:2px solid #F3F4F6;background:#F9FAFB;display:flex;align-items:center;">
-        <button id="historyBtn" onclick="openHistory()" style="display:inline-flex;align-items:center;gap:6px;background:white;border:2px solid #E5E7EB;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#6B7280;transition:all 0.15s;" onmouseover="this.style.borderColor=(window.currentMode==='learn'?'#1CB0F6':'#FF6B00');this.style.color=(window.currentMode==='learn'?'#1CB0F6':'#FF6B00')" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
+        <button id="historyBtn" onclick="openHistory()" style="display:inline-flex;align-items:center;gap:6px;background:white;border:2px solid #E5E7EB;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#6B7280;transition:all 0.15s;" onmouseover="this.style.borderColor=(window.currentMode==='learn'?'#1CB0F6':window.currentMode==='chat'?'#58CC02':'#FF6B00');this.style.color=(window.currentMode==='learn'?'#1CB0F6':window.currentMode==='chat'?'#58CC02':'#FF6B00')" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           History
         </button>
@@ -1476,7 +1479,7 @@
     <div class="rg-pricing" style="align-items:stretch;">
 
       <!-- FREE -->
-      <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">Free</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;">$0</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;margin-bottom:16px;">forever</div>
@@ -1494,12 +1497,13 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full step-by-step breakdowns & tips</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full Socratic tutoring — unlimited hints</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>50 casual chats/day</div>
-        </div></div>
+        </div>
         <button onclick="scrollToAI()" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
       </div>
 
       <!-- SUPER KNOX -->
-      <div class="reveal delay-2" style="background:#58CC02;border-radius:20px;border:2px solid #46A302;box-shadow:0 6px 0 #2D6A00;padding:24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-2" style="position:relative;background:#58CC02;border-radius:20px;border:2px solid #46A302;box-shadow:0 6px 0 #2D6A00;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
+        <div id="proTrialBadge" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#FF6B00;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">⚡ Super Knox</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="proPrice">$9.99</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="proPeriod">/month</div>
@@ -1524,7 +1528,7 @@
       </div>
 
       <!-- MAX KNOX — FEATURED (orange like Pro was) -->
-      <div class="reveal delay-3" style="background:#FF6B00;border-radius:20px;border:2px solid #CC5500;box-shadow:0 6px 0 #CC5500;padding:24px;display:flex;flex-direction:column;position:relative;">
+      <div class="reveal delay-3" style="background:#FF6B00;border-radius:20px;border:2px solid #CC5500;box-shadow:0 6px 0 #CC5500;padding:24px;display:flex;flex-direction:column;position:relative;margin-top:14px;">
         <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#1f2937;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:999px;white-space:nowrap;">MOST POPULAR</div>
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.8);margin-bottom:16px;">🚀 Max Knox</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="maxPrice">$19.99</div>
@@ -1539,7 +1543,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Full Socratic tutoring + session wrap-up</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>All subjects — math, science, history, essays & more</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Photo upload — snap your homework</div>
-        </div></div>
+        </div>
         <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:center;">
           <div style="font-size:22px;margin-bottom:6px;">♾️</div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">No daily limit. No countdown. Knox is yours — whenever, however much you need.</div>
@@ -1549,7 +1553,7 @@
 
 
       <!-- FAMILY KNOX -->
-      <div class="reveal delay-4" style="background:linear-gradient(160deg,#7C3AED,#A855F7);border-radius:20px;border:2px solid #6D28D9;box-shadow:0 6px 0 #5B21B6;padding:24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-4" style="background:linear-gradient(160deg,#7C3AED,#A855F7);border-radius:20px;border:2px solid #6D28D9;box-shadow:0 6px 0 #5B21B6;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">👨‍👩‍👧‍👦 Family Knox</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="familyPrice">$24.99</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="familyPeriod">/month</div>
@@ -1648,7 +1652,7 @@
     </div>
 
     <div style="border-top:1px solid #333;padding-top:24px;margin-top:40px;text-align:center;">
-      <p style="font-size:13px;font-weight:600;color:#555;">&copy; 2026 Knox Knows. All rights reserved.</p>
+      <p style="font-size:13px;font-weight:600;color:#555;">© 2026 Knox Knows™ by Knox™ | All rights reserved.</p>
     </div>
   </div>
 </footer>
@@ -2270,6 +2274,7 @@
     window.currentMode = mode;
     const aBtn         = document.getElementById('modeAnswerBtn');
     const lBtn         = document.getElementById('modeLearnBtn');
+    const cBtn         = document.getElementById('modeChatBtn');
     const askBtn       = document.getElementById('askBtn');
     const aiHeaderDesc = document.getElementById('aiHeaderDesc');
     const aiBoxHeader  = document.getElementById('aiBoxHeader');
@@ -2278,28 +2283,38 @@
     const qInput       = document.getElementById('chatInput') || document.getElementById('questionInput');
     const iconBtns     = document.querySelectorAll('.chat-icon-btn');
 
-    const inactiveStyle = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;';
+    const inactiveStyle = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;';
     if (aBtn) aBtn.style.cssText = inactiveStyle;
     if (lBtn) lBtn.style.cssText = inactiveStyle;
+    if (cBtn) cBtn.style.cssText = inactiveStyle;
 
     if (mode === 'answer') {
-      if (aBtn) aBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;';
-      if (askBtn) { askBtn.style.background = '#FF6B00'; askBtn.style.boxShadow = '0 3px 0 #CC5500'; askBtn.onmouseover = () => { askBtn.style.transform='translateY(-1px)'; askBtn.style.boxShadow='0 5px 0 #CC5500'; }; askBtn.onmouseout = () => { askBtn.style.transform=''; askBtn.style.boxShadow='0 3px 0 #CC5500'; }; }
+      if (aBtn) aBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;';
+      if (askBtn) { askBtn.style.background='#FF6B00'; askBtn.style.boxShadow='0 3px 0 #CC5500'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #CC5500';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #CC5500';}; }
       if (aiBoxHeader) aiBoxHeader.style.background = '#FF6B00';
-      if (introBubble) { introBubble.style.background = '#FFF4EC'; introBubble.style.borderColor = '#FFD0A0'; }
-      if (inputWrapper) { inputWrapper.onfocus = null; qInput && (qInput.onfocus = () => { inputWrapper.style.borderColor='#FF6B00'; }); }
-      iconBtns.forEach(b => { b.dataset.hoverColor = '#FF6B00'; });
+      if (introBubble) { introBubble.style.background='#FFF4EC'; introBubble.style.borderColor='#FFD0A0'; }
+      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#FF6B00'; };
+      iconBtns.forEach(b => { b.dataset.hoverColor='#FF6B00'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Ready to help you ace it';
       if (qInput) qInput.placeholder = 'Ask Knox anything — type or paste your question...';
     } else if (mode === 'learn') {
-      if (lBtn) lBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#1CB0F6;color:white;box-shadow:0 3px 0 #0A85C2;transition:all 0.15s;line-height:1;';
-      if (askBtn) { askBtn.style.background = '#1CB0F6'; askBtn.style.boxShadow = '0 3px 0 #0A85C2'; askBtn.onmouseover = () => { askBtn.style.transform='translateY(-1px)'; askBtn.style.boxShadow='0 5px 0 #0A85C2'; }; askBtn.onmouseout = () => { askBtn.style.transform=''; askBtn.style.boxShadow='0 3px 0 #0A85C2'; }; }
+      if (lBtn) lBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#1CB0F6;color:white;box-shadow:0 3px 0 #0A85C2;transition:all 0.15s;line-height:1;';
+      if (askBtn) { askBtn.style.background='#1CB0F6'; askBtn.style.boxShadow='0 3px 0 #0A85C2'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #0A85C2';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #0A85C2';}; }
       if (aiBoxHeader) aiBoxHeader.style.background = '#1CB0F6';
-      if (introBubble) { introBubble.style.background = '#EFF9FF'; introBubble.style.borderColor = '#BAE6FD'; }
-      if (qInput) qInput.onfocus = () => { inputWrapper && (inputWrapper.style.borderColor='#1CB0F6'); };
-      iconBtns.forEach(b => { b.dataset.hoverColor = '#1CB0F6'; });
+      if (introBubble) { introBubble.style.background='#EFF9FF'; introBubble.style.borderColor='#BAE6FD'; }
+      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#1CB0F6'; };
+      iconBtns.forEach(b => { b.dataset.hoverColor='#1CB0F6'; });
       if (aiHeaderDesc) aiHeaderDesc.textContent = 'Knox will guide you step by step';
       if (qInput) qInput.placeholder = 'What would you like to learn? Knox will guide you step by step...';
+    } else if (mode === 'chat') {
+      if (cBtn) cBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#58CC02;color:white;box-shadow:0 3px 0 #3D9900;transition:all 0.15s;line-height:1;';
+      if (askBtn) { askBtn.style.background='#58CC02'; askBtn.style.boxShadow='0 3px 0 #3D9900'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #3D9900';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #3D9900';}; }
+      if (aiBoxHeader) aiBoxHeader.style.background = '#58CC02';
+      if (introBubble) { introBubble.style.background='#F0FFF0'; introBubble.style.borderColor='#BBF7D0'; }
+      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
+      iconBtns.forEach(b => { b.dataset.hoverColor='#58CC02'; });
+      if (aiHeaderDesc) aiHeaderDesc.textContent = 'Just here to chat 🦊';
+      if (qInput) qInput.placeholder = 'Chat with Knox about anything...';
     }
   }
   document.addEventListener('DOMContentLoaded', () => setMode('answer'));
@@ -2878,12 +2893,12 @@
       window._isCasualResponse = false;
       const knoxRow = replaceThinkingWithResponse(responseHtml, false);
 
-      // Increment correct usage counter based on whether it was casual
+      // Increment correct usage counter based on mode — chat mode = chat credit, everything else = homework credit
       const _usage2 = getUsageData();
       const _plan2  = window.userPlan || 'free';
       const _hwLim  = PLAN_LIMITS[_plan2]   || 5;
       const _csLim  = CASUAL_LIMITS[_plan2] || 20;
-      if (isCasual) {
+      if (currentMode === 'chat') {
         _usage2.casual = (_usage2.casual || 0) + 1;
       } else {
         _usage2.count = (_usage2.count || 0) + 1;
