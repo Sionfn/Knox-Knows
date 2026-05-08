@@ -1,11 +1,16 @@
 {
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/privacy",  "dest": "/privacy.html" },
-    { "src": "/terms",    "dest": "/terms.html" },
-    { "src": "/refund",   "dest": "/refund.html" },
-    { "src": "/404",      "dest": "/404.html" },
-    { "src": "/(.*)",     "dest": "/index.html" }
+    { "src": "/api/(.*)",             "dest": "/api/$1" },
+    { "src": "/knox-logo.jpg",        "dest": "/knox-logo.jpg" },
+    { "src": "/knox-logo-square.jpg", "dest": "/knox-logo-square.jpg" },
+    { "src": "/knox-love.png",        "dest": "/knox-love.png" },
+    { "src": "/sitemap.xml",          "dest": "/sitemap.xml" },
+    { "src": "/robots.txt",           "dest": "/robots.txt" },
+    { "src": "/privacy",              "dest": "/privacy.html" },
+    { "src": "/terms",                "dest": "/terms.html" },
+    { "src": "/refund",               "dest": "/refund.html" },
+    { "src": "/404",                  "dest": "/404.html" },
+    { "src": "/(.*)",                 "dest": "/index.html" }
   ],
   "headers": [
     {
