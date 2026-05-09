@@ -3165,29 +3165,31 @@
 
       // Map ALL known AI-generated header variants to canonical section names
       const mappings = [
-        // Final Answer variants — only exact matches at line start
-        [/^Answer:/gim,                'Final Answer:'],
-        [/^Upgrade:/gim,               'Upgrade:'],
-        // Step-by-step variants — safe ones only
-        [/Step-by-Step Process:/gi,    'Step-by-step:'],
-        [/Step by Step:/gi,            'Step-by-step:'],
-        // Remove dangerous mappings: Solution:, Method:, Work:, Steps:
-        // These often appear as part of the answer text itself
-        // Explanation variants
-        [/Detailed Explanation:/gi,    'Explanation:'],
-        [/How it Works:/gi,            'Explanation:'],
-        // Insight variants
-        [/Deeper Insight:/gi,          'Insight:'],
-        [/Deep Dive:/gi,               'Insight:'],
-        [/Did You Know:/gi,            'Insight:'],
-        // Common Mistake variants
-        [/Common Error:/gi,            'Common Mistake:'],
-        [/Watch Out:/gi,               'Common Mistake:'],
-        [/Avoid This:/gi,              'Common Mistake:'],
-        // Key Points variants
-        [/Key Point:/gi,               'Key Points:'],
-        [/Key Takeaways:/gi,           'Key Points:'],
-        [/Takeaway:/gi,                'Key Points:'],
+        [/^Answer:/gim,                        'Final Answer:'],
+        [/^Upgrade:/gim,                       'Upgrade:'],
+        [/^Step-by-Step:/gim,                  'Step-by-step:'],
+        [/^Step-By-Step:/gim,                  'Step-by-step:'],
+        [/^Steps:/gim,                         'Step-by-step:'],
+        [/Step-by-Step Process:/gi,            'Step-by-step:'],
+        [/Step by Step:/gi,                    'Step-by-step:'],
+        [/Detailed Explanation:/gi,            'Explanation:'],
+        [/How it Works:/gi,                    'Explanation:'],
+        [/^Pro Tip:/gim,                       'Tip:'],
+        [/^Quick Tip:/gim,                     'Tip:'],
+        [/^Study Tip:/gim,                     'Tip:'],
+        [/^Memory Tip:/gim,                    'Tip:'],
+        [/Deeper Insight:/gi,                  'Insight:'],
+        [/Deep Dive:/gi,                       'Insight:'],
+        [/Did You Know:/gi,                    'Insight:'],
+        [/^Fun Fact:/gim,                      'Insight:'],
+        [/^Real-World Connection:/gim,         'Insight:'],
+        [/Common Error:/gi,                    'Common Mistake:'],
+        [/Watch Out:/gi,                       'Common Mistake:'],
+        [/Avoid This:/gi,                      'Common Mistake:'],
+        [/^Common Mistakes:/gim,               'Common Mistake:'],
+        [/Key Point:/gi,                       'Key Points:'],
+        [/Key Takeaways:/gi,                   'Key Points:'],
+        [/Takeaway:/gi,                        'Key Points:'],
       ];
 
       mappings.forEach(([pattern, canonical]) => {
@@ -3195,10 +3197,18 @@
       });
 
       // Force all canonical headers onto their own lines
-      const headers = ['Final Answer:','Explanation:','Step-by-step:','Tip:','Insight:','Common Mistake:','Key Points:','Resources:'];
-      headers.forEach(h => {
-        const escaped = h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        r = r.replace(new RegExp('([^\\n])\\s*(' + escaped + ')', 'g'), '$1\n\n$2');
+      const headerMap = [
+        [/([^\n])\s*(Final Answer:)/gi,    '$1\n\nFinal Answer:'],
+        [/([^\n])\s*(Explanation:)/gi,     '$1\n\nExplanation:'],
+        [/([^\n])\s*(Step-by-step:)/gi,    '$1\n\nStep-by-step:'],
+        [/([^\n])\s*(Tip:)/gi,             '$1\n\nTip:'],
+        [/([^\n])\s*(Insight:)/gi,         '$1\n\nInsight:'],
+        [/([^\n])\s*(Common Mistake:)/gi,  '$1\n\nCommon Mistake:'],
+        [/([^\n])\s*(Key Points:)/gi,      '$1\n\nKey Points:'],
+        [/([^\n])\s*(Resources:)/gi,       '$1\n\nResources:'],
+      ];
+      headerMap.forEach(([pattern, replacement]) => {
+        r = r.replace(pattern, replacement);
       });
 
       // Numbered steps on their own lines
@@ -3229,41 +3239,49 @@
     }
 
     for (const line of lines) {
-      if (line.startsWith("Resources:")) { flushPara(mode); break; }
+      const ll = line.toLowerCase();
+      if (ll.startsWith("resources:")) { flushPara(mode); break; }
 
-      if (line.startsWith("Final Answer:")) {
-        finalAnswerText = line.replace("Final Answer:", "").trim();
+      if (ll.startsWith("final answer:")) {
+        finalAnswerText = line.replace(/^final answer:\s*/i, '').trim();
         mode = "other";
       }
-      else if (line.startsWith("Step-by-step:")) {
+      else if (ll.startsWith("step-by-step:")) {
         flushPara(mode); mode = "steps";
+        // Handle inline first step: "Step-by-step: 1. do this"
+        const inline = line.replace(/^step-by-step:\s*/i, '').trim();
+        if (/^\d+[.:]/.test(inline)) {
+          const num = (inline.match(/^(\d+)/) || [])[1] || '1';
+          const stepText = inline.replace(/^\d+[:.]\s*/, '').trim();
+          if (stepText) stepsHtml += `<div class="resp-step"><div class="resp-step-num">${num}</div><div class="resp-step-text">${formatInline(stepText, plan)}</div></div>`;
+        }
       }
-      else if (line.startsWith("Explanation:")) {
+      else if (ll.startsWith("explanation:")) {
         flushPara(mode); mode = "explanation";
-        const inl = line.replace("Explanation:", "").trim();
+        const inl = line.replace(/^explanation:\s*/i, '').trim();
         if (inl) currentParaLines.push(inl);
       }
       // Catch "Explanation:" appearing mid-line (e.g. "Word. Explanation: more text")
-      else if (line.includes("Explanation:") && !line.startsWith("Final Answer:")) {
-        const parts = line.split("Explanation:");
+      else if (ll.includes("explanation:") && !ll.startsWith("final answer:")) {
+        const parts = line.split(/explanation:/i);
         if (parts[0].trim()) currentParaLines.push(parts[0].trim());
         flushPara(mode); mode = "explanation";
         if (parts[1] && parts[1].trim()) currentParaLines.push(parts[1].trim());
       }
-      else if (line.startsWith("Insight:")) {
+      else if (ll.startsWith("insight:")) {
         flushPara(mode); mode = "insight";
-        insightText = line.replace("Insight:", "").trim();
+        insightText = line.replace(/^insight:\s*/i, '').trim();
       }
-      else if (line.startsWith("Common Mistake:")) {
+      else if (ll.startsWith("common mistake:")) {
         flushPara(mode); mode = "common_mistake";
-        commonMistakeText = line.replace("Common Mistake:", "").trim();
+        commonMistakeText = line.replace(/^common mistake:\s*/i, '').trim();
       }
-      else if (line.startsWith("Key Points:")) {
+      else if (ll.startsWith("key points:")) {
         flushPara(mode); mode = "keypoints";
       }
-      else if (line.startsWith("Tip:")) {
+      else if (ll.startsWith("tip:")) {
         flushPara(mode); mode = "tip";
-        tipText = line.replace("Tip:", "").trim();
+        tipText = line.replace(/^tip:\s*/i, '').trim();
       }
       // Numbered steps detected in ANY mode
       else if (/^(Step\s+\d+\b|\d+\.)/.test(line)) {
