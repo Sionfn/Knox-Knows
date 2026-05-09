@@ -268,13 +268,19 @@ async function isCasualMessage(question, history) {
 
   const prompt = `You are classifying a student's message to an AI tutor as either "casual" or "homework".
 
-CASUAL = the user is chatting, greeting, reacting, expressing feelings, saying what they're up to, making small talk, or NOT actually asking a question that requires a subject-matter answer.
-Examples of casual: "hey", "thanks", "that makes sense", "nothing much just wanted to get some homework done", "I'm tired", "what's up", "you're helpful", "ok cool", "I'll try that"
+Default to HOMEWORK when in doubt. Only mark something as casual if it clearly requires no subject-matter knowledge to answer.
 
-HOMEWORK = the user is actually asking a question or requesting help with a specific topic, subject, concept, problem, or task — even if phrased casually.
-Examples of homework: "what is photosynthesis", "help me solve 2x+3=7", "can you explain the civil war", "write me an intro paragraph", "what's the formula for area of a circle", "i need help with my essay"
+CASUAL = pure small talk, greetings, reactions, feelings, or acknowledgements with zero academic content.
+Casual examples: "hey", "thanks", "lol ok", "that makes sense", "I'm tired", "what's up", "you're helpful", "ok cool", "got it", "haha"
 
-Key rule: mentioning homework/school in passing ("wanted to get some homework done", "I have an essay due") is CASUAL unless they actually ask a specific question.
+HOMEWORK = any question, request, or topic that requires subject-matter knowledge — even if short, simple, or phrased conversationally. When in doubt, classify as homework.
+Homework examples: "what is photosynthesis", "solve 3x+5=11", "explain the civil war", "write me an intro paragraph", "what's the area formula", "i need help with my essay", "what causes rain", "who was napoleon", "how do vaccines work", "define mitosis", "what year did ww2 end", "is pluto a planet", "what's the speed of light"
+
+Critical rules:
+- ANY question asking "what is", "how does", "why does", "explain", "define", "help me with", "solve", "write" = HOMEWORK
+- Short questions are still homework: "what is gravity?" = homework, "who was shakespeare?" = homework
+- If the message contains a subject, concept, equation, or academic topic = HOMEWORK
+- Only mark as casual if there is zero academic content and no question being asked
 
 ${recentCtx ? 'Recent context:\n' + recentCtx + '\n' : ''}Message: "${q}"
 
