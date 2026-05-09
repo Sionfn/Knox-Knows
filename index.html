@@ -438,6 +438,27 @@
 
     /* ── AI BOX ──────────────────────────────────────────────── */
     #ai-helper { background:var(--gray); }
+
+    /* ── Sticky chat widget ── */
+    #chatWidget {
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 90px);
+      display: flex;
+      flex-direction: column;
+    }
+    #chatThread {
+      flex: 1;
+      min-height: 0; /* critical for flex scroll */
+      overflow-y: auto;
+    }
+    @media (max-width: 640px) {
+      #chatWidget {
+        top: 56px;
+        max-height: calc(100vh - 72px);
+      }
+    }
+
     .ai-box {
       background:white; border-radius:24px;
       border:2px solid var(--border);
@@ -1278,7 +1299,7 @@
 </section>
 
 <!-- ===================== ASK AI ===================== -->
-<section id="ai-helper" style="background:#f9fafb;padding:72px 24px;">
+<section id="ai-helper" style="background:#f9fafb;padding:40px 24px 80px;">
   <div style="max-width:780px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:32px;">
       <img src="./knox-wave.png" alt="Knox waving" style="width:80px;height:auto;margin-bottom:-10px;filter:drop-shadow(0 4px 8px rgba(255,107,0,0.2));" onerror="this.style.display='none'">
@@ -1287,7 +1308,7 @@
     </div>
 
     <!-- Chat container -->
-    <div style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;">
+    <div id="chatWidget" style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;">
 
       <!-- ── HEADER ── -->
       <div id="aiBoxHeader" style="background:#FF6B00;padding:18px 20px;display:flex;align-items:center;gap:14px;">
@@ -1320,7 +1341,7 @@
       </div>
 
       <!-- ── CHAT THREAD ── -->
-      <div id="chatThread" style="display:flex;flex-direction:column;gap:14px;padding:20px;min-height:100px;max-height:420px;overflow-y:auto;background:#FAFAFA;">
+      <div id="chatThread" style="display:flex;flex-direction:column;gap:14px;padding:20px;min-height:100px;flex:1;overflow-y:auto;background:#FAFAFA;">
         <!-- Knox greeting -->
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
