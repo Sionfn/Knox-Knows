@@ -2598,10 +2598,9 @@
 
   // Track whether guest has used their one free question (persisted in sessionStorage)
   let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
-  // If already used and still a guest, lock the input on page load
-  if (guestQuestionUsed && !window.currentUser) {
-    // Wait for DOM to be ready
-    window.addEventListener('DOMContentLoaded', () => { if (!window.currentUser) lockGuestInput(); });
+  // If already used, lock after Firebase has had time to resolve auth state
+  if (guestQuestionUsed) {
+    setTimeout(() => { if (!window.currentUser) lockGuestInput(); }, 1500);
   }
 
   function handleAskQuestion() {
@@ -2648,12 +2647,20 @@
       }
       guestQuestionUsed = true;
       sessionStorage.setItem('knoxGuestUsed', '1');
-      // Execute the question, then immediately lock and show sign up prompt
+      // Show 1/1 credit used in usage bar
+      const hwFill  = document.getElementById('usageBarFill');
+      const hwLabel = document.getElementById('usageBarLabel');
+      if (hwFill)  { hwFill.style.width = '100%'; hwFill.className = 'usage-bar-fill hw-fill danger'; }
+      if (hwLabel) { hwLabel.textContent = '1 / 1 question used'; }
+      // Hide learn and chat bars — guests only get 1 question total
+      const learnBar  = document.getElementById('learnBarSection');
+      const casualBar = document.getElementById('casualBarSection');
+      if (learnBar)  learnBar.style.display  = 'none';
+      if (casualBar) casualBar.style.display = 'none';
+      // Execute the question, then lock and show sign up prompt
       executeAskQuestion(() => {
-        setTimeout(() => {
-          appendKnoxSignUpPrompt(true);
-          lockGuestInput();
-        }, 150);
+        appendKnoxSignUpPrompt(true);
+        lockGuestInput();
       });
       return;
     }
@@ -3058,6 +3065,11 @@
         { role: 'assistant', content: answer,        isCasual, isLearn }
       );
       if (conversationHistory.length > 40) conversationHistory = conversationHistory.slice(-40);
+
+      // Fire afterCallback if provided (e.g. guest sign up prompt)
+      if (typeof afterCallback === 'function') {
+        setTimeout(afterCallback, 200);
+      }
 
     } catch (err) {
       console.error('Knox error:', err);
