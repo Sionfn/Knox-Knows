@@ -1599,30 +1599,6 @@
         <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
       </div>
 
-
-      <!-- FAMILY KNOX -->
-      <div class="reveal delay-4" style="background:linear-gradient(160deg,#7C3AED,#A855F7);border-radius:20px;border:2px solid #6D28D9;box-shadow:0 6px 0 #5B21B6;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
-        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">👨‍👩‍👧‍👦 Family Knox</div>
-        <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="familyPrice">$24.99</div>
-        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="familyPeriod">/month</div>
-        <div class="yearly-note" id="familyYearlyNote" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px;">$199.99/yr — save $99.89</div>
-        <div style="font-size:14px;font-weight:800;color:white;margin:12px 0 8px;line-height:1.4;">One plan, five learners — everyone gets Knox</div>
-        
-        <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Up to 5 members — each their own account</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>25 homework questions/day per member</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>50 casual chats/day per member</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Full step-by-step breakdowns & tips</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Full Socratic tutoring for every member</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>All subjects — K-12 through college</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Photo upload for every member</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:center;">
-          <div style="font-size:22px;margin-bottom:6px;">👨‍👩‍👧‍👦</div>
-          <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">One plan. Five learners. Less than $5/member/month — cheaper than a single Super Knox.</div>
-        </div>
-        <button onclick="handlePurchase('Family')" id="familyCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#5B21B6;cursor:pointer;box-shadow:0 4px 0 #5B21B6;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #5B21B6'">Get Family Knox</button>
-      </div>
 </section>
 
 
@@ -1869,8 +1845,9 @@
       userPlan = "free";
     }
     if (window.updateLoginUI) window.updateLoginUI();
-    // Refresh bars after plan is loaded from Firestore
-    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 150);
+    // Unlock input if it was locked as guest, and refresh bars
+    if (window.unlockInput) window.unlockInput();
+    setTimeout(() => { if (window.refreshUsageBars) window.refreshUsageBars(); }, 200);
   }
 
   // ── Auth state listener ───────────────────────────────────────────────────
@@ -2801,6 +2778,45 @@
       if (btn) { btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none'; }
     });
   }
+
+  function unlockInput() {
+    const input   = document.getElementById('chatInput');
+    const askBtn  = document.getElementById('askBtn');
+    const wrapper = document.getElementById('chatInputWrapper');
+    if (input) {
+      input.disabled    = false;
+      input.placeholder = 'Ask Knox anything — type or paste your question...';
+      input.style.color = '#3C3C3C';
+    }
+    if (askBtn) {
+      askBtn.disabled        = false;
+      askBtn.style.opacity   = '1';
+      askBtn.style.cursor    = 'pointer';
+      askBtn.style.boxShadow = '0 3px 0 #CC5500';
+    }
+    if (wrapper) {
+      wrapper.style.background  = '#F9FAFB';
+      wrapper.style.borderColor = '#E5E7EB';
+    }
+    // Re-enable mode tabs
+    ['modeAnswerBtn','modeLearnBtn','modeChatBtn'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+    });
+    // Restore learn and chat bars
+    const learnBar = document.getElementById('learnBarSection');
+    const chatBar  = document.getElementById('casualBarSection');
+    if (learnBar) learnBar.style.display = '';
+    if (chatBar)  chatBar.style.display  = '';
+    // Reset guestQuestionUsed so they get proper free plan limits
+    guestQuestionUsed = false;
+    sessionStorage.removeItem('knoxGuestUsed');
+    // Re-run mode to restore correct colors/placeholders
+    setMode(window.currentMode || 'answer');
+    // Refresh bars with real plan data
+    setTimeout(() => refreshUsageBars(), 100);
+  }
+  window.unlockInput = unlockInput;
 
   function appendKnoxSignUpPrompt(afterAnswer) {
     const chatThread = document.getElementById('chatThread');
