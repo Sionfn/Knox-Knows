@@ -3975,6 +3975,30 @@
     if (modal) modal.style.display = 'none';
   };
 
+  window.clearAllHistory = async function() {
+    const list = document.getElementById('historyList');
+    // Confirm
+    if (!confirm('Clear all history? This cannot be undone.')) return;
+
+    // Clear Firestore if logged in
+    if (window.currentUser && window.loadFirestoreHistory) {
+      try {
+        const items = await window.loadFirestoreHistory();
+        if (items && items.length > 0) {
+          await Promise.all(items.map(item => window.deleteFirestoreHistory(item.id)));
+        }
+      } catch(e) { console.warn('Firestore clear failed:', e); }
+    }
+
+    // Clear localStorage
+    try { localStorage.removeItem('knoxHistory'); } catch(e) {}
+
+    // Show empty state
+    if (list) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
+    }
+  };
+
   function renderHistoryList() {
     const history = getHistory();
     const body = document.getElementById('historyBody');
@@ -4442,8 +4466,9 @@
       <div style="text-align:center;padding:32px;color:#9CA3AF;font-size:14px;font-weight:600;">Loading history...</div>
     </div>
     <!-- Footer -->
-    <div style="padding:12px 16px;border-top:2px solid #F3F4F6;background:white;text-align:center;flex-shrink:0;">
-      <p style="font-size:12px;font-weight:600;color:#9CA3AF;margin:0;">History is saved automatically · Kept for 30 days</p>
+    <div style="padding:12px 16px;border-top:2px solid #F3F4F6;background:white;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <p style="font-size:12px;font-weight:600;color:#9CA3AF;margin:0;">Saved automatically · Kept for 30 days</p>
+      <button onclick="clearAllHistory()" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:2px solid #FEE2E2;background:white;color:#DC2626;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='white'">🗑 Clear All</button>
     </div>
   </div>
 </div>
