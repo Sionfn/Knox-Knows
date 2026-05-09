@@ -2248,7 +2248,25 @@
   }
 
   window.updateUsageBar = updateUsageBar;
+  // Guest question tracking — declared here so refreshUsageBars can reference it
+  let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
+
   function refreshUsageBars() {
+    // Guest mode: show 0/1 and hide learn/chat bars
+    if (!window.currentUser) {
+      const hwFill   = document.getElementById('usageBarFill');
+      const hwLabel  = document.getElementById('usageBarLabel');
+      const hwCd     = document.getElementById('usageBarCountdown');
+      const learnBar = document.getElementById('learnBarSection');
+      const chatBar  = document.getElementById('casualBarSection');
+      const used     = guestQuestionUsed ? 1 : 0;
+      if (hwLabel) hwLabel.textContent = `${used} / 1 question used`;
+      if (hwFill)  { hwFill.style.width = used ? '100%' : '0%'; hwFill.className = 'usage-bar-fill hw-fill' + (used ? ' danger' : ''); }
+      if (hwCd)    hwCd.textContent = '';
+      if (learnBar) learnBar.style.display = 'none';
+      if (chatBar)  chatBar.style.display  = 'none';
+      return;
+    }
     const uPlan     = window.userPlan || 'free';
     const hwLimit   = PLAN_LIMITS[uPlan]   || 5;
     const learnLimit= LEARN_LIMITS[uPlan]  || 10;
@@ -2596,12 +2614,13 @@
     }
   }
 
-  // Track whether guest has used their one free question (persisted in sessionStorage)
-  let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
-  // If already used, lock after Firebase has had time to resolve auth state
-  if (guestQuestionUsed) {
-    setTimeout(() => { if (!window.currentUser) lockGuestInput(); }, 1500);
-  }
+  // Show correct 0/1 or 1/1 on load, and lock if already used
+  setTimeout(() => {
+    if (!window.currentUser) {
+      refreshUsageBars();
+      if (guestQuestionUsed) lockGuestInput();
+    }
+  }, 1600); // wait for Firebase auth to resolve first
 
   function handleAskQuestion() {
     userPlan = window.userPlan || userPlan;
@@ -2647,16 +2666,8 @@
       }
       guestQuestionUsed = true;
       sessionStorage.setItem('knoxGuestUsed', '1');
-      // Show 1/1 credit used in usage bar
-      const hwFill  = document.getElementById('usageBarFill');
-      const hwLabel = document.getElementById('usageBarLabel');
-      if (hwFill)  { hwFill.style.width = '100%'; hwFill.className = 'usage-bar-fill hw-fill danger'; }
-      if (hwLabel) { hwLabel.textContent = '1 / 1 question used'; }
-      // Hide learn and chat bars — guests only get 1 question total
-      const learnBar  = document.getElementById('learnBarSection');
-      const casualBar = document.getElementById('casualBarSection');
-      if (learnBar)  learnBar.style.display  = 'none';
-      if (casualBar) casualBar.style.display = 'none';
+      // Refresh bar to show 1/1 (refreshUsageBars handles guest display)
+      refreshUsageBars();
       // Execute the question, then lock and show sign up prompt
       executeAskQuestion(() => {
         appendKnoxSignUpPrompt(true);
@@ -2782,20 +2793,24 @@
         <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
       </div>
       <div style="max-width:88%;display:flex;flex-direction:column;gap:10px;">
-        <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;">
-          <p style="font-size:15px;font-weight:700;color:#44403C;line-height:1.6;margin:0 0 6px;">
-            ${afterAnswer
-              ? "Glad that helped! 🦊 That's your one free look — create a free account to keep going."
-              : "You've used your free question! Sign up or sign in to keep asking Knox. 🦊"}
+        <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:16px 18px;">
+          <p style="font-size:15px;font-weight:800;color:#44403C;line-height:1.5;margin:0 0 10px;">
+            Want to keep going? Sign up free — it takes 10 seconds. 🦊
           </p>
-          <p style="font-size:13px;font-weight:600;color:#9CA3AF;margin:0;">Free account = 5 questions/day, no card needed, takes 10 seconds.</p>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:2px;">
+            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 5 homework questions every day</div>
+            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 20 casual chat messages</div>
+            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 10 Learn with Knox sessions</div>
+            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ All subjects covered</div>
+            <div style="font-size:13px;font-weight:700;color:#9CA3AF;">✔ No credit card needed</div>
+          </div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button onclick="switchLoginTab('signup');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
-            Create Free Account
+            Sign Up Free
           </button>
           <button onclick="switchLoginTab('signin');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:800;font-family:inherit;border:2px solid #E5E7EB;background:white;color:#6B7280;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
-            Sign In
+            Log In
           </button>
         </div>
       </div>`;
