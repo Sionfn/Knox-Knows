@@ -2369,6 +2369,12 @@
     if (lBtn) lBtn.style.cssText = inactiveStyle;
     if (cBtn) cBtn.style.cssText = inactiveStyle;
 
+    // If guest is locked, don't re-enable input — just update header color only
+    if (!window.currentUser && guestQuestionUsed) {
+      lockGuestInput();
+      return;
+    }
+
     if (mode === 'answer') {
       if (aBtn) aBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;';
       if (askBtn) { askBtn.style.background='#FF6B00'; askBtn.style.boxShadow='0 3px 0 #CC5500'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #CC5500';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #CC5500';}; }
@@ -2799,8 +2805,11 @@
   function appendKnoxSignUpPrompt(afterAnswer) {
     const chatThread = document.getElementById('chatThread');
     if (!chatThread) return;
+    // Prevent duplicate prompts
+    if (document.getElementById('knoxSignUpPrompt')) return;
 
     const row = document.createElement('div');
+    row.id = 'knoxSignUpPrompt';
     row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
     row.innerHTML = `
       <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
