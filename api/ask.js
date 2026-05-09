@@ -90,14 +90,17 @@ Tip: [one useful shortcut, memory trick, or practical advice]
 USE when: there is a real trick or shortcut worth knowing. SKIP if you'd just be restating the answer.
 
 Insight: [one interesting real-world connection, surprising fact, or deeper meaning]
-USE when: there is something genuinely interesting that helps the concept click. SKIP if nothing stands out.
+USE when: the topic has any real-world application, surprising fact, or connection to something bigger — most science, math, and history concepts do. Be generous with this one. SKIP only for pure arithmetic, spelling, or questions with no interesting angle (e.g. "what is 3+4?", "how do you spell necessary?").
 
 Examples:
-"What is 7 × 8?" → Final Answer + Explanation only.
-"Solve 2x + 3 = 11" → Final Answer + Explanation + Step-by-step.
-"What is the quadratic formula?" → Final Answer + Explanation + Tip + Insight.
-"What caused WW1?" → Final Answer + Explanation + Insight if genuinely interesting.
-"Write me an intro paragraph" → Final Answer (write it) + Explanation. No steps.
+"What is 7 × 8?" → Final Answer + Explanation only. No insight.
+"What is 3 + 4?" → Final Answer + Explanation only. No insight.
+"Solve 2x + 3 = 11" → Final Answer + Explanation + Step-by-step. Tip if useful.
+"What is the Pythagorean theorem?" → Final Answer + Explanation + Tip + Insight (used in architecture, GPS, screen sizes).
+"What is the speed of light?" → Final Answer + Explanation + Insight (universal speed limit, GPS relies on it, nothing can go faster).
+"What is the mitochondria?" → Final Answer + Explanation + Insight (why cells need so many mitochondria, connection to energy in athletes).
+"What caused WW1?" → Final Answer + Explanation + Insight (how one assassination triggered a world war through alliances).
+"Write me an intro paragraph" → Final Answer (write it) + Explanation. No insight needed.
 
 Quality over quantity. Every section must earn its place.`,
   },
@@ -130,14 +133,15 @@ Common Mistake: [what students typically get wrong on this topic and why]
 USE when: there is a specific, real mistake students commonly make here. SKIP if it would be generic advice.
 
 Insight: [one real-world connection, deeper meaning, or genuinely surprising fact]
-USE when: there is something that makes the concept click on a deeper level. SKIP if nothing stands out.
+USE when: the topic has any real-world application, surprising angle, or connection worth knowing — most science, math, and history concepts do. Be generous with this. SKIP only for pure arithmetic or questions with no interesting angle (e.g. "what is 2+2?", "how do you spell separate?").
 
 Examples:
 "What year did WW2 end?" → Final Answer + Explanation only.
 "What is 2 + 2?" → Final Answer + brief Explanation only.
-"How does photosynthesis work?" → Final Answer + Explanation + Step-by-step + Key Points + Insight.
+"How does photosynthesis work?" → Final Answer + Explanation + Step-by-step + Key Points + Insight (plants invented solar power billions of years before humans).
 "Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Common Mistake.
-"What is Newton's 2nd law?" → Final Answer + Explanation + Key Points + Insight.
+"What is Newton's 2nd law?" → Final Answer + Explanation + Key Points + Insight (why a feather and bowling ball fall at the same rate in a vacuum).
+"What is the speed of light?" → Final Answer + Explanation + Insight (GPS satellites have to account for relativity or they'd be off by miles).
 "Write me a thesis statement" → Final Answer (write it) + Explanation. No steps.
 
 Every section must earn its place. The best answer is the most useful one, not the longest.`,
