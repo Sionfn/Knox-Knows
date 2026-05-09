@@ -2596,8 +2596,13 @@
     }
   }
 
-  // Track whether guest has used their one free question
-  let guestQuestionUsed = false;
+  // Track whether guest has used their one free question (persisted in sessionStorage)
+  let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
+  // If already used and still a guest, lock the input on page load
+  if (guestQuestionUsed && !window.currentUser) {
+    // Wait for DOM to be ready
+    window.addEventListener('DOMContentLoaded', () => { if (!window.currentUser) lockGuestInput(); });
+  }
 
   function handleAskQuestion() {
     userPlan = window.userPlan || userPlan;
@@ -2634,7 +2639,7 @@
       executeAskQuestion(); return;
     }
 
-    // GUEST: allow exactly 1 question, then lock and prompt sign up
+    // GUEST: allow exactly 1 message of any kind, then lock and prompt sign up
     if (!window.currentUser) {
       if (guestQuestionUsed) {
         lockGuestInput();
@@ -2642,8 +2647,14 @@
         return;
       }
       guestQuestionUsed = true;
-      updateUsageBar({ hw: 1, hwLimit: 1, casual: 0, casualLimit: 1, nextUnlock: null, csNextUnlock: null });
-      executeAskQuestion(() => appendKnoxSignUpPrompt(true));
+      sessionStorage.setItem('knoxGuestUsed', '1');
+      // Execute the question, then immediately lock and show sign up prompt
+      executeAskQuestion(() => {
+        setTimeout(() => {
+          appendKnoxSignUpPrompt(true);
+          lockGuestInput();
+        }, 150);
+      });
       return;
     }
 
