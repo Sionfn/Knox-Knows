@@ -201,16 +201,19 @@
     .rg-2col   { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
     .rg-3col   { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
     .rg-4col   { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-    .rg-pricing{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .rg-pricing{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
     .rg-footer { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; }
 
     /* Tablet */
     @media (max-width:900px) {
       .grid-4   { grid-template-columns:repeat(2,1fr); }
       .rg-4col  { grid-template-columns:repeat(2,1fr); }
-      .rg-pricing { grid-template-columns:repeat(2,1fr); }
+      .rg-pricing { grid-template-columns:repeat(3,1fr); }
       .rg-3col  { grid-template-columns:repeat(3,1fr); }
       .rg-footer{ grid-template-columns:1fr 1fr; gap:24px; }
+    }
+    @media (max-width:767px) {
+      .rg-pricing { grid-template-columns:1fr !important; }
     }
 
     /* Mobile */
@@ -1895,8 +1898,8 @@
 
   // ── Email Sign In ─────────────────────────────────────────────────────────
   window.handleEmailSignIn = async function() {
-    const email = document.getElementById('siEmail')?.value?.trim();
-    const pw    = document.getElementById('siPassword')?.value;
+    const email = document.getElementById('signinEmail')?.value?.trim();
+    const pw    = document.getElementById('signinPassword')?.value;
     if (!email || !pw) { window.showLoginError?.('Please enter your email and password.'); return; }
     try {
       const result = await signInWithEmailAndPassword(auth, email, pw);
@@ -1911,9 +1914,9 @@
 
   // ── Email Sign Up ─────────────────────────────────────────────────────────
   window.handleEmailSignUp = async function() {
-    const name  = document.getElementById('suName')?.value?.trim();
-    const email = document.getElementById('suEmail')?.value?.trim();
-    const pw    = document.getElementById('suPassword')?.value;
+    const name  = document.getElementById('signupName')?.value?.trim();
+    const email = document.getElementById('signupEmail')?.value?.trim();
+    const pw    = document.getElementById('signupPassword')?.value;
     if (!name || !email || !pw) { window.showLoginError?.('Please fill in all fields.'); return; }
     if (pw.length < 6) { window.showLoginError?.('Password must be at least 6 characters.'); return; }
     try {
@@ -1952,7 +1955,7 @@
 
   // ── Forgot Password ───────────────────────────────────────────────────────
   window.handleForgotPassword = async function() {
-    const email = document.getElementById('fpEmail')?.value?.trim();
+    const email = document.getElementById('forgotEmail')?.value?.trim();
     if (!email) { window.showLoginError?.('Please enter your email address.'); return; }
     try {
       await sendPasswordResetEmail(auth, email);
