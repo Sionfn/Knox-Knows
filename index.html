@@ -2018,6 +2018,8 @@
 
   function toggleDropdown(e) { e.stopPropagation(); document.getElementById('accountDropdown').classList.toggle('open'); }
   function closeDropdown() { const d = document.getElementById('accountDropdown'); if (d) d.classList.remove('open'); }
+  window.toggleDropdown = toggleDropdown;
+  window.closeDropdown  = closeDropdown;
 
   // ── Login Modal ───────────────────────────────────────────────────────────
   function openLoginModal() {
