@@ -426,6 +426,11 @@ export default async function handler(req, res) {
     plan = "free";
   }
 
+  // ── Guest requests (no auth token) — treat as free plan, no quota stored ──
+  // Guests are limited client-side to 1 question. Server-side we just ensure
+  // they get free plan responses only — no premium models, no quota tracking.
+  const isGuest = !uid;
+
   const { question, history = [], image, imageType, mode = 'answer', learnSessionId = null } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
