@@ -2634,10 +2634,12 @@
       executeAskQuestion(); return;
     }
 
-    // GUEST: allow exactly 1 question, then prompt sign up
+    // GUEST: allow exactly 1 question, then lock and prompt sign up
     if (!window.currentUser) {
       if (guestQuestionUsed) {
-        appendKnoxSignUpPrompt(); return;
+        lockGuestInput();
+        appendKnoxSignUpPrompt(false);
+        return;
       }
       guestQuestionUsed = true;
       updateUsageBar({ hw: 1, hwLimit: 1, casual: 0, casualLimit: 1, nextUnlock: null, csNextUnlock: null });
@@ -2725,6 +2727,32 @@
   }
 
   // Knox sends a sign-up message in the chat thread
+  function lockGuestInput() {
+    const input   = document.getElementById('chatInput');
+    const askBtn  = document.getElementById('askBtn');
+    const wrapper = document.getElementById('chatInputWrapper');
+    if (input) {
+      input.disabled    = true;
+      input.placeholder = 'Sign up or sign in to keep asking Knox...';
+      input.style.color = '#9CA3AF';
+    }
+    if (askBtn) {
+      askBtn.disabled             = true;
+      askBtn.style.opacity        = '0.4';
+      askBtn.style.cursor         = 'not-allowed';
+      askBtn.style.boxShadow      = 'none';
+    }
+    if (wrapper) {
+      wrapper.style.background    = '#F3F4F6';
+      wrapper.style.borderColor   = '#E5E7EB';
+    }
+    // Also disable mode tabs so they can't switch modes
+    ['modeAnswerBtn','modeLearnBtn','modeChatBtn'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) { btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none'; }
+    });
+  }
+
   function appendKnoxSignUpPrompt(afterAnswer) {
     const chatThread = document.getElementById('chatThread');
     if (!chatThread) return;
@@ -2737,11 +2765,12 @@
       </div>
       <div style="max-width:88%;display:flex;flex-direction:column;gap:10px;">
         <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;">
-          <p style="font-size:15px;font-weight:600;color:#44403C;line-height:1.6;margin:0;">
+          <p style="font-size:15px;font-weight:700;color:#44403C;line-height:1.6;margin:0 0 6px;">
             ${afterAnswer
-              ? "Glad that helped! 🦊 Make a free account and I'll be here for you every day — <strong>5 questions</strong>, no card needed, literally takes 10 seconds."
-              : "You already used your free question! 😄 Sign up free and I got you — 5 questions every day, no card, I'm not going anywhere 🦊"}
+              ? "Glad that helped! 🦊 That's your one free look — create a free account to keep going."
+              : "You've used your free question! Sign up or sign in to keep asking Knox. 🦊"}
           </p>
+          <p style="font-size:13px;font-weight:600;color:#9CA3AF;margin:0;">Free account = 5 questions/day, no card needed, takes 10 seconds.</p>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button onclick="switchLoginTab('signup');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
@@ -2755,6 +2784,9 @@
 
     chatThread.appendChild(row);
     chatThread.scrollTop = chatThread.scrollHeight;
+
+    // Lock the input so they can't keep typing
+    lockGuestInput();
   }
 
   // ── CONVERSATION HISTORY ──────────────────────────────────────────────────
