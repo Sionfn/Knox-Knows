@@ -20,7 +20,7 @@ const db        = getFirestore();
 const PLAN_QUOTAS = {
   free:   { hw: 5,   learn: 10,  chat: 20  },
   super:  { hw: 25,  learn: 50,  chat: 50  },
-  max:    { hw: 100, learn: 999, chat: 999 },
+  max:    { hw: 100, learn: 999, chat: 500 },
   family: { hw: 25,  learn: 50,  chat: 50  },
 };
 
@@ -524,7 +524,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:       image ? "gpt-4o" : (isChatMode || casual) ? "gpt-4o-mini" : mode === 'learn' && plan === 'max' ? "gpt-4o" : config.model,
+        model:       image ? "gpt-4o" : "gpt-4o-mini",
         messages,
         max_tokens:  image ? 1500 : (isChatMode || casual) ? 300 : mode === 'learn' ? 600 : config.maxOutput,
         temperature: (isChatMode || casual) ? 1.0 : mode === 'learn' ? 0.8 : 0.7,
@@ -559,7 +559,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: casual ? 'gpt-4o-mini' : (image ? 'gpt-4o' : config.model), usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: image ? 'gpt-4o' : 'gpt-4o-mini', usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
