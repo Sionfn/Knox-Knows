@@ -124,25 +124,25 @@ USE when: the question involves a process, calculation, or multi-stage problem. 
 Key Points:
 - [concept]
 - [concept]
-USE when: there are multiple distinct concepts worth remembering separately. SKIP if it would just repeat the explanation.
+USE when: there are multiple distinct concepts worth remembering separately. Be generous — if the topic has 2+ important ideas, list them. SKIP only if it would just repeat the explanation word for word.
 
 Tip: [one useful shortcut, memory trick, or practical advice]
-USE when: there is a real trick or faster method worth knowing. SKIP if nothing genuine comes to mind.
+USE when: there is any formula to remember, a faster method, a common pattern, or practical advice — most math, science, and grammar topics have one. Be generous. SKIP only if there is genuinely nothing useful to add.
 
 Common Mistake: [what students typically get wrong on this topic and why]
-USE when: there is a specific, real mistake students commonly make here. SKIP if it would be generic advice.
+USE when: students commonly confuse, misapply, or misremember anything about this topic — most math, science, and writing topics have at least one. Be generous. SKIP only if the topic is so simple there's nothing to get wrong.
 
 Insight: [one real-world connection, deeper meaning, or genuinely surprising fact]
-USE when: the topic has any real-world application, surprising angle, or connection worth knowing — most science, math, and history concepts do. Be generous with this. SKIP only for pure arithmetic or questions with no interesting angle (e.g. "what is 2+2?", "how do you spell separate?").
+USE when: the topic has any real-world application, surprising angle, or connection worth knowing — most science, math, and history concepts do. Be generous. SKIP only for pure arithmetic or questions with no interesting angle (e.g. "what is 2+2?", "how do you spell separate?").
 
 Examples:
 "What year did WW2 end?" → Final Answer + Explanation only.
 "What is 2 + 2?" → Final Answer + brief Explanation only.
-"How does photosynthesis work?" → Final Answer + Explanation + Step-by-step + Key Points + Insight (plants invented solar power billions of years before humans).
-"Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Common Mistake.
-"What is Newton's 2nd law?" → Final Answer + Explanation + Key Points + Insight (why a feather and bowling ball fall at the same rate in a vacuum).
-"What is the speed of light?" → Final Answer + Explanation + Insight (GPS satellites have to account for relativity or they'd be off by miles).
-"Write me a thesis statement" → Final Answer (write it) + Explanation. No steps.
+"How does photosynthesis work?" → all sections: Step-by-step (light → chlorophyll → glucose), Key Points (chlorophyll, ATP, oxygen byproduct), Tip (remember: CO2 in, O2 out), Common Mistake (students think plants get energy from soil, not sunlight), Insight (plants invented solar power billions of years before humans).
+"Explain Newton's second law and calculate force on 5kg at 3m/s²" → all sections: Step-by-step (F=ma, plug in values), Key Points (force, mass, acceleration relationship), Tip (units: always Newtons = kg × m/s²), Common Mistake (forgetting to convert grams to kg), Insight (F=ma is why seatbelts work).
+"Solve 3x² - 5x + 2 = 0" → Step-by-step + Tip (quadratic formula trick) + Common Mistake (sign errors with ±).
+"What is Newton's 2nd law?" → Key Points + Insight. No steps needed.
+"Write me a thesis statement" → Final Answer (write it) + Explanation. No other sections.
 
 Every section must earn its place. The best answer is the most useful one, not the longest.`,
   },
