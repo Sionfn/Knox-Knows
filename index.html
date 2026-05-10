@@ -1318,13 +1318,8 @@
 </section>
 
 <!-- ===================== ASK AI ===================== -->
-<section id="ai-helper" style="background:#f9fafb;padding:32px 24px 40px;">
+<section id="ai-helper" style="background:#f9fafb;padding:16px 24px 32px;">
   <div style="max-width:780px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <img src="./knox-wave.png" alt="Knox waving" style="width:80px;height:auto;margin-bottom:-10px;filter:drop-shadow(0 4px 8px rgba(255,107,0,0.2));" onerror="this.style.display='none'">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:8px;">Ask Knox</h2>
-      <p style="font-size:16px;font-weight:600;color:#888;">Choose how Knox helps you — then just talk to him.</p>
-    </div>
 
     <!-- Chat container -->
     <div id="chatWidget" style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:520px;max-height:780px;">
@@ -1369,6 +1364,17 @@
           <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
             <p id="knoxIntroText" style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
           </div>
+        </div>
+
+        <!-- Suggestion chips — hidden once user starts chatting -->
+        <div id="suggestionChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 0 46px;">
+          <button onclick="setQuestion('Explain the quadratic formula')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Quadratic formula</button>
+          <button onclick="setQuestion('How does photosynthesis work?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Photosynthesis</button>
+          <button onclick="setQuestion('What caused World War 1?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">World War 1</button>
+          <button onclick="setQuestion('Help me write a thesis statement')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Thesis statement</button>
+          <button onclick="setQuestion('Explain the Pythagorean theorem')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Pythagorean theorem</button>
+          <button onclick="setQuestion(\'Newton\'s 2nd law explained\')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Newton's 2nd law</button>
+          <button onclick="setQuestion('What are derivatives in calculus?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Derivatives</button>
         </div>
       </div>
 
@@ -1482,19 +1488,6 @@
 
     <div id="answerBox" style="display:none;"></div>
 
-    <!-- Try asking chips -->
-    <div style="margin-top:20px;">
-      <div style="font-size:13px;font-weight:800;color:#9CA3AF;margin-bottom:10px;">Try asking Knox:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;max-width:100%;">
-        <button onclick="setQuestion('Explain the quadratic formula')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Quadratic formula</button>
-        <button onclick="setQuestion('How does photosynthesis work?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Photosynthesis</button>
-        <button onclick="setQuestion('What caused World War 1?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">World War 1</button>
-        <button onclick="setQuestion('Help me write a thesis statement')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Thesis statement</button>
-        <button onclick="setQuestion('Explain the Pythagorean theorem')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Pythagorean theorem</button>
-        <button onclick="setQuestion('Newton\'s 2nd law explained')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Newton's 2nd law</button>
-        <button onclick="setQuestion('What are derivatives in calculus?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Derivatives</button>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -3030,8 +3023,21 @@
         <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
           <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
         </div>
+        </div>
+      </div>
+      <div id="suggestionChips" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 0 46px;">
+        <button onclick="setQuestion('Explain the quadratic formula')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Quadratic formula</button>
+        <button onclick="setQuestion('How does photosynthesis work?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Photosynthesis</button>
+        <button onclick="setQuestion('What caused World War 1?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">World War 1</button>
+        <button onclick="setQuestion('Help me write a thesis statement')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Thesis statement</button>
+        <button onclick="setQuestion('Explain the Pythagorean theorem')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Pythagorean theorem</button>
+        <button onclick="setQuestion(&quot;Newton\'s 2nd law explained&quot;)" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Newton's 2nd law</button>
+        <button onclick="setQuestion('What are derivatives in calculus?')" style="background:white;border:1.5px solid #E5E7EB;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:700;color:#6B7280;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">Derivatives</button>
       </div>`;
     }
+    // Restore suggestion chips for new chat
+    const chips = document.getElementById('suggestionChips');
+    if (chips) chips.style.display = 'flex';
     updateConversationIndicator();
     if (window.clearImage) window.clearImage();
   };
@@ -3050,6 +3056,9 @@
 
     // ── Helper: append user bubble ───────────────────────────────────────────
     function appendUserBubble(text) {
+      // Hide suggestion chips once user starts chatting
+      const chips = document.getElementById('suggestionChips');
+      if (chips) chips.style.display = 'none';
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;justify-content:flex-end;';
       const bg     = currentMode === 'learn' ? '#1CB0F6' : currentMode === 'chat' ? '#58CC02' : '#FF6B00';
@@ -3271,6 +3280,16 @@
     }  }  // ← end of executeAskQuestion
 
   // ── Expose inline-called functions to window ────────────────────────────
+  // Hide suggestion chips once user sends their first message
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('#chatThread button[onclick*="setQuestion"]')) {
+      setTimeout(() => {
+        const chips = document.getElementById('suggestionChips');
+        if (chips) chips.style.display = 'none';
+      }, 100);
+    }
+  });
+
   window.scrollToAI      = scrollToAI;
   window.scrollToPricing = scrollToPricing;
   window.smoothScroll    = smoothScroll;
