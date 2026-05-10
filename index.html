@@ -2205,6 +2205,8 @@
     if (hwLabel) hwLabel.textContent = `${hwUsed} / ${hwLimit} hw`;
     if (hwFill)  { hwFill.style.width = hwPct + '%'; hwFill.className = 'usage-bar-fill hw-fill' + (hwPct >= 100 ? ' danger' : hwPct >= 80 ? ' warn' : ''); }
     if (hwCd)    { hwCd.textContent = hwLeft === 1 ? '1 left!' : ''; hwCd.style.color = '#F59E0B'; }
+    const hwDetail = document.getElementById('hwDetailLabel');
+    if (hwDetail) hwDetail.textContent = `${hwUsed} / ${hwLimit}`;
 
     if (usage.nextUnlock && hwLeft === 0) {
       startHwClock(usage.nextUnlock);
@@ -2283,8 +2285,19 @@
     // Update learn bar
     const learnLabel = document.getElementById('learnBarLabel');
     const learnFill  = document.getElementById('learnBarFill');
-    if (learnLabel) learnLabel.textContent = learnLimit >= 999999 ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
-    if (learnFill)  learnFill.style.width  = learnLimit >= 999999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
+    const learnDetail = document.getElementById('learnDetailLabel');
+    if (learnLabel)  learnLabel.textContent  = learnLimit >= 999999 ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
+    if (learnDetail) learnDetail.textContent = learnLimit >= 999999 ? 'Unlimited' : `${learnUsed} / ${learnLimit}`;
+    if (learnFill)   learnFill.style.width   = learnLimit >= 999999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
+
+    // Update hw detail label
+    const hwDetail = document.getElementById('hwDetailLabel');
+    if (hwDetail) hwDetail.textContent = `${hwUsed} / ${hwLimit}`;
+
+    // Update chat detail label (casualBarLabel already handled by updateUsageBar,
+    // but we need to make sure csLimit reflects the actual plan)
+    const csLabel = document.getElementById('casualBarLabel');
+    if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat' : `${csUsed} / ${csLimit} chat`;
   }
   window.refreshUsageBars = refreshUsageBars;
 
