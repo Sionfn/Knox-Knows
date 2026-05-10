@@ -28,10 +28,7 @@ const PRICES = {
     monthly: "price_1TTqWZCqlxC7aoKRESZls3vU",  // $19.99/mo
     yearly:  "price_1TTqXnCqlxC7aoKRsOSwHFBy",  // $149.99/yr
   },
-  family: {
-    monthly: "price_1TTqY7CqlxC7aoKRVBbU8AQl",  // $24.99/mo
-    yearly:  "price_1TTqYTCqlxC7aoKRcSaz2XpZ",  // $199.99/yr
-  },
+  // Family plan coming soon — not yet available
 };
 
 export default async function handler(req, res) {
