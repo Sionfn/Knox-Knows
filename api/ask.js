@@ -303,7 +303,7 @@ Reply with ONE word only: casual or homework`;
     });
     const data = await res.json();
     const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
-    console.log('classifier:', verdict);
+
     return verdict === 'casual';
   } catch(e) {
     console.error('Classifier failed:', e.message);
@@ -361,7 +361,7 @@ Reply with ONE word only: continuation or new`;
     });
     const data = await res.json();
     const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
-    console.log('session classifier:', verdict);
+
     return verdict === 'continuation';
   } catch (e) {
     console.error('Session classifier failed:', e.message);
@@ -539,7 +539,7 @@ export default async function handler(req, res) {
     : isLearnMode ? 'learn'
     : 'hw';
 
-  console.log("ask.js v3:", { plan, mode, creditType, casual, chargeLearnCredit, learnSessionId: !!learnSessionId });
+
 
   // ── Server-side daily quota enforcement ──────────────────────────────────
   if (uid && creditType) {
