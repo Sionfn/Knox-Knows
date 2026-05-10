@@ -4317,8 +4317,9 @@
         } catch(e) { console.warn('Firestore clear failed:', e); }
       }
 
-      // Clear localStorage history key
-      try { localStorage.removeItem('knoxHistory'); } catch(e) {}
+      // Clear localStorage history — must match HISTORY_KEY
+      try { localStorage.removeItem(HISTORY_KEY); } catch(e) {}
+      try { localStorage.removeItem('homeworkai_history'); } catch(e) {} // belt-and-suspenders
       // Persist cleared state in localStorage so it survives page reloads
       try { localStorage.setItem('knoxHistoryCleared', '1'); } catch(e) {}
       window._knoxHistoryCleared = true;
