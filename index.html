@@ -1924,9 +1924,26 @@
     window.currentUser = user || null;
     if (user) {
       await fetchAndSetPlan(user.uid);
+      // Share token with Knox Knows Chrome extension if installed
+      try {
+        const token = await user.getIdToken();
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+          chrome.storage.local.set({
+            idToken:      token,
+            refreshToken: user.refreshToken || '',
+            userPlan:     window.userPlan || 'free'
+          });
+        }
+      } catch(e) {}
     } else {
       window.userPlan = "free";
       userPlan = "free";
+      // Clear extension token on logout
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+          chrome.storage.local.remove(['idToken', 'refreshToken', 'userPlan']);
+        }
+      } catch(e) {}
       if (window.updateLoginUI) window.updateLoginUI();
     }
   });
@@ -2530,7 +2547,17 @@
       if (qInput) qInput.placeholder = 'Chat with Knox about anything...';
     }
   }
-  document.addEventListener('DOMContentLoaded', () => setMode('answer'));
+  document.addEventListener('DOMContentLoaded', () => {
+    setMode('answer');
+    // Handle ?action=login or ?action=signup from Chrome extension
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    if (action === 'login') {
+      setTimeout(() => { switchLoginTab('signin'); openLoginModal(); }, 600);
+    } else if (action === 'signup') {
+      setTimeout(() => { switchLoginTab('signup'); openLoginModal(); }, 600);
+    }
+  });
 
   function setBilling(type) {
     billing = type;
