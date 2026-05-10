@@ -21,12 +21,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Map Stripe price IDs → plan names
 const PRICE_TO_PLAN = {
-  "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super",   // Super Monthly
-  "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",   // Super Yearly
-  "price_1TTqWZCqlxC7aoKRESZls3vU": "max",     // Max Monthly
-  "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",     // Max Yearly
-  "price_1TTqY7CqlxC7aoKRVBbU8AQl": "family",  // Family Monthly
-  "price_1TTqYTCqlxC7aoKRcSaz2XpZ": "family",  // Family Yearly
+  "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super",  // Super Monthly
+  "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly
+  "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly
+  "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly
+  // Family plan coming soon
 };
 
 export const config = { api: { bodyParser: false } };
@@ -41,9 +40,8 @@ async function getRawBody(req) {
 }
 
 const PLAN_NAMES = {
-  super:  { name: "Super Knox ⚡", price: "$9.99/month", questions: "25 questions/day", color: "#58CC02", shadow: "#2D6A00" },
-  max:    { name: "Max Knox 🚀",   price: "$19.99/month", questions: "100 questions/day", color: "#FF6B00", shadow: "#CC5500" },
-  family: { name: "Family Knox 👨‍👩‍👧‍👦", price: "$24.99/month", questions: "25 questions/day per member", color: "#7C3AED", shadow: "#5B21B6" },
+  super: { name: "Super Knox ⚡", price: "$9.99/month",  questions: "25 questions/day",  color: "#58CC02", shadow: "#2D6A00" },
+  max:   { name: "Max Knox 🚀",   price: "$19.99/month", questions: "100 questions/day", color: "#FF6B00", shadow: "#CC5500" },
 };
 
 async function sendPlanEmail(email, plan) {
