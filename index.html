@@ -4013,8 +4013,9 @@
   const HISTORY_KEY = 'homeworkai_history';
 
   function saveToHistory(question, answer, plan) {
-    // Reset the cleared flag so Firestore loads normally after new questions
+    // Reset cleared flags so Firestore loads normally after new questions
     window._knoxHistoryCleared = false;
+    try { localStorage.removeItem('knoxHistoryCleared'); } catch(e) {}
     // Also save to Firestore if user is logged in
     if (window.saveToFirestoreHistory) window.saveToFirestoreHistory(question, answer);
     let history = getHistory();
@@ -4038,7 +4039,8 @@
     const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
 
     // Try Firestore first for logged-in users (skip if just cleared)
-    if (window.currentUser && window.loadFirestoreHistory && !window._knoxHistoryCleared) {
+    const _justCleared = window._knoxHistoryCleared || localStorage.getItem('knoxHistoryCleared') === '1';
+    if (window.currentUser && window.loadFirestoreHistory && !_justCleared) {
       try {
         const items = await window.loadFirestoreHistory();
         if (items && items.length > 0) {
@@ -4190,33 +4192,29 @@
       this.textContent = 'Clearing…';
       this.disabled = true;
 
-      // Set cleared flag immediately so openHistory won't re-fetch
-      window._knoxHistoryCleared = true;
-
-      // Clear Firestore if logged in — delete ALL docs
-      if (window.currentUser && window.loadFirestoreHistory) {
+      // Clear Firestore directly using getDocs + deleteDoc (most reliable)
+      if (window.currentUser) {
         try {
-          const items = await window.loadFirestoreHistory();
-          if (items && items.length > 0) {
-            // Delete in batches to ensure all are gone
-            await Promise.all(items.map(item => window.deleteFirestoreHistory(item.id)));
-            // Double-check: fetch again and delete anything remaining
-            try {
-              const remaining = await window.loadFirestoreHistory();
-              if (remaining && remaining.length > 0) {
-                await Promise.all(remaining.map(item => window.deleteFirestoreHistory(item.id)));
-              }
-            } catch(e2) {}
+          const uid = window.currentUser.uid;
+          const histRef = collection(db, 'users', uid, 'history');
+          // Fetch all docs (no limit) and delete each one by ref
+          const snap = await getDocs(histRef);
+          if (!snap.empty) {
+            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+          }
+          // Second pass to catch any race-condition saves
+          const snap2 = await getDocs(histRef);
+          if (!snap2.empty) {
+            await Promise.all(snap2.docs.map(d => deleteDoc(d.ref)));
           }
         } catch(e) { console.warn('Firestore clear failed:', e); }
       }
 
-      // Clear localStorage
+      // Clear localStorage history key
       try { localStorage.removeItem('knoxHistory'); } catch(e) {}
-      // Also clear any history cache keys
-      try {
-        Object.keys(localStorage).forEach(k => { if (k.startsWith('knox')) localStorage.removeItem(k); });
-      } catch(e) {}
+      // Persist cleared state in localStorage so it survives page reloads
+      try { localStorage.setItem('knoxHistoryCleared', '1'); } catch(e) {}
+      window._knoxHistoryCleared = true;
 
       // Animate out modal
       overlay.style.opacity = '0';
