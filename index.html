@@ -1074,9 +1074,11 @@
     .usage-bar-track { height:8px;border-radius:999px;overflow:hidden; }
     .usage-bar-track.orange { background:#FFE0C2; }
     .usage-bar-track.blue   { background:#D7F2FD; }
+    .usage-bar-track.green  { background:#DCFCE7; }
     .usage-bar-fill         { height:100%;border-radius:999px;transition:width 0.4s ease; }
-    .usage-bar-fill.hw-fill { background:#FF6B00; }
-    .usage-bar-fill.cs-fill { background:#1CB0F6; }
+    .usage-bar-fill.hw-fill   { background:#FF6B00; }
+    .usage-bar-fill.cs-fill   { background:#1CB0F6; }
+    .usage-bar-fill.chat-fill { background:#58CC02; }
     .usage-bar-fill.warn    { background:#F59E0B; }
     .usage-bar-fill.danger  { background:#EF4444; }
 
@@ -1456,9 +1458,7 @@
               <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
               <span id="casualBarCountdown" style="font-size:10px;font-weight:800;color:#9CA3AF;"></span>
             </div>
-            <div style="background:#E5E7EB;border-radius:999px;height:8px;overflow:hidden;">
-              <div id="casualBarFill" style="height:100%;border-radius:999px;background:#58CC02;width:0%;transition:width 0.5s ease;"></div>
-            </div>
+            <div class="usage-bar-track green"><div id="casualBarFill" class="usage-bar-fill chat-fill" style="width:0%;"></div></div>
             <div id="csClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#F0FFF0;border-radius:6px;border:1.5px solid #BBF7D0;">
               <div style="display:flex;align-items:center;justify-content:space-between;">
                 <span style="font-size:10px;font-weight:700;color:#16A34A;">⏱ Next unlocks in:</span>
@@ -1612,7 +1612,7 @@
 <section style="background:var(--orange);padding:80px 24px;text-align:center;position:relative;overflow:hidden;">
   <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
   <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
-    <img src="./Sparkle_Knox.png" alt="Knox" style="width:150px;height:auto;margin-bottom:16px;filter:drop-shadow(0 6px 16px rgba(255,107,0,0.3));">
+    <img src="./Sparkle_Knox.png" alt="Knox" style="width:150px;height:auto;margin-bottom:16px;mix-blend-mode:multiply;filter:drop-shadow(0 6px 16px rgba(255,107,0,0.3));"">
     <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Knox is ready when you are.</h2>
     <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Start free, no credit card needed. Knox knows the answer.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
@@ -2234,7 +2234,7 @@
       const csDisplay = csLimit >= 9999 ? 'Unlimited' : csLimit;
       const csUsedDisplay = csLimit >= 9999 ? '' : `${csUsed} / `;
       if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat' : `${csUsed} / ${csLimit} chat`;
-      if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill cs-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
+      if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill chat-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
       if (csCd)    { csCd.textContent = csLeft === 1 ? '1 left!' : ''; csCd.style.color = '#F59E0B'; }
 
       if (usage.csNextUnlock && csLeft === 0) {
@@ -2525,7 +2525,7 @@
           <button onclick="document.getElementById('knoxBillingModal').remove()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.25);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:white;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:inherit;">✕</button>
           <div style="display:flex;align-items:center;gap:14px;">
             <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);overflow:hidden;flex-shrink:0;">
-              <img src="./Sparkle_Knox.png" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;" onerror="this.outerHTML='<div style=\'font-size:26px;display:flex;align-items:center;justify-content:center;height:100%;\'>🦊</div>'">
+              <img src="./Sparkle_Knox.png" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;mix-blend-mode:multiply;" onerror="this.outerHTML='<div style=\'font-size:26px;display:flex;align-items:center;justify-content:center;height:100%;\'>🦊</div>'">
             </div>
             <div>
               <div style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.08em;">Your Plan</div>
