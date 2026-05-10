@@ -1462,8 +1462,8 @@
       <div id="usageBarWrap" style="border-top:1px solid #F3F4F6;background:white;">
         <!-- Compact summary row (always visible) -->
         <div id="usageCompactRow" style="display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;" onclick="document.getElementById('usageBarExpanded').style.display=document.getElementById('usageBarExpanded').style.display==='none'?'block':'none';document.getElementById('usageChevron').style.transform=document.getElementById('usageChevron').style.transform?'':'rotate(180deg)'">
-          <span style="font-size:10px;">📚</span>
-          <span id="usageBarLabel" style="font-size:11px;font-weight:800;color:#FF6B00;">0 / 5 hw</span>
+          <span id="usageEmoji" style="font-size:10px;">✨</span>
+          <span id="usageBarLabel" style="font-size:11px;font-weight:800;background:linear-gradient(90deg,#FF6B00,#1CB0F6,#58CC02);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">1 free question — any mode</span>
           <span id="learnPill" style="font-size:10px;margin-left:4px;">🧠</span>
           <span id="learnBarLabel" style="font-size:11px;font-weight:800;color:#1CB0F6;">0 / 10 learn</span>
           <span id="chatPill" style="font-size:10px;margin-left:4px;">💬</span>
@@ -1473,36 +1473,49 @@
         </div>
         <!-- Expanded detail (hidden by default) -->
         <div id="usageBarExpanded" style="display:none;padding:0 16px 10px;">
-          <div style="margin-bottom:8px;">
+          <!-- Guest universal bar -->
+          <div id="guestUniversalBar" style="margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="font-size:11px;font-weight:800;color:#FF6B00;">📚 Homework</span>
-              <span id="hwDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 5</span>
+              <span style="font-size:11px;font-weight:800;background:linear-gradient(90deg,#FF6B00,#1CB0F6,#58CC02);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">✨ Universal Credit — any mode</span>
+              <span id="hwDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 1</span>
             </div>
-            <div class="usage-bar-track orange"><div id="usageBarFill" class="usage-bar-fill hw-fill" style="width:0%;"></div></div>
-            <div id="hwClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;border:1.5px solid #FECACA;">
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:10px;font-weight:700;color:#DC2626;">⏱ Next unlocks in:</span>
-                <span id="hwClockDisplay" style="font-size:11px;font-weight:900;color:#DC2626;font-variant-numeric:tabular-nums;">--:--:--</span>
+            <div style="height:8px;border-radius:999px;background:#F3F4F6;overflow:hidden;">
+              <div id="usageBarFill" style="height:100%;border-radius:999px;width:0%;background:linear-gradient(90deg,#FF6B00,#1CB0F6,#58CC02);transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <!-- Logged-in bars -->
+          <div id="loggedInBars" style="display:none;">
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#FF6B00;" id="hwDetailTitle">📚 Homework</span>
+                <span id="hwDetailLabel2" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 5</span>
+              </div>
+              <div class="usage-bar-track orange"><div id="hwBarFillInner" class="usage-bar-fill hw-fill" style="width:0%;"></div></div>
+              <div id="hwClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;border:1.5px solid #FECACA;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:10px;font-weight:700;color:#DC2626;">⏱ Next unlocks in:</span>
+                  <span id="hwClockDisplay" style="font-size:11px;font-weight:900;color:#DC2626;font-variant-numeric:tabular-nums;">--:--:--</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div id="learnBarSection" style="margin-bottom:8px;display:none;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="font-size:11px;font-weight:800;color:#1CB0F6;">🧠 Learn</span>
-              <span id="learnDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 10</span>
+            <div id="learnBarSection" style="margin-bottom:8px;display:none;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#1CB0F6;">🧠 Learn</span>
+                <span id="learnDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 10</span>
+              </div>
+              <div class="usage-bar-track blue"><div id="learnBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div></div>
             </div>
-            <div class="usage-bar-track blue"><div id="learnBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div></div>
-          </div>
-          <div id="casualBarSection" style="display:none;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
-              <span id="csDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 20</span>
-            </div>
-            <div class="usage-bar-track green"><div id="casualBarFill" class="usage-bar-fill chat-fill" style="width:0%;"></div></div>
-            <div id="csClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#F0FFF0;border-radius:6px;border:1.5px solid #BBF7D0;">
-              <div style="display:flex;align-items:center;justify-content:space-between;">
-                <span style="font-size:10px;font-weight:700;color:#16A34A;">⏱ Next unlocks in:</span>
-                <span id="csClockDisplay" style="font-size:11px;font-weight:900;color:#16A34A;font-variant-numeric:tabular-nums;">--:--:--</span>
+            <div id="casualBarSection" style="display:none;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
+                <span id="csDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 20</span>
+              </div>
+              <div class="usage-bar-track green"><div id="casualBarFill" class="usage-bar-fill chat-fill" style="width:0%;"></div></div>
+              <div id="csClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#F0FFF0;border-radius:6px;border:1.5px solid #BBF7D0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:10px;font-weight:700;color:#16A34A;">⏱ Next unlocks in:</span>
+                  <span id="csClockDisplay" style="font-size:11px;font-weight:900;color:#16A34A;font-variant-numeric:tabular-nums;">--:--:--</span>
+                </div>
               </div>
             </div>
           </div>
@@ -2265,14 +2278,16 @@
     const hwPct   = Math.min((hwUsed / hwLimit) * 100, 100);
 
     const hwLabel = document.getElementById('usageBarLabel');
-    const hwFill  = document.getElementById('usageBarFill');
+    const hwFill  = document.getElementById('hwBarFillInner');
     const hwCd    = document.getElementById('usageBarCountdown');
     const hwClockWrap = document.getElementById('hwClockWrap');
 
-    if (hwLabel) hwLabel.textContent = `${hwUsed} / ${hwLimit} hw`;
+    const emojiEl = document.getElementById('usageEmoji');
+    if (emojiEl) emojiEl.textContent = '📚';
+    if (hwLabel) { hwLabel.textContent = `${hwUsed} / ${hwLimit} hw`; hwLabel.style.cssText = 'font-size:11px;font-weight:800;color:#FF6B00;'; }
     if (hwFill)  { hwFill.style.width = hwPct + '%'; hwFill.className = 'usage-bar-fill hw-fill' + (hwPct >= 100 ? ' danger' : hwPct >= 80 ? ' warn' : ''); }
     if (hwCd)    { hwCd.textContent = hwLeft === 1 ? '1 left!' : ''; hwCd.style.color = '#F59E0B'; }
-    const hwDetail = document.getElementById('hwDetailLabel');
+    const hwDetail = document.getElementById('hwDetailLabel2');
     if (hwDetail) hwDetail.textContent = `${hwUsed} / ${hwLimit}`;
 
     if (usage.nextUnlock && hwLeft === 0) {
@@ -2318,39 +2333,43 @@
   let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
 
   function refreshUsageBars() {
-    // Guest mode: show one simple bar — 1 free question
+    // Guest mode: 1 universal credit usable across any mode
     if (!window.currentUser) {
-      const hwFill    = document.getElementById('usageBarFill');
-      const hwLabel   = document.getElementById('usageBarLabel');
-      const hwCd      = document.getElementById('usageBarCountdown');
-      const learnBar  = document.getElementById('learnBarSection');
-      const chatBar   = document.getElementById('casualBarSection');
-      const learnPill = document.getElementById('learnPill');
-      const chatPill  = document.getElementById('chatPill');
-      const learnLbl  = document.getElementById('learnBarLabel');
-      const chatLbl   = document.getElementById('casualBarLabel');
-      const used      = guestQuestionUsed ? 1 : 0;
-      if (hwLabel) { hwLabel.textContent = used ? '1 / 1 free question used' : '1 free question — no sign up needed'; hwLabel.style.color = used ? '#DC2626' : '#FF6B00'; }
-      if (hwFill)  { hwFill.style.width = used ? '100%' : '0%'; hwFill.className = 'usage-bar-fill hw-fill' + (used ? ' danger' : ''); }
-      if (hwCd)    hwCd.textContent = used ? 'Sign up for more →' : '';
-      if (hwCd)    hwCd.style.color = '#FF6B00';
-      if (hwCd)    hwCd.style.cursor = used ? 'pointer' : '';
-      if (hwCd && used) hwCd.onclick = () => document.querySelector('[data-modal="login"]') ? document.querySelector('[data-modal="login"]').click() : openLoginModal?.();
-      if (learnBar)  learnBar.style.display  = 'none';
-      if (chatBar)   chatBar.style.display   = 'none';
+      const hwFill         = document.getElementById('usageBarFill');
+      const hwLabel        = document.getElementById('usageBarLabel');
+      const hwDetailLbl    = document.getElementById('hwDetailLabel');
+      const hwCd           = document.getElementById('usageBarCountdown');
+      const guestBar       = document.getElementById('guestUniversalBar');
+      const loggedInBars   = document.getElementById('loggedInBars');
+      const learnPill      = document.getElementById('learnPill');
+      const chatPill       = document.getElementById('chatPill');
+      const learnLbl       = document.getElementById('learnBarLabel');
+      const chatLbl        = document.getElementById('casualBarLabel');
+      const used           = guestQuestionUsed ? 1 : 0;
+      if (guestBar)    guestBar.style.display    = 'block';
+      if (loggedInBars) loggedInBars.style.display = 'none';
+      if (hwLabel)     { hwLabel.textContent = used ? '1 / 1 used — sign up for more' : '1 free question — any mode'; }
+      if (hwDetailLbl)  hwDetailLbl.textContent  = `${used} / 1`;
+      if (hwFill)      hwFill.style.width = used ? '100%' : '0%';
+      if (hwCd)        { hwCd.textContent = used ? 'Sign up for more →' : ''; hwCd.style.color = '#FF6B00'; hwCd.style.cursor = used ? 'pointer' : ''; }
+      if (hwCd && used) hwCd.onclick = () => openLoginModal?.();
       if (learnPill) learnPill.style.display = 'none';
       if (chatPill)  chatPill.style.display  = 'none';
       if (learnLbl)  learnLbl.style.display  = 'none';
       if (chatLbl)   chatLbl.style.display   = 'none';
       return;
     }
-    // Restore bars and pills for logged-in users
+    // Restore bars for logged-in users
+    const guestBarEl  = document.getElementById('guestUniversalBar');
+    const loggedInEl  = document.getElementById('loggedInBars');
     const learnBarEl  = document.getElementById('learnBarSection');
     const chatBarEl   = document.getElementById('casualBarSection');
     const learnPillEl = document.getElementById('learnPill');
     const chatPillEl  = document.getElementById('chatPill');
     const learnLblEl  = document.getElementById('learnBarLabel');
     const chatLblEl   = document.getElementById('casualBarLabel');
+    if (guestBarEl)  guestBarEl.style.display  = 'none';
+    if (loggedInEl)  loggedInEl.style.display  = 'block';
     if (learnBarEl)  learnBarEl.style.display  = 'block';
     if (chatBarEl)   chatBarEl.style.display   = 'block';
     if (learnPillEl) learnPillEl.style.display = '';
