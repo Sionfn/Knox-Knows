@@ -1883,6 +1883,8 @@
       provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       window.currentUser = result.user;
+      const isNewUser = result._tokenResponse?.isNewUser;
+      if (isNewUser) sendWelcomeEmail(result.user);
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
@@ -1920,6 +1922,7 @@
       await updateProfile(result.user, { displayName: name });
       await result.user.getIdToken(true); // force token refresh with new displayName
       window.currentUser = result.user;
+      sendWelcomeEmail(result.user, name); // send welcome email to new email signups
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
