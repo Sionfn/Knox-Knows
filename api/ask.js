@@ -438,10 +438,14 @@ setInterval(() => {
 
 export default async function handler(req, res) {
   // Handle CORS preflight
+  const allowedOrigins = ["https://knoxknowsapp.com", "http://localhost:3000"];
+  const origin = req.headers.origin || "";
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : "https://knoxknowsapp.com";
+  res.setHeader("Access-Control-Allow-Origin", corsOrigin);
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
   if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     return res.status(200).end();
   }
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -480,6 +484,22 @@ export default async function handler(req, res) {
 
   const { question, history = [], image, imageType, mode = 'answer', learnSessionId = null } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
+
+  // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
+  if (image && image.length > 6_800_000) {
+    return res.status(400).json({ error: "Image too large. Please use an image under 5MB." });
+  }
+
+  // ── Image type guard — only allow jpeg, png, gif, webp ──
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  if (image && imageType && !ALLOWED_IMAGE_TYPES.includes(imageType)) {
+    return res.status(400).json({ error: "Unsupported image type." });
+  }
+
+  // ── Question length guard ──
+  if (question && question.length > 8000) {
+    return res.status(400).json({ error: "Question is too long. Please keep it under 8000 characters." });
+  }
 
   const config = getConfig(plan);
   const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
