@@ -1453,7 +1453,7 @@
           <div id="casualBarSection">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
               <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
-              <span id="casualBarCountdown" style="font-size:10px;font-weight:800;color:#9CA3AF;"></span>
+              <span id="csDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 20</span>
             </div>
             <div class="usage-bar-track green"><div id="casualBarFill" class="usage-bar-fill chat-fill" style="width:0%;"></div></div>
             <div id="csClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#F0FFF0;border-radius:6px;border:1.5px solid #BBF7D0;">
@@ -2217,6 +2217,7 @@
     const csLabel = document.getElementById('casualBarLabel');
     const csFill  = document.getElementById('casualBarFill');
     const csCd    = document.getElementById('casualBarCountdown');
+    const csDetailLabel = document.getElementById('csDetailLabel');
     const csClockWrap = document.getElementById('csClockWrap');
 
     if (uPlan === 'pro_plus') {
@@ -2228,9 +2229,8 @@
       const csLeft  = Math.max(0, csLimit - csUsed);
       const csPct   = Math.min((csUsed / csLimit) * 100, 100);
 
-      const csDisplay = csLimit >= 9999 ? 'Unlimited' : csLimit;
-      const csUsedDisplay = csLimit >= 9999 ? '' : `${csUsed} / `;
       if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat' : `${csUsed} / ${csLimit} chat`;
+      if (csDetailLabel) csDetailLabel.textContent = csLimit >= 9999 ? 'Unlimited' : `${csUsed} / ${csLimit}`;
       if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill chat-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
       if (csCd)    { csCd.textContent = csLeft === 1 ? '1 left!' : ''; csCd.style.color = '#F59E0B'; }
 
@@ -2406,7 +2406,7 @@
           chatCountText = limit + ' messages/day';
         }
         const planLabel = chatPlan === 'max' ? 'Max Knox' : chatPlan === 'super' ? 'Super Knox' : chatPlan === 'family' ? 'Family Knox' : 'Free';
-        introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊<br><span style="font-size:13px;font-weight:700;color:#58CC02;margin-top:8px;display:inline-block;">💬 ' + chatCountText + ' on ' + planLabel + '</span>';
+        introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊';
       }
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
       iconBtns.forEach(b => { b.dataset.hoverColor='#58CC02'; });
