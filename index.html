@@ -2402,7 +2402,7 @@
     if (learnFill)   learnFill.style.width   = learnLimit >= 999999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
 
     // Update hw detail label
-    const hwDetail = document.getElementById('hwDetailLabel');
+    const hwDetail = document.getElementById('hwDetailLabel2');
     if (hwDetail) hwDetail.textContent = `${hwUsed} / ${hwLimit}`;
 
     // Update chat detail label (casualBarLabel already handled by updateUsageBar,
