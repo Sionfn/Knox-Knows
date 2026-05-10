@@ -1924,26 +1924,17 @@
     window.currentUser = user || null;
     if (user) {
       await fetchAndSetPlan(user.uid);
-      // Share token with Knox Knows Chrome extension if installed
+      // Dispatch event for Knox Knows Chrome extension content script
       try {
         const token = await user.getIdToken();
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-          chrome.storage.local.set({
-            idToken:      token,
-            refreshToken: user.refreshToken || '',
-            userPlan:     window.userPlan || 'free'
-          });
-        }
+        window.dispatchEvent(new CustomEvent('knoxAuthChange', {
+          detail: { idToken: token, refreshToken: user.refreshToken || '', userPlan: window.userPlan || 'free', loggedIn: true }
+        }));
       } catch(e) {}
     } else {
       window.userPlan = "free";
       userPlan = "free";
-      // Clear extension token on logout
-      try {
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-          chrome.storage.local.remove(['idToken', 'refreshToken', 'userPlan']);
-        }
-      } catch(e) {}
+      window.dispatchEvent(new CustomEvent('knoxAuthChange', { detail: { loggedIn: false } }));
       if (window.updateLoginUI) window.updateLoginUI();
     }
   });
@@ -2556,6 +2547,10 @@
       setTimeout(() => { switchLoginTab('signin'); openLoginModal(); }, 600);
     } else if (action === 'signup') {
       setTimeout(() => { switchLoginTab('signup'); openLoginModal(); }, 600);
+    } else if (action === 'google') {
+      setTimeout(() => { openLoginModal(); handleGoogleLogin(); }, 600);
+    } else if (action === 'microsoft') {
+      setTimeout(() => { openLoginModal(); handleMicrosoftLogin(); }, 600);
     }
   });
 
