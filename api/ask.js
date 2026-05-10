@@ -399,6 +399,43 @@ async function getOrCreateLearnSession(uid, sessionId, isNewQuestion) {
 
 const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
 
+// ── IP Rate Limiting ───────────────────────────────────────────────────────
+// In-memory store — resets on cold start. Stops casual abuse without Redis.
+const IP_RATE_LIMIT    = 60;  // max requests per IP per hour (all users)
+const GUEST_HARD_LIMIT = 3;   // max requests per IP per hour for guests
+const IP_WINDOW_MS     = 60 * 60 * 1000; // 1 hour
+
+const ipStore = new Map();
+
+function getIp(req) {
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.headers["x-real-ip"] ||
+    req.socket?.remoteAddress ||
+    "unknown"
+  );
+}
+
+function checkIpRateLimit(ip, limit) {
+  const now   = Date.now();
+  const entry = ipStore.get(ip) || { count: 0, windowStart: now };
+  if (now - entry.windowStart > IP_WINDOW_MS) {
+    entry.count = 0;
+    entry.windowStart = now;
+  }
+  entry.count += 1;
+  ipStore.set(ip, entry);
+  return { allowed: entry.count <= limit, count: entry.count, limit };
+}
+
+// Clean stale IPs every hour so the Map doesn't grow forever
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of ipStore.entries()) {
+    if (now - entry.windowStart > IP_WINDOW_MS * 2) ipStore.delete(ip);
+  }
+}, IP_WINDOW_MS);
+
 export default async function handler(req, res) {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -409,6 +446,7 @@ export default async function handler(req, res) {
   }
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  const ip         = getIp(req);
   const authHeader = req.headers.authorization || "";
   let uid, email, plan = "free";
 
@@ -426,10 +464,19 @@ export default async function handler(req, res) {
     plan = "free";
   }
 
-  // ── Guest requests (no auth token) — treat as free plan, no quota stored ──
-  // Guests are limited client-side to 1 question. Server-side we just ensure
-  // they get free plan responses only — no premium models, no quota tracking.
   const isGuest = !uid;
+
+  // ── IP rate limiting ───────────────────────────────────────────────────────
+  // Guests: hard limit of 3 requests/hour per IP — enforced server-side.
+  // Logged-in users: 60 requests/hour per IP — stops scripted abuse.
+  const ipLimit  = isGuest ? GUEST_HARD_LIMIT : IP_RATE_LIMIT;
+  const ipCheck  = checkIpRateLimit(ip, ipLimit);
+  if (!ipCheck.allowed) {
+    const msg = isGuest
+      ? "Guest limit reached. Sign up for free to get 5 questions every day."
+      : "Too many requests. Please slow down and try again in an hour.";
+    return res.status(429).json({ error: msg, limitReached: true });
+  }
 
   const { question, history = [], image, imageType, mode = 'answer', learnSessionId = null } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
