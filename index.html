@@ -2395,10 +2395,18 @@
       if (introBubble) { introBubble.style.background='#F0FFF0'; introBubble.style.borderColor='#BBF7D0'; }
       if (introText) {
         const chatPlan = window.userPlan || userPlan || 'free';
-        const chatLimits = { free: '20', super: '50', max: '500', family: '50' };
-        const chatLimit = chatLimits[chatPlan] || '20';
+        const CHAT_LIMITS = { free: 20, super: 50, max: 500, family: 50 };
+        const csLabelEl = document.getElementById('casualBarLabel');
+        // Try to get live count from the usage bar label (most accurate), else use plan limit
+        let chatCountText = '';
+        if (csLabelEl && csLabelEl.textContent && csLabelEl.textContent !== '0 / 20 chat') {
+          chatCountText = csLabelEl.textContent.replace(' chat','') + ' messages/day';
+        } else {
+          const limit = CHAT_LIMITS[chatPlan] || 20;
+          chatCountText = limit + ' messages/day';
+        }
         const planLabel = chatPlan === 'max' ? 'Max Knox' : chatPlan === 'super' ? 'Super Knox' : chatPlan === 'family' ? 'Family Knox' : 'Free';
-        introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox \u2014 not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. \uD83E\uDDA6<br><span style="font-size:13px;font-weight:700;color:#58CC02;margin-top:8px;display:inline-block;">\uD83D\uDCAC ' + chatLimit + ' chat messages/day on ' + planLabel + '</span>';
+        introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊<br><span style="font-size:13px;font-weight:700;color:#58CC02;margin-top:8px;display:inline-block;">💬 ' + chatCountText + ' on ' + planLabel + '</span>';
       }
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
       iconBtns.forEach(b => { b.dataset.hoverColor='#58CC02'; });
@@ -4008,6 +4016,8 @@
   const HISTORY_KEY = 'homeworkai_history';
 
   function saveToHistory(question, answer, plan) {
+    // Reset the cleared flag so Firestore loads normally after new questions
+    window._knoxHistoryCleared = false;
     // Also save to Firestore if user is logged in
     if (window.saveToFirestoreHistory) window.saveToFirestoreHistory(question, answer);
     let history = getHistory();
@@ -4030,8 +4040,8 @@
 
     const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
 
-    // Try Firestore first for logged-in users
-    if (window.currentUser && window.loadFirestoreHistory) {
+    // Try Firestore first for logged-in users (skip if just cleared)
+    if (window.currentUser && window.loadFirestoreHistory && !window._knoxHistoryCleared) {
       try {
         const items = await window.loadFirestoreHistory();
         if (items && items.length > 0) {
@@ -4183,18 +4193,33 @@
       this.textContent = 'Clearing…';
       this.disabled = true;
 
-      // Clear Firestore if logged in
+      // Set cleared flag immediately so openHistory won't re-fetch
+      window._knoxHistoryCleared = true;
+
+      // Clear Firestore if logged in — delete ALL docs
       if (window.currentUser && window.loadFirestoreHistory) {
         try {
           const items = await window.loadFirestoreHistory();
           if (items && items.length > 0) {
+            // Delete in batches to ensure all are gone
             await Promise.all(items.map(item => window.deleteFirestoreHistory(item.id)));
+            // Double-check: fetch again and delete anything remaining
+            try {
+              const remaining = await window.loadFirestoreHistory();
+              if (remaining && remaining.length > 0) {
+                await Promise.all(remaining.map(item => window.deleteFirestoreHistory(item.id)));
+              }
+            } catch(e2) {}
           }
         } catch(e) { console.warn('Firestore clear failed:', e); }
       }
 
       // Clear localStorage
       try { localStorage.removeItem('knoxHistory'); } catch(e) {}
+      // Also clear any history cache keys
+      try {
+        Object.keys(localStorage).forEach(k => { if (k.startsWith('knox')) localStorage.removeItem(k); });
+      } catch(e) {}
 
       // Animate out modal
       overlay.style.opacity = '0';
