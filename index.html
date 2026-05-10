@@ -215,6 +215,14 @@
     @media (max-width:767px) {
       .rg-pricing { grid-template-columns:1fr !important; }
     }
+    @media (max-width:768px) {
+      #headerNav    { display:none !important; }
+      #hamburgerBtn { display:flex !important; }
+    }
+    @media (min-width:769px) {
+      #hamburgerBtn { display:none !important; }
+      #mobileNav    { display:none !important; }
+    }
 
     /* Mobile */
     @media (max-width:640px) {
@@ -1114,7 +1122,15 @@
 
   <!-- ── NAV LINKS ── -->
   <nav id="headerNav" style="display:flex;align-items:center;gap:4px;margin:0 auto;">
+    <a href="#how-it-works" onclick="smoothScroll('how-it-works')" class="header-nav-link">How it Works</a>
+    <a href="#subjects"     onclick="smoothScroll('subjects')"     class="header-nav-link">Subjects</a>
+    <a href="#pricing"      onclick="smoothScroll('pricing')"      class="header-nav-link">Pricing</a>
   </nav>
+
+  <!-- Hamburger button — mobile only -->
+  <button id="hamburgerBtn" onclick="toggleMobileNav()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;color:white;flex-shrink:0;" aria-label="Menu">
+    <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
 
   <div class="header-nav">
     <a href="#pricing" class="pro-badge" id="proBadge" style="text-decoration:none;">⚡ Upgrade</a>
@@ -1153,6 +1169,38 @@
     </button>
   </div>
 </header>
+
+<!-- ── MOBILE NAV DRAWER ── -->
+<div id="mobileNav" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,0.5);" onclick="closeMobileNav()">
+  <div style="position:absolute;top:0;right:0;width:280px;height:100%;background:white;box-shadow:-8px 0 32px rgba(0,0,0,0.15);display:flex;flex-direction:column;" onclick="event.stopPropagation()">
+    <div style="background:#FF6B00;padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="./knox-logo.jpg" alt="Knox" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);" onerror="this.style.display='none'">
+        <span style="font-size:18px;font-weight:900;color:white;">Knox Knows</span>
+      </div>
+      <button onclick="closeMobileNav()" style="background:rgba(255,255,255,0.2);border:none;cursor:pointer;color:white;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="flex:1;padding:16px 0;overflow-y:auto;">
+      <a href="#how-it-works" onclick="smoothScroll('how-it-works');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">📖</span> How it Works
+      </a>
+      <a href="#subjects" onclick="smoothScroll('subjects');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">📚</span> Subjects
+      </a>
+      <a href="#pricing" onclick="smoothScroll('pricing');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">💰</span> Pricing
+      </a>
+      <a href="#ai-helper" onclick="smoothScroll('ai-helper');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">🦊</span> Ask Knox
+      </a>
+    </div>
+    <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
+      <button onclick="openLoginModal();closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===================== HERO ===================== -->
 <section id="home" style="background:white;padding:72px 24px 64px;text-align:center;position:relative;overflow:hidden;">
@@ -2120,8 +2168,18 @@
     else if (document.getElementById('forgotForm')?.style.display !== 'none') window.handleForgotPassword?.();
   });
 
-  function toggleMobileNav() { document.getElementById('mobileNav').classList.toggle('open'); }
-  function closeMobileNav() { document.getElementById('mobileNav').classList.remove('open'); }
+  function toggleMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    if (!nav) return;
+    const isOpen = nav.style.display === 'flex';
+    nav.style.display = isOpen ? 'none' : 'flex';
+    document.body.style.overflow = isOpen ? '' : 'hidden';
+  }
+  function closeMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    if (nav) nav.style.display = 'none';
+    document.body.style.overflow = '';
+  }
 
   // ── Live clock timers ─────────────────────────────────────────────────────
   let _hwClockInterval = null;
