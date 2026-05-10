@@ -1464,9 +1464,9 @@
         <div id="usageCompactRow" style="display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;" onclick="document.getElementById('usageBarExpanded').style.display=document.getElementById('usageBarExpanded').style.display==='none'?'block':'none';document.getElementById('usageChevron').style.transform=document.getElementById('usageChevron').style.transform?'':'rotate(180deg)'">
           <span style="font-size:10px;">📚</span>
           <span id="usageBarLabel" style="font-size:11px;font-weight:800;color:#FF6B00;">0 / 5 hw</span>
-          <span style="font-size:10px;margin-left:4px;">🧠</span>
+          <span id="learnPill" style="font-size:10px;margin-left:4px;">🧠</span>
           <span id="learnBarLabel" style="font-size:11px;font-weight:800;color:#1CB0F6;">0 / 10 learn</span>
-          <span style="font-size:10px;margin-left:4px;">💬</span>
+          <span id="chatPill" style="font-size:10px;margin-left:4px;">💬</span>
           <span id="casualBarLabel" style="font-size:11px;font-weight:800;color:#58CC02;">0 / 20 chat</span>
           <span id="usageBarCountdown" style="font-size:10px;font-weight:800;margin-left:auto;color:#9CA3AF;"></span>
           <svg id="usageChevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" style="transition:transform 0.2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2320,25 +2320,43 @@
   function refreshUsageBars() {
     // Guest mode: show one simple bar — 1 free question
     if (!window.currentUser) {
-      const hwFill   = document.getElementById('usageBarFill');
-      const hwLabel  = document.getElementById('usageBarLabel');
-      const hwCd     = document.getElementById('usageBarCountdown');
-      const learnBar = document.getElementById('learnBarSection');
-      const chatBar  = document.getElementById('casualBarSection');
-      const used     = guestQuestionUsed ? 1 : 0;
-      if (hwLabel) hwLabel.textContent = used ? '1 / 1 free question used' : '1 free question — no sign up needed';
-      if (hwLabel) hwLabel.style.color = used ? '#DC2626' : '#FF6B00';
+      const hwFill    = document.getElementById('usageBarFill');
+      const hwLabel   = document.getElementById('usageBarLabel');
+      const hwCd      = document.getElementById('usageBarCountdown');
+      const learnBar  = document.getElementById('learnBarSection');
+      const chatBar   = document.getElementById('casualBarSection');
+      const learnPill = document.getElementById('learnPill');
+      const chatPill  = document.getElementById('chatPill');
+      const learnLbl  = document.getElementById('learnBarLabel');
+      const chatLbl   = document.getElementById('casualBarLabel');
+      const used      = guestQuestionUsed ? 1 : 0;
+      if (hwLabel) { hwLabel.textContent = used ? '1 / 1 free question used' : '1 free question — no sign up needed'; hwLabel.style.color = used ? '#DC2626' : '#FF6B00'; }
       if (hwFill)  { hwFill.style.width = used ? '100%' : '0%'; hwFill.className = 'usage-bar-fill hw-fill' + (used ? ' danger' : ''); }
-      if (hwCd)    hwCd.textContent = '';
-      if (learnBar) learnBar.style.display = 'none';
-      if (chatBar)  chatBar.style.display  = 'none';
+      if (hwCd)    hwCd.textContent = used ? 'Sign up for more →' : '';
+      if (hwCd)    hwCd.style.color = '#FF6B00';
+      if (hwCd)    hwCd.style.cursor = used ? 'pointer' : '';
+      if (hwCd && used) hwCd.onclick = () => document.querySelector('[data-modal="login"]') ? document.querySelector('[data-modal="login"]').click() : openLoginModal?.();
+      if (learnBar)  learnBar.style.display  = 'none';
+      if (chatBar)   chatBar.style.display   = 'none';
+      if (learnPill) learnPill.style.display = 'none';
+      if (chatPill)  chatPill.style.display  = 'none';
+      if (learnLbl)  learnLbl.style.display  = 'none';
+      if (chatLbl)   chatLbl.style.display   = 'none';
       return;
     }
-    // Restore bars for logged-in users
-    const learnBarEl = document.getElementById('learnBarSection');
-    const chatBarEl  = document.getElementById('casualBarSection');
-    if (learnBarEl) learnBarEl.style.display = 'block';
-    if (chatBarEl)  chatBarEl.style.display  = 'block';
+    // Restore bars and pills for logged-in users
+    const learnBarEl  = document.getElementById('learnBarSection');
+    const chatBarEl   = document.getElementById('casualBarSection');
+    const learnPillEl = document.getElementById('learnPill');
+    const chatPillEl  = document.getElementById('chatPill');
+    const learnLblEl  = document.getElementById('learnBarLabel');
+    const chatLblEl   = document.getElementById('casualBarLabel');
+    if (learnBarEl)  learnBarEl.style.display  = 'block';
+    if (chatBarEl)   chatBarEl.style.display   = 'block';
+    if (learnPillEl) learnPillEl.style.display = '';
+    if (chatPillEl)  chatPillEl.style.display  = '';
+    if (learnLblEl)  learnLblEl.style.display  = '';
+    if (chatLblEl)   chatLblEl.style.display   = '';
 
     const uPlan     = window.userPlan || 'free';
     const hwLimit   = PLAN_LIMITS[uPlan]   || 5;
