@@ -1486,14 +1486,14 @@
               </div>
             </div>
           </div>
-          <div id="learnBarSection" style="margin-bottom:8px;">
+          <div id="learnBarSection" style="margin-bottom:8px;display:none;">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
               <span style="font-size:11px;font-weight:800;color:#1CB0F6;">🧠 Learn</span>
               <span id="learnDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 10</span>
             </div>
             <div class="usage-bar-track blue"><div id="learnBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div></div>
           </div>
-          <div id="casualBarSection">
+          <div id="casualBarSection" style="display:none;">
             <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
               <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
               <span id="csDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 20</span>
@@ -2318,7 +2318,7 @@
   let guestQuestionUsed = sessionStorage.getItem('knoxGuestUsed') === '1';
 
   function refreshUsageBars() {
-    // Guest mode: show 0/1 and hide learn/chat bars
+    // Guest mode: show one simple bar — 1 free question
     if (!window.currentUser) {
       const hwFill   = document.getElementById('usageBarFill');
       const hwLabel  = document.getElementById('usageBarLabel');
@@ -2326,13 +2326,20 @@
       const learnBar = document.getElementById('learnBarSection');
       const chatBar  = document.getElementById('casualBarSection');
       const used     = guestQuestionUsed ? 1 : 0;
-      if (hwLabel) hwLabel.textContent = `${used} / 1 question`;
+      if (hwLabel) hwLabel.textContent = used ? '1 / 1 free question used' : '1 free question — no sign up needed';
+      if (hwLabel) hwLabel.style.color = used ? '#DC2626' : '#FF6B00';
       if (hwFill)  { hwFill.style.width = used ? '100%' : '0%'; hwFill.className = 'usage-bar-fill hw-fill' + (used ? ' danger' : ''); }
       if (hwCd)    hwCd.textContent = '';
       if (learnBar) learnBar.style.display = 'none';
       if (chatBar)  chatBar.style.display  = 'none';
       return;
     }
+    // Restore bars for logged-in users
+    const learnBarEl = document.getElementById('learnBarSection');
+    const chatBarEl  = document.getElementById('casualBarSection');
+    if (learnBarEl) learnBarEl.style.display = 'block';
+    if (chatBarEl)  chatBarEl.style.display  = 'block';
+
     const uPlan     = window.userPlan || 'free';
     const hwLimit   = PLAN_LIMITS[uPlan]   || 5;
     const learnLimit= LEARN_LIMITS[uPlan]  || 10;
