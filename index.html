@@ -2348,6 +2348,8 @@
       const used           = guestQuestionUsed ? 1 : 0;
       if (guestBar)    guestBar.style.display    = 'block';
       if (loggedInBars) loggedInBars.style.display = 'none';
+      const emojiElG = document.getElementById('usageEmoji');
+      if (emojiElG) emojiElG.textContent = '🎟️';
       if (hwLabel)     { hwLabel.textContent = used ? '1 / 1 used — sign up for more' : '1 free question, sign up for more!'; hwLabel.style.color = used ? '#DC2626' : '#1f2937'; }
       if (hwDetailLbl)  hwDetailLbl.textContent  = `${used} / 1`;
       if (hwFill)      hwFill.style.width = used ? '100%' : '0%';
