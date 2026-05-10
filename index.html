@@ -2503,7 +2503,7 @@
     if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
     if (proNote)   proNote.style.display = type === 'yearly'  ? 'block'  : 'none';
     if (proBtn)    proBtn.textContent    = type === 'monthly' ? 'Start Free Trial' : 'Get Super Knox Yearly';
-    if (proTrial)  proTrial.style.display = type === 'monthly' ? 'flex' : 'none';
+    if (proTrial)  proTrial.style.display = 'flex';
 
     // Max Knox pricing
     const maxPrice = document.getElementById('maxPrice');
