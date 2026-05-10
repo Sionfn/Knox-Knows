@@ -2136,7 +2136,7 @@
     if (nameEl)  nameEl.textContent  = name.split(' ')[0];
     if (dName)   dName.textContent   = name;
     if (dEmail)  dEmail.textContent  = email || '';
-    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : userPlan === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
+    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : userPlan === 'family' ? '⚡ Super Knox' : '🆓 Free';
     if (dPlan)  dPlan.textContent  = planLabel;
     if (iconEl) {
       if (photoURL) {
@@ -2468,7 +2468,7 @@
           const limit = CHAT_LIMITS[chatPlan] || 20;
           chatCountText = limit + ' messages/day';
         }
-        const planLabel = chatPlan === 'max' ? 'Max Knox' : chatPlan === 'super' ? 'Super Knox' : chatPlan === 'family' ? 'Family Knox' : 'Free';
+        const planLabel = chatPlan === 'max' ? 'Max Knox' : chatPlan === 'super' ? 'Super Knox' : chatPlan === 'family' ? 'Super Knox' : 'Free';
         introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊';
       }
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
@@ -2506,16 +2506,6 @@
     if (maxNote)  maxNote.style.display = type === 'yearly'  ? 'block'  : 'none';
     if (maxBtn)   maxBtn.textContent    = type === 'monthly' ? 'Get Max Knox' : 'Get Max Knox Yearly';
 
-    // Family Knox pricing
-    const familyPrice  = document.getElementById('familyPrice');
-    const familyPeriod = document.getElementById('familyPeriod');
-    const familyNote   = document.getElementById('familyYearlyNote');
-    const familyBtn    = document.getElementById('familyCTABtn');
-    if (familyPrice)  familyPrice.textContent  = type === 'monthly' ? '$24.99' : '$16.99';
-    if (familyPeriod) familyPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
-    if (familyNote)   familyNote.style.display = type === 'yearly'  ? 'block'  : 'none';
-    if (familyBtn)    familyBtn.textContent    = type === 'monthly' ? 'Get Family Knox' : 'Get Family Knox Yearly';
-
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
   }
 
@@ -2528,12 +2518,10 @@
   async function handlePurchase(planName) {
     if (!window.currentUser) { openLoginModal(); return; }
 
-    // Map button plan names to API plan keys and current billing period
-    const planKey = planName === 'Super' ? 'super' : planName === 'Max' ? 'max' : 'family';
+    const planKey = planName === 'Super' ? 'super' : planName === 'Max' ? 'max' : 'super';
     const billingPeriod = billing || 'monthly';
 
-    // Show loading state on the button
-    const btnMap = { Super: 'proCTABtn', Max: 'maxCTABtn', Family: 'familyCTABtn' };
+    const btnMap = { Super: 'proCTABtn', Max: 'maxCTABtn' };
     const btn = document.getElementById(btnMap[planName]);
     const originalText = btn?.textContent;
     if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
@@ -2569,15 +2557,15 @@
 
     // Build plan display info
     const plan     = window.userPlan || 'free';
-    const planNames  = { free: 'Free', super: 'Super Knox', max: 'Max Knox', family: 'Family Knox' };
-    const planPrices = { free: '$0', super: '$9.99/mo', max: '$19.99/mo', family: '$14.99/mo' };
-    const planColors = { free: '#6B7280', super: '#22C55E', max: '#FF6B00', family: '#8B5CF6' };
-    const planEmojis = { free: '🐾', super: '⚡', max: '🚀', family: '👨‍👩‍👧‍👦' };
+    const planNames  = { free: 'Free', super: 'Super Knox', max: 'Max Knox', family: 'Super Knox' };
+    const planPrices = { free: '$0', super: '$9.99/mo', max: '$19.99/mo', family: '$9.99/mo' };
+    const planColors = { free: '#6B7280', super: '#22C55E', max: '#FF6B00', family: '#22C55E' };
+    const planEmojis = { free: '🐾', super: '⚡', max: '🚀', family: '⚡' };
     const planDescs  = {
       free:   'You\'re on the free plan — 5 questions a day, no card needed.',
       super:  'Step-by-step help, smarter answers, 25 questions a day.',
       max:    '100 questions a day. Full power, full depth.',
-      family: '25 questions/day, great for the whole family.',
+      family: 'Step-by-step help, smarter answers, 25 questions a day.',
     };
 
     // Remove existing modal if open
@@ -2803,7 +2791,7 @@
       } else if (_bp === 'super') {
         banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Super Knox &nbsp;·&nbsp; 25 questions/day &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="scrollToPricing()">Upgrade to Max Knox</span></span></div>';
       } else if (_bp === 'family') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F5F3FF;border-top:1.5px solid #C4B5FD;border-bottom:1.5px solid #C4B5FD;"><div style="width:7px;height:7px;border-radius:50%;background:#7C3AED;flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#5B21B6;letter-spacing:0.01em;">👨‍👩‍👧‍👦 Family Knox &nbsp;·&nbsp; 25 questions/day per member</span></div>';
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FFF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:#22C55E;flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#15803D;letter-spacing:0.01em;">⚡ Super Knox · 25 questions/day</span></div>';
       } else {
         banner.innerHTML = '';
       }
@@ -2899,7 +2887,7 @@
     const msgs = {
       free:   { title: "You've used all 20 chat messages today 💬", sub: "Your messages reset tomorrow — or upgrade to Super Knox for 50 chat messages every day plus 25 homework questions.", btn: "Upgrade to Super Knox ⚡", color: "#58CC02", shadow: "#2D6A00" },
       super:  { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for unlimited chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
-      family: { title: "You've used all 50 chat messages today 👨‍👩‍👧‍👦", sub: "Each family member gets 50 chat messages per day. Your messages reset tomorrow!", btn: null, color: "#7C3AED", shadow: "#5B21B6" },
+      family: { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for unlimited chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
     };
     const m = msgs[plan] || msgs.free;
     const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
@@ -2933,11 +2921,11 @@
         color: "#FF6B00", shadow: "#CC5500"
       },
       family: {
-        title: "You've used all 25 questions today 👨‍👩‍👧‍👦",
-        sub: "Each family member gets 25 questions per day. Your questions reset tomorrow — see you then!",
-        btn: null,
+        title: "You've used all 25 questions today ⚡",
+        sub: "Your questions reset tomorrow — or upgrade to Max Knox for 100 questions every day, best-in-class AI, and no daily stress.",
+        btn: "Upgrade to Max Knox 🚀",
         btn2: null,
-        color: "#7C3AED", shadow: "#5B21B6"
+        color: "#FF6B00", shadow: "#CC5500"
       },
       max: {
         title: "You've used all 100 questions today 🚀",
@@ -3663,7 +3651,7 @@
     // ── Fallback: nothing structured parsed → use smart freeform renderer ─────
     if (!finalAnswerText && !stepsHtml && paragraphs.length === 0 && !tipText && !insightText && !commonMistakeText && keyPointsBullets.length === 0) {
       const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(answer, plan)}<div style="height:10px;"></div>`;
     }
 
@@ -3671,10 +3659,10 @@
     if (!finalAnswerText && paragraphs.length > 0 && !stepsHtml) {
       const allText = paragraphs.map(p => p.text).join('\n\n');
       const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(allText, plan)}<div style="height:10px;"></div>`;
     }
-    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : plan === "family" ? "👨‍👩‍👧‍👦 Family" : "🆓 Free";
+    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : plan === "family" ? "⚡ Super" : "🆓 Free";
     const planTagClass = plan === "max" ? "tag-max" : plan === "super" ? "tag-super" : plan === "family" ? "tag-family" : "tag-free";
     let html = ``;
 
@@ -4126,7 +4114,7 @@
     list.innerHTML = history.map((item, i) => {
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
       const q = (item.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `<div class="hist-card" data-index="${i}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;">${q}</div>
@@ -4201,7 +4189,7 @@
       const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '👨‍👩‍👧‍👦 Family' : '🆓 Free';
+      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
       return `<div id="hist-${item.id}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;transition:all 0.2s;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;margin-bottom:12px;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -4505,8 +4493,8 @@
     const usage = getUsageData();
 
     // Plan label + color
-    const planLabel = _plan === 'max' ? '🚀 Max Knox' : _plan === 'super' ? '⚡ Super Knox' : _plan === 'family' ? '👨‍👩‍👧‍👦 Family Knox' : '🆓 Free';
-    const planColor = _plan === 'max' ? '#FF6B00' : _plan === 'super' ? '#58CC02' : _plan === 'family' ? '#7C3AED' : '#1CB0F6';
+    const planLabel = _plan === 'max' ? '🚀 Max Knox' : _plan === 'super' ? '⚡ Super Knox' : _plan === 'family' ? '⚡ Super Knox' : '🆓 Free';
+    const planColor = _plan === 'max' ? '#FF6B00' : _plan === 'super' ? '#58CC02' : _plan === 'family' ? '#22C55E' : '#1CB0F6';
     document.getElementById('settingsPlanBadge').innerHTML = `<span style="background:${planColor};color:white;padding:4px 12px;border-radius:8px;font-size:13px;">${planLabel}</span>`;
 
     const isPaid = _plan === 'super' || _plan === 'max' || _plan === 'family';
@@ -4532,7 +4520,7 @@
     let usageText;
     if (_plan === 'max') usageText = '♾️ Unlimited';
     else if (_plan === 'super') usageText = `${questionsUsed} of 25 used today`;
-    else if (_plan === 'family') usageText = `${questionsUsed} of 25 used today`;
+    
     else usageText = `${Math.max(0, DAILY_LIMIT - questionsUsed)} of 5 remaining`;
     document.getElementById('settingsUsage').textContent = usageText;
 
