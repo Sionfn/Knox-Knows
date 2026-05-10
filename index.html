@@ -259,7 +259,7 @@
     }
     .header-logo-img {
       width:42px; height:42px; border-radius:50%;
-      border:3px solid rgba(255,255,255,0.4);
+      border:3px solid white;
       overflow:hidden; background:#FFE0C2;
       object-fit:cover; object-position:top center;
       flex-shrink:0;
@@ -1121,13 +1121,6 @@
     <img src="./knox-logo.jpg" alt="Knox" class="header-logo-img" onerror="this.style.fontSize='24px';this.outerHTML='<span style=\'font-size:28px;\'>🦊</span>'">
     <span class="header-logo-text">Knox Knows</span>
   </a>
-
-  <!-- ── NAV LINKS ── -->
-  <nav id="headerNav" style="display:flex;align-items:center;gap:4px;margin:0 auto;">
-    <a href="#how-it-works" onclick="smoothScroll('how-it-works')" class="header-nav-link">How it Works</a>
-    <a href="#subjects"     onclick="smoothScroll('subjects')"     class="header-nav-link">Subjects</a>
-    <a href="#pricing"      onclick="smoothScroll('pricing')"      class="header-nav-link">Pricing</a>
-  </nav>
 
   <!-- Hamburger button — mobile only -->
   <button id="hamburgerBtn" onclick="toggleMobileNav()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;color:white;flex-shrink:0;" aria-label="Menu">
