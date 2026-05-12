@@ -74,9 +74,11 @@ export default async function handler(req, res) {
 
     const baseUrl = req.headers.origin || `https://${req.headers.host}`;
 
-    // 3-day free trial on Super Knox (both monthly and yearly)
+    // 3-day free trial on Super Knox MONTHLY only.
+    // Yearly buyers are already committing — they don't need a trial, and
+    // a trial on a $79.99 annual purchase reads as gimmicky rather than useful.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
-    if (plan === "super") {
+    if (plan === "super" && billing === "monthly") {
       subscriptionData.trial_period_days = 3;
     }
 
