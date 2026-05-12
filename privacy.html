@@ -99,9 +99,10 @@
     <ul>
       <li><span class="highlight">Account info</span> — your name and email address when you sign up via Google, Microsoft, or email</li>
       <li><span class="highlight">Usage data</span> — daily question counts to enforce plan limits (stored for 30 days, then deleted)</li>
-      <li><span class="highlight">Questions</span> — the questions and images you submit to Knox to generate answers</li>
+      <li><span class="highlight">Questions &amp; chat history</span> — the questions and images you submit to Knox, and Knox's answers. Stored for 30 days so you can access your history across devices, then automatically deleted</li>
       <li><span class="highlight">Billing info</span> — handled entirely by Stripe. We only store your Stripe customer ID, not card details</li>
       <li><span class="highlight">Device info</span> — browser type and basic technical info for debugging</li>
+      <li><span class="highlight">Analytics</span> — anonymized page views and interaction data via Google Analytics, used only to improve the product</li>
     </ul>
   </div>
 
@@ -134,6 +135,8 @@
       <li><span class="highlight">OpenAI</span> — powers Knox's AI responses. Questions are sent to OpenAI's API. <a href="https://openai.com/policies/privacy-policy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
       <li><span class="highlight">Stripe</span> — handles all payment processing. We never see or store your card details. <a href="https://stripe.com/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
       <li><span class="highlight">Vercel</span> — hosts the Knox Knows platform. <a href="https://vercel.com/legal/privacy-policy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
+      <li><span class="highlight">Google Analytics</span> — anonymized usage analytics. <a href="https://policies.google.com/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
+      <li><span class="highlight">SendGrid</span> — sends transactional emails (welcome, billing). <a href="https://www.twilio.com/en-us/legal/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
     </ul>
   </div>
 
@@ -148,9 +151,10 @@
       <li><span class="highlight">Authentication</span> — Firebase uses cookies to keep you signed in</li>
       <li><span class="highlight">Usage tracking</span> — we store your daily question count locally so the progress bar updates instantly</li>
       <li><span class="highlight">Theme preference</span> — we remember whether you prefer dark or light mode</li>
-      <li><span class="highlight">Chat history</span> — stored locally in your browser only, never on our servers</li>
+      <li><span class="highlight">Chat history</span> — saved both locally in your browser and to your account (so it follows you between devices). Server-stored history is kept for 30 days and then automatically deleted</li>
+      <li><span class="highlight">Analytics</span> — we use Google Analytics to understand which features get used and where users get stuck. It sets a first-party cookie. We do not use this data for advertising</li>
     </ul>
-    <p>We do not use advertising cookies or third-party tracking cookies.</p>
+    <p>We do not use advertising cookies. You can disable analytics by using your browser's "Do Not Track" setting or a privacy extension.</p>
   </div>
 
   <!-- Section 5 -->
