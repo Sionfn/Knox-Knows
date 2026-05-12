@@ -438,7 +438,10 @@ setInterval(() => {
 
 export default async function handler(req, res) {
   // Handle CORS preflight
-  const allowedOrigins = ["https://knoxknowsapp.com", "http://localhost:3000"];
+  // localhost is only allowed in non-production environments
+  const allowedOrigins = process.env.NODE_ENV === "production"
+    ? ["https://knoxknowsapp.com"]
+    : ["https://knoxknowsapp.com", "http://localhost:3000"];
   const origin = req.headers.origin || "";
   const corsOrigin = allowedOrigins.includes(origin) ? origin : "https://knoxknowsapp.com";
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
