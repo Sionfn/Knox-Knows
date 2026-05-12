@@ -4,7 +4,6 @@
 import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { getAuth as getAdminAuth } from "firebase-admin/auth";
 
 if (!getApps().length) {
   initializeApp({
@@ -25,7 +24,6 @@ const PRICE_TO_PLAN = {
   "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly
   "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly
   "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly
-  // Family plan coming soon
 };
 
 export const config = { api: { bodyParser: false } };
@@ -126,6 +124,36 @@ async function sendPlanEmail(email, plan) {
   }
 }
 
+// ── Idempotency check ──────────────────────────────────────────────────────
+// Stripe occasionally retries webhooks. Without idempotency we'd send
+// duplicate emails and run duplicate Firestore writes. Returns true if we've
+// already processed this event ID, false otherwise (and marks it as seen).
+async function alreadyProcessed(eventId) {
+  if (!eventId) return false;
+  const ref = db.collection("webhookEvents").doc(eventId);
+  try {
+    const snap = await ref.get();
+    if (snap.exists) return true;
+    await ref.set({ processedAt: new Date().toISOString() });
+    return false;
+  } catch (err) {
+    console.warn("Idempotency check failed:", err.message);
+    return false; // fail open — better to risk a duplicate than skip a valid event
+  }
+}
+
+// Resolve uid from a subscription object — checks metadata first, then
+// looks up the customer's email and matches against Firestore users.
+async function resolveUid(subscription) {
+  if (subscription.metadata?.uid) return subscription.metadata.uid;
+  // Fall back to looking up the customer
+  try {
+    const customer = await stripe.customers.retrieve(subscription.customer);
+    if (customer.metadata?.uid) return customer.metadata.uid;
+  } catch (e) { /* fall through */ }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
@@ -142,6 +170,12 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("Webhook signature failed:", err.message);
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
+  }
+
+  // ── Idempotency: skip events we've already handled ──────────────────────
+  if (await alreadyProcessed(event.id)) {
+    console.log(`Skipping duplicate event: ${event.id}`);
+    return res.status(200).json({ received: true, duplicate: true });
   }
 
   // ── Handle events ─────────────────────────────────────────────────────────
@@ -180,7 +214,7 @@ export default async function handler(req, res) {
         if (invoice.billing_reason === "subscription_create") break; // already handled above
 
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-        const uid          = subscription.metadata?.uid;
+        const uid          = await resolveUid(subscription);
         const priceId      = subscription.items.data[0]?.price?.id;
         const plan         = PRICE_TO_PLAN[priceId] || "super";
 
@@ -195,14 +229,33 @@ export default async function handler(req, res) {
         break;
       }
 
-      // Subscription cancelled or payment failed — downgrade to free
-      case "customer.subscription.deleted":
-      case "invoice.payment_failed": {
-        const obj = event.data.object;
-        const sub = obj.subscription
-          ? await stripe.subscriptions.retrieve(obj.subscription)
-          : obj;
-        const uid = sub.metadata?.uid;
+      // Plan changed via customer portal (Super → Max, monthly → yearly, etc.)
+      // This is the only place Stripe tells us about a plan switch — we must
+      // handle it or paying customers will be stuck on the wrong plan.
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+        const uid          = await resolveUid(subscription);
+        const priceId      = subscription.items.data[0]?.price?.id;
+        const plan         = PRICE_TO_PLAN[priceId];
+
+        // Only update if we recognize the price AND subscription is active
+        // (skip past_due, unpaid, etc. — those are handled by other events)
+        if (uid && plan && (subscription.status === "active" || subscription.status === "trialing")) {
+          await db.collection("users").doc(uid).set({
+            plan,
+            planStatus: "active",
+            planRenewedAt: new Date().toISOString(),
+          }, { merge: true });
+          console.log(`✓ Plan updated: uid=${uid} plan=${plan} status=${subscription.status}`);
+        }
+        break;
+      }
+
+      // Subscription cancelled — downgrade to free
+      // Only fires when the subscription is actually gone (after retry period)
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        const uid          = await resolveUid(subscription);
 
         if (uid) {
           await db.collection("users").doc(uid).set({
@@ -211,6 +264,25 @@ export default async function handler(req, res) {
             cancelledAt: new Date().toISOString(),
           }, { merge: true });
           console.log(`✓ Plan cancelled: uid=${uid}`);
+        }
+        break;
+      }
+
+      // Payment failed — DO NOT downgrade. Stripe retries failed payments
+      // for ~3 weeks. We just mark the status; access continues until
+      // customer.subscription.deleted fires (after final retry fails).
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        if (!invoice.subscription) break;
+
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const uid          = await resolveUid(subscription);
+
+        if (uid) {
+          await db.collection("users").doc(uid).set({
+            planStatus: "past_due",
+          }, { merge: true });
+          console.log(`⚠ Payment failed: uid=${uid} — marked past_due, access continues`);
         }
         break;
       }
