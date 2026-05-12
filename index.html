@@ -2,13 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-46QTG4P9GS"></script>
+  <!-- Google Analytics — only loads after the user accepts the cookie banner.
+       This makes the banner a genuine consent gate (GDPR-compatible) rather
+       than just a notice. The banner JS at the bottom of the page calls
+       window.loadAnalytics() once consent is given, and also on page load
+       if consent was previously stored. -->
   <script>
+    window.GA_ID = 'G-46QTG4P9GS';
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-46QTG4P9GS');
+    function gtag(){ dataLayer.push(arguments); }
+    window.gtag = gtag;
+    window.loadAnalytics = function() {
+      if (window._gaLoaded) return;
+      window._gaLoaded = true;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA_ID;
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', window.GA_ID);
+    };
+    // If the user already accepted on a previous visit, load immediately.
+    try {
+      if (localStorage.getItem('cookie_ok') === '1') window.loadAnalytics();
+    } catch(e) {}
   </script>
   <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
   <link rel="apple-touch-icon" href="/knox-logo.jpg">
@@ -21,8 +38,9 @@
   <meta property="og:url" content="https://knoxknowsapp.com">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://knoxknowsapp.com/KnoxKnox.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1983">
+  <meta property="og:image:height" content="793">
+  <meta property="og:image:alt" content="Knox Knows — AI study companion">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://knoxknowsapp.com/KnoxKnox.png">
   <meta name="twitter:title" content="Knox Knows — Stop Guessing. Start Knowing.">
@@ -613,10 +631,8 @@
     }
     .tag-free     { background:#EFF6FF; color:#1D4ED8; border:1.5px solid #93C5FD; }
     .tag-pro      { background:var(--green-light); color:var(--green-dark); border:1.5px solid var(--green); }
-    .tag-pro-plus { background:var(--orange-light); color:var(--orange); border:1.5px solid var(--orange); }
     .tag-super    { background:#F0FDF4; color:#166534; border:1.5px solid #86EFAC; }
     .tag-max      { background:#FFF4EC; color:#CC5500; border:1.5px solid #FDBA74; }
-    .tag-family   { background:#F5F3FF; color:#5B21B6; border:1.5px solid #C4B5FD; }
 
     .resp-final {
       background:var(--green-light); border-left:5px solid var(--green);
@@ -1178,21 +1194,21 @@
       </button>
     </div>
     <div style="flex:1;padding:16px 0;overflow-y:auto;">
-      <a href="#how-it-works" onclick="smoothScroll('how-it-works');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+      <a href="#how-it-works" onclick="smoothScroll('how-it-works',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">📖</span> How it Works
       </a>
-      <a href="#subjects" onclick="smoothScroll('subjects');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+      <a href="#subjects" onclick="smoothScroll('subjects',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">📚</span> Subjects
       </a>
-      <a href="#pricing" onclick="smoothScroll('pricing');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+      <a href="#pricing" onclick="smoothScroll('pricing',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">💰</span> Pricing
       </a>
-      <a href="#ai-helper" onclick="smoothScroll('ai-helper');closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+      <a href="#ai-helper" onclick="smoothScroll('ai-helper',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">🦊</span> Ask Knox
       </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
-      <button onclick="openLoginModal();closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+      <button onclick="openLoginModal();if(window.switchLoginTab)switchLoginTab('signup');closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
     </div>
   </div>
 </div>
@@ -1229,9 +1245,8 @@
 
     <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account — 5 questions every day, no credit card needed</p>
 
-    <!-- Social proof row with running Knox -->
+    <!-- Social proof row -->
     <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
-      <img src="./knox-run.png" alt="Knox running" style="width:90px;height:auto;object-fit:contain;" onerror="this.style.display='none'">
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
           <span style="font-size:20px;">📚</span> Every subject K-12 → College
@@ -1243,7 +1258,6 @@
           <span style="font-size:20px;">🎓</span> Step-by-step learning
         </div>
       </div>
-      <img src="./knox-backpack.png" alt="Knox with backpack" style="width:90px;height:auto;object-fit:contain;" onerror="this.style.display='none'">
     </div>
   </div>
 </section>
@@ -1257,7 +1271,7 @@
     <div class="rg-2col" style="margin-top:48px;">
       <!-- Get the Answer -->
       <div class="reveal delay-1" onclick="scrollToAI();setMode('answer')" style="background:white;border-radius:24px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <img src="./knox-laptop.png" alt="Knox with laptop" style="width:100px;height:auto;float:right;margin:-10px -10px 10px 16px;" onerror="this.style.display='none'">
+        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">⚡</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Get the Answer</h3>
         <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Stuck on a problem? Knox gives you a clear, instant answer with full explanations. Fast and accurate.</p>
         <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #CC5500;">
@@ -1267,7 +1281,7 @@
 
       <!-- Learn with Knox -->
       <div class="reveal delay-2" onclick="scrollToAI();setMode('learn')" style="background:white;border-radius:24px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <img src="./knox-book.png" alt="Knox reading book" style="width:100px;height:auto;float:right;margin:-10px -10px 10px 16px;" onerror="this.style.display='none'">
+        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">🧠</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Learn with Knox</h3>
         <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Knox guides you step-by-step like a real tutor — asking questions, giving hints, helping you actually understand.</p>
         <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #0A85C2;">
@@ -1286,19 +1300,19 @@
     <div class="rg-3col" style="margin-top:48px;">
       <div class="reveal delay-1" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">1</div>
-        <img src="./knox-think.png" alt="Knox thinking" style="width:80px;height:auto;margin-bottom:12px;" onerror="this.style.display='none'">
+        <div style="font-size:48px;margin-bottom:8px;">✏️</div>
         <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Type or upload</h3>
         <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type your question or snap a photo of your homework problem.</p>
       </div>
       <div class="reveal delay-2" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">2</div>
-        <img src="./knox-happy.png" alt="Knox happy" style="width:80px;height:auto;margin-bottom:12px;" onerror="this.style.display='none'">
+        <div style="font-size:48px;margin-bottom:8px;">🦊</div>
         <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Knox figures it out</h3>
         <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Knox analyzes your question and builds a clear, step-by-step explanation.</p>
       </div>
       <div class="reveal delay-3" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">3</div>
-        <img src="./knox-thumbs.png" alt="Knox thumbs up" style="width:80px;height:auto;margin-bottom:12px;" onerror="this.style.display='none'">
+        <div style="font-size:48px;margin-bottom:8px;">🎓</div>
         <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">You actually learn</h3>
         <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Get the answer and understand why — so you're ready for the test.</p>
       </div>
@@ -1361,7 +1375,6 @@
 <section id="ai-helper" style="background:#f9fafb;padding:40px 24px 80px;">
   <div style="max-width:780px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:32px;">
-      <img src="./knox-wave.png" alt="Knox waving" style="width:80px;height:auto;margin-bottom:-10px;filter:drop-shadow(0 4px 8px rgba(255,107,0,0.2));" onerror="this.style.display='none'">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:8px;">Ask Knox</h2>
       <p style="font-size:16px;font-weight:600;color:#888;">Choose how Knox helps you — then just talk to him.</p>
     </div>
@@ -1852,17 +1865,24 @@
     try {
       const uid      = window.currentUser.uid;
       const histRef  = collection(db, "users", uid, "history");
-      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
       await addDoc(histRef, {
         question: question.substring(0, 500),
         answer:   answer.substring(0, 2000),
         plan:     window.userPlan || 'free',
         ts:       Date.now(),
       });
-      // Clean up entries older than 30 days
-      const oldQuery = query(histRef, where('ts', '<', thirtyDaysAgo));
-      const oldSnap  = await getDocs(oldQuery);
-      oldSnap.forEach(d => deleteDoc(d.ref));
+      // Clean up entries older than 30 days — but only ONCE per day per
+      // browser session. Without this throttle, every question triggered
+      // a read + N deletes, burning Firestore quota fast.
+      const today = new Date().toISOString().slice(0, 10);
+      const lastCleanup = localStorage.getItem('knoxLastCleanup');
+      if (lastCleanup !== today) {
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        const oldQuery = query(histRef, where('ts', '<', thirtyDaysAgo));
+        const oldSnap  = await getDocs(oldQuery);
+        oldSnap.forEach(d => deleteDoc(d.ref));
+        try { localStorage.setItem('knoxLastCleanup', today); } catch(e) {}
+      }
     } catch (err) {
       console.warn('History save failed:', err.message);
     }
@@ -2084,9 +2104,10 @@
   let hwUsedCount = 0;
   let csUsedCount = 0;
   const DAILY_LIMIT = 5; // free plan
-  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100,    family: 25 };
-  const LEARN_LIMITS   = { free: 10,  super: 50,  max: 999999, family: 50 };
-  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 500, family: 50 };
+  // These must match server-side PLAN_QUOTAS in api/ask.js
+  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100 };
+  const LEARN_LIMITS   = { free: 10,  super: 50,  max: 999 };
+  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 500 };
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -2164,7 +2185,7 @@
     if (nameEl)  nameEl.textContent  = name.split(' ')[0];
     if (dName)   dName.textContent   = name;
     if (dEmail)  dEmail.textContent  = email || '';
-    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : userPlan === 'family' ? '⚡ Super Knox' : '🆓 Free';
+    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : '🆓 Free';
     if (dPlan)  dPlan.textContent  = planLabel;
     if (iconEl) {
       if (photoURL) {
@@ -2313,26 +2334,22 @@
     const csDetailLabel = document.getElementById('csDetailLabel');
     const csClockWrap = document.getElementById('csClockWrap');
 
-    if (uPlan === 'pro_plus') {
-      if (casualSection) casualSection.style.display = 'none';
+    if (casualSection) casualSection.style.display = 'block';
+    const csUsed  = usage.casual      || 0;
+    const csLimit = usage.casualLimit || CASUAL_LIMITS[uPlan] || 20;
+    const csLeft  = Math.max(0, csLimit - csUsed);
+    const csPct   = Math.min((csUsed / csLimit) * 100, 100);
+
+    if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat' : `${csUsed} / ${csLimit} chat`;
+    if (csDetailLabel) csDetailLabel.textContent = csLimit >= 9999 ? 'Unlimited' : `${csUsed} / ${csLimit}`;
+    if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill chat-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
+    if (csCd)    { csCd.textContent = csLeft === 1 ? '1 left!' : ''; csCd.style.color = '#F59E0B'; }
+
+    if (usage.csNextUnlock && csLeft === 0) {
+      startCsClock(usage.csNextUnlock);
     } else {
-      if (casualSection) casualSection.style.display = 'block';
-      const csUsed  = usage.casual      || 0;
-      const csLimit = usage.casualLimit || CASUAL_LIMITS[uPlan] || 20;
-      const csLeft  = Math.max(0, csLimit - csUsed);
-      const csPct   = Math.min((csUsed / csLimit) * 100, 100);
-
-      if (csLabel) csLabel.textContent = csLimit >= 9999 ? 'Unlimited chat' : `${csUsed} / ${csLimit} chat`;
-      if (csDetailLabel) csDetailLabel.textContent = csLimit >= 9999 ? 'Unlimited' : `${csUsed} / ${csLimit}`;
-      if (csFill)  { csFill.style.width = csPct + '%'; csFill.className = 'usage-bar-fill chat-fill' + (csPct >= 100 ? ' danger' : csPct >= 80 ? ' warn' : ''); }
-      if (csCd)    { csCd.textContent = csLeft === 1 ? '1 left!' : ''; csCd.style.color = '#F59E0B'; }
-
-      if (usage.csNextUnlock && csLeft === 0) {
-        startCsClock(usage.csNextUnlock);
-      } else {
-        if (_csClockInterval) clearInterval(_csClockInterval);
-        if (csClockWrap) csClockWrap.style.display = 'none';
-      }
+      if (_csClockInterval) clearInterval(_csClockInterval);
+      if (csClockWrap) csClockWrap.style.display = 'none';
     }
   }
 
@@ -2407,9 +2424,9 @@
     const learnLabel = document.getElementById('learnBarLabel');
     const learnFill  = document.getElementById('learnBarFill');
     const learnDetail = document.getElementById('learnDetailLabel');
-    if (learnLabel)  learnLabel.textContent  = learnLimit >= 999999 ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
-    if (learnDetail) learnDetail.textContent = learnLimit >= 999999 ? 'Unlimited' : `${learnUsed} / ${learnLimit}`;
-    if (learnFill)   learnFill.style.width   = learnLimit >= 999999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
+    if (learnLabel)  learnLabel.textContent  = learnLimit >= 999 ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
+    if (learnDetail) learnDetail.textContent = learnLimit >= 999 ? 'Unlimited' : `${learnUsed} / ${learnLimit}`;
+    if (learnFill)   learnFill.style.width   = learnLimit >= 999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
 
     // Update hw detail label
     const hwDetail = document.getElementById('hwDetailLabel2');
@@ -2431,16 +2448,21 @@
 
   // ── Show limit reached modal with countdown ───────────────────────────────
   function showLimitModal(data) {
-    const isPro     = userPlan === 'pro';
-    const isProPlus = userPlan === 'pro_plus';
+    const uPlan = window.userPlan || userPlan || 'free';
+    const isMax = uPlan === 'max';
+    const upgradeText = uPlan === 'super' ? 'Upgrade to Max Knox' : 'Upgrade to Super Knox';
+    const upgradeSub  = uPlan === 'super'
+      ? 'Max Knox gives you 100 questions/day, the best AI, and deeper explanations.'
+      : 'Super Knox gives you 25 questions/day, smarter AI, and step-by-step breakdowns.';
+    const upgradeBadge = uPlan === 'super' ? '🚀 Get 100 questions/day with Max Knox' : '⚡ Get 25 questions/day with Super Knox';
     const m = document.createElement('div');
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
-    const upgradeSection = isProPlus ? '' : `
+    const upgradeSection = isMax ? '' : `
       <div style="background:#FFF4EC;border:2px solid #FFCFA0;border-radius:14px;padding:14px 16px;margin-bottom:2px;">
-        <div style="font-size:13px;font-weight:900;color:#CC5500;margin-bottom:4px;">${isPro ? '🚀 Get 40 questions/day with Pro+' : '🚀 Get 25 questions/day with Pro'}</div>
-        <div style="font-size:12px;font-weight:600;color:#888;">${isPro ? 'Pro+ gives you 40 questions/day, the best AI, deeper explanations, resources, and unlimited casual chat.' : 'Pro gives you 25 questions/day, smarter AI, and step-by-step breakdowns.'}</div>
+        <div style="font-size:13px;font-weight:900;color:#CC5500;margin-bottom:4px;">${upgradeBadge}</div>
+        <div style="font-size:12px;font-weight:600;color:#888;">${upgradeSub}</div>
       </div>
-      <button onclick="this.closest('div[style*=fixed]').remove();scrollToPricing();" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--green);color:white;cursor:pointer;box-shadow:0 4px 0 var(--green-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">${isPro ? 'Upgrade to Pro+' : 'Upgrade to Pro'}</button>`;
+      <button onclick="this.closest('div[style*=fixed]').remove();scrollToPricing();" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--green);color:white;cursor:pointer;box-shadow:0 4px 0 var(--green-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">${upgradeText}</button>`;
     m.innerHTML = `<div style="background:white;max-width:420px;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
       <div style="background:var(--orange);padding:28px;text-align:center;">
         <div style="font-size:44px;margin-bottom:8px;">⏰</div>
@@ -2459,7 +2481,7 @@
 
   function scrollToAI() { document.getElementById('ai-helper').scrollIntoView({ behavior:'smooth' }); }
   function scrollToPricing() { document.getElementById('pricing').scrollIntoView({ behavior:'smooth' }); }
-  function smoothScroll(id) { event.preventDefault(); const el = document.getElementById(id); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
+  function smoothScroll(id, ev) { if (ev && ev.preventDefault) ev.preventDefault(); const el = document.getElementById(id); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
 
   let currentMode = 'answer';
   window.currentMode = 'answer';
@@ -2518,18 +2540,6 @@
       if (aiBoxHeader) aiBoxHeader.style.background = '#58CC02';
       if (introBubble) { introBubble.style.background='#F0FFF0'; introBubble.style.borderColor='#BBF7D0'; }
       if (introText) {
-        const chatPlan = window.userPlan || userPlan || 'free';
-        const CHAT_LIMITS = { free: 20, super: 50, max: 500, family: 50 };
-        const csLabelEl = document.getElementById('casualBarLabel');
-        // Try to get live count from the usage bar label (most accurate), else use plan limit
-        let chatCountText = '';
-        if (csLabelEl && csLabelEl.textContent && csLabelEl.textContent !== '0 / 20 chat') {
-          chatCountText = csLabelEl.textContent.replace(' chat','') + ' messages/day';
-        } else {
-          const limit = CHAT_LIMITS[chatPlan] || 20;
-          chatCountText = limit + ' messages/day';
-        }
-        const planLabel = chatPlan === 'max' ? 'Max Knox' : chatPlan === 'super' ? 'Super Knox' : chatPlan === 'family' ? 'Super Knox' : 'Free';
         introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊';
       }
       if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
@@ -2632,15 +2642,14 @@
 
     // Build plan display info
     const plan     = window.userPlan || 'free';
-    const planNames  = { free: 'Free', super: 'Super Knox', max: 'Max Knox', family: 'Super Knox' };
-    const planPrices = { free: '$0', super: '$9.99/mo', max: '$19.99/mo', family: '$9.99/mo' };
-    const planColors = { free: '#6B7280', super: '#22C55E', max: '#FF6B00', family: '#22C55E' };
-    const planEmojis = { free: '🐾', super: '⚡', max: '🚀', family: '⚡' };
+    const planNames  = { free: 'Free', super: 'Super Knox', max: 'Max Knox' };
+    const planPrices = { free: '$0', super: '$9.99/mo', max: '$19.99/mo' };
+    const planColors = { free: '#6B7280', super: '#22C55E', max: '#FF6B00' };
+    const planEmojis = { free: '🐾', super: '⚡', max: '🚀' };
     const planDescs  = {
       free:   'You\'re on the free plan — 5 questions a day, no card needed.',
       super:  'Step-by-step help, smarter answers, 25 questions a day.',
       max:    '100 questions a day. Full power, full depth.',
-      family: 'Step-by-step help, smarter answers, 25 questions a day.',
     };
 
     // Remove existing modal if open
@@ -2777,18 +2786,19 @@
         '</div>',
       ].join('');
     } else {
-      // Only show trial message for Pro Monthly
-      const isProMonthlyTrial = (
-        window._lastPurchasedPlan === 'pro' &&
+      // Show trial message for Super Knox monthly (the only plan with a free trial)
+      const _uPlan = window.userPlan || userPlan || 'free';
+      const isSuperMonthlyTrial = (
+        _uPlan === 'super' &&
         window._lastPurchasedBilling === 'monthly'
       );
       toast.innerHTML = [
         '<div style="font-size:36px;margin-bottom:10px;">🎉</div>',
         '<div style="font-weight:800;font-size:17px;margin-bottom:6px;">You\'re all set!</div>',
         '<div style="color:#4b5563;font-size:14px;line-height:1.5;">',
-        isProMonthlyTrial
+        isSuperMonthlyTrial
           ? 'Your 3-day free trial has started.<br>No charge until the trial ends!'
-          : 'Your subscription is now active.<br>Enjoy unlimited questions!',
+          : 'Your subscription is now active.<br>Enjoy your upgraded access!',
         '</div>',
       ].join('');
     }
@@ -2804,48 +2814,29 @@
   // ── Update pricing buttons based on current plan ─────────────────────────
   function updatePricingButtons() {
     userPlan = window.userPlan || userPlan; // sync from module scope
-    const pricingCards = document.querySelectorAll('.pricing-card');
-    pricingCards.forEach(card => {
-      const title = card.querySelector('h3')?.textContent.trim();
-      const btn   = card.querySelector('.cta-btn-wrap button');
-      if (!btn || !title) return;
+    // Note: current pricing cards don't have a uniform .pricing-card / h3 / .cta-btn-wrap
+    // structure to update. The Super and Max buttons (proCTABtn / maxCTABtn) are
+    // styled inline in their respective cards. If a future pricing redesign adds
+    // those hooks, this function is the place to mark the current plan as active.
+    const proBtn = document.getElementById('proCTABtn');
+    const maxBtn = document.getElementById('maxCTABtn');
 
-      // Reset first
-      btn.disabled = false;
-      btn.style.boxShadow = '';
-      btn.style.opacity   = '';
-
-      if (userPlan === 'pro') {
-        if (title === 'Pro') {
-          btn.textContent = '✓ Current Plan';
-          btn.disabled    = true;
-          btn.style.background  = '#e5e7eb';
-          btn.style.color       = '#6b7280';
-          btn.style.boxShadow   = 'none';
-          btn.style.opacity     = '0.7';
-        }
-        // Pro+ buttons stay active so Pro users can upgrade
+    if (userPlan === 'super' && proBtn) {
+      proBtn.textContent = '✓ Current Plan';
+      proBtn.disabled    = true;
+      proBtn.style.opacity = '0.7';
+    } else if (userPlan === 'max') {
+      if (maxBtn) {
+        maxBtn.textContent = '✓ Current Plan';
+        maxBtn.disabled    = true;
+        maxBtn.style.opacity = '0.7';
       }
-
-      if (userPlan === 'pro_plus') {
-        if (title === 'Pro+') {
-          btn.textContent = '✓ Current Plan';
-          btn.disabled    = true;
-          btn.style.background  = '#e5e7eb';
-          btn.style.color       = '#6b7280';
-          btn.style.boxShadow   = 'none';
-          btn.style.opacity     = '0.7';
-        }
-        if (title === 'Pro') {
-          btn.textContent = '↓ Downgrade';
-          btn.disabled    = true;
-          btn.style.background  = '#e5e7eb';
-          btn.style.color       = '#6b7280';
-          btn.style.boxShadow   = 'none';
-          btn.style.opacity     = '0.7';
-        }
+      if (proBtn) {
+        proBtn.textContent = '↓ Downgrade';
+        proBtn.disabled    = true;
+        proBtn.style.opacity = '0.7';
       }
-    });
+    }
   }
 
   // userPlan is set by the Firebase module script and exposed via window.userPlan
@@ -2865,21 +2856,26 @@
         banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#FFF4EC;border-top:1.5px solid #FFCFA0;border-bottom:1.5px solid #FFCFA0;"><div style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#CC5500;letter-spacing:0.01em;">🚀 Max Knox &nbsp;·&nbsp; 100 questions/day &nbsp;·&nbsp; Best AI</span></div>';
       } else if (_bp === 'super') {
         banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Super Knox &nbsp;·&nbsp; 25 questions/day &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="scrollToPricing()">Upgrade to Max Knox</span></span></div>';
-      } else if (_bp === 'family') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FFF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:#22C55E;flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#15803D;letter-spacing:0.01em;">⚡ Super Knox · 25 questions/day</span></div>';
       } else {
         banner.innerHTML = '';
       }
     }
-    if (userPlan === 'pro' || userPlan === 'pro_plus') {
-      counter.innerHTML = '';
-      counter.style.color = '';
+    if (userPlan === 'max') {
+      // Max users have nothing to upgrade to — show usage only.
+      const _lim = PLAN_LIMITS.max || 100;
+      const left = Math.max(0, _lim - (usage.count || 0));
+      counter.innerHTML = `Daily questions left: ${left}`;
+      counter.style.color = left <= 5 ? '#dc2626' : '#4b5563';
     } else if (!window.currentUser) {
       counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 5 questions/day ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
-      const _pl = window.userPlan || userPlan || 'free'; const _lim = PLAN_LIMITS[_pl] || 5; const left = Math.max(0, _lim - (usage.count || 0));
-      counter.innerHTML = `Daily questions left: ${left} &nbsp;·&nbsp; <span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">Upgrade for unlimited ⚡</span>`;
+      const _pl = window.userPlan || userPlan || 'free';
+      const _lim = PLAN_LIMITS[_pl] || 5;
+      const left = Math.max(0, _lim - (usage.count || 0));
+      // Super → upgrade to Max. Free → upgrade to Super.
+      const upgradeText = _pl === 'super' ? 'Upgrade to Max 🚀' : 'Upgrade for more ⚡';
+      counter.innerHTML = `Daily questions left: ${left} &nbsp;·&nbsp; <span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">${upgradeText}</span>`;
       counter.style.color = left <= 2 ? '#dc2626' : '#4b5563';
     }
   }
@@ -2919,14 +2915,6 @@
       executeAskQuestion(); return;
     }
 
-    // Family Knox — check limits
-    if (_plan === 'family') {
-      const used   = usage.count  || 0;
-      const csUsed = usage.casual || 0;
-      if (used >= 25 && csUsed >= 50) { appendKnoxLimitReached('family'); return; }
-      executeAskQuestion(); return;
-    }
-
     // GUEST: allow exactly 1 message of any kind, then lock and prompt sign up
     if (!window.currentUser) {
       if (guestQuestionUsed) {
@@ -2961,8 +2949,7 @@
   function appendKnoxCasualLimitReached(plan) {
     const msgs = {
       free:   { title: "You've used all 20 chat messages today 💬", sub: "Your messages reset tomorrow — or upgrade to Super Knox for 50 chat messages every day plus 25 homework questions.", btn: "Upgrade to Super Knox ⚡", color: "#58CC02", shadow: "#2D6A00" },
-      super:  { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for unlimited chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
-      family: { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for unlimited chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
+      super:  { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for 500 chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
     };
     const m = msgs[plan] || msgs.free;
     const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
@@ -2989,13 +2976,6 @@
         color: "#58CC02", shadow: "#2D6A00"
       },
       super: {
-        title: "You've used all 25 questions today ⚡",
-        sub: "Your questions reset tomorrow — or upgrade to Max Knox for 100 questions every day, best-in-class AI, and no daily stress.",
-        btn: "Upgrade to Max Knox 🚀",
-        btn2: null,
-        color: "#FF6B00", shadow: "#CC5500"
-      },
-      family: {
         title: "You've used all 25 questions today ⚡",
         sub: "Your questions reset tomorrow — or upgrade to Max Knox for 100 questions every day, best-in-class AI, and no daily stress.",
         btn: "Upgrade to Max Knox 🚀",
@@ -3250,22 +3230,16 @@
     appendThinkingBubble();
 
     // ── Firebase token ───────────────────────────────────────────────────────
-    let idToken = null;
-    if (window.currentUser) {
-      try { idToken = await window.currentUser.getIdToken(true); }
-      catch (e) { console.error('Token error:', e); }
-    }
     const reqHeaders = { "Content-Type": "application/json" };
-    if (idToken) reqHeaders["Authorization"] = `Bearer ${idToken}`;
+    if (window.currentUser) {
+      try {
+        const idToken = await window.currentUser.getIdToken();
+        reqHeaders["Authorization"] = `Bearer ${idToken}`;
+      } catch (e) { console.error('Token error:', e); }
+    }
 
     try {
       // ── REAL API CALL ─────────────────────────────────────────────────────
-      const reqHeaders = { "Content-Type": "application/json" };
-      if (window.currentUser) {
-        const idToken = await window.currentUser.getIdToken();
-        reqHeaders["Authorization"] = `Bearer ${idToken}`;
-      }
-
       const res = await fetch("/api/ask", {
         method:  "POST",
         headers: reqHeaders,
@@ -3419,13 +3393,19 @@
 
   // ── ACKNOWLEDGEMENT CARD ─────────────────────────────────────────────────
   function renderAcknowledgement(message, plan) {
-    // Strip markdown links from acknowledgement text
-    const clean = (message || '').replace(/\[([^\]]+)\]\(https?:[^)]+\)/g, '$1');
+    // Strip markdown links, then HTML-escape so any < > in the message can't
+    // execute as markup.
+    const cleanRaw = (message || '').replace(/\[([^\]]+)\]\(https?:[^)]+\)/g, '$1');
+    const clean = String(cleanRaw)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const planTag = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
+    const planTagClass = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
     return `<div class="ai-response-box">
       <div class="resp-header">
         <div class="resp-brain"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
         <div class="resp-title">Knox Knows</div>
-        <div class="resp-plan-tag tag-pro-plus">Pro+</div>
+        <div class="resp-plan-tag ${planTagClass}">${planTag}</div>
       </div>
       <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:14px 18px;color:#14532d;font-size:15px;line-height:1.6;font-weight:600;">
         ✓ ${clean}
@@ -3434,14 +3414,30 @@
   }
 
   // ── SHARED RENDER HELPERS (outer scope — used by renderResponse AND executeAskQuestion) ──
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function stripMarkdownLinks(text) {
     return text.replace(/\[([^\]]+)\]\(https?:[^)]+\)/g, '$1');
   }
 
   function formatInline(text, p) {
+    // 1. Strip markdown links FIRST (operates on raw input)
     let out = stripMarkdownLinks(text);
+    // 2. Escape HTML — this neutralizes any <script>, <img onerror>, etc.
+    //    the model might emit (whether by accident, hallucination, or
+    //    prompt-injection from user input).
+    out = escapeHtml(out);
+    // 3. NOW apply our safe markdown transformations. The escape above
+    //    has converted any model-supplied < and > to entities, so the
+    //    only HTML in the final output is what we insert below.
     out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    if (p === "pro_plus") out = out.replace(/__(.+?)__/g, "<u>$1</u>");
     out = out.replace(/\*\*/g, "").replace(/(?<![a-zA-Z])__(?![a-zA-Z])/g, "");
     return out;
   }
@@ -3725,20 +3721,20 @@
 
     // ── Fallback: nothing structured parsed → use smart freeform renderer ─────
     if (!finalAnswerText && !stepsHtml && paragraphs.length === 0 && !tipText && !insightText && !commonMistakeText && keyPointsBullets.length === 0) {
-      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
+      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(answer, plan)}<div style="height:10px;"></div>`;
     }
 
     // ── Only paragraphs (no Final Answer) → smart freeform ───────────────────
     if (!finalAnswerText && paragraphs.length > 0 && !stepsHtml) {
       const allText = paragraphs.map(p => p.text).join('\n\n');
-      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : plan === 'family' ? 'tag-family' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
+      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
+      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
       return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(allText, plan)}<div style="height:10px;"></div>`;
     }
-    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : plan === "family" ? "⚡ Super" : "🆓 Free";
-    const planTagClass = plan === "max" ? "tag-max" : plan === "super" ? "tag-super" : plan === "family" ? "tag-family" : "tag-free";
+    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : "🆓 Free";
+    const planTagClass = plan === "max" ? "tag-max" : plan === "super" ? "tag-super" : "tag-free";
     let html = ``;
 
     // ── Thin plan tag bar at top ──────────────────────────────────────────
@@ -3847,19 +3843,9 @@
     }
 
     // ── Visual Content ────────────────────────────────────────────────────────
-    if (plan === 'pro_plus' && (embeddedVideo || imageSearchQuery)) {
-      let visualHtml = `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div style="background:var(--blue-dark);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #075985;">Visual Content</div>
-        </div>`;
-      if (embeddedVideo) {
-        visualHtml += `<div class="resp-video-embed"><iframe src="${embeddedVideo.embedUrl}" title="${embeddedVideo.title}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div><div style="font-size:12px;color:#6b7280;font-weight:600;margin:6px 0 10px;">${embeddedVideo.title} · ${embeddedVideo.channel}</div>`;
-      }
-      if (imageSearchQuery) {
-        visualHtml += `<a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(imageSearchQuery + ' diagram')}" target="_blank" rel="noopener" class="resp-image-search-btn">View Diagrams: ${imageSearchQuery.substring(0, 40)}${imageSearchQuery.length > 40 ? '...' : ''}</a>`;
-      }
-      visualHtml += `</div>`;
-      html += visualHtml;
+    // Reserved for a future tier — no current plan opts into this branch.
+    if (false && (embeddedVideo || imageSearchQuery)) {
+      // Intentionally disabled until a tier opts in.
     }
 
     // Green upgrade bar for free plan (not on casual responses)
@@ -4165,7 +4151,7 @@
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;padding:32px;color:#9CA3AF;font-size:14px;font-weight:600;">Loading...</div>';
 
-    const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
+    const planColors = { max: '#FF6B00', super: '#58CC02', free: '#1CB0F6' };
 
     // Try Firestore first for logged-in users (skip if just cleared)
     const _justCleared = window._knoxHistoryCleared || localStorage.getItem('knoxHistoryCleared') === '1';
@@ -4189,7 +4175,7 @@
     list.innerHTML = history.map((item, i) => {
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
+      const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
       const q = (item.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `<div class="hist-card" data-index="${i}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;">${q}</div>
@@ -4255,7 +4241,7 @@
   function renderFirestoreHistory(items) {
     const list = document.getElementById('historyList');
     if (!list) return;
-    const planColors = { max: '#FF6B00', super: '#58CC02', family: '#7C3AED', free: '#1CB0F6' };
+    const planColors = { max: '#FF6B00', super: '#58CC02', free: '#1CB0F6' };
     if (items.length === 0) {
       list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
       return;
@@ -4264,7 +4250,7 @@
       const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : plan === 'family' ? '⚡ Super' : '🆓 Free';
+      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
       return `<div id="hist-${item.id}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;transition:all 0.2s;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;margin-bottom:12px;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -4371,7 +4357,7 @@
       return;
     }
     body.innerHTML = history.map((item, i) => {
-      const planLabel = item.plan === 'pro_plus' ? '\u2B50 Pro+' : item.plan === 'pro' ? '\u26A1 Pro' : '\uD83C\uDD13 Free';
+      const planLabel = item.plan === 'max' ? '\uD83D\uDE80 Max' : item.plan === 'super' ? '\u26A1 Super' : '\uD83C\uDD93 Free';
       const shortQ = item.question.length > 120 ? item.question.substring(0, 120) + '\u2026' : item.question;
       return '<div class="history-item" id="hist-item-' + i + '">' +
         '<div class="history-q">' + shortQ.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
@@ -4392,9 +4378,15 @@
     const box = document.getElementById('answerBox');
     box.classList.remove('hidden');
     function fi(text, p) {
-      let out = text;
-      if (p === "pro" || p === "pro_plus") out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      if (p === "pro_plus") out = out.replace(/__(.+?)__/g, "<u>$1</u>");
+      // Escape HTML first (same XSS-prevention as formatInline above), then
+      // apply our safe markdown transformations.
+      let out = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+      out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       return out;
     }
     // Normalise sections in history items too
@@ -4432,9 +4424,9 @@
       else { cpl.push(line); }
     }
     fp(mode);
-    const planTag = item.plan === "pro_plus" ? "\u2B50 Pro+" : item.plan === "pro" ? "\u26A1 Pro" : "Free";
-    const planTagClass = item.plan === "pro_plus" ? "tag-pro-plus" : item.plan === "pro" ? "tag-pro" : "tag-free";
-    let html = '<div class="ai-response-box ' + (item.plan === "pro_plus" ? "resp-pro-plus" : "") + '">';
+    const planTag = item.plan === "max" ? "\uD83D\uDE80 Max" : item.plan === "super" ? "\u26A1 Super" : "\uD83C\uDD93 Free";
+    const planTagClass = item.plan === "max" ? "tag-max" : item.plan === "super" ? "tag-super" : "tag-free";
+    let html = '<div class="ai-response-box">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:#f3f4f6;border-radius:8px;font-size:12px;font-weight:700;color:#6b7280;">\uD83D\uDD50 From history &nbsp;&middot;&nbsp; ' + item.time + '</div>';
     html += '<div class="resp-header"><div class="resp-brain">\uD83E\uDDE0</div><div class="resp-title">Knox Knows</div><div class="resp-plan-tag ' + planTagClass + '">' + planTag + '</div></div>';
     if (finalAnswerText) html += '<div class="resp-final"><div class="resp-final-label">Answer</div><div class="resp-final-text">' + fi(finalAnswerText, item.plan) + '</div></div>';
@@ -4508,39 +4500,8 @@
     if (pill) pill.style.display = 'none';
   };
 
-  // ======= REVIEWS =======
-  const reviewColors = ['#7c3aed','#059669','#f59e0b','#3b82f6','#06b6d4','#8b5cf6','#ef4444','#0ea5e9'];
-  const reviews = [
-    { name:'Sarah M.',  handle:'@sarahm_22',     text:'Saved my grades. I went from a C to an A in calculus!',                                                              time:'2h', bg:'#c4b5fd' },
-    { name:'Jake T.',   handle:'@jaket_codes',    text:'I used to get stuck for hours. Now I understand everything step-by-step and can solve problems on my own.',          time:'5h', bg:'#a7f3d0' },
-    { name:'Emily R.',  handle:'@emilyreads',     text:'Best homework tool I have ever used. Period.',                                                                        time:'1d', bg:'#fde68a' },
-    { name:'Marcus L.', handle:'@marcusl',        text:'Helped me prepare for tests way better than studying notes.',                                                         time:'1d', bg:'#bae6fd' },
-    { name:'Olivia K.', handle:'@oliviak_',       text:'Makes homework actually make sense. My parents are impressed!',                                                       time:'2d', bg:'#a7f3d0' },
-    { name:'David W.',  handle:'@david_wins',     text:'Went from failing algebra to getting A grades in 2 weeks. Not even kidding.',                                         time:'3d', bg:'#fde68a' },
-    { name:'Ava P.',    handle:'@avapatel',       text:'Actually teaches instead of just answering. This is how learning should be.',                                         time:'4d', bg:'#c4b5fd' },
-    { name:'Noah C.',   handle:'@noahc_student', text:'Homework used to stress me out every night. Now I finish faster and understand everything.',                          time:'5d', bg:'#bae6fd' },
-  ];
-
-  function renderReviews() {
-    document.getElementById('reviews-grid').innerHTML = reviews.map((r, i) => {
-      const initials = r.name.split(' ').map(w => w[0]).join('');
-      const color = reviewColors[i % reviewColors.length];
-      return `<div class="review-card" style="background:${r.bg};">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="review-avatar-circle" style="background:${color};">${initials}</div>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-sm truncate">${r.name}</p>
-            <p style="font-size:12px;color:#6b7280;" class="truncate">${r.handle}</p>
-          </div>
-        </div>
-        <p style="font-size:14px;color:#1f2937;line-height:1.6;">${r.text}</p>
-        <div class="flex items-center justify-between mt-3 pt-3 border-t" style="border-color:rgba(0,0,0,0.1);">
-          <div style="display:flex;gap:2px;">${[1,2,3,4,5].map(()=>`<svg style="width:15px;height:15px;fill:#fbbf24;" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>`).join('')}</div>
-          <span style="font-size:12px;color:#6b7280;font-weight:600;">${r.time}</span>
-        </div>
-      </div>`;
-    }).join('');
-  }
+  // ======= REVIEWS removed — will use real testimonials once collected from beta users =======
+  function renderReviews() { /* intentionally empty until real reviews exist */ }
   updateUsageCounter();
 
   // ======= SCROLL REVEAL =======
@@ -4569,11 +4530,11 @@
     const usage = getUsageData();
 
     // Plan label + color
-    const planLabel = _plan === 'max' ? '🚀 Max Knox' : _plan === 'super' ? '⚡ Super Knox' : _plan === 'family' ? '⚡ Super Knox' : '🆓 Free';
-    const planColor = _plan === 'max' ? '#FF6B00' : _plan === 'super' ? '#58CC02' : _plan === 'family' ? '#22C55E' : '#1CB0F6';
+    const planLabel = _plan === 'max' ? '🚀 Max Knox' : _plan === 'super' ? '⚡ Super Knox' : '🆓 Free';
+    const planColor = _plan === 'max' ? '#FF6B00' : _plan === 'super' ? '#58CC02' : '#1CB0F6';
     document.getElementById('settingsPlanBadge').innerHTML = `<span style="background:${planColor};color:white;padding:4px 12px;border-radius:8px;font-size:13px;">${planLabel}</span>`;
 
-    const isPaid = _plan === 'super' || _plan === 'max' || _plan === 'family';
+    const isPaid = _plan === 'super' || _plan === 'max';
 
     // Upgrade vs Manage Billing button
     const upgradeBtn = document.getElementById('settingsUpgradeBtn');
@@ -4594,9 +4555,8 @@
     // Questions display
     const questionsUsed = usage.count || 0;
     let usageText;
-    if (_plan === 'max') usageText = '♾️ Unlimited';
+    if (_plan === 'max') usageText = `${questionsUsed} of 100 used today`;
     else if (_plan === 'super') usageText = `${questionsUsed} of 25 used today`;
-    
     else usageText = `${Math.max(0, DAILY_LIMIT - questionsUsed)} of 5 remaining`;
     document.getElementById('settingsUsage').textContent = usageText;
 
@@ -4612,6 +4572,8 @@
 
   window.handleCancelSubscription = function() {
     closeSettings();
+    const _plan = window.userPlan || userPlan || 'free';
+    const planName = _plan === 'max' ? 'Max Knox' : _plan === 'super' ? 'Super Knox' : 'Knox';
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
     modal.innerHTML = `
@@ -4619,7 +4581,7 @@
         <div style="background:var(--orange);padding:24px 28px;text-align:center;">
           <div style="font-size:48px;margin-bottom:8px;">😢</div>
           <h3 style="font-size:20px;font-weight:900;color:white;">Cancel subscription?</h3>
-          <p style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-top:6px;">You'll lose access to all Pro features at the end of your billing period.</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-top:6px;">You'll lose access to ${planName} features at the end of your billing period.</p>
         </div>
         <div style="padding:24px 28px;display:flex;flex-direction:column;gap:10px;">
           <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--green);color:white;cursor:pointer;box-shadow:0 4px 0 var(--green-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Keep My Plan</button>
@@ -4841,17 +4803,17 @@
 <div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0f172a;border-top:3px solid black;padding:14px 16px;">
   <div style="max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
     <p style="color:#e2e8f0;font-size:13px;font-weight:600;line-height:1.5;flex:1;min-width:200px;">
-      🍪 We use cookies to keep you signed in. By continuing, you agree to our
+      🍪 We use cookies for sign-in and anonymous analytics to improve Knox. See our
       <a href="/privacy.html" style="color:#c4b5fd;text-decoration:underline;">Privacy Policy</a>.
     </p>
     <div style="display:flex;gap:8px;flex-shrink:0;">
-      <button onclick="document.getElementById('cookieBanner').style.display='none';localStorage.setItem('cookie_ok','1');" style="background:var(--green);border:2px solid black;border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;box-shadow:3px 3px 0 black;white-space:nowrap;">Got it ✓</button>
-      <a href="/privacy.html" style="background:white;border:2px solid black;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;text-decoration:none;color:#0f172a;box-shadow:3px 3px 0 black;white-space:nowrap;">Learn More</a>
+      <button onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','1');}catch(e){}if(window.loadAnalytics)window.loadAnalytics();" style="background:var(--green);border:2px solid black;border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;box-shadow:3px 3px 0 black;white-space:nowrap;">Accept ✓</button>
+      <button onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','0');}catch(e){}" style="background:white;border:2px solid black;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;box-shadow:3px 3px 0 black;white-space:nowrap;color:#0f172a;">Decline</button>
     </div>
   </div>
 </div>
 <script>
-  // Show cookie banner if not already accepted
+  // Show cookie banner if user hasn't made a choice yet
   if (!localStorage.getItem('cookie_ok')) {
     setTimeout(function() {
       var b = document.getElementById('cookieBanner');
