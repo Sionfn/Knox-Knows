@@ -47,6 +47,85 @@
   <meta name="twitter:description" content="Get instant answers or learn step-by-step with Knox. Every subject, every grade.">
   <meta name="twitter:site" content="@KnoxKnowsApp">
   <meta name="twitter:creator" content="@KnoxKnowsApp">
+
+  <!-- ── JSON-LD: Organization + SoftwareApplication + FAQPage ─────────
+       Helps Google show richer snippets (price, rating, FAQ accordion) in
+       search results. Schemas describe the same content that's visible in
+       the FAQ section below; keep them in sync if FAQ content changes. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://knoxknowsapp.com/#org",
+        "name": "Knox Knows",
+        "url": "https://knoxknowsapp.com",
+        "logo": "https://knoxknowsapp.com/knox-logo-square.jpg",
+        "email": "support@knoxknowsapp.com",
+        "sameAs": [
+          "https://x.com/KnoxKnowsApp",
+          "https://www.instagram.com/KnoxKnowsApp/",
+          "https://www.tiktok.com/@KnoxKnowsApp"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Knox Knows",
+        "url": "https://knoxknowsapp.com",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web Browser",
+        "description": "AI study companion that gives step-by-step homework answers for K-12 and college students. Every subject — math, science, history, English, and more.",
+        "offers": [
+          { "@type": "Offer", "name": "Free",       "price": "0",     "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Super Knox", "price": "9.99",  "priceCurrency": "USD" },
+          { "@type": "Offer", "name": "Max Knox",   "price": "19.99", "priceCurrency": "USD" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is Knox different from ChatGPT or other AI tools?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for learning. He shows step-by-step work, explains why each step is right, and is tuned for K-12 through college subjects. General chatbots are great for trivia — Knox is great when you actually need to learn the material." }
+          },
+          {
+            "@type": "Question",
+            "name": "Will I be charged after the 3-day free trial?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Super Knox Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I cancel anytime?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Sign in, click your name in the top-right, then Manage Billing — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period." }
+          },
+          {
+            "@type": "Question",
+            "name": "What subjects does Knox cover?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Every subject you'd see in K-12 through college: math, all sciences, history, English/essays, foreign languages, economics, computer science, and more." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I upload a photo of my homework?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — click the photo icon in the input box, snap a picture of your worksheet or textbook problem, and Knox reads it directly. Available on every plan including Free." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is this just cheating?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox has two modes: Answer mode gives the solution fast when you're stuck, and Learn mode walks you through the problem step by step like a tutor would so you understand the material." }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you offer refunds?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — 30-day money-back guarantee on yearly plans, and you can cancel any monthly plan anytime. Email support@knoxknowsapp.com and we'll take care of it." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
@@ -888,6 +967,12 @@
       font-size:15px; font-weight:600; color:#555; line-height:1.65;
     }
     .faq-item.open .faq-a { display:block; }
+    /* Native <details> styling — used by new FAQ section */
+    details.faq-item summary { list-style:none; }
+    details.faq-item summary::-webkit-details-marker { display:none; }
+    details.faq-item .faq-icon { transition:transform 0.2s ease; }
+    details.faq-item[open] .faq-icon { transform:rotate(45deg); }
+    details.faq-item[open] { background:#FFF7F0 !important; border-color:#FFD0A0 !important; }
 
     /* ── CTA BANNER ──────────────────────────────────────────── */
     .cta-banner {
@@ -1109,6 +1194,7 @@
     .usage-bar-fill.danger  { background:#EF4444; }
 
     @keyframes spin { to { transform:rotate(360deg); } }
+    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.6; transform:scale(1.2); } }
 
     /* User avatar */
     .user-avatar { width:32px; height:32px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; }
@@ -1206,6 +1292,9 @@
       <a href="#ai-helper" onclick="smoothScroll('ai-helper',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">🦊</span> Ask Knox
       </a>
+      <a href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">❓</span> FAQ
+      </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
       <button onclick="openLoginModal();if(window.switchLoginTab)switchLoginTab('signup');closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
@@ -1243,7 +1332,7 @@
       <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('learn')">Learn with Knox</button>
     </div>
 
-    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account — 5 questions every day, no credit card needed</p>
+    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account · 5 questions every day · no credit card needed</p>
 
     <!-- Social proof row -->
     <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
@@ -1375,8 +1464,12 @@
 <section id="ai-helper" style="background:#f9fafb;padding:40px 24px 80px;">
   <div style="max-width:780px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:32px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#FFF4EC;border:2px solid #FFCFA0;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:900;color:#CC5500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:12px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#22C55E;animation:pulse 2s infinite;"></span>
+        Try Knox right now — no signup needed
+      </div>
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:8px;">Ask Knox</h2>
-      <p style="font-size:16px;font-weight:600;color:#888;">Choose how Knox helps you — then just talk to him.</p>
+      <p style="font-size:16px;font-weight:600;color:#888;">Pick a mode below, then type or upload a photo of your problem.</p>
     </div>
 
     <!-- Chat container -->
@@ -1409,6 +1502,10 @@
             style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
             Chat with Knox
           </button>
+        </div>
+        <!-- One-line explanation of selected mode (helps new visitors) -->
+        <div id="modeDescription" style="font-size:12px;font-weight:600;color:#9CA3AF;text-align:center;margin-top:9px;line-height:1.4;">
+          ⚡ <strong style="color:#FF6B00;">Answer mode</strong> — Knox solves it and shows the work
         </div>
       </div>
 
@@ -1617,6 +1714,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full Socratic tutoring — Knox guides you as long as you need</div>
         </div>
         <button onclick="scrollToAI()" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">✨ No credit card required</div>
       </div>
 
       <!-- SUPER KNOX -->
@@ -1648,6 +1746,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Deeper tutoring — Knox teaches the WHY, not just the how</div>
         </div>
         <button onclick="handlePurchase('Super')" id="proCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
       <!-- MAX KNOX — FEATURED (orange like Pro was) -->
@@ -1679,8 +1778,116 @@
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">100 questions a day. Full power, full depth, whenever you need it.</div>
         </div>
         <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
+</section>
+
+
+<!-- ===================== FAQ ===================== -->
+<section id="faq" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
+  <div style="max-width:760px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:40px;">
+      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:8px;">Common questions</h2>
+      <p style="font-size:16px;font-weight:600;color:#888;">Quick answers to what most people ask before signing up.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Q1 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>How is Knox different from ChatGPT or other AI tools?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Knox is built specifically for learning. He shows step-by-step work, explains <em>why</em> each step is right, and is tuned for K-12 through college subjects. General chatbots are great for trivia — Knox is great when you actually need to learn the material, hand it in, and remember it for the test.
+        </div>
+      </details>
+
+      <!-- Q2 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Will I be charged after the 3-day free trial?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Yes — unless you cancel before the trial ends. The free trial on Super Knox Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+        </div>
+      </details>
+
+      <!-- Q3 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Can I cancel anytime?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Yep. Sign in, click your name in the top-right, then "Manage Billing" — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period, no questions asked.
+        </div>
+      </details>
+
+      <!-- Q4 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>What subjects does Knox cover?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Every subject you'd see in K-12 through college: math (algebra, geometry, calculus, stats), all sciences (biology, chemistry, physics), history, English/essays, foreign languages, economics, computer science, and more. If your teacher assigns it, Knox can help with it.
+        </div>
+      </details>
+
+      <!-- Q5 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Can I upload a photo of my homework?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Absolutely — and most people do. Click the photo icon in the input box, snap a picture of your worksheet or textbook problem, and Knox reads it directly. Available on every plan including Free.
+        </div>
+      </details>
+
+      <!-- Q6 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Is this just cheating?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          That's actually why Knox has two modes. <strong style="color:#FF6B00;">Answer mode</strong> gives you the solution fast — useful when you're stuck and just need to move on. <strong style="color:#1CB0F6;">Learn mode</strong> walks you through the problem step by step like a tutor would, so you understand the material. Knox is designed to teach, not just to do your work for you.
+        </div>
+      </details>
+
+      <!-- Q7 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Do you offer refunds?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Yes — 30-day money-back guarantee on yearly plans, and you can cancel any monthly plan anytime. Email <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:700;">support@knoxknowsapp.com</a> and we'll take care of it. See our full <a href="/refund.html" style="color:#FF6B00;font-weight:700;">refund policy</a>.
+        </div>
+      </details>
+
+      <!-- Q8 -->
+      <details class="faq-item reveal" style="background:#FAFAFA;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>What if Knox gets something wrong?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the thumbs-down on the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:700;">support@knoxknowsapp.com</a>.
+        </div>
+      </details>
+
+    </div>
+
+    <p style="text-align:center;font-size:14px;font-weight:600;color:#9CA3AF;margin-top:36px;">
+      Still have questions? Email <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:800;">support@knoxknowsapp.com</a> — Sion (a real human) reads every message.
+    </p>
+  </div>
 </section>
 
 
@@ -1735,7 +1942,7 @@
         <a href="#how-it-works" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">How it works</a>
         <a href="#ai-helper" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Ask Knox</a>
         <a href="#pricing" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Pricing</a>
-        
+        <a href="#faq" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">FAQ</a>
       </div>
 
       <!-- Legal -->
@@ -1758,6 +1965,7 @@
     </div>
 
     <div style="border-top:1px solid #333;padding-top:24px;margin-top:40px;text-align:center;">
+      <p style="font-size:13px;font-weight:700;color:#888;margin-bottom:6px;">Built with care by one person in Phoenix 🌵</p>
       <p style="font-size:13px;font-weight:600;color:#555;">© 2026 Knox Knows™ by Knox™ | All rights reserved.</p>
     </div>
   </div>
@@ -2508,6 +2716,18 @@
     if (lBtn) lBtn.style.cssText = inactiveStyle;
     if (cBtn) cBtn.style.cssText = inactiveStyle;
 
+    // Update the mode description line below the tabs
+    const modeDesc = document.getElementById('modeDescription');
+    if (modeDesc) {
+      if (mode === 'answer') {
+        modeDesc.innerHTML = '⚡ <strong style="color:#FF6B00;">Answer mode</strong> — Knox solves it and shows the work';
+      } else if (mode === 'learn') {
+        modeDesc.innerHTML = '🧠 <strong style="color:#1CB0F6;">Learn mode</strong> — Knox teaches you step by step';
+      } else if (mode === 'chat') {
+        modeDesc.innerHTML = '💬 <strong style="color:#58CC02;">Chat mode</strong> — just talk to Knox, no tutoring';
+      }
+    }
+
     // If guest is locked, don't re-enable input — just update header color only
     if (!window.currentUser && guestQuestionUsed) {
       lockGuestInput();
@@ -2581,7 +2801,21 @@
     if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
     if (proNote)   proNote.style.display = type === 'yearly'  ? 'block'  : 'none';
     if (proBtn)    proBtn.textContent    = type === 'monthly' ? 'Start Free Trial' : 'Get Super Knox Yearly';
-    if (proTrial)  proTrial.style.display = 'flex';
+    // The badge changes content based on billing period:
+    //   Monthly → "🎉 3-DAY FREE TRIAL"  (matches server-side trial_period_days)
+    //   Yearly  → "💰 2 MONTHS FREE"     (purely a marketing reframing of the discount)
+    if (proTrial) {
+      proTrial.style.display = 'flex';
+      if (type === 'monthly') {
+        proTrial.textContent = '🎉 3-DAY FREE TRIAL';
+        proTrial.style.background = '#FF6B00';
+        proTrial.style.boxShadow  = '0 2px 0 #CC5500';
+      } else {
+        proTrial.textContent = '💰 SAVE 2 MONTHS';
+        proTrial.style.background = '#7C3AED';
+        proTrial.style.boxShadow  = '0 2px 0 #5B21B6';
+      }
+    }
 
     // Max Knox pricing
     const maxPrice = document.getElementById('maxPrice');
