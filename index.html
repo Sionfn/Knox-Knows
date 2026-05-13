@@ -2366,9 +2366,9 @@
     modal.innerHTML = `
       <div style="background:white;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);">
         <div style="background:linear-gradient(135deg,#FF6B00,#CC5500);padding:40px 32px 32px;text-align:center;border-bottom:4px solid #993F00;">
-          <img src="./knox-logo.jpg" alt="Knox" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,0.5);object-fit:cover;display:block;margin:0 auto 14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🦊</div>'">
-          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;">Welcome, ${firstName}!</h2>
-          <p style="margin:6px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Your Knox Knows account is ready ✨</p>
+          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🦊</div>'">
+          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;">Welcome, ${firstName}!</h2>
+          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Your Knox Knows account is ready ✨</p>
         </div>
         <div style="padding:32px 32px 28px;text-align:center;">
           <h3 style="margin:0 0 10px;font-size:19px;font-weight:900;color:#1f2937;">You're all set 🎉</h3>
@@ -2387,28 +2387,25 @@
         </div>
       </div>`;
     document.body.appendChild(modal);
-    // Wire the CTA to close modal + smoothly scroll to Ask Knox section.
-    // Single motion, no jerks: compute target position accounting for the
-    // sticky header, animate there, then focus the input *without* letting
-    // .focus() trigger another scroll (preventScroll:true).
+    // Wire the CTA to close modal + smoothly scroll to the "Ask Knox" title.
+    // We want the user to see the title at the top of their viewport, not be
+    // dropped down at the chat input. Calculate position with a generous
+    // header offset so the section heading sits comfortably below the sticky
+    // header. preventScroll:true on focus stops the browser from doing a
+    // second jerky scroll to bring the input into view.
     const cta = modal.querySelector('#knoxWelcomeCta');
     if (cta) {
       cta.addEventListener('click', () => {
         modal.remove();
         const ai = document.getElementById('ai-helper');
         if (!ai) return;
-        // Calculate position with a header offset so the section heading
-        // sits comfortably below the sticky header instead of hiding behind it.
-        const headerOffset = 80;
-        const targetY = ai.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+        // Aim above the section so the heading is visible with breathing room.
+        const headerOffset = 100;
+        const targetY = Math.max(0, ai.getBoundingClientRect().top + window.pageYOffset - headerOffset);
         window.scrollTo({ top: targetY, behavior: 'smooth' });
-        // Focus the input after the scroll animation finishes.
-        // preventScroll:true is critical — without it, .focus() triggers
-        // a second jerky scroll to bring the input into view.
-        setTimeout(() => {
-          const inp = document.getElementById('chatInput') || document.getElementById('questionInput');
-          if (inp) inp.focus({ preventScroll: true });
-        }, 850);
+        // DON'T auto-focus the input — that would tempt the browser to scroll
+        // again. Let the user see the title, read Knox's intro message, then
+        // click into the chat input themselves when they're ready.
       });
     }
   }
@@ -2983,9 +2980,9 @@
     modal.innerHTML = `
       <div style="background:white;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);">
         <div style="background:linear-gradient(135deg,#58CC02,#46A302);padding:40px 32px 32px;text-align:center;border-bottom:4px solid #2D6A00;">
-          <img src="./knox-logo.jpg" alt="Knox" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,0.5);object-fit:cover;display:block;margin:0 auto 14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🎉</div>'">
-          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;">You're in!</h2>
-          <p style="margin:6px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Payment received — welcome to Knox Knows ✨</p>
+          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🎉</div>'">
+          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;">You're in!</h2>
+          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Payment received — welcome to Knox Knows ✨</p>
         </div>
         <div style="padding:32px 32px 28px;text-align:center;">
           <h3 style="margin:0 0 10px;font-size:19px;font-weight:900;color:#1f2937;">Thanks for going Knox-mode 🦊</h3>
