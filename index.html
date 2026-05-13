@@ -2259,7 +2259,10 @@
       const result = await signInWithPopup(auth, provider);
       window.currentUser = result.user;
       const isNewUser = result._tokenResponse?.isNewUser;
-      if (isNewUser) sendWelcomeEmail(result.user);
+      if (isNewUser) {
+        sendWelcomeEmail(result.user);
+        showWelcomeModalIfNoCheckoutPending(result.user.displayName);
+      }
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
@@ -2275,7 +2278,10 @@
       const result = await signInWithPopup(auth, provider);
       window.currentUser = result.user;
       const isNewUser = result._tokenResponse?.isNewUser;
-      if (isNewUser) sendWelcomeEmail(result.user);
+      if (isNewUser) {
+        sendWelcomeEmail(result.user);
+        showWelcomeModalIfNoCheckoutPending(result.user.displayName);
+      }
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
@@ -2314,6 +2320,7 @@
       await result.user.getIdToken(true); // force token refresh with new displayName
       window.currentUser = result.user;
       sendWelcomeEmail(result.user, name); // send welcome email to new email signups
+      showWelcomeModalIfNoCheckoutPending(name);
       window.closeLoginModal?.();
       window.updateLoginUI?.();
     } catch (err) {
@@ -2321,6 +2328,68 @@
       window.showLoginError?.(msg);
     }
   };
+
+  // ── New-user welcome popup ────────────────────────────────────────────────
+  // Shown only when a brand-new user signs up AND they don't have a pending
+  // paid checkout in flight (otherwise they'd see the popup, then Stripe,
+  // which is jarring). Mirrors the post-payment "You're in!" thank-you style
+  // so the brand feels consistent between free-signup and paid-conversion.
+  function showWelcomeModalIfNoCheckoutPending(name) {
+    // If there's a pending checkout, the auth state handler will route them
+    // straight to Stripe — skip the welcome popup in that case.
+    try {
+      if (sessionStorage.getItem('pendingCheckout')) return;
+    } catch(e) {}
+    // Brief delay so the login modal has time to close cleanly first
+    setTimeout(() => showWelcomeModal(name), 350);
+  }
+
+  function showWelcomeModal(name) {
+    document.getElementById('knoxWelcomeModal')?.remove();
+    const firstName = (name || '').split(' ')[0] || 'friend';
+    const modal = document.createElement('div');
+    modal.id = 'knoxWelcomeModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;';
+    modal.innerHTML = `
+      <div style="background:white;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);">
+        <div style="background:linear-gradient(135deg,#FF6B00,#CC5500);padding:40px 32px 32px;text-align:center;border-bottom:4px solid #993F00;">
+          <div style="font-size:64px;line-height:1;margin-bottom:14px;">🦊</div>
+          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;">Welcome, ${firstName}!</h2>
+          <p style="margin:6px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Your Knox Knows account is ready ✨</p>
+        </div>
+        <div style="padding:32px 32px 28px;text-align:center;">
+          <h3 style="margin:0 0 10px;font-size:19px;font-weight:900;color:#1f2937;">You're all set 🎉</h3>
+          <p style="margin:0 0 24px;font-size:15px;color:#6B7280;line-height:1.6;font-weight:500;">
+            You have <strong style="color:#1f2937;">5 free questions a day</strong> — math, science, history, English, photos all work. Ready to try it out?
+          </p>
+          <button id="knoxWelcomeCta" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;margin-bottom:10px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
+            Ask Knox your first question →
+          </button>
+          <button onclick="document.getElementById('knoxWelcomeModal').remove();" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:#9CA3AF;cursor:pointer;">
+            Maybe later
+          </button>
+          <p style="margin:18px 0 0;font-size:12px;color:#9CA3AF;font-weight:500;">
+            Check your inbox for a welcome email from <span style="color:#6B7280;font-weight:700;">support@knoxknowsapp.com</span>
+          </p>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    // Wire the CTA to close modal + scroll to Ask Knox
+    const cta = modal.querySelector('#knoxWelcomeCta');
+    if (cta) {
+      cta.addEventListener('click', () => {
+        modal.remove();
+        const ai = document.getElementById('ai-helper');
+        if (ai) ai.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Focus the input so they can start typing immediately
+        setTimeout(() => {
+          const inp = document.getElementById('chatInput') || document.getElementById('questionInput');
+          if (inp) inp.focus();
+        }, 700);
+      });
+    }
+  }
+  window.showWelcomeModal = showWelcomeModal;
 
   // ── Send welcome email ────────────────────────────────────────────────────
   async function sendWelcomeEmail(user, overrideName) {
