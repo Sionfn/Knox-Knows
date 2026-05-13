@@ -1887,7 +1887,7 @@
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the thumbs-down on the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:700;">support@knoxknowsapp.com</a>.
+          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the 👎 button below the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:700;">support@knoxknowsapp.com</a>.
         </div>
       </details>
 
@@ -2130,6 +2130,75 @@
     } catch (err) {
       console.warn('History delete failed:', err.message);
     }
+  };
+
+  // ── Feedback: save thumbs up/down on a Knox answer ────────────────────────
+  // Stores per-user in /users/{uid}/feedback and also globally in /feedback
+  // for easy aggregation when reviewing quality.
+  window.submitFeedback = async function(rating, question, answer, mode) {
+    if (!window.currentUser) return false;
+    if (rating !== 1 && rating !== -1) return false;
+    try {
+      const uid = window.currentUser.uid;
+      const payload = {
+        rating:   rating,                            // 1 = up, -1 = down
+        mode:     mode || 'answer',
+        question: (question || '').substring(0, 500),
+        answer:   (answer   || '').substring(0, 2000),
+        plan:     window.userPlan || 'free',
+        ts:       Date.now(),
+      };
+      // Write to global feedback collection (for owner review)
+      await addDoc(collection(db, "feedback"), { ...payload, uid });
+      // Also write a per-user copy (for "your feedback" view if ever needed)
+      await addDoc(collection(db, "users", uid, "feedback"), payload);
+      return true;
+    } catch (err) {
+      console.warn('Feedback save failed:', err.message);
+      return false;
+    }
+  };
+
+  // ── Feedback: thumb click handler — called from inline onclick ────────────
+  window.handleKnoxFeedback = async function(fbId, rating, btnEl) {
+    const container = document.getElementById(fbId);
+    if (!container) return;
+    // Prevent double-submission
+    if (container.dataset.submitted === '1') return;
+    const payload = window._knoxFeedbackPayloads && window._knoxFeedbackPayloads[fbId];
+    if (!payload) return;
+    if (!window.currentUser) {
+      // Shouldn't happen since we hide buttons for guests, but guard anyway
+      return;
+    }
+
+    container.dataset.submitted = '1';
+    // Visually lock both buttons + highlight selected
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach(b => {
+      b.dataset.locked = '1';
+      b.style.cursor = 'default';
+      b.style.opacity = '0.5';
+    });
+    if (btnEl) {
+      btnEl.style.opacity = '1';
+      btnEl.style.background = rating === 1 ? '#DCFCE7' : '#FEE2E2';
+      btnEl.style.borderColor = rating === 1 ? '#22C55E' : '#EF4444';
+    }
+
+    const ok = await window.submitFeedback(rating, payload.question, payload.answer, payload.mode);
+
+    // Replace label with a thank-you note
+    const label = container.querySelector('span');
+    if (label) {
+      label.textContent = ok
+        ? (rating === 1 ? 'Thanks — glad it helped! 🦊' : 'Thanks — we\u2019ll use this to make Knox smarter.')
+        : 'Couldn\u2019t save feedback — try again later.';
+      label.style.color = ok ? (rating === 1 ? '#16A34A' : '#9CA3AF') : '#EF4444';
+    }
+
+    // Clean up the stashed payload so it doesn't leak memory
+    try { delete window._knoxFeedbackPayloads[fbId]; } catch(e) {}
   };
 
   // ── Fetch plan from Firestore ─────────────────────────────────────────────
@@ -3441,13 +3510,31 @@
     }
 
     // ── Helper: replace thinking bubble with Knox response ───────────────────
-    function replaceThinkingWithResponse(html, isError) {
+    // opts: { question, answer, mode } — when provided AND not an error,
+    // renders thumbs up/down feedback buttons under the message.
+    function replaceThinkingWithResponse(html, isError, opts) {
       const old = document.getElementById('knoxThinkingRow');
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
+
+      // Build optional feedback bar (only on successful answers from a logged-in user)
+      let feedbackHtml = '';
+      if (!isError && opts && opts.question && opts.answer && window.currentUser) {
+        const fbId = 'fb_' + Math.random().toString(36).slice(2, 10);
+        // Stash payload globally so click handlers can reach it without escaping issues
+        window._knoxFeedbackPayloads = window._knoxFeedbackPayloads || {};
+        window._knoxFeedbackPayloads[fbId] = { question: opts.question, answer: opts.answer, mode: opts.mode || 'answer' };
+        feedbackHtml = `
+          <div id="${fbId}" style="display:flex;align-items:center;gap:8px;padding:10px 18px 14px;border-top:1px solid #F3F4F6;background:#FAFAFA;">
+            <span style="font-size:12px;font-weight:700;color:#9CA3AF;">Was this helpful?</span>
+            <button onclick="window.handleKnoxFeedback('${fbId}', 1, this)" aria-label="Helpful" title="Helpful" style="background:white;border:1.5px solid #E5E7EB;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='#22C55E';this.style.background='#F0FDF4'" onmouseout="if(!this.dataset.locked){this.style.borderColor='#E5E7EB';this.style.background='white'}">👍</button>
+            <button onclick="window.handleKnoxFeedback('${fbId}', -1, this)" aria-label="Not helpful" title="Not helpful" style="background:white;border:1.5px solid #E5E7EB;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='#EF4444';this.style.background='#FEF2F2'" onmouseout="if(!this.dataset.locked){this.style.borderColor='#E5E7EB';this.style.background='white'}">👎</button>
+          </div>`;
+      }
+
       row.innerHTML = `
         <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;margin-top:4px;"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-        <div style="max-width:88%;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);background:white;">${html}</div>`;
+        <div style="max-width:88%;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);background:white;">${html}${feedbackHtml}</div>`;
       if (old) old.replaceWith(row);
       else chatThread.appendChild(row);
       // Scroll the chat thread so the TOP of Knox's response is visible
@@ -3555,7 +3642,11 @@
           ? renderLearnResponse(cleanedAnswer, plan)
           : renderResponse(cleanedAnswer, [], plan, {});
       window._isCasualResponse = false;
-      const knoxRow = replaceThinkingWithResponse(responseHtml, false);
+      const knoxRow = replaceThinkingWithResponse(responseHtml, false, {
+        question: typedQuestion || '📷 Image question',
+        answer:   cleanedAnswer,
+        mode:     currentMode || 'answer',
+      });
 
       // ── Casual nudge — show a soft suggestion to switch to Chat mode ─────
       // Only shows in answer/learn mode when the classifier flagged it as casual
