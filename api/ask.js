@@ -106,7 +106,7 @@ Examples:
 Every section must earn its place. The best answer is the most useful one, not the longest.`,
   },
   max: {
-    model: "gpt-4o", maxInput: 1000, maxOutput: 1500,
+    model: "gpt-4o", maxInput: 1000, maxOutput: 2500,
     systemPrompt: `You are Knox, an expert AI tutor on the MAX KNOX plan.
 Never use LaTeX. Write math in plain text: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥.
 
