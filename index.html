@@ -2387,18 +2387,28 @@
         </div>
       </div>`;
     document.body.appendChild(modal);
-    // Wire the CTA to close modal + scroll to Ask Knox
+    // Wire the CTA to close modal + smoothly scroll to Ask Knox section.
+    // Single motion, no jerks: compute target position accounting for the
+    // sticky header, animate there, then focus the input *without* letting
+    // .focus() trigger another scroll (preventScroll:true).
     const cta = modal.querySelector('#knoxWelcomeCta');
     if (cta) {
       cta.addEventListener('click', () => {
         modal.remove();
         const ai = document.getElementById('ai-helper');
-        if (ai) ai.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Focus the input so they can start typing immediately
+        if (!ai) return;
+        // Calculate position with a header offset so the section heading
+        // sits comfortably below the sticky header instead of hiding behind it.
+        const headerOffset = 80;
+        const targetY = ai.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: targetY, behavior: 'smooth' });
+        // Focus the input after the scroll animation finishes.
+        // preventScroll:true is critical — without it, .focus() triggers
+        // a second jerky scroll to bring the input into view.
         setTimeout(() => {
           const inp = document.getElementById('chatInput') || document.getElementById('questionInput');
-          if (inp) inp.focus();
-        }, 700);
+          if (inp) inp.focus({ preventScroll: true });
+        }, 850);
       });
     }
   }
