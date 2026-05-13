@@ -47,57 +47,23 @@ async function sendPlanEmail(email, plan) {
   const p = PLAN_NAMES[plan];
   if (!p) return;
 
+  // Keep this email transactional and personal. Gmail routes elaborate
+  // celebratory HTML emails with banners/CTAs/feature lists to Promotions.
+  // A clean text-heavy "your subscription is active" note lands in Primary.
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#F4F4F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F4F4F5;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-        <tr>
-          <td align="center" style="background:${p.color};border-radius:20px 20px 0 0;padding:32px 40px;border-bottom:4px solid ${p.shadow};">
-            <img src="https://knoxknowsapp.com/knox-logo-square.jpg" alt="Knox" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 16px;">
-            <h1 style="margin:0;font-size:26px;font-weight:900;color:white;">You're on ${p.name}!</h1>
-            <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,0.85);font-weight:600;">Welcome to the upgrade 🎉</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="background:white;padding:36px 40px;border-radius:0 0 20px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
-            <h2 style="margin:0 0 8px;font-size:22px;font-weight:900;color:#1f2937;">Your plan is now active</h2>
-            <p style="margin:0 0 24px;font-size:15px;color:#6B7280;line-height:1.6;">Here's what you now get every day:</p>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;border-radius:14px;border:2px solid #FFD0A0;margin-bottom:28px;">
-              <tr><td style="padding:20px 24px;">
-                <p style="margin:0 0 12px;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:#FF6B00;">${p.name} includes</p>
-                <table cellpadding="0" cellspacing="0">
-                  <tr><td style="padding:5px 0;font-size:15px;color:#1f2937;font-weight:600;">✅ &nbsp;${p.questions}</td></tr>
-                  <tr><td style="padding:5px 0;font-size:15px;color:#1f2937;font-weight:600;">✅ &nbsp;Every subject — K-12 through college</td></tr>
-                  <tr><td style="padding:5px 0;font-size:15px;color:#1f2937;font-weight:600;">✅ &nbsp;Step-by-step explanations</td></tr>
-                  <tr><td style="padding:5px 0;font-size:15px;color:#1f2937;font-weight:600;">✅ &nbsp;Photo upload — snap your homework</td></tr>
-                  <tr><td style="padding:5px 0;font-size:15px;color:#1f2937;font-weight:600;">✅ &nbsp;Streaks, leagues &amp; Know Points</td></tr>
-                </table>
-              </td></tr>
-            </table>
-            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-              <tr><td align="center">
-                <a href="https://knoxknowsapp.com" style="display:inline-block;background:#FF6B00;color:white;text-decoration:none;font-size:16px;font-weight:900;padding:16px 40px;border-radius:14px;box-shadow:0 4px 0 #CC5500;">
-                  Start Using Knox Now →
-                </a>
-              </td></tr>
-            </table>
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border-radius:12px;border:2px solid #86EFAC;margin-bottom:24px;">
-              <tr><td style="padding:14px 18px;">
-                <p style="margin:0;font-size:13px;font-weight:700;color:#166534;">💡 To manage or cancel your subscription, go to <strong>Account → Manage Billing</strong> on the site.</p>
-              </td></tr>
-            </table>
-            <p style="margin:0;font-size:13px;color:#9CA3AF;line-height:1.6;">Questions? Reply to this email anytime.<br><strong style="color:#6B7280;">— Knox &amp; the Knox Knows team 🦊</strong></p>
-          </td>
-        </tr>
-        <tr><td align="center" style="padding:24px 0;">
-          <p style="margin:0;font-size:12px;color:#9CA3AF;">© 2026 Knox Knows · <a href="https://knoxknowsapp.com/privacy.html" style="color:#9CA3AF;">Privacy</a> · <a href="https://knoxknowsapp.com/terms.html" style="color:#9CA3AF;">Terms</a></p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
+<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;font-size:16px;line-height:1.6;">
+  <div style="max-width:580px;margin:0 auto;padding:32px 24px;">
+    <p style="margin:0 0 16px;">Hey,</p>
+    <p style="margin:0 0 16px;">Your ${p.name} subscription is active. Thanks for upgrading.</p>
+    <p style="margin:0 0 16px;">Starting today you have ${p.questions}. You can keep using Knox at <a href="https://knoxknowsapp.com" style="color:#FF6B00;">knoxknowsapp.com</a>.</p>
+    <p style="margin:0 0 16px;">To manage or cancel your subscription anytime, click your account menu in the top right of the site and choose <strong>Manage Billing</strong>.</p>
+    <p style="margin:0 0 16px;">If anything looks off, just reply to this email — it goes straight to me.</p>
+    <p style="margin:0 0 4px;">— Sion</p>
+    <p style="margin:0 0 24px;color:#6B7280;font-size:14px;">Knox Knows</p>
+    <p style="margin:0;color:#9CA3AF;font-size:12px;border-top:1px solid #E5E7EB;padding-top:16px;">You're receiving this because you upgraded your Knox Knows plan. <a href="https://knoxknowsapp.com/privacy.html" style="color:#9CA3AF;">Privacy</a> · <a href="https://knoxknowsapp.com/terms.html" style="color:#9CA3AF;">Terms</a></p>
+  </div>
 </body>
 </html>`;
 
@@ -110,10 +76,11 @@ async function sendPlanEmail(email, plan) {
       },
       body: JSON.stringify({
         personalizations: [{ to: [{ email }] }],
-        from: { email: process.env.SENDGRID_FROM_EMAIL || "support@knoxknowsapp.com", name: "Knox from Knox Knows" },
-        subject: `You're on ${p.name} — let's go! 🎉`,
+        from: { email: process.env.SENDGRID_FROM_EMAIL || "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
+        reply_to: { email: "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
+        subject: `Your ${p.name} subscription is active`,
         content: [
-          { type: "text/plain", value: `You're now on ${p.name}!\n\nYou get ${p.questions} starting today. Go to knoxknowsapp.com to start using it.\n\nTo manage or cancel, go to Account → Manage Billing on the site.\n\n— Knox 🦊` },
+          { type: "text/plain", value: `Hey,\n\nYour ${p.name} subscription is active. Thanks for upgrading.\n\nStarting today you have ${p.questions}. You can keep using Knox at https://knoxknowsapp.com.\n\nTo manage or cancel your subscription anytime, click your account menu in the top right of the site and choose Manage Billing.\n\nIf anything looks off, just reply to this email — it goes straight to me.\n\n— Sion\nKnox Knows` },
           { type: "text/html",  value: html },
         ],
       }),
