@@ -2387,25 +2387,27 @@
         </div>
       </div>`;
     document.body.appendChild(modal);
-    // Wire the CTA to close modal + smoothly scroll to the "Ask Knox" title.
-    // We want the user to see the title at the top of their viewport, not be
-    // dropped down at the chat input. Calculate position with a generous
-    // header offset so the section heading sits comfortably below the sticky
-    // header. preventScroll:true on focus stops the browser from doing a
-    // second jerky scroll to bring the input into view.
+    // Wire the CTA to close modal + smoothly scroll to the chat input.
+    // We want the user to land right at the chat box so they can start
+    // typing immediately. Single smooth motion: scroll there, then focus
+    // the input with preventScroll:true so it doesn't trigger a second jerk.
     const cta = modal.querySelector('#knoxWelcomeCta');
     if (cta) {
       cta.addEventListener('click', () => {
         modal.remove();
-        const ai = document.getElementById('ai-helper');
-        if (!ai) return;
-        // Aim above the section so the heading is visible with breathing room.
+        const inp = document.getElementById('chatInput') || document.getElementById('questionInput');
+        if (!inp) return;
+        // Scroll the chat input into a comfortable position near the bottom
+        // of the viewport, accounting for header so context above is visible.
         const headerOffset = 100;
-        const targetY = Math.max(0, ai.getBoundingClientRect().top + window.pageYOffset - headerOffset);
+        const targetY = Math.max(0, inp.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight - inp.offsetHeight - 120));
         window.scrollTo({ top: targetY, behavior: 'smooth' });
-        // DON'T auto-focus the input — that would tempt the browser to scroll
-        // again. Let the user see the title, read Knox's intro message, then
-        // click into the chat input themselves when they're ready.
+        // Focus the input after the smooth scroll finishes.
+        // preventScroll:true is critical — without it, .focus() triggers
+        // a second jerky scroll to bring the input into view.
+        setTimeout(() => {
+          inp.focus({ preventScroll: true });
+        }, 850);
       });
     }
   }
