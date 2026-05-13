@@ -2335,11 +2335,24 @@
   // which is jarring). Mirrors the post-payment "You're in!" thank-you style
   // so the brand feels consistent between free-signup and paid-conversion.
   function showWelcomeModalIfNoCheckoutPending(name) {
-    // If there's a pending checkout, the auth state handler will route them
-    // straight to Stripe — skip the welcome popup in that case.
+    // If there's a FRESH pending checkout (set within the last 5 minutes), the
+    // auth state handler will route them straight to Stripe — skip the popup.
+    // Stale entries (from earlier testing/abandoned flows) shouldn't block.
     try {
-      if (sessionStorage.getItem('pendingCheckout')) return;
-    } catch(e) {}
+      const raw = sessionStorage.getItem('pendingCheckout');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const ageMs = Date.now() - (parsed?.ts || 0);
+        if (parsed && parsed.plan && ageMs < 5 * 60 * 1000) {
+          // Fresh intent — Stripe is about to open, skip popup
+          return;
+        }
+        // Stale — clear it so future signups aren't blocked
+        sessionStorage.removeItem('pendingCheckout');
+      }
+    } catch(e) {
+      try { sessionStorage.removeItem('pendingCheckout'); } catch(e2) {}
+    }
     // Brief delay so the login modal has time to close cleanly first
     setTimeout(() => showWelcomeModal(name), 350);
   }
