@@ -2365,18 +2365,18 @@
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;';
     modal.innerHTML = `
       <div style="background:white;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);">
-        <div style="background:linear-gradient(135deg,#FF6B00,#CC5500);padding:40px 32px 32px;text-align:center;border-bottom:4px solid #993F00;">
-          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🦊</div>'">
-          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;">Welcome, ${firstName}!</h2>
-          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Your Knox Knows account is ready ✨</p>
+        <div style="background:linear-gradient(135deg,#FF6B00,#CC5500);padding:40px 32px 36px;text-align:center;border-bottom:4px solid #993F00;">
+          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 18px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🦊</div>'">
+          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;letter-spacing:-0.01em;">Welcome, ${firstName}</h2>
+          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);letter-spacing:0.01em;">Your Knox Knows account is ready</p>
         </div>
         <div style="padding:32px 32px 28px;text-align:center;">
-          <h3 style="margin:0 0 10px;font-size:19px;font-weight:900;color:#1f2937;">You're all set 🎉</h3>
+          <h3 style="margin:0 0 12px;font-size:19px;font-weight:900;color:#1f2937;">You're all set</h3>
           <p style="margin:0 0 24px;font-size:15px;color:#6B7280;line-height:1.6;font-weight:500;">
             You've got <strong style="color:#1f2937;">5 free questions a day</strong> across every subject — and you can snap a photo of your homework if you don't want to type it out.
           </p>
           <button id="knoxWelcomeCta" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;margin-bottom:10px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
-            Ask Knox your first question →
+            Ask Knox your first question
           </button>
           <button onclick="document.getElementById('knoxWelcomeModal').remove();" style="width:100%;padding:10px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:#9CA3AF;cursor:pointer;">
             Maybe later
@@ -2981,18 +2981,18 @@
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;';
     modal.innerHTML = `
       <div style="background:white;border-radius:24px;max-width:480px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);">
-        <div style="background:linear-gradient(135deg,#58CC02,#46A302);padding:40px 32px 32px;text-align:center;border-bottom:4px solid #2D6A00;">
-          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🎉</div>'">
-          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;">You're in!</h2>
-          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);">Payment received — welcome to Knox Knows ✨</p>
+        <div style="background:linear-gradient(135deg,#58CC02,#46A302);padding:40px 32px 36px;text-align:center;border-bottom:4px solid #2D6A00;">
+          <img src="./knox-logo-square.jpg" alt="Knox" style="width:84px;height:84px;border-radius:50%;border:3px solid rgba(255,255,255,0.55);object-fit:cover;object-position:center center;display:block;margin:0 auto 18px;box-shadow:0 4px 14px rgba(0,0,0,0.18);" onerror="this.outerHTML='<div style=&quot;font-size:64px;line-height:1;margin-bottom:14px;&quot;>🎉</div>'">
+          <h2 style="margin:0;font-size:26px;font-weight:900;color:white;font-family:Fredoka,sans-serif;line-height:1.2;letter-spacing:-0.01em;">You're in</h2>
+          <p style="margin:8px 0 0;font-size:14px;font-weight:700;color:rgba(255,255,255,0.92);letter-spacing:0.01em;">Payment received — welcome to Knox Knows</p>
         </div>
         <div style="padding:32px 32px 28px;text-align:center;">
-          <h3 style="margin:0 0 10px;font-size:19px;font-weight:900;color:#1f2937;">Thanks for going Knox-mode 🦊</h3>
+          <h3 style="margin:0 0 12px;font-size:19px;font-weight:900;color:#1f2937;">Thanks for going Knox-mode</h3>
           <p style="margin:0 0 24px;font-size:15px;color:#6B7280;line-height:1.6;font-weight:500;">
             Your upgraded plan is now active. A confirmation email is on its way. You can manage your subscription anytime from your account menu.
           </p>
           <button onclick="document.getElementById('knoxPaymentSuccessModal').remove();" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
-            Start using Knox →
+            Start using Knox
           </button>
           <p style="margin:18px 0 0;font-size:12px;color:#9CA3AF;font-weight:500;">
             Didn't receive an email? Check your spam folder or email <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:700;">support@knoxknowsapp.com</a>.
