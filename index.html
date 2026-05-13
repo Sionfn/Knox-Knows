@@ -2392,7 +2392,7 @@
   const DAILY_LIMIT = 5; // free plan
   // These must match server-side PLAN_QUOTAS in api/ask.js
   const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100 };
-  const LEARN_LIMITS   = { free: 10,  super: 50,  max: 999 };
+  const LEARN_LIMITS   = { free: 10,  super: 50,  max: Infinity };
   const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 500 };
 
   document.addEventListener('click', (e) => {
@@ -2710,9 +2710,9 @@
     const learnLabel = document.getElementById('learnBarLabel');
     const learnFill  = document.getElementById('learnBarFill');
     const learnDetail = document.getElementById('learnDetailLabel');
-    if (learnLabel)  learnLabel.textContent  = learnLimit >= 999 ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
-    if (learnDetail) learnDetail.textContent = learnLimit >= 999 ? 'Unlimited' : `${learnUsed} / ${learnLimit}`;
-    if (learnFill)   learnFill.style.width   = learnLimit >= 999 ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
+    if (learnLabel)  learnLabel.textContent  = !isFinite(learnLimit) ? 'Unlimited learn' : `${learnUsed} / ${learnLimit} learn`;
+    if (learnDetail) learnDetail.textContent = !isFinite(learnLimit) ? 'Unlimited' : `${learnUsed} / ${learnLimit}`;
+    if (learnFill)   learnFill.style.width   = !isFinite(learnLimit) ? '0%' : `${Math.min((learnUsed / learnLimit) * 100, 100)}%`;
 
     // Update hw detail label
     const hwDetail = document.getElementById('hwDetailLabel2');
