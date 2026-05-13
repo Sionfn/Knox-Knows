@@ -90,6 +90,12 @@ export default async function handler(req, res) {
       success_url:       `${baseUrl}?payment=success`,
       cancel_url:        `${baseUrl}?payment=cancelled`,
       allow_promotion_codes: true,
+      // Send Stripe's official payment receipt to the customer. This is in
+      // addition to our own SendGrid plan-upgrade email — Stripe's receipt
+      // is tax-deductible and gives the customer a formal record.
+      // Note: receipt_email is not allowed in subscription mode; instead we
+      // rely on the customer's email being set (above) and Stripe's default
+      // email settings (enable in Dashboard → Settings → Customer emails).
       metadata: { uid: verifiedUid, email: verifiedEmail, plan, billing },
     });
 
