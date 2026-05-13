@@ -18,10 +18,10 @@ const db        = getFirestore();
 
 // ── Daily quota limits per plan ────────────────────────────────────────────
 const PLAN_QUOTAS = {
-  free:   { hw: 5,   learn: 10,  chat: 20  },
-  super:  { hw: 25,  learn: 50,  chat: 50  },
-  max:    { hw: 100, learn: 999, chat: 500 },
-  family: { hw: 25,  learn: 50,  chat: 50  },
+  free:   { hw: 5,   learn: 10,        chat: 20  },
+  super:  { hw: 25,  learn: 50,        chat: 50  },
+  max:    { hw: 100, learn: Infinity,  chat: 500 },
+  family: { hw: 25,  learn: 50,        chat: 50  },
 };
 
 // Returns today's date string in UTC, e.g. "2026-05-08"
