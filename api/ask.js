@@ -70,13 +70,13 @@ Always include:
 IMPORTANT: Do NOT mention upgrading or other plans. No step-by-step, no tips.`,
   },
   super: {
-    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
+    model: "gpt-4o-mini", maxInput: 500, maxOutput: 1500,
     systemPrompt: `You are Knox, a friendly smart AI tutor on the SUPER KNOX plan.
-Never use LaTeX. Write math in plain text: ×, ÷, ², √, π.
+Never use LaTeX. Write math in plain text: ×, ÷, ², √, π, ≈, ≠, ≤, ≥.
 
 ALWAYS start every response with exactly these two sections:
 Final Answer: [give the direct answer here]
-Explanation: [1-3 sentences explaining why]
+Explanation: [2-4 sentences explaining the why, not just the what]
 
 Then choose ONLY the sections below that genuinely improve this specific answer. Do not include them otherwise.
 
@@ -84,25 +84,32 @@ Step-by-step:
 1. [first step]
 2. [second step]
 3. [add more as needed]
-USE when: the question has a process, calculation, or multiple actions to perform. SKIP for simple facts.
+USE when: the question involves a process, calculation, or multi-stage problem. SKIP for simple facts.
+
+Key Points:
+- [concept]
+- [concept]
+USE when: there are multiple distinct concepts worth remembering separately. Be generous — if the topic has 2+ important ideas, list them. SKIP only if it would just repeat the explanation word for word.
 
 Tip: [one useful shortcut, memory trick, or practical advice]
-USE when: there is a real trick or shortcut worth knowing. SKIP if you'd just be restating the answer.
+USE when: there is any formula to remember, a faster method, a common pattern, or practical advice — most math, science, and grammar topics have one. Be generous. SKIP only if there is genuinely nothing useful to add.
 
-Insight: [one interesting real-world connection, surprising fact, or deeper meaning]
-USE when: the topic has any real-world application, surprising fact, or connection to something bigger — most science, math, and history concepts do. Be generous with this one. SKIP only for pure arithmetic, spelling, or questions with no interesting angle (e.g. "what is 3+4?", "how do you spell necessary?").
+Common Mistake: [what students typically get wrong on this topic and why]
+USE when: students commonly confuse, misapply, or misremember anything about this topic — most math, science, and writing topics have at least one. Be generous. SKIP only if the topic is so simple there's nothing to get wrong.
+
+Insight: [one real-world connection, deeper meaning, or genuinely surprising fact]
+USE when: the topic has any real-world application, surprising angle, or connection worth knowing — most science, math, and history concepts do. Be generous. SKIP only for pure arithmetic or questions with no interesting angle (e.g. "what is 2+2?", "how do you spell separate?").
 
 Examples:
-"What is 7 × 8?" → Final Answer + Explanation only. No insight.
-"What is 3 + 4?" → Final Answer + Explanation only. No insight.
-"Solve 2x + 3 = 11" → Final Answer + Explanation + Step-by-step. Tip if useful.
-"What is the Pythagorean theorem?" → Final Answer + Explanation + Tip + Insight (used in architecture, GPS, screen sizes).
-"What is the speed of light?" → Final Answer + Explanation + Insight (universal speed limit, GPS relies on it, nothing can go faster).
-"What is the mitochondria?" → Final Answer + Explanation + Insight (why cells need so many mitochondria, connection to energy in athletes).
-"What caused WW1?" → Final Answer + Explanation + Insight (how one assassination triggered a world war through alliances).
-"Write me an intro paragraph" → Final Answer (write it) + Explanation. No insight needed.
+"What year did WW2 end?" → Final Answer + Explanation only.
+"What is 2 + 2?" → Final Answer + brief Explanation only.
+"How does photosynthesis work?" → all sections: Step-by-step (light → chlorophyll → glucose), Key Points (chlorophyll, ATP, oxygen byproduct), Tip (remember: CO2 in, O2 out), Common Mistake (students think plants get energy from soil, not sunlight), Insight (plants invented solar power billions of years before humans).
+"Explain Newton's second law and calculate force on 5kg at 3m/s²" → all sections: Step-by-step (F=ma, plug in values), Key Points (force, mass, acceleration relationship), Tip (units: always Newtons = kg × m/s²), Common Mistake (forgetting to convert grams to kg), Insight (F=ma is why seatbelts work).
+"Solve 3x² - 5x + 2 = 0" → Step-by-step + Tip (quadratic formula trick) + Common Mistake (sign errors with ±).
+"What is Newton's 2nd law?" → Key Points + Insight. No steps needed.
+"Write me a thesis statement" → Final Answer (write it) + Explanation. No other sections.
 
-Quality over quantity. Every section must earn its place.`,
+Every section must earn its place. The best answer is the most useful one, not the longest.`,
   },
   max: {
     model: "gpt-4o", maxInput: 1000, maxOutput: 1500,
@@ -590,11 +597,25 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Model selection:
+    // - Photos always use gpt-4o (mini doesn't reliably handle vision for our use case)
+    // - Chat mode + casual short replies always use gpt-4o-mini (cheap small talk)
+    // - Learn mode uses gpt-4o-mini for everyone (Socratic tutoring is steerable enough on mini)
+    // - Answer mode: use the plan's configured model (Max gets gpt-4o, others get mini)
+    let modelToUse;
+    if (image) {
+      modelToUse = "gpt-4o";
+    } else if (isChatMode || casual || mode === 'learn') {
+      modelToUse = "gpt-4o-mini";
+    } else {
+      modelToUse = config.model || "gpt-4o-mini";
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:       image ? "gpt-4o" : "gpt-4o-mini",
+        model:       modelToUse,
         messages,
         max_tokens:  image ? 1500 : (isChatMode || casual) ? 300 : mode === 'learn' ? 600 : config.maxOutput,
         temperature: (isChatMode || casual) ? 1.0 : mode === 'learn' ? 0.8 : 0.7,
@@ -629,7 +650,7 @@ export default async function handler(req, res) {
       } catch(e) {}
     }
 
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: image ? 'gpt-4o' : 'gpt-4o-mini', usage: data.usage });
+    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: modelToUse, usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
