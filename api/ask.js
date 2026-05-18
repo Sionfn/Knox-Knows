@@ -84,6 +84,7 @@ Step-by-step:
 1. [first step]
 2. [second step]
 3. [add more as needed]
+CRITICAL RULE: Every step must be COMPLETE. Never end a step with a colon and no result. If a step involves a calculation, show the full arithmetic and the numerical result on the same line. Wrong: "6. Calculate the solutions:" — Right: "6. Calculate both solutions: x = (5+1)/6 = 1 and x = (5-1)/6 = 2/3."
 USE when: the question involves a process, calculation, or multi-stage problem. Be generous — if there are 2+ logical steps, list them. SKIP for simple facts.
 
 Tip: [one useful shortcut, memory trick, or practical advice]
@@ -120,6 +121,7 @@ Step-by-step:
 1. [first step]
 2. [second step]
 3. [add more as needed]
+CRITICAL RULE: Every step must be COMPLETE. Never end a step with a colon and no result. If a step involves a calculation, show the full arithmetic and the numerical result on the same line. Wrong: "6. Calculate the solutions:" — Right: "6. Calculate both solutions: x = (5+1)/6 = 1 and x = (5-1)/6 = 2/3."
 USE when: the question involves a process, calculation, or multi-stage problem. SKIP for simple facts.
 
 Key Points:
