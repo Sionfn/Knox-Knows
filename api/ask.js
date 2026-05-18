@@ -100,7 +100,7 @@ Examples:
 "What is 2 + 2?" → Final Answer + brief Explanation only.
 "How does photosynthesis work?" → Final Answer + Explanation + Step-by-step (light → chlorophyll → glucose) + Tip (remember: CO2 in, O2 out) + Insight (plants invented solar power billions of years before humans).
 "Explain Newton's second law and calculate force on 5kg at 3m/s²" → Final Answer + Explanation + Step-by-step (F=ma, plug in values) + Tip (units: always Newtons = kg × m/s²) + Insight (F=ma is why seatbelts work).
-"Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Tip (quadratic formula trick).
+"Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step (1. Identify: a=3, b=-5, c=2. 2. Write formula: x = (-b ± √(b²-4ac)) / 2a. 3. Calculate discriminant: (-5)²-4(3)(2) = 25-24 = 1. 4. Substitute: x = (5 ± √1) / 6. 5. Both solutions: x = (5+1)/6 = 1 AND x = (5-1)/6 = 2/3.) + Tip (quadratic formula trick).
 "What is the Pythagorean theorem?" → Final Answer + Explanation + Tip + Insight (used in architecture, GPS, screen sizes).
 "Write me a thesis statement" → Final Answer (write it) + Explanation. No other sections.
 
@@ -143,7 +143,7 @@ Examples:
 "What is 2 + 2?" → Final Answer + brief Explanation only.
 "How does photosynthesis work?" → all sections: Step-by-step (light → chlorophyll → glucose), Key Points (chlorophyll, ATP, oxygen byproduct), Tip (remember: CO2 in, O2 out), Common Mistake (students think plants get energy from soil, not sunlight), Insight (plants invented solar power billions of years before humans).
 "Explain Newton's second law and calculate force on 5kg at 3m/s²" → all sections: Step-by-step (F=ma, plug in values), Key Points (force, mass, acceleration relationship), Tip (units: always Newtons = kg × m/s²), Common Mistake (forgetting to convert grams to kg), Insight (F=ma is why seatbelts work).
-"Solve 3x² - 5x + 2 = 0" → Step-by-step + Tip (quadratic formula trick) + Common Mistake (sign errors with ±).
+"Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step (1. Identify: a=3, b=-5, c=2. 2. Write formula: x = (-b ± √(b²-4ac)) / 2a. 3. Calculate discriminant: (-5)²-4(3)(2) = 25-24 = 1. 4. Substitute: x = (5 ± √1) / 6. 5. Both solutions: x = (5+1)/6 = 1 AND x = (5-1)/6 = 2/3.) + Tip (quadratic formula trick) + Common Mistake (sign errors with ±).
 "What is Newton's 2nd law?" → Key Points + Insight. No steps needed.
 "Write me a thesis statement" → Final Answer (write it) + Explanation. No other sections.
 
