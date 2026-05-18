@@ -3974,14 +3974,52 @@
 
         // ── Numbered step ─────────────────────────────────────────────────────
         if (/^\d+\./.test(line)) {
-          // Collect all consecutive numbered lines into a step group
+          // Collect all consecutive numbered lines into a step group.
+          // Handles two formats:
+          // Format A: "1. Step text here" (number + dot + text on same line)
+          // Format B: "1\nStep text here" (number alone, text on next line — GPT sometimes does this)
+          // Also handles continuation lines (indented text after a numbered step).
           let steps = [];
-          while (i < allLines.length && /^\d+\./.test(allLines[i])) {
-            const m   = allLines[i].match(/^(\d+)\.\s*(.*)/);
-            const num = m ? m[1] : '•';
-            const txt = m ? m[2] : allLines[i];
-            steps.push({ num, txt });
-            i++;
+          while (i < allLines.length) {
+            const line = allLines[i];
+            // Format A: starts with digit + dot
+            if (/^\d+\.\s*/.test(line)) {
+              const m   = line.match(/^(\d+)\.\s*(.*)/);
+              const num = m ? m[1] : '•';
+              let txt   = m ? m[2].trim() : line;
+              i++;
+              // Grab continuation lines (non-empty, not a new numbered step, not a section header)
+              while (i < allLines.length
+                && allLines[i].trim() !== ''
+                && !/^\d+[\.\)]/.test(allLines[i])
+                && !/^(Explanation|Tip|Insight|Common Mistake|Final Answer|Key Points|Step-by-step|Resources):/i.test(allLines[i])
+                && !/^[-•*]\s/.test(allLines[i])) {
+                txt += ' ' + allLines[i].trim();
+                i++;
+              }
+              if (txt.trim()) steps.push({ num, txt: txt.trim() });
+            }
+            // Format B: bare digit on its own line followed by text
+            else if (/^\d+$/.test(line.trim()) && i + 1 < allLines.length && allLines[i + 1].trim() !== '') {
+              const num = line.trim();
+              i++;
+              let txt = allLines[i].trim();
+              i++;
+              // Grab continuation lines
+              while (i < allLines.length
+                && allLines[i].trim() !== ''
+                && !/^\d+[\.\)]/.test(allLines[i])
+                && !/^\d+$/.test(allLines[i].trim())
+                && !/^(Explanation|Tip|Insight|Common Mistake|Final Answer|Key Points|Step-by-step|Resources):/i.test(allLines[i])
+                && !/^[-•*]\s/.test(allLines[i])) {
+                txt += ' ' + allLines[i].trim();
+                i++;
+              }
+              if (txt.trim()) steps.push({ num, txt: txt.trim() });
+            }
+            else {
+              break;
+            }
           }
           html += `<div style="display:flex;flex-direction:column;gap:8px;margin:10px 14px;">`;
           steps.forEach(({ num, txt }) => {
