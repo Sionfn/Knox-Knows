@@ -2228,12 +2228,6 @@
   }
 
   // ── Auth state listener ───────────────────────────────────────────────────
-  // Track whether this is a fresh page load vs an in-session auth event.
-  // We only auto-scroll on fresh page loads — not on new signups (which
-  // already show the welcome popup + scroll) and not on plan purchases
-  // (which show the payment success modal).
-  let _isFirstAuthEvent = true;
-
   onAuthStateChanged(auth, async (user) => {
     window.currentUser = user || null;
     if (user) {
@@ -2250,43 +2244,9 @@
       if (typeof window.resumePendingCheckoutIfAny === 'function') {
         try { window.resumePendingCheckoutIfAny(); } catch(e) {}
       }
-      // ── Returning user auto-scroll ─────────────────────────────────────
-      // When a logged-in user loads the page fresh, skip the marketing
-      // content and scroll them straight to the Ask Knox chat section —
-      // same experience as ChatGPT/Claude where returning users land in chat.
-      // Guards:
-      // 1. Only on first auth event (page load restore, not in-session signup)
-      // 2. Skip if there's a pending checkout (going to Stripe instead)
-      // 3. Skip if there's a ?payment=success param (payment modal showing)
-      // 4. Small delay so the page renders fully before scrolling
-      if (_isFirstAuthEvent) {
-        _isFirstAuthEvent = false;
-        const params = new URLSearchParams(window.location.search);
-        const hasPaymentParam = params.get('payment');
-        let hasPendingCheckout = false;
-        try {
-          const raw = sessionStorage.getItem('pendingCheckout');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            hasPendingCheckout = parsed && parsed.plan && (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000);
-          }
-        } catch(e) {}
-        if (!hasPaymentParam && !hasPendingCheckout) {
-          setTimeout(() => {
-            const aiSection = document.getElementById('ai-helper');
-            if (!aiSection) return;
-            const headerOffset = 80;
-            const targetY = Math.max(0, aiSection.getBoundingClientRect().top + window.pageYOffset - headerOffset);
-            window.scrollTo({ top: targetY, behavior: 'smooth' });
-          }, 600);
-        }
-      } else {
-        _isFirstAuthEvent = false;
-      }
     } else {
       window.userPlan = "free";
       userPlan = "free";
-      _isFirstAuthEvent = false;
       window.dispatchEvent(new CustomEvent('knoxAuthChange', { detail: { loggedIn: false } }));
       if (window.updateLoginUI) window.updateLoginUI();
     }
