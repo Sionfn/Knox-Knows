@@ -1330,7 +1330,7 @@
     </p>
 
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
-      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Get the Answer</button>
+      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('answer')">Get the Answer</button>
       <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('learn')">Learn with Knox</button>
     </div>
 
@@ -1469,77 +1469,205 @@
   </div>
 </section>
 
-<!-- ===================== APP PREVIEW ===================== -->
+<!-- ===================== ASK AI ===================== -->
 <section id="ai-helper" style="background:#f9fafb;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:780px;margin:0 auto;text-align:center;">
-    <div style="display:flex;justify-content:center;margin-bottom:14px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:#FFF4EC;border:2px solid #FFCFA0;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:900;color:#CC5500;letter-spacing:0.04em;text-transform:uppercase;">
-        <span style="width:8px;height:8px;border-radius:50%;background:#22C55E;animation:pulse 2s infinite;"></span>
-        Live now — thousands of students online
+  <div style="max-width:780px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:48px;">
+      <div style="display:flex;justify-content:center;margin-bottom:14px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;background:#FFF4EC;border:2px solid #FFCFA0;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:900;color:#CC5500;letter-spacing:0.04em;text-transform:uppercase;">
+          <span style="width:8px;height:8px;border-radius:50%;background:#22C55E;animation:pulse 2s infinite;"></span>
+          Try Knox right now — no signup needed
+        </div>
       </div>
+      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Ask Knox</h2>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Pick a mode below, then type or upload a photo of your problem.</p>
     </div>
-    <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">The full Knox experience</h2>
-    <p style="font-size:17px;font-weight:600;color:#9CA3AF;margin-bottom:40px;">Homework help, Socratic tutoring, and open chat — all in one place.</p>
 
-    <!-- App mockup -->
-    <div style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 8px 40px rgba(0,0,0,0.10);overflow:hidden;text-align:left;">
-      <!-- Header bar -->
-      <div style="background:#FF6B00;padding:18px 20px;display:flex;align-items:center;gap:14px;">
+    <!-- Chat container -->
+    <div id="chatWidget" style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:520px;max-height:780px;text-align:left;">
+
+      <!-- ── HEADER ── -->
+      <div id="aiBoxHeader" style="background:#FF6B00;padding:18px 20px;display:flex;align-items:center;gap:14px;">
         <div style="width:48px;height:48px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);overflow:hidden;background:#FED7AA;flex-shrink:0;">
-          <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
+          <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
         </div>
         <div style="flex:1;">
           <div style="font-size:17px;font-weight:900;color:white;line-height:1.2;">Knox Knows</div>
-          <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:2px;">Ready to help you ace it</div>
+          <div id="aiHeaderDesc" style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);margin-top:2px;">Ready to help you ace it</div>
         </div>
+        <button id="newChatBtn" onclick="startNewChat()" style="display:none;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.5);border-radius:10px;padding:7px 14px;font-size:13px;font-weight:800;color:white;cursor:pointer;font-family:inherit;">New Chat</button>
       </div>
-      <!-- Mode tabs -->
+
+      <!-- ── MODE TABS ── -->
       <div style="padding:12px 16px;background:white;border-bottom:2px solid #F3F4F6;">
         <div style="display:flex;gap:6px;background:#F3F4F6;border-radius:12px;padding:4px;">
-          <div style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;text-align:center;line-height:1;">Get the Answer</div>
-          <div style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;color:#9CA3AF;text-align:center;line-height:1;">Learn with Knox</div>
-          <div style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;color:#9CA3AF;text-align:center;line-height:1;">Chat with Knox</div>
+          <button id="modeAnswerBtn" onclick="setMode('answer')"
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;">
+            Get the Answer
+          </button>
+          <button id="modeLearnBtn" onclick="setMode('learn')"
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
+            Learn with Knox
+          </button>
+          <button id="modeChatBtn" onclick="setMode('chat')"
+            style="flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;">
+            Chat with Knox
+          </button>
+        </div>
+        <!-- One-line explanation of selected mode (helps new visitors) -->
+        <div id="modeDescription" style="font-size:12px;font-weight:600;color:#9CA3AF;text-align:center;margin-top:9px;line-height:1.4;">
+          ⚡ <strong style="color:#FF6B00;">Answer mode</strong> — Knox solves it and shows the work
         </div>
       </div>
-      <!-- Chat thread -->
-      <div style="padding:20px;background:#FAFAFA;display:flex;flex-direction:column;gap:14px;">
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
-            <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
-          </div>
-          <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
-            <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;flex-direction:row-reverse;">
-          <div style="background:#FF6B00;border-radius:18px 6px 18px 18px;padding:12px 16px;max-width:72%;">
-            <p style="font-size:15px;font-weight:600;color:white;line-height:1.55;margin:0;">Can you explain how to solve quadratic equations?</p>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
-            <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
-          </div>
-          <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
-            <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;">Sure! For <strong>ax² + bx + c = 0</strong>, use the quadratic formula:<br><br><strong style="font-size:16px;">x = (−b ± √(b²−4ac)) / 2a</strong><br><br>Let me walk you through an example step by step. 📐</p>
-          </div>
-        </div>
-      </div>
-      <!-- Fake input -->
-      <div style="background:white;border-top:2px solid #F3F4F6;padding:14px 16px;">
-        <div style="display:flex;align-items:center;background:#F9FAFB;border:2px solid #E5E7EB;border-radius:16px;padding:10px 16px;gap:8px;">
-          <span style="flex:1;font-size:15px;font-weight:500;color:#9CA3AF;">Ask Knox anything...</span>
-          <div style="width:40px;height:40px;border-radius:12px;background:#FF6B00;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #CC5500;flex-shrink:0;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- CTA -->
-    <div style="margin-top:36px;">
-      <a href="/app" style="display:inline-block;padding:18px 48px;border-radius:16px;font-size:18px;font-weight:900;font-family:inherit;background:#FF6B00;color:white;text-decoration:none;box-shadow:0 5px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 7px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #CC5500'">Try Knox free →</a>
-      <p style="margin-top:14px;font-size:13px;font-weight:700;color:#9CA3AF;">No credit card required · Free to start</p>
+      <!-- ── CHAT THREAD ── -->
+      <div id="chatThread" style="display:flex;flex-direction:column;gap:14px;padding:20px;min-height:0;flex:1;overflow-y:auto;background:#FAFAFA;scroll-behavior:smooth;">
+        <!-- Knox greeting -->
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
+            <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+          </div>
+          <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
+            <p id="knoxIntroText" style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plan banner -->
+      <div id="planBanner"></div>
+      <div id="conversationIndicator" style="display:none;padding:5px 20px;font-size:12px;font-weight:700;color:#1D4ED8;background:#EFF6FF;"></div>
+
+      <!-- ── INPUT AREA ── -->
+      <div style="background:white;border-top:2px solid #F3F4F6;padding:14px 16px 12px;">
+        <!-- Input box -->
+        <div id="chatInputWrapper" style="display:flex;align-items:center;background:#F9FAFB;border:2px solid #E5E7EB;border-radius:16px;padding:4px 6px 4px 16px;transition:border-color 0.2s;gap:8px;">
+          <textarea id="chatInput" placeholder="Ask Knox anything..." rows="1"
+            style="flex:1;border:none;outline:none;background:transparent;font-size:15px;font-family:inherit;font-weight:500;color:#3C3C3C;resize:none;min-height:44px;max-height:140px;overflow-y:auto;padding:10px 0;line-height:1.5;"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleAskQuestion();}"
+            onfocus="document.getElementById('chatInputWrapper').style.borderColor='#FF6B00'"
+            onblur="document.getElementById('chatInputWrapper').style.borderColor='#E5E7EB'"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,140)+'px';"></textarea>
+          <!-- Tools -->
+          <div style="display:flex;align-items:center;gap:2px;flex-shrink:0;">
+            <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            <button onclick="openCalc()" title="Calculator" class="chat-icon-btn" data-hover-color="#FF6B00"
+              style="width:34px;height:34px;border-radius:9px;border:none;background:transparent;cursor:pointer;color:#D1D5DB;display:flex;align-items:center;justify-content:center;transition:color 0.15s;"
+              onmouseover="this.style.color=(this.dataset.hoverColor||'#FF6B00')" onmouseout="this.style.color='#D1D5DB'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+            </button>
+            <button onclick="document.getElementById('fileInput').click()" title="Upload image" class="chat-icon-btn" data-hover-color="#FF6B00"
+              style="width:34px;height:34px;border-radius:9px;border:none;background:transparent;cursor:pointer;color:#D1D5DB;display:flex;align-items:center;justify-content:center;transition:color 0.15s;"
+              onmouseover="this.style.color=(this.dataset.hoverColor||'#FF6B00')" onmouseout="this.style.color='#D1D5DB'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            </button>
+            <button id="askBtn" onclick="handleAskQuestion()" title="Send"
+              style="width:40px;height:40px;border-radius:12px;border:none;background:#FF6B00;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;flex-shrink:0;"
+              onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'"
+              onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Image pill + hint -->
+        <div style="display:flex;align-items:center;margin-top:6px;gap:8px;">
+          <div id="imagePill" style="display:none;align-items:center;gap:6px;background:#FFF4EC;border:1.5px solid #FF6B00;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#FF6B00;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            <span id="imagePillName">Image attached</span>
+            <button onclick="clearImage()" style="background:none;border:none;cursor:pointer;color:#FF6B00;font-size:13px;padding:0;line-height:1;">✕</button>
+          </div>
+          <span style="font-size:11px;font-weight:600;color:#D1D5DB;margin-left:auto;">Enter to send · Shift+Enter for new line</span>
+        </div>
+      </div>
+
+      <!-- Usage bars — compact collapsible -->
+      <div id="usageBarWrap" style="border-top:1px solid #F3F4F6;background:white;">
+        <!-- Compact summary row (always visible) -->
+        <div id="usageCompactRow" style="display:flex;align-items:center;gap:10px;padding:7px 16px;cursor:pointer;" onclick="document.getElementById('usageBarExpanded').style.display=document.getElementById('usageBarExpanded').style.display==='none'?'block':'none';document.getElementById('usageChevron').style.transform=document.getElementById('usageChevron').style.transform?'':'rotate(180deg)'">
+          <span id="usageEmoji" style="font-size:10px;">🎟️</span>
+          <span id="usageBarLabel" style="font-size:11px;font-weight:800;color:#1f2937;">1 free question, sign up for more!</span>
+          <span id="learnPill" style="font-size:10px;margin-left:4px;">🧠</span>
+          <span id="learnBarLabel" style="font-size:11px;font-weight:800;color:#1CB0F6;">0 / 10 learn</span>
+          <span id="chatPill" style="font-size:10px;margin-left:4px;">💬</span>
+          <span id="casualBarLabel" style="font-size:11px;font-weight:800;color:#58CC02;">0 / 20 chat</span>
+          <span id="usageBarCountdown" style="font-size:10px;font-weight:800;margin-left:auto;color:#9CA3AF;"></span>
+          <svg id="usageChevron" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2.5" style="transition:transform 0.2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <!-- Expanded detail (hidden by default) -->
+        <div id="usageBarExpanded" style="display:none;padding:0 16px 10px;">
+          <!-- Guest universal bar -->
+          <div id="guestUniversalBar" style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+              <span style="font-size:11px;font-weight:800;color:#1f2937;">🎟️ Universal — any mode</span>
+              <span id="hwDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 1</span>
+            </div>
+            <div style="height:8px;border-radius:999px;background:#E5E7EB;overflow:hidden;">
+              <div id="usageBarFill" style="height:100%;border-radius:999px;width:0%;background:#1f2937;transition:width 0.5s ease;"></div>
+            </div>
+          </div>
+          <!-- Logged-in bars -->
+          <div id="loggedInBars" style="display:none;">
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#FF6B00;" id="hwDetailTitle">📚 Homework</span>
+                <span id="hwDetailLabel2" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 5</span>
+              </div>
+              <div class="usage-bar-track orange"><div id="hwBarFillInner" class="usage-bar-fill hw-fill" style="width:0%;"></div></div>
+              <div id="hwClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#FEF2F2;border-radius:6px;border:1.5px solid #FECACA;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:10px;font-weight:700;color:#DC2626;">⏱ Next unlocks in:</span>
+                  <span id="hwClockDisplay" style="font-size:11px;font-weight:900;color:#DC2626;font-variant-numeric:tabular-nums;">--:--:--</span>
+                </div>
+              </div>
+            </div>
+            <div id="learnBarSection" style="margin-bottom:8px;display:none;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#1CB0F6;">🧠 Learn</span>
+                <span id="learnDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 10</span>
+              </div>
+              <div class="usage-bar-track blue"><div id="learnBarFill" class="usage-bar-fill cs-fill" style="width:0%;"></div></div>
+            </div>
+            <div id="casualBarSection" style="display:none;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:11px;font-weight:800;color:#58CC02;">💬 Chat</span>
+                <span id="csDetailLabel" style="font-size:11px;font-weight:700;color:#6B7280;">0 / 20</span>
+              </div>
+              <div class="usage-bar-track green"><div id="casualBarFill" class="usage-bar-fill chat-fill" style="width:0%;"></div></div>
+              <div id="csClockWrap" style="display:none;margin-top:4px;padding:5px 8px;background:#F0FFF0;border-radius:6px;border:1.5px solid #BBF7D0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:10px;font-weight:700;color:#16A34A;">⏱ Next unlocks in:</span>
+                  <span id="csClockDisplay" style="font-size:11px;font-weight:900;color:#16A34A;font-variant-numeric:tabular-nums;">--:--:--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FOOTER ── -->
+      <div style="padding:10px 16px;border-top:2px solid #F3F4F6;background:#F9FAFB;display:flex;align-items:center;">
+        <button id="historyBtn" onclick="openHistory()" style="display:inline-flex;align-items:center;gap:6px;background:white;border:2px solid #E5E7EB;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;color:#6B7280;transition:all 0.15s;" onmouseover="this.style.borderColor=(window.currentMode==='learn'?'#1CB0F6':window.currentMode==='chat'?'#58CC02':'#FF6B00');this.style.color=(window.currentMode==='learn'?'#1CB0F6':window.currentMode==='chat'?'#58CC02':'#FF6B00')" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          History
+        </button>
+        <div id="usageCounter" style="font-size:12px;font-weight:700;color:#9CA3AF;margin-left:auto;"></div>
+      </div>
+
+    </div><!-- end chat container -->
+
+    <div id="answerBox" style="display:none;"></div>
+
+    <!-- Try asking chips -->
+    <div style="margin-top:20px;">
+      <div style="font-size:13px;font-weight:800;color:#9CA3AF;margin-bottom:10px;">Try asking Knox:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;max-width:100%;">
+        <button onclick="setQuestion('Explain the quadratic formula')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Quadratic formula</button>
+        <button onclick="setQuestion('How does photosynthesis work?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Photosynthesis</button>
+        <button onclick="setQuestion('What caused World War 1?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">World War 1</button>
+        <button onclick="setQuestion('Help me write a thesis statement')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Thesis statement</button>
+        <button onclick="setQuestion('Explain the Pythagorean theorem')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Pythagorean theorem</button>
+        <button onclick="setQuestion('Newton\'s 2nd law explained')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Newton's 2nd law</button>
+        <button onclick="setQuestion('What are derivatives in calculus?')" style="background:white;border:2px solid #E5E7EB;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;color:#3C3C3C;cursor:pointer;font-family:inherit;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#3C3C3C'">Derivatives</button>
+      </div>
     </div>
   </div>
 </section>
@@ -1628,7 +1756,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Key points broken out + common mistake warnings</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Deeper tutoring — Knox teaches the WHY, not just the how</div>
         </div>
-        <button onclick="window.location.href='/app'" id="proCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
+        <button onclick="handlePurchase('Super')" id="proCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
@@ -1660,7 +1788,7 @@
           <div style="font-size:22px;margin-bottom:6px;">🚀</div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">100 questions a day. Full power, full depth, whenever you need it.</div>
         </div>
-        <button onclick="window.location.href='/app'" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
+        <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
