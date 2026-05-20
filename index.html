@@ -1299,7 +1299,7 @@
       </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
-      <button onclick="openLoginModal();if(window.switchLoginTab)switchLoginTab('signup');closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+      <button onclick="window.location.href='/app';closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
     </div>
   </div>
 </div>
@@ -1724,7 +1724,7 @@
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Tips, memory tricks & real-world insights</div>
           <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full Socratic tutoring — Knox guides you as long as you need</div>
         </div>
-        <button onclick="scrollToAI()" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
+        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">✨ No credit card required</div>
       </div>
 
@@ -1914,7 +1914,7 @@
     <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Knox is ready when you are.</h2>
     <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Start free, no credit card needed. Knox knows the answer.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
-      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI()">Start for Free</button>
+      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Start for Free</button>
       <button onclick="scrollToPricing()" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:15px 28px;font-size:17px;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">View Plans →</button>
     </div>
   </div>
@@ -2272,13 +2272,7 @@
           }
         } catch(e) {}
         if (!hasPaymentParam && !hasPendingCheckout) {
-          setTimeout(() => {
-            const aiSection = document.getElementById('ai-helper');
-            if (!aiSection) return;
-            const headerOffset = 80;
-            const targetY = Math.max(0, aiSection.getBoundingClientRect().top + window.pageYOffset - headerOffset);
-            window.scrollTo({ top: targetY, behavior: 'smooth' });
-          }, 600);
+          window.location.replace('/claude-api');
         }
       } else {
         _isFirstAuthEvent = false;
@@ -3636,7 +3630,7 @@
           </div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="switchLoginTab('signup');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
+          <button onclick="window.location.href='/app'" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
             Sign Up Free
           </button>
           <button onclick="switchLoginTab('signin');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:800;font-family:inherit;border:2px solid #E5E7EB;background:white;color:#6B7280;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
