@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Knox Knows — AI Homework Helper</title>
+  <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
+  <link rel="apple-touch-icon" href="/knox-logo.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;900&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:       #FF6B00;
+      --orange-dark:  #CC5500;
+      --orange-light: #FFF4EC;
+      --orange-border:#FFE0C2;
+      --blue:         #1CB0F6;
+      --blue-dark:    #0A85C2;
+      --blue-light:   #D7F2FD;
+      --green:        #58CC02;
+      --green-dark:   #46A302;
+      --green-light:  #D7FFB8;
+      --sidebar-bg:   #111827;
+      --sidebar-hover:#1F2937;
+      --sidebar-active:#374151;
+      --sidebar-text: #D1D5DB;
+      --sidebar-muted:#6B7280;
+      --main-bg:      #FFFFFF;
+      --chat-bg:      #F9FAFB;
+      --border:       #E5E7EB;
+      --text:         #1F2937;
+      --text-light:   #6B7280;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,0.1);
+      --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+      --sidebar-w:    260px;
+      --header-h:     60px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Nunito', sans-serif;
+      background: var(--sidebar-bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── APP SHELL ─────────────────────────────────────────── */
+    #appShell {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: width 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      z-index: 100;
+    }
+
+    #sidebar.collapsed {
+      width: 0;
+      transform: translateX(-100%);
+    }
+
+    /* Sidebar header */
+    .sidebar-header {
+      padding: 16px 14px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      line-height: 1;
+    }
+
+    .sidebar-brand span {
+      color: var(--orange);
+    }
+
+    /* New chat button */
+    .new-chat-btn {
+      margin: 12px 12px 8px;
+      padding: 10px 14px;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 3px 0 var(--orange-dark);
+      transition: transform 0.12s, box-shadow 0.12s;
+      flex-shrink: 0;
+    }
+
+    .new-chat-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 0 var(--orange-dark);
+    }
+
+    .new-chat-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 0 var(--orange-dark);
+    }
+
+    /* Sidebar sections */
+    .sidebar-section-label {
+      padding: 12px 14px 4px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--sidebar-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+    }
+
+    /* Mode nav items */
+    .sidebar-nav {
+      padding: 4px 8px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sidebar-text);
+      transition: background 0.12s, color 0.12s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .sidebar-nav-item:hover {
+      background: var(--sidebar-hover);
+      color: white;
+    }
+
+    .sidebar-nav-item.active {
+      background: var(--sidebar-active);
+      color: white;
+    }
+
+    .sidebar-nav-item .mode-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mode-dot.orange { background: var(--orange); }
+    .mode-dot.blue   { background: var(--blue); }
+    .mode-dot.green  { background: var(--green); }
+
+    /* History list */
+    #historyList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4px 8px;
+    }
+
+    #historyList::-webkit-scrollbar { width: 4px; }
+    #historyList::-webkit-scrollbar-track { background: transparent; }
+    #historyList::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sidebar-muted);
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      background: var(--sidebar-hover);
+      color: var(--sidebar-text);
+    }
+
+    .history-item-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 12px 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+
+    .sidebar-user-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: 'Nunito', sans-serif;
+      transition: background 0.12s;
+    }
+
+    .sidebar-user-btn:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .sidebar-user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: white;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-user-info {
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .sidebar-user-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-user-plan {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--orange);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Plan badges */
+    .plan-badge {
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .plan-badge.free    { background: rgba(255,255,255,0.1); color: #9CA3AF; }
+    .plan-badge.super   { background: rgba(28,176,246,0.2);  color: var(--blue); }
+    .plan-badge.max     { background: rgba(255,107,0,0.2);   color: var(--orange); }
+
+    /* ── MAIN AREA ─────────────────────────────────────────── */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--main-bg);
+      position: relative;
+    }
+
+    /* Top bar */
+    #topbar {
+      height: var(--header-h);
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .topbar-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-light);
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+
+    .topbar-toggle:hover {
+      background: #F3F4F6;
+      color: var(--text);
+    }
+
+    /* Mode tabs in topbar */
+    #topbarModes {
+      display: flex;
+      gap: 4px;
+      background: #F3F4F6;
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .topbar-mode-btn {
+      padding: 7px 16px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #9CA3AF;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .topbar-mode-btn.active-answer { background: var(--orange); color: white; box-shadow: 0 2px 0 var(--orange-dark); }
+    .topbar-mode-btn.active-learn  { background: var(--blue);   color: white; box-shadow: 0 2px 0 var(--blue-dark); }
+    .topbar-mode-btn.active-chat   { background: var(--green);  color: white; box-shadow: 0 2px 0 var(--green-dark); }
+
+    .topbar-spacer { flex: 1; }
+
+    /* Upgrade + account area */
+    .topbar-upgrade {
+      padding: 7px 14px;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 900;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 2px 0 var(--orange-dark);
+      transition: transform 0.12s, box-shadow 0.12s;
+      white-space: nowrap;
+    }
+
+    .topbar-upgrade:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 0 var(--orange-dark);
+    }
+
+    .topbar-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 900;
+      color: white;
+      cursor: pointer;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      transition: border-color 0.12s;
+    }
+
+    .topbar-avatar:hover { border-color: var(--orange); }
+
+    /* ── CHAT AREA ───────────────────────────────────────────── */
+    #chatArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Welcome screen (shown when no messages) */
+    #welcomeScreen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+      background: var(--main-bg);
+    }
+
+    .welcome-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 22px;
+      object-fit: cover;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(255,107,0,0.2);
+    }
+
+    .welcome-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .welcome-subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 40px;
+      max-width: 420px;
+      line-height: 1.5;
+    }
+
+    /* Suggestion chips */
+    .suggestion-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .suggestion-chip {
+      padding: 14px 16px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--orange);
+      background: var(--orange-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255,107,0,0.12);
+    }
+
+    .suggestion-chip-icon {
+      font-size: 20px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .suggestion-chip-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .suggestion-chip-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    /* Chat thread */
+    #chatThread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      background: var(--main-bg);
+      scroll-behavior: smooth;
+    }
+
+    #chatThread::-webkit-scrollbar { width: 6px; }
+    #chatThread::-webkit-scrollbar-track { background: transparent; }
+    #chatThread::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 999px; }
+
+    #chatThread.hidden { display: none; }
+
+    /* Message rows */
+    .msg-row {
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    /* User messages */
+    .msg-user {
+      align-self: flex-end;
+      background: #F3F4F6;
+      color: var(--text);
+      border-radius: 18px 18px 4px 18px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.55;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+
+    /* Knox messages */
+    .msg-knox-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      max-width: 780px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 4px 24px;
+    }
+
+    .msg-knox-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--orange-border);
+      border: 2px solid var(--orange-border);
+      margin-top: 2px;
+    }
+
+    .msg-knox-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .msg-knox-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .msg-knox-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .msg-knox-name .mode-label {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    .mode-label.answer { background: #FFF4EC; color: var(--orange); }
+    .mode-label.learn  { background: var(--blue-light); color: var(--blue-dark); }
+    .mode-label.chat   { background: var(--green-light); color: var(--green-dark); }
+
+    .msg-knox-bubble {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 4px 18px 18px 18px;
+      padding: 16px 18px;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.65;
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+      word-wrap: break-word;
+    }
+
+    /* Thinking indicator */
+    .thinking-bubble {
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 4px 18px 18px 18px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .thinking-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--orange);
+      animation: thinking 1.2s infinite;
+    }
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; background: var(--blue); }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; background: var(--green); }
+
+    @keyframes thinking {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    /* Answer sections — reuse styles from index.html logic */
+    .knox-section {
+      margin-top: 14px;
+      border-top: 1px solid #F3F4F6;
+      padding-top: 12px;
+    }
+
+    .knox-section-label {
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .knox-section-label.orange { color: var(--orange); }
+    .knox-section-label.blue   { color: var(--blue-dark); }
+    .knox-section-label.green  { color: var(--green-dark); }
+    .knox-section-label.purple { color: #7C3AED; }
+    .knox-section-label.red    { color: #DC2626; }
+
+    /* ── INPUT AREA ──────────────────────────────────────────── */
+    #inputArea {
+      padding: 12px 24px 16px;
+      background: var(--main-bg);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-inner {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .input-box {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      padding: 10px 10px 10px 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255,107,0,0.1);
+    }
+
+    #appChatInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 500;
+      color: var(--text);
+      resize: none;
+      min-height: 44px;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 8px 0;
+      line-height: 1.5;
+    }
+
+    .input-tools {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .input-icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #D1D5DB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .input-icon-btn:hover {
+      color: var(--orange);
+      background: var(--orange-light);
+    }
+
+    #appSendBtn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--orange);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 0 var(--orange-dark);
+      transition: transform 0.12s, box-shadow 0.12s;
+      flex-shrink: 0;
+    }
+
+    #appSendBtn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--orange-dark); }
+    #appSendBtn:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--orange-dark); }
+
+    .input-hint {
+      font-size: 11px;
+      font-weight: 600;
+      color: #D1D5DB;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* Image pill */
+    #appImagePill {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: var(--orange-light);
+      border: 1.5px solid var(--orange);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+
+    /* Usage row */
+    #appUsageRow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      padding: 0 2px;
+    }
+
+    .usage-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* ── MODALS & OVERLAYS ───────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.72);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-card {
+      background: white;
+      border-radius: 24px;
+      max-width: 420px;
+      width: 100%;
+      padding: 32px 28px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.3);
+      animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .modal-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    /* Auth tabs */
+    .auth-tabs {
+      display: flex;
+      background: #F3F4F6;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border-radius: 9px;
+      border: none;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      background: transparent;
+      color: #9CA3AF;
+      transition: all 0.15s;
+    }
+
+    .auth-tab.active {
+      background: white;
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Auth inputs */
+    .auth-field {
+      margin-bottom: 12px;
+    }
+
+    .auth-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-light);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .auth-field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .auth-field input:focus { border-color: var(--orange); }
+
+    /* Auth buttons */
+    .auth-submit {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: none;
+      background: var(--orange);
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--orange-dark);
+      transition: transform 0.12s, box-shadow 0.12s;
+      margin-bottom: 10px;
+    }
+
+    .auth-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 0 var(--orange-dark); }
+    .auth-submit:active { transform: translateY(1px); box-shadow: 0 2px 0 var(--orange-dark); }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px 0;
+      color: #D1D5DB;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .auth-social-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text);
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 8px;
+    }
+
+    .auth-social-btn:hover { border-color: var(--orange); background: var(--orange-light); }
+
+    .auth-error {
+      background: #FEF2F2;
+      border: 1.5px solid #FECACA;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #DC2626;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* User dropdown */
+    #userDropdown {
+      position: fixed;
+      bottom: 70px;
+      left: 14px;
+      width: 220px;
+      background: #1F2937;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      padding: 8px;
+      z-index: 200;
+      display: none;
+      animation: slideUp 0.2s ease;
+    }
+
+    .dropdown-item-dark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--sidebar-text);
+      transition: background 0.12s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .dropdown-item-dark:hover { background: var(--sidebar-active); color: white; }
+    .dropdown-item-dark.danger { color: #F87171; }
+    .dropdown-item-dark.danger:hover { background: rgba(248,113,113,0.15); color: #F87171; }
+
+    .dropdown-divider-dark {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 4px 0;
+    }
+
+    /* ── MOBILE ──────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 280px; }
+
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 300;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      }
+
+      #sidebar.open {
+        transform: translateX(0);
+        width: var(--sidebar-w);
+      }
+
+      #sidebarOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 299;
+      }
+
+      #sidebarOverlay.show { display: block; }
+
+      .suggestion-grid { grid-template-columns: 1fr; }
+
+      #topbarModes { display: none; }
+
+      .topbar-upgrade { display: none; }
+    }
+
+    /* Feedback buttons */
+    .feedback-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #F3F4F6;
+    }
+
+    .feedback-bar span {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9CA3AF;
+    }
+
+    .feedback-btn {
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .feedback-btn:hover { border-color: var(--orange); background: var(--orange-light); }
+
+    /* Settings modal specifics */
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child { border-bottom: none; }
+
+    .settings-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .settings-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    /* Sign up CTA for guests */
+    #guestCta {
+      background: linear-gradient(135deg, var(--orange-light), #FFF);
+      border: 1.5px solid var(--orange-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin: 0 24px 12px;
+      max-width: 780px;
+      margin-left: auto;
+      margin-right: auto;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #guestCta p {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    #guestCta strong { color: var(--orange); }
+
+    #guestCta button {
+      padding: 9px 18px;
+      border-radius: 10px;
+      border: none;
+      background: var(--orange);
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 0 var(--orange-dark);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Mobile sidebar overlay -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div id="appShell">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <nav id="sidebar">
+
+    <div class="sidebar-header">
+      <img src="./knox-logo-square.jpg" alt="Knox" class="sidebar-logo" onerror="this.style.display='none'">
+      <div class="sidebar-brand">Knox <span>Knows</span></div>
+    </div>
+
+    <button class="new-chat-btn" onclick="appStartNewChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New chat
+    </button>
+
+    <!-- Mode navigation -->
+    <div class="sidebar-section-label">Mode</div>
+    <div class="sidebar-nav">
+      <button class="sidebar-nav-item active" id="sidebarAnswerBtn" onclick="appSetMode('answer')">
+        <span class="mode-dot orange"></span>
+        Get the Answer
+      </button>
+      <button class="sidebar-nav-item" id="sidebarLearnBtn" onclick="appSetMode('learn')">
+        <span class="mode-dot blue"></span>
+        Learn with Knox
+      </button>
+      <button class="sidebar-nav-item" id="sidebarChatBtn" onclick="appSetMode('chat')">
+        <span class="mode-dot green"></span>
+        Chat with Knox
+      </button>
+    </div>
+
+    <!-- History -->
+    <div class="sidebar-section-label">History</div>
+    <div id="historyList">
+      <div style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--sidebar-muted);" id="historyEmpty">
+        No history yet. Ask Knox something!
+      </div>
+    </div>
+
+    <!-- User -->
+    <div class="sidebar-footer">
+      <button class="sidebar-user-btn" onclick="toggleUserDropdown()">
+        <div class="sidebar-user-avatar" id="sidebarAvatar">?</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebarUserName">Sign in</div>
+          <div class="sidebar-user-plan" id="sidebarUserPlan">Guest</div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+
+  </nav>
+
+  <!-- User dropdown (anchored to sidebar footer) -->
+  <div id="userDropdown">
+    <div id="udPlanBadgeRow" style="padding:8px 12px 6px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;">
+      <div style="font-size:12px;font-weight:800;color:white;" id="udName">—</div>
+      <div style="font-size:11px;font-weight:600;color:#6B7280;" id="udEmail">—</div>
+      <div style="margin-top:4px;" id="udPlan"></div>
+    </div>
+    <button class="dropdown-item-dark" onclick="openAppSettings();closeUserDropdown()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Account &amp; Settings
+    </button>
+    <button class="dropdown-item-dark" id="udUpgradeBtn" onclick="goToPricing();closeUserDropdown()" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Upgrade Plan
+    </button>
+    <div class="dropdown-divider-dark"></div>
+    <button class="dropdown-item-dark danger" onclick="appHandleLogout();closeUserDropdown()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </button>
+  </div>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div id="main">
+
+    <!-- Top bar -->
+    <div id="topbar">
+      <button class="topbar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+
+      <!-- Mode tabs -->
+      <div id="topbarModes">
+        <button class="topbar-mode-btn active-answer" id="topAnswerBtn" onclick="appSetMode('answer')">Get the Answer</button>
+        <button class="topbar-mode-btn" id="topLearnBtn" onclick="appSetMode('learn')">Learn with Knox</button>
+        <button class="topbar-mode-btn" id="topChatBtn" onclick="appSetMode('chat')">Chat with Knox</button>
+      </div>
+
+      <div class="topbar-spacer"></div>
+
+      <button class="topbar-upgrade" id="topUpgradeBtn" onclick="goToPricing()" style="display:none;">⚡ Upgrade</button>
+
+      <div class="topbar-avatar" id="topAvatar" onclick="openAuthModal()" title="Sign in">?</div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="chatArea">
+
+      <!-- Welcome screen -->
+      <div id="welcomeScreen">
+        <img src="./knox-logo-square.jpg" alt="Knox" class="welcome-logo" onerror="this.style.background='var(--orange)'">
+        <h1 class="welcome-title">What can Knox help with?</h1>
+        <p class="welcome-subtitle">Ask any homework question — math, science, history, English, and more. Type it or snap a photo.</p>
+
+        <div class="suggestion-grid">
+          <button class="suggestion-chip" onclick="appSetQuestion('Explain the quadratic formula step by step')">
+            <span class="suggestion-chip-icon">📐</span>
+            <div class="suggestion-chip-text">Quadratic formula</div>
+            <div class="suggestion-chip-sub">Step-by-step algebra</div>
+          </button>
+          <button class="suggestion-chip" onclick="appSetQuestion('How does photosynthesis work step by step?')">
+            <span class="suggestion-chip-icon">🌿</span>
+            <div class="suggestion-chip-text">Photosynthesis</div>
+            <div class="suggestion-chip-sub">Biology explained</div>
+          </button>
+          <button class="suggestion-chip" onclick="appSetQuestion('What caused World War 1?')">
+            <span class="suggestion-chip-icon">🌍</span>
+            <div class="suggestion-chip-text">What caused WW1?</div>
+            <div class="suggestion-chip-sub">History breakdown</div>
+          </button>
+          <button class="suggestion-chip" onclick="appSetQuestion('Help me write a thesis statement for my essay')">
+            <span class="suggestion-chip-icon">✍️</span>
+            <div class="suggestion-chip-text">Write a thesis</div>
+            <div class="suggestion-chip-sub">Essay writing help</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat thread (hidden when welcome is shown) -->
+      <div id="chatThread" class="hidden"></div>
+
+      <!-- Guest CTA bar -->
+      <div id="guestCta">
+        <p>You've used your free question. <strong>Sign up free</strong> for 5 questions/day — no credit card needed.</p>
+        <button onclick="openAuthModal()">Sign up free</button>
+      </div>
+
+    </div>
+
+    <!-- Input area -->
+    <div id="inputArea">
+      <div class="input-inner">
+        <!-- Image pill -->
+        <div id="appImagePill">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span id="appImagePillName">Image attached</span>
+          <button onclick="appClearImage()" style="background:none;border:none;cursor:pointer;color:var(--orange);font-size:13px;padding:0;line-height:1;">✕</button>
+        </div>
+
+        <div class="input-box">
+          <textarea id="appChatInput"
+            placeholder="Ask Knox anything..."
+            rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();appHandleAsk();}"
+            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px';"></textarea>
+
+          <div class="input-tools">
+            <input type="file" id="appFileInput" accept="image/*" style="display:none;">
+            <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload image">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            </button>
+            <button id="appSendBtn" onclick="appHandleAsk()" title="Send">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Usage row -->
+        <div id="appUsageRow" style="display:none;">
+          <span class="usage-pill" style="color:var(--orange);" id="appHwUsage">📚 0/5 hw</span>
+          <span class="usage-pill" style="color:var(--blue);" id="appLearnUsage">🧠 0/10 learn</span>
+          <span class="usage-pill" style="color:var(--green);" id="appChatUsage">💬 0/20 chat</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:700;color:#9CA3AF;" id="appPlanLabel">Free</span>
+        </div>
+
+        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
+      </div>
+    </div>
+
+  </div><!-- end #main -->
+</div><!-- end #appShell -->
+
+<!-- ══════════════ AUTH MODAL ══════════════ -->
+<div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
+  <div class="modal-card">
+    <div style="text-align:center;margin-bottom:20px;">
+      <img src="./knox-logo-square.jpg" alt="Knox" style="width:48px;height:48px;border-radius:14px;object-fit:cover;margin-bottom:12px;" onerror="this.style.display='none'">
+      <div class="modal-title">Welcome to Knox</div>
+      <div class="modal-sub">Sign in or create a free account</div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
+      <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Sign up</button>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+
+    <!-- Sign-in fields -->
+    <div id="authSigninFields">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="authSigninEmail" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="authSigninPw" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')appHandleEmailSignin()">
+      </div>
+      <button class="auth-submit" onclick="appHandleEmailSignin()">Sign in</button>
+    </div>
+
+    <!-- Sign-up fields -->
+    <div id="authSignupFields" style="display:none;">
+      <div class="auth-field">
+        <label>Your name</label>
+        <input type="text" id="authSignupName" placeholder="First name" autocomplete="given-name">
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="authSignupEmail" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="authSignupPw" placeholder="Min 6 characters" autocomplete="new-password"
+          onkeydown="if(event.key==='Enter')appHandleEmailSignup()">
+      </div>
+      <button class="auth-submit" onclick="appHandleEmailSignup()">Create account</button>
+    </div>
+
+    <div class="auth-divider">or</div>
+
+    <button class="auth-social-btn" onclick="appHandleGoogleLogin()">
+      <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" height="18" alt="Google">
+      Continue with Google
+    </button>
+    <button class="auth-social-btn" onclick="appHandleMicrosoftLogin()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+      Continue with Microsoft
+    </button>
+
+    <p style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF;margin-top:14px;">
+      By continuing you agree to our <a href="/terms.html" style="color:var(--orange);">Terms</a> and <a href="/privacy.html" style="color:var(--orange);">Privacy Policy</a>
+    </p>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<div id="appSettingsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAppSettings()">
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="modal-title" style="margin-bottom:0;">Account</div>
+      <button onclick="closeAppSettings()" style="background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:20px;line-height:1;">✕</button>
+    </div>
+    <div id="settingsContent"></div>
+  </div>
+</div>
+
+<script>
+  window.userPlan    = 'free';
+  window.currentUser = null;
+  window.currentMode = 'answer';
+  window._appImage   = null;
+  window._sidebarOpen = true;
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, getDocs, query, where, orderBy, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
+    authDomain:        "knox-knows.firebaseapp.com",
+    projectId:         "knox-knows",
+    storageBucket:     "knox-knows.firebasestorage.app",
+    messagingSenderId: "217543758511",
+    appId:             "1:217543758511:web:f5451b30eea1918caa3a5a",
+  };
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // ── Plan fetch ────────────────────────────────────────────────
+  async function fetchPlan(uid) {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      if (snap.exists()) {
+        const d = snap.data();
+        window.userPlan = d.plan || 'free';
+        window._planStatus = d.planStatus;
+      } else {
+        window.userPlan = 'free';
+      }
+    } catch(e) { window.userPlan = 'free'; }
+    updatePlanUI();
+  }
+
+  function updatePlanUI() {
+    const plan = window.userPlan;
+    const user = window.currentUser;
+
+    // Sidebar avatar + name
+    const avatar = document.getElementById('sidebarAvatar');
+    const nameEl = document.getElementById('sidebarUserName');
+    const planEl = document.getElementById('sidebarUserPlan');
+    const topAvatar = document.getElementById('topAvatar');
+
+    if (user) {
+      const initials = (user.displayName||user.email||'?').charAt(0).toUpperCase();
+      if (avatar)    { avatar.textContent = ''; avatar.style.background = ''; }
+      if (user.photoURL) {
+        if (avatar)    { avatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;">`; }
+        if (topAvatar) { topAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;">`; }
+      } else {
+        if (avatar)    { avatar.textContent = initials; avatar.style.background = '#FF6B00'; }
+        if (topAvatar) { topAvatar.textContent = initials; topAvatar.style.background = '#FF6B00'; }
+      }
+      if (nameEl) nameEl.textContent = user.displayName || user.email;
+      if (planEl) planEl.textContent = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+
+      // Topbar
+      if (topAvatar) topAvatar.onclick = () => toggleUserDropdown();
+
+      // Dropdown
+      const udName  = document.getElementById('udName');
+      const udEmail = document.getElementById('udEmail');
+      const udPlan  = document.getElementById('udPlan');
+      if (udName)  udName.textContent  = user.displayName || '—';
+      if (udEmail) udEmail.textContent = user.email || '—';
+      if (udPlan)  udPlan.innerHTML    = `<span class="plan-badge ${plan}">${plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free'}</span>`;
+
+      // Show/hide upgrade button
+      const upgradeBtn  = document.getElementById('udUpgradeBtn');
+      const topUpgrade  = document.getElementById('topUpgradeBtn');
+      if (plan === 'free') {
+        if (upgradeBtn) upgradeBtn.style.display = 'flex';
+        if (topUpgrade) topUpgrade.style.display = '';
+      } else {
+        if (upgradeBtn) upgradeBtn.style.display = 'none';
+        if (topUpgrade) topUpgrade.style.display = 'none';
+      }
+
+      // Usage row
+      document.getElementById('appUsageRow').style.display = 'flex';
+      updateUsageDisplay();
+
+    } else {
+      if (avatar)    { avatar.textContent = '?'; avatar.style.background = '#374151'; }
+      if (topAvatar) { topAvatar.textContent = '?'; topAvatar.style.background = '#E5E7EB'; topAvatar.onclick = openAuthModal; }
+      if (nameEl)    nameEl.textContent = 'Sign in';
+      if (planEl)    planEl.textContent = 'Guest';
+      document.getElementById('appUsageRow').style.display = 'none';
+    }
+  }
+
+  // Usage display
+  async function updateUsageDisplay() {
+    if (!window.currentUser) return;
+    const plan = window.userPlan;
+    const LIMITS = {
+      free:  { hw: 5,   learn: 10,       chat: 20  },
+      super: { hw: 25,  learn: 50,       chat: 50  },
+      max:   { hw: 100, learn: Infinity, chat: 500 },
+    };
+    const lim = LIMITS[plan] || LIMITS.free;
+
+    try {
+      const today  = new Date().toISOString().slice(0,10);
+      const uid    = window.currentUser.uid;
+      const usnap  = await getDoc(doc(db,'users',uid,'usage',today));
+      const u      = usnap.exists() ? usnap.data() : {};
+      const hw     = u.hw    || 0;
+      const learn  = u.learn || 0;
+      const chat   = u.chat  || 0;
+
+      const hwEl    = document.getElementById('appHwUsage');
+      const learnEl = document.getElementById('appLearnUsage');
+      const chatEl  = document.getElementById('appChatUsage');
+      const planEl  = document.getElementById('appPlanLabel');
+
+      if (hwEl)    hwEl.textContent    = `📚 ${hw}/${lim.hw} hw`;
+      if (learnEl) learnEl.textContent = `🧠 ${learn}/${isFinite(lim.learn) ? lim.learn : '∞'} learn`;
+      if (chatEl)  chatEl.textContent  = `💬 ${chat}/${lim.chat} chat`;
+      if (planEl)  planEl.textContent  = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+    } catch(e) {}
+  }
+
+  // ── Auth state ────────────────────────────────────────────────
+  let _firstEvent = true;
+  onAuthStateChanged(auth, async (user) => {
+    window.currentUser = user || null;
+    if (user) {
+      await fetchPlan(user.uid);
+      loadSidebarHistory();
+      if (_firstEvent) {
+        _firstEvent = false;
+        // If coming back from Stripe, don't interfere
+        const p = new URLSearchParams(window.location.search).get('payment');
+        if (p === 'success') showAppPaymentSuccess();
+      } else {
+        _firstEvent = false;
+      }
+    } else {
+      window.userPlan = 'free';
+      updatePlanUI();
+    }
+  });
+
+  // ── History ───────────────────────────────────────────────────
+  async function loadSidebarHistory() {
+    if (!window.currentUser) return;
+    try {
+      const q = query(
+        collection(db,'users',window.currentUser.uid,'history'),
+        orderBy('ts','desc'), limit(20)
+      );
+      const snaps = await getDocs(q);
+      const list  = document.getElementById('historyList');
+      const empty = document.getElementById('historyEmpty');
+      if (snaps.empty) { if (empty) empty.style.display=''; return; }
+      if (empty) empty.style.display = 'none';
+      // Clear existing history items
+      list.querySelectorAll('.history-item').forEach(el => el.remove());
+      snaps.forEach(s => {
+        const d   = s.data();
+        const q   = (d.question || 'Untitled').substring(0,40);
+        const el  = document.createElement('button');
+        el.className = 'history-item';
+        el.innerHTML = `<span style="font-size:11px;">💬</span><span class="history-item-text">${q}</span>`;
+        el.onclick   = () => { appSetQuestion(d.question || ''); };
+        list.appendChild(el);
+      });
+    } catch(e) {}
+  }
+
+  // ── Firestore: save to history ────────────────────────────────
+  async function saveHistory(question, answer, mode) {
+    if (!window.currentUser) return;
+    try {
+      await addDoc(collection(db,'users',window.currentUser.uid,'history'), {
+        question, answer: answer.substring(0,500), mode, ts: Date.now()
+      });
+      loadSidebarHistory();
+    } catch(e) {}
+  }
+
+  // ── Firestore: feedback ───────────────────────────────────────
+  window.submitFeedback = async function(rating, question, answer, mode) {
+    if (!window.currentUser || (rating !== 1 && rating !== -1)) return false;
+    try {
+      const uid = window.currentUser.uid;
+      const payload = { rating, mode: mode||'answer', question:(question||'').substring(0,500), answer:(answer||'').substring(0,2000), plan: window.userPlan||'free', ts: Date.now() };
+      await addDoc(collection(db,'feedback'), { ...payload, uid });
+      await addDoc(collection(db,'users',uid,'feedback'), payload);
+      return true;
+    } catch(e) { return false; }
+  };
+
+  // ── Guest usage tracking ──────────────────────────────────────
+  let _guestUsed = 0;
+
+  // ── Mode switching ────────────────────────────────────────────
+  window.appSetMode = function(mode) {
+    window.currentMode = mode;
+    // Sidebar
+    ['answer','learn','chat'].forEach(m => {
+      const btn = document.getElementById(`sidebar${m.charAt(0).toUpperCase()+m.slice(1)}Btn`);
+      if (btn) btn.className = 'sidebar-nav-item' + (m === mode ? ' active' : '');
+    });
+    // Topbar
+    const topAnswerBtn = document.getElementById('topAnswerBtn');
+    const topLearnBtn  = document.getElementById('topLearnBtn');
+    const topChatBtn   = document.getElementById('topChatBtn');
+    if (topAnswerBtn) topAnswerBtn.className = 'topbar-mode-btn' + (mode === 'answer' ? ' active-answer' : '');
+    if (topLearnBtn)  topLearnBtn.className  = 'topbar-mode-btn' + (mode === 'learn'  ? ' active-learn'  : '');
+    if (topChatBtn)   topChatBtn.className   = 'topbar-mode-btn' + (mode === 'chat'   ? ' active-chat'   : '');
+    // Placeholder
+    const input = document.getElementById('appChatInput');
+    if (input) {
+      if (mode === 'answer') input.placeholder = 'Ask Knox anything...';
+      else if (mode === 'learn') input.placeholder = "What topic do you want to learn? Knox will guide you...";
+      else input.placeholder = 'Chat with Knox...';
+    }
+    // Input send button color
+    const sendBtn = document.getElementById('appSendBtn');
+    if (sendBtn) {
+      const colors = { answer: ['#FF6B00','#CC5500'], learn: ['#1CB0F6','#0A85C2'], chat: ['#58CC02','#46A302'] };
+      const [bg, shadow] = colors[mode] || colors.answer;
+      sendBtn.style.background = bg;
+      sendBtn.style.boxShadow = `0 3px 0 ${shadow}`;
+    }
+  };
+
+  // ── Image handling ────────────────────────────────────────────
+  document.getElementById('appFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      window._appImage = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
+      const pill     = document.getElementById('appImagePill');
+      const pillName = document.getElementById('appImagePillName');
+      if (pill)     pill.style.display = 'flex';
+      if (pillName) pillName.textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  window.appClearImage = function() {
+    window._appImage = null;
+    const pill = document.getElementById('appImagePill');
+    if (pill) pill.style.display = 'none';
+  };
+
+  // ── Ask Knox ──────────────────────────────────────────────────
+  window.appHandleAsk = async function() {
+    const input = document.getElementById('appChatInput');
+    const q     = (input?.value || '').trim();
+    if (!q && !window._appImage) return;
+
+    // Guest limit check
+    if (!window.currentUser) {
+      if (_guestUsed >= 1) {
+        document.getElementById('guestCta').style.display = 'flex';
+        return;
+      }
+      _guestUsed++;
+    }
+
+    // Switch to chat thread
+    showChatThread();
+
+    // Clear input
+    if (input) { input.value = ''; input.style.height = 'auto'; }
+
+    // Render user message
+    const userRow = document.createElement('div');
+    userRow.className = 'msg-row';
+    userRow.innerHTML = `<div class="msg-user">${escHtml(q) + (window._appImage ? ' <span style="opacity:0.6;font-size:12px;">📷</span>' : '')}</div>`;
+    document.getElementById('chatThread').appendChild(userRow);
+
+    // Render thinking
+    const thinkingRow = document.createElement('div');
+    thinkingRow.className = 'msg-knox-row';
+    thinkingRow.id = 'appThinking';
+    thinkingRow.innerHTML = `
+      <div class="msg-knox-avatar"><img src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'"></div>
+      <div class="msg-knox-content">
+        <div class="msg-knox-name">Knox <span class="mode-label ${window.currentMode}">${window.currentMode}</span></div>
+        <div class="thinking-bubble"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div>
+      </div>`;
+    document.getElementById('chatThread').appendChild(thinkingRow);
+    scrollChat();
+
+    // Build request
+    const image      = window._appImage;
+    window.appClearImage();
+    let idToken = '';
+    if (window.currentUser) {
+      try { idToken = await window.currentUser.getIdToken(); } catch(e) {}
+    }
+
+    try {
+      const res  = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization': idToken ? `Bearer ${idToken}` : '' },
+        body: JSON.stringify({ question: q, mode: window.currentMode, image: image?.data, imageType: image?.type, plan: window.userPlan }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        replaceThinking(`<p style="color:#DC2626;font-weight:700;">😬 ${data.error || 'Something went wrong. Please try again.'}</p>`, true);
+        return;
+      }
+
+      const answer = data.answer || '';
+      const html   = renderAnswerHtml(answer);
+      const fbId   = 'fb_' + Math.random().toString(36).slice(2,9);
+      window._knoxFbPayloads = window._knoxFbPayloads || {};
+      window._knoxFbPayloads[fbId] = { question: q, answer, mode: window.currentMode };
+
+      replaceThinking(`
+        <div>${html}</div>
+        <div class="feedback-bar">
+          <span>Was this helpful?</span>
+          <button class="feedback-btn" onclick="appHandleFeedback('${fbId}',1,this)">👍</button>
+          <button class="feedback-btn" onclick="appHandleFeedback('${fbId}',-1,this)">👎</button>
+        </div>`, false);
+
+      // Save history + update usage
+      await saveHistory(q, answer, window.currentMode);
+      await updateUsageDisplay();
+
+    } catch(e) {
+      replaceThinking('<p style="color:#DC2626;font-weight:700;">😬 Network error. Please check your connection.</p>', true);
+    }
+  };
+
+  function replaceThinking(html, isError) {
+    const thinking = document.getElementById('appThinking');
+    if (!thinking) return;
+    const row = document.createElement('div');
+    row.className = 'msg-knox-row';
+    row.innerHTML = `
+      <div class="msg-knox-avatar"><img src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'"></div>
+      <div class="msg-knox-content">
+        <div class="msg-knox-name">Knox <span class="mode-label ${window.currentMode}">${window.currentMode}</span></div>
+        <div class="msg-knox-bubble">${html}</div>
+      </div>`;
+    thinking.replaceWith(row);
+    scrollChat();
+  }
+
+  // ── Answer renderer ───────────────────────────────────────────
+  function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderAnswerHtml(text) {
+    if (!text) return '';
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    let html = '';
+    let i = 0;
+
+    const sectionColors = {
+      'Final Answer':    ['orange','📋'],
+      'Answer':          ['orange','📋'],
+      'Step-by-step':    ['blue',  '🔢'],
+      'Step-by-Step':    ['blue',  '🔢'],
+      'Explanation':     ['blue',  '💡'],
+      'Key Points':      ['green', '✅'],
+      'Tip':             ['orange','💡'],
+      'Common Mistake':  ['red',   '⚠️'],
+      'Insight':         ['purple','🌟'],
+      'Resources':       ['blue',  '📚'],
+    };
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // Check for section headers (e.g. "Final Answer:")
+      let matched = false;
+      for (const [key, [color, icon]] of Object.entries(sectionColors)) {
+        if (line === key || line === key + ':' || line.startsWith(key + ':')) {
+          const content = line.includes(':') ? line.slice(line.indexOf(':')+1).trim() : '';
+          html += `<div class="knox-section"><div class="knox-section-label ${color}">${icon} ${key}</div>`;
+          if (content) html += `<p style="margin:0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(content)}</p>`;
+          i++;
+          // Collect section content
+          while (i < lines.length) {
+            const next = lines[i];
+            let isNewSection = false;
+            for (const k of Object.keys(sectionColors)) {
+              if (next === k || next === k+':' || next.startsWith(k+':')) { isNewSection = true; break; }
+            }
+            if (isNewSection) break;
+            // Numbered steps
+            if (/^\d+[\.\)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
+              html += '<ol style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;">';
+              while (i < lines.length) {
+                const sl = lines[i];
+                let isNewSec2 = false;
+                for (const k of Object.keys(sectionColors)) { if (sl===k||sl===k+':'||sl.startsWith(k+':')){ isNewSec2=true;break;} }
+                if (isNewSec2) break;
+                if (/^\d+[\.\)]\s*/.test(sl)) {
+                  const txt = sl.replace(/^\d+[\.\)]\s*/,'');
+                  html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`;
+                  i++;
+                } else if (/^\d+$/.test(sl.trim()) && i+1<lines.length) {
+                  const txt = lines[i+1];
+                  let isNewSec3=false;
+                  for(const k of Object.keys(sectionColors)){if(txt===k||txt===k+':'||txt.startsWith(k+':')){isNewSec3=true;break;}}
+                  if (!isNewSec3) { html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`; i+=2; }
+                  else { html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${sl}</li>`; i++; }
+                } else break;
+              }
+              html += '</ol>';
+            }
+            // Bullet points
+            else if (/^[•\-\*✓✔]\s/.test(next) || next.startsWith('✓')) {
+              html += '<ul style="margin:8px 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">';
+              while (i < lines.length && (/^[•\-\*✓✔]\s/.test(lines[i]) || lines[i].startsWith('✓'))) {
+                const txt = lines[i].replace(/^[•\-\*✓✔]\s*/,'');
+                html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`;
+                i++;
+              }
+              html += '</ul>';
+            }
+            // Plain paragraph
+            else {
+              html += `<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(next)}</p>`;
+              i++;
+            }
+          }
+          html += '</div>';
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        html += `<p style="margin:4px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(line)}</p>`;
+        i++;
+      }
+    }
+    return html;
+  }
+
+  // ── Feedback handler ──────────────────────────────────────────
+  window.appHandleFeedback = async function(fbId, rating, btn) {
+    const payload = window._knoxFbPayloads?.[fbId];
+    if (!payload || !window.currentUser) return;
+    const bar = btn?.closest('.feedback-bar');
+    if (bar?.dataset.submitted) return;
+    if (bar) bar.dataset.submitted = '1';
+    bar?.querySelectorAll('.feedback-btn').forEach(b => { b.style.opacity='0.5'; b.style.cursor='default'; });
+    if (btn) { btn.style.opacity='1'; btn.style.background = rating===1?'#DCFCE7':'#FEE2E2'; btn.style.borderColor = rating===1?'#22C55E':'#EF4444'; }
+    const ok = await window.submitFeedback(rating, payload.question, payload.answer, payload.mode);
+    const label = bar?.querySelector('span');
+    if (label) { label.textContent = ok ? (rating===1?'Thanks! 🦊':'Thanks — helps us improve') : 'Could not save'; }
+    try { delete window._knoxFbPayloads[fbId]; } catch(e) {}
+  };
+
+  // ── Auth handlers ─────────────────────────────────────────────
+  window.appHandleGoogleLogin = async function() {
+    clearAuthError();
+    try {
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      window.currentUser = result.user;
+      const isNew = result._tokenResponse?.isNewUser;
+      closeAuthModal();
+      if (isNew) {
+        sendWelcomeEmailCall(result.user);
+        showAppWelcomeModal(result.user.displayName);
+      }
+    } catch(e) { showAuthError(e.message); }
+  };
+
+  window.appHandleMicrosoftLogin = async function() {
+    clearAuthError();
+    try {
+      const p = new OAuthProvider('microsoft.com');
+      p.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, p);
+      window.currentUser = result.user;
+      const isNew = result._tokenResponse?.isNewUser;
+      closeAuthModal();
+      if (isNew) {
+        sendWelcomeEmailCall(result.user);
+        showAppWelcomeModal(result.user.displayName);
+      }
+    } catch(e) { if (e.code !== 'auth/popup-closed-by-user') showAuthError(e.message); }
+  };
+
+  window.appHandleEmailSignin = async function() {
+    clearAuthError();
+    const email = document.getElementById('authSigninEmail')?.value?.trim();
+    const pw    = document.getElementById('authSigninPw')?.value;
+    if (!email || !pw) { showAuthError('Please fill in all fields.'); return; }
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, pw);
+      window.currentUser = result.user;
+      closeAuthModal();
+    } catch(e) {
+      showAuthError(e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : e.message);
+    }
+  };
+
+  window.appHandleEmailSignup = async function() {
+    clearAuthError();
+    const name  = document.getElementById('authSignupName')?.value?.trim();
+    const email = document.getElementById('authSignupEmail')?.value?.trim();
+    const pw    = document.getElementById('authSignupPw')?.value;
+    if (!name || !email || !pw) { showAuthError('Please fill in all fields.'); return; }
+    if (pw.length < 6)          { showAuthError('Password must be at least 6 characters.'); return; }
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, pw);
+      await updateProfile(result.user, { displayName: name });
+      await result.user.getIdToken(true);
+      window.currentUser = result.user;
+      sendWelcomeEmailCall(result.user, name);
+      closeAuthModal();
+      showAppWelcomeModal(name);
+    } catch(e) {
+      showAuthError(e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : e.message);
+    }
+  };
+
+  window.appHandleLogout = async function() {
+    try {
+      await signOut(auth);
+      window.currentUser = null;
+      window.userPlan    = 'free';
+      updatePlanUI();
+      appStartNewChat();
+    } catch(e) {}
+  };
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  function clearAuthError() {
+    const el = document.getElementById('authError');
+    if (el) { el.textContent = ''; el.style.display = 'none'; }
+  }
+
+  async function sendWelcomeEmailCall(user, overrideName) {
+    try {
+      const token = await user.getIdToken();
+      await fetch('/api/send-welcome-email', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+        body: JSON.stringify({ name: overrideName || user.displayName || '' }),
+      });
+    } catch(e) {}
+  }
+
+  // ── Payments ──────────────────────────────────────────────────
+  window.goToPricing = function() {
+    window.location.href = '/#pricing';
+  };
+
+  // Handle ?payment=success return from Stripe
+  if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+    window.addEventListener('load', () => setTimeout(showAppPaymentSuccess, 800));
+    try { history.replaceState({}, '', window.location.pathname); } catch(e) {}
+  }
+
+  function showAppPaymentSuccess() {
+    document.getElementById('authModal')?.style && (document.getElementById('authModal').style.display = 'none');
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <div class="modal-card" style="text-align:center;">
+        <img src="./knox-logo-square.jpg" style="width:64px;height:64px;border-radius:18px;object-fit:cover;margin-bottom:16px;box-shadow:0 6px 18px rgba(88,204,2,0.3);" onerror="this.style.display='none'">
+        <div class="modal-title">You're in</div>
+        <p style="font-size:14px;font-weight:600;color:var(--text-light);margin:8px 0 20px;">Your upgraded plan is now active.</p>
+        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:14px;padding:14px 18px;margin-bottom:20px;text-align:left;">
+          <p style="font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">A confirmation email is on its way. Manage your plan from your account menu.</p>
+        </div>
+        <button onclick="this.closest('.modal-backdrop').remove()" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);">Start using Knox</button>
+      </div>`;
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+    if (window.currentUser) setTimeout(() => fetchPlan(window.currentUser.uid), 1500);
+  }
+
+  function showAppWelcomeModal(name) {
+    const firstName = (name||'').split(' ')[0] || 'friend';
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML = `
+      <div class="modal-card" style="text-align:center;">
+        <img src="./knox-logo-square.jpg" style="width:64px;height:64px;border-radius:18px;object-fit:cover;margin-bottom:16px;box-shadow:0 6px 18px rgba(255,107,0,0.25);" onerror="this.style.display='none'">
+        <div class="modal-title">Welcome, ${escHtml(firstName)}</div>
+        <p style="font-size:14px;font-weight:600;color:var(--text-light);margin:6px 0 20px;">Your Knox Knows account is ready to go.</p>
+        <div style="background:var(--orange-light);border:1.5px solid var(--orange-border);border-radius:14px;padding:14px 18px;margin-bottom:20px;text-align:left;">
+          <p style="font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">You've got <strong style="color:var(--text);">5 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>
+        </div>
+        <button id="welcomeStartBtn" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);margin-bottom:8px;">Ask Knox your first question</button>
+        <button onclick="this.closest('.modal-backdrop').remove()" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:#9CA3AF;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">Maybe later</button>
+        <p style="margin-top:14px;font-size:12px;color:#9CA3AF;font-weight:500;">Check your inbox for a welcome email from support@knoxknowsapp.com</p>
+      </div>`;
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.querySelector('#welcomeStartBtn').onclick = () => {
+      modal.remove();
+      document.getElementById('appChatInput')?.focus({ preventScroll: true });
+    };
+    document.body.appendChild(modal);
+  }
+
+  // ── Settings ──────────────────────────────────────────────────
+  window.openAppSettings = function() {
+    const u   = window.currentUser;
+    const plan = window.userPlan;
+    const el  = document.getElementById('settingsContent');
+    if (!el) return;
+    if (!u) { openAuthModal(); return; }
+
+    const planLabel = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+
+    el.innerHTML = `
+      <div class="settings-row">
+        <span class="settings-label">Name</span>
+        <span class="settings-value">${escHtml(u.displayName||'—')}</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Email</span>
+        <span class="settings-value">${escHtml(u.email||'—')}</span>
+      </div>
+      <div class="settings-row">
+        <span class="settings-label">Plan</span>
+        <span class="settings-value"><span class="plan-badge ${plan}">${planLabel}</span></span>
+      </div>
+      ${plan !== 'free' ? `
+      <div class="settings-row">
+        <span class="settings-label">Billing</span>
+        <button onclick="openBillingPortal()" style="padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--text);">Manage Billing</button>
+      </div>` : `
+      <div style="margin-top:16px;">
+        <button onclick="goToPricing();closeAppSettings();" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);">Upgrade to Super Knox</button>
+      </div>`}
+      <div style="margin-top:12px;">
+        <button onclick="appHandleLogout();closeAppSettings();" style="width:100%;padding:11px;border-radius:12px;border:1.5px solid #FECACA;background:#FEF2F2;color:#DC2626;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">Sign out</button>
+      </div>`;
+
+    document.getElementById('appSettingsModal').style.display = 'flex';
+  };
+
+  window.closeAppSettings = function() {
+    document.getElementById('appSettingsModal').style.display = 'none';
+  };
+
+  async function openBillingPortal() {
+    if (!window.currentUser) return;
+    try {
+      const token = await window.currentUser.getIdToken();
+      const res   = await fetch('/api/customer-portal', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } catch(e) { alert('Could not open billing portal.'); }
+  }
+</script>
+
+<script>
+  // ── UI helpers (non-module) ───────────────────────────────────
+
+  function showChatThread() {
+    document.getElementById('welcomeScreen').style.display = 'none';
+    document.getElementById('chatThread').classList.remove('hidden');
+  }
+
+  function scrollChat() {
+    const thread = document.getElementById('chatThread');
+    if (thread) setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 50);
+  }
+
+  function appStartNewChat() {
+    const thread = document.getElementById('chatThread');
+    if (thread) thread.innerHTML = '';
+    document.getElementById('welcomeScreen').style.display = '';
+    document.getElementById('chatThread').classList.add('hidden');
+    document.getElementById('guestCta').style.display = 'none';
+    appClearImage();
+  }
+  window.appStartNewChat = appStartNewChat;
+
+  function appSetQuestion(q) {
+    const input = document.getElementById('appChatInput');
+    if (input) {
+      input.value = q;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+      input.focus();
+    }
+    // On mobile, close sidebar
+    if (window.innerWidth <= 768) closeSidebar();
+  }
+  window.appSetQuestion = appSetQuestion;
+
+  // Sidebar toggle
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (window.innerWidth <= 768) {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('show');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
+  }
+  window.toggleSidebar = toggleSidebar;
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+  window.closeSidebar = closeSidebar;
+
+  // User dropdown
+  function toggleUserDropdown() {
+    const dd = document.getElementById('userDropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  }
+  window.toggleUserDropdown = toggleUserDropdown;
+
+  function closeUserDropdown() {
+    document.getElementById('userDropdown').style.display = 'none';
+  }
+  window.closeUserDropdown = closeUserDropdown;
+
+  document.addEventListener('click', (e) => {
+    const dd = document.getElementById('userDropdown');
+    if (dd && !dd.contains(e.target) && !e.target.closest('.sidebar-user-btn')) {
+      dd.style.display = 'none';
+    }
+  });
+
+  // Auth modal
+  function openAuthModal() {
+    document.getElementById('authModal').style.display = 'flex';
+  }
+  window.openAuthModal = openAuthModal;
+
+  function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
+  }
+  window.closeAuthModal = closeAuthModal;
+
+  function switchAuthTab(tab) {
+    document.getElementById('authSigninTab').className   = 'auth-tab' + (tab==='signin'?' active':'');
+    document.getElementById('authSignupTab').className   = 'auth-tab' + (tab==='signup'?' active':'');
+    document.getElementById('authSigninFields').style.display = tab==='signin' ? '' : 'none';
+    document.getElementById('authSignupFields').style.display = tab==='signup' ? '' : 'none';
+  }
+  window.switchAuthTab = switchAuthTab;
+
+  // Keyboard shortcut — Cmd/Ctrl+K = new chat
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      appStartNewChat();
+      document.getElementById('appChatInput')?.focus();
+    }
+  });
+</script>
+
+</body>
+</html>
