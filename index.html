@@ -1330,8 +1330,8 @@
     </p>
 
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
-      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('answer')">Get the Answer</button>
-      <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="scrollToAI();setMode('learn')">Learn with Knox</button>
+      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Get the Answer</button>
+      <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Learn with Knox</button>
     </div>
 
     <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account · 5 questions every day · no credit card needed</p>
@@ -1357,13 +1357,13 @@
 <section style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Two ways to use Knox</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Knox helps you no matter how you learn best.</p>
+      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Three powerful modes</h2>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Knox Knows has three powerful modes to help you learn your way.</p>
     </div>
 
     <div class="rg-2col">
       <!-- Get the Answer -->
-      <div class="reveal delay-1" onclick="scrollToAI();setMode('answer')" style="background:white;border-radius:24px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
+      <div class="reveal delay-1" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
         <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">⚡</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Get the Answer</h3>
         <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Stuck on a problem? Knox gives you a clear, instant answer with full explanations. Fast and accurate.</p>
@@ -1373,7 +1373,7 @@
       </div>
 
       <!-- Learn with Knox -->
-      <div class="reveal delay-2" onclick="scrollToAI();setMode('learn')" style="background:white;border-radius:24px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
+      <div class="reveal delay-2" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
         <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">🧠</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Learn with Knox</h3>
         <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Knox guides you step-by-step like a real tutor — asking questions, giving hints, helping you actually understand.</p>
@@ -1390,27 +1390,27 @@
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">How Knox works</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Three steps. That's it.</p>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Sign up free, pick your mode, and start learning in seconds.</p>
     </div>
 
     <div class="rg-3col">
       <div class="reveal delay-1" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">1</div>
         <div style="font-size:48px;margin-bottom:8px;">✏️</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Type or upload</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type your question or snap a photo of your homework problem.</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Create your free account</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Sign up in seconds at knoxknowsapp.com/app</p>
       </div>
       <div class="reveal delay-2" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">2</div>
         <div style="font-size:48px;margin-bottom:8px;">🦊</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Knox figures it out</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Knox analyzes your question and builds a clear, step-by-step explanation.</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Pick your mode</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Get the Answer, Learn with Knox, or Chat with Knox</p>
       </div>
       <div class="reveal delay-3" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">3</div>
         <div style="font-size:48px;margin-bottom:8px;">🎓</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">You actually learn</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Get the answer and understand why — so you're ready for the test.</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Ask Knox anything</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type or snap a photo of your homework</p>
       </div>
     </div>
   </div>
@@ -1471,17 +1471,13 @@
 
 <!-- ===================== ASK AI ===================== -->
 <section id="ai-helper" style="background:#f9fafb;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:780px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <div style="display:flex;justify-content:center;margin-bottom:14px;">
-        <div style="display:inline-flex;align-items:center;gap:8px;background:#FFF4EC;border:2px solid #FFCFA0;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:900;color:#CC5500;letter-spacing:0.04em;text-transform:uppercase;">
-          <span style="width:8px;height:8px;border-radius:50%;background:#22C55E;animation:pulse 2s infinite;"></span>
-          Try Knox right now — no signup needed
-        </div>
-      </div>
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Ask Knox</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Pick a mode below, then type or upload a photo of your problem.</p>
-    </div>
+  <div style="max-width:780px;margin:0 auto;text-align:center;">
+    <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">See Knox in action</h2>
+    <p style="font-size:17px;font-weight:600;color:#9CA3AF;margin-bottom:40px;">The full Knox experience — chat interface, step-by-step answers, and three learning modes.</p>
+    <a href="/app" style="display:inline-block;background:#FF6B00;color:white;font-size:18px;font-weight:900;padding:18px 48px;border-radius:16px;text-decoration:none;box-shadow:0 4px 0 #CC5500;font-family:Nunito,sans-serif;">Try Knox free</a>
+    <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 5 free questions every day</p>
+  </div>
+  <div style="display:none;">
 
     <!-- Chat container -->
     <div id="chatWidget" style="background:white;border-radius:24px;border:2px solid #E5E7EB;box-shadow:0 4px 24px rgba(0,0,0,0.07);overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:520px;max-height:780px;text-align:left;">
@@ -2887,7 +2883,7 @@
     document.body.appendChild(m);
   }
 
-  function scrollToAI() { document.getElementById('ai-helper').scrollIntoView({ behavior:'smooth' }); }
+  function scrollToAI() { document.getElementById('ai-helper')?.scrollIntoView({ behavior:'smooth' }); }
   function scrollToPricing() { document.getElementById('pricing').scrollIntoView({ behavior:'smooth' }); }
   function smoothScroll(id, ev) { if (ev && ev.preventDefault) ev.preventDefault(); const el = document.getElementById(id); if(el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }
 
@@ -2895,81 +2891,8 @@
   window.currentMode = 'answer';
   let currentLearnSessionId = null;
   function genSessionId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-  function setMode(mode) {
-    currentMode = mode;
-    window.currentMode = mode;
-    if (mode !== 'learn') currentLearnSessionId = null; // reset session on mode switch
-    const aBtn         = document.getElementById('modeAnswerBtn');
-    const lBtn         = document.getElementById('modeLearnBtn');
-    const cBtn         = document.getElementById('modeChatBtn');
-    const askBtn       = document.getElementById('askBtn');
-    const aiHeaderDesc = document.getElementById('aiHeaderDesc');
-    const aiBoxHeader  = document.getElementById('aiBoxHeader');
-    const introBubble  = document.getElementById('knoxIntroBubble');
-    const introText    = document.getElementById('knoxIntroText');
-    const inputWrapper = document.getElementById('chatInputWrapper');
-    const qInput       = document.getElementById('chatInput') || document.getElementById('questionInput');
-    const iconBtns     = document.querySelectorAll('.chat-icon-btn');
-
-    const inactiveStyle = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;line-height:1;';
-    if (aBtn) aBtn.style.cssText = inactiveStyle;
-    if (lBtn) lBtn.style.cssText = inactiveStyle;
-    if (cBtn) cBtn.style.cssText = inactiveStyle;
-
-    // Update the mode description line below the tabs
-    const modeDesc = document.getElementById('modeDescription');
-    if (modeDesc) {
-      if (mode === 'answer') {
-        modeDesc.innerHTML = '⚡ <strong style="color:#FF6B00;">Answer mode</strong> — Knox solves it and shows the work';
-      } else if (mode === 'learn') {
-        modeDesc.innerHTML = '🧠 <strong style="color:#1CB0F6;">Learn mode</strong> — Knox teaches you step by step';
-      } else if (mode === 'chat') {
-        modeDesc.innerHTML = '💬 <strong style="color:#58CC02;">Chat mode</strong> — just talk to Knox, no tutoring';
-      }
-    }
-
-    // If guest is locked, don't re-enable input — just update header color only
-    if (!window.currentUser && guestQuestionUsed) {
-      lockGuestInput();
-      return;
-    }
-
-    if (mode === 'answer') {
-      if (aBtn) aBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;line-height:1;';
-      if (askBtn) { askBtn.style.background='#FF6B00'; askBtn.style.boxShadow='0 3px 0 #CC5500'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #CC5500';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #CC5500';}; }
-      if (aiBoxHeader) aiBoxHeader.style.background = '#FF6B00';
-      if (introBubble) { introBubble.style.background='#FFF4EC'; introBubble.style.borderColor='#FFD0A0'; }
-      if (introText)   introText.innerHTML = '<strong>Hey! I\'m Knox.</strong> Drop your question — homework, essays, math, science, history. I\'ll give you the answer with a full explanation. 🦊';
-      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#FF6B00'; };
-      iconBtns.forEach(b => { b.dataset.hoverColor='#FF6B00'; });
-      if (aiHeaderDesc) aiHeaderDesc.textContent = 'Ready to help you ace it';
-      if (qInput) qInput.placeholder = 'Ask Knox anything — type or paste your question...';
-    } else if (mode === 'learn') {
-      if (lBtn) lBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#1CB0F6;color:white;box-shadow:0 3px 0 #0A85C2;transition:all 0.15s;line-height:1;';
-      if (askBtn) { askBtn.style.background='#1CB0F6'; askBtn.style.boxShadow='0 3px 0 #0A85C2'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #0A85C2';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #0A85C2';}; }
-      if (aiBoxHeader) aiBoxHeader.style.background = '#1CB0F6';
-      if (introBubble) { introBubble.style.background='#EFF9FF'; introBubble.style.borderColor='#BAE6FD'; }
-      if (introText)   introText.innerHTML = '<strong>Let\'s figure it out together.</strong> Tell me what you\'re working on — I\'ll guide you to the answer step by step instead of just giving it away. 🧠';
-      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#1CB0F6'; };
-      iconBtns.forEach(b => { b.dataset.hoverColor='#1CB0F6'; });
-      if (aiHeaderDesc) aiHeaderDesc.textContent = 'Knox will guide you step by step';
-      if (qInput) qInput.placeholder = 'What would you like to learn? Knox will guide you step by step...';
-    } else if (mode === 'chat') {
-      if (cBtn) cBtn.style.cssText = 'flex:1;padding:11px 8px;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#58CC02;color:white;box-shadow:0 3px 0 #3D9900;transition:all 0.15s;line-height:1;';
-      if (askBtn) { askBtn.style.background='#58CC02'; askBtn.style.boxShadow='0 3px 0 #3D9900'; askBtn.onmouseover=()=>{askBtn.style.transform='translateY(-1px)';askBtn.style.boxShadow='0 5px 0 #3D9900';}; askBtn.onmouseout=()=>{askBtn.style.transform='';askBtn.style.boxShadow='0 3px 0 #3D9900';}; }
-      if (aiBoxHeader) aiBoxHeader.style.background = '#58CC02';
-      if (introBubble) { introBubble.style.background='#F0FFF0'; introBubble.style.borderColor='#BBF7D0'; }
-      if (introText) {
-        introText.innerHTML = '<strong>Hey, what\'s up!</strong> I\'m Knox — not in tutor mode right now, just here to chat. Ask me anything, vent, or just say hi. 🦊';
-      }
-      if (qInput) qInput.onfocus = () => { if(inputWrapper) inputWrapper.style.borderColor='#58CC02'; };
-      iconBtns.forEach(b => { b.dataset.hoverColor='#58CC02'; });
-      if (aiHeaderDesc) aiHeaderDesc.textContent = 'Just here to chat 🦊';
-      if (qInput) qInput.placeholder = 'Chat with Knox about anything...';
-    }
-  }
+  function setMode(mode) { currentMode = mode; window.currentMode = mode; }
   document.addEventListener('DOMContentLoaded', () => {
-    setMode('answer');
     // Handle ?action=login or ?action=signup from Chrome extension
     const params = new URLSearchParams(window.location.search);
     const action = params.get('action');
@@ -3083,11 +3006,7 @@
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
   }
 
-  function setQuestion(q) {
-    const input = document.getElementById('chatInput') || document.getElementById('questionInput');
-    if (input) { input.value = q; input.focus(); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; }
-    scrollToAI();
-  }
+  function setQuestion(q) {}
 
   async function handlePurchase(planName) {
     const planKey = planName === 'Super' ? 'super' : planName === 'Max' ? 'max' : 'super';
@@ -3420,552 +3339,29 @@
     }
   }, 1600); // wait for Firebase auth to resolve first
 
-  function handleAskQuestion() {
-    userPlan = window.userPlan || userPlan;
-    const question = ((document.getElementById('chatInput')||document.getElementById('questionInput')||{value:''}).value||'').trim();
-    if (!question && !pendingImageBase64) return;
-    const usage = getUsageData();
+  function handleAskQuestion() {}
 
-    const _plan = window.userPlan || userPlan || 'free';
-    const _limit = PLAN_LIMITS[_plan] || 5;
+  function appendKnoxCasualLimitReached(plan) {}
 
-    // Determine if this is a casual chat message (learn mode or conversational)
-    const _isLearn = currentMode === 'learn';
-
-    // Max Knox — check limits
-    if (_plan === 'max') {
-      const used = usage.count || 0;
-      if (used >= 100) { appendKnoxLimitReached('max'); return; }
-      executeAskQuestion(); return;
-    }
-
-    // Super Knox — check limits
-    if (_plan === 'super') {
-      const used   = usage.count   || 0;
-      const csUsed = usage.casual  || 0;
-      if (used >= 25 && csUsed >= 50) { appendKnoxLimitReached('super'); return; }
-      executeAskQuestion(); return;
-    }
-
-    // GUEST: allow exactly 1 message of any kind, then lock and prompt sign up
-    if (!window.currentUser) {
-      if (guestQuestionUsed) {
-        lockGuestInput();
-        appendKnoxSignUpPrompt(false);
-        return;
-      }
-      guestQuestionUsed = true;
-      sessionStorage.setItem('knoxGuestUsed', '1');
-      // Refresh bar to show 1/1 (refreshUsageBars handles guest display)
-      refreshUsageBars();
-      // Execute the question, then lock and show sign up prompt
-      executeAskQuestion(() => {
-        appendKnoxSignUpPrompt(true);
-        lockGuestInput();
-      });
-      return;
-    }
-
-    // Free plan — check limits but don't increment yet (increment after API tells us if casual)
-    // For now: check both limits, use homework limit as default gate
-    const _hwUsed = usage.count  || 0;
-    const _csUsed = usage.casual || 0;
-    // Don't block yet — we need the API to tell us if it's casual or homework
-    // But if BOTH are maxed, definitely block
-    if (_hwUsed >= DAILY_LIMIT && _csUsed >= 20) {
-      appendKnoxLimitReached('free'); return;
-    }
-    executeAskQuestion();
-  }
-
-  function appendKnoxCasualLimitReached(plan) {
-    const msgs = {
-      free:   { title: "You've used all 20 chat messages today 💬", sub: "Your messages reset tomorrow — or upgrade to Super Knox for 50 chat messages every day plus 25 homework questions.", btn: "Upgrade to Super Knox ⚡", color: "#58CC02", shadow: "#2D6A00" },
-      super:  { title: "You've used all 50 chat messages today ⚡", sub: "Your messages reset tomorrow — or upgrade to Max Knox for 500 chat messages every day.", btn: "Upgrade to Max Knox 🚀", color: "#FF6B00", shadow: "#CC5500" },
-    };
-    const m = msgs[plan] || msgs.free;
-    const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
-    if (!chatThread) return;
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin:8px 0;';
-    row.innerHTML = '<div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="./knox-logo.jpg" style="width:100%;height:100%;object-fit:cover;"></div>'
-      + '<div style="background:white;border:2px solid #E5E7EB;border-radius:4px 20px 20px 20px;padding:16px 18px;max-width:85%;">'
-      + '<div style="font-size:15px;font-weight:900;color:#1f2937;margin-bottom:6px;">' + m.title + '</div>'
-      + '<div style="font-size:14px;font-weight:600;color:#6B7280;line-height:1.6;margin-bottom:' + (m.btn ? '14px' : '0') + '">' + m.sub + '</div>'
-      + (m.btn ? '<button onclick="closeSettings();scrollToPricing();" style="padding:10px 20px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:' + m.color + ';color:white;cursor:pointer;box-shadow:0 3px 0 ' + m.shadow + ';">' + m.btn + '</button>' : '')
-      + '</div>';
-    chatThread.appendChild(row);
-    chatThread.scrollTop = chatThread.scrollHeight;
-  }
-
-  function appendKnoxLimitReached(plan) {
-    const msgs = {
-      free: {
-        title: "You've used all 5 free questions today 🦊",
-        sub: "Your questions reset tomorrow — or upgrade to Super Knox for 25 questions every day, step-by-step breakdowns, and smarter AI.",
-        btn: "Upgrade to Super Knox ⚡",
-        btn2: null,
-        color: "#58CC02", shadow: "#2D6A00"
-      },
-      super: {
-        title: "You've used all 25 questions today ⚡",
-        sub: "Your questions reset tomorrow — or upgrade to Max Knox for 100 questions every day, best-in-class AI, and no daily stress.",
-        btn: "Upgrade to Max Knox 🚀",
-        btn2: null,
-        color: "#FF6B00", shadow: "#CC5500"
-      },
-      max: {
-        title: "You've used all 100 questions today 🚀",
-        sub: "You're a power user! Your questions reset tomorrow. Knox will be ready and waiting.",
-        btn: null,
-        btn2: null,
-        color: "#FF6B00", shadow: "#CC5500"
-      },
-    };
-    const m = msgs[plan] || msgs.free;
-    const chatThread = document.getElementById('chatThread') || document.getElementById('chatMessages');
-    if (!chatThread) return;
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin:8px 0;';
-    row.innerHTML = `<div style="width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="./knox-logo.jpg" style="width:100%;height:100%;object-fit:cover;"></div>
-      <div style="background:white;border:2px solid #E5E7EB;border-radius:4px 20px 20px 20px;padding:16px 18px;max-width:85%;">
-        <div style="font-size:15px;font-weight:900;color:#1f2937;margin-bottom:6px;">${m.title}</div>
-        <div style="font-size:14px;font-weight:600;color:#6B7280;line-height:1.6;margin-bottom:${m.btn ? '14px' : '0'}">${m.sub}</div>
-        ${m.btn ? `<button onclick="closeSettings();scrollToPricing();" style="padding:10px 20px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:${m.color};color:white;cursor:pointer;box-shadow:0 3px 0 ${m.shadow};">${m.btn}</button>` : ''}
-      </div>`;
-    chatThread.appendChild(row);
-    chatThread.scrollTop = chatThread.scrollHeight;
-  }
+  function appendKnoxLimitReached(plan) {}
 
   // Knox sends a sign-up message in the chat thread
-  function lockGuestInput() {
-    const input   = document.getElementById('chatInput');
-    const askBtn  = document.getElementById('askBtn');
-    const wrapper = document.getElementById('chatInputWrapper');
-    if (input) {
-      input.disabled    = true;
-      input.placeholder = 'Sign up or sign in to keep asking Knox...';
-      input.style.color = '#9CA3AF';
-    }
-    if (askBtn) {
-      askBtn.disabled             = true;
-      askBtn.style.opacity        = '0.4';
-      askBtn.style.cursor         = 'not-allowed';
-      askBtn.style.boxShadow      = 'none';
-    }
-    if (wrapper) {
-      wrapper.style.background    = '#F3F4F6';
-      wrapper.style.borderColor   = '#E5E7EB';
-    }
-    // Also disable mode tabs so they can't switch modes
-    ['modeAnswerBtn','modeLearnBtn','modeChatBtn'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) { btn.style.opacity = '0.4'; btn.style.pointerEvents = 'none'; }
-    });
-  }
+  function lockGuestInput() {}
 
-  function unlockInput() {
-    const input   = document.getElementById('chatInput');
-    const askBtn  = document.getElementById('askBtn');
-    const wrapper = document.getElementById('chatInputWrapper');
-    if (input) {
-      input.disabled    = false;
-      input.placeholder = 'Ask Knox anything — type or paste your question...';
-      input.style.color = '#3C3C3C';
-    }
-    if (askBtn) {
-      askBtn.disabled        = false;
-      askBtn.style.opacity   = '1';
-      askBtn.style.cursor    = 'pointer';
-      askBtn.style.boxShadow = '0 3px 0 #CC5500';
-    }
-    if (wrapper) {
-      wrapper.style.background  = '#F9FAFB';
-      wrapper.style.borderColor = '#E5E7EB';
-    }
-    // Re-enable mode tabs
-    ['modeAnswerBtn','modeLearnBtn','modeChatBtn'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
-    });
-    // Restore learn and chat bars
-    const learnBar = document.getElementById('learnBarSection');
-    const chatBar  = document.getElementById('casualBarSection');
-    if (learnBar) learnBar.style.display = '';
-    if (chatBar)  chatBar.style.display  = '';
-    // Reset guestQuestionUsed so they get proper free plan limits
-    guestQuestionUsed = false;
-    sessionStorage.removeItem('knoxGuestUsed');
-    // Re-run mode to restore correct colors/placeholders
-    setMode(window.currentMode || 'answer');
-    // Refresh bars with real plan data
-    setTimeout(() => refreshUsageBars(), 100);
-  }
+  function unlockInput() {}
   window.unlockInput = unlockInput;
 
-  function appendKnoxSignUpPrompt(afterAnswer) {
-    const chatThread = document.getElementById('chatThread');
-    if (!chatThread) return;
-    // Prevent duplicate prompts
-    if (document.getElementById('knoxSignUpPrompt')) return;
-
-    const row = document.createElement('div');
-    row.id = 'knoxSignUpPrompt';
-    row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
-    row.innerHTML = `
-      <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
-        <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
-      </div>
-      <div style="max-width:88%;display:flex;flex-direction:column;gap:10px;">
-        <div style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:16px 18px;">
-          <p style="font-size:15px;font-weight:800;color:#44403C;line-height:1.5;margin:0 0 10px;">
-            Want to keep going? Sign up free — it takes 10 seconds. 🦊
-          </p>
-          <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:2px;">
-            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 5 homework questions every day</div>
-            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 20 casual chat messages</div>
-            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ 10 Learn with Knox sessions</div>
-            <div style="font-size:13px;font-weight:700;color:#FF6B00;">✔ All subjects covered</div>
-            <div style="font-size:13px;font-weight:700;color:#9CA3AF;">✔ No credit card needed</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="window.location.href='/app'" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">
-            Sign Up Free
-          </button>
-          <button onclick="switchLoginTab('signin');openLoginModal();" style="padding:12px 22px;border-radius:12px;font-size:14px;font-weight:800;font-family:inherit;border:2px solid #E5E7EB;background:white;color:#6B7280;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#6B7280'">
-            Log In
-          </button>
-        </div>
-      </div>`;
-
-    chatThread.appendChild(row);
-    chatThread.scrollTop = chatThread.scrollHeight;
-
-    // Lock the input so they can't keep typing
-    lockGuestInput();
-  }
+  function appendKnoxSignUpPrompt(afterAnswer) {}
 
   // ── CONVERSATION HISTORY ──────────────────────────────────────────────────
   // Stores last 3 exchanges (6 messages) to give the AI context
   let conversationHistory = [];
 
-  function updateConversationIndicator() {
-    const el  = document.getElementById('conversationIndicator');
-    const btn = document.getElementById('newChatBtn');
-    const exchanges = Math.floor(conversationHistory.length / 2);
-    if (exchanges > 0) {
-      el.style.display  = 'block';
-      btn.style.display = 'inline-flex';
-      el.textContent    = `💬 ${exchanges} message${exchanges > 1 ? 's' : ''} in this conversation — AI remembers context`;
-    } else {
-      el.style.display  = 'none';
-      btn.style.display = 'none';
-    }
-  }
+  function updateConversationIndicator() {}
 
-  window.startNewChat = function() {
-    conversationHistory = [];
-    currentLearnSessionId = null; // reset learn session on new chat
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) { chatInput.value = ''; chatInput.style.height = 'auto'; }
-    // Reset chat thread to just the greeting
-    const thread = document.getElementById('chatThread');
-    if (thread) {
-      thread.innerHTML = `<div style="display:flex;gap:10px;align-items:flex-start;">
-        <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;">
-          <img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
-        </div>
-        <div id="knoxIntroBubble" style="background:#FFF4EC;border:2px solid #FFD0A0;border-radius:6px 18px 18px 18px;padding:14px 18px;max-width:84%;">
-          <p style="font-size:15px;font-weight:500;color:#44403C;line-height:1.55;margin:0;"><strong>Hey! I'm Knox.</strong> Ask me anything — homework, essays, math, science, history. I've got you. 🦊</p>
-        </div>
-      </div>`;
-    }
-    updateConversationIndicator();
-    if (window.clearImage) window.clearImage();
-  };
+  window.startNewChat = function() {};
 
-  async function executeAskQuestion(afterCallback) {
-    const chatInput   = document.getElementById('chatInput');
-    const typedQuestion = (chatInput ? chatInput.value : '').trim();
-    if (!typedQuestion && !pendingImageBase64) return;
-
-    const askBtn      = document.getElementById('askBtn');
-    const chatThread  = document.getElementById('chatThread');
-    const spinnerSVG  = '<svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
-
-    // ── Helper: scroll thread to bottom ─────────────────────────────────────
-    const scrollBottom = () => { if (chatThread) chatThread.scrollTop = chatThread.scrollHeight; };
-
-    // ── Helper: append user bubble ───────────────────────────────────────────
-    function appendUserBubble(text) {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;justify-content:flex-end;';
-      const bg     = currentMode === 'learn' ? '#1CB0F6' : currentMode === 'chat' ? '#58CC02' : '#FF6B00';
-      const shadow = currentMode === 'learn' ? 'rgba(28,176,246,0.2)' : currentMode === 'chat' ? 'rgba(88,204,2,0.2)' : 'rgba(255,107,0,0.2)';
-      row.innerHTML = `<div style="background:${bg};color:white;padding:12px 18px;border-radius:18px 18px 4px 18px;max-width:82%;font-size:15px;font-weight:600;line-height:1.5;box-shadow:0 2px 8px ${shadow};">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
-      chatThread.appendChild(row);
-      scrollBottom();
-    }
-
-    // ── Helper: append Knox thinking bubble ─────────────────────────────────
-    function appendThinkingBubble() {
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
-      row.id = 'knoxThinkingRow';
-      const label = currentMode === 'learn' ? 'Knox is working it out' : currentMode === 'chat' ? 'Knox is typing' : 'Knox is thinking';
-      const dotColor = currentMode === 'learn' ? '#1CB0F6' : currentMode === 'chat' ? '#58CC02' : '#FF6B00';
-      row.innerHTML = `
-        <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-        <div style="background:white;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-          <span style="font-size:13px;font-weight:700;color:#9CA3AF;">${label}</span>
-          <div style="display:flex;gap:5px;align-items:center;">
-            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out infinite;"></span>
-            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out 0.2s infinite;"></span>
-            <span style="width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;animation:chatDot 1.2s ease-in-out 0.4s infinite;"></span>
-          </div>
-        </div>`;
-      chatThread.appendChild(row);
-      scrollBottom();
-    }
-
-    // ── Helper: replace thinking bubble with Knox response ───────────────────
-    // opts: { question, answer, mode } — when provided AND not an error,
-    // renders thumbs up/down feedback buttons under the message.
-    function replaceThinkingWithResponse(html, isError, opts) {
-      const old = document.getElementById('knoxThinkingRow');
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:10px;align-items:flex-start;';
-
-      // Build optional feedback bar (only on successful answers from a logged-in user)
-      let feedbackHtml = '';
-      if (!isError && opts && opts.question && opts.answer && window.currentUser) {
-        const fbId = 'fb_' + Math.random().toString(36).slice(2, 10);
-        // Stash payload globally so click handlers can reach it without escaping issues
-        window._knoxFeedbackPayloads = window._knoxFeedbackPayloads || {};
-        window._knoxFeedbackPayloads[fbId] = { question: opts.question, answer: opts.answer, mode: opts.mode || 'answer' };
-        feedbackHtml = `
-          <div id="${fbId}" style="display:flex;align-items:center;gap:8px;padding:10px 18px 14px;border-top:1px solid #F3F4F6;background:#FAFAFA;">
-            <span style="font-size:12px;font-weight:700;color:#9CA3AF;">Was this helpful?</span>
-            <button onclick="window.handleKnoxFeedback('${fbId}', 1, this)" aria-label="Helpful" title="Helpful" style="background:white;border:1.5px solid #E5E7EB;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='#22C55E';this.style.background='#F0FDF4'" onmouseout="if(!this.dataset.locked){this.style.borderColor='#E5E7EB';this.style.background='white'}">👍</button>
-            <button onclick="window.handleKnoxFeedback('${fbId}', -1, this)" aria-label="Not helpful" title="Not helpful" style="background:white;border:1.5px solid #E5E7EB;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:14px;line-height:1;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.borderColor='#EF4444';this.style.background='#FEF2F2'" onmouseout="if(!this.dataset.locked){this.style.borderColor='#E5E7EB';this.style.background='white'}">👎</button>
-          </div>`;
-      }
-
-      row.innerHTML = `
-        <div style="width:36px;height:36px;border-radius:50%;border:2px solid #FFE0C2;overflow:hidden;flex-shrink:0;background:#FED7AA;margin-top:4px;"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-        <div style="max-width:88%;border:2px solid #E5E7EB;border-radius:6px 18px 18px 18px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07);background:white;">${html}${feedbackHtml}</div>`;
-      if (old) old.replaceWith(row);
-      else chatThread.appendChild(row);
-      // Scroll the chat thread so the TOP of Knox's response is visible
-      setTimeout(() => {
-        const rowTop = row.offsetTop - chatThread.offsetTop - 12;
-        chatThread.scrollTo({ top: rowTop, behavior: 'smooth' });
-      }, 80);
-      return row;
-    }
-
-    const resetBtn = () => {
-      if (askBtn) {
-        askBtn.disabled = false;
-        askBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>';
-      }
-    };
-
-    // ── Disable send, show user bubble, show thinking ────────────────────────
-    if (askBtn) { askBtn.disabled = true; askBtn.innerHTML = spinnerSVG; }
-    if (chatInput) { chatInput.value = ''; chatInput.style.height = 'auto'; }
-
-    appendUserBubble(typedQuestion || '📷 Image question');
-    appendThinkingBubble();
-
-    // ── Firebase token ───────────────────────────────────────────────────────
-    const reqHeaders = { "Content-Type": "application/json" };
-    if (window.currentUser) {
-      try {
-        const idToken = await window.currentUser.getIdToken();
-        reqHeaders["Authorization"] = `Bearer ${idToken}`;
-      } catch (e) { console.error('Token error:', e); }
-    }
-
-    try {
-      // ── REAL API CALL ─────────────────────────────────────────────────────
-      const res = await fetch("/api/ask", {
-        method:  "POST",
-        headers: reqHeaders,
-        body: JSON.stringify({
-          question:      typedQuestion,
-          history:       conversationHistory.slice(-20),
-          image:         pendingImageBase64 || null,
-          imageType:     pendingImageType || null,
-          mode:          currentMode || 'answer',
-          learnSessionId: currentMode === 'learn' ? currentLearnSessionId : null,
-        }),
-      });
-
-      if (res.status === 401) {
-        const _old401 = document.getElementById('knoxThinkingRow');
-        if (_old401) _old401.remove();
-        resetBtn();
-        appendKnoxSignUpPrompt();
-        return;
-      }
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        replaceThinkingWithResponse(`<div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;">
-          <div style="font-size:14px;font-weight:700;color:#DC2626;line-height:1.6;">😬 ${errData.error || 'Knox couldn\'t reach the server — check your connection and try again.'}</div>
-          <button onclick="handleAskQuestion()" style="padding:10px 18px;border-radius:10px;font-size:13px;font-weight:800;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;align-self:flex-start;">↩ Try Again</button>
-        </div>`, true);
-        return;
-      }
-
-      const data     = await res.json();
-      const answer   = data.answer   || '';
-      const plan     = window.userPlan || data.plan || 'free';
-      const isCasual          = !!data.isCasual;
-      const isLearn           = !!data.isLearn;
-      const chargeLearnCredit = data.chargeLearnCredit !== false;
-      // Only open a session AFTER the server confirms a credit was charged.
-      // This ensures the server always sees learnSessionId=null on brand new questions.
-      if (currentMode === 'learn') {
-        if (data.isNewLearnQuestion || !chargeLearnCredit === false) {
-          // New question detected mid-session — reset so next message sends null
-          if (data.isNewLearnQuestion) currentLearnSessionId = null;
-        }
-        if (chargeLearnCredit && !currentLearnSessionId) {
-          // Server just charged a credit — open a session for follow-ups
-          currentLearnSessionId = genSessionId();
-        }
-      }
-
-      // Clean LaTeX notation to plain text
-      const cleanedAnswer = (function(text) {
-        return text
-          .replace(/\\\(|\\\)/g, '')
-          .replace(/\\\[|\\\]/g, '')
-          .replace(/\$\$([^$]+)\$\$/g, '$1')
-          .replace(/\$([^$]+)\$/g, '$1')
-          .replace(/\\times/g, '×')
-          .replace(/\\div/g, '÷')
-          .replace(/\\pm/g, '±')
-          .replace(/\\/g, '');
-      })(answer);
-      // Safety net: override casual if the response has structured sections
-      const _structuredHeaders = ['Final Answer:', 'Explanation:', 'Step-by-step:', 'Step-by-Step:', 'Tip:', 'Insight:', 'Common Mistake:', 'Key Points:'];
-      const _hasStructured = _structuredHeaders.some(h => cleanedAnswer.includes(h));
-      const effectivelyCasual = isCasual && !_hasStructured;
-      window._isCasualResponse = effectivelyCasual;
-      const responseHtml = effectivelyCasual
-        ? renderCasualResponse(cleanedAnswer, plan)
-        : isLearn
-          ? renderLearnResponse(cleanedAnswer, plan)
-          : renderResponse(cleanedAnswer, [], plan, {});
-      window._isCasualResponse = false;
-      const knoxRow = replaceThinkingWithResponse(responseHtml, false, {
-        question: typedQuestion || '📷 Image question',
-        answer:   cleanedAnswer,
-        mode:     currentMode || 'answer',
-      });
-
-      // ── Casual nudge — show a soft suggestion to switch to Chat mode ─────
-      // Only shows in answer/learn mode when the classifier flagged it as casual
-      if (effectivelyCasual && currentMode !== 'chat' && knoxRow) {
-        const nudge = document.createElement('div');
-        nudge.style.cssText = 'display:flex;align-items:center;gap:8px;padding:0 0 0 46px;margin-top:-6px;';
-        nudge.innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;background:#F0FFF0;border:1.5px solid #BBF7D0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:#16A34A;cursor:pointer;transition:all 0.15s;" 
-               onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FFF0'"
-               onclick="setMode('chat');this.closest('div').remove();">
-            💬 Switch to Chat with Knox — save your credits for homework
-          </div>
-          <span onclick="this.closest('div').remove();" style="font-size:16px;cursor:pointer;color:#9CA3AF;line-height:1;" title="Dismiss">×</span>`;
-        if (knoxRow.parentNode) {
-          knoxRow.parentNode.insertBefore(nudge, knoxRow.nextSibling);
-        }
-        if (chatThread) chatThread.scrollTop = chatThread.scrollHeight;
-      }
-
-      // Increment correct usage counter based on mode
-      const _usage2 = getUsageData();
-      const _plan2  = window.userPlan || 'free';
-      if (currentMode === 'chat') {
-        _usage2.casual = (_usage2.casual || 0) + 1;
-      } else if (currentMode === 'learn') {
-        // Only count if server actually charged a learn credit (not a free follow-up)
-        if (chargeLearnCredit) {
-          _usage2.learn = (_usage2.learn || 0) + 1;
-        }
-      } else {
-        _usage2.count = (_usage2.count || 0) + 1;
-      }
-      setUsageData(_usage2);
-      refreshUsageBars();
-
-      // Check if limit just hit and show message for next time
-      const _hwNow = _usage2.count  || 0;
-      const _csNow = _usage2.casual || 0;
-      const _hwMax = PLAN_LIMITS[_plan2]   || 5;
-      const _csMax = CASUAL_LIMITS[_plan2] || 20;
-      // (limits enforced on next question, not retroactively)
-
-      // Auto-save to history — always save to localStorage, also Firestore if logged in
-      if (typedQuestion) {
-        saveToHistory(typedQuestion, answer, plan);
-      }
-
-      updateConversationIndicator();
-      conversationHistory.push(
-        { role: 'user',      content: typedQuestion, isCasual, isLearn },
-        { role: 'assistant', content: answer,        isCasual, isLearn }
-      );
-      if (conversationHistory.length > 40) conversationHistory = conversationHistory.slice(-40);
-
-      // Fire afterCallback if provided (e.g. guest sign up prompt)
-      if (typeof afterCallback === 'function') {
-        setTimeout(afterCallback, 200);
-      }
-
-    } catch (err) {
-      console.error('Knox error:', err);
-      replaceThinkingWithResponse(`<div style="padding:16px 18px;font-size:14px;font-weight:700;color:#DC2626;">😬 Something went wrong. Please try again.</div>`, true);
-    } finally {
-      resetBtn();
-      if (window.clearImage) window.clearImage();
-      if (chatInput) chatInput.focus();
-    }  }  // ← end of executeAskQuestion
-
-  // ── Expose inline-called functions to window ────────────────────────────
-  window.scrollToAI      = scrollToAI;
-  window.scrollToPricing = scrollToPricing;
-  window.smoothScroll    = smoothScroll;
-  window.setMode         = setMode;
-  window.setBilling      = setBilling;
-  window.setQuestion     = setQuestion;
-  window.handlePurchase  = handlePurchase;
-  window.handleAskQuestion = handleAskQuestion;
-
-  // ── ACKNOWLEDGEMENT CARD ─────────────────────────────────────────────────
-  function renderAcknowledgement(message, plan) {
-    // Strip markdown links, then HTML-escape so any < > in the message can't
-    // execute as markup.
-    const cleanRaw = (message || '').replace(/\[([^\]]+)\]\(https?:[^)]+\)/g, '$1');
-    const clean = String(cleanRaw)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    const planTag = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
-    const planTagClass = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
-    return `<div class="ai-response-box">
-      <div class="resp-header">
-        <div class="resp-brain"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
-        <div class="resp-title">Knox Knows</div>
-        <div class="resp-plan-tag ${planTagClass}">${planTag}</div>
-      </div>
-      <div style="background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:14px 18px;color:#14532d;font-size:15px;line-height:1.6;font-weight:600;">
-        ✓ ${clean}
-      </div>
-    </div>`;
-  }
+  async function executeAskQuestion(afterCallback) {}
 
   // ── SHARED RENDER HELPERS (outer scope — used by renderResponse AND executeAskQuestion) ──
   function escapeHtml(s) {
@@ -4148,309 +3544,11 @@
     }
 
   // ── RENDER RESPONSE ───────────────────────────────────────────────────────
-  function renderLearnResponse(text, plan) {
-    const lines = text.split('\n').filter(l => l.trim());
-    const html = lines.map(l => `<p style="margin:0 0 6px;line-height:1.6;">${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`).join('');
-    return `<div style="padding:14px 18px 14px;font-size:15px;font-weight:500;color:#1f2937;">${html}</div>`;
-  }
+  function renderLearnResponse(text, plan) { return ''; }
 
-  function renderCasualResponse(text, plan) {
-    // Plain text like a text message — no structured sections
-    const lines = text.split('\n').filter(l => l.trim());
-    const html = lines.map(l => `<p style="margin:0 0 6px;line-height:1.6;">${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>`).join('');
-    return `<div style="padding:14px 18px 14px;font-size:15px;font-weight:500;color:#1f2937;">${html}</div>`;
-  }
+  function renderCasualResponse(text, plan) { return ''; }
 
-  function renderResponse(answer, resources, plan, extras = {}) {
-    const { learningStyle, embeddedVideo, imageSearchQuery } = extras;
-
-    // Pre-pass: ensure Resources: is always on its own line
-    answer = answer.replace(/(.)\n?(Resources:)/g, '$1\n\n$2');
-
-    // ── Normalise section headers — map ALL known variants to canonical names ──
-    function normalizeSections(text) {
-      let r = text;
-
-      // Map ALL known AI-generated header variants to canonical section names
-      const mappings = [
-        [/^Answer:/gim,                        'Final Answer:'],
-        [/^Upgrade:/gim,                       'Upgrade:'],
-        [/^Step-by-Step:/gim,                  'Step-by-step:'],
-        [/^Step-By-Step:/gim,                  'Step-by-step:'],
-        [/^Steps:/gim,                         'Step-by-step:'],
-        [/Step-by-Step Process:/gi,            'Step-by-step:'],
-        [/Step by Step:/gi,                    'Step-by-step:'],
-        [/Detailed Explanation:/gi,            'Explanation:'],
-        [/How it Works:/gi,                    'Explanation:'],
-        [/^Pro Tip:/gim,                       'Tip:'],
-        [/^Quick Tip:/gim,                     'Tip:'],
-        [/^Study Tip:/gim,                     'Tip:'],
-        [/^Memory Tip:/gim,                    'Tip:'],
-        [/Deeper Insight:/gi,                  'Insight:'],
-        [/Deep Dive:/gi,                       'Insight:'],
-        [/Did You Know:/gi,                    'Insight:'],
-        [/^Fun Fact:/gim,                      'Insight:'],
-        [/^Real-World Connection:/gim,         'Insight:'],
-        [/Common Error:/gi,                    'Common Mistake:'],
-        [/Watch Out:/gi,                       'Common Mistake:'],
-        [/Avoid This:/gi,                      'Common Mistake:'],
-        [/^Common Mistakes:/gim,               'Common Mistake:'],
-        [/Key Point:/gi,                       'Key Points:'],
-        [/Key Takeaways:/gi,                   'Key Points:'],
-        [/Takeaway:/gi,                        'Key Points:'],
-      ];
-
-      mappings.forEach(([pattern, canonical]) => {
-        r = r.replace(pattern, canonical);
-      });
-
-      // Force all canonical headers onto their own lines
-      const headerMap = [
-        [/([^\n])\s*(Final Answer:)/gi,    '$1\n\nFinal Answer:'],
-        [/([^\n])\s*(Explanation:)/gi,     '$1\n\nExplanation:'],
-        [/([^\n])\s*(Step-by-step:)/gi,    '$1\n\nStep-by-step:'],
-        [/([^\n])\s*(Tip:)/gi,             '$1\n\nTip:'],
-        [/([^\n])\s*(Insight:)/gi,         '$1\n\nInsight:'],
-        [/([^\n])\s*(Common Mistake:)/gi,  '$1\n\nCommon Mistake:'],
-        [/([^\n])\s*(Key Points:)/gi,      '$1\n\nKey Points:'],
-        [/([^\n])\s*(Resources:)/gi,       '$1\n\nResources:'],
-      ];
-      headerMap.forEach(([pattern, replacement]) => {
-        r = r.replace(pattern, replacement);
-      });
-
-      // Numbered steps on their own lines
-      r = r.replace(/([.!?:;,])\s+(\d+\.\s)/g, '$1\n$2');
-      r = r.replace(/([.!?:;,])\s+(Step\s+\d+[:.]\s)/gi, '$1\n$2');
-
-      return r;
-    }
-    answer = normalizeSections(answer);
-
-    const knownHeaders = ['Final Answer:', 'Explanation:', 'Step-by-step:', 'Tip:', 'Insight:', 'Common Mistake:', 'Key Points:', 'Resources:'];
-    const lines = answer.split("\n").map(l => l.trim()).filter(l => l.length > 0);
-
-    // If the first line isn't a known header, auto-treat it as Final Answer
-    if (lines.length > 0 && !knownHeaders.some(h => lines[0].startsWith(h))) {
-      lines[0] = 'Final Answer: ' + lines[0];
-    }
-
-    let finalAnswerText = "", stepsHtml = "", paragraphs = [], tipText = "", insightText = "", commonMistakeText = "";
-    let keyPointsBullets = [];
-    let mode = "other", currentParaLines = [];
-
-    function flushPara(type) {
-      if (currentParaLines.length > 0) {
-        paragraphs.push({ type, text: currentParaLines.join(" ").trim() });
-        currentParaLines = [];
-      }
-    }
-
-    for (const line of lines) {
-      const ll = line.toLowerCase();
-      if (ll.startsWith("resources:")) { flushPara(mode); break; }
-
-      if (ll.startsWith("final answer:")) {
-        finalAnswerText = line.replace(/^final answer:\s*/i, '').trim();
-        mode = "other";
-      }
-      else if (ll.startsWith("step-by-step:")) {
-        flushPara(mode); mode = "steps";
-        // Handle inline first step: "Step-by-step: 1. do this"
-        const inline = line.replace(/^step-by-step:\s*/i, '').trim();
-        if (/^\d+[.:]/.test(inline)) {
-          const num = (inline.match(/^(\d+)/) || [])[1] || '1';
-          const stepText = inline.replace(/^\d+[:.]\s*/, '').trim();
-          if (stepText) stepsHtml += `<div class="resp-step"><div class="resp-step-num">${num}</div><div class="resp-step-text">${formatInline(stepText, plan)}</div></div>`;
-        }
-      }
-      else if (ll.startsWith("explanation:")) {
-        flushPara(mode); mode = "explanation";
-        const inl = line.replace(/^explanation:\s*/i, '').trim();
-        if (inl) currentParaLines.push(inl);
-      }
-      // Catch "Explanation:" appearing mid-line (e.g. "Word. Explanation: more text")
-      else if (ll.includes("explanation:") && !ll.startsWith("final answer:")) {
-        const parts = line.split(/explanation:/i);
-        if (parts[0].trim()) currentParaLines.push(parts[0].trim());
-        flushPara(mode); mode = "explanation";
-        if (parts[1] && parts[1].trim()) currentParaLines.push(parts[1].trim());
-      }
-      else if (ll.startsWith("insight:")) {
-        flushPara(mode); mode = "insight";
-        insightText = line.replace(/^insight:\s*/i, '').trim();
-      }
-      else if (ll.startsWith("common mistake:")) {
-        flushPara(mode); mode = "common_mistake";
-        commonMistakeText = line.replace(/^common mistake:\s*/i, '').trim();
-      }
-      else if (ll.startsWith("key points:")) {
-        flushPara(mode); mode = "keypoints";
-      }
-      else if (ll.startsWith("tip:")) {
-        flushPara(mode); mode = "tip";
-        tipText = line.replace(/^tip:\s*/i, '').trim();
-      }
-      // Numbered steps detected in ANY mode
-      else if (/^(Step\s+\d+\b|\d+\.)/.test(line)) {
-        if (mode !== "steps") { flushPara(mode); mode = "steps"; }
-        const num = (line.match(/^(?:Step\s+)?(\d+)/) || [])[1] || '•';
-        const stepText = line.replace(/^(?:Step\s+)?\d+[:.]\s*/, '').trim();
-        stepsHtml += `<div class="resp-step"><div class="resp-step-num">${num}</div><div class="resp-step-text">${formatInline(stepText, plan)}</div></div>`;
-      }
-      // Key points bullets — detect -, •, *, or plain text lines in keypoints mode
-      else if (mode === "keypoints") {
-        const bulletText = line.replace(/^[-•*]\s*/, "").trim();
-        if (bulletText) keyPointsBullets.push(stripMarkdownLinks(bulletText));
-      }
-      else if (mode === "tip")            { tipText           += " " + line; }
-      else if (mode === "insight")        { insightText       += " " + line; }
-      else if (mode === "common_mistake") { commonMistakeText += " " + line; }
-      else if (mode === "explanation")    { currentParaLines.push(line); }
-      else                               { currentParaLines.push(line); }
-    }
-    flushPara(mode);
-
-    // ── Fallback: nothing structured parsed → use smart freeform renderer ─────
-    if (!finalAnswerText && !stepsHtml && paragraphs.length === 0 && !tipText && !insightText && !commonMistakeText && keyPointsBullets.length === 0) {
-      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
-      return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(answer, plan)}<div style="height:10px;"></div>`;
-    }
-
-    // ── Only paragraphs (no Final Answer) → smart freeform ───────────────────
-    if (!finalAnswerText && paragraphs.length > 0 && !stepsHtml) {
-      const allText = paragraphs.map(p => p.text).join('\n\n');
-      const planTagClass2 = plan === 'max' ? 'tag-max' : plan === 'super' ? 'tag-super' : 'tag-free';
-      const planTag2 = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
-      return `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass2}">${planTag2}</span></div>${renderFreeformText(allText, plan)}<div style="height:10px;"></div>`;
-    }
-    const planTag      = plan === "max" ? "🚀 Max" : plan === "super" ? "⚡ Super" : "🆓 Free";
-    const planTagClass = plan === "max" ? "tag-max" : plan === "super" ? "tag-super" : "tag-free";
-    let html = ``;
-
-    // ── Thin plan tag bar at top ──────────────────────────────────────────
-    html += `<div style="display:flex;align-items:center;justify-content:flex-end;padding:10px 14px 4px;"><span class="resp-plan-tag ${planTagClass}">${planTag}</span></div>`;
-
-    // ── Answer ───────────────────────────────────────────────────────────────
-    if (finalAnswerText) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="background:var(--green);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 var(--green-dark);">Answer</div>
-        </div>
-        <div style="background:var(--green-light);border-left:5px solid var(--green);border-radius:0 14px 14px 0;padding:14px 16px;">
-          <div style="font-size:17px;font-weight:800;color:#1a1a1a;line-height:1.5;">${formatInline(finalAnswerText, plan)}</div>
-        </div>
-      </div>`;
-    }
-
-    // ── Step-by-Step ─────────────────────────────────────────────────────────
-    if (stepsHtml) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div style="background:var(--orange);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #CC5500;">Step-by-Step</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">${stepsHtml}</div>
-      </div>`;
-    }
-
-    // ── Explanation ───────────────────────────────────────────────────────────
-    const explanationParas = paragraphs.filter(p => p.type === "explanation" || p.type === "other");
-    if (explanationParas.length > 0) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="background:var(--blue);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 var(--blue-dark);">Explanation</div>
-        </div>
-        <div style="background:var(--blue-light);border-left:5px solid var(--blue);border-radius:0 14px 14px 0;padding:14px 16px;">`;
-      explanationParas.forEach(p => {
-        if (p.text) html += `<div style="font-size:15px;font-weight:500;color:#333;line-height:1.75;margin-bottom:10px;">${formatInline(p.text, plan)}</div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // ── Key Points ────────────────────────────────────────────────────────────
-    if (keyPointsBullets.length > 0) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div style="background:#8B5CF6;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #6D28D9;">Key Points</div>
-        </div>
-        <div style="background:#F5F3FF;border-left:5px solid #8B5CF6;border-radius:0 14px 14px 0;padding:14px 18px;display:flex;flex-direction:column;gap:8px;">`;
-      keyPointsBullets.forEach(b => {
-        html += `<div style="display:flex;align-items:flex-start;gap:10px;font-size:14px;font-weight:600;color:#333;line-height:1.55;">
-          <div style="width:20px;height:20px;border-radius:50%;background:#8B5CF6;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px;font-weight:900;">✓</div>
-          <span>${formatInline(b, plan)}</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // ── Insight ───────────────────────────────────────────────────────────────
-    if (insightText.trim()) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="background:#EC4899;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #BE185D;">Insight</div>
-        </div>
-        <div style="background:#FDF2F8;border-left:5px solid #EC4899;border-radius:0 14px 14px 0;padding:14px 18px;">
-          <div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(insightText.trim(), plan)}</div>
-        </div>
-      </div>`;
-    }
-
-    // ── Tip ───────────────────────────────────────────────────────────────────
-    if (tipText.trim()) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="background:#F59E0B;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B45309;">Tip</div>
-        </div>
-        <div style="background:#FFFBEB;border-left:5px solid #F59E0B;border-radius:0 14px 14px 0;padding:14px 18px;">
-          <div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(tipText.trim(), plan)}</div>
-        </div>
-      </div>`;
-    }
-
-    // ── Common Mistake ────────────────────────────────────────────────────────
-    if (commonMistakeText.trim()) {
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="background:#EF4444;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B91C1C;">Common Mistake</div>
-        </div>
-        <div style="background:#FEF2F2;border-left:5px solid #EF4444;border-radius:0 14px 14px 0;padding:14px 18px;">
-          <div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(commonMistakeText.trim(), plan)}</div>
-        </div>
-      </div>`;
-    }
-
-    // ── Resources ─────────────────────────────────────────────────────────────
-    if (resources && resources.length > 0) {
-      const ytIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#ef4444"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon fill="white" points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>`;
-      const items = resources.map(r => {
-        return `<a href="${r.link}" target="_blank" rel="noopener" class="resp-resource-link">${ytIcon}<span class="resp-resource-title">${r.title}</span><span style="font-size:11px;font-weight:800;color:#ef4444;white-space:nowrap;">YouTube ↗</span></a>`;
-      }).join("");
-      html += `<div style="margin:10px 14px 0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <div style="background:#6B7280;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #374151;">Resources</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;">${items}</div>
-      </div>`;
-    }
-
-    // ── Visual Content ────────────────────────────────────────────────────────
-    // Reserved for a future tier — no current plan opts into this branch.
-    if (false && (embeddedVideo || imageSearchQuery)) {
-      // Intentionally disabled until a tier opts in.
-    }
-
-    // Green upgrade bar for free plan (not on casual responses)
-    if (plan === 'free' && !window._isCasualResponse) {
-      html += `<div style="margin:10px 14px;padding:12px 14px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:700;color:#166534;">⚡ Get step-by-step breakdowns &amp; smarter answers</span>
-        <button onclick="scrollToPricing()" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:900;font-family:inherit;border:none;background:#58CC02;color:white;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 #2D6A00;">Upgrade →</button>
-      </div>`;
-    }
-
-    html += `<div style="height:12px;"></div>`;
-    return html;
-  }
+  function renderResponse(answer, resources, plan, extras) { return ''; }
 
   // ── CALCULATOR ────────────────────────────────────────────────────────────
   let calcExpr = '';
