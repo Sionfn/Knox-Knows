@@ -1113,6 +1113,7 @@
       margin-right: auto;
       display: none;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
     }
 
@@ -1546,6 +1547,12 @@
     if (user) {
       await fetchPlan(user.uid);
       loadSidebarHistory();
+      // Re-enable input in case it was locked during guest session
+      const inp = document.getElementById('appChatInput');
+      const btn = document.getElementById('appSendBtn');
+      if (inp) { inp.disabled = false; inp.placeholder = 'Ask Knox anything...'; }
+      if (btn) btn.disabled = false;
+      document.getElementById('guestCta').style.display = 'none';
       if (_firstEvent) {
         _firstEvent = false;
         // If coming back from Stripe, don't interfere
@@ -1643,6 +1650,8 @@
       sendBtn.style.background = bg;
       sendBtn.style.boxShadow = `0 3px 0 ${shadow}`;
     }
+    // On mobile, close the sidebar after picking a mode
+    if (window.innerWidth <= 768) closeSidebar();
   };
 
   // ── Image handling ────────────────────────────────────────────
@@ -1677,6 +1686,11 @@
     if (!window.currentUser) {
       if (_guestUsed >= 1) {
         document.getElementById('guestCta').style.display = 'flex';
+        // Lock input so guest knows they're blocked
+        const inp = document.getElementById('appChatInput');
+        const btn = document.getElementById('appSendBtn');
+        if (inp) { inp.disabled = true; inp.placeholder = 'Sign up free to keep asking Knox...'; }
+        if (btn) btn.disabled = true;
         return;
       }
       _guestUsed++;
