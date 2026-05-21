@@ -356,7 +356,7 @@
 
     .topbar-mode-btn {
       padding: 7px 16px;
-      border-radius: 9px;
+      border-radius: 12px;
       font-size: 13px;
       font-weight: 800;
       font-family: 'Nunito', sans-serif;
@@ -368,9 +368,9 @@
       white-space: nowrap;
     }
 
-    .topbar-mode-btn.active-answer { background: var(--orange); color: white; box-shadow: 0 2px 0 var(--orange-dark); }
-    .topbar-mode-btn.active-learn  { background: var(--blue);   color: white; box-shadow: 0 2px 0 var(--blue-dark); }
-    .topbar-mode-btn.active-chat   { background: var(--green);  color: white; box-shadow: 0 2px 0 var(--green-dark); }
+    .topbar-mode-btn.active-answer { background: #FF6B00; color: white; box-shadow: 0 3px 0 #CC5500; }
+    .topbar-mode-btn.active-learn  { background: #1CB0F6; color: white; box-shadow: 0 3px 0 #0A85C2; }
+    .topbar-mode-btn.active-chat   { background: #58CC02; color: white; box-shadow: 0 3px 0 #46A302; }
 
     .topbar-spacer { flex: 1; }
 
@@ -744,21 +744,21 @@
     #appSendBtn {
       width: 40px;
       height: 40px;
-      border-radius: 12px;
+      border-radius: 14px;
       border: none;
-      background: var(--orange);
+      background: #FF6B00;
       color: white;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 0 var(--orange-dark);
+      box-shadow: 0 4px 0 #CC5500;
       transition: transform 0.12s, box-shadow 0.12s;
       flex-shrink: 0;
     }
 
-    #appSendBtn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--orange-dark); }
-    #appSendBtn:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--orange-dark); }
+    #appSendBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    #appSendBtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
 
     .input-hint {
       font-size: 11px;
@@ -1234,7 +1234,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
 
-      <a href="https://knoxknowsapp.com" style="font-family:'Fredoka',sans-serif;font-size:17px;font-weight:900;color:var(--text);text-decoration:none;flex-shrink:0;letter-spacing:-0.01em;line-height:1;" title="Back to home">Knox <span style="color:var(--orange);">Knows</span></a>
+      <a href="https://www.knoxknowsapp.com" style="font-family:'Fredoka',sans-serif;font-size:17px;font-weight:900;color:var(--text);text-decoration:none;flex-shrink:0;letter-spacing:-0.01em;line-height:1;" title="Back to home">Knox <span style="color:var(--orange);">Knows</span></a>
 
       <!-- Mode tabs -->
       <div id="topbarModes">
@@ -1991,7 +1991,7 @@
 
   // ── Payments ──────────────────────────────────────────────────
   window.goToPricing = function() {
-    window.location.href = 'https://knoxknowsapp.com/#pricing';
+    window.location.href = 'https://www.knoxknowsapp.com/#pricing';
   };
 
   // Handle ?payment=success return from Stripe
