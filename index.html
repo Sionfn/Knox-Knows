@@ -1278,10 +1278,10 @@
       </div>
     </div>
 
-    <button id="loginBtn" class="header-login" onclick="window.location.href='/app'">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span class="login-text">Sign Up / Login</span>
-    </button>
+    <div id="loginBtn" style="display:inline-flex;gap:8px;align-items:center;">
+      <button class="header-login" onclick="openLoginModal()">Login</button>
+      <button class="header-login" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.7);" onclick="openLoginModal();window.switchLoginTab&&window.switchLoginTab('signup')">Sign Up</button>
+    </div>
   </div>
 </header>
 
@@ -1315,7 +1315,7 @@
       </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
-      <button onclick="window.location.href='/app';closeMobileNav();" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal();window.switchLoginTab&&window.switchLoginTab('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
     </div>
   </div>
 </div>
@@ -2330,6 +2330,23 @@
     }
   });
 
+  // ── Redirect to app after successful auth ────────────────────────────────
+  // Guards: skip if ?payment= is in the URL (payment modal is showing)
+  // or if there's a fresh pending checkout (Stripe is about to open).
+  function redirectToApp() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment')) return;
+    try {
+      const raw = sessionStorage.getItem('pendingCheckout');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.plan && (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000)) return;
+      }
+    } catch(e) {}
+    window.location.replace('/app');
+  }
+  window.redirectToApp = redirectToApp;
+
   // ── Google Sign In ────────────────────────────────────────────────────────
   window.handleGoogleLogin = async function() {
     try {
@@ -2340,9 +2357,12 @@
       if (isNewUser) {
         sendWelcomeEmail(result.user);
         showWelcomeModalIfNoCheckoutPending(result.user.displayName);
+        // Welcome modal CTA handles the /app redirect for new users
+      } else {
+        window.closeLoginModal?.();
+        window.updateLoginUI?.();
+        setTimeout(() => redirectToApp(), 200);
       }
-      window.closeLoginModal?.();
-      window.updateLoginUI?.();
     } catch (err) {
       window.showLoginError?.(err.message);
     }
@@ -2359,9 +2379,12 @@
       if (isNewUser) {
         sendWelcomeEmail(result.user);
         showWelcomeModalIfNoCheckoutPending(result.user.displayName);
+        // Welcome modal CTA handles the /app redirect for new users
+      } else {
+        window.closeLoginModal?.();
+        window.updateLoginUI?.();
+        setTimeout(() => redirectToApp(), 200);
       }
-      window.closeLoginModal?.();
-      window.updateLoginUI?.();
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         window.showLoginError?.(err.message);
@@ -2379,6 +2402,7 @@
       window.currentUser = result.user;
       window.closeLoginModal?.();
       window.updateLoginUI?.();
+      setTimeout(() => redirectToApp(), 200);
     } catch (err) {
       const msg = err.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : err.message;
       window.showLoginError?.(msg);
@@ -2452,10 +2476,10 @@
           </p>
         </div>
         <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
-          Ask Knox your first question
+          Ask Knox your first question →
         </button>
-        <button onclick="document.getElementById('knoxWelcomeModal').remove();" style="width:100%;padding:11px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:#9CA3AF;cursor:pointer;transition:color 0.12s;" onmouseover="this.style.color='#6B7280'" onmouseout="this.style.color='#9CA3AF'">
-          Maybe later
+        <button onclick="document.getElementById('knoxWelcomeModal').remove();if(window.redirectToApp)window.redirectToApp();" style="width:100%;padding:11px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:#9CA3AF;cursor:pointer;transition:color 0.12s;" onmouseover="this.style.color='#6B7280'" onmouseout="this.style.color='#9CA3AF'">
+          Go to Knox
         </button>
         <p style="margin:16px 0 0;font-size:12px;color:#9CA3AF;font-weight:500;line-height:1.5;">
           Check your inbox — we sent a welcome email from<br><span style="color:#6B7280;font-weight:700;">support@knoxknowsapp.com</span>
@@ -2463,19 +2487,13 @@
       </div>`;
     document.body.appendChild(modal);
     // Close on backdrop click (but not when clicking the card itself)
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-    // Wire the CTA to close modal + smoothly scroll to the chat input.
-    // Single smooth motion: scroll there, then focus the input with
-    // preventScroll:true so it doesn't trigger a second jerky scroll.
+    modal.addEventListener('click', (e) => { if (e.target === modal) { modal.remove(); redirectToApp(); } });
+    // Wire the CTA to close modal and redirect to the app
     const cta = modal.querySelector('#knoxWelcomeCta');
     if (cta) {
       cta.addEventListener('click', () => {
         modal.remove();
-        const inp = document.getElementById('chatInput') || document.getElementById('questionInput');
-        if (!inp) return;
-        const targetY = Math.max(0, inp.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight - inp.offsetHeight - 120));
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-        setTimeout(() => { inp.focus({ preventScroll: true }); }, 850);
+        redirectToApp();
       });
     }
   }
