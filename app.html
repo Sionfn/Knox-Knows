@@ -6,7 +6,8 @@
   <title>Knox Knows — AI Homework Helper</title>
   <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
   <link rel="apple-touch-icon" href="/knox-logo.jpg">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;900&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -14,6 +15,7 @@
       --orange:        #FF6B00;
       --orange-dark:   #CC5500;
       --orange-light:  #FFE0C2;
+      --orange-cream:  #FFF8F0;
       --blue:          #1CB0F6;
       --blue-dark:     #0A85C2;
       --blue-light:    #D7F2FD;
@@ -22,207 +24,440 @@
       --green-light:   #D7FFB8;
       --gray:          #F7F7F7;
       --cream:         #FFF8F0;
-      --sidebar-bg:    #111827;
-      --sidebar-hover: #1F2937;
-      --sidebar-active:#374151;
-      --sidebar-text:  #D1D5DB;
-      --sidebar-muted: #6B7280;
-      --main-bg:       #FFFFFF;
-      --chat-bg:       #F7F7F7;
       --border:        #E5E5E5;
       --text:          #3C3C3C;
       --text-light:    #777;
-      --shadow:        0 4px 0 rgba(0,0,0,0.15);
       --shadow-orange: 0 4px 0 #CC5500;
       --shadow-blue:   0 4px 0 #0A85C2;
       --shadow-green:  0 4px 0 #46A302;
-      --shadow-sm:     0 1px 3px rgba(0,0,0,0.1);
-      --shadow-md:     0 4px 16px rgba(0,0,0,0.08);
-      --sidebar-w:     260px;
-      --header-h:      60px;
     }
 
     html, body {
       height: 100%;
-      font-family: 'Nunito', sans-serif;
-      background: var(--sidebar-bg);
+      font-family: 'Nunito', system-ui, sans-serif;
       color: var(--text);
-      overflow: hidden;
+      background: white;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── APP SHELL ─────────────────────────────────────────── */
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ── BUTTONS — exact copy from landing page ─────────────── */
+    .btn-orange {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--orange); color: white;
+      border: none; border-radius: 16px;
+      padding: 13px 24px; font-size: 15px; font-weight: 800;
+      box-shadow: var(--shadow-orange);
+      transition: all 0.15s; cursor: pointer;
+    }
+    .btn-orange:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    .btn-orange:active { transform: translateY(2px);  box-shadow: none; }
+
+    .btn-blue {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--blue); color: white;
+      border: none; border-radius: 16px;
+      padding: 13px 24px; font-size: 15px; font-weight: 800;
+      box-shadow: var(--shadow-blue);
+      transition: all 0.15s; cursor: pointer;
+    }
+    .btn-blue:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #0A85C2; }
+    .btn-blue:active { transform: translateY(2px);  box-shadow: none; }
+
+    .btn-green {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--green); color: white;
+      border: none; border-radius: 16px;
+      padding: 13px 24px; font-size: 15px; font-weight: 800;
+      box-shadow: var(--shadow-green);
+      transition: all 0.15s; cursor: pointer;
+    }
+    .btn-green:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #46A302; }
+    .btn-green:active { transform: translateY(2px);  box-shadow: none; }
+
+    /* ── LAYOUT ─────────────────────────────────────────────── */
     #appShell {
       display: flex;
+      flex-direction: column;
       height: 100vh;
-      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* ── HEADER — identical to landing page ─────────────────── */
+    #appHeader {
+      background: var(--orange);
+      border-bottom: 3px solid #CC5500;
+      padding: 0 20px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+      z-index: 200;
+    }
+
+    .app-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Sidebar toggle — hamburger style like landing page mobile */
+    #sidebarToggle {
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    #sidebarToggle:hover { background: rgba(255,255,255,0.25); }
+
+    /* Logo — exact landing page style */
+    .app-logo-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: white;
+      flex-shrink: 0;
+    }
+    .app-logo-img {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 3px solid white;
+      overflow: hidden;
+      object-fit: cover;
+      object-position: top center;
+      background: var(--orange-light);
+    }
+    .app-logo-text {
+      font-size: 20px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -0.01em;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+
+    /* Mode tabs in header */
+    #headerModeTabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 14px;
+      padding: 5px;
+    }
+
+    .header-mode-btn {
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .header-mode-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+    .header-mode-btn.active-answer { background: white; color: var(--orange); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+    .header-mode-btn.active-learn  { background: var(--blue); color: white; box-shadow: 0 2px 0 #0A85C2; }
+    .header-mode-btn.active-chat   { background: var(--green); color: white; box-shadow: 0 2px 0 #46A302; }
+
+    /* Header right side */
+    .app-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Upgrade badge — matches landing page pro-badge */
+    #appUpgradeBtn {
+      background: #FFD900;
+      color: #3C3C3C;
+      border: none;
+      border-radius: 12px;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 3px 0 #CC9900;
+      transition: all 0.15s;
+      cursor: pointer;
+      font-family: inherit;
+      display: none;
+    }
+    #appUpgradeBtn:hover  { transform: translateY(-1px); box-shadow: 0 4px 0 #CC9900; }
+    #appUpgradeBtn:active { transform: translateY(1px);  box-shadow: none; }
+
+    /* Account button — matches landing page */
+    #appAccountBtn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 12px;
+      padding: 6px 12px 6px 6px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      height: 44px;
+    }
+    #appAccountBtn:hover { background: rgba(255,255,255,0.3); }
+
+    #appAccountIcon {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.2);
+      font-size: 14px;
+      font-weight: 900;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    #appAccountName {
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Guest login/signup buttons */
+    #appGuestBtns {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-login-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 12px;
+      padding: 9px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .header-login-btn:hover { background: rgba(255,255,255,0.3); }
+    .header-signup-btn {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.7);
+    }
+
+    /* Account dropdown */
+    #appAccountDropdown {
+      position: fixed;
+      top: 76px;
+      right: 20px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      min-width: 230px;
+      overflow: hidden;
+      display: none;
+      z-index: 9999;
+    }
+
+    .app-dropdown-header {
+      padding: 16px 18px;
+      background: var(--gray);
+      border-bottom: 2px solid var(--border);
+    }
+
+    .app-dropdown-header p {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .app-dropdown-header span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .app-dropdown-item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+      text-align: left;
+    }
+    .app-dropdown-item:hover { background: var(--gray); }
+    .app-dropdown-item.danger { color: #DC2626; }
+    .app-dropdown-item.danger:hover { background: #FEF2F2; }
+
+    .app-dropdown-divider {
+      height: 2px;
+      background: var(--border);
+      margin: 2px 0;
+    }
+
+    /* ── BODY — sidebar + chat ──────────────────────────────── */
+    #appBody {
+      flex: 1;
+      display: flex;
       overflow: hidden;
     }
 
     /* ── SIDEBAR ─────────────────────────────────────────────── */
     #sidebar {
-      width: var(--sidebar-w);
-      height: 100vh;
-      background: var(--sidebar-bg);
+      width: 260px;
+      background: white;
+      border-right: 2px solid var(--border);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
       overflow: hidden;
-      transition: width 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1);
-      z-index: 100;
+      transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
     }
 
-    #sidebar.collapsed {
-      width: 0;
-      transform: translateX(-100%);
-    }
-
-    /* Sidebar header */
-    .sidebar-header {
-      padding: 16px 14px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      flex-shrink: 0;
-    }
-
-    .sidebar-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-    .sidebar-brand {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 20px;
-      font-weight: 700;
-      color: white;
-      line-height: 1;
-    }
-
-    .sidebar-brand span {
-      color: var(--orange);
-    }
+    #sidebar.collapsed { width: 0; }
 
     /* New chat button */
-    .new-chat-btn {
-      margin: 12px 12px 8px;
-      padding: 10px 14px;
+    #newChatBtn {
+      margin: 16px 14px 8px;
+      padding: 12px 16px;
       background: var(--orange);
       color: white;
       border: none;
       border-radius: 16px;
-      font-size: 13px;
-      font-weight: 900;
-      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 0 #CC5500;
-      transition: transform 0.12s, box-shadow 0.12s;
+      box-shadow: var(--shadow-orange);
+      transition: all 0.15s;
       flex-shrink: 0;
+      font-family: inherit;
     }
+    #newChatBtn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    #newChatBtn:active { transform: translateY(2px);  box-shadow: none; }
 
-    .new-chat-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 0 #CC5500;
-    }
-
-    .new-chat-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 2px 0 #CC5500;
-    }
-
-    /* Sidebar sections */
-    .sidebar-section-label {
-      padding: 12px 14px 4px;
+    /* Sidebar section label */
+    .sb-label {
+      padding: 14px 16px 4px;
       font-size: 10px;
-      font-weight: 800;
-      color: var(--sidebar-muted);
+      font-weight: 900;
+      color: var(--text-light);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       flex-shrink: 0;
     }
 
-    /* Mode nav items */
-    .sidebar-nav {
-      padding: 4px 8px;
-      flex-shrink: 0;
-    }
+    /* Mode nav items — card style like landing page */
+    .sb-nav { padding: 4px 10px; flex-shrink: 0; }
 
-    .sidebar-nav-item {
+    .sb-mode-btn {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 11px 14px;
+      border-radius: 14px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
-      color: var(--sidebar-text);
-      transition: background 0.12s, color 0.12s;
-      border: none;
+      color: var(--text-light);
+      transition: all 0.15s;
+      border: 2px solid transparent;
       background: transparent;
       width: 100%;
       text-align: left;
-      font-family: 'Nunito', sans-serif;
+      font-family: inherit;
+      margin-bottom: 4px;
+    }
+    .sb-mode-btn:hover { background: var(--gray); color: var(--text); }
+    .sb-mode-btn.active-answer {
+      background: var(--orange-cream);
+      border-color: var(--orange-light);
+      color: var(--orange);
+      box-shadow: 0 3px 0 var(--orange-light);
+    }
+    .sb-mode-btn.active-learn {
+      background: var(--blue-light);
+      border-color: #B3E5FC;
+      color: var(--blue-dark);
+      box-shadow: 0 3px 0 #B3E5FC;
+    }
+    .sb-mode-btn.active-chat {
+      background: var(--green-light);
+      border-color: #B9F6CA;
+      color: var(--green-dark);
+      box-shadow: 0 3px 0 #B9F6CA;
     }
 
-    .sidebar-nav-item:hover {
-      background: var(--sidebar-hover);
-      color: white;
-    }
-
-    .sidebar-nav-item.active {
-      background: var(--sidebar-active);
-      color: white;
-    }
-
-    .sidebar-nav-item .mode-dot {
-      width: 8px;
-      height: 8px;
+    .sb-mode-dot {
+      width: 10px; height: 10px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-
-    .mode-dot.orange { background: var(--orange); }
-    .mode-dot.blue   { background: var(--blue); }
-    .mode-dot.green  { background: var(--green); }
+    .dot-orange { background: var(--orange); }
+    .dot-blue   { background: var(--blue); }
+    .dot-green  { background: var(--green); }
 
     /* History list */
     #historyList {
       flex: 1;
       overflow-y: auto;
-      padding: 4px 8px;
+      padding: 4px 10px;
     }
-
     #historyList::-webkit-scrollbar { width: 4px; }
-    #historyList::-webkit-scrollbar-track { background: transparent; }
-    #historyList::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+    #historyList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
     .history-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 10px;
-      border-radius: 8px;
+      padding: 9px 12px;
+      border-radius: 12px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--sidebar-muted);
-      transition: background 0.12s, color 0.12s;
+      color: var(--text-light);
+      transition: all 0.15s;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      border: 2px solid transparent;
     }
-
     .history-item:hover {
-      background: var(--sidebar-hover);
-      color: var(--sidebar-text);
+      background: var(--gray);
+      color: var(--text);
+      border-color: var(--border);
     }
 
     .history-item-text {
@@ -232,210 +467,22 @@
     }
 
     /* Sidebar footer */
-    .sidebar-footer {
-      padding: 12px 8px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+    .sb-footer {
+      padding: 12px 10px;
+      border-top: 2px solid var(--border);
       flex-shrink: 0;
     }
 
-    .sidebar-user-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-family: 'Nunito', sans-serif;
-      transition: background 0.12s;
-    }
-
-    .sidebar-user-btn:hover {
-      background: var(--sidebar-hover);
-    }
-
-    .sidebar-user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--orange);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 900;
-      color: white;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .sidebar-user-info {
-      flex: 1;
-      text-align: left;
-      overflow: hidden;
-    }
-
-    .sidebar-user-name {
-      font-size: 13px;
-      font-weight: 800;
-      color: white;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .sidebar-user-plan {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--orange);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    /* Plan badges */
-    .plan-badge {
-      font-size: 10px;
-      font-weight: 900;
-      padding: 2px 7px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .plan-badge.free    { background: rgba(255,255,255,0.1); color: #9CA3AF; }
-    .plan-badge.super   { background: rgba(28,176,246,0.2);  color: var(--blue); }
-    .plan-badge.max     { background: rgba(255,107,0,0.2);   color: var(--orange); }
-
-    /* ── MAIN AREA ─────────────────────────────────────────── */
-    #main {
+    /* ── MAIN CHAT AREA ──────────────────────────────────────── */
+    #chatMain {
       flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
       overflow: hidden;
-      background: var(--main-bg);
-      position: relative;
-    }
-
-    /* Top bar */
-    #topbar {
-      height: var(--header-h);
       background: white;
-      border-bottom: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      flex-shrink: 0;
-      z-index: 50;
     }
 
-    .topbar-toggle {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-light);
-      transition: background 0.12s, color 0.12s;
-      flex-shrink: 0;
-    }
-
-    .topbar-toggle:hover {
-      background: var(--gray);
-      color: var(--text);
-    }
-
-    /* Mode tabs in topbar */
-    #topbarModes {
-      display: flex;
-      gap: 4px;
-      background: var(--gray);
-      border-radius: 14px;
-      padding: 5px;
-    }
-
-    .topbar-mode-btn {
-      padding: 7px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 800;
-      font-family: 'Nunito', sans-serif;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #9CA3AF;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .topbar-mode-btn.active-answer { background: #FF6B00; color: white; box-shadow: 0 4px 0 #CC5500; }
-    .topbar-mode-btn.active-learn  { background: #1CB0F6; color: white; box-shadow: 0 4px 0 #0A85C2; }
-    .topbar-mode-btn.active-chat   { background: #58CC02; color: white; box-shadow: 0 4px 0 #46A302; }
-
-    .topbar-spacer { flex: 1; }
-
-    /* Upgrade + account area */
-    .topbar-upgrade {
-      padding: 8px 16px;
-      background: var(--orange);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 800;
-      font-family: 'Nunito', sans-serif;
-      cursor: pointer;
-      box-shadow: 0 3px 0 var(--orange-dark);
-      transition: transform 0.15s, box-shadow 0.15s;
-      white-space: nowrap;
-    }
-
-    .topbar-upgrade:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 0 var(--orange-dark);
-    }
-
-    .topbar-upgrade:active {
-      transform: translateY(2px);
-      box-shadow: none;
-    }
-
-    .topbar-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--orange);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 900;
-      color: white;
-      cursor: pointer;
-      flex-shrink: 0;
-      overflow: hidden;
-      border: 2px solid var(--border);
-      transition: border-color 0.12s;
-    }
-
-    .topbar-avatar:hover { border-color: var(--orange); }
-
-    /* ── CHAT AREA ───────────────────────────────────────────── */
-    #chatArea {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Welcome screen (shown when no messages) */
+    /* ── WELCOME SCREEN ──────────────────────────────────────── */
     #welcomeScreen {
       flex: 1;
       display: flex;
@@ -445,141 +492,119 @@
       padding: 40px 24px;
       text-align: center;
       background: white;
+      overflow-y: auto;
     }
 
     .welcome-logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 20px;
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      border: 4px solid white;
       object-fit: cover;
+      object-position: top center;
       margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(255,107,0,0.2);
+      box-shadow: 0 6px 0 var(--orange-light), 0 0 0 4px var(--orange-light);
+      background: var(--orange-light);
     }
 
     .welcome-title {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 36px;
-      font-weight: 700;
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 900;
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       letter-spacing: -0.02em;
     }
 
-    .welcome-subtitle {
+    .welcome-sub {
       font-size: 16px;
       font-weight: 600;
       color: var(--text-light);
-      margin-bottom: 40px;
-      max-width: 420px;
-      line-height: 1.5;
+      margin-bottom: 36px;
+      max-width: 440px;
+      line-height: 1.55;
     }
 
-    /* Suggestion chips */
+    /* Suggestion chips — EXACT landing page card style */
     .suggestion-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 14px;
       width: 100%;
-      max-width: 560px;
+      max-width: 600px;
     }
 
     .suggestion-chip {
-      padding: 14px 16px;
+      padding: 22px 20px;
       background: white;
-      border: 1.5px solid var(--border);
+      border: 2px solid var(--border);
       border-radius: 20px;
-      box-shadow: 0 4px 0 #E5E7EB;
+      box-shadow: 0 4px 0 var(--border);
       text-align: left;
       cursor: pointer;
       transition: all 0.15s;
-      font-family: 'Nunito', sans-serif;
+      font-family: inherit;
     }
-
     .suggestion-chip:hover {
       border-color: var(--orange);
-      background: var(--orange-light);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 0 #CC5500;
+      background: var(--orange-cream);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 0 var(--orange-light);
     }
 
-    .suggestion-chip-icon {
-      font-size: 20px;
-      margin-bottom: 6px;
-      display: block;
-    }
+    .chip-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+    .chip-text { font-size: 15px; font-weight: 800; color: var(--text); line-height: 1.3; }
+    .chip-sub  { font-size: 12px; font-weight: 600; color: var(--text-light); margin-top: 4px; }
 
-    .suggestion-chip-text {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-    }
-
-    .suggestion-chip-sub {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-light);
-      margin-top: 2px;
-    }
-
-    /* Chat thread */
+    /* ── CHAT THREAD ─────────────────────────────────────────── */
     #chatThread {
       flex: 1;
       overflow-y: auto;
-      padding: 24px 0;
+      padding: 28px 0;
       display: flex;
       flex-direction: column;
-      gap: 0;
-      background: var(--main-bg);
+      background: white;
       scroll-behavior: smooth;
     }
-
     #chatThread::-webkit-scrollbar { width: 6px; }
-    #chatThread::-webkit-scrollbar-track { background: transparent; }
-    #chatThread::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 999px; }
-
+    #chatThread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     #chatThread.hidden { display: none; }
 
     /* Message rows */
-    .msg-row {
-      padding: 8px 0;
-      display: flex;
-      flex-direction: column;
-      max-width: 780px;
+    .msg-wrap {
+      max-width: 800px;
       margin: 0 auto;
       width: 100%;
-      padding-left: 24px;
-      padding-right: 24px;
+      padding: 0 24px;
     }
 
-    /* User messages */
+    /* User bubble */
     .msg-user {
-      align-self: flex-end;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .msg-user-bubble {
       background: var(--gray);
-      color: var(--text);
+      border: 2px solid var(--border);
       border-radius: 20px 20px 4px 20px;
-      padding: 12px 16px;
+      padding: 13px 18px;
       font-size: 15px;
       font-weight: 500;
-      line-height: 1.55;
+      color: var(--text);
       max-width: 75%;
-      word-wrap: break-word;
+      line-height: 1.55;
+      box-shadow: 0 2px 0 var(--border);
     }
 
-    /* Knox messages */
-    .msg-knox-row {
+    /* Knox row */
+    .msg-knox {
       display: flex;
       gap: 12px;
       align-items: flex-start;
-      max-width: 780px;
-      margin: 0 auto;
-      width: 100%;
-      padding: 4px 24px;
+      margin-bottom: 20px;
     }
 
     .msg-knox-avatar {
-      width: 32px;
-      height: 32px;
+      width: 36px; height: 36px;
       border-radius: 50%;
       overflow: hidden;
       flex-shrink: 0;
@@ -587,111 +612,136 @@
       border: 2px solid var(--orange-light);
       margin-top: 2px;
     }
-
     .msg-knox-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 100%; height: 100%; object-fit: cover; object-position: top;
     }
 
-    .msg-knox-content {
-      flex: 1;
-      min-width: 0;
-    }
+    .msg-knox-content { flex: 1; min-width: 0; }
 
-    .msg-knox-name {
-      font-size: 12px;
-      font-weight: 800;
+    .msg-knox-label {
+      font-size: 11px;
+      font-weight: 900;
       color: var(--text-light);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .msg-knox-name .mode-label {
+    .mode-pill {
       font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
+      font-weight: 900;
+      padding: 2px 8px;
       border-radius: 999px;
     }
+    .pill-answer { background: var(--orange-light); color: var(--orange); }
+    .pill-learn  { background: var(--blue-light); color: var(--blue-dark); }
+    .pill-chat   { background: var(--green-light); color: var(--green-dark); }
 
-    .mode-label.answer { background: #FFF4EC; color: var(--orange); }
-    .mode-label.learn  { background: var(--blue-light); color: var(--blue-dark); }
-    .mode-label.chat   { background: var(--green-light); color: var(--green-dark); }
-
+    /* Knox bubble — EXACT landing page card style */
     .msg-knox-bubble {
       background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 6px 20px 20px 20px;
-      padding: 16px 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px 20px 20px 20px;
+      padding: 18px 20px;
       font-size: 15px;
       font-weight: 500;
       line-height: 1.65;
       color: var(--text);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      word-wrap: break-word;
+      box-shadow: 0 4px 0 var(--border);
     }
 
-    /* Thinking indicator */
-    .thinking-bubble {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 6px 20px 20px 20px;
-      padding: 14px 18px;
+    /* Thinking dots */
+    .thinking-row {
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 14px 0;
     }
-
     .thinking-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--orange);
-      animation: thinking 1.2s infinite;
+      animation: bounce 1.2s infinite;
     }
-    .thinking-dot:nth-child(2) { animation-delay: 0.2s; background: var(--blue); }
-    .thinking-dot:nth-child(3) { animation-delay: 0.4s; background: var(--green); }
+    .thinking-dot:nth-child(1) { background: var(--orange); }
+    .thinking-dot:nth-child(2) { background: var(--blue); animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { background: var(--green); animation-delay: 0.4s; }
 
-    @keyframes thinking {
+    @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-5px); opacity: 1; }
+      30% { transform: translateY(-6px); opacity: 1; }
     }
 
-    /* Answer sections — reuse styles from index.html logic */
-    .knox-section {
-      margin-top: 14px;
-      border-top: 1px solid #F3F4F6;
+    /* Feedback bar */
+    .feedback-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
       padding-top: 12px;
+      border-top: 2px solid var(--border);
     }
+    .feedback-bar span { font-size: 12px; font-weight: 700; color: var(--text-light); }
 
-    .knox-section-label {
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 8px;
+    .fb-btn {
+      padding: 5px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.12s;
+      box-shadow: 0 2px 0 var(--border);
     }
+    .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
 
-    .knox-section-label.orange { color: var(--orange); }
-    .knox-section-label.blue   { color: var(--blue-dark); }
-    .knox-section-label.green  { color: var(--green-dark); }
-    .knox-section-label.purple { color: #7C3AED; }
-    .knox-section-label.red    { color: #DC2626; }
+    /* Guest CTA strip */
+    #guestCta {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: var(--orange-cream);
+      border-top: 2px solid var(--orange-light);
+      padding: 14px 24px;
+      flex-shrink: 0;
+    }
+    #guestCta p { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); }
+    #guestCta strong { color: var(--orange); }
+    #guestCta button {
+      padding: 10px 20px; border-radius: 12px; border: none;
+      background: var(--orange); color: white; font-size: 14px;
+      font-weight: 800; font-family: inherit; cursor: pointer;
+      box-shadow: var(--shadow-orange); white-space: nowrap;
+      transition: all 0.15s;
+    }
+    #guestCta button:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #CC5500; }
 
     /* ── INPUT AREA ──────────────────────────────────────────── */
     #inputArea {
-      padding: 12px 24px 16px;
-      background: var(--main-bg);
-      border-top: 1px solid var(--border);
+      padding: 14px 24px 18px;
+      background: white;
+      border-top: 2px solid var(--border);
       flex-shrink: 0;
     }
 
-    .input-inner {
-      max-width: 780px;
-      margin: 0 auto;
+    .input-inner { max-width: 800px; margin: 0 auto; }
+
+    /* Image pill */
+    #appImagePill {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: var(--orange-cream);
+      border: 2px solid var(--orange-light);
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 10px;
+      width: fit-content;
     }
 
     .input-box {
@@ -701,13 +751,13 @@
       background: white;
       border: 2px solid var(--border);
       border-radius: 20px;
-      padding: 10px 10px 10px 18px;
+      padding: 10px 10px 10px 20px;
+      box-shadow: 0 4px 0 var(--border);
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-
     .input-box:focus-within {
       border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(255,107,0,0.1);
+      box-shadow: 0 4px 0 var(--orange-light);
     }
 
     #appChatInput {
@@ -717,7 +767,7 @@
       background: transparent;
       font-size: 15px;
       font-family: 'Nunito', sans-serif;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text);
       resize: none;
       min-height: 44px;
@@ -726,6 +776,7 @@
       padding: 8px 0;
       line-height: 1.5;
     }
+    #appChatInput::placeholder { color: #BBB; }
 
     .input-tools {
       display: flex;
@@ -735,89 +786,67 @@
     }
 
     .input-icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 38px; height: 38px;
+      border-radius: 12px;
       border: none;
       background: transparent;
       cursor: pointer;
-      color: #D1D5DB;
+      color: #CCC;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: color 0.12s, background 0.12s;
+      transition: all 0.15s;
     }
-
-    .input-icon-btn:hover {
-      color: var(--orange);
-      background: var(--orange-light);
-    }
+    .input-icon-btn:hover { color: var(--orange); background: var(--orange-cream); }
 
     #appSendBtn {
-      width: 40px;
-      height: 40px;
+      width: 44px; height: 44px;
       border-radius: 14px;
       border: none;
-      background: #FF6B00;
+      background: var(--orange);
       color: white;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 0 #CC5500;
-      transition: transform 0.12s, box-shadow 0.12s;
+      box-shadow: var(--shadow-orange);
+      transition: all 0.15s;
       flex-shrink: 0;
     }
+    #appSendBtn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    #appSendBtn:active { transform: translateY(2px);  box-shadow: none; }
 
-    #appSendBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
-    #appSendBtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
+    /* Usage row */
+    #appUsageRow {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      margin-top: 10px;
+      padding: 0 4px;
+    }
+
+    .usage-pill {
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
     .input-hint {
       font-size: 11px;
       font-weight: 600;
-      color: #D1D5DB;
+      color: #CCC;
       text-align: center;
       margin-top: 8px;
     }
 
-    /* Image pill */
-    #appImagePill {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      background: var(--orange-light);
-      border: 1.5px solid var(--orange);
-      border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--orange);
-      margin-bottom: 8px;
-    }
-
-    /* Usage row */
-    #appUsageRow {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 8px;
-      padding: 0 2px;
-    }
-
-    .usage-pill {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    /* ── MODALS & OVERLAYS ───────────────────────────────────── */
+    /* ── MODALS ──────────────────────────────────────────────── */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15,23,42,0.72);
-      backdrop-filter: blur(8px);
+      background: rgba(60,60,60,0.6);
+      backdrop-filter: blur(6px);
       z-index: 9999;
       display: flex;
       align-items: center;
@@ -827,95 +856,107 @@
     }
 
     @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
-    .modal-card {
+    /* Auth modal */
+    .auth-card {
       background: white;
       border-radius: 24px;
-      border: 2px solid var(--border);
       max-width: 420px;
       width: 100%;
-      padding: 32px 28px;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.25);
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
     }
 
-    .modal-title {
-      font-family: 'Fredoka', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
+    /* Auth header — orange like landing page header */
+    .auth-header {
+      background: var(--orange);
+      border-bottom: 3px solid #CC5500;
+      padding: 28px 28px 24px;
+      text-align: center;
     }
-
-    .modal-sub {
+    .auth-header img {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 3px solid white;
+      object-fit: cover;
+      object-position: top;
+      margin-bottom: 12px;
+    }
+    .auth-header h2 {
+      font-size: 22px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+    .auth-header p {
       font-size: 14px;
       font-weight: 600;
-      color: var(--text-light);
-      margin-bottom: 24px;
+      color: rgba(255,255,255,0.85);
+      margin-top: 4px;
     }
+
+    .auth-body { padding: 24px 28px 28px; }
 
     /* Auth tabs */
     .auth-tabs {
       display: flex;
       background: var(--gray);
       border-radius: 14px;
-      padding: 5px;
+      padding: 4px;
       margin-bottom: 20px;
       gap: 4px;
     }
-
     .auth-tab {
       flex: 1;
-      padding: 9px;
-      border-radius: 10px;
+      padding: 10px;
+      border-radius: 11px;
       border: none;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
-      font-family: 'Nunito', sans-serif;
       cursor: pointer;
       background: transparent;
-      color: #9CA3AF;
+      color: var(--text-light);
       transition: all 0.15s;
+      font-family: inherit;
     }
-
     .auth-tab.active {
       background: white;
       color: var(--text);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 0 var(--border);
     }
 
     /* Auth inputs */
-    .auth-field {
-      margin-bottom: 12px;
-    }
-
+    .auth-field { margin-bottom: 12px; }
     .auth-field label {
       display: block;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       color: var(--text-light);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
     }
-
     .auth-field input {
       width: 100%;
-      padding: 12px 14px;
+      padding: 12px 16px;
       border: 2px solid var(--border);
       border-radius: 14px;
-      font-size: 14px;
-      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-family: inherit;
       font-weight: 600;
       color: var(--text);
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 0 var(--border);
+    }
+    .auth-field input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 2px 0 var(--orange-light);
     }
 
-    .auth-field input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,107,0,0.1); }
-
-    /* Auth buttons */
     .auth-submit {
       width: 100%;
       padding: 14px;
@@ -923,512 +964,417 @@
       border: none;
       background: var(--orange);
       color: white;
-      font-size: 15px;
-      font-weight: 800;
-      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
       cursor: pointer;
       box-shadow: var(--shadow-orange);
       transition: all 0.15s;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      font-family: inherit;
     }
-
-    .auth-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
-    .auth-submit:active { transform: translateY(2px); box-shadow: none; }
+    .auth-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    .auth-submit:active { transform: translateY(2px);  box-shadow: none; }
 
     .auth-divider {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 14px 0;
-      color: #D1D5DB;
+      color: #CCC;
       font-size: 12px;
       font-weight: 700;
+      margin: 14px 0;
     }
-
     .auth-divider::before, .auth-divider::after {
       content: '';
       flex: 1;
-      height: 1px;
+      height: 2px;
       background: var(--border);
+      border-radius: 999px;
     }
 
-    .auth-social-btn {
+    .auth-social {
       width: 100%;
       padding: 12px;
       border-radius: 14px;
       border: 2px solid var(--border);
       background: white;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 800;
-      font-family: 'Nunito', sans-serif;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
       color: var(--text);
-      transition: border-color 0.15s, background 0.15s;
+      transition: all 0.15s;
       margin-bottom: 8px;
+      box-shadow: 0 2px 0 var(--border);
+      font-family: inherit;
     }
-
-    .auth-social-btn:hover { border-color: var(--orange); background: var(--orange-light); }
+    .auth-social:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); background: var(--orange-cream); }
 
     .auth-error {
       background: #FEF2F2;
-      border: 1.5px solid #FECACA;
-      border-radius: 10px;
-      padding: 10px 12px;
+      border: 2px solid #FECACA;
+      border-radius: 12px;
+      padding: 10px 14px;
       font-size: 13px;
       font-weight: 700;
       color: #DC2626;
       margin-bottom: 12px;
       display: none;
+      box-shadow: 0 2px 0 #FECACA;
     }
 
-    /* User dropdown */
-    #userDropdown {
-      position: fixed;
-      bottom: 70px;
-      left: 14px;
-      width: 220px;
-      background: #1F2937;
-      border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      padding: 8px;
-      z-index: 200;
-      display: none;
-      animation: slideUp 0.2s ease;
+    .auth-terms {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-top: 14px;
     }
+    .auth-terms a { color: var(--orange); text-decoration: none; }
 
-    .dropdown-item-dark {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--sidebar-text);
-      transition: background 0.12s;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      font-family: 'Nunito', sans-serif;
-    }
-
-    .dropdown-item-dark:hover { background: var(--sidebar-active); color: white; }
-    .dropdown-item-dark.danger { color: #F87171; }
-    .dropdown-item-dark.danger:hover { background: rgba(248,113,113,0.15); color: #F87171; }
-
-    .dropdown-divider-dark {
-      height: 1px;
-      background: rgba(255,255,255,0.06);
-      margin: 4px 0;
-    }
-
-    /* ── MOBILE ──────────────────────────────────────────────── */
-    @media (max-width: 768px) {
-      :root { --sidebar-w: 280px; }
-
-      #sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 300;
-        transform: translateX(-100%);
-        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-      }
-
-      #sidebar.open {
-        transform: translateX(0);
-        width: var(--sidebar-w);
-      }
-
-      #sidebarOverlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 299;
-      }
-
-      #sidebarOverlay.show { display: block; }
-
-      .suggestion-grid { grid-template-columns: 1fr; }
-
-      #topbarModes { display: none; }
-
-      .topbar-upgrade { display: none; }
-    }
-
-    /* Feedback buttons */
-    .feedback-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #F3F4F6;
-    }
-
-    .feedback-bar span {
-      font-size: 12px;
-      font-weight: 700;
-      color: #9CA3AF;
-    }
-
-    .feedback-btn {
-      padding: 5px 12px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
+    /* Settings modal */
+    .settings-card {
       background: white;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      box-shadow: 0 2px 0 var(--border);
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+      animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
     }
-
-    .feedback-btn:hover { border-color: var(--orange); background: var(--orange-light); box-shadow: 0 2px 0 var(--orange-dark); }
-
-    /* Settings modal specifics */
+    .settings-header {
+      background: var(--orange);
+      border-bottom: 3px solid #CC5500;
+      padding: 24px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .settings-header h2 { font-size: 20px; font-weight: 900; color: white; }
+    .settings-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 10px;
+      width: 36px; height: 36px;
+      cursor: pointer;
+      color: white;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .settings-close:hover { background: rgba(255,255,255,0.3); }
+    .settings-body { padding: 24px 28px; }
     .settings-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+      border-bottom: 2px solid var(--border);
     }
+    .settings-row:last-of-type { border-bottom: none; }
+    .settings-label { font-size: 15px; font-weight: 700; color: var(--text); }
+    .settings-value { font-size: 14px; font-weight: 600; color: var(--text-light); }
 
-    .settings-row:last-child { border-bottom: none; }
-
-    .settings-label {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
+    /* Plan badge */
+    .plan-badge {
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
+    .badge-free  { background: var(--gray); color: var(--text-light); border: 2px solid var(--border); }
+    .badge-super { background: var(--blue-light); color: var(--blue-dark); border: 2px solid #B3E5FC; }
+    .badge-max   { background: var(--orange-light); color: var(--orange); border: 2px solid var(--orange-light); }
 
-    .settings-value {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-light);
-    }
-
-    /* Sign up CTA for guests */
-    #guestCta {
-      background: linear-gradient(135deg, var(--orange-light), #FFF);
-      border: 1.5px solid var(--orange-border);
-      border-radius: 16px;
-      padding: 16px 20px;
-      margin: 0 24px 12px;
-      max-width: 780px;
-      margin-left: auto;
-      margin-right: auto;
+    /* ── MOBILE ──────────────────────────────────────────────── */
+    #sidebarOverlay {
       display: none;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 299;
     }
 
-    #guestCta p {
-      flex: 1;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.4;
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        top: 68px;
+        left: 0;
+        bottom: 0;
+        z-index: 300;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        width: 280px;
+        border-right: 2px solid var(--border);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+      }
+      #sidebar.open { transform: translateX(0); }
+      #sidebarOverlay.show { display: block; }
+      #headerModeTabs { display: none; }
+      .suggestion-grid { grid-template-columns: 1fr; }
     }
 
-    #guestCta strong { color: var(--orange); }
-
-    #guestCta button {
-      padding: 10px 20px;
-      border-radius: 12px;
-      border: none;
-      background: var(--orange);
-      color: white;
-      font-size: 13px;
-      font-weight: 800;
-      font-family: 'Nunito', sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      box-shadow: 0 3px 0 var(--orange-dark);
-      transition: all 0.15s;
+    @media (max-width: 480px) {
+      #appUpgradeBtn { display: none !important; }
+      #appAccountName { display: none; }
     }
-
-    #guestCta button:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--orange-dark); }
-    #guestCta button:active { transform: translateY(2px); box-shadow: none; }
   </style>
 </head>
 <body>
-
-<!-- Mobile sidebar overlay -->
 <div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <div id="appShell">
 
-  <!-- ══════════════ SIDEBAR ══════════════ -->
-  <nav id="sidebar">
-
-    <div class="sidebar-header" onclick="window.location.href='/?from=app'" style="cursor:pointer;">
-      <img src="./knox-logo-square.jpg" alt="Knox" class="sidebar-logo" onerror="this.style.display='none'">
-      <div class="sidebar-brand">Knox <span>Knows</span></div>
+  <!-- ══ HEADER ══════════════════════════════════════════════ -->
+  <header id="appHeader">
+    <div class="app-header-left">
+      <button id="sidebarToggle" onclick="toggleSidebar()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="/" class="app-logo-link">
+        <img src="./knox-logo.jpg" alt="Knox" class="app-logo-img" onerror="this.style.background='#FFE0C2'">
+        <span class="app-logo-text">Knox Knows</span>
+      </a>
     </div>
 
-    <div onclick="window.location.href='/?from=app'" style="display:block;padding:8px 16px 4px;font-size:12px;font-weight:700;color:#6B7280;text-decoration:none;cursor:pointer;transition:color 0.15s;" onmouseover="this.style.color='#9CA3AF'" onmouseout="this.style.color='#6B7280'">← Back to home</div>
-
-    <button class="new-chat-btn" onclick="appStartNewChat()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New chat
-    </button>
-
-    <!-- Mode navigation -->
-    <div class="sidebar-section-label">Mode</div>
-    <div class="sidebar-nav">
-      <button class="sidebar-nav-item active" id="sidebarAnswerBtn" onclick="appSetMode('answer')">
-        <span class="mode-dot orange"></span>
-        Get the Answer
-      </button>
-      <button class="sidebar-nav-item" id="sidebarLearnBtn" onclick="appSetMode('learn')">
-        <span class="mode-dot blue"></span>
-        Learn with Knox
-      </button>
-      <button class="sidebar-nav-item" id="sidebarChatBtn" onclick="appSetMode('chat')">
-        <span class="mode-dot green"></span>
-        Chat with Knox
-      </button>
+    <!-- Mode tabs -->
+    <div id="headerModeTabs">
+      <button class="header-mode-btn active-answer" id="hAnswerBtn" onclick="appSetMode('answer')">Get the Answer</button>
+      <button class="header-mode-btn" id="hLearnBtn" onclick="appSetMode('learn')">Learn with Knox</button>
+      <button class="header-mode-btn" id="hChatBtn" onclick="appSetMode('chat')">Chat with Knox</button>
     </div>
 
-    <!-- History -->
-    <div class="sidebar-section-label">History</div>
-    <div id="historyList">
-      <div style="padding:8px 10px;font-size:12px;font-weight:600;color:var(--sidebar-muted);" id="historyEmpty">
-        No history yet. Ask Knox something!
+    <div class="app-header-right">
+      <button id="appUpgradeBtn" onclick="goToPricing()">⚡ Upgrade</button>
+
+      <!-- Logged-in account button -->
+      <button id="appAccountBtn" onclick="toggleUserDropdown()" style="display:none;">
+        <div id="appAccountIcon">?</div>
+        <span id="appAccountName"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      <!-- Guest buttons -->
+      <div id="appGuestBtns">
+        <button class="header-login-btn" onclick="openAuthModal()">Login</button>
+        <button class="header-login-btn header-signup-btn" onclick="openAuthModal();setTimeout(()=>switchAuthTab('signup'),50)">Sign Up</button>
       </div>
     </div>
+  </header>
 
-    <!-- User -->
-    <div class="sidebar-footer">
-      <button class="sidebar-user-btn" onclick="toggleUserDropdown()">
-        <div class="sidebar-user-avatar" id="sidebarAvatar">?</div>
-        <div class="sidebar-user-info">
-          <div class="sidebar-user-name" id="sidebarUserName">Sign in</div>
-          <div class="sidebar-user-plan" id="sidebarUserPlan">Guest</div>
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+  <!-- Account dropdown -->
+  <div id="appAccountDropdown">
+    <div class="app-dropdown-header">
+      <p id="ddName">—</p>
+      <span id="ddEmail">—</span>
+      <div style="margin-top:6px;" id="ddPlan"></div>
+    </div>
+    <button class="app-dropdown-item" onclick="openAppSettings();closeUserDropdown()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Account &amp; Plan
+    </button>
+    <div id="ddUpgradeRow" style="display:none;">
+      <button class="app-dropdown-item" onclick="goToPricing();closeUserDropdown()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Upgrade Plan
       </button>
     </div>
-
-  </nav>
-
-  <!-- User dropdown (anchored to sidebar footer) -->
-  <div id="userDropdown">
-    <div id="udPlanBadgeRow" style="padding:8px 12px 6px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:4px;">
-      <div style="font-size:12px;font-weight:800;color:white;" id="udName">—</div>
-      <div style="font-size:11px;font-weight:600;color:#6B7280;" id="udEmail">—</div>
-      <div style="margin-top:4px;" id="udPlan"></div>
-    </div>
-    <button class="dropdown-item-dark" onclick="openAppSettings();closeUserDropdown()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Account &amp; Settings
-    </button>
-    <button class="dropdown-item-dark" id="udUpgradeBtn" onclick="goToPricing();closeUserDropdown()" style="display:none;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      Upgrade Plan
-    </button>
-    <div class="dropdown-divider-dark"></div>
-    <button class="dropdown-item-dark danger" onclick="appHandleLogout();closeUserDropdown()">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Sign out
+    <div class="app-dropdown-divider"></div>
+    <button class="app-dropdown-item danger" onclick="appHandleLogout();closeUserDropdown()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign Out
     </button>
   </div>
 
-  <!-- ══════════════ MAIN ══════════════ -->
-  <div id="main">
+  <!-- ══ BODY ═════════════════════════════════════════════════ -->
+  <div id="appBody">
 
-    <!-- Top bar -->
-    <div id="topbar">
-      <button class="topbar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <!-- ── SIDEBAR ─────────────────────────────────────────── -->
+    <nav id="sidebar">
+      <button id="newChatBtn" onclick="appStartNewChat()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New chat
       </button>
 
-      <a href="/" style="font-family:'Fredoka',sans-serif;font-size:17px;font-weight:900;color:var(--text);text-decoration:none;flex-shrink:0;letter-spacing:-0.01em;line-height:1;" title="Back to home">Knox <span style="color:var(--orange);">Knows</span></a>
-
-      <!-- Mode tabs -->
-      <div id="topbarModes">
-        <button class="topbar-mode-btn active-answer" id="topAnswerBtn" onclick="appSetMode('answer')">Get the Answer</button>
-        <button class="topbar-mode-btn" id="topLearnBtn" onclick="appSetMode('learn')">Learn with Knox</button>
-        <button class="topbar-mode-btn" id="topChatBtn" onclick="appSetMode('chat')">Chat with Knox</button>
+      <div class="sb-label">Mode</div>
+      <div class="sb-nav">
+        <button class="sb-mode-btn active-answer" id="sbAnswerBtn" onclick="appSetMode('answer')">
+          <span class="sb-mode-dot dot-orange"></span> Get the Answer
+        </button>
+        <button class="sb-mode-btn" id="sbLearnBtn" onclick="appSetMode('learn')">
+          <span class="sb-mode-dot dot-blue"></span> Learn with Knox
+        </button>
+        <button class="sb-mode-btn" id="sbChatBtn" onclick="appSetMode('chat')">
+          <span class="sb-mode-dot dot-green"></span> Chat with Knox
+        </button>
       </div>
 
-      <div class="topbar-spacer"></div>
+      <div class="sb-label">History</div>
+      <div id="historyList">
+        <div id="historyEmpty" style="padding:8px 12px;font-size:13px;font-weight:600;color:#BBB;">
+          No history yet. Ask Knox something!
+        </div>
+      </div>
 
-      <button class="topbar-upgrade" id="topUpgradeBtn" onclick="goToPricing()" style="display:none;">⚡ Upgrade</button>
+      <div class="sb-footer">
+        <a href="/" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:700;color:var(--text-light);text-decoration:none;transition:all 0.15s;border:2px solid transparent;" onmouseover="this.style.background='var(--gray)';this.style.borderColor='var(--border)'" onmouseout="this.style.background='';this.style.borderColor='transparent'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Back to home
+        </a>
+      </div>
+    </nav>
 
-      <div class="topbar-avatar" id="topAvatar" onclick="openAuthModal()" title="Sign in">?</div>
-    </div>
-
-    <!-- Chat area -->
-    <div id="chatArea">
+    <!-- ── CHAT MAIN ────────────────────────────────────────── -->
+    <div id="chatMain">
 
       <!-- Welcome screen -->
       <div id="welcomeScreen">
-        <img src="./knox-logo-square.jpg" alt="Knox" class="welcome-logo" onerror="this.style.background='var(--orange)'">
+        <img src="./knox-logo.jpg" alt="Knox" class="welcome-logo" onerror="this.style.background='var(--orange-light)'">
         <h1 class="welcome-title">What can Knox help with?</h1>
-        <p class="welcome-subtitle">Ask any homework question — math, science, history, English, and more. Type it or snap a photo.</p>
+        <p class="welcome-sub">Ask any homework question — math, science, history, English, and more. Type it or snap a photo.</p>
 
         <div class="suggestion-grid">
-          <button class="suggestion-chip" onclick="appSetQuestion('Explain the quadratic formula step by step')">
-            <span class="suggestion-chip-icon">📐</span>
-            <div class="suggestion-chip-text">Quadratic formula</div>
-            <div class="suggestion-chip-sub">Step-by-step algebra</div>
+          <button class="suggestion-chip" onclick="appSetQuestion('Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step')">
+            <span class="chip-icon">📐</span>
+            <div class="chip-text">Quadratic formula</div>
+            <div class="chip-sub">Step-by-step algebra</div>
           </button>
           <button class="suggestion-chip" onclick="appSetQuestion('How does photosynthesis work step by step?')">
-            <span class="suggestion-chip-icon">🌿</span>
-            <div class="suggestion-chip-text">Photosynthesis</div>
-            <div class="suggestion-chip-sub">Biology explained</div>
+            <span class="chip-icon">🌿</span>
+            <div class="chip-text">Photosynthesis</div>
+            <div class="chip-sub">Biology explained</div>
           </button>
-          <button class="suggestion-chip" onclick="appSetQuestion('What caused World War 1?')">
-            <span class="suggestion-chip-icon">🌍</span>
-            <div class="suggestion-chip-text">What caused WW1?</div>
-            <div class="suggestion-chip-sub">History breakdown</div>
+          <button class="suggestion-chip" onclick="appSetQuestion('What caused World War 1? Explain the main reasons.')">
+            <span class="chip-icon">🌍</span>
+            <div class="chip-text">What caused WW1?</div>
+            <div class="chip-sub">History breakdown</div>
           </button>
-          <button class="suggestion-chip" onclick="appSetQuestion('Help me write a thesis statement for my essay')">
-            <span class="suggestion-chip-icon">✍️</span>
-            <div class="suggestion-chip-text">Write a thesis</div>
-            <div class="suggestion-chip-sub">Essay writing help</div>
+          <button class="suggestion-chip" onclick="appSetQuestion('Help me write a strong thesis statement for an essay about climate change')">
+            <span class="chip-icon">✍️</span>
+            <div class="chip-text">Write a thesis</div>
+            <div class="chip-sub">Essay writing help</div>
           </button>
         </div>
       </div>
 
-      <!-- Chat thread (hidden when welcome is shown) -->
+      <!-- Chat thread -->
       <div id="chatThread" class="hidden"></div>
 
-      <!-- Guest CTA bar -->
+      <!-- Guest CTA -->
       <div id="guestCta">
         <p>You've used your free question. <strong>Sign up free</strong> for 5 questions/day — no credit card needed.</p>
         <button onclick="openAuthModal()">Sign up free</button>
       </div>
 
-    </div>
-
-    <!-- Input area -->
-    <div id="inputArea">
-      <div class="input-inner">
-        <!-- Image pill -->
-        <div id="appImagePill">
-          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          <span id="appImagePillName">Image attached</span>
-          <button onclick="appClearImage()" style="background:none;border:none;cursor:pointer;color:var(--orange);font-size:13px;padding:0;line-height:1;">✕</button>
-        </div>
-
-        <div class="input-box">
-          <textarea id="appChatInput"
-            placeholder="Ask Knox anything..."
-            rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();appHandleAsk();}"
-            oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px';"></textarea>
-
-          <div class="input-tools">
-            <input type="file" id="appFileInput" accept="image/*" style="display:none;">
-            <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload image">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-            </button>
-            <button id="appSendBtn" onclick="appHandleAsk()" title="Send">
-              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-            </button>
+      <!-- Input area -->
+      <div id="inputArea">
+        <div class="input-inner">
+          <div id="appImagePill">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            <span id="appImagePillName">Image attached</span>
+            <button onclick="appClearImage()" style="background:none;border:none;cursor:pointer;color:var(--orange);font-size:16px;line-height:1;padding:0;margin-left:4px;">✕</button>
           </div>
+
+          <div class="input-box">
+            <textarea id="appChatInput"
+              placeholder="Ask Knox anything..."
+              rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();appHandleAsk();}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px';"></textarea>
+
+            <div class="input-tools">
+              <input type="file" id="appFileInput" accept="image/*" style="display:none;">
+              <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload photo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+              </button>
+              <button id="appSendBtn" onclick="appHandleAsk()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="appUsageRow">
+            <span class="usage-pill" style="color:var(--orange);" id="appHwUsage">📚 0/5</span>
+            <span class="usage-pill" style="color:var(--blue);" id="appLearnUsage">🧠 0/10</span>
+            <span class="usage-pill" style="color:var(--green);" id="appChatUsage">💬 0/20</span>
+            <span style="margin-left:auto;font-size:12px;font-weight:800;color:var(--text-light);" id="appPlanLabel">Free</span>
+          </div>
+          <div class="input-hint">Enter to send · Shift+Enter for new line</div>
         </div>
-
-        <!-- Usage row -->
-        <div id="appUsageRow" style="display:none;">
-          <span class="usage-pill" style="color:var(--orange);" id="appHwUsage">📚 0/5 hw</span>
-          <span class="usage-pill" style="color:var(--blue);" id="appLearnUsage">🧠 0/10 learn</span>
-          <span class="usage-pill" style="color:var(--green);" id="appChatUsage">💬 0/20 chat</span>
-          <span style="margin-left:auto;font-size:11px;font-weight:700;color:#9CA3AF;" id="appPlanLabel">Free</span>
-        </div>
-
-        <div class="input-hint">Enter to send · Shift+Enter for new line</div>
       </div>
     </div>
-
-  </div><!-- end #main -->
-</div><!-- end #appShell -->
-
-<!-- ══════════════ AUTH MODAL ══════════════ -->
-<div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
-  <div class="modal-card">
-    <div style="text-align:center;margin-bottom:20px;">
-      <img src="./knox-logo-square.jpg" alt="Knox" style="width:48px;height:48px;border-radius:14px;object-fit:cover;margin-bottom:12px;" onerror="this.style.display='none'">
-      <div class="modal-title">Welcome to Knox</div>
-      <div class="modal-sub">Sign in or create a free account</div>
-    </div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
-      <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Sign up</button>
-    </div>
-
-    <div id="authError" class="auth-error"></div>
-
-    <!-- Sign-in fields -->
-    <div id="authSigninFields">
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="authSigninEmail" placeholder="you@email.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="authSigninPw" placeholder="••••••••" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter')appHandleEmailSignin()">
-      </div>
-      <button class="auth-submit" onclick="appHandleEmailSignin()">Sign in</button>
-    </div>
-
-    <!-- Sign-up fields -->
-    <div id="authSignupFields" style="display:none;">
-      <div class="auth-field">
-        <label>Your name</label>
-        <input type="text" id="authSignupName" placeholder="First name" autocomplete="given-name">
-      </div>
-      <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="authSignupEmail" placeholder="you@email.com" autocomplete="email">
-      </div>
-      <div class="auth-field">
-        <label>Password</label>
-        <input type="password" id="authSignupPw" placeholder="Min 6 characters" autocomplete="new-password"
-          onkeydown="if(event.key==='Enter')appHandleEmailSignup()">
-      </div>
-      <button class="auth-submit" onclick="appHandleEmailSignup()">Create account</button>
-    </div>
-
-    <div class="auth-divider">or</div>
-
-    <button class="auth-social-btn" onclick="appHandleGoogleLogin()">
-      <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" height="18" alt="Google">
-      Continue with Google
-    </button>
-    <button class="auth-social-btn" onclick="appHandleMicrosoftLogin()">
-      <svg width="18" height="18" viewBox="0 0 24 24"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
-      Continue with Microsoft
-    </button>
-
-    <p style="text-align:center;font-size:11px;font-weight:600;color:#9CA3AF;margin-top:14px;">
-      By continuing you agree to our <a href="/terms.html" style="color:var(--orange);">Terms</a> and <a href="/privacy.html" style="color:var(--orange);">Privacy Policy</a>
-    </p>
   </div>
 </div>
 
-<!-- Settings modal -->
-<div id="appSettingsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAppSettings()">
-  <div class="modal-card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div class="modal-title" style="margin-bottom:0;">Account</div>
-      <button onclick="closeAppSettings()" style="background:none;border:none;cursor:pointer;color:#9CA3AF;font-size:20px;line-height:1;">✕</button>
+<!-- ══ AUTH MODAL ════════════════════════════════════════════ -->
+<div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-card">
+    <div class="auth-header">
+      <img src="./knox-logo.jpg" alt="Knox" onerror="this.style.display='none'">
+      <h2>Welcome to Knox</h2>
+      <p>Sign in or create your free account</p>
     </div>
-    <div id="settingsContent"></div>
+    <div class="auth-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
+        <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Sign up free</button>
+      </div>
+      <div id="authError" class="auth-error"></div>
+      <div id="authSigninFields">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="authSigninEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="authSigninPw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')appHandleEmailSignin()">
+        </div>
+        <button class="auth-submit" onclick="appHandleEmailSignin()">Sign in</button>
+      </div>
+      <div id="authSignupFields" style="display:none;">
+        <div class="auth-field">
+          <label>Your name</label>
+          <input type="text" id="authSignupName" placeholder="First name" autocomplete="given-name">
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="authSignupEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="authSignupPw" placeholder="Min 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')appHandleEmailSignup()">
+        </div>
+        <button class="auth-submit" onclick="appHandleEmailSignup()">Create free account</button>
+      </div>
+      <div class="auth-divider">or continue with</div>
+      <button class="auth-social" onclick="appHandleGoogleLogin()">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" height="20" alt="Google">
+        Continue with Google
+      </button>
+      <button class="auth-social" onclick="appHandleMicrosoftLogin()">
+        <svg width="20" height="20" viewBox="0 0 24 24"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+        Continue with Microsoft
+      </button>
+      <p class="auth-terms">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ════════════════════════════════════════ -->
+<div id="appSettingsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAppSettings()">
+  <div class="settings-card">
+    <div class="settings-header">
+      <h2>Account &amp; Plan</h2>
+      <button class="settings-close" onclick="closeAppSettings()">✕</button>
+    </div>
+    <div class="settings-body" id="settingsContent"></div>
   </div>
 </div>
 
@@ -1437,13 +1383,12 @@
   window.currentUser = null;
   window.currentMode = 'answer';
   window._appImage   = null;
-  window._sidebarOpen = true;
 </script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, addDoc, getDocs, query, where, orderBy, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E",
@@ -1458,14 +1403,13 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  // ── Plan fetch ────────────────────────────────────────────────
+  // ── Plan fetch ────────────────────────────────────────────
   async function fetchPlan(uid) {
     try {
       const snap = await getDoc(doc(db, 'users', uid));
       if (snap.exists()) {
         const d = snap.data();
         window.userPlan = d.plan || 'free';
-        window._planStatus = d.planStatus;
       } else {
         window.userPlan = 'free';
       }
@@ -1477,147 +1421,122 @@
     const plan = window.userPlan;
     const user = window.currentUser;
 
-    // Sidebar avatar + name
-    const avatar = document.getElementById('sidebarAvatar');
-    const nameEl = document.getElementById('sidebarUserName');
-    const planEl = document.getElementById('sidebarUserPlan');
-    const topAvatar = document.getElementById('topAvatar');
+    const accountBtn  = document.getElementById('appAccountBtn');
+    const guestBtns   = document.getElementById('appGuestBtns');
+    const upgradeBtn  = document.getElementById('appUpgradeBtn');
+    const ddUpgrade   = document.getElementById('ddUpgradeRow');
 
     if (user) {
-      const initials = (user.displayName||user.email||'?').charAt(0).toUpperCase();
-      if (avatar)    { avatar.textContent = ''; avatar.style.background = ''; }
-      if (user.photoURL) {
-        if (avatar)    { avatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;">`; }
-        if (topAvatar) { topAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;">`; }
-      } else {
-        if (avatar)    { avatar.textContent = initials; avatar.style.background = '#FF6B00'; }
-        if (topAvatar) { topAvatar.textContent = initials; topAvatar.style.background = '#FF6B00'; }
-      }
-      if (nameEl) nameEl.textContent = user.displayName || user.email;
-      if (planEl) planEl.textContent = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+      if (guestBtns)  guestBtns.style.display = 'none';
+      if (accountBtn) accountBtn.style.display = 'inline-flex';
 
-      // Topbar
-      if (topAvatar) topAvatar.onclick = () => toggleUserDropdown();
+      const initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+      const icon = document.getElementById('appAccountIcon');
+      const name = document.getElementById('appAccountName');
+      if (icon) {
+        if (user.photoURL) {
+          icon.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">`;
+        } else {
+          icon.textContent = initials;
+        }
+      }
+      if (name) name.textContent = (user.displayName || user.email || '').split(' ')[0];
 
       // Dropdown
-      const udName  = document.getElementById('udName');
-      const udEmail = document.getElementById('udEmail');
-      const udPlan  = document.getElementById('udPlan');
-      if (udName)  udName.textContent  = user.displayName || '—';
-      if (udEmail) udEmail.textContent = user.email || '—';
-      if (udPlan)  udPlan.innerHTML    = `<span class="plan-badge ${plan}">${plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free'}</span>`;
-
-      // Show/hide upgrade button
-      const upgradeBtn  = document.getElementById('udUpgradeBtn');
-      const topUpgrade  = document.getElementById('topUpgradeBtn');
-      if (plan === 'free') {
-        if (upgradeBtn) upgradeBtn.style.display = 'flex';
-        if (topUpgrade) topUpgrade.style.display = '';
-      } else {
-        if (upgradeBtn) upgradeBtn.style.display = 'none';
-        if (topUpgrade) topUpgrade.style.display = 'none';
+      const ddName  = document.getElementById('ddName');
+      const ddEmail = document.getElementById('ddEmail');
+      const ddPlan  = document.getElementById('ddPlan');
+      if (ddName)  ddName.textContent  = user.displayName || '—';
+      if (ddEmail) ddEmail.textContent = user.email || '—';
+      if (ddPlan) {
+        const planLabel = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+        const badgeClass = `badge-${plan}`;
+        ddPlan.innerHTML = `<span class="plan-badge ${badgeClass}">${planLabel}</span>`;
       }
 
-      // Usage row
+      if (plan === 'free') {
+        if (upgradeBtn) upgradeBtn.style.display = '';
+        if (ddUpgrade)  ddUpgrade.style.display  = '';
+      } else {
+        if (upgradeBtn) upgradeBtn.style.display = 'none';
+        if (ddUpgrade)  ddUpgrade.style.display  = 'none';
+      }
+
       document.getElementById('appUsageRow').style.display = 'flex';
       updateUsageDisplay();
-
     } else {
-      if (avatar)    { avatar.textContent = '?'; avatar.style.background = '#374151'; }
-      if (topAvatar) { topAvatar.textContent = '?'; topAvatar.style.background = '#E5E7EB'; topAvatar.onclick = openAuthModal; }
-      if (nameEl)    nameEl.textContent = 'Sign in';
-      if (planEl)    planEl.textContent = 'Guest';
+      if (guestBtns)  guestBtns.style.display  = 'inline-flex';
+      if (accountBtn) accountBtn.style.display = 'none';
+      if (upgradeBtn) upgradeBtn.style.display = 'none';
       document.getElementById('appUsageRow').style.display = 'none';
     }
   }
 
-  // Usage display
   async function updateUsageDisplay() {
     if (!window.currentUser) return;
-    const plan = window.userPlan;
     const LIMITS = {
       free:  { hw: 5,   learn: 10,       chat: 20  },
       super: { hw: 25,  learn: 50,       chat: 50  },
       max:   { hw: 100, learn: Infinity, chat: 500 },
     };
-    const lim = LIMITS[plan] || LIMITS.free;
-
+    const lim = LIMITS[window.userPlan] || LIMITS.free;
     try {
-      const today  = new Date().toISOString().slice(0,10);
-      const uid    = window.currentUser.uid;
-      const usnap  = await getDoc(doc(db,'users',uid,'usage',today));
-      const u      = usnap.exists() ? usnap.data() : {};
-      const hw     = u.hw    || 0;
-      const learn  = u.learn || 0;
-      const chat   = u.chat  || 0;
-
-      const hwEl    = document.getElementById('appHwUsage');
-      const learnEl = document.getElementById('appLearnUsage');
-      const chatEl  = document.getElementById('appChatUsage');
-      const planEl  = document.getElementById('appPlanLabel');
-
-      if (hwEl)    hwEl.textContent    = `📚 ${hw}/${lim.hw} hw`;
-      if (learnEl) learnEl.textContent = `🧠 ${learn}/${isFinite(lim.learn) ? lim.learn : '∞'} learn`;
-      if (chatEl)  chatEl.textContent  = `💬 ${chat}/${lim.chat} chat`;
-      if (planEl)  planEl.textContent  = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+      const today = new Date().toISOString().slice(0,10);
+      const snap  = await getDoc(doc(db,'users',window.currentUser.uid,'usage',today));
+      const u     = snap.exists() ? snap.data() : {};
+      const hw    = u.hw    || 0;
+      const learn = u.learn || 0;
+      const chat  = u.chat  || 0;
+      const el = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
+      el('appHwUsage',    `📚 ${hw}/${lim.hw}`);
+      el('appLearnUsage', `🧠 ${learn}/${isFinite(lim.learn)?lim.learn:'∞'}`);
+      el('appChatUsage',  `💬 ${chat}/${lim.chat}`);
+      el('appPlanLabel',  window.userPlan === 'max' ? 'Max Knox' : window.userPlan === 'super' ? 'Super Knox' : 'Free');
     } catch(e) {}
   }
 
-  // ── Auth state ────────────────────────────────────────────────
-  let _firstEvent = true;
+  // ── Auth state ────────────────────────────────────────────
+  let _first = true;
   onAuthStateChanged(auth, async (user) => {
     window.currentUser = user || null;
     if (user) {
       await fetchPlan(user.uid);
       loadSidebarHistory();
-      // Re-enable input in case it was locked during guest session
-      const inp = document.getElementById('appChatInput');
-      const btn = document.getElementById('appSendBtn');
-      if (inp) { inp.disabled = false; inp.placeholder = 'Ask Knox anything...'; }
-      if (btn) btn.disabled = false;
-      document.getElementById('guestCta').style.display = 'none';
-      if (_firstEvent) {
-        _firstEvent = false;
-        // If coming back from Stripe, don't interfere
-        const p = new URLSearchParams(window.location.search).get('payment');
-        if (p === 'success') showAppPaymentSuccess();
-      } else {
-        _firstEvent = false;
-      }
+      if (_first) {
+        _first = false;
+        if (new URLSearchParams(window.location.search).get('payment') === 'success') {
+          showPaymentSuccessModal();
+        }
+      } else { _first = false; }
     } else {
       window.userPlan = 'free';
       updatePlanUI();
     }
   });
 
-  // ── History ───────────────────────────────────────────────────
+  // ── History ───────────────────────────────────────────────
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
     try {
-      const q = query(
-        collection(db,'users',window.currentUser.uid,'history'),
-        orderBy('ts','desc'), limit(20)
-      );
+      const q = query(collection(db,'users',window.currentUser.uid,'history'), orderBy('ts','desc'), limit(20));
       const snaps = await getDocs(q);
       const list  = document.getElementById('historyList');
       const empty = document.getElementById('historyEmpty');
-      if (snaps.empty) { if (empty) empty.style.display=''; return; }
+      if (snaps.empty) { if(empty) empty.style.display=''; return; }
       if (empty) empty.style.display = 'none';
-      // Clear existing history items
       list.querySelectorAll('.history-item').forEach(el => el.remove());
       snaps.forEach(s => {
-        const d   = s.data();
-        const q   = (d.question || 'Untitled').substring(0,40);
-        const el  = document.createElement('button');
+        const d  = s.data();
+        const q  = (d.question || 'Untitled').substring(0, 42);
+        const el = document.createElement('button');
         el.className = 'history-item';
-        el.innerHTML = `<span style="font-size:11px;">💬</span><span class="history-item-text">${q}</span>`;
-        el.onclick   = () => { appSetQuestion(d.question || ''); };
+        el.innerHTML = `<span style="font-size:12px;flex-shrink:0;">💬</span><span class="history-item-text">${q}</span>`;
+        el.onclick   = () => { appSetQuestion(d.question || ''); if(window.innerWidth<=768) closeSidebar(); };
         list.appendChild(el);
       });
     } catch(e) {}
   }
 
-  // ── Firestore: save to history ────────────────────────────────
   async function saveHistory(question, answer, mode) {
     if (!window.currentUser) return;
     try {
@@ -1628,7 +1547,7 @@
     } catch(e) {}
   }
 
-  // ── Firestore: feedback ───────────────────────────────────────
+  // ── Feedback ──────────────────────────────────────────────
   window.submitFeedback = async function(rating, question, answer, mode) {
     if (!window.currentUser || (rating !== 1 && rating !== -1)) return false;
     try {
@@ -1640,58 +1559,52 @@
     } catch(e) { return false; }
   };
 
-  // ── Guest usage tracking ──────────────────────────────────────
-  let _guestUsed = 0;
-
-  // ── Mode switching ────────────────────────────────────────────
+  // ── Mode switching ────────────────────────────────────────
   window.appSetMode = function(mode) {
     window.currentMode = mode;
-    // Sidebar
-    ['answer','learn','chat'].forEach(m => {
-      const btn = document.getElementById(`sidebar${m.charAt(0).toUpperCase()+m.slice(1)}Btn`);
-      if (btn) btn.className = 'sidebar-nav-item' + (m === mode ? ' active' : '');
+    const modes = ['answer','learn','chat'];
+    modes.forEach(m => {
+      const hBtn  = document.getElementById(`h${m.charAt(0).toUpperCase()+m.slice(1)}Btn`);
+      const sbBtn = document.getElementById(`sb${m.charAt(0).toUpperCase()+m.slice(1)}Btn`);
+      if (hBtn)  { hBtn.className  = 'header-mode-btn' + (m===mode ? ` active-${m}` : ''); }
+      if (sbBtn) { sbBtn.className = 'sb-mode-btn'     + (m===mode ? ` active-${m}` : ''); }
     });
-    // Topbar
-    const topAnswerBtn = document.getElementById('topAnswerBtn');
-    const topLearnBtn  = document.getElementById('topLearnBtn');
-    const topChatBtn   = document.getElementById('topChatBtn');
-    if (topAnswerBtn) topAnswerBtn.className = 'topbar-mode-btn' + (mode === 'answer' ? ' active-answer' : '');
-    if (topLearnBtn)  topLearnBtn.className  = 'topbar-mode-btn' + (mode === 'learn'  ? ' active-learn'  : '');
-    if (topChatBtn)   topChatBtn.className   = 'topbar-mode-btn' + (mode === 'chat'   ? ' active-chat'   : '');
-    // Placeholder
     const input = document.getElementById('appChatInput');
     if (input) {
-      if (mode === 'answer') input.placeholder = 'Ask Knox anything...';
-      else if (mode === 'learn') input.placeholder = "What topic do you want to learn? Knox will guide you...";
-      else input.placeholder = 'Chat with Knox...';
+      const placeholders = {
+        answer: 'Ask Knox anything — math, science, history, English...',
+        learn:  'What topic do you want to learn? Knox will guide you step by step...',
+        chat:   'Chat with Knox — ask anything, think out loud...'
+      };
+      input.placeholder = placeholders[mode] || 'Ask Knox anything...';
     }
-    // Input send button color
     const sendBtn = document.getElementById('appSendBtn');
     if (sendBtn) {
       const colors = { answer: ['#FF6B00','#CC5500'], learn: ['#1CB0F6','#0A85C2'], chat: ['#58CC02','#46A302'] };
-      const [bg, shadow] = colors[mode] || colors.answer;
-      sendBtn.style.background = bg;
-      sendBtn.style.boxShadow = `0 3px 0 ${shadow}`;
+      const [bg, sh] = colors[mode] || colors.answer;
+      sendBtn.style.background  = bg;
+      sendBtn.style.boxShadow   = `0 4px 0 ${sh}`;
     }
-    // On mobile, close the sidebar after picking a mode
-    if (window.innerWidth <= 768) closeSidebar();
   };
 
-  // ── Image handling ────────────────────────────────────────────
-  document.getElementById('appFileInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      window._appImage = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
-      const pill     = document.getElementById('appImagePill');
-      const pillName = document.getElementById('appImagePillName');
-      if (pill)     pill.style.display = 'flex';
-      if (pillName) pillName.textContent = file.name;
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  });
+  // ── Image handling ────────────────────────────────────────
+  const _fi = document.getElementById('appFileInput');
+  if (_fi) {
+    _fi.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        window._appImage = { data: ev.target.result.split(',')[1], type: file.type, name: file.name };
+        const pill = document.getElementById('appImagePill');
+        const name = document.getElementById('appImagePillName');
+        if (pill) pill.style.display = 'flex';
+        if (name) name.textContent   = file.name;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    });
+  }
 
   window.appClearImage = function() {
     window._appImage = null;
@@ -1699,54 +1612,49 @@
     if (pill) pill.style.display = 'none';
   };
 
-  // ── Ask Knox ──────────────────────────────────────────────────
+  // ── Guest tracking ────────────────────────────────────────
+  let _guestUsed = 0;
+
+  // ── Ask Knox ──────────────────────────────────────────────
   window.appHandleAsk = async function() {
     const input = document.getElementById('appChatInput');
-    const q     = (input?.value || '').trim();
+    const q = (input?.value || '').trim();
     if (!q && !window._appImage) return;
 
-    // Guest limit check
     if (!window.currentUser) {
       if (_guestUsed >= 1) {
         document.getElementById('guestCta').style.display = 'flex';
-        // Lock input so guest knows they're blocked
-        const inp = document.getElementById('appChatInput');
-        const btn = document.getElementById('appSendBtn');
-        if (inp) { inp.disabled = true; inp.placeholder = 'Sign up free to keep asking Knox...'; }
-        if (btn) btn.disabled = true;
         return;
       }
       _guestUsed++;
     }
 
-    // Switch to chat thread
     showChatThread();
-
-    // Clear input
     if (input) { input.value = ''; input.style.height = 'auto'; }
 
-    // Render user message
     const userRow = document.createElement('div');
-    userRow.className = 'msg-row';
-    userRow.innerHTML = `<div class="msg-user">${escHtml(q) + (window._appImage ? ' <span style="opacity:0.6;font-size:12px;">📷</span>' : '')}</div>`;
+    userRow.className = 'msg-wrap';
+    userRow.innerHTML = `<div class="msg-user"><div class="msg-user-bubble">${escHtml(q)}${window._appImage ? ' <span style="opacity:0.5;font-size:12px;">📷</span>' : ''}</div></div>`;
     document.getElementById('chatThread').appendChild(userRow);
 
-    // Render thinking
-    const thinkingRow = document.createElement('div');
-    thinkingRow.className = 'msg-knox-row';
-    thinkingRow.id = 'appThinking';
-    thinkingRow.innerHTML = `
-      <div class="msg-knox-avatar"><img src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'"></div>
-      <div class="msg-knox-content">
-        <div class="msg-knox-name">Knox <span class="mode-label ${window.currentMode}">${window.currentMode}</span></div>
-        <div class="thinking-bubble"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div>
+    const thinkId = 'think_' + Date.now();
+    const thinkRow = document.createElement('div');
+    thinkRow.className = 'msg-wrap';
+    thinkRow.id = thinkId;
+    thinkRow.innerHTML = `
+      <div class="msg-knox">
+        <div class="msg-knox-avatar"><img src="./knox-logo.jpg" alt="Knox" style="object-position:top" onerror="this.style.display='none'"></div>
+        <div class="msg-knox-content">
+          <div class="msg-knox-label">Knox <span class="mode-pill pill-${window.currentMode}">${window.currentMode}</span></div>
+          <div class="msg-knox-bubble"><div class="thinking-row"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div></div>
+        </div>
       </div>`;
-    document.getElementById('chatThread').appendChild(thinkingRow);
+    document.getElementById('chatThread').appendChild(thinkRow);
     scrollChat();
 
-    // Build request
-    const image      = window._appImage;
+    const image = window._appImage;
     window.appClearImage();
+
     let idToken = '';
     if (window.currentUser) {
       try { idToken = await window.currentUser.getIdToken(); } catch(e) {}
@@ -1759,51 +1667,47 @@
         body: JSON.stringify({ question: q, mode: window.currentMode, image: image?.data, imageType: image?.type, plan: window.userPlan }),
       });
       const data = await res.json();
-
-      if (!res.ok) {
-        replaceThinking(`<p style="color:#DC2626;font-weight:700;">😬 ${data.error || 'Something went wrong. Please try again.'}</p>`, true);
-        return;
-      }
+      if (!res.ok) { replaceThinking(thinkId, `<p style="color:#DC2626;font-weight:700;">😬 ${escHtml(data.error || 'Something went wrong. Try again.')}</p>`, true); return; }
 
       const answer = data.answer || '';
       const html   = renderAnswerHtml(answer);
-      const fbId   = 'fb_' + Math.random().toString(36).slice(2,9);
-      window._knoxFbPayloads = window._knoxFbPayloads || {};
-      window._knoxFbPayloads[fbId] = { question: q, answer, mode: window.currentMode };
+      const fbId   = 'fb_' + Math.random().toString(36).slice(2,8);
+      window._fbPayloads = window._fbPayloads || {};
+      window._fbPayloads[fbId] = { question: q, answer, mode: window.currentMode };
 
-      replaceThinking(`
+      replaceThinking(thinkId, `
         <div>${html}</div>
         <div class="feedback-bar">
           <span>Was this helpful?</span>
-          <button class="feedback-btn" onclick="appHandleFeedback('${fbId}',1,this)">👍</button>
-          <button class="feedback-btn" onclick="appHandleFeedback('${fbId}',-1,this)">👎</button>
+          <button class="fb-btn" onclick="appHandleFeedback('${fbId}',1,this)">👍</button>
+          <button class="fb-btn" onclick="appHandleFeedback('${fbId}',-1,this)">👎</button>
         </div>`, false);
 
-      // Save history + update usage
       await saveHistory(q, answer, window.currentMode);
       await updateUsageDisplay();
-
     } catch(e) {
-      replaceThinking('<p style="color:#DC2626;font-weight:700;">😬 Network error. Please check your connection.</p>', true);
+      replaceThinking(thinkId, '<p style="color:#DC2626;font-weight:700;">😬 Network error. Check your connection.</p>', true);
     }
   };
 
-  function replaceThinking(html, isError) {
-    const thinking = document.getElementById('appThinking');
+  function replaceThinking(thinkId, html, isError) {
+    const thinking = document.getElementById(thinkId);
     if (!thinking) return;
     const row = document.createElement('div');
-    row.className = 'msg-knox-row';
+    row.className = 'msg-wrap';
     row.innerHTML = `
-      <div class="msg-knox-avatar"><img src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'"></div>
-      <div class="msg-knox-content">
-        <div class="msg-knox-name">Knox <span class="mode-label ${window.currentMode}">${window.currentMode}</span></div>
-        <div class="msg-knox-bubble">${html}</div>
+      <div class="msg-knox">
+        <div class="msg-knox-avatar"><img src="./knox-logo.jpg" alt="Knox" style="object-position:top" onerror="this.style.display='none'"></div>
+        <div class="msg-knox-content">
+          <div class="msg-knox-label">Knox <span class="mode-pill pill-${window.currentMode}">${window.currentMode}</span></div>
+          <div class="msg-knox-bubble">${html}</div>
+        </div>
       </div>`;
     thinking.replaceWith(row);
     scrollChat();
   }
 
-  // ── Answer renderer ───────────────────────────────────────────
+  // ── Answer renderer ───────────────────────────────────────
   function escHtml(s) {
     return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
@@ -1811,108 +1715,80 @@
   function renderAnswerHtml(text) {
     if (!text) return '';
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-    let html = '';
-    let i = 0;
-
-    const sectionColors = {
-      'Final Answer':    ['orange','📋'],
-      'Answer':          ['orange','📋'],
-      'Step-by-step':    ['blue',  '🔢'],
-      'Step-by-Step':    ['blue',  '🔢'],
-      'Explanation':     ['blue',  '💡'],
-      'Key Points':      ['green', '✅'],
-      'Tip':             ['orange','💡'],
-      'Common Mistake':  ['red',   '⚠️'],
-      'Insight':         ['purple','🌟'],
-      'Resources':       ['blue',  '📚'],
+    let html = '', i = 0;
+    const SECTIONS = {
+      'Final Answer':   ['#FF6B00','📋'], 'Answer': ['#FF6B00','📋'],
+      'Step-by-step':   ['#1CB0F6','🔢'], 'Step-by-Step': ['#1CB0F6','🔢'],
+      'Explanation':    ['#1CB0F6','💡'],
+      'Key Points':     ['#58CC02','✅'],
+      'Tip':            ['#FF6B00','💡'],
+      'Common Mistake': ['#FF4B4B','⚠️'],
+      'Insight':        ['#CE82FF','🌟'],
+      'Resources':      ['#1CB0F6','📚'],
     };
-
     while (i < lines.length) {
       const line = lines[i];
-
-      // Check for section headers (e.g. "Final Answer:")
       let matched = false;
-      for (const [key, [color, icon]] of Object.entries(sectionColors)) {
-        if (line === key || line === key + ':' || line.startsWith(key + ':')) {
+      for (const [key, [color, icon]] of Object.entries(SECTIONS)) {
+        if (line === key || line === key+':' || line.startsWith(key+':')) {
           const content = line.includes(':') ? line.slice(line.indexOf(':')+1).trim() : '';
-          html += `<div class="knox-section"><div class="knox-section-label ${color}">${icon} ${key}</div>`;
+          html += `<div style="margin-top:14px;border-top:2px solid var(--border);padding-top:12px;"><div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:${color};margin-bottom:8px;">${icon} ${key}</div>`;
           if (content) html += `<p style="margin:0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(content)}</p>`;
           i++;
-          // Collect section content
           while (i < lines.length) {
             const next = lines[i];
-            let isNewSection = false;
-            for (const k of Object.keys(sectionColors)) {
-              if (next === k || next === k+':' || next.startsWith(k+':')) { isNewSection = true; break; }
-            }
-            if (isNewSection) break;
-            // Numbered steps
+            let isSec = Object.keys(SECTIONS).some(k => next===k || next===k+':' || next.startsWith(k+':'));
+            if (isSec) break;
             if (/^\d+[\.\)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
               html += '<ol style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;">';
               while (i < lines.length) {
                 const sl = lines[i];
-                let isNewSec2 = false;
-                for (const k of Object.keys(sectionColors)) { if (sl===k||sl===k+':'||sl.startsWith(k+':')){ isNewSec2=true;break;} }
-                if (isNewSec2) break;
+                let isSec2 = Object.keys(SECTIONS).some(k => sl===k||sl===k+':'||sl.startsWith(k+':'));
+                if (isSec2) break;
                 if (/^\d+[\.\)]\s*/.test(sl)) {
-                  const txt = sl.replace(/^\d+[\.\)]\s*/,'');
-                  html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`;
-                  i++;
+                  html += `<li style="font-size:14px;font-weight:600;line-height:1.6;">${escHtml(sl.replace(/^\d+[\.\)]\s*/,''))}</li>`; i++;
                 } else if (/^\d+$/.test(sl.trim()) && i+1<lines.length) {
-                  const txt = lines[i+1];
-                  let isNewSec3=false;
-                  for(const k of Object.keys(sectionColors)){if(txt===k||txt===k+':'||txt.startsWith(k+':')){isNewSec3=true;break;}}
-                  if (!isNewSec3) { html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`; i+=2; }
-                  else { html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${sl}</li>`; i++; }
+                  let isSec3 = Object.keys(SECTIONS).some(k => lines[i+1]===k||lines[i+1]===k+':'||lines[i+1].startsWith(k+':'));
+                  if (!isSec3) { html += `<li style="font-size:14px;font-weight:600;line-height:1.6;">${escHtml(lines[i+1])}</li>`; i+=2; }
+                  else { html += `<li style="font-size:14px;font-weight:600;line-height:1.6;">${escHtml(sl)}</li>`; i++; }
                 } else break;
               }
               html += '</ol>';
-            }
-            // Bullet points
-            else if (/^[•\-\*✓✔]\s/.test(next) || next.startsWith('✓')) {
+            } else if (/^[•\-\*✓✔]\s/.test(next) || next.startsWith('✓')) {
               html += '<ul style="margin:8px 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">';
               while (i < lines.length && (/^[•\-\*✓✔]\s/.test(lines[i]) || lines[i].startsWith('✓'))) {
-                const txt = lines[i].replace(/^[•\-\*✓✔]\s*/,'');
-                html += `<li style="font-size:14px;font-weight:500;line-height:1.6;">${escHtml(txt)}</li>`;
-                i++;
+                html += `<li style="font-size:14px;font-weight:600;line-height:1.6;">${escHtml(lines[i].replace(/^[•\-\*✓✔]\s*/,''))}</li>`; i++;
               }
               html += '</ul>';
-            }
-            // Plain paragraph
-            else {
-              html += `<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(next)}</p>`;
-              i++;
+            } else {
+              html += `<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(next)}</p>`; i++;
             }
           }
           html += '</div>';
-          matched = true;
-          break;
+          matched = true; break;
         }
       }
-      if (!matched) {
-        html += `<p style="margin:4px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(line)}</p>`;
-        i++;
-      }
+      if (!matched) { html += `<p style="margin:4px 0;font-size:15px;font-weight:500;line-height:1.65;">${escHtml(line)}</p>`; i++; }
     }
     return html;
   }
 
-  // ── Feedback handler ──────────────────────────────────────────
+  // ── Feedback ──────────────────────────────────────────────
   window.appHandleFeedback = async function(fbId, rating, btn) {
-    const payload = window._knoxFbPayloads?.[fbId];
+    const payload = window._fbPayloads?.[fbId];
     if (!payload || !window.currentUser) return;
     const bar = btn?.closest('.feedback-bar');
     if (bar?.dataset.submitted) return;
     if (bar) bar.dataset.submitted = '1';
-    bar?.querySelectorAll('.feedback-btn').forEach(b => { b.style.opacity='0.5'; b.style.cursor='default'; });
-    if (btn) { btn.style.opacity='1'; btn.style.background = rating===1?'#DCFCE7':'#FEE2E2'; btn.style.borderColor = rating===1?'#22C55E':'#EF4444'; }
+    bar?.querySelectorAll('.fb-btn').forEach(b => { b.style.opacity='0.4'; b.style.cursor='default'; });
+    if (btn) { btn.style.opacity='1'; btn.style.borderColor=rating===1?'#58CC02':'#FF4B4B'; btn.style.background=rating===1?'#D7FFB8':'#FFE5E5'; }
     const ok = await window.submitFeedback(rating, payload.question, payload.answer, payload.mode);
     const label = bar?.querySelector('span');
-    if (label) { label.textContent = ok ? (rating===1?'Thanks! 🦊':'Thanks — helps us improve') : 'Could not save'; }
-    try { delete window._knoxFbPayloads[fbId]; } catch(e) {}
+    if (label) label.textContent = ok ? (rating===1?'Thanks! 🦊':'Thanks — helps Knox improve') : 'Could not save';
+    try { delete window._fbPayloads[fbId]; } catch(e) {}
   };
 
-  // ── Auth handlers ─────────────────────────────────────────────
+  // ── Auth handlers ─────────────────────────────────────────
   window.appHandleGoogleLogin = async function() {
     clearAuthError();
     try {
@@ -1920,10 +1796,7 @@
       window.currentUser = result.user;
       const isNew = result._tokenResponse?.isNewUser;
       closeAuthModal();
-      if (isNew) {
-        sendWelcomeEmailCall(result.user);
-        showAppWelcomeModal(result.user.displayName);
-      }
+      if (isNew) { sendWelcomeEmailCall(result.user); showWelcomeModal(result.user.displayName); }
     } catch(e) { showAuthError(e.message); }
   };
 
@@ -1936,10 +1809,7 @@
       window.currentUser = result.user;
       const isNew = result._tokenResponse?.isNewUser;
       closeAuthModal();
-      if (isNew) {
-        sendWelcomeEmailCall(result.user);
-        showAppWelcomeModal(result.user.displayName);
-      }
+      if (isNew) { sendWelcomeEmailCall(result.user); showWelcomeModal(result.user.displayName); }
     } catch(e) { if (e.code !== 'auth/popup-closed-by-user') showAuthError(e.message); }
   };
 
@@ -1952,9 +1822,7 @@
       const result = await signInWithEmailAndPassword(auth, email, pw);
       window.currentUser = result.user;
       closeAuthModal();
-    } catch(e) {
-      showAuthError(e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : e.message);
-    }
+    } catch(e) { showAuthError(e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : e.message); }
   };
 
   window.appHandleEmailSignup = async function() {
@@ -1963,7 +1831,7 @@
     const email = document.getElementById('authSignupEmail')?.value?.trim();
     const pw    = document.getElementById('authSignupPw')?.value;
     if (!name || !email || !pw) { showAuthError('Please fill in all fields.'); return; }
-    if (pw.length < 6)          { showAuthError('Password must be at least 6 characters.'); return; }
+    if (pw.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
     try {
       const result = await createUserWithEmailAndPassword(auth, email, pw);
       await updateProfile(result.user, { displayName: name });
@@ -1971,183 +1839,137 @@
       window.currentUser = result.user;
       sendWelcomeEmailCall(result.user, name);
       closeAuthModal();
-      showAppWelcomeModal(name);
-    } catch(e) {
-      showAuthError(e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : e.message);
-    }
+      showWelcomeModal(name);
+    } catch(e) { showAuthError(e.code === 'auth/email-already-in-use' ? 'An account with this email already exists.' : e.message); }
   };
 
   window.appHandleLogout = async function() {
     try {
       await signOut(auth);
-      window.currentUser = null;
-      window.userPlan    = 'free';
-      updatePlanUI();
-      appStartNewChat();
+      window.currentUser = null; window.userPlan = 'free';
+      updatePlanUI(); appStartNewChat();
     } catch(e) {}
   };
 
-  function showAuthError(msg) {
-    const el = document.getElementById('authError');
-    if (el) { el.textContent = msg; el.style.display = 'block'; }
-  }
-
-  function clearAuthError() {
-    const el = document.getElementById('authError');
-    if (el) { el.textContent = ''; el.style.display = 'none'; }
-  }
+  function showAuthError(msg) { const e=document.getElementById('authError'); if(e){e.textContent=msg;e.style.display='block';} }
+  function clearAuthError()   { const e=document.getElementById('authError'); if(e){e.textContent='';e.style.display='none';} }
 
   async function sendWelcomeEmailCall(user, overrideName) {
     try {
       const token = await user.getIdToken();
-      await fetch('/api/send-welcome-email', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-        body: JSON.stringify({ name: overrideName || user.displayName || '' }),
-      });
+      await fetch('/api/send-welcome-email', { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body: JSON.stringify({ name: overrideName || user.displayName || '' }) });
     } catch(e) {}
   }
 
-  // ── Payments ──────────────────────────────────────────────────
-  window.goToPricing = function() {
-    window.location.href = '/#pricing';
-  };
+  // ── Payments ──────────────────────────────────────────────
+  window.goToPricing = function() { window.location.href = '/#pricing'; };
 
-  // Handle ?payment=success return from Stripe
   if (new URLSearchParams(window.location.search).get('payment') === 'success') {
-    window.addEventListener('load', () => setTimeout(showAppPaymentSuccess, 800));
+    window.addEventListener('load', () => setTimeout(showPaymentSuccessModal, 800));
     try { history.replaceState({}, '', window.location.pathname); } catch(e) {}
   }
 
-  function showAppPaymentSuccess() {
-    document.getElementById('authModal')?.style && (document.getElementById('authModal').style.display = 'none');
+  function showPaymentSuccessModal() {
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
-      <div class="modal-card" style="text-align:center;">
-        <img src="./knox-logo-square.jpg" style="width:64px;height:64px;border-radius:18px;object-fit:cover;margin-bottom:16px;box-shadow:0 6px 18px rgba(88,204,2,0.3);" onerror="this.style.display='none'">
-        <div class="modal-title">You're in</div>
-        <p style="font-size:14px;font-weight:600;color:var(--text-light);margin:8px 0 20px;">Your upgraded plan is now active.</p>
-        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:14px;padding:14px 18px;margin-bottom:20px;text-align:left;">
-          <p style="font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">A confirmation email is on its way. Manage your plan from your account menu.</p>
+      <div class="auth-card">
+        <div class="auth-header" style="background:var(--green);border-color:#46A302;">
+          <img src="./knox-logo.jpg" alt="Knox" onerror="this.style.display='none'">
+          <h2>You're in!</h2>
+          <p>Your upgraded plan is now active.</p>
         </div>
-        <button onclick="this.closest('.modal-backdrop').remove()" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);">Start using Knox</button>
+        <div class="auth-body">
+          <div style="background:var(--green-light);border:2px solid #B9F6CA;border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 #B9F6CA;">
+            <p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">A confirmation email is on its way. Manage your subscription anytime from your account menu.</p>
+          </div>
+          <button class="auth-submit" style="background:var(--orange);box-shadow:var(--shadow-orange);" onclick="this.closest('.modal-backdrop').remove()">Start using Knox</button>
+          <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:12px;font-weight:600;">Didn't get an email? Check spam or email <a href="mailto:support@knoxknowsapp.com" style="color:var(--orange);">support@knoxknowsapp.com</a></p>
+        </div>
       </div>`;
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
     document.body.appendChild(modal);
     if (window.currentUser) setTimeout(() => fetchPlan(window.currentUser.uid), 1500);
   }
 
-  function showAppWelcomeModal(name) {
+  function showWelcomeModal(name) {
     const firstName = (name||'').split(' ')[0] || 'friend';
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';
     modal.innerHTML = `
-      <div class="modal-card" style="text-align:center;">
-        <img src="./knox-logo-square.jpg" style="width:64px;height:64px;border-radius:18px;object-fit:cover;margin-bottom:16px;box-shadow:0 6px 18px rgba(255,107,0,0.25);" onerror="this.style.display='none'">
-        <div class="modal-title">Welcome, ${escHtml(firstName)}</div>
-        <p style="font-size:14px;font-weight:600;color:var(--text-light);margin:6px 0 20px;">Your Knox Knows account is ready to go.</p>
-        <div style="background:var(--orange-light);border:1.5px solid var(--orange-border);border-radius:14px;padding:14px 18px;margin-bottom:20px;text-align:left;">
-          <p style="font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">You've got <strong style="color:var(--text);">5 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>
+      <div class="auth-card">
+        <div class="auth-header">
+          <img src="./knox-logo.jpg" alt="Knox" onerror="this.style.display='none'">
+          <h2>Welcome, ${escHtml(firstName)}</h2>
+          <p>Your Knox Knows account is ready.</p>
         </div>
-        <button id="welcomeStartBtn" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);margin-bottom:8px;">Ask Knox your first question</button>
-        <button onclick="this.closest('.modal-backdrop').remove()" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:#9CA3AF;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;">Maybe later</button>
-        <p style="margin-top:14px;font-size:12px;color:#9CA3AF;font-weight:500;">Check your inbox for a welcome email from support@knoxknowsapp.com</p>
+        <div class="auth-body">
+          <div style="background:var(--orange-cream);border:2px solid var(--orange-light);border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 var(--orange-light);">
+            <p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You've got <strong style="color:var(--orange);">5 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>
+          </div>
+          <button id="welcomeStartBtn" class="auth-submit">Ask Knox your first question</button>
+          <button onclick="this.closest('.modal-backdrop').remove()" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:var(--text-light);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Maybe later</button>
+          <p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:14px;font-weight:600;">Check your inbox for a welcome email from support@knoxknowsapp.com</p>
+        </div>
       </div>`;
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
-    modal.querySelector('#welcomeStartBtn').onclick = () => {
-      modal.remove();
-      document.getElementById('appChatInput')?.focus({ preventScroll: true });
-    };
+    modal.querySelector('#welcomeStartBtn').onclick = () => { modal.remove(); document.getElementById('appChatInput')?.focus({ preventScroll: true }); };
     document.body.appendChild(modal);
   }
 
-  // ── Settings ──────────────────────────────────────────────────
+  // ── Settings ──────────────────────────────────────────────
   window.openAppSettings = function() {
-    const u   = window.currentUser;
+    const u = window.currentUser;
     const plan = window.userPlan;
-    const el  = document.getElementById('settingsContent');
-    if (!el) return;
     if (!u) { openAuthModal(); return; }
-
     const planLabel = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
-
+    const badgeClass = `badge-${plan}`;
+    const el = document.getElementById('settingsContent');
+    if (!el) return;
     el.innerHTML = `
-      <div class="settings-row">
-        <span class="settings-label">Name</span>
-        <span class="settings-value">${escHtml(u.displayName||'—')}</span>
-      </div>
-      <div class="settings-row">
-        <span class="settings-label">Email</span>
-        <span class="settings-value">${escHtml(u.email||'—')}</span>
-      </div>
-      <div class="settings-row">
-        <span class="settings-label">Plan</span>
-        <span class="settings-value"><span class="plan-badge ${plan}">${planLabel}</span></span>
-      </div>
-      ${plan !== 'free' ? `
-      <div class="settings-row">
-        <span class="settings-label">Billing</span>
-        <button onclick="openBillingPortal(this)" style="padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--text);transition:all 0.15s;">Manage Billing</button>
-      </div>` : `
-      <div style="margin-top:16px;">
-        <button onclick="goToPricing();closeAppSettings();" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);">Upgrade to Super Knox</button>
-      </div>`}
-      <div style="margin-top:12px;">
-        <button onclick="appHandleLogout();closeAppSettings();" style="width:100%;padding:11px;border-radius:12px;border:1.5px solid #FECACA;background:#FEF2F2;color:#DC2626;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;">Sign out</button>
-      </div>`;
-
+      <div class="settings-row"><span class="settings-label">Name</span><span class="settings-value">${escHtml(u.displayName||'—')}</span></div>
+      <div class="settings-row"><span class="settings-label">Email</span><span class="settings-value">${escHtml(u.email||'—')}</span></div>
+      <div class="settings-row"><span class="settings-label">Plan</span><span class="plan-badge ${badgeClass}">${planLabel}</span></div>
+      ${plan !== 'free' ? `<div class="settings-row"><span class="settings-label">Billing</span><button onclick="openBillingPortal(this)" style="padding:8px 16px;border-radius:12px;border:2px solid var(--border);background:white;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">Manage Billing</button></div>` : `<div style="margin-top:16px;"><button onclick="goToPricing();closeAppSettings();" class="auth-submit">Upgrade to Super Knox</button></div>`}
+      <div style="margin-top:12px;"><button onclick="appHandleLogout();closeAppSettings();" style="width:100%;padding:12px;border-radius:14px;border:2px solid #FECACA;background:#FEF2F2;color:#DC2626;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">Sign out</button></div>`;
     document.getElementById('appSettingsModal').style.display = 'flex';
   };
 
-  window.closeAppSettings = function() {
-    document.getElementById('appSettingsModal').style.display = 'none';
-  };
+  window.closeAppSettings = function() { document.getElementById('appSettingsModal').style.display = 'none'; };
 
   async function openBillingPortal(btn) {
     if (!window.currentUser) return;
-    if (btn) { btn.textContent = 'Opening…'; btn.disabled = true; }
+    if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
     try {
       const token = await window.currentUser.getIdToken();
-      const res   = await fetch('/api/customer-portal', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.error || 'Could not open billing portal. Please try again.');
-        if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
-      }
-    } catch(e) {
-      alert('Could not open billing portal. Please try again.');
-      if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
-    }
+      const res   = await fetch('/api/customer-portal', { method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`} });
+      const data  = await res.json();
+      if (data.url) window.location.href = data.url;
+      else { if(btn){btn.textContent='Manage Billing';btn.disabled=false;} alert('Could not open billing portal.'); }
+    } catch(e) { if(btn){btn.textContent='Manage Billing';btn.disabled=false;} alert('Could not open billing portal.'); }
   }
   window.openBillingPortal = openBillingPortal;
 </script>
 
 <script>
-  // ── UI helpers (non-module) ───────────────────────────────────
-
+  // ── UI helpers ────────────────────────────────────────────
   function showChatThread() {
     document.getElementById('welcomeScreen').style.display = 'none';
     document.getElementById('chatThread').classList.remove('hidden');
   }
 
   function scrollChat() {
-    const thread = document.getElementById('chatThread');
-    if (thread) setTimeout(() => { thread.scrollTop = thread.scrollHeight; }, 50);
+    const t = document.getElementById('chatThread');
+    if (t) setTimeout(() => { t.scrollTop = t.scrollHeight; }, 50);
   }
 
   function appStartNewChat() {
-    const thread = document.getElementById('chatThread');
-    if (thread) thread.innerHTML = '';
+    const t = document.getElementById('chatThread');
+    if (t) t.innerHTML = '';
     document.getElementById('welcomeScreen').style.display = '';
     document.getElementById('chatThread').classList.add('hidden');
     document.getElementById('guestCta').style.display = 'none';
-    appClearImage();
+    window.appClearImage && window.appClearImage();
   }
   window.appStartNewChat = appStartNewChat;
 
@@ -2159,20 +1981,18 @@
       input.style.height = Math.min(input.scrollHeight, 160) + 'px';
       input.focus();
     }
-    // On mobile, close sidebar
     if (window.innerWidth <= 768) closeSidebar();
   }
   window.appSetQuestion = appSetQuestion;
 
-  // Sidebar toggle
   function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
+    const sb  = document.getElementById('sidebar');
+    const ov  = document.getElementById('sidebarOverlay');
     if (window.innerWidth <= 768) {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('show');
+      sb.classList.toggle('open');
+      ov.classList.toggle('show');
     } else {
-      sidebar.classList.toggle('collapsed');
+      sb.classList.toggle('collapsed');
     }
   }
   window.toggleSidebar = toggleSidebar;
@@ -2183,34 +2003,24 @@
   }
   window.closeSidebar = closeSidebar;
 
-  // User dropdown
   function toggleUserDropdown() {
-    const dd = document.getElementById('userDropdown');
+    const dd = document.getElementById('appAccountDropdown');
     dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
   }
   window.toggleUserDropdown = toggleUserDropdown;
 
-  function closeUserDropdown() {
-    document.getElementById('userDropdown').style.display = 'none';
-  }
+  function closeUserDropdown() { document.getElementById('appAccountDropdown').style.display = 'none'; }
   window.closeUserDropdown = closeUserDropdown;
 
   document.addEventListener('click', (e) => {
-    const dd = document.getElementById('userDropdown');
-    if (dd && !dd.contains(e.target) && !e.target.closest('.sidebar-user-btn') && !e.target.closest('#topAvatar')) {
-      dd.style.display = 'none';
-    }
+    const dd = document.getElementById('appAccountDropdown');
+    if (dd && !dd.contains(e.target) && !e.target.closest('#appAccountBtn')) dd.style.display = 'none';
   });
 
-  // Auth modal
-  function openAuthModal() {
-    document.getElementById('authModal').style.display = 'flex';
-  }
+  function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
   window.openAuthModal = openAuthModal;
 
-  function closeAuthModal() {
-    document.getElementById('authModal').style.display = 'none';
-  }
+  function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
   window.closeAuthModal = closeAuthModal;
 
   function switchAuthTab(tab) {
@@ -2221,13 +2031,10 @@
   }
   window.switchAuthTab = switchAuthTab;
 
-  // Keyboard shortcut — Cmd/Ctrl+K = new chat
+  // Keyboard shortcut
   document.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault();
-      appStartNewChat();
-      document.getElementById('appChatInput')?.focus();
-    }
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); appStartNewChat(); document.getElementById('appChatInput')?.focus(); }
+    if (e.key === 'Escape') { closeAuthModal(); closeUserDropdown(); }
   });
 </script>
 
