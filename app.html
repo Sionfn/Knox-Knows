@@ -2088,7 +2088,7 @@
       ${plan !== 'free' ? `
       <div class="settings-row">
         <span class="settings-label">Billing</span>
-        <button onclick="openBillingPortal()" style="padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--text);">Manage Billing</button>
+        <button onclick="openBillingPortal(this)" style="padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--text);transition:all 0.15s;">Manage Billing</button>
       </div>` : `
       <div style="margin-top:16px;">
         <button onclick="goToPricing();closeAppSettings();" style="width:100%;padding:13px;border-radius:14px;border:none;background:var(--orange);color:white;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);">Upgrade to Super Knox</button>
@@ -2104,8 +2104,9 @@
     document.getElementById('appSettingsModal').style.display = 'none';
   };
 
-  async function openBillingPortal() {
+  async function openBillingPortal(btn) {
     if (!window.currentUser) return;
+    if (btn) { btn.textContent = 'Opening…'; btn.disabled = true; }
     try {
       const token = await window.currentUser.getIdToken();
       const res   = await fetch('/api/customer-portal', {
@@ -2113,9 +2114,18 @@
         headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch(e) { alert('Could not open billing portal.'); }
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Could not open billing portal. Please try again.');
+        if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
+      }
+    } catch(e) {
+      alert('Could not open billing portal. Please try again.');
+      if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
+    }
   }
+  window.openBillingPortal = openBillingPortal;
 </script>
 
 <script>
