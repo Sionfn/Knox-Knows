@@ -2315,7 +2315,8 @@
             hasPendingCheckout = parsed && parsed.plan && (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000);
           }
         } catch(e) {}
-        if (!hasPaymentParam && !hasPendingCheckout) {
+        const cameFromApp = params.get('from') === 'app';
+        if (!hasPaymentParam && !hasPendingCheckout && !cameFromApp) {
           window.location.replace('/app');
         }
       } else {
