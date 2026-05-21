@@ -88,7 +88,7 @@
           {
             "@type": "Question",
             "name": "How is Knox different from ChatGPT or other AI tools?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for learning. He shows step-by-step work, explains why each step is right, and is tuned for K-12 through college subjects. General chatbots are great for trivia — Knox is great when you actually need to learn the material." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students. It structures every answer with step-by-step breakdowns, key points, tips, and common mistakes — not just a wall of text. It also has a dedicated Learn mode that teaches you instead of just giving answers, and a full chat history so you never lose your work." }
           },
           {
             "@type": "Question",
@@ -108,12 +108,22 @@
           {
             "@type": "Question",
             "name": "Can I upload a photo of my homework?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — click the photo icon in the input box, snap a picture of your worksheet or textbook problem, and Knox reads it directly. Available on every plan including Free." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question." }
           },
           {
             "@type": "Question",
             "name": "Is this just cheating?",
             "acceptedAnswer": { "@type": "Answer", "text": "Knox has two modes: Answer mode gives the solution fast when you're stuck, and Learn mode walks you through the problem step by step like a tutor would so you understand the material." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I access Knox?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and you get 5 homework questions, 10 learning sessions, and 20 chats every day. Upgrade to Super or Max Knox for more." }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Knox remember my previous questions?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account." }
           },
           {
             "@type": "Question",
@@ -1317,7 +1327,7 @@
 
     <!-- Knox wave badge -->
     <div style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      Hi! I'm Knox 👋 Your AI study companion
+      Your AI homework companion 🦊
     </div>
 
     <h1 style="font-size:clamp(38px,6.5vw,74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
@@ -1326,12 +1336,12 @@
     </h1>
 
     <p style="font-size:18px;font-weight:600;color:#666;line-height:1.65;max-width:500px;margin:18px auto 0;">
-      Knox knows every subject — math, science, history, English and more. From K-12 through college.
+      Knox Knows is your personal AI tutor — get instant answers, learn step by step, and chat about anything school-related. Free to start, no credit card needed.
     </p>
 
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
-      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Get the Answer</button>
-      <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Learn with Knox</button>
+      <button class="btn-orange" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Open Knox</button>
+      <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="smoothScroll('how-it-works',event)">See how it works</button>
     </div>
 
     <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account · 5 questions every day · no credit card needed</p>
@@ -1355,18 +1365,18 @@
 
 <!-- ===================== TWO MODES ===================== -->
 <section style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:1000px;margin:0 auto;">
+  <div style="max-width:1100px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Three powerful modes</h2>
+      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Three modes, one tutor</h2>
       <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Knox Knows has three powerful modes to help you learn your way.</p>
     </div>
 
-    <div class="rg-2col">
+    <div class="rg-3col">
       <!-- Get the Answer -->
       <div class="reveal delay-1" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
         <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">⚡</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Get the Answer</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Stuck on a problem? Knox gives you a clear, instant answer with full explanations. Fast and accurate.</p>
+        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Ask Knox any homework question. Get a full answer with step-by-step breakdown, tips, and insights.</p>
         <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #CC5500;">
           Try it now →
         </div>
@@ -1376,9 +1386,19 @@
       <div class="reveal delay-2" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
         <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">🧠</div>
         <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Learn with Knox</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Knox guides you step-by-step like a real tutor — asking questions, giving hints, helping you actually understand.</p>
+        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Knox guides you with questions and hints instead of just giving the answer. Real learning, not just copying.</p>
         <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #0A85C2;">
           Learn with Knox →
+        </div>
+      </div>
+
+      <!-- Chat with Knox -->
+      <div class="reveal delay-3" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
+        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">💬</div>
+        <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Chat with Knox</h3>
+        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Talk to Knox like a friend. Ask follow-up questions, get explanations in simple terms.</p>
+        <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--green);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #3D9900;">
+          Start chatting →
         </div>
       </div>
     </div>
@@ -1390,27 +1410,27 @@
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">How Knox works</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Sign up free, pick your mode, and start learning in seconds.</p>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Three steps. That's it.</p>
     </div>
 
     <div class="rg-3col">
       <div class="reveal delay-1" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">1</div>
         <div style="font-size:48px;margin-bottom:8px;">✏️</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Create your free account</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Sign up in seconds at knoxknowsapp.com/app</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Sign up free</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Create your account in seconds. No credit card, no commitment.</p>
       </div>
       <div class="reveal delay-2" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">2</div>
         <div style="font-size:48px;margin-bottom:8px;">🦊</div>
         <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Pick your mode</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Get the Answer, Learn with Knox, or Chat with Knox</p>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Choose how you want to learn — answers, guided learning, or casual chat.</p>
       </div>
       <div class="reveal delay-3" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">3</div>
         <div style="font-size:48px;margin-bottom:8px;">🎓</div>
         <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Ask Knox anything</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type or snap a photo of your homework</p>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type your question or snap a photo of your homework. Knox handles the rest.</p>
       </div>
     </div>
   </div>
@@ -1473,7 +1493,7 @@
 <section id="ai-helper" style="background:#f9fafb;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:780px;margin:0 auto;text-align:center;">
     <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">See Knox in action</h2>
-    <p style="font-size:17px;font-weight:600;color:#9CA3AF;margin-bottom:40px;">The full Knox experience — chat interface, step-by-step answers, and three learning modes.</p>
+    <p style="font-size:17px;font-weight:600;color:#9CA3AF;margin-bottom:40px;">Join students getting better grades with Knox. The full experience — sidebar chat history, three learning modes, step-by-step answers, and photo upload.</p>
     <a href="/app" style="display:inline-block;background:#FF6B00;color:white;font-size:18px;font-weight:900;padding:18px 48px;border-radius:16px;text-decoration:none;box-shadow:0 4px 0 #CC5500;font-family:Nunito,sans-serif;">Try Knox free</a>
     <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 5 free questions every day</p>
   </div>
@@ -1808,7 +1828,7 @@
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          Knox is built specifically for learning. He shows step-by-step work, explains <em>why</em> each step is right, and is tuned for K-12 through college subjects. General chatbots are great for trivia — Knox is great when you actually need to learn the material, hand it in, and remember it for the test.
+          Knox is built specifically for students. It structures every answer with step-by-step breakdowns, key points, tips, and common mistakes — not just a wall of text. It also has a dedicated Learn mode that teaches you instead of just giving answers, and a full chat history so you never lose your work.
         </div>
       </details>
 
@@ -1852,7 +1872,7 @@
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          Absolutely — and most people do. Click the photo icon in the input box, snap a picture of your worksheet or textbook problem, and Knox reads it directly. Available on every plan including Free.
+          Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question.
         </div>
       </details>
 
@@ -1868,6 +1888,28 @@
       </details>
 
       <!-- Q7 -->
+      <details class="faq-item reveal" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 3px 0 #E5E7EB;transition:box-shadow 0.2s;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>How do I access Knox?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Knox lives at <a href="/app" style="color:#FF6B00;font-weight:700;">knoxknowsapp.com/app</a>. Sign up free and you get 5 homework questions, 10 learning sessions, and 20 chats every day. Upgrade to Super or Max Knox for more.
+        </div>
+      </details>
+
+      <!-- Q8 -->
+      <details class="faq-item reveal" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 3px 0 #E5E7EB;transition:box-shadow 0.2s;">
+        <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <span>Does Knox remember my previous questions?</span>
+          <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
+        </summary>
+        <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
+          Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account.
+        </div>
+      </details>
+
+      <!-- Q9 -->
       <details class="faq-item reveal" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 3px 0 #E5E7EB;transition:box-shadow 0.2s;">
         <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <span>Do you offer refunds?</span>
@@ -1907,10 +1949,10 @@
   <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
   <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
     <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:4px solid rgba(255,255,255,0.4);margin:0 auto 16px;background:rgba(255,255,255,0.2);"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-    <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Knox is ready when you are.</h2>
-    <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Start free, no credit card needed. Knox knows the answer.</p>
+    <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Ready to stop guessing?</h2>
+    <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Join students who already use Knox to ace their homework. Free to start — no credit card needed.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
-      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Start for Free</button>
+      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Open Knox now</button>
       <button onclick="scrollToPricing()" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:15px 28px;font-size:17px;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">View Plans →</button>
     </div>
   </div>
