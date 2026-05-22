@@ -1561,7 +1561,7 @@
 
   <!-- ═══════ HEADER ═══════════════════════════════════════ -->
   <header id="appHeader">
-    <a href="/" class="app-logo-link" title="Back to landing page">
+    <a href="/?home=1" class="app-logo-link" title="Back to landing page">
       <img src="./knox-logo.jpg" alt="Knox" class="app-logo-img" onerror="this.style.background='var(--orange-light)'">
       <span class="app-logo-text">Knox Knows</span>
     </a>
@@ -1588,7 +1588,8 @@
         <span id="appAccountIcon" style="
           width:32px;height:32px;border-radius:50%;overflow:hidden;
           display:flex;align-items:center;justify-content:center;
-          background:rgba(255,255,255,0.2);font-size:14px;font-weight:900;color:white;flex-shrink:0;
+          background:rgba(255,255,255,0.2);font-size:13px;font-weight:900;
+          color:white;flex-shrink:0;line-height:1;
         ">?</span>
         <span id="appAccountName" style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;"></span>
       </button>
@@ -1643,7 +1644,7 @@
         </div>
       </div>
       <div class="sidebar-footer">
-        <a href="/" class="sidebar-home-link">
+        <a href="/?home=1" class="sidebar-home-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Back to home
         </a>
@@ -2029,11 +2030,10 @@
       const name = document.getElementById('appAccountName');
       if (icon) {
         if (user.photoURL) {
-          icon.style.padding = '0';
-          icon.style.background = 'transparent';
-          icon.innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${initials}'">`;
+          icon.style.cssText = 'width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;padding:0;';
+          icon.innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;min-width:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;" onerror="this.parentElement.style.background='rgba(255,255,255,0.25)';this.parentElement.textContent='${initials}'">`;
         } else {
-          icon.style.background = 'rgba(255,255,255,0.25)';
+          icon.style.cssText = 'width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,0.25);font-size:13px;font-weight:900;color:white;';
           icon.textContent = initials;
         }
       }
@@ -2180,37 +2180,7 @@
   };
 
   // ── Mode switching ────────────────────────────────────
-  window.appSetMode = function(mode) {
-    window.currentMode = mode;
-    const modes = ['answer','learn','chat'];
-    modes.forEach(m => {
-      const sbBtn = document.getElementById(`sb${m.charAt(0).toUpperCase()+m.slice(1)}Btn`);
-      if (sbBtn) sbBtn.className = 'sb-mode-btn' + (m===mode ? ` active-${m}` : '');
-    });
-    const input = document.getElementById('appChatInput');
-    if (input) {
-      const placeholders = {
-        answer: 'Ask Knox anything — math, science, history, English...',
-        learn:  'What do you want to learn? Knox will walk you through it...',
-        chat:   'Chat with Knox — ask anything, think out loud...'
-      };
-      input.placeholder = placeholders[mode] || 'Ask Knox anything...';
-    }
-    const sendBtn = document.getElementById('appSendBtn');
-    if (sendBtn) {
-      const colors = { answer: ['#FF6B00','#CC5500'], learn: ['#1CB0F6','#0A85C2'], chat: ['#58CC02','#46A302'] };
-      const [bg, sh] = colors[mode] || colors.answer;
-      sendBtn.style.background = bg;
-      sendBtn.style.boxShadow  = `0 4px 0 ${sh}`;
-    }
-    // Update welcome mode indicator
-    const ind = document.getElementById('welcomeMode');
-    if (ind) {
-      const labels = { answer: '⚡ Answer mode', learn: '🧠 Learn mode', chat: '💬 Chat mode' };
-      ind.textContent = labels[mode] || labels.answer;
-      ind.className = `mode-indicator mode-${mode}`;
-    }
-  };
+  // appSetMode defined below
 
   // ── Image ─────────────────────────────────────────────
   const _fi = document.getElementById('appFileInput');
@@ -2744,9 +2714,12 @@
     // Send button color
     const sendBtn = document.getElementById('appSendBtn');
     if (sendBtn) { sendBtn.style.background = cfg.bg; sendBtn.style.boxShadow = '0 3px 0 ' + cfg.sh; }
-    // Input border color
+    // Input border color — direct style for immediate effect
     const inputOuter = document.getElementById('inputOuter');
-    if (inputOuter) inputOuter.dataset.mode = mode;
+    if (inputOuter) {
+      const borderColors = { answer:'#FF6B00', learn:'#1CB0F6', chat:'#58CC02' };
+      inputOuter.style.borderTopColor = borderColors[mode] || '#FF6B00';
+    }
   };
 
   window.toggleModeDropdown = function() {
