@@ -205,19 +205,18 @@
 
     #appUpgradeBtn {
       background: var(--yellow);
-      color: var(--text);
+      color: #3C3C3C;
       border: none;
       border-radius: 12px;
-      padding: 9px 16px;
+      padding: 8px 16px;
       font-size: 13px;
       font-weight: 900;
-      box-shadow: 0 3px 0 var(--yellow-dark);
+      box-shadow: 0 3px 0 #CC9900;
       transition: all 0.15s;
       display: none;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
     }
-    #appUpgradeBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--yellow-dark); }
+    #appUpgradeBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 #CC9900; }
     #appUpgradeBtn:active { transform: translateY(1px); box-shadow: none; }
 
     #appAccountBtn {
@@ -500,8 +499,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 40px 24px 32px;
+      justify-content: flex-start;
+      padding: 32px 24px 24px;
       text-align: center;
       overflow-y: auto;
       background: var(--cream);
@@ -1568,8 +1567,19 @@
     <div class="header-right">
 
       <button id="appUpgradeBtn" onclick="goToPricing()">⚡ Upgrade</button>
-      <button id="appAccountBtn" onclick="toggleUserDropdown()">
-        <span id="appAccountIcon">?</span>
+      <button id="appAccountBtn" onclick="toggleUserDropdown()" style="
+        display:none;align-items:center;gap:8px;
+        background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);
+        border-radius:12px;padding:5px 12px 5px 5px;
+        color:white;font-size:13px;font-weight:800;font-family:inherit;
+        cursor:pointer;transition:all 0.15s;height:40px;
+      ">
+        <span id="appAccountIcon" style="
+          width:28px;height:28px;border-radius:50%;overflow:hidden;
+          display:flex;align-items:center;justify-content:center;
+          background:rgba(255,255,255,0.25);font-size:13px;font-weight:900;color:white;flex-shrink:0;
+        ">?</span>
+        <span id="appAccountName" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       </button>
       <div id="appGuestBtns">
         <button class="header-login-btn" onclick="openAuthModal()">Login</button>
@@ -1716,7 +1726,7 @@
           </div>
         </div>
 
-        <div id="appUsageRow" style="display:none;">
+        <div id="appUsageRow" style="display:none!important;">
           <span id="appHwUsage"></span><span id="appLearnUsage"></span>
           <span id="appChatUsage"></span><span id="appPlanLabel"></span>
         </div>
@@ -1724,16 +1734,16 @@
         <!-- MODE DROPDOWN — like Claude's model selector -->
         <div id="modeSelectorWrap" style="position:relative;display:inline-flex;align-items:center;">
           <button id="modeDropdownBtn" onclick="toggleModeDropdown()" style="
-            display:inline-flex;align-items:center;gap:6px;
-            padding:5px 10px 5px 8px;
+            display:inline-flex;align-items:center;gap:5px;
+            padding:4px 8px 4px 6px;
             border-radius:8px;border:none;
             background:transparent;
-            font-family:inherit;font-size:13px;font-weight:700;
-            color:#888;cursor:pointer;transition:all 0.12s;
-          " onmouseover="this.style.background='#F0F0F0'" onmouseout="this.style.background='transparent'">
-            <span id="modeDropdownIcon">⚡</span>
-            <span id="modeDropdownLabel" style="color:var(--orange);font-weight:800;">Get the Answer</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.4;"><polyline points="6 9 12 15 18 9"/></svg>
+            font-family:inherit;font-size:12px;font-weight:700;
+            color:#999;cursor:pointer;transition:background 0.12s;
+          " onmouseover="this.style.background='#F5F5F5'" onmouseout="this.style.background='transparent'">
+            <span id="modeDropdownIcon" style="font-size:13px;">⚡</span>
+            <span id="modeDropdownLabel" style="color:var(--orange);font-weight:800;font-size:12px;">Get the Answer</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.35;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
 
           <!-- Dropdown menu -->
@@ -2026,7 +2036,8 @@
           icon.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">`;
         } else { icon.textContent = initials; }
       }
-      if (name) name.textContent = (user.displayName || user.email || '').split(' ')[0];
+      const nameEl = document.getElementById('appAccountName');
+      if (nameEl) nameEl.textContent = (user.displayName || user.email || '').split(' ')[0];
 
       const ddName  = document.getElementById('ddName');
       const ddEmail = document.getElementById('ddEmail');
@@ -2038,7 +2049,7 @@
         ddPlan.innerHTML = `<span class="plan-badge badge-${plan}">${planLabel}</span>`;
       }
 
-      if (plan === 'free') {
+      if (plan === 'free' || plan === 'super') {
         if (upgradeBtn) upgradeBtn.style.display = '';
         if (ddUpgrade)  ddUpgrade.style.display  = '';
       } else {
@@ -2046,13 +2057,13 @@
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
 
-      document.getElementById('appUsageRow').style.display = 'flex';
+      // usage row hidden
       updateUsageDisplay();
     } else {
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
       if (upgradeBtn) upgradeBtn.style.display = 'none';
-      document.getElementById('appUsageRow').style.display = 'none';
+      // usage row hidden
     }
   }
 
