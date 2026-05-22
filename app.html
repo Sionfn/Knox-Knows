@@ -893,7 +893,26 @@
     }
 
     /* Hide unused */
-    #appUsageRow { display: none; }
+    #appUsageRow {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 2px 0;
+    }
+    .usage-pill {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-light);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #appPlanLabel {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--orange);
+    }
 
     /* ═══ MODALS ═══════════════════════════════════════════ */
     .modal-backdrop {
@@ -1287,16 +1306,7 @@
     .mode-tab.active-chat:hover { transform: none; }
 
 
-    /* Mode-colored top accent above input */
-    #chatColumn::after {
-      content: none;
-    }
-    #inputArea {
-      border-top: 3px solid var(--orange);
-      transition: border-color 0.2s;
-    }
-    #inputArea[data-mode="learn"] { border-top-color: var(--blue); }
-    #inputArea[data-mode="chat"]  { border-top-color: var(--green); }
+    /* single border on inputOuter only, not inputArea */
 
 
     /* Decorative blobs on welcome screen — like landing page hero */
@@ -1771,9 +1781,11 @@
           </div>
         </div>
 
-        <div id="appUsageRow" style="display:none!important;">
-          <span id="appHwUsage"></span><span id="appLearnUsage"></span>
-          <span id="appChatUsage"></span><span id="appPlanLabel"></span>
+        <div id="appUsageRow" style="display:none;">
+          <span class="usage-pill" id="appHwUsage"></span>
+          <span class="usage-pill" id="appLearnUsage"></span>
+          <span class="usage-pill" id="appChatUsage"></span>
+          <span id="appPlanLabel"></span>
         </div>
 
         <!-- mode selector is now inside input box -->
@@ -2017,8 +2029,13 @@
       const name = document.getElementById('appAccountName');
       if (icon) {
         if (user.photoURL) {
-          icon.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='${initials}'">`;
-        } else { icon.textContent = initials; }
+          icon.style.padding = '0';
+          icon.style.background = 'transparent';
+          icon.innerHTML = `<img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;" onerror="this.parentElement.textContent='${initials}'">`;
+        } else {
+          icon.style.background = 'rgba(255,255,255,0.25)';
+          icon.textContent = initials;
+        }
       }
       const nameEl = document.getElementById('appAccountName');
       if (nameEl) nameEl.textContent = (user.displayName || user.email || '').split(' ')[0];
@@ -2041,7 +2058,7 @@
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
 
-      // usage row hidden
+      const ur = document.getElementById('appUsageRow'); if(ur) ur.style.cssText="display:flex!important";
       updateUsageDisplay();
     } else {
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
@@ -2067,10 +2084,10 @@
       const learn = u.learn || 0;
       const chat  = u.chat  || 0;
       const el = (id, txt) => { const e = document.getElementById(id); if(e) e.textContent = txt; };
-      el('appHwUsage',    `📚 ${hw}/${lim.hw}`);
-      el('appLearnUsage', `🧠 ${learn}/${isFinite(lim.learn)?lim.learn:'∞'}`);
-      el('appChatUsage',  `💬 ${chat}/${lim.chat}`);
-      el('appPlanLabel',  window.userPlan === 'max' ? 'Max Knox' : window.userPlan === 'super' ? 'Super Knox' : 'Free');
+      el('appHwUsage',    `📚 ${hw}/${lim.hw} hw`);
+      el('appLearnUsage', `🧠 ${learn}/${isFinite(lim.learn)?lim.learn:'∞'} learn`);
+      el('appChatUsage',  `💬 ${chat}/${lim.chat} chat`);
+      el('appPlanLabel',  window.userPlan === 'max' ? '⚡ Max Knox' : window.userPlan === 'super' ? '⚡ Super Knox' : '');
     } catch(e) {}
   }
 
