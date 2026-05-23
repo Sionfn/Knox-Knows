@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
-  <link rel="icon" type="image/jpeg" href="/knox-logo.jpg">
-  <link rel="apple-touch-icon" href="/knox-logo.jpg">
+  <meta name="theme-color" content="#FF6B00">
+  <link rel="icon" type="image/jpeg" href="/knox-logo-square.jpg">
+  <link rel="apple-touch-icon" href="/knox-logo-square.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -28,7 +31,6 @@
       --yellow:        #FFD900;
       --yellow-dark:   #CC9900;
       --purple:        #CE82FF;
-      --purple-dark:   #A855F7;
       --cream:         #FFF8F0;
       --cream-warm:    #FFF4E5;
       --gray:          #F7F7F7;
@@ -39,26 +41,16 @@
 
     html, body {
       height: 100%;
-      font-family: 'Nunito', system-ui, sans-serif;
+      font-family: 'Nunito', system-ui, -apple-system, sans-serif;
       color: var(--text);
       background: white;
       -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
     }
     body { display: flex; flex-direction: column; }
     button, input, textarea { font-family: inherit; }
     button { cursor: pointer; }
-
-    /* ═══ DUOLINGO-STYLE 3D BUTTONS ════════════════════════ */
-    .btn-3d {
-      display: inline-flex; align-items: center; justify-content: center;
-      gap: 8px; border: none; border-radius: 16px;
-      font-family: inherit; font-weight: 900;
-      transition: transform 0.1s, box-shadow 0.1s;
-      letter-spacing: 0.02em; text-transform: uppercase; font-size: 14px;
-    }
-    .btn-3d-orange { background: var(--orange); color: white; box-shadow: 0 4px 0 var(--orange-dark); padding: 14px 24px; }
-    .btn-3d-orange:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
-    .btn-3d-orange:active { transform: translateY(2px);  box-shadow: none; }
+    a { color: var(--orange); }
 
     /* ═══ HEADER ═══════════════════════════════════════════ */
     #appHeader {
@@ -73,7 +65,10 @@
       flex-shrink: 0;
       z-index: 100;
     }
-    .app-logo-link { display: flex; align-items: center; gap: 10px; text-decoration: none; color: white; flex-shrink: 0; }
+    .app-logo-link {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: white; flex-shrink: 0;
+    }
     .app-logo-img {
       width: 40px; height: 40px;
       border-radius: 50%;
@@ -89,6 +84,38 @@
     }
 
     .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    /* Mobile history button — hidden on desktop */
+    #mobileHistoryBtn {
+      display: none;
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 12px;
+      color: white;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    #mobileHistoryBtn:hover { background: rgba(255,255,255,0.3); }
+
+    /* Usage pill in header — shows X/N today for free/super */
+    #headerUsage {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      padding: 5px 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    #headerUsage .usage-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
+    }
+    #headerUsage.danger .usage-dot { background: #FFB4B4; }
 
     #appUpgradeBtn {
       background: var(--yellow);
@@ -113,16 +140,14 @@
       background: rgba(255,255,255,0.2);
       border: 2px solid rgba(255,255,255,0.4);
       border-radius: 12px;
-      padding: 6px 14px 6px 6px;
+      padding: 4px 14px 4px 4px;
       color: white;
       font-size: 14px;
       font-weight: 800;
-      font-family: inherit;
       transition: all 0.15s;
       height: 44px;
     }
     #appAccountBtn:hover { background: rgba(255,255,255,0.3); }
-
     #appAccountIcon {
       width: 32px; height: 32px;
       border-radius: 50%;
@@ -135,7 +160,6 @@
       line-height: 1;
     }
     #appAccountIcon img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
     #appAccountName {
       max-width: 90px;
       overflow: hidden;
@@ -166,7 +190,7 @@
     }
     .header-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); background: white; }
 
-    /* ═══ DROPDOWNS ═══════════════════════════════════════ */
+    /* ═══ ACCOUNT DROPDOWN ════════════════════════════════ */
     #appAccountDropdown {
       position: fixed;
       top: 72px;
@@ -175,7 +199,7 @@
       border: 2px solid var(--border);
       border-radius: 20px;
       box-shadow: 0 12px 28px rgba(0,0,0,0.15);
-      min-width: 250px;
+      min-width: 260px;
       overflow: hidden;
       display: none;
       z-index: 200;
@@ -185,20 +209,15 @@
       background: var(--cream);
       border-bottom: 2px solid var(--border);
     }
-    .app-dropdown-header p { font-size: 15px; font-weight: 900; color: var(--text); margin-bottom: 2px; }
-    .app-dropdown-header span { font-size: 12px; font-weight: 700; color: var(--text-light); }
+    .app-dropdown-header p { font-size: 15px; font-weight: 900; color: var(--text); margin-bottom: 2px; word-break: break-word; }
+    .app-dropdown-header span { font-size: 12px; font-weight: 700; color: var(--text-light); word-break: break-all; }
     .app-dropdown-item {
       width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       padding: 14px 18px;
-      font-size: 14px;
-      font-weight: 800;
+      font-size: 14px; font-weight: 800;
       color: var(--text);
-      background: none;
-      border: none;
-      text-align: left;
+      background: none; border: none; text-align: left;
       transition: background 0.15s;
     }
     .app-dropdown-item:hover { background: var(--cream); }
@@ -206,8 +225,7 @@
     .app-dropdown-item.danger:hover { background: #FEF2F2; }
     .app-dropdown-divider { height: 2px; background: var(--border); margin: 2px 0; }
     .plan-badge {
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       padding: 4px 11px;
       border-radius: 999px;
       text-transform: uppercase;
@@ -215,9 +233,9 @@
       border: 2px solid;
       display: inline-block;
     }
-    .badge-free  { background: var(--gray); color: var(--text-light); border-color: var(--border); }
-    .badge-super { background: var(--blue-light); color: var(--blue-dark); border-color: #B3E5FC; }
-    .badge-max   { background: var(--orange-light); color: var(--orange); border-color: var(--orange-light); }
+    .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
+    .badge-super { background: var(--blue-light);    color: var(--blue-dark);  border-color: #B3E5FC; }
+    .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
     #appBody {
@@ -228,7 +246,7 @@
       background: var(--cream);
     }
 
-    /* LEFT HISTORY SIDEBAR — full height of appBody */
+    /* SIDEBAR */
     #rightSidebar {
       width: 240px;
       flex-shrink: 0;
@@ -240,16 +258,13 @@
     }
     .sidebar-section-header {
       padding: 14px 14px 10px;
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       background: var(--orange);
       color: white;
       border-bottom: 3px solid var(--orange-dark);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
     .sidebar-new-btn {
@@ -258,8 +273,7 @@
       border: none;
       border-radius: 10px;
       padding: 5px 12px;
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       box-shadow: 0 2px 0 var(--orange-light);
       transition: all 0.15s;
       text-transform: uppercase;
@@ -279,19 +293,17 @@
     #sidebarHistoryEmpty {
       padding: 24px 10px;
       text-align: center;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12px; font-weight: 700;
       color: #BBB;
       line-height: 1.6;
     }
+
     .sidebar-history-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      position: relative;
+      display: flex; align-items: center; gap: 8px;
       padding: 10px 12px;
       border-radius: 12px;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 13px; font-weight: 700;
       color: var(--text-light);
       transition: all 0.15s;
       border: 2px solid transparent;
@@ -300,12 +312,28 @@
       text-align: left;
       margin-bottom: 4px;
       font-family: inherit;
+      cursor: pointer;
+      user-select: none;
     }
+    .sidebar-history-item:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
     .sidebar-history-item:hover { color: var(--text); border-color: var(--orange-light); }
     .sidebar-history-item .shi-text {
       flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .sidebar-history-item .shi-icon { font-size: 14px; flex-shrink: 0; }
+    .sidebar-history-item .shi-delete {
+      opacity: 0;
+      background: transparent;
+      border: none;
+      color: var(--text-light);
+      font-size: 14px;
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s, background 0.15s;
+    }
+    .sidebar-history-item:hover .shi-delete { opacity: 1; }
+    .sidebar-history-item .shi-delete:hover { background: #FEE2E2; color: var(--red); }
 
     .sidebar-footer {
       padding: 10px 8px;
@@ -314,38 +342,76 @@
       background: white;
     }
     .sidebar-home-link {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       padding: 9px 10px;
       border-radius: 10px;
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 12px; font-weight: 800;
       color: var(--text-light);
       text-decoration: none;
       transition: all 0.15s;
     }
     .sidebar-home-link:hover { background: var(--orange-cream); color: var(--orange); }
 
-    /* RIGHT: chat + input stacked */
+    /* MOBILE HISTORY DRAWER */
+    #mobileHistoryDrawer {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 250;
+      background: rgba(0,0,0,0.45);
+      animation: fadeIn 0.2s;
+    }
+    #mobileHistoryDrawer.open { display: block; }
+    #mobileHistoryDrawer .drawer-panel {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 85%;
+      max-width: 300px;
+      background: white;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      animation: slideRight 0.25s ease;
+    }
+    @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    #mobileHistoryDrawer .drawer-header {
+      padding: 14px 16px;
+      background: var(--orange);
+      color: white;
+      border-bottom: 3px solid var(--orange-dark);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    #mobileHistoryDrawer .drawer-header h3 {
+      font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    #mobileHistoryDrawer .drawer-close {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 10px;
+      width: 32px; height: 32px;
+      color: white;
+      font-size: 16px; font-weight: 900;
+    }
+    #mobileHistoryDrawer .drawer-body {
+      flex: 1; overflow-y: auto; padding: 8px;
+      background: var(--cream);
+    }
+
+    /* CHAT + INPUT */
     #chatAndInput {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       overflow: hidden;
       min-width: 0;
     }
     #appLayout {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       overflow: hidden;
       background: var(--cream);
     }
     #chatColumn {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       overflow: hidden;
       background: var(--cream);
       min-width: 0;
@@ -354,10 +420,8 @@
     /* ═══ WELCOME ═════════════════════════════════════════ */
     #welcomeScreen {
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       padding: 40px 24px 32px;
       text-align: center;
       overflow-y: auto;
@@ -374,6 +438,7 @@
       background: var(--orange-light);
       opacity: 0.6;
       z-index: 0;
+      pointer-events: none;
     }
     #welcomeScreen::after {
       content: '';
@@ -384,18 +449,16 @@
       background: var(--blue-light);
       opacity: 0.5;
       z-index: 0;
+      pointer-events: none;
     }
 
     .welcome-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      display: inline-flex; align-items: center; gap: 6px;
       background: var(--cream);
       border: 2px solid #FFD0A8;
       border-radius: 999px;
       padding: 6px 16px;
-      font-size: 13px;
-      font-weight: 800;
+      font-size: 13px; font-weight: 800;
       color: var(--orange);
       margin-bottom: 16px;
       letter-spacing: 0.02em;
@@ -411,8 +474,7 @@
     }
     .welcome-accent { color: var(--orange); }
     .welcome-sub {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 16px; font-weight: 700;
       color: #666;
       max-width: 480px;
       line-height: 1.55;
@@ -431,12 +493,9 @@
       border: 2px solid var(--border);
       border-radius: 20px;
       padding: 18px 16px;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
       box-shadow: 0 4px 0 var(--border);
-      display: flex;
-      align-items: center;
-      gap: 14px;
+      display: flex; align-items: center; gap: 14px;
       text-align: left;
       font-family: inherit;
     }
@@ -447,25 +506,20 @@
     .suggestion-chip[data-flavor="purple"]:hover { border-color: var(--purple); box-shadow: 0 7px 0 #EBD5FF; }
 
     .chip-circle {
-      width: 56px;
-      height: 56px;
+      width: 56px; height: 56px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 28px;
       flex-shrink: 0;
-      transition: all 0.15s;
     }
     .suggestion-chip[data-flavor="orange"] .chip-circle { background: var(--orange-light); border: 3px solid var(--orange); box-shadow: 0 3px 0 var(--orange); }
     .suggestion-chip[data-flavor="blue"]   .chip-circle { background: var(--blue-light);   border: 3px solid var(--blue);   box-shadow: 0 3px 0 var(--blue); }
     .suggestion-chip[data-flavor="green"]  .chip-circle { background: var(--green-light);  border: 3px solid var(--green);  box-shadow: 0 3px 0 var(--green); }
-    .suggestion-chip[data-flavor="purple"] .chip-circle { background: #F3E8FF;              border: 3px solid var(--purple); box-shadow: 0 3px 0 var(--purple); }
+    .suggestion-chip[data-flavor="purple"] .chip-circle { background: #F3E8FF;             border: 3px solid var(--purple); box-shadow: 0 3px 0 var(--purple); }
 
     .chip-content { flex: 1; min-width: 0; }
     .chip-text {
-      font-size: 15px;
-      font-weight: 900;
+      font-size: 15px; font-weight: 900;
       color: var(--text);
       line-height: 1.25;
       margin-bottom: 3px;
@@ -493,19 +547,26 @@
     #chatThread.hidden { display: none; }
 
     .msg-wrap { margin-bottom: 18px; }
-
     .msg-user { display: flex; justify-content: flex-end; }
     .msg-user-bubble {
       background: var(--orange);
       color: white;
       border-radius: 20px 20px 4px 20px;
       padding: 13px 18px;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       max-width: 80%;
       line-height: 1.5;
       box-shadow: 0 3px 0 var(--orange-dark);
       word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    .msg-user-img {
+      max-width: 220px;
+      max-height: 220px;
+      border-radius: 14px;
+      display: block;
+      margin-top: 8px;
+      border: 2px solid rgba(255,255,255,0.4);
     }
 
     .msg-knox { display: flex; gap: 14px; align-items: flex-start; }
@@ -522,19 +583,14 @@
 
     .msg-knox-content { flex: 1; min-width: 0; }
     .msg-knox-label {
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       color: var(--text-light);
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+      display: flex; align-items: center; gap: 8px;
+      text-transform: uppercase; letter-spacing: 0.06em;
     }
     .mode-pill {
-      font-size: 10px;
-      font-weight: 900;
+      font-size: 10px; font-weight: 900;
       padding: 3px 10px;
       border-radius: 999px;
       letter-spacing: 0.04em;
@@ -548,12 +604,12 @@
       border: 2px solid var(--border);
       border-radius: 4px 20px 20px 20px;
       padding: 18px 20px;
-      font-size: 15px;
-      font-weight: 500;
+      font-size: 15px; font-weight: 500;
       line-height: 1.65;
       color: var(--text);
       box-shadow: 0 4px 0 var(--border);
       word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .msg-knox-bubble:has(.knox-section-card) {
       background: transparent;
@@ -571,16 +627,16 @@
     }
     .knox-section-card:first-child { margin-top: 0; }
     .knox-section-label {
-      font-size: 11px;
-      font-weight: 900;
+      font-size: 11px; font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.07em;
       margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      display: flex; align-items: center; gap: 6px;
     }
+    .knox-section-card strong { color: inherit; font-weight: 800; }
+    .msg-knox-bubble strong { color: var(--orange); font-weight: 800; }
 
+    /* THINKING / TYPING */
     .thinking-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
     .thinking-dot {
       width: 10px; height: 10px;
@@ -595,10 +651,9 @@
       30% { transform: translateY(-8px); opacity: 1; }
     }
 
+    /* FEEDBACK BAR */
     .feedback-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       margin-top: 12px;
       padding: 10px 14px;
       background: var(--cream);
@@ -617,6 +672,42 @@
       transition: all 0.12s;
     }
     .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); transform: translateY(-1px); }
+
+    /* LIMIT REACHED UPSELL CARD */
+    .limit-card {
+      background: linear-gradient(135deg, var(--orange-cream), #FFEED9);
+      border: 2px solid var(--orange-light);
+      border-radius: 18px;
+      padding: 20px 22px;
+      box-shadow: 0 4px 0 var(--orange-light);
+    }
+    .limit-card h3 {
+      font-size: 18px; font-weight: 900;
+      color: var(--orange);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .limit-card p {
+      font-size: 14px; font-weight: 700;
+      color: var(--text);
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+    .limit-card-btn {
+      display: inline-block;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 11px 22px;
+      font-size: 14px; font-weight: 900;
+      box-shadow: 0 4px 0 var(--orange-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .limit-card-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
 
     /* GUEST CTA */
     #guestCta {
@@ -639,8 +730,7 @@
       border: none;
       background: var(--orange);
       color: white;
-      font-size: 13px;
-      font-weight: 900;
+      font-size: 13px; font-weight: 900;
       box-shadow: 0 4px 0 var(--orange-dark);
       transition: all 0.15s;
       text-transform: uppercase;
@@ -664,31 +754,43 @@
       margin: 0 auto;
       width: 100%;
     }
+
+    /* IMAGE PREVIEW PILL */
     #appImagePill {
       display: none;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       background: var(--orange-cream);
       border: 2px solid var(--orange-light);
       border-radius: 12px;
-      padding: 5px 12px;
-      font-size: 13px;
-      font-weight: 800;
+      padding: 4px 8px 4px 4px;
+      font-size: 13px; font-weight: 800;
       color: var(--orange);
       margin-bottom: 10px;
       width: fit-content;
       box-shadow: 0 2px 0 var(--orange-light);
+      max-width: 100%;
+    }
+    #appImagePillThumb {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+    }
+    #appImagePillName {
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     #appImagePill button {
       background: none; border: none; color: var(--orange);
       font-size: 16px; font-weight: 900; line-height: 1;
-      padding: 0 0 0 4px;
+      padding: 0 4px;
     }
 
     .input-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       background: white;
       border: 2px solid #E8E8E8;
       border-radius: 20px;
@@ -704,8 +806,7 @@
       border: none;
       outline: none;
       background: transparent;
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 15px; font-weight: 600;
       color: var(--text);
       resize: none;
       min-height: 36px;
@@ -723,9 +824,7 @@
       border: none;
       background: transparent;
       color: var(--text-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
     }
     .input-icon-btn:hover { color: var(--orange); transform: translateY(-1px); }
@@ -736,9 +835,7 @@
       border: none;
       background: var(--orange);
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 0 var(--orange-dark);
       transition: all 0.15s;
       flex-shrink: 0;
@@ -758,16 +855,13 @@
       margin-right: 4px;
     }
     #modeDropdownBtn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      display: inline-flex; align-items: center; gap: 5px;
       padding: 4px 6px 4px 4px;
       border-radius: 8px;
       border: none;
       background: transparent;
       font-family: inherit;
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12px; font-weight: 700;
       color: #999;
       transition: background 0.12s;
       white-space: nowrap;
@@ -789,36 +883,30 @@
     }
     #modeDropdownMenu button {
       width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      display: flex; align-items: center; gap: 12px;
       padding: 13px 16px;
       border: none;
       background: transparent;
       font-family: inherit;
-      cursor: pointer;
       text-align: left;
       border-bottom: 1px solid var(--border);
       transition: background 0.1s;
     }
     #modeDropdownMenu button:last-child { border-bottom: none; }
-    #modeDropdownMenu button:hover[data-mode="answer"] { background: #FFF8F0; }
-    #modeDropdownMenu button:hover[data-mode="learn"]  { background: #D7F2FD; }
-    #modeDropdownMenu button:hover[data-mode="chat"]   { background: #D7FFB8; }
+    #modeDropdownMenu button[data-mode="answer"]:hover { background: #FFF8F0; }
+    #modeDropdownMenu button[data-mode="learn"]:hover  { background: #D7F2FD; }
+    #modeDropdownMenu button[data-mode="chat"]:hover   { background: #D7FFB8; }
     #modeDropdownMenu .mode-emoji { font-size: 20px; width: 32px; text-align: center; }
     #modeDropdownMenu .mode-title { font-size: 14px; font-weight: 800; }
     #modeDropdownMenu .mode-sub   { font-size: 11px; font-weight: 600; color: #999; margin-top: 2px; }
 
     /* ═══ MODALS ═══════════════════════════════════════════ */
     .modal-backdrop {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(60,60,60,0.6);
       backdrop-filter: blur(6px);
       z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       padding: 20px;
       animation: fadeIn 0.2s ease;
     }
@@ -833,6 +921,8 @@
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .auth-header {
       background: var(--orange);
@@ -870,8 +960,7 @@
       padding: 11px;
       border-radius: 11px;
       border: none;
-      font-size: 13px;
-      font-weight: 900;
+      font-size: 13px; font-weight: 900;
       background: transparent;
       color: var(--text-light);
       transition: all 0.15s;
@@ -886,8 +975,7 @@
     .auth-field { margin-bottom: 14px; }
     .auth-field label {
       display: block;
-      font-size: 12px;
-      font-weight: 900;
+      font-size: 12px; font-weight: 900;
       color: var(--text-light);
       margin-bottom: 6px;
       text-transform: uppercase;
@@ -898,8 +986,7 @@
       padding: 13px 16px;
       border: 2px solid var(--border);
       border-radius: 14px;
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 15px; font-weight: 600;
       color: var(--text);
       outline: none;
       transition: all 0.2s;
@@ -913,8 +1000,7 @@
       border: none;
       background: var(--orange);
       color: white;
-      font-size: 15px;
-      font-weight: 900;
+      font-size: 15px; font-weight: 900;
       box-shadow: 0 4px 0 var(--orange-dark);
       transition: all 0.15s;
       margin-bottom: 14px;
@@ -924,14 +1010,25 @@
     .auth-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
     .auth-submit:active { transform: translateY(2px);  box-shadow: none; }
     .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
+    .auth-forgot {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-light);
+      background: none;
+      border: none;
+      margin-top: -8px;
+      margin-bottom: 14px;
+      text-decoration: underline;
+      font-family: inherit;
+    }
+    .auth-forgot:hover { color: var(--orange); }
 
     .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      display: flex; align-items: center; gap: 10px;
       color: #CCC;
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 12px; font-weight: 800;
       margin: 16px 0;
       text-transform: uppercase;
     }
@@ -948,12 +1045,8 @@
       border-radius: 14px;
       border: 2px solid var(--border);
       background: white;
-      font-size: 14px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      font-size: 14px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
       color: var(--text);
       transition: all 0.15s;
       margin-bottom: 10px;
@@ -965,22 +1058,29 @@
       background: var(--cream);
       transform: translateY(-1px);
     }
-    .auth-error {
-      background: #FEF2F2;
-      border: 2px solid #FECACA;
+    .auth-error, .auth-success {
       border-radius: 12px;
       padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--red);
+      font-size: 13px; font-weight: 700;
       margin-bottom: 12px;
       display: none;
+      border: 2px solid;
+    }
+    .auth-error {
+      background: #FEF2F2;
+      border-color: #FECACA;
+      color: var(--red);
       box-shadow: 0 2px 0 #FECACA;
+    }
+    .auth-success {
+      background: var(--green-light);
+      border-color: #B9F6CA;
+      color: var(--green-dark);
+      box-shadow: 0 2px 0 #B9F6CA;
     }
     .auth-terms {
       text-align: center;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 11px; font-weight: 700;
       color: var(--text-light);
       margin-top: 14px;
     }
@@ -994,14 +1094,14 @@
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .settings-header {
       background: var(--orange);
       border-bottom: 4px solid var(--orange-dark);
       padding: 22px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .settings-header h2 { font-size: 22px; font-weight: 900; color: white; }
     .settings-close {
@@ -1011,25 +1111,22 @@
       width: 38px; height: 38px;
       color: white;
       font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       transition: background 0.15s;
     }
     .settings-close:hover { background: rgba(255,255,255,0.3); }
     .settings-body { padding: 26px 28px; }
     .settings-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 14px 0;
       border-bottom: 2px solid var(--border);
+      gap: 12px;
     }
     .settings-row:last-of-type { border-bottom: none; }
     .settings-label { font-size: 15px; font-weight: 800; color: var(--text); }
-    .settings-value { font-size: 14px; font-weight: 700; color: var(--text-light); }
+    .settings-value { font-size: 14px; font-weight: 700; color: var(--text-light); word-break: break-word; text-align: right; }
 
-    /* ═══ CALCULATOR MODAL ═══════════════════════════════════ */
+    /* ═══ CALCULATOR ═══════════════════════════════════════ */
     .calc-modal {
       position: fixed; inset: 0;
       z-index: 10000;
@@ -1052,37 +1149,48 @@
     .calc-btn-num {
       background: white; border: 1.5px solid #E5E7EB; border-radius: 12px;
       font-size: 20px; font-weight: 700; color: #1f2937;
-      cursor: pointer; padding: 16px 8px; font-family: inherit;
+      padding: 16px 8px; font-family: inherit;
       box-shadow: 0 2px 0 #E5E7EB;
     }
     .calc-btn-op {
       background: #FFF4EC; border: none; border-radius: 12px;
       font-size: 20px; font-weight: 900; color: #FF6B00;
-      cursor: pointer; padding: 16px 8px; font-family: inherit;
+      padding: 16px 8px; font-family: inherit;
       box-shadow: 0 3px 0 #FFD0A0;
     }
     .calc-btn-fn {
       background: #EEF2FF; border: none; border-radius: 10px;
       font-size: 12px; font-weight: 800; color: #4338CA;
-      cursor: pointer; padding: 12px 2px; font-family: inherit;
+      padding: 12px 2px; font-family: inherit;
       box-shadow: 0 2px 0 #C7D2FE;
     }
 
     /* ═══ RESPONSIVE ═══════════════════════════════════════ */
     @media (max-width: 900px) {
       #rightSidebar { display: none; }
+      #mobileHistoryBtn { display: flex; }
     }
     @media (max-width: 768px) {
-      #appHeader { padding: 0 16px; gap: 10px; }
+      #appHeader { padding: 0 14px; gap: 8px; }
       .app-logo-text { display: none; }
       #welcomeScreen { padding: 24px 16px; }
       .suggestion-grid { grid-template-columns: 1fr; }
       #chatThread { padding: 16px 16px 12px; }
-      #inputArea { padding: 12px 16px 16px; }
+      #inputArea { padding: 12px 14px 14px; }
+      #appAccountDropdown { right: 14px; top: 68px; min-width: 240px; max-width: calc(100vw - 28px); }
+      #headerUsage { display: none !important; }
     }
     @media (max-width: 480px) {
       #appUpgradeBtn { display: none !important; }
       #appGuestBtns .header-login-btn:not(.header-signup-btn) { display: none; }
+      .msg-user-bubble, .msg-knox-bubble { max-width: 95%; }
+      .msg-knox { gap: 10px; }
+      .msg-knox-avatar { width: 34px; height: 34px; }
+    }
+
+    /* Reduce motion if requested */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
@@ -1090,20 +1198,29 @@
 
   <!-- ═══════ HEADER ═══════════════════════════════════════ -->
   <header id="appHeader">
-    <a href="/?home=1" class="app-logo-link" title="Back to landing page">
-      <img src="/knox-logo.jpg" alt="Knox" class="app-logo-img" onerror="this.style.display='none'">
-      <span class="app-logo-text">Knox Knows</span>
-    </a>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <a href="/?home=1" class="app-logo-link" title="Back to landing page">
+        <img src="/knox-logo-square.jpg" alt="Knox" class="app-logo-img" onerror="this.style.display='none'">
+        <span class="app-logo-text">Knox Knows</span>
+      </a>
+    </div>
 
     <div class="header-right">
+      <div id="headerUsage" title="Daily questions remaining">
+        <span class="usage-dot"></span>
+        <span id="headerUsageText">5 left today</span>
+      </div>
       <button id="appUpgradeBtn" onclick="goToPricing()">⚡ Upgrade</button>
-      <button id="appAccountBtn" onclick="toggleUserDropdown()">
+      <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
         <span id="appAccountName"></span>
       </button>
       <div id="appGuestBtns">
         <button class="header-login-btn" onclick="openAuthModal()">Login</button>
-        <button class="header-login-btn header-signup-btn" onclick="openAuthModal(); setTimeout(()=>switchAuthTab('signup'),50)">Sign up</button>
+        <button class="header-login-btn header-signup-btn" onclick="openAuthModal('signup')">Sign up</button>
       </div>
     </div>
   </header>
@@ -1119,6 +1236,7 @@
     <div id="ddUpgradeRow" style="display:none;">
       <button class="app-dropdown-item" onclick="goToPricing(); closeUserDropdown()">⚡ Upgrade Plan</button>
     </div>
+    <a class="app-dropdown-item" href="mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback" style="text-decoration:none;">💬 Send feedback</a>
     <div class="app-dropdown-divider"></div>
     <button class="app-dropdown-item danger" onclick="appHandleLogout(); closeUserDropdown()">🚪 Sign out</button>
   </div>
@@ -1126,7 +1244,7 @@
   <!-- ═══════ BODY ═════════════════════════════════════════ -->
   <div id="appBody">
 
-    <!-- LEFT HISTORY SIDEBAR -->
+    <!-- LEFT SIDEBAR (desktop) -->
     <aside id="rightSidebar">
       <div class="sidebar-section-header">
         <span>📚 History</span>
@@ -1146,7 +1264,7 @@
       </div>
     </aside>
 
-    <!-- RIGHT: chat + input -->
+    <!-- CHAT + INPUT -->
     <div id="chatAndInput">
       <div id="appLayout">
         <div id="chatColumn">
@@ -1195,7 +1313,7 @@
           <!-- GUEST CTA -->
           <div id="guestCta">
             <p>You've used your free question! <strong>Sign up free</strong> to get 5 a day — no credit card.</p>
-            <button onclick="openAuthModal(); setTimeout(()=>switchAuthTab('signup'),50)">Sign up free</button>
+            <button onclick="openAuthModal('signup')">Sign up free</button>
           </div>
 
         </div>
@@ -1205,19 +1323,19 @@
       <div id="inputOuter">
         <div id="inputArea">
           <div id="appImagePill">
-            📎 <span id="appImagePillName">Image attached</span>
+            <img id="appImagePillThumb" alt="">
+            <span id="appImagePillName">Image attached</span>
             <button onclick="appClearImage()" aria-label="Remove image">✕</button>
           </div>
 
           <div class="input-box">
-            <!-- Mode selector inside input box, left side -->
             <div id="modeSelectorWrap">
-              <button id="modeDropdownBtn" onclick="toggleModeDropdown()" aria-haspopup="true">
+              <button id="modeDropdownBtn" onclick="toggleModeDropdown()" aria-haspopup="true" aria-label="Choose mode">
                 <span id="modeDropdownIcon" style="font-size:14px;">⚡</span>
                 <span id="modeDropdownLabel">Answer</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.35;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
-              <div id="modeDropdownMenu">
+              <div id="modeDropdownMenu" role="menu">
                 <button data-mode="answer" onclick="appSetMode('answer'); closeModeDropdown()">
                   <span class="mode-emoji">⚡</span>
                   <div>
@@ -1266,20 +1384,39 @@
 
   </div><!-- end appBody -->
 
+  <!-- MOBILE HISTORY DRAWER -->
+  <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>📚 History</h3>
+        <button class="drawer-close" onclick="closeMobileHistory()" aria-label="Close">✕</button>
+      </div>
+      <div class="drawer-body" id="mobileHistoryList">
+        <div id="mobileHistoryEmpty" style="padding:24px 10px;text-align:center;font-size:13px;font-weight:700;color:#BBB;line-height:1.6;">
+          <div style="font-size:32px;margin-bottom:8px;">🦊</div>
+          Your past questions will show up here.
+        </div>
+      </div>
+    </div>
+  </div>
+
 <!-- ═══════ AUTH MODAL ═══════════════════════════════════════ -->
 <div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
   <div class="auth-card">
     <div class="auth-header">
-      <img src="/knox-logo.jpg" alt="Knox" onerror="this.style.display='none'">
-      <h2>Welcome to Knox</h2>
-      <p>Sign in or create your free account</p>
+      <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+      <h2 id="authHeaderTitle">Welcome to Knox</h2>
+      <p id="authHeaderSubtitle">Sign in or create your free account</p>
     </div>
     <div class="auth-body">
-      <div class="auth-tabs">
+      <div class="auth-tabs" id="authTabs">
         <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
         <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Sign up</button>
       </div>
       <div id="authError" class="auth-error"></div>
+      <div id="authSuccess" class="auth-success"></div>
+
+      <!-- SIGN IN -->
       <div id="authSigninFields">
         <div class="auth-field">
           <label for="authSigninEmail">Email</label>
@@ -1290,7 +1427,10 @@
           <input type="password" id="authSigninPw" placeholder="••••••••" autocomplete="current-password">
         </div>
         <button class="auth-submit" id="authSigninBtn" onclick="appHandleEmailSignin()">Sign in</button>
+        <button class="auth-forgot" onclick="switchAuthTab('forgot')">Forgot your password?</button>
       </div>
+
+      <!-- SIGN UP -->
       <div id="authSignupFields" style="display:none;">
         <div class="auth-field">
           <label for="authSignupName">Your name</label>
@@ -1306,15 +1446,29 @@
         </div>
         <button class="auth-submit" id="authSignupBtn" onclick="appHandleEmailSignup()">Create free account</button>
       </div>
-      <div class="auth-divider">or continue with</div>
-      <button class="auth-social" onclick="appHandleGoogleLogin()">
-        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continue with Google
-      </button>
-      <button class="auth-social" onclick="appHandleMicrosoftLogin()">
-        <svg width="20" height="20" viewBox="0 0 24 24"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
-        Continue with Microsoft
-      </button>
+
+      <!-- FORGOT PASSWORD -->
+      <div id="authForgotFields" style="display:none;">
+        <p style="font-size:13px;font-weight:700;color:var(--text-light);line-height:1.55;margin-bottom:14px;">Enter your email and we'll send you a password reset link.</p>
+        <div class="auth-field">
+          <label for="authForgotEmail">Email</label>
+          <input type="email" id="authForgotEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <button class="auth-submit" id="authForgotBtn" onclick="appHandleForgotPassword()">Send reset link</button>
+        <button class="auth-forgot" onclick="switchAuthTab('signin')">← Back to sign in</button>
+      </div>
+
+      <div class="auth-divider" id="authSocialDivider">or continue with</div>
+      <div id="authSocialButtons">
+        <button class="auth-social" onclick="appHandleGoogleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <button class="auth-social" onclick="appHandleMicrosoftLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+          Continue with Microsoft
+        </button>
+      </div>
       <p class="auth-terms">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a></p>
     </div>
   </div>
@@ -1331,14 +1485,13 @@
   </div>
 </div>
 
-<!-- ═══════ CALCULATOR MODAL ═════════════════════════════════ -->
+<!-- ═══════ CALCULATOR ═══════════════════════════════════════ -->
 <div class="calc-modal" id="calcModal" onclick="if(event.target===this)closeCalc()">
   <div class="calc-card">
-    <!-- Header -->
     <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
-          <img src="/knox-logo.jpg" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+          <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" onerror="this.style.display='none'">
         </div>
         <div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.1;">Knox Calculator</div>
@@ -1348,39 +1501,34 @@
       <button onclick="closeCalc()" aria-label="Close" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:16px;display:flex;align-items:center;justify-content:center;font-weight:900;">✕</button>
     </div>
 
-    <!-- Mode tabs -->
     <div style="display:flex;background:#1f2937;">
       <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:#FF6B00;color:white;transition:all 0.15s;">Basic</button>
       <button id="calcTabSci" onclick="calcSetMode('scientific')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:transparent;color:#9CA3AF;transition:all 0.15s;">Science</button>
     </div>
 
-    <!-- Display -->
     <div style="background:#1f2937;padding:16px 18px 12px;">
       <div id="calcExpr" style="font-size:12px;color:#9CA3AF;font-weight:600;min-height:16px;text-align:right;margin-bottom:4px;"></div>
       <div id="calcDisplay" style="font-size:38px;font-weight:900;color:white;text-align:right;line-height:1;word-break:break-all;min-height:46px;">0</div>
     </div>
 
-    <!-- DEG/RAD toggle (science only) -->
     <div id="calcDegToggle" onclick="calcToggleDeg()" style="display:none;background:#111827;padding:6px 18px;text-align:right;cursor:pointer;">
       <span id="calcDegLabel" style="background:#FF6B00;color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
     </div>
 
-    <!-- Memory bar -->
     <div style="display:flex;gap:6px;padding:8px 14px;background:#F9FAFB;border-bottom:1.5px solid #E5E7EB;">
-      <button onclick="calcMemClear()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MC</button>
+      <button onclick="calcMemClear()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MC</button>
       <button onclick="calcMemRecall()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MR</button>
-      <button onclick="calcMemStore()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MS</button>
-      <button onclick="calcMemAdd()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M+</button>
-      <button onclick="calcMemSub()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M−</button>
+      <button onclick="calcMemStore()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MS</button>
+      <button onclick="calcMemAdd()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M+</button>
+      <button onclick="calcMemSub()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M−</button>
       <span id="calcMemInd" style="font-size:10px;font-weight:900;color:#FF6B00;align-self:center;"></span>
     </div>
 
-    <!-- BASIC GRID -->
     <div id="calcGridBasic" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;">
-      <button onclick="calcClear()" style="background:#FEE2E2;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
-      <button onclick="calcSmartParen()" class="calc-btn-op" style="font-size:15px;padding:18px 8px;">( )</button>
-      <button onclick="calcInput('%')" class="calc-btn-op" style="font-size:17px;padding:18px 8px;">%</button>
-      <button onclick="calcDel()" style="background:#F3F4F6;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#6B7280;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #E5E7EB;">⌫</button>
+      <button onclick="calcClear()"       style="background:#FEE2E2;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
+      <button onclick="calcSmartParen()"  class="calc-btn-op" style="font-size:15px;padding:18px 8px;">( )</button>
+      <button onclick="calcInput('%')"    class="calc-btn-op" style="font-size:17px;padding:18px 8px;">%</button>
+      <button onclick="calcDel()"         style="background:#F3F4F6;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#6B7280;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #E5E7EB;">⌫</button>
 
       <button onclick="calcInput('7')" class="calc-btn-num">7</button>
       <button onclick="calcInput('8')" class="calc-btn-num">8</button>
@@ -1399,29 +1547,28 @@
 
       <button onclick="calcInput('0')" class="calc-btn-num">0</button>
       <button onclick="calcInput('.')" class="calc-btn-num">.</button>
-      <button onclick="calcEquals()" style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
+      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
       <button onclick="calcInput('+')" class="calc-btn-op">+</button>
     </div>
 
-    <!-- SCIENCE GRID -->
     <div id="calcGridSci" style="display:none;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;">
-      <button onclick="calcFn('sin')" class="calc-btn-fn">sin</button>
-      <button onclick="calcFn('cos')" class="calc-btn-fn">cos</button>
-      <button onclick="calcFn('tan')" class="calc-btn-fn">tan</button>
-      <button onclick="calcFn('log')" class="calc-btn-fn">log</button>
-      <button onclick="calcFn('ln')" class="calc-btn-fn">ln</button>
+      <button onclick="calcFn('sin')"  class="calc-btn-fn">sin</button>
+      <button onclick="calcFn('cos')"  class="calc-btn-fn">cos</button>
+      <button onclick="calcFn('tan')"  class="calc-btn-fn">tan</button>
+      <button onclick="calcFn('log')"  class="calc-btn-fn">log</button>
+      <button onclick="calcFn('ln')"   class="calc-btn-fn">ln</button>
 
-      <button onclick="calcFn('sqrt')" class="calc-btn-fn">√x</button>
-      <button onclick="calcInput('**2')" class="calc-btn-fn">x²</button>
-      <button onclick="calcInput('**3')" class="calc-btn-fn">x³</button>
+      <button onclick="calcFn('sqrt')"         class="calc-btn-fn">√x</button>
+      <button onclick="calcInput('**2')"       class="calc-btn-fn">x²</button>
+      <button onclick="calcInput('**3')"       class="calc-btn-fn">x³</button>
       <button onclick="calcInsertConst('Math.PI')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">π</button>
-      <button onclick="calcInsertConst('Math.E')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
+      <button onclick="calcInsertConst('Math.E')"  style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
 
-      <button onclick="calcClear()" style="background:#FEE2E2;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
+      <button onclick="calcClear()"      style="background:#FEE2E2;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
       <button onclick="calcSmartParen()" style="background:#FFF4EC;border:none;border-radius:10px;font-size:11px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">( )</button>
-      <button onclick="calcInput('%')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
-      <button onclick="calcDel()" style="background:#F3F4F6;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#6B7280;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #E5E7EB;">⌫</button>
-      <button onclick="calcInput('/')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
+      <button onclick="calcInput('%')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
+      <button onclick="calcDel()"        style="background:#F3F4F6;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#6B7280;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #E5E7EB;">⌫</button>
+      <button onclick="calcInput('/')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
 
       <button onclick="calcInput('7')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">7</button>
       <button onclick="calcInput('8')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">8</button>
@@ -1433,7 +1580,7 @@
       <button onclick="calcInput('5')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">5</button>
       <button onclick="calcInput('6')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">6</button>
       <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
-      <button onclick="calcEquals()" style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
+      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
 
       <button onclick="calcInput('1')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">1</button>
       <button onclick="calcInput('2')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">2</button>
@@ -1442,7 +1589,6 @@
       <button onclick="calcInput('.')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">.</button>
     </div>
 
-    <!-- Send to Knox button -->
     <div style="padding:0 12px 12px;">
       <button onclick="calcInsert()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#1f2937;color:white;font-size:14px;font-weight:900;font-family:inherit;">➤ Send result to Knox</button>
     </div>
@@ -1455,29 +1601,51 @@
   window.currentUser    = null;
   window.currentMode    = 'answer';
   window._appImage      = null;
-  window._guestUsed     = 0;
-  window._learnSession  = null;          // current learn-mode session id
-  window._conversation  = [];            // turn-by-turn history sent to API
-  window._fbPayloads    = {};            // feedback payloads keyed by fb id
+  window._learnSession  = null;
+  window._conversation  = [];
+  window._fbPayloads    = {};
 
-  // Calculator state — declared globally so non-module script can access
+  // Calculator state — globals so non-module script can access
   window._calcExpr        = '';
   window._calcOpenParens  = 0;
   window._calcMemory      = 0;
   window._calcMode        = 'standard';
   window._calcUseDeg      = true;
+
+  // Today's date string for guest-quota reset
+  window._todayKey = function() {
+    return new Date().toISOString().slice(0, 10);
+  };
+
+  // Guest question count — persists across refreshes, resets daily
+  window._getGuestCount = function() {
+    try {
+      const raw = localStorage.getItem('knox_guest');
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      if (obj.day !== window._todayKey()) return 0;
+      return obj.count || 0;
+    } catch (e) { return 0; }
+  };
+  window._incGuestCount = function() {
+    try {
+      const next = (window._getGuestCount() || 0) + 1;
+      localStorage.setItem('knox_guest', JSON.stringify({ day: window._todayKey(), count: next }));
+      return next;
+    } catch (e) { return 1; }
+  };
 </script>
 
-<!-- ═══════ FIREBASE (module) ═══════════════════════════════════ -->
+<!-- ═══════ FIREBASE + AUTH (module) ═══════════════════════════ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import {
     getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
-    signOut, onAuthStateChanged, updateProfile
+    sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, collection, addDoc, getDocs,
+    getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc,
     query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
@@ -1494,7 +1662,7 @@
   const auth  = getAuth(fbApp);
   const db    = getFirestore(fbApp);
 
-  // ── Friendly Firebase error messages ─────────────────────────────────
+  // ── Friendly Firebase error messages ─────────────────────────
   function authErrorMessage(err) {
     const code = err?.code || '';
     const map = {
@@ -1502,21 +1670,22 @@
       'auth/invalid-email':            'That email address doesn\u2019t look right.',
       'auth/user-not-found':           'No account with that email yet.',
       'auth/wrong-password':           'Incorrect password. Try again.',
-      'auth/email-already-in-use':     'An account with this email already exists.',
+      'auth/email-already-in-use':     'An account with this email already exists. Try signing in instead.',
       'auth/weak-password':            'Password must be at least 6 characters.',
       'auth/network-request-failed':   'Network error — check your connection.',
-      'auth/too-many-requests':        'Too many attempts. Try again in a moment.',
-      'auth/popup-closed-by-user':     null,                                          // silent
-      'auth/cancelled-popup-request':  null,                                          // silent
+      'auth/too-many-requests':        'Too many attempts. Try again in a few minutes.',
+      'auth/popup-closed-by-user':     null,
+      'auth/cancelled-popup-request':  null,
       'auth/popup-blocked':            'Pop-up blocked. Allow popups and try again.',
       'auth/account-exists-with-different-credential':
                                         'An account with this email exists with a different sign-in method.',
+      'auth/missing-email':            'Please enter your email.',
     };
     if (code in map) return map[code];
     return 'Something went wrong. Please try again.';
   }
 
-  // ── Plan fetch ────────────────────────────────────────────
+  // ── Plan fetch ──────────────────────────────────────────────
   async function fetchPlan(uid) {
     try {
       const snap = await getDoc(doc(db, 'users', uid));
@@ -1526,6 +1695,26 @@
     }
     updatePlanUI();
   }
+
+  // Poll for plan after payment success — webhook may not be done yet.
+  // Tries 5 times over ~10 seconds, stops as soon as plan upgrades.
+  async function pollForPlanUpdate(uid) {
+    for (let i = 0; i < 5; i++) {
+      try {
+        const snap = await getDoc(doc(db, 'users', uid));
+        const plan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
+        if (plan !== 'free') {
+          window.userPlan = plan;
+          updatePlanUI();
+          return;
+        }
+      } catch (e) { /* keep trying */ }
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    // Last try — accept whatever we get
+    fetchPlan(uid);
+  }
+  window.pollForPlanUpdate = pollForPlanUpdate;
 
   function updatePlanUI() {
     const plan       = window.userPlan;
@@ -1559,10 +1748,21 @@
       if (ddName)  ddName.textContent  = user.displayName || '—';
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
-        const label = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
-        ddPlan.innerHTML = '<span class="plan-badge badge-' + plan + '">' + label + '</span>';
+        const label = plan === 'max'    ? 'Max Knox'
+                    : plan === 'super'  ? 'Super Knox'
+                    : plan === 'family' ? 'Family Plan'
+                    : 'Free';
+        ddPlan.innerHTML = '';
+        const badge = document.createElement('span');
+        // Family shares Super's badge style (same color treatment)
+        const badgeClass = plan === 'family' ? 'super' : plan;
+        badge.className   = 'plan-badge badge-' + badgeClass;
+        badge.textContent = label;
+        ddPlan.appendChild(badge);
       }
 
+      // Upgrade button shown for free + super (super can move to max)
+      // Family + max already at top of their lane — no upgrade prompt
       if (plan === 'free' || plan === 'super') {
         if (upgradeBtn) upgradeBtn.style.display = '';
         if (ddUpgrade)  ddUpgrade.style.display  = '';
@@ -1570,15 +1770,69 @@
         if (upgradeBtn) upgradeBtn.style.display = 'none';
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
+      // Refresh usage pill
+      updateUsageIndicator();
     } else {
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
       if (upgradeBtn) upgradeBtn.style.display = 'none';
+      const usage = document.getElementById('headerUsage');
+      if (usage) usage.style.display = 'none';
     }
   }
   window.updatePlanUI = updatePlanUI;
 
-  // ── Auth state ────────────────────────────────────────────
+  // ── Usage indicator in header ──────────────────────────────
+  // Shows X/N questions remaining today for the CURRENT mode.
+  // ⚠️ These numbers MUST match PLAN_QUOTAS in api/ask.js — if you
+  //   change quotas server-side, change them here too.
+  const PLAN_LIMITS = {
+    free:   { hw: 5,   learn: 10, chat: 20  },
+    super:  { hw: 25,  learn: 50, chat: 50  },
+    max:    { hw: 100, learn: -1, chat: 500 },   // -1 = unlimited
+    family: { hw: 25,  learn: 50, chat: 50  },
+  };
+
+  function modeToCreditField(mode) {
+    if (mode === 'chat')  return 'chat';
+    if (mode === 'learn') return 'learn';
+    return 'hw';
+  }
+  function modeLabel(mode) {
+    if (mode === 'chat')  return 'chats';
+    if (mode === 'learn') return 'lessons';
+    return 'questions';
+  }
+
+  async function updateUsageIndicator() {
+    const usage = document.getElementById('headerUsage');
+    const text  = document.getElementById('headerUsageText');
+    if (!usage || !text) return;
+    if (!window.currentUser) { usage.style.display = 'none'; return; }
+
+    const plan  = window.userPlan;
+    const field = modeToCreditField(window.currentMode);
+    const lim   = (PLAN_LIMITS[plan] || PLAN_LIMITS.free)[field];
+
+    // Unlimited (e.g. Max plan's Learn mode) — hide the pill
+    if (lim === -1 || lim === Infinity) { usage.style.display = 'none'; return; }
+
+    try {
+      const today = window._todayKey();
+      const snap  = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', today));
+      const u     = snap.exists() ? snap.data() : {};
+      const used  = u[field] || 0;
+      const left  = Math.max(0, lim - used);
+      const noun  = modeLabel(window.currentMode);
+
+      usage.style.display = 'inline-flex';
+      text.textContent = left + ' ' + (left === 1 ? noun.replace(/s$/, '') : noun) + ' left';
+      usage.classList.toggle('danger', left <= 1);
+    } catch (e) { /* silent */ }
+  }
+  window.updateUsageIndicator = updateUsageIndicator;
+
+  // ── Auth state ──────────────────────────────────────────────
   let _firstAuth = true;
   onAuthStateChanged(auth, async (user) => {
     window.currentUser = user || null;
@@ -1590,23 +1844,28 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get('payment') === 'success') {
           showPaymentSuccessModal();
-          // Clean the param so refreshes don't re-show the modal
+          // Poll for the webhook to finish writing the new plan
+          pollForPlanUpdate(user.uid);
           try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
         }
       }
     } else {
       _firstAuth = false;
       window.userPlan = 'free';
+      window._conversation = [];
+      window._learnSession = null;
       updatePlanUI();
     }
   });
 
-  // ── Sidebar history ───────────────────────────────────────
+  // ── Sidebar history ─────────────────────────────────────────
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
     const sbList  = document.getElementById('sidebarHistoryList');
     const sbEmpty = document.getElementById('sidebarHistoryEmpty');
-    if (!sbList) return;
+    const mbList  = document.getElementById('mobileHistoryList');
+    const mbEmpty = document.getElementById('mobileHistoryEmpty');
+
     try {
       const q = query(
         collection(db, 'users', window.currentUser.uid, 'history'),
@@ -1614,52 +1873,100 @@
         limit(20)
       );
       const snaps = await getDocs(q);
-      // Clear old items but keep the empty-state marker
-      sbList.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
-      if (snaps.empty) {
-        if (sbEmpty) sbEmpty.style.display = '';
-        return;
-      }
-      if (sbEmpty) sbEmpty.style.display = 'none';
-      snaps.forEach(s => {
-        const d     = s.data();
-        const qText = (d.question || 'Untitled').substring(0, 36);
-        const btn   = document.createElement('button');
-        btn.className = 'sidebar-history-item';
-        btn.innerHTML = '<span class="shi-icon">💬</span><span class="shi-text"></span>';
-        btn.querySelector('.shi-text').textContent = qText;
-        btn.onclick = () => appSetQuestion(d.question || '');
-        sbList.appendChild(btn);
-      });
-    } catch (e) { /* silent — sidebar is non-critical */ }
+      renderHistoryInto(sbList, sbEmpty, snaps);
+      renderHistoryInto(mbList, mbEmpty, snaps);
+    } catch (e) { /* sidebar is non-critical */ }
   }
   window.loadSidebarHistory = loadSidebarHistory;
+
+  function renderHistoryInto(list, empty, snaps) {
+    if (!list) return;
+    list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+    if (snaps.empty) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    snaps.forEach(s => {
+      const d     = s.data();
+      const qText = (d.question || 'Untitled').substring(0, 36);
+      const docId = s.id;
+      // Use div role=button (not <button>) so we can nest the delete button inside.
+      // Nested <button>s are invalid HTML and behave inconsistently across browsers.
+      const row = document.createElement('div');
+      row.className = 'sidebar-history-item';
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      // icon
+      const icon = document.createElement('span');
+      icon.className   = 'shi-icon';
+      icon.textContent = '💬';
+      icon.setAttribute('aria-hidden', 'true');
+      row.appendChild(icon);
+      // text — textContent prevents XSS
+      const text = document.createElement('span');
+      text.className   = 'shi-text';
+      text.textContent = qText;
+      row.appendChild(text);
+      // delete
+      const del = document.createElement('button');
+      del.className   = 'shi-delete';
+      del.textContent = '×';
+      del.setAttribute('aria-label', 'Delete this question');
+      del.onclick = async (e) => {
+        e.stopPropagation();
+        del.disabled = true;
+        try {
+          await deleteDoc(doc(db, 'users', window.currentUser.uid, 'history', docId));
+          loadSidebarHistory();
+        } catch (err) { del.disabled = false; }
+      };
+      row.appendChild(del);
+      // Use full row text as accessible label
+      row.setAttribute('aria-label', 'Reload question: ' + qText);
+      const activate = (e) => {
+        if (e.target === del || del.contains(e.target)) return;
+        window.appSetQuestion(d.question || '');
+        if (window.closeMobileHistory) window.closeMobileHistory();
+      };
+      row.onclick = activate;
+      row.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate(e);
+        }
+      };
+      list.appendChild(row);
+    });
+  }
 
   async function saveHistory(question, answer, mode) {
     if (!window.currentUser) return;
     try {
       await addDoc(collection(db, 'users', window.currentUser.uid, 'history'), {
-        question: question.substring(0, 500),
-        answer:   answer.substring(0, 500),
-        mode,
-        ts: Date.now(),
+        question: String(question || '').substring(0, 500),
+        answer:   String(answer   || '').substring(0, 500),
+        mode:     mode || 'answer',
+        ts:       Date.now(),
       });
       loadSidebarHistory();
     } catch (e) { /* silent */ }
   }
+  window.saveHistory = saveHistory;
 
-  // ── Feedback ──────────────────────────────────────────────
+  // ── Feedback ────────────────────────────────────────────────
   async function submitFeedback(rating, question, answer, mode) {
     if (!window.currentUser) return false;
     if (rating !== 1 && rating !== -1) return false;
     try {
       const uid = window.currentUser.uid;
       const payload = {
-        rating, mode: mode || 'answer',
-        question: (question || '').substring(0, 500),
-        answer:   (answer || '').substring(0, 2000),
-        plan: window.userPlan || 'free',
-        ts: Date.now(),
+        rating,
+        mode:     mode || 'answer',
+        question: String(question || '').substring(0, 500),
+        answer:   String(answer   || '').substring(0, 2000),
+        plan:     window.userPlan || 'free',
+        ts:       Date.now(),
       };
       await addDoc(collection(db, 'feedback'), { ...payload, uid });
       await addDoc(collection(db, 'users', uid, 'feedback'), payload);
@@ -1689,9 +1996,31 @@
     delete window._fbPayloads[fbId];
   };
 
-  // ── Auth handlers ─────────────────────────────────────────
+  // ── Auth handlers ───────────────────────────────────────────
+  function showAuthError(msg) {
+    const e = document.getElementById('authError');
+    const s = document.getElementById('authSuccess');
+    if (s) { s.textContent = ''; s.style.display = 'none'; }
+    if (e) { e.textContent = msg; e.style.display = 'block'; }
+  }
+  function showAuthSuccess(msg) {
+    const e = document.getElementById('authError');
+    const s = document.getElementById('authSuccess');
+    if (e) { e.textContent = ''; e.style.display = 'none'; }
+    if (s) { s.textContent = msg; s.style.display = 'block'; }
+  }
+  function clearAuthMsgs() {
+    const e = document.getElementById('authError');
+    const s = document.getElementById('authSuccess');
+    if (e) { e.textContent = ''; e.style.display = 'none'; }
+    if (s) { s.textContent = ''; s.style.display = 'none'; }
+  }
+  window.showAuthError   = showAuthError;
+  window.showAuthSuccess = showAuthSuccess;
+  window.clearAuthMsgs   = clearAuthMsgs;
+
   window.appHandleGoogleLogin = async function() {
-    clearAuthError();
+    clearAuthMsgs();
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       window.currentUser = result.user;
@@ -1708,7 +2037,7 @@
   };
 
   window.appHandleMicrosoftLogin = async function() {
-    clearAuthError();
+    clearAuthMsgs();
     try {
       const p = new OAuthProvider('microsoft.com');
       p.setCustomParameters({ prompt: 'select_account' });
@@ -1727,7 +2056,7 @@
   };
 
   window.appHandleEmailSignin = async function() {
-    clearAuthError();
+    clearAuthMsgs();
     const email = document.getElementById('authSigninEmail')?.value?.trim();
     const pw    = document.getElementById('authSigninPw')?.value;
     if (!email || !pw) { showAuthError('Please fill in all fields.'); return; }
@@ -1745,7 +2074,7 @@
   };
 
   window.appHandleEmailSignup = async function() {
-    clearAuthError();
+    clearAuthMsgs();
     const name  = document.getElementById('authSignupName')?.value?.trim();
     const email = document.getElementById('authSignupEmail')?.value?.trim();
     const pw    = document.getElementById('authSignupPw')?.value;
@@ -1769,28 +2098,33 @@
     }
   };
 
+  window.appHandleForgotPassword = async function() {
+    clearAuthMsgs();
+    const email = document.getElementById('authForgotEmail')?.value?.trim();
+    if (!email) { showAuthError('Please enter your email.'); return; }
+    const btn = document.getElementById('authForgotBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      showAuthSuccess('Reset link sent! Check your inbox (and spam folder).');
+    } catch (e) {
+      showAuthError(authErrorMessage(e) || 'Could not send reset link.');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Send reset link'; }
+    }
+  };
+
   window.appHandleLogout = async function() {
     try {
       await signOut(auth);
-      window.currentUser = null;
-      window.userPlan    = 'free';
+      window.currentUser   = null;
+      window.userPlan      = 'free';
       window._conversation = [];
       window._learnSession = null;
       updatePlanUI();
-      appStartNewChat();
+      if (window.appStartNewChat) window.appStartNewChat();
     } catch (e) { /* silent */ }
   };
-
-  function showAuthError(msg) {
-    const e = document.getElementById('authError');
-    if (e) { e.textContent = msg; e.style.display = 'block'; }
-  }
-  function clearAuthError() {
-    const e = document.getElementById('authError');
-    if (e) { e.textContent = ''; e.style.display = 'none'; }
-  }
-  window.showAuthError = showAuthError;
-  window.clearAuthError = clearAuthError;
 
   async function sendWelcomeEmailCall(user, overrideName) {
     try {
@@ -1800,11 +2134,11 @@
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body:    JSON.stringify({ name: overrideName || user.displayName || '' }),
       });
-    } catch (e) { /* silent — non-critical */ }
+    } catch (e) { /* non-critical */ }
   }
   window.sendWelcomeEmailCall = sendWelcomeEmailCall;
 
-  // ── Payments ──────────────────────────────────────────────
+  // ── Payments ────────────────────────────────────────────────
   window.goToPricing = function() { window.location.href = '/#pricing'; };
 
   function showPaymentSuccessModal() {
@@ -1813,7 +2147,7 @@
     modal.innerHTML =
       '<div class="auth-card">' +
         '<div class="auth-header" style="background:var(--green);border-color:var(--green-dark);">' +
-          '<img src="/knox-logo.jpg" alt="Knox" onerror="this.style.display=\'none\'">' +
+          '<img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'">' +
           '<h2>You\u2019re in!</h2>' +
           '<p>Your upgraded plan is now active.</p>' +
         '</div>' +
@@ -1828,8 +2162,8 @@
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
     document.body.appendChild(modal);
     modal.querySelector('#paySuccessClose').onclick = () => modal.remove();
-    if (window.currentUser) setTimeout(() => fetchPlan(window.currentUser.uid), 1500);
   }
+  window.showPaymentSuccessModal = showPaymentSuccessModal;
 
   function showWelcomeModal(name) {
     const firstName = (name || '').split(' ')[0] || 'friend';
@@ -1838,7 +2172,7 @@
     modal.innerHTML =
       '<div class="auth-card">' +
         '<div class="auth-header">' +
-          '<img src="/knox-logo.jpg" alt="Knox" onerror="this.style.display=\'none\'">' +
+          '<img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'">' +
           '<h2>Welcome, <span id="welcomeName"></span>!</h2>' +
           '<p>Your Knox Knows account is ready.</p>' +
         '</div>' +
@@ -1853,7 +2187,6 @@
       '</div>';
     modal.onclick = e => { if (e.target === modal) modal.remove(); };
     document.body.appendChild(modal);
-    // Set name via textContent to avoid HTML injection
     modal.querySelector('#welcomeName').textContent = firstName;
     modal.querySelector('#welcomeStartBtn').onclick = () => {
       modal.remove();
@@ -1863,59 +2196,71 @@
   }
   window.showWelcomeModal = showWelcomeModal;
 
-  // ── Settings ──────────────────────────────────────────────
+  // ── Settings ────────────────────────────────────────────────
   window.openAppSettings = function() {
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
-    const planLabel = plan === 'max' ? 'Max Knox' : plan === 'super' ? 'Super Knox' : 'Free';
+    const planLabel = plan === 'max'    ? 'Max Knox'
+                    : plan === 'super'  ? 'Super Knox'
+                    : plan === 'family' ? 'Family Plan'
+                    : 'Free';
+    const badgeClass = plan === 'family' ? 'super' : plan;
     const el = document.getElementById('settingsContent');
     if (!el) return;
 
-    // Build via DOM so user fields can't inject HTML
     el.innerHTML = '';
 
-    const row1 = document.createElement('div'); row1.className = 'settings-row';
-    row1.innerHTML = '<span class="settings-label">Name</span><span class="settings-value"></span>';
-    row1.querySelector('.settings-value').textContent = u.displayName || '—';
-    el.appendChild(row1);
+    // Build DOM safely
+    function row(label, valueNode) {
+      const r = document.createElement('div'); r.className = 'settings-row';
+      const l = document.createElement('span'); l.className = 'settings-label'; l.textContent = label;
+      r.appendChild(l);
+      r.appendChild(valueNode);
+      return r;
+    }
+    function spanVal(text) {
+      const s = document.createElement('span'); s.className = 'settings-value'; s.textContent = text || '—';
+      return s;
+    }
 
-    const row2 = document.createElement('div'); row2.className = 'settings-row';
-    row2.innerHTML = '<span class="settings-label">Email</span><span class="settings-value"></span>';
-    row2.querySelector('.settings-value').textContent = u.email || '—';
-    el.appendChild(row2);
+    el.appendChild(row('Name',  spanVal(u.displayName || '—')));
+    el.appendChild(row('Email', spanVal(u.email || '—')));
 
-    const row3 = document.createElement('div'); row3.className = 'settings-row';
-    row3.innerHTML = '<span class="settings-label">Plan</span><span class="plan-badge badge-' + plan + '">' + planLabel + '</span>';
-    el.appendChild(row3);
+    const planBadge = document.createElement('span');
+    planBadge.className   = 'plan-badge badge-' + badgeClass;
+    planBadge.textContent = planLabel;
+    el.appendChild(row('Plan', planBadge));
 
     if (plan !== 'free') {
-      const row4 = document.createElement('div'); row4.className = 'settings-row';
-      row4.innerHTML = '<span class="settings-label">Billing</span><button id="manageBillingBtn" style="padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;">Manage Billing</button>';
-      el.appendChild(row4);
-      row4.querySelector('#manageBillingBtn').onclick = function() { openBillingPortal(this); };
+      const billBtn = document.createElement('button');
+      billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
+      billBtn.textContent = 'Manage Billing';
+      billBtn.onclick = function() { openBillingPortal(this); };
+      el.appendChild(row('Billing', billBtn));
     } else {
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
-      const upgradeBtn = document.createElement('button');
-      upgradeBtn.className   = 'auth-submit';
-      upgradeBtn.textContent = 'Upgrade to Super Knox';
-      upgradeBtn.onclick     = () => { goToPricing(); closeAppSettings(); };
-      wrap.appendChild(upgradeBtn);
+      const up = document.createElement('button');
+      up.className   = 'auth-submit';
+      up.textContent = 'Upgrade to Super Knox';
+      up.onclick     = () => { goToPricing(); closeAppSettings(); };
+      wrap.appendChild(up);
       el.appendChild(wrap);
     }
 
-    const signOutWrap = document.createElement('div'); signOutWrap.style.marginTop = '14px';
-    const signOutBtn = document.createElement('button');
-    signOutBtn.style.cssText  = 'width:100%;padding:13px;border-radius:14px;border:2px solid #FECACA;background:#FEF2F2;color:var(--red);font-size:14px;font-weight:900;font-family:inherit;';
-    signOutBtn.textContent    = 'Sign out';
-    signOutBtn.onclick        = () => { appHandleLogout(); closeAppSettings(); };
-    signOutWrap.appendChild(signOutBtn);
-    el.appendChild(signOutWrap);
+    const outWrap = document.createElement('div'); outWrap.style.marginTop = '14px';
+    const out = document.createElement('button');
+    out.style.cssText = 'width:100%;padding:13px;border-radius:14px;border:2px solid #FECACA;background:#FEF2F2;color:var(--red);font-size:14px;font-weight:900;font-family:inherit;';
+    out.textContent = 'Sign out';
+    out.onclick     = () => { appHandleLogout(); closeAppSettings(); };
+    outWrap.appendChild(out);
+    el.appendChild(outWrap);
 
     document.getElementById('appSettingsModal').style.display = 'flex';
   };
   window.closeAppSettings = function() {
-    document.getElementById('appSettingsModal').style.display = 'none';
+    const m = document.getElementById('appSettingsModal');
+    if (m) m.style.display = 'none';
   };
 
   async function openBillingPortal(btn) {
@@ -1945,17 +2290,22 @@
 <script>
 'use strict';
 
-// ── DOM helpers ──────────────────────────────────────────────
 function $(id) { return document.getElementById(id); }
 function escHtml(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// Apply **bold** markdown — safe because we escape FIRST then transform.
+// The escape neutralizes any HTML in the source, and we only insert <strong>.
+function formatInline(text) {
+  return escHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*\*/g, '');
 }
 
 function showChatThread() {
   const ws = $('welcomeScreen'); if (ws) ws.style.display = 'none';
   const t  = $('chatThread');    if (t)  t.classList.remove('hidden');
 }
-
 function scrollChat() {
   const t = $('chatThread');
   if (t) setTimeout(() => { t.scrollTop = t.scrollHeight; }, 50);
@@ -1967,7 +2317,6 @@ window.appStartNewChat = function() {
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
   const gc = $('guestCta');      if (gc) gc.style.display = 'none';
   if (window.appClearImage) window.appClearImage();
-  // Reset conversation context — fresh chat means fresh memory
   window._conversation = [];
   window._learnSession = null;
 };
@@ -1982,18 +2331,67 @@ window.appSetQuestion = function(q) {
 };
 
 // ── Auth modal ───────────────────────────────────────────────
-window.openAuthModal  = function() { $('authModal').style.display = 'flex'; clearAuthErr(); };
-window.closeAuthModal = function() { $('authModal').style.display = 'none'; };
-window.switchAuthTab  = function(tab) {
-  $('authSigninTab').className = 'auth-tab' + (tab === 'signin' ? ' active' : '');
-  $('authSignupTab').className = 'auth-tab' + (tab === 'signup' ? ' active' : '');
-  $('authSigninFields').style.display = tab === 'signin' ? '' : 'none';
-  $('authSignupFields').style.display = tab === 'signup' ? '' : 'none';
-  clearAuthErr();
+window.openAuthModal = function(initialTab) {
+  $('authModal').style.display = 'flex';
+  if (window.clearAuthMsgs) window.clearAuthMsgs();
+  if (initialTab) switchAuthTab(initialTab);
 };
-function clearAuthErr() {
-  const e = $('authError'); if (e) { e.textContent = ''; e.style.display = 'none'; }
-}
+window.closeAuthModal = function() {
+  $('authModal').style.display = 'none';
+};
+
+window.switchAuthTab = function(tab) {
+  const signinTab    = $('authSigninTab');
+  const signupTab    = $('authSignupTab');
+  const signinFields = $('authSigninFields');
+  const signupFields = $('authSignupFields');
+  const forgotFields = $('authForgotFields');
+  const authTabs     = $('authTabs');
+  const social       = $('authSocialButtons');
+  const divider      = $('authSocialDivider');
+  const titleEl      = $('authHeaderTitle');
+  const subEl        = $('authHeaderSubtitle');
+
+  // Hide all sub-forms first
+  if (signinFields) signinFields.style.display = 'none';
+  if (signupFields) signupFields.style.display = 'none';
+  if (forgotFields) forgotFields.style.display = 'none';
+
+  if (tab === 'forgot') {
+    // Forgot password — hide tabs and social, change header
+    if (forgotFields) forgotFields.style.display = '';
+    if (authTabs)     authTabs.style.display     = 'none';
+    if (social)       social.style.display       = 'none';
+    if (divider)      divider.style.display      = 'none';
+    if (titleEl)      titleEl.textContent        = 'Reset your password';
+    if (subEl)        subEl.textContent          = 'We\u2019ll email you a reset link';
+  } else {
+    // Regular sign in / sign up — restore tabs and social
+    if (authTabs)     authTabs.style.display     = '';
+    if (social)       social.style.display       = '';
+    if (divider)      divider.style.display      = '';
+    if (titleEl)      titleEl.textContent        = 'Welcome to Knox';
+    if (subEl)        subEl.textContent          = 'Sign in or create your free account';
+    if (signinTab) signinTab.className = 'auth-tab' + (tab === 'signin' ? ' active' : '');
+    if (signupTab) signupTab.className = 'auth-tab' + (tab === 'signup' ? ' active' : '');
+    if (tab === 'signin' && signinFields) signinFields.style.display = '';
+    if (tab === 'signup' && signupFields) signupFields.style.display = '';
+  }
+  if (window.clearAuthMsgs) window.clearAuthMsgs();
+};
+
+// Enter to submit on auth forms — wired up after DOM exists
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const modal = $('authModal');
+  if (!modal || modal.style.display !== 'flex') return;
+  // Don't submit if user is in a textarea or pressing Shift+Enter
+  if (e.target.tagName === 'TEXTAREA' || e.shiftKey) return;
+  // Decide which form is visible
+  if ($('authForgotFields')?.style.display !== 'none') { e.preventDefault(); window.appHandleForgotPassword?.(); }
+  else if ($('authSignupFields')?.style.display !== 'none') { e.preventDefault(); window.appHandleEmailSignup?.(); }
+  else if ($('authSigninFields')?.style.display !== 'none') { e.preventDefault(); window.appHandleEmailSignin?.(); }
+});
 
 // ── Account dropdown ─────────────────────────────────────────
 window.toggleUserDropdown = function() {
@@ -2054,8 +2452,19 @@ window.appSetMode = function(mode) {
   const inputOuter = $('inputOuter');
   if (inputOuter) inputOuter.style.borderTopColor = cfg.border;
 
-  // Switching mode resets the learn session — new context, new billing window
   window._learnSession = null;
+  // Mode determines which credit bucket is shown — refresh the pill
+  if (window.updateUsageIndicator) window.updateUsageIndicator();
+};
+
+// ── Mobile history drawer ────────────────────────────────────
+window.openMobileHistory = function() {
+  const d = $('mobileHistoryDrawer'); if (d) d.classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+window.closeMobileHistory = function() {
+  const d = $('mobileHistoryDrawer'); if (d) d.classList.remove('open');
+  document.body.style.overflow = '';
 };
 
 // ── Image upload ─────────────────────────────────────────────
@@ -2064,7 +2473,6 @@ if (_fi) {
   _fi.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // 5MB limit — matches server-side guard in api/ask.js
     if (file.size > 5 * 1024 * 1024) {
       alert('Image too large — please use an image under 5MB.');
       e.target.value = '';
@@ -2072,12 +2480,15 @@ if (_fi) {
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const base64 = String(ev.target.result).split(',')[1];
-      window._appImage = { data: base64, type: file.type, name: file.name };
-      const pill = $('appImagePill');
-      const name = $('appImagePillName');
-      if (pill) pill.style.display = 'inline-flex';
-      if (name) name.textContent  = file.name;
+      const dataUrl = String(ev.target.result);
+      const base64  = dataUrl.split(',')[1];
+      window._appImage = { data: base64, type: file.type, name: file.name, dataUrl };
+      const pill  = $('appImagePill');
+      const thumb = $('appImagePillThumb');
+      const name  = $('appImagePillName');
+      if (thumb) thumb.src = dataUrl;
+      if (name)  name.textContent  = file.name;
+      if (pill)  pill.style.display = 'inline-flex';
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -2086,7 +2497,8 @@ if (_fi) {
 
 window.appClearImage = function() {
   window._appImage = null;
-  const pill = $('appImagePill'); if (pill) pill.style.display = 'none';
+  const pill = $('appImagePill');
+  if (pill) pill.style.display = 'none';
 };
 
 // ── Textarea auto-grow + enter to send ───────────────────────
@@ -2110,46 +2522,53 @@ window.appHandleAsk = async function() {
   const q = (input?.value || '').trim();
   if (!q && !window._appImage) return;
 
-  // Guest gate — 1 free question before requiring sign-up
+  // Guest gate — 1 free question per day, tracked in localStorage
   if (!window.currentUser) {
-    if (window._guestUsed >= 1) {
+    const used = window._getGuestCount();
+    if (used >= 1) {
       const gc = $('guestCta'); if (gc) gc.style.display = 'flex';
       return;
     }
-    window._guestUsed++;
   }
 
-  // Lock send button while in flight
   const sendBtn = $('appSendBtn');
   if (sendBtn) sendBtn.disabled = true;
 
   showChatThread();
   if (input) { input.value = ''; input.style.height = 'auto'; }
 
+  // ── Build user message with optional image preview ─────────
   const userRow = document.createElement('div');
   userRow.className = 'msg-wrap';
   const userBubble = document.createElement('div');
   userBubble.className = 'msg-user';
   const userInner = document.createElement('div');
   userInner.className = 'msg-user-bubble';
-  userInner.textContent = q;                              // textContent — no XSS
-  if (window._appImage) {
-    const cam = document.createElement('span');
-    cam.style.cssText = 'opacity:0.6;font-size:13px;margin-left:6px;';
-    cam.textContent   = ' 📷';
-    userInner.appendChild(cam);
+  if (q) {
+    // textContent → no XSS
+    const span = document.createElement('span');
+    span.textContent = q;
+    userInner.appendChild(span);
+  }
+  if (window._appImage?.dataUrl) {
+    const img = document.createElement('img');
+    img.className = 'msg-user-img';
+    img.src       = window._appImage.dataUrl;
+    img.alt       = 'Attached image';
+    userInner.appendChild(img);
   }
   userBubble.appendChild(userInner);
   userRow.appendChild(userBubble);
   $('chatThread').appendChild(userRow);
 
+  // Thinking row
   const thinkId  = 'think_' + Date.now();
   const thinkRow = document.createElement('div');
   thinkRow.className = 'msg-wrap';
   thinkRow.id        = thinkId;
   thinkRow.innerHTML =
     '<div class="msg-knox">' +
-      '<div class="msg-knox-avatar"><img src="/knox-logo.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
+      '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
       '<div class="msg-knox-content">' +
         '<div class="msg-knox-label">Knox <span class="mode-pill pill-' + window.currentMode + '">' + window.currentMode + '</span></div>' +
         '<div class="msg-knox-bubble"><div class="thinking-row"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div></div>' +
@@ -2163,13 +2582,13 @@ window.appHandleAsk = async function() {
 
   let idToken = '';
   if (window.currentUser) {
-    try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* falls back to guest */ }
+    try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* fall through */ }
   }
 
-  // Build conversation history for the API — last 10 turns trimmed to 500 chars
+  // History sent to API — server truncates internally so no need to here
   const history = window._conversation.slice(-10).map(m => ({
     role:    m.role,
-    content: (m.content || '').substring(0, 500),
+    content: m.content,
     isLearn: !!m.isLearn,
   }));
 
@@ -2181,29 +2600,40 @@ window.appHandleAsk = async function() {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        question:        q,
-        mode:            window.currentMode,
-        image:           image?.data,
-        imageType:       image?.type,
+        question:       q,
+        mode:           window.currentMode,
+        image:          image?.data,
+        imageType:      image?.type,
         history,
-        learnSessionId:  window.currentMode === 'learn' ? window._learnSession : null,
+        learnSessionId: window.currentMode === 'learn' ? window._learnSession : null,
       }),
     });
     const data = await res.json();
 
     if (!res.ok) {
-      const errMsg = data.error || 'Something went wrong. Try again.';
-      replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>');
+      // Rich rate-limit handling — show upgrade card on quota errors
+      if (data.limitReached) {
+        replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
+      } else {
+        const errMsg = data.error || 'Something went wrong. Try again.';
+        replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>');
+        // If the request was rejected, don't burn the guest's free question
+        if (!window.currentUser) {
+          // Roll back the count we haven't actually incremented yet — no-op
+        }
+      }
       return;
     }
+
+    // Successful answer — increment guest count
+    if (!window.currentUser) window._incGuestCount();
 
     const answer = data.answer || '';
     const html   = renderAnswerHtml(answer);
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q, answer, mode: window.currentMode };
+    window._fbPayloads[fbId] = { question: q || '[image]', answer, mode: window.currentMode };
 
     let bodyHtml = '<div>' + html + '</div>';
-    // Feedback bar only for signed-in users
     if (window.currentUser) {
       bodyHtml +=
         '<div class="feedback-bar">' +
@@ -2214,43 +2644,30 @@ window.appHandleAsk = async function() {
     }
     replaceThinking(thinkId, bodyHtml);
 
-    // Track conversation for follow-up context. Mark Learn-mode turns so the
-    // server-side continuation classifier knows what to compare against.
-    window._conversation.push({ role: 'user',      content: q,      isLearn: window.currentMode === 'learn' });
-    window._conversation.push({ role: 'assistant', content: answer, isLearn: window.currentMode === 'learn' });
-    // Cap conversation in memory so it can't grow unbounded
+    // Track conversation
+    window._conversation.push({ role: 'user',      content: q || '[image]', isLearn: window.currentMode === 'learn' });
+    window._conversation.push({ role: 'assistant', content: answer,         isLearn: window.currentMode === 'learn' });
     if (window._conversation.length > 30) window._conversation = window._conversation.slice(-30);
 
-    // Learn-session lifecycle. Server tells us when to reset.
+    // Learn-session lifecycle
     if (window.currentMode === 'learn') {
       if (data.isNewLearnQuestion || !window._learnSession) {
-        // New session — generate a fresh id client-side
         window._learnSession = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       }
     }
 
-    // Save to Firestore history (signed-in only)
-    if (window.currentUser && window.loadSidebarHistory) {
-      try {
-        const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
-        // Already covered via global save path — skip duplicate write
-      } catch (e) {}
-      // Use the saveHistory exposed implicitly via loadSidebarHistory module — keep it simple here
+    // Save history + refresh usage indicator
+    if (window.saveHistory && window.currentUser) {
+      window.saveHistory(q || '[image]', answer, window.currentMode);
     }
-    saveHistoryViaApi(q, answer, window.currentMode);
+    if (window.updateUsageIndicator) window.updateUsageIndicator();
+
   } catch (e) {
-    replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 Network error. Check your connection.</p>');
+    replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 Network error. Check your connection and try again.</p>');
   } finally {
     if (sendBtn) sendBtn.disabled = false;
   }
 };
-
-// History save helper — uses Firestore via the module's saveHistory if available
-async function saveHistoryViaApi(question, answer, mode) {
-  // The module script imports addDoc/collection and exposes loadSidebarHistory.
-  // Instead of re-importing here, dispatch a custom event that the module listens for.
-  window.dispatchEvent(new CustomEvent('knox:saveHistory', { detail: { question, answer, mode } }));
-}
 
 function replaceThinking(thinkId, html) {
   const thinking = document.getElementById(thinkId);
@@ -2259,7 +2676,7 @@ function replaceThinking(thinkId, html) {
   row.className = 'msg-wrap';
   row.innerHTML =
     '<div class="msg-knox">' +
-      '<div class="msg-knox-avatar"><img src="/knox-logo.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
+      '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
       '<div class="msg-knox-content">' +
         '<div class="msg-knox-label">Knox <span class="mode-pill pill-' + window.currentMode + '">' + window.currentMode + '</span></div>' +
         '<div class="msg-knox-bubble">' + html + '</div>' +
@@ -2269,7 +2686,30 @@ function replaceThinking(thinkId, html) {
   scrollChat();
 }
 
-// ── Render Knox answer with section cards ──────────────────
+// ── Render the upgrade card for rate-limit errors ──────────
+function renderLimitCard(data, isSignedIn) {
+  const plan = window.userPlan;
+  const msg  = data.message || data.error || "You've hit today's limit.";
+  let title  = "You've reached today's limit";
+  let cta    = '';
+  if (!isSignedIn) {
+    title = 'One free question used';
+    cta   = '<button class="limit-card-btn" onclick="openAuthModal(\'signup\')">Sign up free for more</button>';
+  } else if (plan === 'max') {
+    // Already on highest tier — no upsell
+    title = "You've reached today's limit";
+    cta   = '<p style="font-size:12px;font-weight:700;color:var(--text-light);margin-top:6px;">Your daily allowance resets at midnight UTC.</p>';
+  } else {
+    cta   = '<button class="limit-card-btn" onclick="goToPricing()">⚡ Upgrade for more</button>';
+  }
+  return '<div class="limit-card">' +
+    '<h3>🦊 ' + escHtml(title) + '</h3>' +
+    '<p>' + escHtml(msg) + '</p>' +
+    cta +
+    '</div>';
+}
+
+// ── Render Knox answer with section cards + **bold** ──────
 function renderAnswerHtml(text) {
   if (!text) return '';
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
@@ -2307,22 +2747,20 @@ function renderAnswerHtml(text) {
       html += '<div class="knox-section-card" style="border-left:4px solid ' + color + ';">';
       html += '<div class="knox-section-label" style="color:' + color + ';">' + icon + ' ' + escHtml(key) + '</div>';
       if (inlineContent) {
-        html += '<p style="margin:0;font-size:15px;font-weight:500;line-height:1.65;">' + escHtml(inlineContent) + '</p>';
+        html += '<p style="margin:0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(inlineContent) + '</p>';
       }
       i++;
-      // Consume content until the next section header
       while (i < lines.length && !isSectionLine(lines[i])) {
         const next = lines[i];
-        // Numbered list (either "1. text" or bare "1\ntext")
         if (/^\d+[\.)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
           html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
           while (i < lines.length && !isSectionLine(lines[i])) {
             const sl = lines[i];
             if (/^\d+[\.)]\s*/.test(sl)) {
-              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + escHtml(sl.replace(/^\d+[\.)]\s*/, '')) + '</li>';
+              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(sl.replace(/^\d+[\.)]\s*/, '')) + '</li>';
               i++;
             } else if (/^\d+$/.test(sl.trim()) && i + 1 < lines.length && !isSectionLine(lines[i + 1])) {
-              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + escHtml(lines[i + 1]) + '</li>';
+              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(lines[i + 1]) + '</li>';
               i += 2;
             } else {
               break;
@@ -2332,18 +2770,18 @@ function renderAnswerHtml(text) {
         } else if (/^[•\-\*✓✔]\s/.test(next)) {
           html += '<ul style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;">';
           while (i < lines.length && /^[•\-\*✓✔]\s/.test(lines[i])) {
-            html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + escHtml(lines[i].replace(/^[•\-\*✓✔]\s*/, '')) + '</li>';
+            html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(lines[i].replace(/^[•\-\*✓✔]\s*/, '')) + '</li>';
             i++;
           }
           html += '</ul>';
         } else {
-          html += '<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">' + escHtml(next) + '</p>';
+          html += '<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(next) + '</p>';
           i++;
         }
       }
       html += '</div>';
     } else {
-      html += '<p style="margin:5px 0;font-size:15px;font-weight:500;line-height:1.65;">' + escHtml(line) + '</p>';
+      html += '<p style="margin:5px 0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(line) + '</p>';
       i++;
     }
   }
@@ -2351,30 +2789,32 @@ function renderAnswerHtml(text) {
 }
 
 // ── Keyboard shortcuts ───────────────────────────────────────
+// Only Escape — closes whatever is open. We deliberately don't bind
+// Cmd/Ctrl+K because it conflicts with browser address-bar focus on
+// Firefox, and "new chat" is rare enough that the sidebar button is fine.
 document.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    window.appStartNewChat();
-    $('appChatInput')?.focus();
-  }
   if (e.key === 'Escape') {
     window.closeAuthModal();
     window.closeUserDropdown();
     window.closeAppSettings && window.closeAppSettings();
     window.closeCalc && window.closeCalc();
+    window.closeMobileHistory && window.closeMobileHistory();
+    window.closeModeDropdown && window.closeModeDropdown();
   }
 });
 
 // ═══════ CALCULATOR ═══════════════════════════════════════════
 window.openCalc = function() {
-  window._calcExpr = '';
-  window._calcOpenParens = 0;
-  $('calcDisplay').textContent = '0';
-  $('calcExpr').textContent    = '';
-  calcSetMode('standard');
-  $('calcModal').classList.add('open');
+  window._calcExpr        = '';
+  window._calcOpenParens  = 0;
+  if ($('calcDisplay')) $('calcDisplay').textContent = '0';
+  if ($('calcExpr'))    $('calcExpr').textContent    = '';
+  window.calcSetMode('standard');
+  if ($('calcModal'))   $('calcModal').classList.add('open');
 };
-window.closeCalc = function() { $('calcModal').classList.remove('open'); };
+window.closeCalc = function() {
+  const m = $('calcModal'); if (m) m.classList.remove('open');
+};
 
 window.calcSetMode = function(mode) {
   window._calcMode = mode;
@@ -2392,7 +2832,8 @@ window.calcSetMode = function(mode) {
 
 window.calcToggleDeg = function() {
   window._calcUseDeg = !window._calcUseDeg;
-  $('calcDegLabel').textContent = window._calcUseDeg ? 'DEG' : 'RAD';
+  const el = $('calcDegLabel');
+  if (el) el.textContent = window._calcUseDeg ? 'DEG' : 'RAD';
 };
 
 function calcUpdateDisplay() {
@@ -2405,7 +2846,7 @@ function calcUpdateDisplay() {
     .replace(/Math\.sqrt\(/g, '√(')
     .replace(/Math\.log10\(/g, 'log(')
     .replace(/Math\.log\(/g, 'ln(');
-  $('calcDisplay').textContent = disp || '0';
+  if ($('calcDisplay')) $('calcDisplay').textContent = disp || '0';
 }
 
 window.calcInput = function(val) {
@@ -2463,17 +2904,16 @@ function fmtNum(n) {
 window.calcClear = function() {
   window._calcExpr       = '';
   window._calcOpenParens = 0;
-  $('calcDisplay').textContent = '0';
-  $('calcExpr').textContent    = '';
+  if ($('calcDisplay')) $('calcDisplay').textContent = '0';
+  if ($('calcExpr'))    $('calcExpr').textContent    = '';
 };
 
 window.calcDel = function() {
   if (window._calcExpr === 'Error') {
     window._calcExpr = '';
-    $('calcDisplay').textContent = '0';
+    if ($('calcDisplay')) $('calcDisplay').textContent = '0';
     return;
   }
-  // Try removing a known multi-char token first
   const tokens = [
     /Math\.log10\($/, /Math\.log\($/, /Math\.sqrt\($/, /Math\.PI$/, /Math\.E$/,
     /__sin\($/, /__cos\($/, /__tan\($/, /\*\*$/
@@ -2501,14 +2941,14 @@ window.calcEquals = function() {
     let expr = resolveExpr(window._calcExpr);
     for (let i = 0; i < window._calcOpenParens; i++) expr += ')';
     const result = Function('"use strict"; return (' + expr + ')')();
-    $('calcExpr').textContent = window._calcExpr + ' =';
+    if ($('calcExpr')) $('calcExpr').textContent = window._calcExpr + ' =';
     const fmt = fmtNum(result);
     window._calcExpr        = fmt === 'Error' ? 'Error' : fmt;
     window._calcOpenParens  = 0;
-    $('calcDisplay').textContent = fmt;
+    if ($('calcDisplay')) $('calcDisplay').textContent = fmt;
   } catch (e) {
     window._calcExpr = 'Error';
-    $('calcDisplay').textContent = 'Error';
+    if ($('calcDisplay')) $('calcDisplay').textContent = 'Error';
   }
 };
 
@@ -2535,35 +2975,6 @@ window.calcInsert = function() {
   window.closeCalc();
 };
 
-// ═══════ HISTORY SAVE BRIDGE ═════════════════════════════════
-// The non-module script can't use the Firestore SDK directly, so we
-// dispatch an event and let the module script handle the write.
-// (Module script wires this up below.)
 </script>
-
-<!-- ═══════ HISTORY SAVE BRIDGE (module) ═══════════════════════ -->
-<script type="module">
-  import { getFirestore, collection, addDoc }
-    from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-  import { getApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-
-  // Bridge between non-module script and Firestore
-  window.addEventListener('knox:saveHistory', async (ev) => {
-    if (!window.currentUser) return;
-    const { question, answer, mode } = ev.detail || {};
-    if (!question) return;
-    try {
-      const db = getFirestore(getApp());
-      await addDoc(collection(db, 'users', window.currentUser.uid, 'history'), {
-        question: String(question).substring(0, 500),
-        answer:   String(answer || '').substring(0, 500),
-        mode:     mode || 'answer',
-        ts:       Date.now(),
-      });
-      if (window.loadSidebarHistory) window.loadSidebarHistory();
-    } catch (e) { /* silent */ }
-  });
-</script>
-
 </body>
 </html>
