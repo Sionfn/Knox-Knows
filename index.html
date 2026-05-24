@@ -1030,26 +1030,227 @@
     .footer-bottom { max-width:1100px; margin:40px auto 0; padding-top:24px; border-top:1px solid #333; text-align:center; font-size:13px; font-weight:600; color:#555; }
 
     /* ── MODALS (existing) ───────────────────────────────────── */
-    .login-modal { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.5); display:none; align-items:flex-end; justify-content:center; }
-    .login-modal.open { display:flex; }
-    @media (min-width:640px) { .login-modal { align-items:center; } }
-    .login-panel { background:white; border-radius:24px 24px 0 0; padding:28px; width:100%; max-width:480px; max-height:92vh; overflow-y:auto; }
-    @media (min-width:640px) { .login-panel { border-radius:24px; } }
-    .login-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:20px; }
-    .login-body {}
-    .login-input { width:100%; padding:14px 16px; border:2px solid var(--border); border-radius:14px; font-size:15px; font-family:inherit; font-weight:600; transition:border-color 0.2s; }
-    .login-input:focus { outline:none; border-color:var(--orange); }
-    .login-divider { display:flex; align-items:center; gap:12px; margin:16px 0; }
-    .login-divider span { color:#9ca3af; font-size:13px; font-weight:600; white-space:nowrap; }
-    .login-divider::before,.login-divider::after { content:''; flex:1; border-top:2px solid var(--border); }
-    .login-social-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; padding:13px; border:2px solid var(--border); border-radius:14px; font-weight:700; font-size:15px; cursor:pointer; background:white; margin-bottom:10px; transition:all 0.15s; font-family:inherit; }
-    .login-social-btn:hover { border-color:var(--orange); background:var(--orange-light); }
-    .login-error { background:#fef2f2; border:2px solid var(--red); border-radius:12px; padding:10px 14px; color:var(--red); font-size:13px; font-weight:700; margin-bottom:14px; display:none; }
-    .login-error.show { display:block; }
-    .login-success { background:var(--green-light); border:2px solid var(--green); border-radius:12px; padding:10px 14px; color:var(--green-dark); font-size:13px; font-weight:700; margin-bottom:14px; display:none; }
-    .login-success.show { display:block; }
-    .login-tab { display:inline-flex; align-items:center; justify-content:center; padding:12px 18px; border-radius:12px; font-weight:800; font-size:15px; cursor:pointer; border:2px solid transparent; transition:all 0.15s; font-family:inherit; background:none; color:#9CA3AF; flex:1; }
-    .login-tab.active { background:#FF6B00; color:white; border-color:#FF6B00; box-shadow:0 3px 0 #CC5500; }
+    /* ───── Login modal — matches the auth modal in /app for consistency ─────
+       Class names kept as .login-* to preserve existing JS handler references,
+       but visual styling is ported from app.html's .auth-* classes so the user
+       sees the same Knox-branded modal everywhere. */
+    .login-modal {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      background: rgba(60,60,60,0.6);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    .login-modal.open { display: flex; }
+    .login-panel {
+      background: white;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      overflow: hidden;
+      padding: 0;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+      animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .login-header {
+      background: var(--orange);
+      border-bottom: 4px solid #CC5500;
+      padding: 32px 28px 26px;
+      text-align: center;
+      display: block;
+      margin: 0;
+    }
+    .login-header img.login-knox {
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      border: 4px solid white;
+      object-fit: cover;
+      object-position: top;
+      margin: 0 auto 12px;
+      display: block;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+    }
+    .login-header h2 {
+      font-size: 24px; font-weight: 900;
+      color: white;
+      letter-spacing: -0.01em;
+      margin: 0;
+      font-family: inherit;
+    }
+    .login-header p {
+      font-size: 14px; font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      margin: 4px 0 0;
+    }
+    .login-body { padding: 26px 28px 28px; }
+
+    .login-tabs {
+      display: flex;
+      background: #FFF8F0;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+    .login-tab-btn {
+      flex: 1;
+      padding: 11px;
+      border-radius: 11px;
+      border: none;
+      font-size: 13px; font-weight: 900;
+      background: transparent;
+      color: #777;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .login-tab-btn.active {
+      background: white;
+      color: #3C3C3C;
+      box-shadow: 0 2px 0 var(--border);
+    }
+
+    .login-field { margin-bottom: 14px; }
+    .login-field label {
+      display: block;
+      font-size: 12px; font-weight: 900;
+      color: #777;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .login-input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-size: 15px; font-weight: 600;
+      color: #3C3C3C;
+      outline: none;
+      transition: all 0.2s;
+      box-shadow: 0 2px 0 var(--border);
+      font-family: inherit;
+    }
+    .login-input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 2px 0 #FFE0C2;
+    }
+
+    .login-submit {
+      width: 100%;
+      padding: 15px;
+      border-radius: 16px;
+      border: none;
+      background: var(--orange);
+      color: white;
+      font-size: 15px; font-weight: 900;
+      box-shadow: 0 4px 0 #CC5500;
+      transition: all 0.15s;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .login-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    .login-submit:active { transform: translateY(2px);  box-shadow: none; }
+    .login-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 #CC5500; }
+
+    .login-forgot {
+      display: block;
+      width: 100%;
+      text-align: center;
+      font-size: 12px; font-weight: 700;
+      color: #777;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-top: -8px;
+      margin-bottom: 14px;
+      text-decoration: underline;
+      font-family: inherit;
+    }
+    .login-forgot:hover { color: var(--orange); }
+
+    .login-divider {
+      display: flex; align-items: center; gap: 10px;
+      color: #CCC;
+      font-size: 12px; font-weight: 800;
+      margin: 16px 0;
+      text-transform: uppercase;
+    }
+    .login-divider::before, .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      border-radius: 999px;
+    }
+    .login-divider span { display: none; }
+
+    .login-social-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 14px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      color: #3C3C3C;
+      transition: all 0.15s;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 0 var(--border);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .login-social-btn:hover {
+      border-color: var(--orange);
+      box-shadow: 0 2px 0 var(--orange-light);
+      background: #FFF8F0;
+      transform: translateY(-1px);
+    }
+
+    .login-error, .login-success {
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px; font-weight: 700;
+      margin-bottom: 12px;
+      display: none;
+      border: 2px solid;
+    }
+    .login-error {
+      background: #FEF2F2;
+      border-color: #FECACA;
+      color: var(--red);
+      box-shadow: 0 2px 0 #FECACA;
+    }
+    .login-error.show { display: block; }
+    .login-success {
+      background: var(--green-light);
+      border-color: #B9F6CA;
+      color: var(--green-dark);
+      box-shadow: 0 2px 0 #B9F6CA;
+    }
+    .login-success.show { display: block; }
+
+    .login-terms {
+      text-align: center;
+      font-size: 11px; font-weight: 700;
+      color: #777;
+      margin-top: 14px;
+    }
+    .login-terms a { color: var(--orange); text-decoration: none; }
+
+    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
     .login-tab:not(.active) { color:#9CA3AF; background:transparent; }
 
     /* Modals (settings, calculator, history) */
@@ -1280,7 +1481,7 @@
 
     <div id="loginBtn" style="display:inline-flex;gap:8px;align-items:center;">
       <button class="header-login" onclick="openLoginModal()">Login</button>
-      <button class="header-login" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.7);" onclick="openLoginModal();window.switchLoginTab&&window.switchLoginTab('signup')">Sign Up</button>
+      <button class="header-login" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.7);" onclick="openLoginModal('signup')">Sign Up</button>
     </div>
   </div>
 </header>
@@ -1315,7 +1516,7 @@
       </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid #F3F4F6;">
-      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal();window.switchLoginTab&&window.switchLoginTab('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
     </div>
   </div>
 </div>
@@ -1940,72 +2141,80 @@
 </footer>
 
 <!-- ===================== LOGIN MODAL ===================== -->
+<!-- Visual structure matches /app's auth modal — same Knox-branded experience
+     everywhere. Element IDs preserved so existing handlers (handleEmailSignIn,
+     handleEmailSignUp, etc.) work unchanged. -->
 <div class="login-modal" id="loginModal" onclick="if(event.target===this)closeLoginModal()">
   <div class="login-panel">
     <div class="login-header">
-      <div>
-        <div style="font-weight:800;font-size:18px;letter-spacing:-0.03em;">Welcome to Knox Knows 🦊</div>
-        <div style="font-size:13px;color:#4b5563;margin-top:2px;">Sign in or create an account</div>
-      </div>
-      <button onclick="closeLoginModal()" style="background:none;border:2px solid black;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:800;font-size:16px;">✕</button>
+      <img class="login-knox" src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+      <h2 id="loginHeaderTitle">Welcome to Knox</h2>
+      <p id="loginHeaderSubtitle">Sign in or create your free account</p>
     </div>
     <div class="login-body">
-
-      <!-- Tab switcher -->
-      <div style="display:flex;gap:4px;background:#F3F4F6;border-radius:14px;padding:4px;margin-bottom:20px;">
-        <button id="tabSignIn" onclick="switchLoginTab('signin')" style="flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;">Sign In</button>
-        <button id="tabSignUp" onclick="switchLoginTab('signup')" style="flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:transparent;color:#9CA3AF;">Create Account</button>
+      <div class="login-tabs" id="loginTabs">
+        <button class="login-tab-btn active" id="tabSignIn" onclick="switchLoginTab('signin')">Sign in</button>
+        <button class="login-tab-btn" id="tabSignUp" onclick="switchLoginTab('signup')">Sign up</button>
       </div>
 
       <!-- Error / Success messages -->
       <div class="login-error" id="loginError"></div>
       <div class="login-success" id="loginSuccess"></div>
 
-      <!-- Google button -->
-      <button class="login-social-btn" onclick="handleGoogleLogin()">
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" height="20" alt="Google">
-        Continue with Google
-      </button>
-
-      <!-- Microsoft button -->
-      <button class="login-social-btn" onclick="handleMicrosoftLogin()">
-        <svg width="20" height="20" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
-        Continue with Microsoft
-      </button>
-
-      <div class="login-divider"><span>or</span></div>
-
-      <!-- SIGN IN FORM -->
+      <!-- SIGN IN -->
       <div id="signinForm">
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <input class="login-input" id="signinEmail" type="email" placeholder="Email address" autocomplete="email">
-          <input class="login-input" id="signinPassword" type="password" placeholder="Password" autocomplete="current-password">
-          <button onclick="handleEmailSignIn()" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'" onmousedown="this.style.transform='translateY(2px)';this.style.boxShadow='none'" onmouseup="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">Sign In</button>
+        <div class="login-field">
+          <label for="signinEmail">Email</label>
+          <input class="login-input" id="signinEmail" type="email" placeholder="you@email.com" autocomplete="email">
         </div>
-        <button onclick="switchLoginTab('forgot')" style="background:none;border:none;cursor:pointer;color:#FF6B00;font-size:13px;font-weight:700;margin-top:12px;padding:0;width:100%;text-align:center;">Forgot password?</button>
+        <div class="login-field">
+          <label for="signinPassword">Password</label>
+          <input class="login-input" id="signinPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="login-submit" onclick="handleEmailSignIn()">Sign in</button>
+        <button class="login-forgot" onclick="switchLoginTab('forgot')">Forgot your password?</button>
       </div>
 
-      <!-- SIGN UP FORM -->
+      <!-- SIGN UP -->
       <div id="signupForm" style="display:none;">
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <input class="login-input" id="signupName" type="text" placeholder="Full name" autocomplete="name">
-          <input class="login-input" id="signupEmail" type="email" placeholder="Email address" autocomplete="email">
-          <input class="login-input" id="signupPassword" type="password" placeholder="Password (min 6 characters)" autocomplete="new-password">
-          <button onclick="handleEmailSignUp()" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#1CB0F6;color:white;cursor:pointer;box-shadow:0 4px 0 #0A85C2;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #0A85C2'" onmousedown="this.style.transform='translateY(2px)';this.style.boxShadow='none'" onmouseup="this.style.transform='';this.style.boxShadow='0 4px 0 #0A85C2'">Create Account</button>
+        <div class="login-field">
+          <label for="signupName">Your name</label>
+          <input class="login-input" id="signupName" type="text" placeholder="First name" autocomplete="name">
         </div>
-        <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:12px;">By creating an account you agree to our <a href="/terms.html" style="color:#FF6B00;">Terms of Service</a>. You must be 13 or older to use Knox Knows.</p>
+        <div class="login-field">
+          <label for="signupEmail">Email</label>
+          <input class="login-input" id="signupEmail" type="email" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="login-field">
+          <label for="signupPassword">Password</label>
+          <input class="login-input" id="signupPassword" type="password" placeholder="Min 6 characters" autocomplete="new-password">
+        </div>
+        <button class="login-submit" onclick="handleEmailSignUp()">Create free account</button>
       </div>
 
-      <!-- FORGOT PASSWORD FORM -->
+      <!-- FORGOT PASSWORD -->
       <div id="forgotForm" style="display:none;">
-        <p style="font-size:14px;color:#4b5563;margin-bottom:14px;">Enter your email and we'll send you a reset link.</p>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <input class="login-input" id="forgotEmail" type="email" placeholder="Email address">
-          <button onclick="handleForgotPassword()" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'" onmousedown="this.style.transform='translateY(2px)';this.style.boxShadow='none'" onmouseup="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">Send Reset Email</button>
+        <p style="font-size:13px;font-weight:700;color:#777;line-height:1.55;margin-bottom:14px;">Enter your email and we'll send you a password reset link.</p>
+        <div class="login-field">
+          <label for="forgotEmail">Email</label>
+          <input class="login-input" id="forgotEmail" type="email" placeholder="you@email.com" autocomplete="email">
         </div>
-        <button onclick="switchLoginTab('signin')" style="background:none;border:none;cursor:pointer;color:#FF6B00;font-size:13px;font-weight:700;margin-top:12px;padding:0;width:100%;text-align:center;">← Back to Sign In</button>
+        <button class="login-submit" onclick="handleForgotPassword()">Send reset link</button>
+        <button class="login-forgot" onclick="switchLoginTab('signin')">← Back to sign in</button>
       </div>
 
+      <div class="login-divider" id="loginSocialDivider">or continue with</div>
+      <div id="loginSocialButtons">
+        <button class="login-social-btn" onclick="handleGoogleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <button class="login-social-btn" onclick="handleMicrosoftLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+          Continue with Microsoft
+        </button>
+      </div>
+      <p class="login-terms">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a></p>
     </div>
   </div>
 </div>
@@ -2506,9 +2715,11 @@
   window.closeDropdown  = closeDropdown;
 
   // ── Login Modal ───────────────────────────────────────────────────────────
-  function openLoginModal() {
+  function openLoginModal(initialTab) {
     document.getElementById('loginModal').classList.add('open');
     clearLoginMessages();
+    // Always reset to signin tab when opening fresh; caller can override
+    switchLoginTab(initialTab || 'signin');
   }
   function closeLoginModal(scrollTop) {
     document.getElementById('loginModal').classList.remove('open');
@@ -2520,15 +2731,39 @@
     const si = document.getElementById('signinForm');
     const su = document.getElementById('signupForm');
     const fp = document.getElementById('forgotForm');
-    if (si) si.style.display = tab === 'signin' ? 'block' : 'none';
-    if (su) su.style.display = tab === 'signup' ? 'block' : 'none';
-    if (fp) fp.style.display = tab === 'forgot'  ? 'block' : 'none';
-    const siBtn = document.getElementById('tabSignIn');
-    const suBtn = document.getElementById('tabSignUp');
-    const activeStyle = (c,s) => `flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:${c};color:white;box-shadow:0 3px 0 ${s};`;
-    const inactiveStyle = 'flex:1;justify-content:center;padding:12px 18px;border-radius:12px;font-weight:800;font-size:15px;cursor:pointer;border:none;transition:all 0.15s;font-family:inherit;background:transparent;color:#9CA3AF;box-shadow:none;';
-    if (siBtn) siBtn.style.cssText = tab === 'signin' ? activeStyle('#FF6B00','#CC5500') : inactiveStyle;
-    if (suBtn) suBtn.style.cssText = tab === 'signup' ? activeStyle('#1CB0F6','#0A85C2') : inactiveStyle;
+    const tabs    = document.getElementById('loginTabs');
+    const social  = document.getElementById('loginSocialButtons');
+    const divider = document.getElementById('loginSocialDivider');
+    const title   = document.getElementById('loginHeaderTitle');
+    const sub     = document.getElementById('loginHeaderSubtitle');
+
+    // Hide all sub-forms first
+    if (si) si.style.display = 'none';
+    if (su) su.style.display = 'none';
+    if (fp) fp.style.display = 'none';
+
+    if (tab === 'forgot') {
+      // Forgot password — hide tabs and social, change header
+      if (fp)      fp.style.display      = 'block';
+      if (tabs)    tabs.style.display    = 'none';
+      if (social)  social.style.display  = 'none';
+      if (divider) divider.style.display = 'none';
+      if (title)   title.textContent     = 'Reset your password';
+      if (sub)     sub.textContent       = 'We\u2019ll email you a reset link';
+    } else {
+      // Regular sign in / sign up — restore tabs and social
+      if (tabs)    tabs.style.display    = '';
+      if (social)  social.style.display  = '';
+      if (divider) divider.style.display = '';
+      if (title)   title.textContent     = 'Welcome to Knox';
+      if (sub)     sub.textContent       = 'Sign in or create your free account';
+      const siBtn = document.getElementById('tabSignIn');
+      const suBtn = document.getElementById('tabSignUp');
+      if (siBtn) siBtn.classList.toggle('active', tab === 'signin');
+      if (suBtn) suBtn.classList.toggle('active', tab === 'signup');
+      if (tab === 'signin' && si) si.style.display = 'block';
+      if (tab === 'signup' && su) su.style.display = 'block';
+    }
     clearLoginMessages();
   }
   function showLoginError(msg) {
@@ -2594,13 +2829,17 @@
   window.clearLoginMessages = clearLoginMessages;
   window.updateLoginUI    = updateLoginUI;
 
-  // Keyboard enter on login modal
+  // Keyboard enter on login modal — submit whichever form is visible.
+  // Matches the behavior in /app for consistency.
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    if (!document.getElementById('loginModal')?.classList.contains('open')) return;
-    if (document.getElementById('signinForm')?.style.display !== 'none') window.handleEmailSignIn?.();
-    else if (document.getElementById('signupForm')?.style.display !== 'none') window.handleEmailSignUp?.();
-    else if (document.getElementById('forgotForm')?.style.display !== 'none') window.handleForgotPassword?.();
+    const modal = document.getElementById('loginModal');
+    if (!modal?.classList.contains('open')) return;
+    if (e.key === 'Escape') { closeLoginModal(); return; }
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (e.target.tagName === 'TEXTAREA') return;
+    if (document.getElementById('forgotForm')?.style.display !== 'none') { e.preventDefault(); window.handleForgotPassword?.(); }
+    else if (document.getElementById('signupForm')?.style.display !== 'none') { e.preventDefault(); window.handleEmailSignUp?.(); }
+    else if (document.getElementById('signinForm')?.style.display !== 'none') { e.preventDefault(); window.handleEmailSignIn?.(); }
   });
 
   function toggleMobileNav() {
@@ -2877,9 +3116,9 @@
     const params = new URLSearchParams(window.location.search);
     const action = params.get('action');
     if (action === 'login') {
-      setTimeout(() => { switchLoginTab('signin'); openLoginModal(); }, 600);
+      setTimeout(() => openLoginModal('signin'), 600);
     } else if (action === 'signup') {
-      setTimeout(() => { switchLoginTab('signup'); openLoginModal(); }, 600);
+      setTimeout(() => openLoginModal('signup'), 600);
     } else if (action === 'google') {
       setTimeout(() => { openLoginModal(); handleGoogleLogin(); }, 600);
     } else if (action === 'microsoft') {
