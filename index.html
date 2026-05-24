@@ -412,6 +412,7 @@
       .header-logo-img  { width:36px; height:36px; }
       #accountName { display:none; }
       #headerNav { display:none !important; }
+      #main-header { padding: 0 14px; gap: 8px; }
     }
     @media (max-width:380px) {
       .header-try-pro { display:none; }
@@ -1212,7 +1213,7 @@
       padding: 13px 16px;
       border: 2px solid var(--border);
       border-radius: 14px;
-      font-size: 15px; font-weight: 600;
+      font-size: 16px; font-weight: 600;
       color: #3C3C3C;
       outline: none;
       transition: all 0.2s;
@@ -1640,6 +1641,38 @@
       .ai-box-header { padding:16px 20px; }
       .resp-brain { width:36px; height:36px; }
       .section { padding:56px 20px; }
+      /* Hero — tighter padding on phones */
+      #home { padding: 48px 20px 44px; }
+      .hero-knox { width: 150px; height: 150px; }
+      .hero-sub { font-size: 16px; }
+      .hero-ctas { gap: 10px; }
+      /* CTA buttons — make them full-width-ish on tiny phones for easier tapping */
+      .hero-ctas > * { min-width: 0; }
+      /* Login modal panel — full-bleed on tiny phones */
+      .login-modal { padding: 12px; }
+      .login-header { padding: 26px 22px 22px; }
+      .login-body { padding: 22px 22px 24px; }
+      .login-header img.login-knox { width: 60px; height: 60px; }
+      .login-header h2 { font-size: 22px; }
+      /* Settings modal tighter on phones */
+      .settings-modal { padding: 12px; }
+      .settings-header { padding: 18px 22px; }
+      .settings-body { padding: 22px 22px; }
+      /* Account dropdown — anchor closer to edge */
+      .account-dropdown { right: 12px !important; left: 12px !important; min-width: 0 !important; }
+      /* Footer text sizing */
+      .rg-footer { gap: 22px; }
+      /* Use dynamic viewport height where supported for full-screen modals */
+      .login-panel, .settings-panel, .history-panel, .calc-panel { max-height: 92dvh; max-height: 92vh; }
+      /* Respect iOS bottom safe area on full-page sticky bars */
+      .login-panel, .settings-panel { padding-bottom: env(safe-area-inset-bottom); }
+    }
+    @media (max-width:380px) {
+      /* Tiny phones — squeeze hero further */
+      .hero-knox { width: 130px; height: 130px; }
+      #home { padding: 40px 16px 36px; }
+      .section { padding: 48px 16px; }
+      .header-logo-img { width: 36px; height: 36px; }
     }
   </style>
 </head>
