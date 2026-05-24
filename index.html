@@ -423,19 +423,95 @@
       opacity:1; background:rgba(255,255,255,0.15);
     }
 
-    /* Account dropdown (existing JS relies on these) */
+    /* Account dropdown — matches /app's profile dropdown for consistency.
+       Class names preserved (.dropdown-header, .dropdown-item, etc.) so
+       existing handlers in this file still work; styling ported from app. */
     .pro-badge { background:#FFD900; color:#3C3C3C; border:none; border-radius:12px; padding:10px 18px; font-size:14px; font-weight:800; box-shadow:0 3px 0 #CC9900; transition:all 0.15s; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
     .pro-badge:hover { transform:translateY(-1px); box-shadow:0 4px 0 #CC9900; }
     .account-dropdown-wrapper { position:relative; }
-    .account-dropdown { position:fixed; top:78px; right:24px; background:white; border:2px solid var(--border); border-radius:20px; box-shadow:0 8px 24px rgba(0,0,0,0.12); min-width:220px; overflow:hidden; display:none; z-index:9999; }
-    .account-dropdown.open { display:block; }
-    .dropdown-header { padding:16px; border-bottom:2px solid var(--border); }
-    .dropdown-header p { font-weight:800; font-size:15px; color:var(--text); }
-    .dropdown-header span { font-size:12px; color:var(--text-light); }
-    .dropdown-item { width:100%; display:flex; align-items:center; gap:10px; padding:12px 16px; font-size:14px; font-weight:700; color:var(--text); background:none; border:none; cursor:pointer; transition:background 0.15s; font-family:inherit; }
-    .dropdown-item:hover { background:var(--gray); }
-    .dropdown-item.danger { color:var(--red); }
-    .dropdown-divider { border-top:2px solid var(--border); margin:4px 0; }
+    .account-dropdown {
+      position: fixed;
+      top: 78px;
+      right: 24px;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+      min-width: 260px;
+      overflow: hidden;
+      display: none;
+      z-index: 9999;
+    }
+    .account-dropdown.open { display: block; }
+    .dropdown-header {
+      padding: 18px;
+      background: #FFF8F0;
+      border-bottom: 2px solid var(--border);
+    }
+    .dropdown-header p {
+      font-size: 15px; font-weight: 900;
+      color: var(--text);
+      margin-bottom: 2px;
+      word-break: break-word;
+    }
+    .dropdown-header span {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-light);
+      word-break: break-all;
+      display: block;
+    }
+    /* Plan card — prominent card-style display, same as /app */
+    .dd-plan-card {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      border: 2px solid;
+      box-shadow: 0 2px 0 var(--border);
+    }
+    .dd-plan-card .plan-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .dd-plan-card .plan-name {
+      font-size: 14px; font-weight: 900;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    .dd-plan-card .plan-tag {
+      font-size: 10px; font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+    }
+    .dd-plan-card .plan-icon {
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .dd-plan-free  { background: white;             border-color: var(--border);                                                                             }
+    .dd-plan-free  .plan-name { color: var(--text); }
+    .dd-plan-free  .plan-tag  { color: var(--text-light); }
+    .dd-plan-super { background: var(--green-light); border-color: #B9F6CA;                       box-shadow: 0 2px 0 #B9F6CA;                              }
+    .dd-plan-super .plan-name { color: var(--green-dark); }
+    .dd-plan-super .plan-tag  { color: var(--green-dark); }
+    .dd-plan-max   { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
+    .dd-plan-max   .plan-name { color: #CC5500; }
+    .dd-plan-max   .plan-tag  { color: #CC5500; }
+    .dropdown-item {
+      width: 100%;
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px;
+      font-size: 14px; font-weight: 800;
+      color: var(--text);
+      background: none; border: none; text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+      text-decoration: none;
+    }
+    .dropdown-item:hover { background: #FFF8F0; }
+    .dropdown-item.danger { color: var(--red); }
+    .dropdown-item.danger:hover { background: #FEF2F2; }
+    .dropdown-divider { height: 2px; background: var(--border); margin: 2px 0; }
 
     /* ── HERO ────────────────────────────────────────────────── */
     #home {
@@ -1461,7 +1537,7 @@
         <div class="dropdown-header">
           <p id="dropdownName"></p>
           <span id="dropdownEmail"></span>
-          <div id="dropdownPlan" style="margin-top:4px;font-size:11px;font-weight:900;color:var(--orange);"></div>
+          <div id="dropdownPlan"></div>
         </div>
         <button class="dropdown-item" onclick="openSettings()">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1474,7 +1550,7 @@
         <div class="dropdown-divider"></div>
         <button class="dropdown-item danger" onclick="handleLogout()">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sign Out
+          Sign out
         </button>
       </div>
     </div>
@@ -2804,8 +2880,28 @@
     if (nameEl)  nameEl.textContent  = name.split(' ')[0];
     if (dName)   dName.textContent   = name;
     if (dEmail)  dEmail.textContent  = email || '';
-    const planLabel = userPlan === 'max' ? '🚀 Max Knox' : userPlan === 'super' ? '⚡ Super Knox' : '🆓 Free';
-    if (dPlan)  dPlan.textContent  = planLabel;
+    if (dPlan) {
+      // Render plan card (matches /app's dropdown) instead of plain text
+      const cfg = userPlan === 'max'   ? { cls: 'max',   icon: '🦊', name: 'Max Knox',   tag: 'Top tier · unlimited learning' }
+                : userPlan === 'super' ? { cls: 'super', icon: '⚡', name: 'Super Knox', tag: 'Pro plan · 25/day homework' }
+                :                        { cls: 'free',  icon: '🆓', name: 'Free',       tag: '5 homework questions / day' };
+      dPlan.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'dd-plan-card dd-plan-' + cfg.cls;
+      const info = document.createElement('div');
+      info.className = 'plan-info';
+      const nm = document.createElement('span'); nm.className = 'plan-name'; nm.textContent = cfg.name;
+      const tg = document.createElement('span'); tg.className = 'plan-tag';  tg.textContent = cfg.tag;
+      info.appendChild(nm);
+      info.appendChild(tg);
+      const icon = document.createElement('span');
+      icon.className   = 'plan-icon';
+      icon.textContent = cfg.icon;
+      icon.setAttribute('aria-hidden', 'true');
+      card.appendChild(info);
+      card.appendChild(icon);
+      dPlan.appendChild(card);
+    }
     if (iconEl) {
       if (photoURL) {
         iconEl.innerHTML = `<img src="${photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;">`;
