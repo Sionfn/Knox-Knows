@@ -1368,27 +1368,12 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 14px;
     }
-    .settings-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-    .settings-header-knox {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      border: 3px solid rgba(255,255,255,0.5);
-      overflow: hidden;
-      background: #FED7AA;
-      flex-shrink: 0;
-    }
-    .settings-header-knox img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
     .settings-header h2 {
       font-size: 22px; font-weight: 900;
       color: white;
       letter-spacing: -0.01em;
       margin: 0;
       font-family: inherit;
-    }
-    .settings-header p {
-      font-size: 13px; font-weight: 600;
-      color: rgba(255,255,255,0.85);
-      margin: 2px 0 0;
     }
     .settings-close {
       background: rgba(255,255,255,0.2);
@@ -1415,24 +1400,8 @@
       gap: 12px;
     }
     .settings-row:last-of-type { border-bottom: none; }
-    .settings-label-block { min-width: 0; }
-    .settings-label {
-      font-size: 15px; font-weight: 800;
-      color: var(--text);
-      display: block;
-    }
-    .settings-sublabel {
-      font-size: 12px; font-weight: 600;
-      color: var(--text-light);
-      margin-top: 2px;
-      display: block;
-    }
-    .settings-value {
-      font-size: 14px; font-weight: 700;
-      color: var(--text-light);
-      text-align: right;
-      word-break: break-word;
-    }
+    .settings-label { font-size: 15px; font-weight: 800; color: var(--text); }
+    .settings-value { font-size: 14px; font-weight: 700; color: var(--text-light); word-break: break-word; text-align: right; }
 
     /* Plan badge — pill style, same as /app */
     .plan-badge {
@@ -1449,28 +1418,26 @@
     .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: #B9F6CA; }
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
-    /* Countdown row — shown when limit hit */
-    .settings-countdown-row {
-      background: var(--orange-light);
-      border-radius: 16px;
-      padding: 14px 20px;
-      border: 2px solid #FFCFA0;
-      margin-top: 8px;
+    /* "Manage billing" small button inside the Billing row — matches /app */
+    .settings-billing-btn {
+      padding: 9px 18px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 13px; font-weight: 800;
+      font-family: inherit;
+      box-shadow: 0 2px 0 var(--border);
+      transition: all 0.15s;
+      cursor: pointer;
+      color: var(--text);
     }
-    .settings-countdown-label {
-      font-size: 11px; font-weight: 900;
-      color: #CC5500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
-    .settings-countdown-time {
-      font-size: 22px; font-weight: 900;
-      color: var(--orange);
+    .settings-billing-btn:hover {
+      border-color: var(--orange);
+      box-shadow: 0 2px 0 var(--orange-light);
+      background: #FFF8F0;
     }
 
-    /* Action buttons */
-    .settings-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+    /* Primary button (Upgrade) and danger button (Sign out) — match /app */
     .settings-primary-btn {
       width: 100%;
       padding: 15px;
@@ -1485,7 +1452,6 @@
       letter-spacing: 0.04em;
       cursor: pointer;
       font-family: inherit;
-      display: flex; align-items: center; justify-content: center;
     }
     .settings-primary-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
     .settings-primary-btn:active { transform: translateY(2px);  box-shadow: none; }
@@ -4695,56 +4661,64 @@
   });
 
   // ======= SETTINGS MODAL =======
+  // Body built dynamically to mirror /app's openAppSettings exactly.
   window.openSettings = function() {
     closeDropdown();
+    const u = window.currentUser;
+    if (!u) { openLoginModal(); return; }
+
     const _plan = window.userPlan || userPlan || 'free';
     userPlan = _plan;
-    const usage = getUsageData();
+    const planLabel = _plan === 'max'   ? 'Max Knox'
+                    : _plan === 'super' ? 'Super Knox'
+                    :                     'Free';
+    const el = document.getElementById('settingsContent');
+    if (!el) return;
+    el.innerHTML = '';
 
-    // Plan badge — use shared .plan-badge / .badge-* classes from /app
-    const planLabel = _plan === 'max' ? 'Max Knox' : _plan === 'super' ? 'Super Knox' : 'Free';
-    const badgeEl   = document.getElementById('settingsPlanBadge');
-    if (badgeEl) {
-      badgeEl.innerHTML = '';
-      const b = document.createElement('span');
-      b.className   = 'plan-badge badge-' + _plan;
-      b.textContent = planLabel;
-      badgeEl.appendChild(b);
+    function row(label, valueNode) {
+      const r = document.createElement('div'); r.className = 'settings-row';
+      const l = document.createElement('span'); l.className = 'settings-label'; l.textContent = label;
+      r.appendChild(l);
+      r.appendChild(valueNode);
+      return r;
+    }
+    function spanVal(text) {
+      const s = document.createElement('span'); s.className = 'settings-value'; s.textContent = text || '—';
+      return s;
     }
 
-    const isPaid = _plan === 'super' || _plan === 'max';
+    el.appendChild(row('Name',  spanVal(u.displayName || '—')));
+    el.appendChild(row('Email', spanVal(u.email || '—')));
 
-    // Upgrade vs Manage Plan button (single primary action)
-    const upgradeBtn = document.getElementById('settingsUpgradeBtn');
-    if (upgradeBtn) {
-      if (isPaid) {
-        upgradeBtn.textContent = 'Manage Plan';
-        upgradeBtn.onclick = () => { closeSettings(); window.openCustomerPortal(); };
-      } else {
-        upgradeBtn.textContent = 'Upgrade Plan';
-        upgradeBtn.onclick = () => { closeSettings(); scrollToPricing(); };
-      }
-      upgradeBtn.style.display = 'flex';
+    const planBadge = document.createElement('span');
+    planBadge.className   = 'plan-badge badge-' + _plan;
+    planBadge.textContent = planLabel;
+    el.appendChild(row('Plan', planBadge));
+
+    if (_plan !== 'free') {
+      const billBtn = document.createElement('button');
+      billBtn.className   = 'settings-billing-btn';
+      billBtn.textContent = 'Manage billing';
+      billBtn.onclick     = () => { closeSettings(); if (window.openCustomerPortal) window.openCustomerPortal(); };
+      el.appendChild(row('Billing', billBtn));
+    } else {
+      const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
+      const up = document.createElement('button');
+      up.className   = 'settings-primary-btn';
+      up.textContent = 'Upgrade to Super Knox';
+      up.onclick     = () => { closeSettings(); scrollToPricing(); };
+      wrap.appendChild(up);
+      el.appendChild(wrap);
     }
 
-    // Cancel button — show only for paid users
-    const cancelBtn = document.getElementById('settingsCancelBtn');
-    if (cancelBtn) cancelBtn.style.display = isPaid ? 'block' : 'none';
-
-    // Renewal row stays hidden until we have real renewal data from Stripe
-    document.getElementById('settingsRenewalRow').style.display = 'none';
-
-    // Questions Today usage
-    const questionsUsed = usage.count || 0;
-    let usageText;
-    if (_plan === 'max')        usageText = `${questionsUsed} of 100 used today`;
-    else if (_plan === 'super') usageText = `${questionsUsed} of 25 used today`;
-    else                        usageText = `${Math.max(0, DAILY_LIMIT - questionsUsed)} of ${DAILY_LIMIT} remaining`;
-    document.getElementById('settingsUsage').textContent = usageText;
-
-    // Hide countdown unless a separate handler shows it on limit
-    const cdRow = document.getElementById('settingsCountdownRow');
-    if (cdRow) cdRow.style.display = 'none';
+    const outWrap = document.createElement('div'); outWrap.style.marginTop = '14px';
+    const out = document.createElement('button');
+    out.className   = 'settings-danger-btn';
+    out.textContent = 'Sign out';
+    out.onclick     = () => { closeSettings(); if (window.handleLogout) window.handleLogout(); };
+    outWrap.appendChild(out);
+    el.appendChild(outWrap);
 
     document.getElementById('settingsModal').classList.add('open');
   };
@@ -4753,91 +4727,18 @@
     document.getElementById('settingsModal').classList.remove('open');
   };
 
-  window.handleCancelSubscription = function() {
-    closeSettings();
-    const _plan = window.userPlan || userPlan || 'free';
-    const planName = _plan === 'max' ? 'Max Knox' : _plan === 'super' ? 'Super Knox' : 'Knox';
-    const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
-    modal.innerHTML = `
-      <div style="background:white;max-width:400px;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-        <div style="background:var(--orange);padding:24px 28px;text-align:center;">
-          <div style="font-size:48px;margin-bottom:8px;">😢</div>
-          <h3 style="font-size:20px;font-weight:900;color:white;">Cancel subscription?</h3>
-          <p style="font-size:13px;color:rgba(255,255,255,0.85);font-weight:600;margin-top:6px;">You'll lose access to ${planName} features at the end of your billing period.</p>
-        </div>
-        <div style="padding:24px 28px;display:flex;flex-direction:column;gap:10px;">
-          <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--green);color:white;cursor:pointer;box-shadow:0 4px 0 var(--green-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">Keep My Plan</button>
-          <button onclick="this.closest('div[style*=fixed]').remove();window.openCustomerPortal();" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;border:2px solid #fca5a5;background:#fef2f2;color:#dc2626;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">Go to Billing Portal →</button>
-        </div>
-      </div>`;
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
-  };
 </script>
 
 <!-- ===================== SETTINGS MODAL (Account & Plan) ===================== -->
-<!-- Visual styling matches /app's settings card. Element IDs preserved so
-     existing openSettings() / handleCancelSubscription() handlers work. -->
+<!-- Structure matches /app exactly: simple header (no logo/subtitle),
+     dynamic body filled by openSettings() with Name/Email/Plan/Billing rows. -->
 <div class="settings-modal" id="settingsModal" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel">
-
-    <!-- Header — same as /app: orange band with Knox logo + close button -->
     <div class="settings-header">
-      <div class="settings-header-left">
-        <div class="settings-header-knox">
-          <img src="./knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
-        </div>
-        <div>
-          <h2>Account &amp; Plan</h2>
-          <p>Manage your subscription</p>
-        </div>
-      </div>
+      <h2>Account &amp; Plan</h2>
       <button class="settings-close" onclick="closeSettings()" aria-label="Close">✕</button>
     </div>
-
-    <!-- Body — same .settings-row pattern as /app -->
-    <div class="settings-body">
-
-      <!-- Plan row -->
-      <div class="settings-row">
-        <div class="settings-label-block">
-          <span class="settings-label">Plan</span>
-          <span class="settings-sublabel">Your active subscription</span>
-        </div>
-        <div id="settingsPlanBadge"></div>
-      </div>
-
-      <!-- Renewal row -->
-      <div class="settings-row" id="settingsRenewalRow" style="display:none;">
-        <div class="settings-label-block">
-          <span class="settings-label">Renewal</span>
-          <span class="settings-sublabel">Next billing cycle</span>
-        </div>
-        <div class="settings-value" id="settingsRenewalDate">—</div>
-      </div>
-
-      <!-- Questions Today row -->
-      <div class="settings-row">
-        <div class="settings-label-block">
-          <span class="settings-label">Questions today</span>
-          <span class="settings-sublabel">Rolling 24-hour window</span>
-        </div>
-        <div class="settings-value" id="settingsUsage">—</div>
-      </div>
-
-      <!-- Countdown row — shown only when limit hit -->
-      <div class="settings-countdown-row" id="settingsCountdownRow" style="display:none;">
-        <div class="settings-countdown-label">Next question unlocks in</div>
-        <div class="settings-countdown-time" id="settingsCountdown">—</div>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="settings-actions">
-        <button id="settingsUpgradeBtn" class="settings-primary-btn">Upgrade Plan</button>
-        <button id="settingsCancelBtn" class="settings-danger-btn" onclick="handleCancelSubscription()" style="display:none;">Cancel subscription</button>
-      </div>
-    </div>
+    <div class="settings-body" id="settingsContent"></div>
   </div>
 </div>
 
