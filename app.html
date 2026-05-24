@@ -2698,6 +2698,10 @@ window.appHandleAsk = async function() {
       } else {
         const errMsg = data.error || 'Something went wrong. Try again.';
         replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>');
+        // If the request was rejected, don't burn the guest's free question
+        if (!window.currentUser) {
+          // Roll back the count we haven't actually incremented yet — no-op
+        }
       }
       return;
     }
@@ -2791,15 +2795,15 @@ function renderAnswerHtml(text) {
   if (!text) return '';
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const SECTIONS = {
-    'Final Answer':   ['#FF6B00', '📋'],   // orange
+    'Final Answer':   ['#FF6B00', '📋'],
     'Answer':         ['#FF6B00', '📋'],
-    'Step-by-step':   ['#1CB0F6', '🔢'],   // blue
+    'Step-by-step':   ['#1CB0F6', '🔢'],
     'Step-by-Step':   ['#1CB0F6', '🔢'],
-    'Explanation':    ['#CE82FF', '💡'],   // purple — distinct from step-by-step
-    'Key Points':     ['#58CC02', '✅'],   // green
-    'Tip':            ['#FFAA00', '💡'],   // amber — distinct from final answer orange
-    'Common Mistake': ['#FF4B4B', '⚠️'],   // red
-    'Insight':        ['#EC4899', '🌟'],   // pink — distinct from explanation purple
+    'Explanation':    ['#1CB0F6', '💡'],
+    'Key Points':     ['#58CC02', '✅'],
+    'Tip':            ['#FF6B00', '💡'],
+    'Common Mistake': ['#FF4B4B', '⚠️'],
+    'Insight':        ['#CE82FF', '🌟'],
     'Resources':      ['#1CB0F6', '📚'],
   };
   const sectionKeys = Object.keys(SECTIONS);
