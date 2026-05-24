@@ -116,6 +116,14 @@
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
     #headerUsage.danger .usage-dot { background: #FFB4B4; }
+    #headerUsage.unlimited {
+      background: rgba(255,217,0,0.22);
+      border-color: rgba(255,217,0,0.55);
+    }
+    #headerUsage.unlimited .usage-dot {
+      background: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(255,217,0,0.25);
+    }
 
     #appUpgradeBtn {
       background: var(--yellow);
@@ -209,8 +217,53 @@
       background: var(--cream);
       border-bottom: 2px solid var(--border);
     }
-    .app-dropdown-header p { font-size: 15px; font-weight: 900; color: var(--text); margin-bottom: 2px; word-break: break-word; }
-    .app-dropdown-header span { font-size: 12px; font-weight: 700; color: var(--text-light); word-break: break-all; }
+    .app-dropdown-header .dd-name {
+      font-size: 15px; font-weight: 900; color: var(--text);
+      margin-bottom: 2px; word-break: break-word;
+    }
+    .app-dropdown-header .dd-email {
+      font-size: 12px; font-weight: 700; color: var(--text-light);
+      word-break: break-all; display: block;
+    }
+    /* Plan card inside the dropdown — bigger, more visual */
+    .dd-plan-card {
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+      border: 2px solid;
+      box-shadow: 0 2px 0 var(--border);
+    }
+    .dd-plan-card .plan-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .dd-plan-card .plan-name {
+      font-size: 14px; font-weight: 900;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    .dd-plan-card .plan-tag {
+      font-size: 10px; font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+    }
+    .dd-plan-card .plan-icon {
+      font-size: 22px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .dd-plan-free   { background: white;             border-color: var(--border);       }
+    .dd-plan-free   .plan-name { color: var(--text); }
+    .dd-plan-free   .plan-tag  { color: var(--text-light); }
+    .dd-plan-super  { background: var(--blue-light); border-color: #B3E5FC;             box-shadow: 0 2px 0 #B3E5FC; }
+    .dd-plan-super  .plan-name { color: var(--blue-dark); }
+    .dd-plan-super  .plan-tag  { color: var(--blue-dark); }
+    .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
+    .dd-plan-max    .plan-name { color: var(--orange-dark); }
+    .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
+    .dd-plan-family { background: var(--green-light); border-color: #B9F6CA;            box-shadow: 0 2px 0 #B9F6CA; }
+    .dd-plan-family .plan-name { color: var(--green-dark); }
+    .dd-plan-family .plan-tag  { color: var(--green-dark); }
     .app-dropdown-item {
       width: 100%;
       display: flex; align-items: center; gap: 10px;
@@ -1202,7 +1255,7 @@
       <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <a href="/?home=1" class="app-logo-link" title="Back to landing page">
+      <a href="/?from=app" class="app-logo-link" title="Back to landing page">
         <img src="/knox-logo-square.jpg" alt="Knox" class="app-logo-img" onerror="this.style.display='none'">
         <span class="app-logo-text">Knox Knows</span>
       </a>
@@ -1228,9 +1281,9 @@
   <!-- ACCOUNT DROPDOWN -->
   <div id="appAccountDropdown">
     <div class="app-dropdown-header">
-      <p id="ddName">—</p>
-      <span id="ddEmail">—</span>
-      <div style="margin-top:6px;" id="ddPlan"></div>
+      <p class="dd-name"  id="ddName">—</p>
+      <span class="dd-email" id="ddEmail">—</span>
+      <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">⚙️ Account &amp; Plan</button>
     <div id="ddUpgradeRow" style="display:none;">
@@ -1257,7 +1310,7 @@
         </div>
       </div>
       <div class="sidebar-footer">
-        <a href="/?home=1" class="sidebar-home-link">
+        <a href="/?from=app" class="sidebar-home-link">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Back to home
         </a>
@@ -1748,17 +1801,30 @@
       if (ddName)  ddName.textContent  = user.displayName || '—';
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
-        const label = plan === 'max'    ? 'Max Knox'
-                    : plan === 'super'  ? 'Super Knox'
-                    : plan === 'family' ? 'Family Plan'
-                    : 'Free';
+        // Build a card-style plan display (icon + name + tagline)
+        const cfg = plan === 'max'    ? { cls: 'max',    icon: '🦊', name: 'Max Knox',    tag: 'Top tier · unlimited learning' }
+                  : plan === 'super'  ? { cls: 'super',  icon: '⚡', name: 'Super Knox',  tag: 'Pro plan · 25/day homework' }
+                  : plan === 'family' ? { cls: 'family', icon: '👨‍👩‍👧', name: 'Family Plan', tag: 'Up to 5 members'          }
+                  :                     { cls: 'free',   icon: '🆓', name: 'Free',        tag: '5 homework questions / day' };
         ddPlan.innerHTML = '';
-        const badge = document.createElement('span');
-        // Family shares Super's badge style (same color treatment)
-        const badgeClass = plan === 'family' ? 'super' : plan;
-        badge.className   = 'plan-badge badge-' + badgeClass;
-        badge.textContent = label;
-        ddPlan.appendChild(badge);
+        const card = document.createElement('div');
+        card.className = 'dd-plan-card dd-plan-' + cfg.cls;
+
+        const info = document.createElement('div');
+        info.className = 'plan-info';
+        const nm = document.createElement('span'); nm.className = 'plan-name'; nm.textContent = cfg.name;
+        const tg = document.createElement('span'); tg.className = 'plan-tag';  tg.textContent = cfg.tag;
+        info.appendChild(nm);
+        info.appendChild(tg);
+
+        const icon = document.createElement('span');
+        icon.className   = 'plan-icon';
+        icon.textContent = cfg.icon;
+        icon.setAttribute('aria-hidden', 'true');
+
+        card.appendChild(info);
+        card.appendChild(icon);
+        ddPlan.appendChild(card);
       }
 
       // Upgrade button shown for free + super (super can move to max)
@@ -1814,8 +1880,17 @@
     const field = modeToCreditField(window.currentMode);
     const lim   = (PLAN_LIMITS[plan] || PLAN_LIMITS.free)[field];
 
-    // Unlimited (e.g. Max plan's Learn mode) — hide the pill
-    if (lim === -1 || lim === Infinity) { usage.style.display = 'none'; return; }
+    // Unlimited (e.g. Max plan's Learn mode) — show it explicitly,
+    // not just hide the pill. Users on top-tier plans deserve to see
+    // the benefit they're paying for.
+    if (lim === -1 || lim === Infinity) {
+      usage.style.display = 'inline-flex';
+      usage.classList.remove('danger');
+      usage.classList.add('unlimited');
+      text.textContent = 'Unlimited ' + modeLabel(window.currentMode);
+      return;
+    }
+    usage.classList.remove('unlimited');
 
     try {
       const today = window._todayKey();
