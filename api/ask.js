@@ -18,10 +18,9 @@ const db        = getFirestore();
 
 // ── Daily quota limits per plan ────────────────────────────────────────────
 const PLAN_QUOTAS = {
-  free:   { hw: 5,   learn: 10,        chat: 20  },
-  super:  { hw: 25,  learn: 50,        chat: 50  },
-  max:    { hw: 100, learn: Infinity,  chat: 500 },
-  family: { hw: 25,  learn: 50,        chat: 50  },
+  free:  { hw: 5,   learn: 10,        chat: 20  },
+  super: { hw: 25,  learn: 50,        chat: 50  },
+  max:   { hw: 100, learn: Infinity,  chat: 500 },
 };
 
 // Returns today's date string in UTC, e.g. "2026-05-08"
@@ -149,17 +148,6 @@ Examples:
 
 Every section must earn its place. The best answer is the most useful one, not the longest.`,
   },
-  family: {
-    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
-    systemPrompt: `You are Knox, a friendly AI homework helper for families. FAMILY KNOX plan.
-Simple clear language for K-12. Never use LaTeX. Write math plainly like 2 × 5 = 10.
-Always include:
-- Final Answer: [always required]
-- Explanation: [always include — simple language]
-Only include when useful:
-- Step-by-step: [only if multiple steps]
-- Tip: [only if genuinely helpful]`,
-  },
 };
 
 // ── LEARN WITH KNOX — Socratic system prompts per plan ─────────────────────
@@ -219,24 +207,6 @@ What makes Max special:
 Rules:
 - ONE question or hint per message
 - Adapt depth to the student's level based on how they respond
-- Never use LaTeX, write math plainly`,
-
-  family: `You are Knox, a warm friendly tutor for the whole family. FAMILY KNOX plan.
-
-Use simple clear language suitable for all ages K-12. Guide students to discover answers themselves.
-
-How to guide:
-- Ask what they already know in simple terms
-- Give hints using everyday language and examples
-- Be extra encouraging — every step forward is worth celebrating
-- If they're stuck, use an analogy or real-world example to help
-- When they get it, explain why in simple terms
-
-Rules:
-- ONE question or hint per message
-- Very simple language — avoid jargon
-- Short messages — 2-3 sentences
-- Extra warm and patient tone
 - Never use LaTeX, write math plainly`,
 };
 
@@ -562,12 +532,18 @@ export default async function handler(req, res) {
     }
   }
 
-  // Select system prompt based on mode
+  // Select system prompt based on mode.
+  // IMPORTANT: Learn mode must check BEFORE casual — when a student says "idk"
+  // or "hint please" in Learn mode, the casual classifier flags it as casual,
+  // but we still want Knox to respond with a Socratic hint (LEARN_PROMPTS),
+  // not generic small talk (CASUAL_SYSTEM_PROMPT). The continuation classifier
+  // already correctly handles billing (no charge for follow-ups); this just
+  // ensures the response style stays in-character as a tutor.
   let systemPrompt;
-  if (isChatMode || casual) {
-    systemPrompt = CASUAL_SYSTEM_PROMPT;
-  } else if (mode === 'learn') {
+  if (isLearnMode) {
     systemPrompt = LEARN_PROMPTS[plan] || LEARN_PROMPTS.super;
+  } else if (isChatMode || casual) {
+    systemPrompt = CASUAL_SYSTEM_PROMPT;
   } else {
     systemPrompt = config.systemPrompt;
   }
