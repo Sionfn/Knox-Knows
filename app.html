@@ -255,15 +255,12 @@
     .dd-plan-free   { background: white;             border-color: var(--border);       }
     .dd-plan-free   .plan-name { color: var(--text); }
     .dd-plan-free   .plan-tag  { color: var(--text-light); }
-    .dd-plan-super  { background: var(--blue-light); border-color: #B3E5FC;             box-shadow: 0 2px 0 #B3E5FC; }
-    .dd-plan-super  .plan-name { color: var(--blue-dark); }
-    .dd-plan-super  .plan-tag  { color: var(--blue-dark); }
+    .dd-plan-super  { background: var(--green-light); border-color: #B9F6CA;             box-shadow: 0 2px 0 #B9F6CA; }
+    .dd-plan-super  .plan-name { color: var(--green-dark); }
+    .dd-plan-super  .plan-tag  { color: var(--green-dark); }
     .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max    .plan-name { color: var(--orange-dark); }
     .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
-    .dd-plan-family { background: var(--green-light); border-color: #B9F6CA;            box-shadow: 0 2px 0 #B9F6CA; }
-    .dd-plan-family .plan-name { color: var(--green-dark); }
-    .dd-plan-family .plan-tag  { color: var(--green-dark); }
     .app-dropdown-item {
       width: 100%;
       display: flex; align-items: center; gap: 10px;
@@ -287,7 +284,7 @@
       display: inline-block;
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
-    .badge-super { background: var(--blue-light);    color: var(--blue-dark);  border-color: #B3E5FC; }
+    .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: #B9F6CA; }
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
@@ -1802,10 +1799,9 @@
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
-        const cfg = plan === 'max'    ? { cls: 'max',    icon: '🦊', name: 'Max Knox',    tag: 'Top tier · unlimited learning' }
-                  : plan === 'super'  ? { cls: 'super',  icon: '⚡', name: 'Super Knox',  tag: 'Pro plan · 25/day homework' }
-                  : plan === 'family' ? { cls: 'family', icon: '👨‍👩‍👧', name: 'Family Plan', tag: 'Up to 5 members'          }
-                  :                     { cls: 'free',   icon: '🆓', name: 'Free',        tag: '5 homework questions / day' };
+        const cfg = plan === 'max'   ? { cls: 'max',   icon: '🦊', name: 'Max Knox',   tag: 'Top tier · unlimited learning' }
+                  : plan === 'super' ? { cls: 'super', icon: '⚡', name: 'Super Knox', tag: 'Pro plan · 25/day homework' }
+                  :                    { cls: 'free',  icon: '🆓', name: 'Free',       tag: '5 homework questions / day' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -1827,8 +1823,8 @@
         ddPlan.appendChild(card);
       }
 
-      // Upgrade button shown for free + super (super can move to max)
-      // Family + max already at top of their lane — no upgrade prompt
+      // Upgrade button shown for free + super (super can move to max).
+      // Max users are already at the top tier — no upgrade prompt.
       if (plan === 'free' || plan === 'super') {
         if (upgradeBtn) upgradeBtn.style.display = '';
         if (ddUpgrade)  ddUpgrade.style.display  = '';
@@ -1853,10 +1849,9 @@
   // ⚠️ These numbers MUST match PLAN_QUOTAS in api/ask.js — if you
   //   change quotas server-side, change them here too.
   const PLAN_LIMITS = {
-    free:   { hw: 5,   learn: 10, chat: 20  },
-    super:  { hw: 25,  learn: 50, chat: 50  },
-    max:    { hw: 100, learn: -1, chat: 500 },   // -1 = unlimited
-    family: { hw: 25,  learn: 50, chat: 50  },
+    free:  { hw: 5,   learn: 10, chat: 20  },
+    super: { hw: 25,  learn: 50, chat: 50  },
+    max:   { hw: 100, learn: -1, chat: 500 },   // -1 = unlimited
   };
 
   function modeToCreditField(mode) {
@@ -2276,11 +2271,10 @@
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
-    const planLabel = plan === 'max'    ? 'Max Knox'
-                    : plan === 'super'  ? 'Super Knox'
-                    : plan === 'family' ? 'Family Plan'
+    const planLabel = plan === 'max'   ? 'Max Knox'
+                    : plan === 'super' ? 'Super Knox'
                     : 'Free';
-    const badgeClass = plan === 'family' ? 'super' : plan;
+    const badgeClass = plan;
     const el = document.getElementById('settingsContent');
     if (!el) return;
 
