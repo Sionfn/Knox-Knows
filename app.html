@@ -384,6 +384,10 @@
     }
     .sidebar-history-item:hover .shi-delete { opacity: 1; }
     .sidebar-history-item .shi-delete:hover { background: #FEE2E2; color: var(--red); }
+    /* Touch devices have no hover — show delete buttons by default */
+    @media (hover: none) {
+      .sidebar-history-item .shi-delete { opacity: 0.6; width: 28px; height: 28px; }
+    }
 
     .sidebar-footer {
       padding: 10px 8px;
@@ -437,9 +441,9 @@
       background: rgba(255,255,255,0.2);
       border: none;
       border-radius: 10px;
-      width: 32px; height: 32px;
+      width: 38px; height: 38px;
       color: white;
-      font-size: 16px; font-weight: 900;
+      font-size: 18px; font-weight: 900;
     }
     #mobileHistoryDrawer .drawer-body {
       flex: 1; overflow-y: auto; padding: 8px;
@@ -856,7 +860,7 @@
       border: none;
       outline: none;
       background: transparent;
-      font-size: 15px; font-weight: 600;
+      font-size: 16px; font-weight: 600;
       color: var(--text);
       resize: none;
       min-height: 36px;
@@ -869,7 +873,7 @@
 
     .input-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .input-icon-btn {
-      width: 34px; height: 34px;
+      width: 40px; height: 40px;
       border-radius: 10px;
       border: none;
       background: transparent;
@@ -972,6 +976,7 @@
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
       max-height: 90vh;
+      max-height: 90dvh;  /* iOS Safari — accounts for address bar */
       overflow-y: auto;
     }
     .auth-header {
@@ -1036,7 +1041,7 @@
       padding: 13px 16px;
       border: 2px solid var(--border);
       border-radius: 14px;
-      font-size: 15px; font-weight: 600;
+      font-size: 16px; font-weight: 600;
       color: var(--text);
       outline: none;
       transition: all 0.2s;
@@ -1145,6 +1150,7 @@
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
       max-height: 90vh;
+      max-height: 90dvh;  /* iOS Safari — accounts for address bar */
       overflow-y: auto;
     }
     .settings-header {
@@ -1192,6 +1198,7 @@
       width: 320px;
       max-width: 95vw;
       max-height: 90vh;
+      max-height: 90dvh;
       overflow-y: auto;
       overflow-x: hidden;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -1229,6 +1236,12 @@
       #inputArea { padding: 12px 14px 14px; }
       #appAccountDropdown { right: 14px; top: 68px; min-width: 240px; max-width: calc(100vw - 28px); }
       #headerUsage { display: none !important; }
+      /* Slightly smaller suggestion chips on tablet */
+      .suggestion-chip { padding: 16px 14px; }
+      .chip-circle { width: 48px; height: 48px; font-size: 24px; }
+      /* Modal padding tighter */
+      .modal-backdrop { padding: 16px; }
+      .auth-card, .settings-card { max-width: 100%; }
     }
     @media (max-width: 480px) {
       #appUpgradeBtn { display: none !important; }
@@ -1236,6 +1249,23 @@
       .msg-user-bubble, .msg-knox-bubble { max-width: 95%; }
       .msg-knox { gap: 10px; }
       .msg-knox-avatar { width: 34px; height: 34px; }
+      /* Even tighter spacing on phones */
+      #welcomeScreen { padding: 16px 14px 24px; }
+      .welcome-title { font-size: 24px; }
+      .welcome-sub { font-size: 14px; margin-bottom: 20px; }
+      #chatThread { padding: 12px 12px 8px; }
+      #inputArea { padding: 10px 12px 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+      /* Pin input area to avoid iOS Safari address bar covering it */
+      .input-box { font-size: 16px; /* prevents iOS zoom on input focus */ }
+      .input-box textarea, .input-box input { font-size: 16px !important; }
+      /* Modal heights respect dynamic viewport on iOS */
+      .auth-card, .settings-card { max-height: 92dvh; max-height: 92vh; }
+      /* Make modal padding even tighter on tiny phones */
+      .auth-body, .settings-body { padding: 22px 20px; }
+      .auth-header, .settings-header { padding: 18px 20px; }
+      /* Suggestion chip text doesn't need to be huge */
+      .chip-text { font-size: 14px; }
+      .chip-sub  { font-size: 12px; }
     }
 
     /* Reduce motion if requested */
