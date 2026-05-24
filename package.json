@@ -9,5 +9,8 @@
   "dependencies": {
     "stripe": "^14.21.0",
     "firebase-admin": "^12.1.0"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0"
   }
 }
