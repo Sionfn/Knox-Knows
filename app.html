@@ -2698,10 +2698,6 @@ window.appHandleAsk = async function() {
       } else {
         const errMsg = data.error || 'Something went wrong. Try again.';
         replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>');
-        // If the request was rejected, don't burn the guest's free question
-        if (!window.currentUser) {
-          // Roll back the count we haven't actually incremented yet — no-op
-        }
       }
       return;
     }
