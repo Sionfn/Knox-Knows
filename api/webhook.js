@@ -21,12 +21,24 @@ if (!getApps().length) {
 const db     = getFirestore();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Map Stripe price IDs → plan names
+// Map Stripe price IDs → plan names.
+//
+// IMPORTANT: After the 2026 price reset, we keep BOTH the old and new price IDs
+// in this map. Why? Stripe protects existing subscribers — they stay on the
+// price they originally signed up for. The webhook will continue receiving
+// events for those old prices for as long as those customers stay subscribed.
+// Both old and new IDs must resolve to the same plan name ('super' or 'max').
 const PRICE_TO_PLAN = {
-  "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super",  // Super Monthly
-  "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly
-  "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly
-  "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly
+  // OLD prices (grandfathered subscribers from before 2026 reset)
+  "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super",  // Super Monthly $9.99 (old)
+  "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly $79.99 (old)
+  "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly $19.99 (old)
+  "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly $149.99 (old)
+  // NEW prices (2026 matrix) — replace placeholders with real Stripe IDs
+  "price_REPLACE_SUPER_MONTHLY":    "super",  // Super Monthly $7.99 (new)
+  "price_REPLACE_SUPER_YEARLY":     "super",  // Super Yearly $59.99 (new)
+  "price_REPLACE_MAX_MONTHLY":      "max",    // Max Monthly $14.99 (new)
+  "price_REPLACE_MAX_YEARLY":       "max",    // Max Yearly $119.99 (new)
 };
 
 export const config = { api: { bodyParser: false } };
