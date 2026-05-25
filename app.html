@@ -43,11 +43,23 @@
       height: 100%;
       font-family: 'Nunito', system-ui, -apple-system, sans-serif;
       color: var(--text);
-      background: white;
+      background: var(--cream);
       -webkit-font-smoothing: antialiased;
       -webkit-tap-highlight-color: transparent;
+      /* Prevent rubber-band scroll exposing white edges on iOS */
+      overscroll-behavior-y: none;
     }
-    body { display: flex; flex-direction: column; }
+    body {
+      display: flex; flex-direction: column;
+      /* On iOS, 100vh includes the address bar — use dvh (dynamic viewport
+         height) so the layout shrinks/grows with browser chrome.
+         Falls back to 100% on browsers that don't support dvh. */
+      height: 100dvh;
+      max-height: 100dvh;
+      /* Block document-level scrolling — only #chatThread should scroll.
+         This is what stops the page from jiggling when keyboard opens. */
+      overflow: hidden;
+    }
     button, input, textarea { font-family: inherit; }
     button { cursor: pointer; }
     a { color: var(--orange); }
@@ -479,6 +491,7 @@
       padding: 40px 24px 32px;
       text-align: center;
       overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--cream);
       position: relative;
     }
@@ -591,10 +604,9 @@
       margin: 0 auto;
       width: 100%;
       scroll-behavior: smooth;
-      background:
-        radial-gradient(circle at 95% 5%, rgba(255,107,0,0.07) 0%, transparent 35%),
-        radial-gradient(circle at 5% 95%, rgba(28,176,246,0.06) 0%, transparent 35%),
-        var(--cream);
+      background: var(--cream);
+      /* Keep iOS Safari from bouncing into a white edge while scrolling */
+      overscroll-behavior: contain;
     }
     #chatThread::-webkit-scrollbar { width: 8px; }
     #chatThread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
@@ -803,7 +815,7 @@
     }
     #inputArea {
       padding: 14px 24px 16px;
-      background: white;
+      background: var(--cream);
       max-width: 900px;
       margin: 0 auto;
       width: 100%;
@@ -869,7 +881,7 @@
       padding: 6px 0;
       line-height: 1.5;
     }
-    #appChatInput::placeholder { color: #BBB; }
+    #appChatInput::placeholder { color: #999; }
 
     .input-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .input-icon-btn {
@@ -1231,11 +1243,20 @@
       #appHeader { padding: 0 14px; gap: 8px; }
       .app-logo-text { display: none; }
       #welcomeScreen { padding: 24px 16px; }
+      /* Hide decorative welcome circles on mobile — they make the bg feel busy */
+      #welcomeScreen::before, #welcomeScreen::after { display: none; }
       .suggestion-grid { grid-template-columns: 1fr; }
       #chatThread { padding: 16px 16px 12px; }
       #inputArea { padding: 12px 14px 14px; }
       #appAccountDropdown { right: 14px; top: 68px; min-width: 240px; max-width: calc(100vw - 28px); }
-      #headerUsage { display: none !important; }
+      /* Compact credit pill on mobile (still visible, just smaller) */
+      #headerUsage {
+        display: inline-flex !important;
+        padding: 5px 10px;
+        font-size: 11px;
+        gap: 5px;
+      }
+      #headerUsageText { font-size: 11px; }
       /* Slightly smaller suggestion chips on tablet */
       .suggestion-chip { padding: 16px 14px; }
       .chip-circle { width: 48px; height: 48px; font-size: 24px; }
@@ -1266,6 +1287,17 @@
       /* Suggestion chip text doesn't need to be huge */
       .chip-text { font-size: 14px; }
       .chip-sub  { font-size: 12px; }
+      /* Hide name on tiny phones (avatar+caret still shows) */
+      #appAccountName { display: none; }
+    }
+    /* Even tinier — give credit pill room by trimming label */
+    @media (max-width: 380px) {
+      #headerUsage {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      #headerUsageText { font-size: 10px; }
+      #mobileHistoryBtn { width: 36px; height: 36px; }
     }
 
     /* Reduce motion if requested */
@@ -1917,6 +1949,9 @@
     const field = modeToCreditField(window.currentMode);
     const lim   = (PLAN_LIMITS[plan] || PLAN_LIMITS.free)[field];
 
+    // Compact text on phones — no room for "99 questions left", just "99/100"
+    const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
     // Unlimited (e.g. Max plan's Learn mode) — show it explicitly,
     // not just hide the pill. Users on top-tier plans deserve to see
     // the benefit they're paying for.
@@ -1924,7 +1959,7 @@
       usage.style.display = 'inline-flex';
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
-      text.textContent = 'Unlimited ' + modeLabel(window.currentMode);
+      text.textContent = isCompact ? '∞' : ('Unlimited ' + modeLabel(window.currentMode));
       return;
     }
     usage.classList.remove('unlimited');
@@ -1938,11 +1973,21 @@
       const noun  = modeLabel(window.currentMode);
 
       usage.style.display = 'inline-flex';
-      text.textContent = left + ' ' + (left === 1 ? noun.replace(/s$/, '') : noun) + ' left';
+      text.textContent = isCompact
+        ? `${left}/${lim} left`
+        : `${left} ${left === 1 ? noun.replace(/s$/, '') : noun} left`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
   window.updateUsageIndicator = updateUsageIndicator;
+
+  // Re-render usage text on resize so the compact/full label switches
+  // when the user rotates their phone or resizes the window.
+  let _usageResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(_usageResizeTimer);
+    _usageResizeTimer = setTimeout(() => updateUsageIndicator(), 200);
+  });
 
   // ── Auth state ──────────────────────────────────────────────
   let _firstAuth = true;
