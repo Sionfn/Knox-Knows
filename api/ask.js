@@ -17,10 +17,15 @@ const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
 // ── Daily quota limits per plan ────────────────────────────────────────────
+// Pricing matrix (2026 reset):
+//   Free:  $0       — 10 hw / 15 learn / 30 chat per day
+//   Super: $7.99/mo — 40 hw / 100 learn / 200 chat per day
+//   Max:   $14.99/mo — 200 hw / unlimited learn / unlimited chat
+// Yearly: Super $59.99/yr ($5/mo equiv) · Max $119.99/yr ($10/mo equiv)
 const PLAN_QUOTAS = {
-  free:  { hw: 5,   learn: 10,        chat: 20  },
-  super: { hw: 25,  learn: 50,        chat: 50  },
-  max:   { hw: 100, learn: Infinity,  chat: 500 },
+  free:  { hw: 10,  learn: 15,        chat: 30        },
+  super: { hw: 40,  learn: 100,       chat: 200       },
+  max:   { hw: 200, learn: Infinity,  chat: Infinity  },
 };
 
 // Returns today's date string in UTC, e.g. "2026-05-08"
