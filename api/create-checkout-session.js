@@ -19,14 +19,32 @@ if (!getApps().length) {
 
 const adminAuth = getAdminAuth();
 
+// ─────────────────────────────────────────────────────────────────────────
+// PRICING MATRIX (2026 reset):
+//   Super monthly: $7.99/mo
+//   Super yearly:  $59.99/yr  ($5/mo equivalent)
+//   Max monthly:   $14.99/mo
+//   Max yearly:    $119.99/yr ($10/mo equivalent)
+//
+// IMPORTANT — to roll out new pricing, do this in Stripe Dashboard first:
+//   1. Go to Products. For each (Super, Max), keep the existing Product —
+//      Stripe Products are just containers. Don't delete them.
+//   2. On each Product, click "Add another price" and create the new amount
+//      with the same recurring interval. Stripe will give you a NEW price ID.
+//   3. Replace the four price_xxx values below with the new IDs.
+//   4. Replace the four price_xxx values in api/webhook.js' PRICE_TO_PLAN map.
+//   5. Update the user-facing prices in index.html (already done in this rollout).
+//   6. Existing subscribers stay on their OLD prices — Stripe handles that
+//      automatically. Only NEW signups see the new prices.
+// ─────────────────────────────────────────────────────────────────────────
 const PRICES = {
   super: {
-    monthly: "price_1TTqUyCqlxC7aoKR0C9AM3sX",  // $9.99/mo
-    yearly:  "price_1TTqW6CqlxC7aoKR8nzCDAF3",  // $79.99/yr
+    monthly: "price_REPLACE_SUPER_MONTHLY",  // $7.99/mo  — create in Stripe, paste ID
+    yearly:  "price_REPLACE_SUPER_YEARLY",   // $59.99/yr — create in Stripe, paste ID
   },
   max: {
-    monthly: "price_1TTqWZCqlxC7aoKRESZls3vU",  // $19.99/mo
-    yearly:  "price_1TTqXnCqlxC7aoKRsOSwHFBy",  // $149.99/yr
+    monthly: "price_REPLACE_MAX_MONTHLY",    // $14.99/mo  — create in Stripe, paste ID
+    yearly:  "price_REPLACE_MAX_YEARLY",     // $119.99/yr — create in Stripe, paste ID
   },
   // Family plan coming soon — not yet available
 };
@@ -74,12 +92,13 @@ export default async function handler(req, res) {
 
     const baseUrl = req.headers.origin || `https://${req.headers.host}`;
 
-    // 3-day free trial on Super Knox MONTHLY only.
-    // Yearly buyers are already committing — they don't need a trial, and
-    // a trial on a $79.99 annual purchase reads as gimmicky rather than useful.
+    // 7-day free trial on Super Knox MONTHLY only.
+    // Yearly buyers are already committing — they don't need a trial, and a
+    // trial on a $59.99 annual purchase reads as gimmicky rather than useful.
+    // 7 days (up from 3) gives users a full school week to feel the value.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === "super" && billing === "monthly") {
-      subscriptionData.trial_period_days = 3;
+      subscriptionData.trial_period_days = 7;
     }
 
     const session = await stripe.checkout.sessions.create({
