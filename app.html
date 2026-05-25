@@ -1880,8 +1880,8 @@
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
         const cfg = plan === 'max'   ? { cls: 'max',   icon: '🦊', name: 'Max Knox',   tag: 'Top tier · unlimited learning' }
-                  : plan === 'super' ? { cls: 'super', icon: '⚡', name: 'Super Knox', tag: 'Pro plan · 25/day homework' }
-                  :                    { cls: 'free',  icon: '🆓', name: 'Free',       tag: '5 homework questions / day' };
+                  : plan === 'super' ? { cls: 'super', icon: '⚡', name: 'Super Knox', tag: 'Pro plan · 40/day homework' }
+                  :                    { cls: 'free',  icon: '🆓', name: 'Free',       tag: '10 homework questions / day' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
