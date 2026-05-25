@@ -3476,7 +3476,8 @@
     if (proBtn)    proBtn.textContent    = type === 'monthly' ? 'Start Free Trial' : 'Get Super Knox Yearly';
     // The badge changes content based on billing period:
     //   Monthly → "🎉 7-DAY FREE TRIAL"  (matches server-side trial_period_days)
-    //   Yearly  → "💰 SAVE 2 MONTHS"     (marketing reframing — $59.99 vs $7.99×12=$95.88)
+    //   Yearly  → "💰 4 MONTHS FREE"     ($35.89 saved ÷ $7.99/mo ≈ 4.5 months;
+    //                                    we round down to 4 to stay honest)
     if (proTrial) {
       proTrial.style.display = 'flex';
       if (type === 'monthly') {
@@ -3484,7 +3485,7 @@
         proTrial.style.background = '#FF6B00';
         proTrial.style.boxShadow  = '0 2px 0 #CC5500';
       } else {
-        proTrial.textContent = '💰 SAVE 2 MONTHS';
+        proTrial.textContent = '💰 4 MONTHS FREE';
         proTrial.style.background = '#7C3AED';
         proTrial.style.boxShadow  = '0 2px 0 #5B21B6';
       }
