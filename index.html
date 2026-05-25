@@ -1953,83 +1953,101 @@
       <p style="font-size:17px;font-weight:600;color:#9CA3AF;">The full Knox experience — chat history, three learning modes, step-by-step answers, and photo upload.</p>
     </div>
 
-    <!-- App mockup -->
-    <div class="reveal" style="background:#111827;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:2px solid #1F2937;max-width:900px;margin:0 auto 48px;">
+    <!-- App mockup — matches current /app design (light theme, cream bg, white sidebar) -->
+    <div class="reveal" style="background:#3C3C3C;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:2px solid #2D2D2D;max-width:900px;margin:0 auto 48px;">
 
-      <!-- Fake topbar -->
-      <div style="background:#111827;padding:12px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1F2937;">
+      <!-- Fake topbar (Mac chrome) -->
+      <div style="background:#3C3C3C;padding:12px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #4A4A4A;">
         <div style="display:flex;gap:6px;">
           <div style="width:12px;height:12px;border-radius:50%;background:#FF5F56;"></div>
           <div style="width:12px;height:12px;border-radius:50%;background:#FFBD2E;"></div>
           <div style="width:12px;height:12px;border-radius:50%;background:#27C93F;"></div>
         </div>
-        <div style="flex:1;background:#1F2937;border-radius:8px;height:28px;display:flex;align-items:center;padding:0 12px;">
-          <span style="font-size:11px;font-weight:600;color:#6B7280;">knoxknowsapp.com/app</span>
+        <div style="flex:1;background:#4A4A4A;border-radius:8px;height:28px;display:flex;align-items:center;padding:0 12px;">
+          <span style="font-size:11px;font-weight:600;color:#BBB;">knoxknowsapp.com/app</span>
         </div>
       </div>
 
-      <!-- Fake app shell -->
-      <div style="display:flex;height:420px;">
+      <!-- Fake app shell — light theme to match real app -->
+      <div style="display:flex;height:440px;background:#FFF8F0;">
 
-        <!-- Sidebar -->
-        <div style="width:220px;background:#111827;border-right:1px solid #1F2937;display:flex;flex-direction:column;flex-shrink:0;padding:16px 12px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <img src="./knox-logo-square.jpg" alt="Knox" style="width:28px;height:28px;border-radius:8px;object-fit:cover;" onerror="this.style.background='#FF6B00'">
-            <span style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;color:white;">Knox <span style="color:#FF6B00;">Knows</span></span>
+        <!-- Sidebar (white with cream accents) -->
+        <div style="width:220px;background:white;border-right:2px solid #E5E5E5;display:flex;flex-direction:column;flex-shrink:0;padding:14px 12px;">
+          <!-- Brand row -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #F0F0F0;">
+            <img src="./knox-logo-square.jpg" alt="Knox" style="width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 1.5px #FFE0C2;object-fit:cover;" onerror="this.style.background='#FF6B00'">
+            <span style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:#3C3C3C;letter-spacing:-0.01em;">Knox <span style="color:#FF6B00;">Knows</span></span>
           </div>
-          <div style="background:#FF6B00;border-radius:12px;padding:8px 12px;font-size:12px;font-weight:800;color:white;text-align:center;margin-bottom:14px;box-shadow:0 3px 0 #CC5500;">+ New chat</div>
-          <div style="font-size:9px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Mode</div>
-          <div style="background:#374151;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;color:white;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-            <div style="width:7px;height:7px;border-radius:50%;background:#FF6B00;flex-shrink:0;"></div>Get the Answer
+          <!-- New chat button -->
+          <button style="background:#FF6B00;border:none;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:800;color:white;text-align:center;margin-bottom:14px;box-shadow:0 3px 0 #CC5500;font-family:inherit;">+ New chat</button>
+          <!-- Mode label -->
+          <div style="font-size:9px;font-weight:900;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding-left:4px;">Mode</div>
+          <!-- Active: Answer (orange) -->
+          <div style="background:#FFF4EC;border:1.5px solid #FFE0C2;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800;color:#FF6B00;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+            <span style="font-size:13px;">⚡</span>Get the Answer
           </div>
-          <div style="padding:8px 10px;font-size:12px;font-weight:600;color:#6B7280;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-            <div style="width:7px;height:7px;border-radius:50%;background:#1CB0F6;flex-shrink:0;"></div>Learn with Knox
+          <!-- Inactive: Learn (blue text) -->
+          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#777;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+            <span style="font-size:13px;">🧠</span>Learn with Knox
           </div>
-          <div style="padding:8px 10px;font-size:12px;font-weight:600;color:#6B7280;display:flex;align-items:center;gap:7px;margin-bottom:14px;">
-            <div style="width:7px;height:7px;border-radius:50%;background:#58CC02;flex-shrink:0;"></div>Chat with Knox
+          <!-- Inactive: Chat (green text) -->
+          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#777;display:flex;align-items:center;gap:7px;margin-bottom:14px;">
+            <span style="font-size:13px;">💬</span>Chat with Knox
           </div>
-          <div style="font-size:9px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">History</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#9CA3AF;border-radius:7px;background:#1F2937;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Solve 3x² - 5x + 2 = 0</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#6B7280;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">How does photosynthesis work?</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#6B7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">What caused WW1?</div>
+          <!-- History label -->
+          <div style="font-size:9px;font-weight:900;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding-left:4px;">History</div>
+          <div style="padding:7px 8px;font-size:11px;font-weight:700;color:#3C3C3C;border-radius:8px;background:#F7F7F7;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Solve 3x² - 5x + 2 = 0</div>
+          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#777;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">How does photosynthesis work?</div>
+          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#777;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">What caused WW1?</div>
         </div>
 
-        <!-- Main chat area -->
-        <div style="flex:1;background:white;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Main chat area (cream bg) -->
+        <div style="flex:1;background:#FFF8F0;display:flex;flex-direction:column;overflow:hidden;">
 
-          <!-- Topbar -->
-          <div style="padding:0 16px;height:52px;border-bottom:2px solid #E5E5E5;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <div style="display:flex;gap:4px;background:#F7F7F7;border-radius:12px;padding:4px;">
-              <div style="background:#FF6B00;color:white;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:800;box-shadow:0 3px 0 #CC5500;">Get the Answer</div>
-              <div style="color:#9CA3AF;padding:6px 12px;font-size:11px;font-weight:700;">Learn with Knox</div>
-              <div style="color:#9CA3AF;padding:6px 12px;font-size:11px;font-weight:700;">Chat with Knox</div>
+          <!-- Topbar (orange header to match real app) -->
+          <div style="padding:0 16px;height:52px;background:#FF6B00;border-bottom:3px solid #CC5500;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:white;">Knox Knows</span>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+              <div style="background:rgba(255,255,255,0.2);color:white;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:800;border:1.5px solid rgba(255,255,255,0.3);"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFD900;margin-right:4px;vertical-align:1px;"></span>9/10 left</div>
+              <div style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:white;border-radius:999px;padding:3px 10px 3px 4px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:5px;">
+                <div style="width:20px;height:20px;border-radius:50%;background:#FFE0C2;color:#FF6B00;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;">A</div>
+                Alex
+              </div>
             </div>
-            <div style="margin-left:auto;background:#FF6B00;color:white;border-radius:10px;padding:6px 12px;font-size:10px;font-weight:800;box-shadow:0 2px 0 #CC5500;">⚡ Upgrade</div>
           </div>
 
           <!-- Chat messages -->
-          <div style="flex:1;padding:20px;overflow:hidden;display:flex;flex-direction:column;gap:14px;">
+          <div style="flex:1;padding:18px;overflow:hidden;display:flex;flex-direction:column;gap:12px;">
 
-            <!-- User message -->
+            <!-- User message (orange bubble, right) -->
             <div style="display:flex;justify-content:flex-end;">
-              <div style="background:#F3F4F6;border-radius:18px 18px 4px 18px;padding:10px 14px;font-size:13px;font-weight:500;color:#3C3C3C;max-width:70%;">
+              <div style="background:#FF6B00;color:white;border-radius:18px 18px 4px 18px;padding:9px 14px;font-size:13px;font-weight:600;max-width:75%;box-shadow:0 2px 0 #CC5500;">
                 Solve 3x² - 5x + 2 = 0 step by step
               </div>
             </div>
 
             <!-- Knox answer -->
             <div style="display:flex;gap:10px;align-items:flex-start;">
-              <img src="./knox-logo-square.jpg" alt="Knox" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #E5E5E5;" onerror="this.style.background='#FF6B00'">
-              <div style="flex:1;">
-                <div style="background:white;border:2px solid #E5E5E5;border-radius:4px 18px 18px 18px;padding:14px 16px;box-shadow:0 4px 0 #E5E5E5;">
-                  <div style="font-size:10px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">📋 Answer</div>
-                  <div style="font-size:13px;font-weight:700;color:#3C3C3C;margin-bottom:10px;">x = 1 or x = 2/3</div>
-                  <div style="font-size:10px;font-weight:900;color:#1CB0F6;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">🔢 Step-by-Step</div>
-                  <div style="font-size:12px;font-weight:500;color:#555;line-height:1.6;">
-                    <div style="margin-bottom:3px;">1. Identify: a = 3, b = -5, c = 2</div>
-                    <div style="margin-bottom:3px;">2. Use quadratic formula: x = (-b ± √(b²-4ac)) / 2a</div>
-                    <div style="margin-bottom:3px;">3. Calculate discriminant: 25 - 24 = 1</div>
-                    <div>4. Both solutions: x = (5+1)/6 = 1 and x = (5-1)/6 = 2/3</div>
+              <img src="./knox-logo-square.jpg" alt="Knox" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.08);" onerror="this.style.background='#FFE0C2'">
+              <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
+                <!-- Label row -->
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:10px;font-weight:900;color:#3C3C3C;">KNOX</span>
+                  <span style="background:#FFE0C2;color:#FF6B00;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:900;letter-spacing:0.04em;">ANSWER</span>
+                </div>
+                <!-- Final Answer section (orange left bar) -->
+                <div style="background:white;border:1.5px solid #FFD0A8;border-left:4px solid #FF6B00;border-radius:0 12px 12px 0;padding:10px 14px;">
+                  <div style="font-size:9px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">📋 FINAL ANSWER</div>
+                  <div style="font-size:13px;font-weight:700;color:#3C3C3C;">x = 1 or x = 2/3</div>
+                </div>
+                <!-- Step-by-step section (blue left bar) -->
+                <div style="background:white;border:1.5px solid #C7E9F8;border-left:4px solid #1CB0F6;border-radius:0 12px 12px 0;padding:10px 14px;">
+                  <div style="font-size:9px;font-weight:900;color:#1CB0F6;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">🔢 STEP-BY-STEP</div>
+                  <div style="font-size:11px;font-weight:500;color:#555;line-height:1.55;">
+                    <div style="margin-bottom:2px;">1. Identify: a = 3, b = -5, c = 2</div>
+                    <div style="margin-bottom:2px;">2. Quadratic formula: x = (-b ± √(b²-4ac)) / 2a</div>
+                    <div style="margin-bottom:2px;">3. Discriminant: 25 - 24 = 1</div>
+                    <div>4. x = (5+1)/6 = 1 and x = (5-1)/6 = 2/3</div>
                   </div>
                 </div>
               </div>
@@ -2037,11 +2055,14 @@
 
           </div>
 
-          <!-- Input -->
-          <div style="padding:10px 16px;border-top:2px solid #E5E5E5;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <div style="flex:1;background:white;border:2px solid #E5E5E5;border-radius:14px;padding:10px 14px;font-size:12px;color:#9CA3AF;font-weight:600;">Ask Knox anything...</div>
-            <div style="width:36px;height:36px;background:#FF6B00;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 0 #CC5500;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+          <!-- Input (orange outline = Answer mode) -->
+          <div style="padding:10px 16px;background:#FFF8F0;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <div style="flex:1;display:flex;align-items:center;gap:8px;background:white;border:2px solid #FF6B00;box-shadow:0 0 0 3px rgba(255,107,0,0.12);border-radius:18px;padding:7px 8px 7px 12px;">
+              <div style="background:#FFE0C2;color:#FF6B00;border-radius:10px;padding:5px 9px;font-size:10px;font-weight:800;flex-shrink:0;">⚡ Answer</div>
+              <div style="flex:1;font-size:12px;color:#999;font-weight:600;">Ask Knox anything…</div>
+              <button style="background:#FF6B00;border:none;width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 0 #CC5500;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              </button>
             </div>
           </div>
 
@@ -2052,7 +2073,7 @@
     <!-- CTA below mockup -->
     <div style="text-align:center;">
       <a href="/app" class="btn-orange" style="font-size:18px;padding:18px 48px;text-decoration:none;">Try Knox free →</a>
-      <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 5 free questions every day</p>
+      <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 10 free questions every day</p>
     </div>
   </div>
 </section>
@@ -2072,7 +2093,7 @@
       <div style="display:inline-flex;background:white;border:2px solid #E5E7EB;border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 #E5E7EB;">
         <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
         <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;">
-          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:#58CC02;color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 30%</span>
+          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:#58CC02;color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 37%</span>
         </button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
