@@ -39,14 +39,13 @@ const adminAuth = getAdminAuth();
 // ─────────────────────────────────────────────────────────────────────────
 const PRICES = {
   super: {
-    monthly: "price_REPLACE_SUPER_MONTHLY",  // $7.99/mo  — create in Stripe, paste ID
-    yearly:  "price_REPLACE_SUPER_YEARLY",   // $59.99/yr — create in Stripe, paste ID
+    monthly: "price_1Tb16gCqlxC7aoKRxPv4z4BP",  // $7.99/mo
+    yearly:  "price_1Tb17FCqlxC7aoKRIE0BZaWg",  // $59.99/yr
   },
   max: {
-    monthly: "price_REPLACE_MAX_MONTHLY",    // $14.99/mo  — create in Stripe, paste ID
-    yearly:  "price_REPLACE_MAX_YEARLY",     // $119.99/yr — create in Stripe, paste ID
+    monthly: "price_1Tb17fCqlxC7aoKRgQ3uxxlK",  // $14.99/mo
+    yearly:  "price_1Tb17zCqlxC7aoKRNOYaO73B",  // $119.99/yr
   },
-  // Family plan coming soon — not yet available
 };
 
 export default async function handler(req, res) {
