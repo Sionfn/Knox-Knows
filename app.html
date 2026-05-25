@@ -642,7 +642,8 @@
       overflow: hidden;
       flex-shrink: 0;
       background: var(--orange-light);
-      border: 3px solid var(--orange);
+      border: 3px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       margin-top: 2px;
     }
     .msg-knox-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
@@ -863,10 +864,15 @@
       padding: 8px 8px 8px 12px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .input-box:focus-within {
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(255,107,0,0.1);
-    }
+    /* Mode-aware input outline — matches the active mode's brand color.
+       Always shown (not just on focus) so the user knows which mode they're in. */
+    .input-box[data-mode="answer"] { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,107,0,0.12); }
+    .input-box[data-mode="learn"]  { border-color: var(--blue);   box-shadow: 0 0 0 3px rgba(28,176,246,0.12); }
+    .input-box[data-mode="chat"]   { border-color: var(--green);  box-shadow: 0 0 0 3px rgba(88,204,2,0.12); }
+    /* Slightly stronger ring when actually focused */
+    .input-box[data-mode="answer"]:focus-within { box-shadow: 0 0 0 4px rgba(255,107,0,0.18); }
+    .input-box[data-mode="learn"]:focus-within  { box-shadow: 0 0 0 4px rgba(28,176,246,0.18); }
+    .input-box[data-mode="chat"]:focus-within   { box-shadow: 0 0 0 4px rgba(88,204,2,0.18); }
     #appChatInput {
       flex: 1;
       border: none;
@@ -1452,7 +1458,7 @@
             <button onclick="appClearImage()" aria-label="Remove image">✕</button>
           </div>
 
-          <div class="input-box">
+          <div class="input-box" id="inputBox" data-mode="answer">
             <div id="modeSelectorWrap">
               <button id="modeDropdownBtn" onclick="toggleModeDropdown()" aria-haspopup="true" aria-label="Choose mode">
                 <span id="modeDropdownIcon" style="font-size:14px;">⚡</span>
@@ -2624,6 +2630,10 @@ window.appSetMode = function(mode) {
     };
     input.placeholder = ph[mode] || 'Ask Knox anything...';
   }
+
+  // Color the input outline based on mode (orange/blue/green).
+  const inputBox = $('inputBox');
+  if (inputBox) inputBox.setAttribute('data-mode', mode);
 
   const sendBtn = $('appSendBtn');
   if (sendBtn) {
