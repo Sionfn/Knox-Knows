@@ -34,11 +34,11 @@ const PRICE_TO_PLAN = {
   "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly $79.99 (old)
   "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly $19.99 (old)
   "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly $149.99 (old)
-  // NEW prices (2026 matrix) — replace placeholders with real Stripe IDs
-  "price_REPLACE_SUPER_MONTHLY":    "super",  // Super Monthly $7.99 (new)
-  "price_REPLACE_SUPER_YEARLY":     "super",  // Super Yearly $59.99 (new)
-  "price_REPLACE_MAX_MONTHLY":      "max",    // Max Monthly $14.99 (new)
-  "price_REPLACE_MAX_YEARLY":       "max",    // Max Yearly $119.99 (new)
+  // NEW prices (2026 matrix)
+  "price_1Tb16gCqlxC7aoKRxPv4z4BP":    "super",  // Super Monthly $7.99 (new)
+  "price_1Tb17FCqlxC7aoKRIE0BZaWg":     "super",  // Super Yearly $59.99 (new)
+  "price_1Tb17fCqlxC7aoKRgQ3uxxlK":      "max",    // Max Monthly $14.99 (new)
+  "price_1Tb17zCqlxC7aoKRNOYaO73B":     "max",    // Max Yearly $119.99 (new)
 };
 
 export const config = { api: { bodyParser: false } };
