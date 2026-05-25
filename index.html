@@ -980,6 +980,64 @@
       box-shadow:0 6px 0 #CC5500;
     }
     .pricing-card-pro-plus:hover { box-shadow:0 10px 0 #CC5500; }
+
+    /* ─── Pricing card animations (subtle, perf-friendly) ─── */
+    .plan-card {
+      display:flex; flex-direction:column;
+      border-radius:20px; padding:24px;
+      margin-top:14px; position:relative;
+      transition:transform 0.25s cubic-bezier(0.16,1,0.3,1),
+                 box-shadow 0.25s cubic-bezier(0.16,1,0.3,1);
+      will-change:transform;
+    }
+    .plan-card:hover {
+      transform:translateY(-6px);
+    }
+    /* When the user toggles monthly/yearly, the price gets a quick pop */
+    .price-pop {
+      animation:pricePop 0.32s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes pricePop {
+      0%   { transform:scale(1); }
+      45%  { transform:scale(1.08); }
+      100% { transform:scale(1); }
+    }
+    /* Trial badge gentle pulse — draws the eye without being annoying */
+    @keyframes badgeBob {
+      0%, 100% { transform:translateX(-50%) translateY(0); }
+      50%      { transform:translateX(-50%) translateY(-2px); }
+    }
+    #proTrialBadge {
+      animation:badgeBob 2.4s ease-in-out infinite;
+    }
+    /* Shared bullet rows so all three cards have identical structure */
+    .plan-bullet {
+      display:flex; align-items:flex-start; gap:9px;
+      font-size:13.5px; font-weight:600;
+      line-height:1.45; margin-bottom:11px;
+    }
+    .plan-bullet:last-child { margin-bottom:0; }
+    .plan-bullet-icon {
+      width:18px; height:18px; flex-shrink:0;
+      border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:900;
+      margin-top:1px;
+    }
+    .plan-divider {
+      height:1px; background:rgba(255,255,255,0.2);
+      margin:14px 0 12px;
+    }
+    .plan-teaser {
+      font-size:12px; font-weight:700; line-height:1.45;
+      display:flex; align-items:flex-start; gap:8px;
+      opacity:0.7;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .plan-card, .plan-card:hover { transition:none; transform:none; }
+      .price-pop { animation:none; }
+      #proTrialBadge { animation:none; }
+    }
     .popular-badge {
       position:absolute; top:-14px; left:50%; transform:translateX(-50%);
       background:var(--green); color:white; border:none;
@@ -1953,10 +2011,10 @@
       <p style="font-size:17px;font-weight:600;color:#9CA3AF;">The full Knox experience — chat history, three learning modes, step-by-step answers, and photo upload.</p>
     </div>
 
-    <!-- App mockup — matches current /app design (light theme, cream bg, white sidebar) -->
-    <div class="reveal" style="background:#3C3C3C;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:2px solid #2D2D2D;max-width:900px;margin:0 auto 48px;">
+    <!-- App showcase — real screenshot of /app -->
+    <div class="reveal" style="background:#3C3C3C;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:2px solid #2D2D2D;max-width:1000px;margin:0 auto 48px;">
 
-      <!-- Fake topbar (Mac chrome) -->
+      <!-- Mac chrome topbar -->
       <div style="background:#3C3C3C;padding:12px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #4A4A4A;">
         <div style="display:flex;gap:6px;">
           <div style="width:12px;height:12px;border-radius:50%;background:#FF5F56;"></div>
@@ -1968,106 +2026,8 @@
         </div>
       </div>
 
-      <!-- Fake app shell — light theme to match real app -->
-      <div style="display:flex;height:440px;background:#FFF8F0;">
-
-        <!-- Sidebar (white with cream accents) -->
-        <div style="width:220px;background:white;border-right:2px solid #E5E5E5;display:flex;flex-direction:column;flex-shrink:0;padding:14px 12px;">
-          <!-- Brand row -->
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #F0F0F0;">
-            <img src="./knox-logo-square.jpg" alt="Knox" style="width:30px;height:30px;border-radius:50%;border:2px solid white;box-shadow:0 0 0 1.5px #FFE0C2;object-fit:cover;" onerror="this.style.background='#FF6B00'">
-            <span style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:#3C3C3C;letter-spacing:-0.01em;">Knox <span style="color:#FF6B00;">Knows</span></span>
-          </div>
-          <!-- New chat button -->
-          <button style="background:#FF6B00;border:none;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:800;color:white;text-align:center;margin-bottom:14px;box-shadow:0 3px 0 #CC5500;font-family:inherit;">+ New chat</button>
-          <!-- Mode label -->
-          <div style="font-size:9px;font-weight:900;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding-left:4px;">Mode</div>
-          <!-- Active: Answer (orange) -->
-          <div style="background:#FFF4EC;border:1.5px solid #FFE0C2;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:800;color:#FF6B00;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-            <span style="font-size:13px;">⚡</span>Get the Answer
-          </div>
-          <!-- Inactive: Learn (blue text) -->
-          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#777;display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-            <span style="font-size:13px;">🧠</span>Learn with Knox
-          </div>
-          <!-- Inactive: Chat (green text) -->
-          <div style="padding:7px 10px;font-size:12px;font-weight:700;color:#777;display:flex;align-items:center;gap:7px;margin-bottom:14px;">
-            <span style="font-size:13px;">💬</span>Chat with Knox
-          </div>
-          <!-- History label -->
-          <div style="font-size:9px;font-weight:900;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding-left:4px;">History</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:700;color:#3C3C3C;border-radius:8px;background:#F7F7F7;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Solve 3x² - 5x + 2 = 0</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#777;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">How does photosynthesis work?</div>
-          <div style="padding:7px 8px;font-size:11px;font-weight:600;color:#777;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">What caused WW1?</div>
-        </div>
-
-        <!-- Main chat area (cream bg) -->
-        <div style="flex:1;background:#FFF8F0;display:flex;flex-direction:column;overflow:hidden;">
-
-          <!-- Topbar (orange header to match real app) -->
-          <div style="padding:0 16px;height:52px;background:#FF6B00;border-bottom:3px solid #CC5500;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <span style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:white;">Knox Knows</span>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-              <div style="background:rgba(255,255,255,0.2);color:white;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:800;border:1.5px solid rgba(255,255,255,0.3);"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#FFD900;margin-right:4px;vertical-align:1px;"></span>9/10 left</div>
-              <div style="background:rgba(255,255,255,0.18);border:1.5px solid rgba(255,255,255,0.35);color:white;border-radius:999px;padding:3px 10px 3px 4px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:5px;">
-                <div style="width:20px;height:20px;border-radius:50%;background:#FFE0C2;color:#FF6B00;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;">A</div>
-                Alex
-              </div>
-            </div>
-          </div>
-
-          <!-- Chat messages -->
-          <div style="flex:1;padding:18px;overflow:hidden;display:flex;flex-direction:column;gap:12px;">
-
-            <!-- User message (orange bubble, right) -->
-            <div style="display:flex;justify-content:flex-end;">
-              <div style="background:#FF6B00;color:white;border-radius:18px 18px 4px 18px;padding:9px 14px;font-size:13px;font-weight:600;max-width:75%;box-shadow:0 2px 0 #CC5500;">
-                Solve 3x² - 5x + 2 = 0 step by step
-              </div>
-            </div>
-
-            <!-- Knox answer -->
-            <div style="display:flex;gap:10px;align-items:flex-start;">
-              <img src="./knox-logo-square.jpg" alt="Knox" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2.5px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.08);" onerror="this.style.background='#FFE0C2'">
-              <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
-                <!-- Label row -->
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <span style="font-size:10px;font-weight:900;color:#3C3C3C;">KNOX</span>
-                  <span style="background:#FFE0C2;color:#FF6B00;border-radius:6px;padding:2px 7px;font-size:9px;font-weight:900;letter-spacing:0.04em;">ANSWER</span>
-                </div>
-                <!-- Final Answer section (orange left bar) -->
-                <div style="background:white;border:1.5px solid #FFD0A8;border-left:4px solid #FF6B00;border-radius:0 12px 12px 0;padding:10px 14px;">
-                  <div style="font-size:9px;font-weight:900;color:#FF6B00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">📋 FINAL ANSWER</div>
-                  <div style="font-size:13px;font-weight:700;color:#3C3C3C;">x = 1 or x = 2/3</div>
-                </div>
-                <!-- Step-by-step section (blue left bar) -->
-                <div style="background:white;border:1.5px solid #C7E9F8;border-left:4px solid #1CB0F6;border-radius:0 12px 12px 0;padding:10px 14px;">
-                  <div style="font-size:9px;font-weight:900;color:#1CB0F6;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">🔢 STEP-BY-STEP</div>
-                  <div style="font-size:11px;font-weight:500;color:#555;line-height:1.55;">
-                    <div style="margin-bottom:2px;">1. Identify: a = 3, b = -5, c = 2</div>
-                    <div style="margin-bottom:2px;">2. Quadratic formula: x = (-b ± √(b²-4ac)) / 2a</div>
-                    <div style="margin-bottom:2px;">3. Discriminant: 25 - 24 = 1</div>
-                    <div>4. x = (5+1)/6 = 1 and x = (5-1)/6 = 2/3</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Input (orange outline = Answer mode) -->
-          <div style="padding:10px 16px;background:#FFF8F0;display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <div style="flex:1;display:flex;align-items:center;gap:8px;background:white;border:2px solid #FF6B00;box-shadow:0 0 0 3px rgba(255,107,0,0.12);border-radius:18px;padding:7px 8px 7px 12px;">
-              <div style="background:#FFE0C2;color:#FF6B00;border-radius:10px;padding:5px 9px;font-size:10px;font-weight:800;flex-shrink:0;">⚡ Answer</div>
-              <div style="flex:1;font-size:12px;color:#999;font-weight:600;">Ask Knox anything…</div>
-              <button style="background:#FF6B00;border:none;width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 0 #CC5500;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-              </button>
-            </div>
-          </div>
-
-        </div>
-      </div>
+      <!-- Screenshot -->
+      <img src="./knox-in-action.png" alt="Knox Knows app — answering a photosynthesis question with Final Answer, Explanation, and Step-by-step sections" loading="lazy" style="display:block;width:100%;height:auto;">
     </div>
 
     <!-- CTA below mockup -->
@@ -2106,97 +2066,76 @@
     <div class="rg-pricing" style="align-items:stretch;">
 
       <!-- FREE -->
-      <div class="reveal delay-1" style="background:#1CB0F6;border-radius:20px;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
+      <div class="plan-card reveal delay-1" style="background:#1CB0F6;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;">
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">Free</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;">$0</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;margin-bottom:16px;">forever</div>
         <!-- Credits summary -->
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;flex-direction:column;gap:6px;">
           <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.7);margin-bottom:2px;">Daily credits</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>📚 Homework answers</span><span>10/day</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>🧠 Learn with Knox</span><span>15/day</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>💬 Chat with Knox</span><span>30/day</span></div>
         </div>
-        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:16px;line-height:1.4;">Real answers, real explanations — no card, no catch</div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Clear answers with explanations, every time</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Learn with Knox — guided hints that lead you to the answer</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Every subject — math, science, history, essays & more</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Snap a photo of your homework and Knox reads it</div>
-          <div style="height:1px;background:rgba(255,255,255,0.2);margin:6px 0;"></div>
-          <div style="font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:2px;">Upgrade to Super Knox to unlock</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>5× more credits — 25 homework, 50 learn, 50 chat daily</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Step-by-step walkthroughs on any problem that needs one</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Tips, memory tricks & real-world insights</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Full Socratic tutoring — Knox guides you as long as you need</div>
+        <div style="flex:1;color:white;">
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Clear answers with explanations, every time</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every subject — math, science, history, essays</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Snap a photo and Knox reads it</div>
+          <div class="plan-divider"></div>
+          <div class="plan-teaser" style="color:rgba(255,255,255,0.65);">🔒 Need more? Super Knox unlocks step-by-step walkthroughs and 4× the credits.</div>
         </div>
-        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">✨ No credit card required</div>
+        <button onclick="window.location.href='/app'" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">✨ No credit card required</div>
       </div>
 
       <!-- SUPER KNOX -->
-      <div class="reveal delay-2" style="position:relative;background:#58CC02;border-radius:20px;border:2px solid #46A302;box-shadow:0 6px 0 #2D6A00;padding:24px;display:flex;flex-direction:column;margin-top:14px;">
+      <div class="plan-card reveal delay-2" style="background:#58CC02;border:2px solid #46A302;box-shadow:0 6px 0 #2D6A00;">
         <div id="proTrialBadge" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#FF6B00;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">⚡ Super Knox</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="proPrice">$7.99</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="proPeriod">/month</div>
         <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px;">$59.99/yr — save $35.89</div>
         <!-- Credits summary -->
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin:12px 0 16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin:14px 0 18px;display:flex;flex-direction:column;gap:6px;">
           <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.7);margin-bottom:2px;">Daily credits</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>📚 Homework answers</span><span>40/day</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>🧠 Learn with Knox</span><span>100/day</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>💬 Chat with Knox</span><span>200/day</span></div>
         </div>
-        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:16px;line-height:1.4;">Everything in Free — with a lot more room to use it</div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
-          <div style="font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:2px;">Everything in Free, plus:</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>4× more credits — 40 homework, 100 learn, 200 chat daily</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Step-by-step walkthroughs on any problem that needs one</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Tips, memory tricks, common mistakes & real-world insights</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Full Socratic tutoring — Knox guides you as long as you need</div>
-          <div style="height:1px;background:rgba(255,255,255,0.2);margin:6px 0;"></div>
-          <div style="font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:2px;">Upgrade to Max Knox to unlock</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>5× more credits — 200 homework, unlimited learn, unlimited chat</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Powered by advanced AI — noticeably smarter answers</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Connections to bigger concepts + end-of-session wrap-ups</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.45);"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🔒</span>Deeper tutoring — Knox teaches the WHY, not just the how</div>
+        <div style="flex:1;color:white;">
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Step-by-step walkthroughs on every problem</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Tips, memory tricks &amp; common-mistake warnings</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Full Socratic tutoring — guided as long as you need</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>4× the credits of Free</div>
+          <div class="plan-divider"></div>
+          <div class="plan-teaser" style="color:rgba(255,255,255,0.7);">🔒 Max Knox adds unlimited learn &amp; chat plus smarter AI.</div>
         </div>
-        <button onclick="handlePurchase('Super')" id="proCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
+        <button onclick="handlePurchase('Super')" id="proCTABtn" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
-      <!-- MAX KNOX — FEATURED (orange like Pro was) -->
-      <div class="reveal delay-3" style="background:#FF6B00;border-radius:20px;border:2px solid #CC5500;box-shadow:0 6px 0 #CC5500;padding:24px;display:flex;flex-direction:column;position:relative;margin-top:14px;">
+      <!-- MAX KNOX — FEATURED -->
+      <div class="plan-card reveal delay-3" style="background:#FF6B00;border:2px solid #CC5500;box-shadow:0 6px 0 #CC5500;">
         <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#1f2937;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:999px;white-space:nowrap;">MOST POPULAR</div>
         <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.8);margin-bottom:16px;">🚀 Max Knox</div>
         <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="maxPrice">$14.99</div>
         <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;">/month</div>
         <div class="yearly-note" id="maxYearlyNote" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px;">$119.99/yr — save $59.89</div>
         <!-- Credits summary -->
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin:12px 0 16px;display:flex;flex-direction:column;gap:6px;">
+        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin:14px 0 18px;display:flex;flex-direction:column;gap:6px;">
           <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.7);margin-bottom:2px;">Daily credits</div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>📚 Homework answers</span><span>200/day</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>🧠 Learn with Knox</span><span>Unlimited</span></div>
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>💬 Chat with Knox</span><span>Unlimited</span></div>
         </div>
-        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:16px;line-height:1.4;">Everything Knox can do — nothing held back</div>
-        <div style="flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
-          <div style="font-size:10px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:2px;">Everything in Super Knox, plus:</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>5× more credits — 200 homework, unlimited learn & chat</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Powered by advanced AI — noticeably smarter answers</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Key points broken out so nothing gets missed</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Longer, richer answers — Knox never has to cut short</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>End-of-session wrap-ups — what you learned, what to remember</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Connections to bigger concepts &amp; real-world applications</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:white;"><span style="width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.3);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">✔</span>Deeper tutoring — Knox teaches the WHY, not just the how</div>
+        <div style="flex:1;color:white;">
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Advanced AI model — noticeably smarter answers</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Deeper tutoring — Knox teaches the WHY</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>End-of-session wrap-ups — what you learned, what to remember</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Connections to bigger concepts &amp; real-world applications</div>
         </div>
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:center;">
-          <div style="font-size:22px;margin-bottom:6px;">🚀</div>
-          <div style="font-size:14px;font-weight:900;color:white;line-height:1.4;">200 homework a day, unlimited learn &amp; chat. Full power, whenever you need it.</div>
-        </div>
-        <button onclick="handlePurchase('Max')" id="maxCTABtn" style="width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;line-height:1.5;">🔒 Cancel anytime · Secure Stripe checkout</div>
+        <button onclick="handlePurchase('Max')" id="maxCTABtn" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#FF6B00;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Get Max Knox</button>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">🔒 Cancel anytime · Secure Stripe checkout</div>
       </div>
 
 </section>
@@ -3500,6 +3439,17 @@
     if (maxBtn)   maxBtn.textContent    = type === 'monthly' ? 'Get Max Knox' : 'Get Max Knox Yearly';
 
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
+
+    // Trigger the price-pop animation on the two price elements.
+    // Removing and re-adding the class on the next animation frame is the
+    // canonical way to "replay" a CSS animation in vanilla JS.
+    [proPrice, maxPrice].forEach(el => {
+      if (!el) return;
+      el.classList.remove('price-pop');
+      // Force reflow before re-adding so the browser registers it as new
+      void el.offsetWidth;
+      el.classList.add('price-pop');
+    });
   }
 
   function setQuestion(q) {}
