@@ -178,7 +178,6 @@
 
     * { margin:0; padding:0; box-sizing:border-box; }
     html {
-      scroll-behavior:smooth;
       overflow-x:hidden;
       overscroll-behavior-x:none;
     }
@@ -1490,16 +1489,22 @@
     .history-answer { font-size:13px; color:#777; margin-top:4px; line-height:1.5; }
 
     /* Reveal animations */
-    .reveal { opacity:0; transform:translateY(24px); transition:opacity 0.6s ease, transform 0.6s ease; }
-    .reveal.visible { opacity:1; transform:none; }
-    .reveal-left { opacity:0; transform:translateX(-24px); transition:opacity 0.6s ease, transform 0.6s ease; }
-    .reveal-left.visible { opacity:1; transform:none; }
-    .reveal-right { opacity:0; transform:translateX(24px); transition:opacity 0.6s ease, transform 0.6s ease; }
-    .reveal-right.visible { opacity:1; transform:none; }
-    .delay-1 { transition-delay:0.05s; }
-    .delay-2 { transition-delay:0.15s; }
-    .delay-3 { transition-delay:0.25s; }
-    .delay-4 { transition-delay:0.35s; }
+    /* Scroll-reveal — kept light to avoid jank.
+       Opacity-only is much cheaper than transform+opacity, and a shorter
+       duration means simultaneous animations finish faster. */
+    .reveal { opacity:0; transition:opacity 0.4s ease; }
+    .reveal.visible { opacity:1; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity:1; transition:none; }
+    }
+    .reveal-left  { opacity:0; transition:opacity 0.4s ease; }
+    .reveal-left.visible { opacity:1; }
+    .reveal-right { opacity:0; transition:opacity 0.4s ease; }
+    .reveal-right.visible { opacity:1; }
+    .delay-1 { transition-delay:0.04s; }
+    .delay-2 { transition-delay:0.08s; }
+    .delay-3 { transition-delay:0.12s; }
+    .delay-4 { transition-delay:0.16s; }
 
     /* Section title underline */
     .section-title { font-size:clamp(26px,4vw,40px); font-weight:900; letter-spacing:-0.02em; }
@@ -2661,34 +2666,14 @@
       if (typeof window.resumePendingCheckoutIfAny === 'function') {
         try { window.resumePendingCheckoutIfAny(); } catch(e) {}
       }
-      // ── Returning user auto-scroll ─────────────────────────────────────
-      // When a logged-in user loads the page fresh, skip the marketing
-      // content and scroll them straight to the Ask Knox chat section —
-      // same experience as ChatGPT/Claude where returning users land in chat.
-      // Guards:
-      // 1. Only on first auth event (page load restore, not in-session signup)
-      // 2. Skip if there's a pending checkout (going to Stripe instead)
-      // 3. Skip if there's a ?payment=success param (payment modal showing)
-      // 4. Small delay so the page renders fully before scrolling
-      if (_isFirstAuthEvent) {
-        _isFirstAuthEvent = false;
-        const params = new URLSearchParams(window.location.search);
-        const hasPaymentParam = params.get('payment');
-        let hasPendingCheckout = false;
-        try {
-          const raw = sessionStorage.getItem('pendingCheckout');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            hasPendingCheckout = parsed && parsed.plan && (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000);
-          }
-        } catch(e) {}
-        const cameFromApp = params.get('from') === 'app';
-        if (!hasPaymentParam && !hasPendingCheckout && !cameFromApp) {
-          window.location.replace('/app');
-        }
-      } else {
-        _isFirstAuthEvent = false;
-      }
+      // ── Returning user behavior ────────────────────────────────────────
+      // Returning users stay on the marketing site. The header's "Open Knox"
+      // button (and the chat preview anchor) gives them the choice of when
+      // to enter the app. We deliberately do NOT redirect them automatically,
+      // because doing so breaks browsing — they can't read legal pages,
+      // compare plans, or follow internal links without getting bounced to
+      // the app on every page reload.
+      _isFirstAuthEvent = false;
     } else {
       window.userPlan = "free";
       userPlan = "free";
@@ -2698,9 +2683,14 @@
     }
   });
 
-  // ── Redirect to app after successful auth ────────────────────────────────
-  // Guards: skip if ?payment= is in the URL (payment modal is showing)
-  // or if there's a fresh pending checkout (Stripe is about to open).
+  // ── Redirect to /app — used by EXPLICIT login flows ──────────────────
+  // Called only when the user has just clicked Sign In / Sign Up and
+  // intentionally completed an auth action. NOT called from
+  // onAuthStateChanged page-load restores — that's what made the site
+  // un-browseable before (every page reload threw you to /app).
+  //
+  // Guards: skip if there's a payment success modal showing or a pending
+  // checkout (in which case Stripe checkout opens instead).
   function redirectToApp() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment')) return;
@@ -2711,7 +2701,7 @@
         if (parsed && parsed.plan && (Date.now() - (parsed.ts || 0) < 5 * 60 * 1000)) return;
       }
     } catch(e) {}
-    window.location.replace('/app');
+    window.location.href = '/app';
   }
   window.redirectToApp = redirectToApp;
 
