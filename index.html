@@ -2082,7 +2082,7 @@
           <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every subject — math, science, history, essays</div>
           <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Snap a photo and Knox reads it</div>
           <div class="plan-divider"></div>
-          <div class="plan-teaser" style="color:rgba(255,255,255,0.65);">🔒 Need more? Super Knox unlocks step-by-step walkthroughs and 4× the credits.</div>
+          <div class="plan-teaser" style="color:rgba(255,255,255,0.65);">🔒 Need more? Super Knox unlocks step-by-step walkthroughs and 4-6× the credits.</div>
         </div>
         <button onclick="window.location.href='/app'" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
         <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">✨ No credit card required</div>
@@ -2103,10 +2103,10 @@
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:white;"><span>💬 Chat with Knox</span><span>200/day</span></div>
         </div>
         <div style="flex:1;color:white;">
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Step-by-step walkthroughs on every problem</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Step-by-step walkthroughs when you need them</div>
           <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Tips, memory tricks &amp; common-mistake warnings</div>
           <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Full Socratic tutoring — guided as long as you need</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>4× the credits of Free</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Up to 6× more credits than Free</div>
           <div class="plan-divider"></div>
           <div class="plan-teaser" style="color:rgba(255,255,255,0.7);">🔒 Max Knox adds unlimited learn &amp; chat plus smarter AI.</div>
         </div>
@@ -2790,7 +2790,7 @@
         <p style="margin:0 0 22px;font-size:15px;font-weight:600;color:#9CA3AF;line-height:1.5;">Your Knox Knows account is ready to go.</p>
         <div style="background:#FFF7F0;border:1.5px solid #FFE0C2;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
           <p style="margin:0;font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">
-            You've got <strong style="color:#1f2937;">5 free questions a day</strong> across every subject. Type a question or snap a photo of your homework — Knox handles both.
+            You've got <strong style="color:#1f2937;">10 free questions a day</strong> across every subject. Type a question or snap a photo of your homework — Knox handles both.
           </p>
         </div>
         <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
@@ -2891,11 +2891,11 @@
   let billing = 'monthly';
   let hwUsedCount = 0;
   let csUsedCount = 0;
-  const DAILY_LIMIT = 5; // free plan
+  const DAILY_LIMIT = 10; // free plan hw quota
   // These must match server-side PLAN_QUOTAS in api/ask.js
-  const PLAN_LIMITS    = { free: 5,   super: 25,  max: 100 };
-  const LEARN_LIMITS   = { free: 10,  super: 50,  max: Infinity };
-  const CASUAL_LIMITS  = { free: 20,  super: 50,  max: 500 };
+  const PLAN_LIMITS    = { free: 10,  super: 40,  max: 200      };  // homework
+  const LEARN_LIMITS   = { free: 15,  super: 100, max: Infinity };  // learn
+  const CASUAL_LIMITS  = { free: 30,  super: 200, max: Infinity };  // chat
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -3243,9 +3243,9 @@
     if (chatLblEl)   chatLblEl.style.display   = '';
 
     const uPlan     = window.userPlan || 'free';
-    const hwLimit   = PLAN_LIMITS[uPlan]   || 5;
-    const learnLimit= LEARN_LIMITS[uPlan]  || 10;
-    const csLimit   = CASUAL_LIMITS[uPlan] || 20;
+    const hwLimit   = PLAN_LIMITS[uPlan]   || 10;
+    const learnLimit= LEARN_LIMITS[uPlan]  || 15;
+    const csLimit   = CASUAL_LIMITS[uPlan] || 30;
     const usage     = getUsageData();
     const hwUsed    = usage.count   || 0;
     const learnUsed = usage.learn   || 0;
@@ -3759,16 +3759,16 @@
     }
     if (userPlan === 'max') {
       // Max users have nothing to upgrade to — show usage only.
-      const _lim = PLAN_LIMITS.max || 100;
+      const _lim = PLAN_LIMITS.max || 200;
       const left = Math.max(0, _lim - (usage.count || 0));
       counter.innerHTML = `Daily questions left: ${left}`;
       counter.style.color = left <= 5 ? '#dc2626' : '#4b5563';
     } else if (!window.currentUser) {
-      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 5 questions/day ✨</span>`;
+      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 10 questions/day ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
       const _pl = window.userPlan || userPlan || 'free';
-      const _lim = PLAN_LIMITS[_pl] || 5;
+      const _lim = PLAN_LIMITS[_pl] || 10;
       const left = Math.max(0, _lim - (usage.count || 0));
       // Super → upgrade to Max. Free → upgrade to Super.
       const upgradeText = _pl === 'super' ? 'Upgrade to Max 🚀' : 'Upgrade for more ⚡';
