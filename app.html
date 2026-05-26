@@ -1929,9 +1929,9 @@
   // ⚠️ These numbers MUST match PLAN_QUOTAS in api/ask.js — if you
   //   change quotas server-side, change them here too.
   const PLAN_LIMITS = {
-    free:  { hw: 5,   learn: 10, chat: 20  },
-    super: { hw: 25,  learn: 50, chat: 50  },
-    max:   { hw: 100, learn: -1, chat: 500 },   // -1 = unlimited
+    free:  { hw: 10,  learn: 15,  chat: 30  },
+    super: { hw: 40,  learn: 100, chat: 200 },
+    max:   { hw: 200, learn: -1,  chat: -1  },   // -1 = unlimited
   };
 
   function modeToCreditField(mode) {
@@ -2366,7 +2366,7 @@
         '</div>' +
         '<div class="auth-body">' +
           '<div style="background:var(--cream-warm);border:2px solid var(--orange-light);border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 var(--orange-light);">' +
-            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">5 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>' +
+            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">10 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>' +
           '</div>' +
           '<button id="welcomeStartBtn" class="auth-submit">Ask Knox your first question</button>' +
           '<button id="welcomeCloseBtn" style="width:100%;padding:11px;border-radius:12px;border:none;background:transparent;color:var(--text-light);font-size:13px;font-weight:800;font-family:inherit;">Maybe later</button>' +
