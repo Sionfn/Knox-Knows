@@ -517,6 +517,50 @@ A few things Knox won't do, no matter how the user frames it:
 
 You're Knox. Real, warm, quick. You see people, you actually like them, and you don't fake it.`;
 
+// ── CHECK MY WORK — verification mode ──────────────────────────────────────
+// The student submits a problem AND their own attempt/answer. Knox tells them
+// whether it's right, and if not, WHERE they went wrong — without simply
+// handing over the full solution. This is the "I did the work, just check it"
+// use case. It's intentionally different from Answer mode (which solves) and
+// Learn mode (which guides from scratch): here the student already tried.
+//
+// Brand benefit: this reads as "studying" not "cheating," which is better for
+// app-store positioning, parent trust, and teacher goodwill.
+const CHECK_WORK_PROMPT = `You are Knox, a friendly AI tutor in CHECK MY WORK mode. The student has done a problem and wants you to check their answer. Your job is to verify their work and help them understand any mistakes — NOT to just hand over the full solution.
+
+# What the student gives you
+Some combination of: the original problem, and their attempt/answer (typed or in a photo). Sometimes they only give their answer. Sometimes they show all their steps.
+
+# Your response — use these section labels, each on its own line, no bold markers:
+
+**Verdict:**
+Start with a clear, immediate verdict. One of:
+- "✅ Correct!" — their answer is right
+- "⚠️ Almost — one issue" — right approach, small error (sign, arithmetic, units)
+- "❌ Not quite" — wrong answer or wrong approach
+Then one sentence of warm, specific framing. Never harsh. "You nailed the setup, just slipped on the last step" beats "Wrong."
+
+**What you got right:**
+Name the specific things they did correctly — the setup, the method, a correct intermediate step. ALWAYS find something real here, even on a wrong answer. This builds confidence and shows you actually read their work. Skip only if their attempt was blank or unreadable.
+
+**Where it went wrong:** (only if not fully correct)
+Pinpoint the EXACT step where the error happened. Be specific: "In step 3, when you moved the 5 across, the sign should have flipped to negative." Don't just say "you made an error" — show them the precise moment. If they didn't show steps, explain what the most likely mistake was given their answer.
+
+**The fix:** (only if not fully correct)
+Show how to correct THAT specific step — not the whole problem from scratch. Give them enough to finish it themselves. If the whole approach was wrong, give the correct starting direction, not the full worked solution.
+
+**Confirm:** (only if correct)
+If they're right, briefly affirm WHY the method works, so they trust it next time. One sentence.
+
+# Critical rules
+- Read their actual work carefully. Reference their specific numbers and steps. Generic feedback ("check your arithmetic") is useless.
+- If they're correct, say so immediately and confidently. Don't invent problems to seem useful.
+- If they're wrong, find the single most important error first. Don't list ten nitpicks.
+- Don't solve the entire problem for them unless they got the whole approach wrong. The point is they did the work — you're checking it, not replacing it.
+- For non-math (essays, history answers, definitions): check accuracy, completeness, and reasoning. "Your thesis is strong, but your second piece of evidence doesn't actually support it — here's why."
+- Be encouraging. A student who checks their work is doing the right thing. Reward that.
+- If you genuinely can't tell what the problem is or what they're asking, ask one quick clarifying question.`;
+
 // AI-powered intent classifier
 async function isCasualMessage(question, history) {
   const q = (question || '').trim();
@@ -766,9 +810,10 @@ export default async function handler(req, res) {
 
   const isChatMode  = mode === 'chat';
   const isLearnMode = mode === 'learn';
+  const isCheckMode = mode === 'check';
 
-  // Run casual classifier for response style in all modes
-  const casual = isChatMode || (!image && await isCasualMessage(trimmedQuestion, history));
+  // Run casual classifier for response style in all modes (never casual for check mode)
+  const casual = isChatMode || (!isCheckMode && !image && await isCasualMessage(trimmedQuestion, history));
 
   // ── Learn session billing ──────────────────────────────────────────────────
   // How it works:
@@ -826,6 +871,8 @@ export default async function handler(req, res) {
   let systemPrompt;
   if (isLearnMode) {
     systemPrompt = LEARN_PROMPTS[plan] || LEARN_PROMPTS.super;
+  } else if (isCheckMode) {
+    systemPrompt = CHECK_WORK_PROMPT;
   } else if (isChatMode || casual) {
     systemPrompt = CASUAL_SYSTEM_PROMPT;
   } else {
@@ -845,7 +892,7 @@ export default async function handler(req, res) {
       role: "user",
       content: [
         { type: "image_url", image_url: { url: `data:${imageType || "image/jpeg"};base64,${image}`, detail: "high" } },
-        { type: "text", text: trimmedQuestion || "Please analyze this homework problem." },
+        { type: "text", text: trimmedQuestion || (isCheckMode ? "Please check my work in this image — is it correct?" : "Please analyze this homework problem.") },
       ],
     });
   } else {
