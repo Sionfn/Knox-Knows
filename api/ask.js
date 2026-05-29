@@ -156,7 +156,7 @@ For essays, theses, definitions, opinions, or written responses, the Final Answe
 
 const PLAN_CONFIG = {
   free: {
-    model: "gpt-4o-mini", maxInput: 500, maxOutput: 800,
+    model: "gpt-4.1-mini", maxInput: 500, maxOutput: 800,
     systemPrompt: `You are Knox, a friendly AI homework helper. FREE PLAN.
 ${ANSWER_BASE}
 
@@ -169,7 +169,7 @@ That's it. Do NOT add Step-by-step, Tip, Insight, Key Points, or Common Mistake 
   },
 
   super: {
-    model: "gpt-4o-mini", maxInput: 500, maxOutput: 1500,
+    model: "gpt-4.1-mini", maxInput: 500, maxOutput: 1500,
     systemPrompt: `You are Knox, a friendly smart AI tutor. SUPER KNOX plan.
 ${ANSWER_BASE}
 
@@ -208,7 +208,7 @@ USE when: there's a takeaway worth carrying beyond this problem. Skip for arithm
   },
 
   max: {
-    model: "gpt-4o", maxInput: 1000, maxOutput: 2500,
+    model: "gpt-4.1", maxInput: 1000, maxOutput: 2500,
     systemPrompt: `You are Knox, an expert AI tutor. MAX KNOX plan — deepest level of homework help.
 ${ANSWER_BASE}
 
@@ -552,7 +552,7 @@ Reply with ONE word only: casual or homework`;
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3,
         temperature: 0,
@@ -610,7 +610,7 @@ Reply with ONE word only: continuation or new`;
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-mini',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3,
         temperature: 0,
@@ -854,17 +854,20 @@ export default async function handler(req, res) {
 
   try {
     // Model selection:
-    // - Photos always use gpt-4o (mini doesn't reliably handle vision for our use case)
-    // - Chat mode + casual short replies always use gpt-4o-mini (cheap small talk)
-    // - Learn mode uses gpt-4o-mini for everyone (Socratic tutoring is steerable enough on mini)
-    // - Answer mode: use the plan's configured model (Max gets gpt-4o, others get mini)
+    // - Photos use gpt-4.1 (full vision support, better + cheaper than gpt-4o)
+    // - Chat mode + casual short replies use gpt-4.1-mini (cheap small talk)
+    // - Learn mode: Max gets full gpt-4.1 (deeper tutoring is a Max feature),
+    //   Free/Super get gpt-4.1-mini (Socratic tutoring is steerable enough on mini)
+    // - Answer mode: use the plan's configured model (Max gets gpt-4.1, others mini)
     let modelToUse;
     if (image) {
-      modelToUse = "gpt-4o";
-    } else if (isChatMode || casual || mode === 'learn') {
-      modelToUse = "gpt-4o-mini";
+      modelToUse = "gpt-4.1";
+    } else if (mode === 'learn') {
+      modelToUse = (plan === 'max') ? "gpt-4.1" : "gpt-4.1-mini";
+    } else if (isChatMode || casual) {
+      modelToUse = "gpt-4.1-mini";
     } else {
-      modelToUse = config.model || "gpt-4o-mini";
+      modelToUse = config.model || "gpt-4.1-mini";
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
