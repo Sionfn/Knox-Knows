@@ -753,7 +753,12 @@ export default async function handler(req, res) {
     ? ["https://knoxknowsapp.com", "https://www.knoxknowsapp.com"]
     : ["https://knoxknowsapp.com", "https://www.knoxknowsapp.com", "http://localhost:3000"];
   const origin = req.headers.origin || "";
-  const corsOrigin = allowedOrigins.includes(origin) ? origin : "https://knoxknowsapp.com";
+  // The browser extension calls from a chrome-extension:// (or moz-extension://)
+  // origin. Those are first-party Knox surfaces, so allow them too. Requests are
+  // still authenticated by Firebase token + quota-limited server-side, so this
+  // doesn't widen the security surface.
+  const isExtension = /^(chrome-extension|moz-extension):\/\//.test(origin);
+  const corsOrigin = (allowedOrigins.includes(origin) || isExtension) ? origin : "https://knoxknowsapp.com";
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
