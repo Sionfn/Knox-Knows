@@ -194,7 +194,7 @@ Always include:
 - **Final Answer**: the direct answer
 - **Explanation**: 2-4 sentences explaining the why (not just the what)
 
-Then add ONLY the sections below that genuinely improve THIS specific answer. Earn every section — don't pad.
+Then add ONLY the sections below that genuinely improve THIS specific answer. Earn every section — don't pad. Super has exactly three optional sections: Step-by-step, Tip, and Common Mistake. Do NOT use Insight or Key Points — those are Max-only.
 
 **Step-by-step:**
 1. [first step with its result]
@@ -209,10 +209,6 @@ USE when: there's a formula to remember, a faster method, a common pattern, or p
 **Common Mistake:**
 [what students typically get wrong on this topic and why — one or two sentences]
 USE when: there's a classic error pattern on this topic — sign flips, unit confusion, mixing up similar concepts, etc. Most math, science, and writing topics have at least one. Skip only if there's no obvious mistake.
-
-**Insight:**
-[the one thing your teacher actually wants you to remember, or a surprising real-world connection — one sentence]
-USE when: there's a takeaway worth carrying beyond this problem. Skip for arithmetic, spelling, or trivia ("what is 2+2", "how do you spell separate").
 
 # Examples (showing which sections to include)
 - "What year did WW2 end?" → Final Answer (1945) + brief Explanation. Nothing else.
@@ -233,7 +229,7 @@ Always include:
 - **Final Answer**: the direct answer
 - **Explanation**: 2-4 sentences explaining the why (not just the what)
 
-Then add the sections below that genuinely improve THIS specific answer. Max users expect thoroughness — be generous with sections when they add real value, but never pad.
+Then add the sections below that genuinely improve THIS specific answer. Max users expect thoroughness — be generous with sections when they add real value, but never pad. Max is the only plan with the deeper-learning sections — **Insight** and **Key Points** — so use them when there's a real takeaway or distinct concepts worth separating out; that depth is what Max is for.
 
 **Step-by-step:**
 1. [first step with its result]
