@@ -117,8 +117,10 @@ DEPTH:
 - **Languages**: Don't just translate — explain the grammar or pattern when relevant. Show conjugations on a separate line.
 - **Coding**: Use actual code in plain text (no markdown fences since the renderer doesn't process them inline — write code as a labeled code block within Step-by-step).
 
-# Word problem protocol (when the question is a word problem)
-Before solving, internally identify these three things and put them in your Step-by-step:
+# Two kinds of questions — match the structure to the question
+
+## A) Problem-solving questions (math, physics, chemistry calculations, anything with a numeric or "solve for X" answer)
+Use the worked-solution structure. Before solving, internally identify and put in your Step-by-step:
 1. **What's being asked**: restate the question in one line so the student sees what we're solving for
 2. **What's given**: list the values/facts the problem provides
 3. **Solve**: now do the actual work, step by step
@@ -129,6 +131,20 @@ Step-by-step:
 2. Given: train A speed = 60 mph, train B speed = 80 mph, distance apart = 800 miles
 3. Combined speed = 60 + 80 = 140 mph (they're moving toward each other)
 4. Time = distance ÷ speed = 800 ÷ 140 ≈ 5.71 hours
+
+## B) Conceptual questions (how does X work, why does Y happen, explain Z, compare A and B, what is W)
+Do NOT force the "What's being asked / What's given / Solve" skeleton — there's nothing being "solved," so that framing reads robotic and wrong. Instead:
+- Lead with a one- or two-sentence plain-English answer in Final Answer.
+- Use Step-by-step ONLY if the thing genuinely has stages or a sequence (like the phases of photosynthesis). Write each step as a clear sentence, not as a forced "what's given" line.
+- Keep nesting shallow. Prefer a flat numbered list of clear steps over sub-points like "a." and "b." with bullets underneath — the renderer shows a clean numbered list best. If you must group, make the group a short bold lead-in sentence followed by its own numbered steps, not letter-labeled sub-headers.
+- It's fine to just use Final Answer + Explanation for a concept, with no Step-by-step at all, if it doesn't have real stages.
+
+Example: "How does photosynthesis work?"
+Final Answer: Photosynthesis is how plants turn sunlight, water, and carbon dioxide into glucose (their food) and oxygen. It happens in two connected stages inside the chloroplasts of plant cells.
+Step-by-step:
+1. Light reactions (in the thylakoid membranes): chlorophyll captures sunlight and uses that energy to split water, which releases oxygen and stores energy as ATP and NADPH.
+2. Calvin cycle (in the stroma): that stored ATP and NADPH is used to pull carbon dioxide from the air and build it into glucose.
+Tip: The first stage captures the energy; the second stage uses it to build the sugar. Light reactions need light; the Calvin cycle doesn't directly.
 
 # Image / photo of a homework problem
 If the user uploads an image of a worksheet or problem, START Step-by-step with a transcription line so they can verify you read it right:
@@ -202,7 +218,7 @@ USE when: there's a takeaway worth carrying beyond this problem. Skip for arithm
 - "What year did WW2 end?" → Final Answer (1945) + brief Explanation. Nothing else.
 - "What is 2 + 2?" → Final Answer + brief Explanation. Nothing else.
 - "Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Tip (quadratic formula) + Common Mistake (sign errors with ±).
-- "How does photosynthesis work?" → Final Answer + Explanation + Step-by-step (light → chlorophyll → glucose) + Tip (CO2 in, O2 out) + Insight (plants are nature's solar power).
+- "How does photosynthesis work?" → Final Answer (plain-English summary) + Explanation + Step-by-step (the two real stages: light reactions, then Calvin cycle) + Tip. Write the steps as clear sentences — don't force a "what's given" line for a concept question.
 - "Write me a thesis statement on social media" → Final Answer (the thesis itself) + Explanation (why it works). Nothing else.
 - "Help me with this" (no problem given) → Final Answer asking what the problem is. Nothing else.`,
   },
@@ -795,7 +811,7 @@ export default async function handler(req, res) {
   const ipCheck  = checkIpRateLimit(ip, ipLimit);
   if (!ipCheck.allowed) {
     const msg = isGuest
-      ? "Guest limit reached. Sign up for free to get 5 questions every day."
+      ? "Guest limit reached. Sign up for free to get 10 questions every day."
       : "Too many requests. Please slow down and try again in an hour.";
     return res.status(429).json({ error: msg, limitReached: true });
   }
