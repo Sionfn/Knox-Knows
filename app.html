@@ -3173,18 +3173,47 @@ function renderAnswerHtml(text) {
       while (i < lines.length && !isSectionLine(lines[i])) {
         const next = lines[i];
         if (/^\d+[\.)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
+          // Numbered list — ONE continuous <ol> so numbering never resets.
+          // Bullets / lettered lines that follow a number nest INSIDE that item.
           html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
           while (i < lines.length && !isSectionLine(lines[i])) {
             const sl = lines[i];
+            let itemText = null;
             if (/^\d+[\.)]\s*/.test(sl)) {
-              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(sl.replace(/^\d+[\.)]\s*/, '')) + '</li>';
+              itemText = formatInline(sl.replace(/^\d+[\.)]\s*/, ''));
               i++;
             } else if (/^\d+$/.test(sl.trim()) && i + 1 < lines.length && !isSectionLine(lines[i + 1])) {
-              html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(lines[i + 1]) + '</li>';
+              itemText = formatInline(lines[i + 1]);
               i += 2;
             } else {
-              break;
+              break; // not a numbered item — stop the ordered list
             }
+            // gather any sub-lines (bullets or lettered) that belong under this item
+            let sub = '';
+            while (i < lines.length && !isSectionLine(lines[i]) &&
+                   (/^[•\-\*✓✔]\s/.test(lines[i]) || /^[a-z][\.)]\s/.test(lines[i]))) {
+              const subItems = [];
+              const isLettered = /^[a-z][\.)]\s/.test(lines[i]);
+              while (i < lines.length && !isSectionLine(lines[i]) &&
+                     ((isLettered && /^[a-z][\.)]\s/.test(lines[i])) ||
+                      (!isLettered && /^[•\-\*✓✔]\s/.test(lines[i])))) {
+                const clean = lines[i].replace(/^[•\-\*✓✔]\s*/, '').replace(/^[a-z][\.)]\s*/, '');
+                subItems.push('<li style="font-size:13.5px;font-weight:500;line-height:1.55;">' + formatInline(clean) + '</li>');
+                i++;
+              }
+              const tag = isLettered ? 'ol type="a"' : 'ul';
+              const closeTag = isLettered ? 'ol' : 'ul';
+              sub += '<' + tag + ' style="margin:5px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">' + subItems.join('') + '</' + closeTag + '>';
+            }
+            html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + itemText + sub + '</li>';
+          }
+          html += '</ol>';
+        } else if (/^[a-z][\.)]\s/.test(next)) {
+          // Lettered sub-steps with no parent number → indented list
+          html += '<ol type="a" style="margin:4px 0 8px 0;padding-left:24px;display:flex;flex-direction:column;gap:5px;">';
+          while (i < lines.length && /^[a-z][\.)]\s/.test(lines[i])) {
+            html += '<li style="font-size:13.5px;font-weight:600;line-height:1.55;">' + formatInline(lines[i].replace(/^[a-z][\.)]\s*/, '')) + '</li>';
+            i++;
           }
           html += '</ol>';
         } else if (/^[•\-\*✓✔]\s/.test(next)) {
