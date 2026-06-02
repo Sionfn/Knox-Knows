@@ -83,7 +83,7 @@ export default async function handler(req, res) {
 
 Thanks for signing up for Knox Knows — your account is ready to use.
 
-Ask Knox any homework question at https://knoxknowsapp.com. You get 5 questions a day free, every subject, and you can snap a photo of your homework instead of typing it.
+Ask Knox any homework question at https://knoxknowsapp.com. You get 10 questions a day free, every subject, and you can snap a photo of your homework instead of typing it.
 
 I built Knox Knows because I wanted a tutor that actually explains the why, not one that just spits out answers. If Knox ever gets something wrong, hit the thumbs-down on the answer — I read those personally.
 
@@ -95,7 +95,7 @@ Knox Knows`;
   const htmlBody = knoxEmailShell(`
     <p style="margin:0 0 16px;">Hey ${firstName},</p>
     <p style="margin:0 0 16px;">Thanks for signing up for Knox Knows — your account is ready to use.</p>
-    <p style="margin:0 0 16px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:600;">knoxknowsapp.com</a>. You get 5 questions a day free, every subject, and you can snap a photo of your homework instead of typing it.</p>
+    <p style="margin:0 0 16px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:600;">knoxknowsapp.com</a>. You get 10 questions a day free, every subject, and you can snap a photo of your homework instead of typing it.</p>
     <p style="margin:0 0 16px;">I built Knox Knows because I wanted a tutor that actually explains the <em>why</em>, not one that just spits out answers. If Knox ever gets something wrong, hit the thumbs-down on the answer — I read those personally.</p>
     <p style="margin:0 0 16px;">Any questions, just reply to this email. It comes straight to me.</p>
     <p style="margin:0 0 2px;">— Sion</p>
