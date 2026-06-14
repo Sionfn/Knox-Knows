@@ -72,8 +72,13 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // EXTENSION ID — replace after you load the extension in Chrome (chrome://extensions)
-    const EXTENSION_ID = "REPLACE_WITH_YOUR_EXTENSION_ID";
+    // EXTENSION ID — set this once your extension is loaded in Chrome
+    // (chrome://extensions → copy the ID). Until set, we rely on Path B
+    // (window.postMessage) only — your content-script bridge must pick that up.
+    // Path A (direct chrome.runtime.sendMessage) requires both an ID here AND
+    // an "externally_connectable" entry in the extension manifest matching
+    // this origin.
+    const EXTENSION_ID = ""; // <-- paste your real extension ID here
 
     let isSignup = new URLSearchParams(location.search).get("signup") === "1";
     const $ = (id) => document.getElementById(id);
@@ -103,7 +108,7 @@
       };
       // Path A: direct external message (needs externally_connectable in manifest)
       try {
-        if (chrome?.runtime?.sendMessage && EXTENSION_ID !== "REPLACE_WITH_YOUR_EXTENSION_ID") {
+        if (chrome?.runtime?.sendMessage && EXTENSION_ID) {
           chrome.runtime.sendMessage(EXTENSION_ID, { type: "KNOX_AUTH", auth: auth_payload });
         }
       } catch (e) {}
