@@ -1356,6 +1356,14 @@
 </head>
 <body>
 
+<noscript>
+  <div style="padding:32px 24px;text-align:center;font-family:'Nunito',system-ui,sans-serif;background:#FFF8F0;border-bottom:3px solid #FF6B00;">
+    <div style="font-size:48px;margin-bottom:8px;">🦊</div>
+    <h2 style="font-weight:900;color:#1f2937;margin-bottom:8px;font-size:22px;">Knox needs JavaScript</h2>
+    <p style="color:#666;font-weight:600;font-size:15px;max-width:420px;margin:0 auto;">Please enable JavaScript in your browser to use Knox Knows. Knox is a fully interactive app — questions, answers, and your history all need JS to work.</p>
+  </div>
+</noscript>
+
   <!-- ═══════ HEADER ═══════════════════════════════════════ -->
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
@@ -2661,6 +2669,23 @@
     out.onclick     = () => { appHandleLogout(); closeAppSettings(); };
     outWrap.appendChild(out);
     el.appendChild(outWrap);
+
+    // Delete account — privacy policy promises this, so the path must exist.
+    // For now this opens a mailto so support can verify identity and run the
+    // deletion. A self-serve endpoint can replace this later.
+    const delWrap = document.createElement('div'); delWrap.style.marginTop = '10px';
+    const del = document.createElement('a');
+    del.href = 'mailto:support@knoxknowsapp.com?subject=' +
+               encodeURIComponent('Delete my Knox Knows account') +
+               '&body=' + encodeURIComponent(
+                 "Please delete my Knox Knows account and all associated data.\n\n" +
+                 "Account email: " + (u.email || '') + "\n\n" +
+                 "Thanks."
+               );
+    del.style.cssText = 'display:block;text-align:center;padding:10px;font-size:12px;font-weight:700;color:#9CA3AF;text-decoration:none;';
+    del.textContent = 'Delete my account';
+    delWrap.appendChild(del);
+    el.appendChild(delWrap);
 
     document.getElementById('appSettingsModal').style.display = 'flex';
   };
