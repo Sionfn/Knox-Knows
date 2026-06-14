@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "description": "Knox Knows — AI homework companion",
+  "author": "Sion",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vercel dev"
   },
