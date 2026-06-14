@@ -176,12 +176,14 @@ const PLAN_CONFIG = {
     systemPrompt: `You are Knox, a friendly AI homework helper. FREE PLAN.
 ${ANSWER_BASE}
 
-# Free plan — what to include
-Free plan responses are intentionally lean. Always include:
+# Free plan — OVERRIDE the base prompt's section examples
+The base prompt above shows examples that include Step-by-step, Tip, Common Mistake, Key Points, and Insight sections. ON THE FREE PLAN, IGNORE those examples — those sections are paid features.
+
+Free responses use exactly two sections, in this order:
 - **Final Answer**: the direct answer
 - **Explanation**: 1-3 sentences on the why (not just the what)
 
-That's it. Do NOT add Step-by-step, Tip, Insight, Key Points, or Common Mistake on Free — those are paid features. Keep it short and useful. Do not mention upgrading.`,
+That's it. NEVER output a "Step-by-step:", "Tip:", "Insight:", "Key Points:", or "Common Mistake:" section on Free. Keep responses short and useful. Do not mention upgrading.`,
   },
 
   super: {
@@ -638,11 +640,10 @@ Reply with ONE word only: casual or homework`;
 // ── Learn session helpers ────────────────────────────────────────────────────
 // A "learn session" is opened when a new homework question starts in learn mode.
 // All follow-up messages (hints, attempts, "idk") within that session use chat
-// credits instead of homework credits.
-
-function generateSessionId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
+// credits instead of homework credits. The session ID is generated client-side
+// in app.html (Date.now().toString(36) + random suffix) and sent with each
+// follow-up; the server uses isLearnContinuation() below to decide whether to
+// charge a credit. No Firestore storage needed for sessions.
 
 // Returns true if the message is a continuation (student working through same problem)
 // rather than a brand-new question.
@@ -693,31 +694,9 @@ Reply with ONE word only: continuation or new`;
 }
 
 // Store/validate a learn session in Firestore
-async function getOrCreateLearnSession(uid, sessionId, isNewQuestion) {
-  if (!uid) return { sessionId: generateSessionId(), isNew: true };
-
-  const sessRef = db.collection('users').doc(uid).collection('learnSessions').doc(sessionId || '_none');
-
-  if (!isNewQuestion && sessionId) {
-    // Check if this session exists and was opened today
-    try {
-      const snap = await sessRef.get();
-      if (snap.exists && snap.data().date === todayKey()) {
-        return { sessionId, isNew: false };
-      }
-    } catch (e) { /* fall through to new session */ }
-  }
-
-  // Start a new session
-  const newId = generateSessionId();
-  try {
-    await db.collection('users').doc(uid).collection('learnSessions').doc(newId).set({
-      date: todayKey(),
-      createdAt: new Date().toISOString(),
-    });
-  } catch (e) { console.error('Session create error:', e.message); }
-  return { sessionId: newId, isNew: true };
-}
+// NOTE: getOrCreateLearnSession was removed — the handler does session logic
+// inline using isLearnContinuation() above. If you ever want server-side
+// session storage (e.g. for analytics), add it back here.
 
 const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
 
@@ -986,6 +965,24 @@ export default async function handler(req, res) {
         const bad = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade'];
         answer = answer.split('\n').filter(l => !bad.some(p => l.includes(p))).join('\n').trim();
       } catch(e) {}
+    }
+
+    // Defense-in-depth: strip paid-tier section blocks if they leak through on Free.
+    // The free system prompt forbids them, but a backup filter here means a single
+    // prompt-following slip on gpt-4.1-mini doesn't show Free users paid features.
+    if (plan === 'free' && !casual && !isLearnMode && !isCheckMode) {
+      try {
+        const paidStart = /^\s*\*?\*?(Step-?by-?step|Key Points?|Tip|Common Mistake|Insight|Resources)\*?\*?\s*:?\s*$/i;
+        const allowedStart = /^\s*\*?\*?(Final Answer|Answer|Explanation)\*?\*?\s*:/i;
+        const out = [];
+        let skipping = false;
+        for (const line of answer.split('\n')) {
+          if (allowedStart.test(line)) { skipping = false; out.push(line); continue; }
+          if (paidStart.test(line))    { skipping = true;  continue; }
+          if (!skipping) out.push(line);
+        }
+        answer = out.join('\n').trim();
+      } catch (e) {}
     }
 
     return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: modelToUse, usage: data.usage });
