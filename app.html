@@ -694,16 +694,6 @@
       display: flex; align-items: center; gap: 8px;
       text-transform: uppercase; letter-spacing: 0.06em;
     }
-    .mode-pill {
-      font-size: 10px; font-weight: 900;
-      padding: 3px 10px;
-      border-radius: 999px;
-      letter-spacing: 0.04em;
-    }
-    .pill-answer { background: var(--orange-light); color: var(--orange); }
-    .pill-learn  { background: var(--blue-light);   color: var(--blue-dark); }
-    .pill-chat   { background: var(--green-light);  color: var(--green-dark); }
-    .pill-check  { background: #EDE4FF;             color: #7C3AED; }
 
     .msg-knox-bubble {
       background: white;
@@ -903,17 +893,6 @@
       padding: 8px 8px 8px 12px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    /* Mode-aware input outline — matches the active mode's brand color.
-       Always shown (not just on focus) so the user knows which mode they're in. */
-    .input-box[data-mode="answer"] { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,107,0,0.12); }
-    .input-box[data-mode="learn"]  { border-color: var(--blue);   box-shadow: 0 0 0 3px rgba(28,176,246,0.12); }
-    .input-box[data-mode="chat"]   { border-color: var(--green);  box-shadow: 0 0 0 3px rgba(88,204,2,0.12); }
-    .input-box[data-mode="check"]  { border-color: #7C3AED;       box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
-    /* Slightly stronger ring when actually focused */
-    .input-box[data-mode="answer"]:focus-within { box-shadow: 0 0 0 4px rgba(255,107,0,0.18); }
-    .input-box[data-mode="learn"]:focus-within  { box-shadow: 0 0 0 4px rgba(28,176,246,0.18); }
-    .input-box[data-mode="chat"]:focus-within   { box-shadow: 0 0 0 4px rgba(88,204,2,0.18); }
-    .input-box[data-mode="check"]:focus-within  { box-shadow: 0 0 0 4px rgba(124,58,237,0.18); }
     #appChatInput {
       flex: 1;
       border: none;
@@ -956,63 +935,6 @@
     #appSendBtn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
     #appSendBtn:active { transform: translateY(2px);  box-shadow: none; }
     #appSendBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
-
-    /* MODE SELECTOR */
-    #modeSelectorWrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
-      border-right: 1.5px solid #EBEBEB;
-      padding-right: 10px;
-      margin-right: 4px;
-    }
-    #modeDropdownBtn {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 6px 4px 4px;
-      border-radius: 8px;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      font-size: 12px; font-weight: 700;
-      color: #999;
-      transition: background 0.12s;
-      white-space: nowrap;
-    }
-    #modeDropdownBtn:hover { background: #F5F5F5; }
-    #modeDropdownLabel { color: var(--orange); font-weight: 800; font-size: 12px; }
-    #modeDropdownMenu {
-      display: none;
-      position: absolute;
-      bottom: calc(100% + 8px);
-      left: 0;
-      background: white;
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.12);
-      min-width: 220px;
-      overflow: hidden;
-      z-index: 500;
-    }
-    #modeDropdownMenu button {
-      width: 100%;
-      display: flex; align-items: center; gap: 12px;
-      padding: 13px 16px;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-    }
-    #modeDropdownMenu button:last-child { border-bottom: none; }
-    #modeDropdownMenu button[data-mode="answer"]:hover { background: #FFF8F0; }
-    #modeDropdownMenu button[data-mode="learn"]:hover  { background: #D7F2FD; }
-    #modeDropdownMenu button[data-mode="chat"]:hover   { background: #D7FFB8; }
-    #modeDropdownMenu button[data-mode="check"]:hover  { background: #EDE4FF; }
-    #modeDropdownMenu .mode-emoji { font-size: 20px; width: 32px; text-align: center; }
-    #modeDropdownMenu .mode-title { font-size: 14px; font-weight: 800; }
-    #modeDropdownMenu .mode-sub   { font-size: 11px; font-weight: 600; color: #999; margin-top: 2px; }
 
     /* ═══ MODALS ═══════════════════════════════════════════ */
     .modal-backdrop {
@@ -1512,45 +1434,7 @@
             <button onclick="appClearImage()" aria-label="Remove image">✕</button>
           </div>
 
-          <div class="input-box" id="inputBox" data-mode="answer">
-            <div id="modeSelectorWrap">
-              <button id="modeDropdownBtn" onclick="toggleModeDropdown()" aria-haspopup="true" aria-label="Choose mode">
-                <span id="modeDropdownIcon" style="font-size:14px;">⚡</span>
-                <span id="modeDropdownLabel">Answer</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.35;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div id="modeDropdownMenu" role="menu">
-                <button data-mode="answer" onclick="appSetMode('answer'); closeModeDropdown()">
-                  <span class="mode-emoji">⚡</span>
-                  <div>
-                    <div class="mode-title" style="color:var(--orange);">Get the Answer</div>
-                    <div class="mode-sub">Full breakdown instantly</div>
-                  </div>
-                </button>
-                <button data-mode="learn" onclick="appSetMode('learn'); closeModeDropdown()">
-                  <span class="mode-emoji">🧠</span>
-                  <div>
-                    <div class="mode-title" style="color:var(--blue-dark);">Learn with Knox</div>
-                    <div class="mode-sub">Guided step by step</div>
-                  </div>
-                </button>
-                <button data-mode="chat" onclick="appSetMode('chat'); closeModeDropdown()">
-                  <span class="mode-emoji">💬</span>
-                  <div>
-                    <div class="mode-title" style="color:var(--green-dark);">Chat with Knox</div>
-                    <div class="mode-sub">Casual conversation</div>
-                  </div>
-                </button>
-                <button data-mode="check" onclick="appSetMode('check'); closeModeDropdown()">
-                  <span class="mode-emoji">✓</span>
-                  <div>
-                    <div class="mode-title" style="color:#7C3AED;">Check My Work</div>
-                    <div class="mode-sub">See if your answer is right</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
+          <div class="input-box" id="inputBox">
             <textarea id="appChatInput"
               placeholder="Ask Knox anything..."
               rows="1"
@@ -1790,9 +1674,7 @@
 <script>
   window.userPlan       = 'free';
   window.currentUser    = null;
-  window.currentMode    = 'answer';
   window._appImage      = null;
-  window._learnSession  = null;
   window._conversation  = [];
   window._fbPayloads    = {};
 
@@ -1990,22 +1872,14 @@
   // ── Usage indicator in header ──────────────────────────────
   // Shows X/N questions remaining today for the CURRENT mode.
   // ⚠️ These numbers MUST match PLAN_QUOTAS in api/ask.js — if you
-  //   change quotas server-side, change them here too.
-  const PLAN_LIMITS = {
-    free:  { hw: 10,  learn: 15,  chat: 30  },
-    super: { hw: 40,  learn: 100, chat: 200 },
-    max:   { hw: 200, learn: -1,  chat: -1  },   // -1 = unlimited
-  };
+  // Usage limits — must match USAGE_LIMITS in api/ask.js. Rolling window,
+  // not a flat daily count: usage regenerates over time rather than
+  // resetting once at midnight, closer to how Claude's own free tier works.
+  const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+  const USAGE_LIMITS = { free: 15, paid: 100 };
 
-  function modeToCreditField(mode) {
-    if (mode === 'chat')  return 'chat';
-    if (mode === 'learn') return 'learn';
-    return 'hw';
-  }
-  function modeLabel(mode) {
-    if (mode === 'chat')  return 'chats';
-    if (mode === 'learn') return 'lessons';
-    return 'questions';
+  function planTier(plan) {
+    return plan === 'free' ? 'free' : 'paid';
   }
 
   async function updateUsageIndicator() {
@@ -2014,37 +1888,21 @@
     if (!usage || !text) return;
     if (!window.currentUser) { usage.style.display = 'none'; return; }
 
-    const plan  = window.userPlan;
-    const field = modeToCreditField(window.currentMode);
-    const lim   = (PLAN_LIMITS[plan] || PLAN_LIMITS.free)[field];
-
-    // Compact text on phones — no room for "99 questions left", just "99/100"
+    const lim = USAGE_LIMITS[planTier(window.userPlan)];
     const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-
-    // Unlimited (e.g. Max plan's Learn mode) — show it explicitly,
-    // not just hide the pill. Users on top-tier plans deserve to see
-    // the benefit they're paying for.
-    if (lim === -1 || lim === Infinity) {
-      usage.style.display = 'inline-flex';
-      usage.classList.remove('danger');
-      usage.classList.add('unlimited');
-      text.textContent = isCompact ? '∞' : ('Unlimited ' + modeLabel(window.currentMode));
-      return;
-    }
     usage.classList.remove('unlimited');
 
     try {
-      const today = window._todayKey();
-      const snap  = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', today));
-      const u     = snap.exists() ? snap.data() : {};
-      const used  = u[field] || 0;
-      const left  = Math.max(0, lim - used);
-      const noun  = modeLabel(window.currentMode);
+      const snap = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', 'rolling'));
+      const log  = snap.exists() ? (snap.data().log || []) : [];
+      const now  = Date.now();
+      const used = log.filter(ts => now - ts < USAGE_WINDOW_MS).length;
+      const left = Math.max(0, lim - used);
 
       usage.style.display = 'inline-flex';
       text.textContent = isCompact
         ? `${left}/${lim} left`
-        : `${left} ${left === 1 ? noun.replace(/s$/, '') : noun} left`;
+        : `${left} question${left === 1 ? '' : 's'} left`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
@@ -2085,7 +1943,6 @@
       _firstAuth = false;
       window.userPlan = 'free';
       window._conversation = [];
-      window._learnSession = null;
       updatePlanUI();
     }
   });
@@ -2355,13 +2212,12 @@
     });
   }
 
-  async function saveHistory(question, answer, mode) {
+  async function saveHistory(question, answer) {
     if (!window.currentUser) return;
     try {
       await addDoc(collection(db, 'users', window.currentUser.uid, 'history'), {
         question: String(question || '').substring(0, 500),
         answer:   String(answer   || '').substring(0, 500),
-        mode:     mode || 'answer',
         ts:       Date.now(),
       });
       loadSidebarHistory();
@@ -2370,14 +2226,13 @@
   window.saveHistory = saveHistory;
 
   // ── Feedback ────────────────────────────────────────────────
-  async function submitFeedback(rating, question, answer, mode) {
+  async function submitFeedback(rating, question, answer) {
     if (!window.currentUser) return false;
     if (rating !== 1 && rating !== -1) return false;
     try {
       const uid = window.currentUser.uid;
       const payload = {
         rating,
-        mode:     mode || 'answer',
         question: String(question || '').substring(0, 500),
         answer:   String(answer   || '').substring(0, 2000),
         plan:     window.userPlan || 'free',
@@ -2401,7 +2256,7 @@
       btn.style.borderColor = rating === 1 ? 'var(--green)' : 'var(--red)';
       btn.style.background  = rating === 1 ? 'var(--green-light)' : '#FFE5E5';
     }
-    const ok = await submitFeedback(rating, payload.question, payload.answer, payload.mode);
+    const ok = await submitFeedback(rating, payload.question, payload.answer);
     const label = bar?.querySelector('span');
     if (label) {
       label.textContent = ok
@@ -2535,7 +2390,6 @@
       window.currentUser   = null;
       window.userPlan      = 'free';
       window._conversation = [];
-      window._learnSession = null;
       updatePlanUI();
       if (window.appStartNewChat) window.appStartNewChat();
     } catch (e) { /* silent */ }
@@ -2749,7 +2603,6 @@ window.appStartNewChat = function() {
   const gc = $('guestCta');      if (gc) gc.style.display = 'none';
   if (window.appClearImage) window.appClearImage();
   window._conversation = [];
-  window._learnSession = null;
 };
 
 window.appSetQuestion = function(q) {
@@ -2840,59 +2693,8 @@ document.addEventListener('click', (e) => {
   dd.style.display = 'none';
 });
 
-// ── Mode dropdown ────────────────────────────────────────────
-window.toggleModeDropdown = function() {
-  const m = $('modeDropdownMenu');
-  if (m) m.style.display = m.style.display === 'block' ? 'none' : 'block';
-};
-window.closeModeDropdown = function() {
-  const m = $('modeDropdownMenu'); if (m) m.style.display = 'none';
-};
-document.addEventListener('click', (e) => {
-  const wrap = $('modeSelectorWrap');
-  if (wrap && !wrap.contains(e.target)) window.closeModeDropdown();
-});
-
-window.appSetMode = function(mode) {
-  window.currentMode = mode;
-  const configs = {
-    answer: { icon: '⚡', label: 'Get the Answer',  color: '#FF6B00', bg: '#FF6B00', sh: '#CC5500', border: '#FF6B00' },
-    learn:  { icon: '🧠', label: 'Learn with Knox', color: '#0A85C2', bg: '#1CB0F6', sh: '#0A85C2', border: '#1CB0F6' },
-    chat:   { icon: '💬', label: 'Chat with Knox',  color: '#46A302', bg: '#58CC02', sh: '#46A302', border: '#58CC02' },
-    check:  { icon: '✓', label: 'Check My Work',   color: '#7C3AED', bg: '#7C3AED', sh: '#5B21B6', border: '#7C3AED' },
-  };
-  const cfg = configs[mode] || configs.answer;
-
-  const iconEl  = $('modeDropdownIcon');  if (iconEl)  iconEl.textContent  = cfg.icon;
-  const labelEl = $('modeDropdownLabel'); if (labelEl) { labelEl.textContent = cfg.label; labelEl.style.color = cfg.color; }
-
-  const input = $('appChatInput');
-  if (input) {
-    const ph = {
-      answer: 'Ask Knox anything — math, science, history, English...',
-      learn:  'What do you want to learn? Knox will guide you step by step...',
-      chat:   'Chat with Knox — ask anything, think out loud...',
-      check:  'Paste your answer (or snap a photo) and Knox will check it...',
-    };
-    input.placeholder = ph[mode] || 'Ask Knox anything...';
-  }
-
-  // Color the input outline based on mode (orange/blue/green).
-  const inputBox = $('inputBox');
-  if (inputBox) inputBox.setAttribute('data-mode', mode);
-
-  const sendBtn = $('appSendBtn');
-  if (sendBtn) {
-    sendBtn.style.background = cfg.bg;
-    sendBtn.style.boxShadow  = '0 4px 0 ' + cfg.sh;
-  }
-  const inputOuter = $('inputOuter');
-  if (inputOuter) inputOuter.style.borderTopColor = cfg.border;
-
-  window._learnSession = null;
-  // Mode determines which credit bucket is shown — refresh the pill
-  if (window.updateUsageIndicator) window.updateUsageIndicator();
-};
+// Mode selector removed — Knox now reads the message itself instead of a
+// pre-selected mode. Input placeholder stays generic and unstyled.
 
 // ── Mobile history drawer ────────────────────────────────────
 window.openMobileHistory = function() {
@@ -3007,7 +2809,7 @@ window.appHandleAsk = async function() {
     '<div class="msg-knox">' +
       '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
       '<div class="msg-knox-content">' +
-        '<div class="msg-knox-label">Knox <span class="mode-pill pill-' + window.currentMode + '">' + (window.currentMode === 'check' ? 'check work' : window.currentMode) + '</span></div>' +
+        '<div class="msg-knox-label">Knox</div>' +
         '<div class="msg-knox-bubble"><div class="thinking-row"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div></div></div>' +
       '</div>' +
     '</div>';
@@ -3026,7 +2828,6 @@ window.appHandleAsk = async function() {
   const history = window._conversation.slice(-10).map(m => ({
     role:    m.role,
     content: m.content,
-    isLearn: !!m.isLearn,
   }));
 
   try {
@@ -3037,12 +2838,10 @@ window.appHandleAsk = async function() {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        question:       q,
-        mode:           window.currentMode,
-        image:          image?.data,
-        imageType:      image?.type,
+        question:  q,
+        image:     image?.data,
+        imageType: image?.type,
         history,
-        learnSessionId: window.currentMode === 'learn' ? window._learnSession : null,
       }),
     });
     const data = await res.json();
@@ -3062,15 +2861,15 @@ window.appHandleAsk = async function() {
     if (!window.currentUser) window._incGuestCount();
 
     // Advance the study streak (logged-in users only). Fires on any
-    // successful question in any mode — asking Knox = studying today.
+    // successful question — asking Knox = studying today.
     if (window.currentUser && window.updateStreak) {
       window.updateStreak(window.currentUser.uid).catch(() => {});
     }
 
     const answer = data.answer || '';
-    const html   = renderAnswerHtml(answer);
+    const html   = renderAnswerHtml(answer) + renderVideoCard(data.video);
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q || '[image]', answer, mode: window.currentMode };
+    window._fbPayloads[fbId] = { question: q || '[image]', answer };
 
     let bodyHtml = '<div>' + html + '</div>';
     if (window.currentUser) {
@@ -3084,20 +2883,13 @@ window.appHandleAsk = async function() {
     replaceThinking(thinkId, bodyHtml);
 
     // Track conversation
-    window._conversation.push({ role: 'user',      content: q || '[image]', isLearn: window.currentMode === 'learn' });
-    window._conversation.push({ role: 'assistant', content: answer,         isLearn: window.currentMode === 'learn' });
+    window._conversation.push({ role: 'user',      content: q || '[image]' });
+    window._conversation.push({ role: 'assistant', content: answer });
     if (window._conversation.length > 30) window._conversation = window._conversation.slice(-30);
-
-    // Learn-session lifecycle
-    if (window.currentMode === 'learn') {
-      if (data.isNewLearnQuestion || !window._learnSession) {
-        window._learnSession = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      }
-    }
 
     // Save history + refresh usage indicator
     if (window.saveHistory && window.currentUser) {
-      window.saveHistory(q || '[image]', answer, window.currentMode);
+      window.saveHistory(q || '[image]', answer);
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
 
@@ -3117,7 +2909,7 @@ function replaceThinking(thinkId, html) {
     '<div class="msg-knox">' +
       '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
       '<div class="msg-knox-content">' +
-        '<div class="msg-knox-label">Knox <span class="mode-pill pill-' + window.currentMode + '">' + (window.currentMode === 'check' ? 'check work' : window.currentMode) + '</span></div>' +
+        '<div class="msg-knox-label">Knox</div>' +
         '<div class="msg-knox-bubble">' + html + '</div>' +
       '</div>' +
     '</div>';
@@ -3134,8 +2926,8 @@ function renderLimitCard(data, isSignedIn) {
   if (!isSignedIn) {
     title = 'One free question used';
     cta   = '<button class="limit-card-btn" onclick="openAuthModal(\'signup\')">Sign up free for more</button>';
-  } else if (plan === 'max') {
-    // Already on highest tier — no upsell
+  } else if (plan && plan !== 'free') {
+    // Already on the paid plan — no upsell, just the (very generous) soft cap
     title = "You've reached today's limit";
     cta   = '<p style="font-size:12px;font-weight:700;color:var(--text-light);margin-top:6px;">Your daily allowance resets at midnight UTC.</p>';
   } else {
@@ -3148,22 +2940,17 @@ function renderLimitCard(data, isSignedIn) {
     '</div>';
 }
 
-// ── Render Knox answer with section cards + **bold** ──────
+// ── Render Knox answer as natural prose + **bold** ──────────
+// Answer/Learn/Chat modes no longer use forced labeled sections — the model
+// just writes naturally, so this renders plain paragraphs and lists directly.
+// Check My Work mode keeps its labels below since those (Verdict, Where it
+// went wrong, The fix...) are functionally meaningful, not padding — they
+// mark genuinely different parts of checking someone's work.
 function renderAnswerHtml(text) {
   if (!text) return '';
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const SECTIONS = {
-    'Final Answer':   ['#FF6B00', '📋'],   // orange
-    'Answer':         ['#FF6B00', '📋'],
-    'Step-by-step':   ['#1CB0F6', '🔢'],   // blue
-    'Step-by-Step':   ['#1CB0F6', '🔢'],
-    'Explanation':    ['#CE82FF', '💡'],   // purple — distinct from step-by-step
-    'Key Points':     ['#58CC02', '✅'],   // green
-    'Tip':            ['#FFAA00', '💡'],   // amber — distinct from final answer orange
-    'Common Mistake': ['#FF4B4B', '⚠️'],   // red
-    'Insight':        ['#EC4899', '🌟'],   // pink — distinct from explanation purple
-    'Resources':      ['#1CB0F6', '📚'],
-    // Check My Work sections
+    // Check My Work sections — kept as labeled cards on purpose
     'Verdict':           ['#7C3AED', '⚖️'],   // purple — the check-mode signature color
     'What you got right':['#58CC02', '✅'],   // green — positive reinforcement
     'Where it went wrong':['#FF4B4B', '🔍'],  // red — the error location
@@ -3254,12 +3041,49 @@ function renderAnswerHtml(text) {
         }
       }
       html += '</div>';
+    } else if (/^\d+[\.)]\s*/.test(line)) {
+      // Top-level numbered list — natural prose answers use these directly
+      // now (no section wrapper required) when a problem genuinely has steps.
+      html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
+      while (i < lines.length && /^\d+[\.)]\s*/.test(lines[i])) {
+        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(lines[i].replace(/^\d+[\.)]\s*/, '')) + '</li>';
+        i++;
+      }
+      html += '</ol>';
+    } else if (/^[•\-\*✓✔]\s/.test(line)) {
+      html += '<ul style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;">';
+      while (i < lines.length && /^[•\-\*✓✔]\s/.test(lines[i])) {
+        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(lines[i].replace(/^[•\-\*✓✔]\s*/, '')) + '</li>';
+        i++;
+      }
+      html += '</ul>';
     } else {
       html += '<p style="margin:5px 0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(line) + '</p>';
       i++;
     }
   }
   return html;
+}
+
+// ── Render a video suggestion card (visual-learner topics) ─────
+// data.video comes from the server's real YouTube search — never fabricated
+// client-side. Rendered as a soft, optional card, not a forced section.
+function renderVideoCard(video) {
+  if (!video || !video.videoId) return '';
+  const title   = escHtml(video.title || 'Watch on YouTube');
+  const channel = escHtml(video.channel || '');
+  const thumb   = video.thumbnail ? escHtml(video.thumbnail) : '';
+  return (
+    '<a href="' + escHtml(video.url) + '" target="_blank" rel="noopener noreferrer" class="knox-video-card" ' +
+    'style="display:flex;gap:10px;align-items:center;margin-top:10px;padding:8px;border-radius:12px;border:1px solid var(--border,#E5E7EB);text-decoration:none;color:inherit;">' +
+      (thumb ? '<img src="' + thumb + '" alt="" style="width:88px;height:66px;border-radius:8px;object-fit:cover;flex-shrink:0;">' : '') +
+      '<div style="min-width:0;">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--text-light,#6B7280);margin-bottom:2px;">🎥 See it visually</div>' +
+        '<div style="font-size:13.5px;font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + title + '</div>' +
+        (channel ? '<div style="font-size:12px;color:var(--text-light,#6B7280);margin-top:2px;">' + channel + '</div>' : '') +
+      '</div>' +
+    '</a>'
+  );
 }
 
 // ── Keyboard shortcuts ───────────────────────────────────────
@@ -3273,7 +3097,6 @@ document.addEventListener('keydown', (e) => {
     window.closeAppSettings && window.closeAppSettings();
     window.closeCalc && window.closeCalc();
     window.closeMobileHistory && window.closeMobileHistory();
-    window.closeModeDropdown && window.closeModeDropdown();
   }
 });
 
