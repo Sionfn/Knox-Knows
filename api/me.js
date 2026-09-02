@@ -1,7 +1,7 @@
 // /api/me.js — Knox Knows
 // Lightweight "who am I" endpoint for the browser extension (and anything
-// else that needs the user's current plan + today's usage in one call).
-// Verifies the Firebase ID token, then reads the user doc + today's usage.
+// else that needs the user's current plan + rolling usage in one call).
+// Verifies the Firebase ID token, then reads the user doc + rolling usage log.
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
@@ -20,7 +20,15 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db = getFirestore();
 
-// UTC day key — must match todayKey() in api/ask.js
+// Must match api/ask.js — a rolling window, not a flat daily reset.
+const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+const USAGE_LIMITS = { free: 15, paid: 100 };
+
+function planTier(plan) {
+  return plan === 'free' ? 'free' : 'paid';
+}
+
+// UTC day key — used only for streak freshness, unrelated to usage now
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -57,11 +65,23 @@ export default async function handler(req, res) {
     const userRef = db.collection("users").doc(uid);
     const [userSnap, usageSnap] = await Promise.all([
       userRef.get(),
-      userRef.collection("usage").doc(todayKey()).get(),
+      userRef.collection("usage").doc("rolling").get(),
     ]);
 
     const userData = userSnap.exists ? userSnap.data() : {};
-    const usageData = usageSnap.exists ? usageSnap.data() : { hw: 0, learn: 0, chat: 0 };
+    const plan     = userData.plan || "free";
+    const limit    = USAGE_LIMITS[planTier(plan)];
+
+    const log    = usageSnap.exists ? (usageSnap.data().log || []) : [];
+    const now    = Date.now();
+    const recent = log.filter(ts => now - ts < USAGE_WINDOW_MS);
+    const used      = recent.length;
+    const remaining = Math.max(0, limit - used);
+    // When the student is at the cap, tell them how long until the oldest
+    // use ages out of the window and frees up a slot.
+    const resetInMs = recent.length > 0
+      ? Math.max(0, USAGE_WINDOW_MS - (now - Math.min(...recent)))
+      : 0;
 
     // streak freshness
     let streak = userData.streakCount || 0;
@@ -76,13 +96,9 @@ export default async function handler(req, res) {
       uid,
       email: decoded.email || userData.email || null,
       name: userData.displayName || decoded.name || null,
-      plan: userData.plan || "free",
+      plan,
       planStatus: userData.planStatus || "none",
-      usage: {
-        hw:    usageData.hw    || 0,
-        learn: usageData.learn || 0,
-        chat:  usageData.chat  || 0,
-      },
+      usage: { used, limit, remaining, resetInMs },
       streak,
       studiedToday,
     });
