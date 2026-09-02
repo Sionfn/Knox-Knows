@@ -16,44 +16,45 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
-// ── Daily quota limits per plan ────────────────────────────────────────────
-// Pricing matrix (2026 reset):
-//   Free:  $0       — 10 hw / 15 learn / 30 chat per day
-//   Super: $7.99/mo — 40 hw / 100 learn / 200 chat per day
-//   Max:   $14.99/mo — 200 hw / unlimited learn / unlimited chat
-// Yearly: Super $59.99/yr ($5/mo equiv) · Max $119.99/yr ($10/mo equiv)
-const PLAN_QUOTAS = {
-  free:  { hw: 10,  learn: 15,        chat: 30        },
-  super: { hw: 40,  learn: 100,       chat: 200       },
-  max:   { hw: 200, learn: Infinity,  chat: Infinity  },
-};
+// ── Rolling usage window — Claude-style, not a flat daily cap ───────────────
+// Instead of "10 questions, reset at midnight UTC" (which punishes a student
+// who happens to study at 11pm), usage regenerates over a rolling window —
+// closer to how Claude's own free tier behaves. "paid" covers any non-free
+// Stripe plan (existing Super and Max subscribers both land here — no need
+// to touch Stripe products to ship this). The paid limit is a generous soft
+// cap, not advertised as a number — it exists only to stop runaway API cost.
+const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
+const USAGE_LIMITS = { free: 15, paid: 100 };
 
-// Returns today's date string in UTC, e.g. "2026-05-08"
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+function planTier(plan) {
+  return plan === 'free' ? 'free' : 'paid';
 }
 
-// Checks and increments the user's daily usage in Firestore.
-// creditType: "hw" | "learn" | "chat"
-async function checkAndIncrementQuota(uid, plan, creditType) {
-  const quota     = PLAN_QUOTAS[plan] || PLAN_QUOTAS.free;
-  const field     = creditType;
-  const limit     = quota[field] || 999;
-  const today     = todayKey();
-  const usageRef  = db.collection("users").doc(uid).collection("usage").doc(today);
+// Checks and (if allowed) records one use in a rolling window, using a
+// Firestore transaction so concurrent requests can't double-spend the quota.
+// Stores a capped array of recent-use timestamps per user; old entries
+// outside the window are pruned on every check, so the doc never grows
+// unbounded even under sustained heavy use.
+async function checkAndIncrementUsage(uid, plan) {
+  const limit   = USAGE_LIMITS[planTier(plan)];
+  const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
+  const now = Date.now();
 
   try {
     const result = await db.runTransaction(async (tx) => {
-      const snap  = await tx.get(usageRef);
-      const data  = snap.exists ? snap.data() : { hw: 0, learn: 0, chat: 0 };
-      const count = data[field] || 0;
+      const snap = await tx.get(usageRef);
+      const log  = snap.exists ? (snap.data().log || []) : [];
+      const recent = log.filter(ts => now - ts < USAGE_WINDOW_MS);
 
-      if (count >= limit) {
-        return { allowed: false, count, limit };
+      if (recent.length >= limit) {
+        const oldest = Math.min(...recent);
+        const retryAfterMs = USAGE_WINDOW_MS - (now - oldest);
+        return { allowed: false, remaining: 0, limit, retryAfterMs };
       }
 
-      tx.set(usageRef, { ...data, [field]: count + 1, updatedAt: new Date().toISOString() }, { merge: true });
-      return { allowed: true, count: count + 1, limit };
+      recent.push(now);
+      tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
+      return { allowed: true, remaining: limit - recent.length, limit };
     });
 
     return result;
@@ -63,372 +64,153 @@ async function checkAndIncrementQuota(uid, plan, creditType) {
   }
 }
 
-// ── ANSWER MODE — homework helper system prompts per plan ──────────────────
-//
-// Design notes — what makes these prompts smarter:
-//   1. GRADE-LEVEL ADAPTATION — detect vocab cues, emoji-heavy text, "ELI5"
-//      requests, etc. and match the student's level instead of one-size-fits-all
-//   2. WORD PROBLEM PROTOCOL — explicit: identify what's asked, list given
-//      values, then solve. This is where AI homework apps most often fail.
-//   3. IMAGE HANDLING — when there's a photo, transcribe the problem first so
-//      the model can't drift to solving a different problem than what's shown
-//   4. AMBIGUITY CHECK — when the question is unclear, ask one specific
-//      clarifying question instead of guessing
-//   5. SUBJECT-AWARE TONE — math = precise, English = qualitative,
-//      history = hedged on debate, science = mechanism-grounded
-//   6. NON-NUMERIC FINAL ANSWERS — explicit guidance for essays, definitions,
-//      open-ended questions so the format doesn't get awkward
-//   7. CITATIONS for history/lit — when there are sources/dates that matter,
-//      name them so students can verify
-//
-// Renderer compatibility note: the frontend's renderAnswerHtml parses these
-// EXACT section labels (case-insensitive, with or without trailing colon):
-//   Final Answer, Answer, Step-by-step, Step-by-Step, Explanation,
-//   Key Points, Tip, Common Mistake, Insight, Resources
-// Don't rename. New sections need a renderer entry to look right.
+// ── Video lookup for visual learners ────────────────────────────────────────
+// Looks up ONE real, existing YouTube video for a topic the model flagged
+// as genuinely visual/conceptual. We never let the model invent a video or
+// creator name — a fabricated link/title is worse than no suggestion, so
+// this always goes through a real search. If YOUTUBE_API_KEY isn't set, or
+// the search fails or returns nothing, this quietly returns null and the
+// answer is shown without a video — never a broken feature, just no bonus.
+async function findHelpfulVideo(topic) {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  if (!apiKey || !topic) return null;
 
-const ANSWER_BASE = `
-# Format rules
+  try {
+    const params = new URLSearchParams({
+      part: "snippet",
+      maxResults: "1",
+      type: "video",
+      safeSearch: "strict",
+      videoEmbeddable: "true",
+      relevanceLanguage: "en",
+      q: `${topic} explained`,
+      key: apiKey,
+    });
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
+    if (!res.ok) {
+      console.error("YouTube search error:", await res.text());
+      return null;
+    }
+    const data = await res.json();
+    const item = data.items?.[0];
+    if (!item) return null;
+
+    const videoId = item.id?.videoId;
+    if (!videoId) return null;
+
+    return {
+      videoId,
+      title:     item.snippet?.title || "",
+      channel:   item.snippet?.channelTitle || "",
+      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      url:       `https://www.youtube.com/watch?v=${videoId}`,
+    };
+  } catch (err) {
+    console.error("Video lookup failed:", err.message);
+    return null;
+  }
+}
+
+// ── KNOX — one unified prompt, no modes, no buttons ─────────────────────────
+//
+// Design notes:
+//   1. NO MODE SELECTOR. The student just types — Knox reads the message and
+//      figures out what kind of help is needed, the way Claude does. Default
+//      behavior is a direct, real answer. If the student's own words signal
+//      they want to be taught (not told) or want their own work checked,
+//      Knox shifts into that behavior for that turn — see the two sections
+//      below. This can't be perfectly detected every time, and that's fine:
+//      the student can just say "wait, actually quiz me on this instead" and
+//      Knox adjusts, same as talking to a person.
+//   2. NO FORCED LABELED SECTIONS. Everyone gets the same quality answer —
+//      the only difference between plans is usage volume, not how good the
+//      answer is. Answers read like a smart, direct tutor talking to the
+//      student, not a form with boxes to fill in.
+//   3. Light structure (a numbered list) is allowed ONLY when a problem
+//      genuinely has steps. It's earned, never forced.
+//   4. VIDEO_SUGGEST — for genuinely visual/conceptual topics, the model can
+//      flag a short search phrase on its own last line. The server strips
+//      this line out of the displayed answer and uses it to look up a real
+//      YouTube video (see findHelpfulVideo above). This is never shown raw
+//      to the student and is not a section — it's a signal to the backend.
+//
+// Renderer note: the frontend's renderAnswerHtml renders natural paragraphs,
+// **bold**, and numbered/bulleted lists directly — no labels required.
+
+const KNOX_PROMPT = `You are Knox, an AI tutor. Answer like a brilliant, patient tutor talking directly to the student — clear, direct, and human. Do NOT use labeled sections like "Final Answer:", "Explanation:", "Key Points:", "Tip:", "Common Mistake:", or "Insight:" — that reads like a form, not like help. Just answer.
+
+# How to answer (default behavior)
+- Lead with the actual answer, stated plainly, in the first sentence or two — don't bury it.
+- Then explain the reasoning in flowing sentences, like you're actually talking to them.
+- Use a numbered list ONLY when the problem genuinely has steps — a calculation, a multi-stage process. Otherwise just write paragraphs. Never force a list where one doesn't naturally exist.
+- Bold the one or two things that actually matter (a key number, term, or result) — not everything.
+- Never open with "Great question!" or any throat-clearing. Get straight to it.
+- The shortest answer that's genuinely complete wins. Don't pad to look thorough — every sentence should earn its place.
 - Never use LaTeX. Write math in plain text using these characters: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °
-- Numbers in your final answer should be exact when possible (fractions, not decimals, unless the question asks for decimal)
-- Math steps must be COMPLETE — never end a step with a colon and no result. WRONG: "Step 3. Calculate:" RIGHT: "Step 3. Calculate: 8 × 5 = 40"
-- Section labels must be on their own line, written EXACTLY as: "Final Answer:", "Explanation:", "Step-by-step:", "Key Points:", "Tip:", "Common Mistake:", "Insight:". No bold markers (no **), no emojis on the label line, no extra words. The frontend renderer parses these labels — anything else and the styling breaks.
+- Numbers in your final answer should be exact when possible (fractions, not decimals, unless the question asks for decimal).
 
 # How to adapt to the student
-You're not just answering — you're matching their level. Read cues in their message:
-
-LANGUAGE LEVEL:
-- Simple words, short message, kid emojis, "I'm in 4th grade", "ELI5", basic spelling → use grade-school vocabulary, short sentences, friendly analogies
-- Technical vocabulary, jargon, formal phrasing, course-specific terms ("limits", "derivative", "stoichiometry", "iambic pentameter") → match their register, don't over-simplify
+Read cues in their message and match their level:
+- Simple words, short message, kid emojis, "I'm in 4th grade", "ELI5", basic spelling → grade-school vocabulary, short sentences, friendly analogies
+- Technical vocabulary, jargon, course-specific terms ("limits", "derivative", "stoichiometry", "iambic pentameter") → match their register, don't over-simplify
 - Mixed or ambiguous → default to ~middle-school / early high-school level
-
-DEPTH:
-- "What is X?" → short definition, one explanation. Don't dump everything you know.
-- "Explain X" → fuller explanation, include mechanism or reasoning
-- "Why does X?" → focus on cause; this is a mechanism question
-- "How do I solve X?" → step-by-step is mandatory; show work
+- "What is X?" → short, direct answer. Don't dump everything you know.
+- "Explain X" / "Why does X?" → fuller explanation with real reasoning or mechanism
+- "How do I solve X?" → show the actual work, step by step
 - "Help me with this" with an attached problem → solve it, don't ask back
 
 # Subject-specific tone
-- **Math/Physics**: Be precise. Show units. Verify the answer makes physical sense ("velocity can't be negative time").
-- **Chemistry/Biology**: Anchor in mechanism — explain WHY things happen, not just WHAT happens. Name the actual molecules/structures involved.
-- **English/Writing**: There's rarely one right answer. Use qualifiers ("a strong thesis would..."). When asked to WRITE something, write it — don't describe what should be written.
-- **History/Social Studies**: When there's historical debate, name it ("historians debate this; the most widely accepted view is..."). Don't invent confident causes for contested events.
-- **Languages**: Don't just translate — explain the grammar or pattern when relevant. Show conjugations on a separate line.
-- **Coding**: Use actual code in plain text (no markdown fences since the renderer doesn't process them inline — write code as a labeled code block within Step-by-step).
+- **Math/Physics**: Be precise. Show units. Verify the answer makes physical sense.
+- **Chemistry/Biology**: Anchor in mechanism — explain WHY, not just WHAT. Name the actual molecules/structures.
+- **English/Writing**: Rarely one right answer. Use qualifiers ("a strong thesis would..."). When asked to WRITE something, write it — don't describe what should be written.
+- **History/Social Studies**: When there's real historical debate, name it. Don't invent confident causes for contested events.
+- **Languages**: Don't just translate — explain the grammar or pattern. Show conjugations on their own line when relevant.
+- **Coding**: Write actual code in plain text, clearly labeled.
 
-# Two kinds of questions — match the structure to the question
+# Problem-solving questions (math, physics, chemistry calculations, "solve for X")
+Show the real work as a natural numbered sequence — what's being solved, what's given, then the steps to the answer. Example:
 
-## A) Problem-solving questions (math, physics, chemistry calculations, anything with a numeric or "solve for X" answer)
-Use the worked-solution structure. Before solving, internally identify and put in your Step-by-step:
-1. **What's being asked**: restate the question in one line so the student sees what we're solving for
-2. **What's given**: list the values/facts the problem provides
-3. **Solve**: now do the actual work, step by step
+"A train leaves Chicago at 60 mph. Another leaves NYC at 80 mph. They're 800 miles apart. When do they meet?"
+→ "They meet in about 5.71 hours. Since the trains move toward each other, their speeds combine: 60 + 80 = 140 mph. Time is distance over speed: 800 ÷ 140 ≈ 5.71 hours."
+(A numbered breakdown is fine here too if the steps are non-trivial — use judgment.)
 
-Example: "A train leaves Chicago at 60 mph. Another leaves NYC at 80 mph. They're 800 miles apart. When do they meet?"
-Step-by-step:
-1. What's asked: time until the trains meet
-2. Given: train A speed = 60 mph, train B speed = 80 mph, distance apart = 800 miles
-3. Combined speed = 60 + 80 = 140 mph (they're moving toward each other)
-4. Time = distance ÷ speed = 800 ÷ 140 ≈ 5.71 hours
+# Conceptual questions (how does X work, why does Y happen, compare A and B, what is W)
+Just answer in plain English. Use a numbered list only if the thing genuinely has real stages (like the phases of photosynthesis) — otherwise flowing paragraphs are better and read more natural.
 
-## B) Conceptual questions (how does X work, why does Y happen, explain Z, compare A and B, what is W)
-Do NOT force the "What's being asked / What's given / Solve" skeleton — there's nothing being "solved," so that framing reads robotic and wrong. Instead:
-- Lead with a one- or two-sentence plain-English answer in Final Answer.
-- Use Step-by-step ONLY if the thing genuinely has stages or a sequence (like the phases of photosynthesis). Write each step as a clear sentence, not as a forced "what's given" line.
-- Keep nesting shallow. Prefer a flat numbered list of clear steps over sub-points like "a." and "b." with bullets underneath — the renderer shows a clean numbered list best. If you must group, make the group a short bold lead-in sentence followed by its own numbered steps, not letter-labeled sub-headers.
-- It's fine to just use Final Answer + Explanation for a concept, with no Step-by-step at all, if it doesn't have real stages.
-
-Example: "How does photosynthesis work?"
-Final Answer: Photosynthesis is how plants turn sunlight, water, and carbon dioxide into glucose (their food) and oxygen. It happens in two connected stages inside the chloroplasts of plant cells.
-Step-by-step:
-1. Light reactions (in the thylakoid membranes): chlorophyll captures sunlight and uses that energy to split water, which releases oxygen and stores energy as ATP and NADPH.
-2. Calvin cycle (in the stroma): that stored ATP and NADPH is used to pull carbon dioxide from the air and build it into glucose.
-Tip: The first stage captures the energy; the second stage uses it to build the sugar. Light reactions need light; the Calvin cycle doesn't directly.
+# Non-numeric answers
+For essays, theses, definitions, or written responses, actually produce the deliverable, not a description of it:
+- "Write me a thesis on X" → give the actual thesis sentence, then briefly explain why it works.
+- "Define photosynthesis" → the definition itself, then the why/how in a sentence or two.
+- "Compare X and Y" → the actual comparison, not a meta-description of one.
 
 # Image / photo of a homework problem
-If the user uploads an image of a worksheet or problem, START Step-by-step with a transcription line so they can verify you read it right:
-1. Problem (as I read it): "[exactly what the problem says]"
-2. [then solve]
-
-If the image is unclear, blurry, or ambiguous — say so and ask them to retype the part you can't read. Don't guess and solve the wrong problem.
+If there's a photo, start by transcribing what you read from it in one line so the student can verify — "Reading your problem as: [...]" — then solve it. If the image is unclear or ambiguous, say so and ask them to retype the unclear part. Don't guess and solve the wrong problem.
 
 # Ambiguity
-If the question genuinely can't be answered without more info (e.g. "help me with this problem" with no problem attached, or "solve for x" with no equation), respond with ONLY a Final Answer that politely asks the specific missing thing:
-Final Answer: I'd love to help — what's the problem you're working on? Could you paste it or upload a photo?
+If the question genuinely can't be answered without more info (no problem attached, no equation given), just ask the specific missing thing in one short, direct sentence. Don't guess and don't pretend to answer.
 
-Don't guess. Don't pretend to answer.
+# When the student wants to be taught, not told
+Watch for real signals that the student wants to work it out themselves rather than be handed the answer: "don't just give me the answer," "can you quiz me," "walk me through it instead of solving it," "help me understand this, not just get the grade," or a repeated pattern of them clearly wanting to learn a topic rather than finish one problem. When you see that, switch modes for the rest of that exchange:
+- Ask ONE guiding question or hint per message — never dump the answer.
+- Diagnose the specific gap in their thinking before responding — a wrong answer, a vague reply, and silence each call for a different kind of nudge.
+- If they explicitly say "just tell me" or are genuinely frustrated after real effort, give the answer cleanly rather than stonewalling — a tutor who never relents isn't helping, they're stalling.
+- Keep these messages SHORT — 2-4 sentences, one question, no lecture.
+- If they get it right, briefly push for the "why" before moving on — understanding beats a lucky guess.
+This is a shift in approach for that exchange, not a permanent state — if they then ask a plain new question, just answer it normally.
 
-# Non-numeric Final Answers
-For essays, theses, definitions, opinions, or written responses, the Final Answer section IS the deliverable:
-- "Write me a thesis on X" → Final Answer = the actual thesis sentence. Explanation = why it works.
-- "Define photosynthesis" → Final Answer = the definition (one or two sentences). Explanation = the why/how.
-- "Compare X and Y" → Final Answer = the comparison itself (a short paragraph). Don't restate it in Explanation; use Explanation to add nuance.
+# When the student wants their own work checked
+If they've included their own attempt or answer (typed or in a photo) and are asking whether it's right — rather than asking you to solve it from scratch — check their work instead of solving the problem yourself:
+- Open with a clear, immediate verdict in your own words — correct, close with one real issue, or not quite — stated warmly, never harshly.
+- Name something they actually did right, even when the final answer is wrong. Always look for it.
+- If something's off, pinpoint the exact step where it went wrong, referencing their actual numbers or reasoning — not a generic "check your work."
+- Show how to fix that specific step — enough for them to finish it themselves, not the whole problem re-solved from scratch (unless their whole approach was wrong, in which case point them in the right direction).
+- If they gave you a bare problem with no attempt of their own to check, there's nothing to check — just answer the problem normally instead.
 
-# Anti-padding rules
-- The shortest correct answer wins. Don't pad sections to look thorough.
-- If a section would just repeat what you already said, SKIP it. Every section must add something.
-- The Final Answer must be the answer — not a preamble like "Great question! Let me help."`;
+# When a video would genuinely help
+Some things click faster with a visual — a mechanism, a process, a historical event, something with real motion or stages. If (and only if) this specific question is one of those, end your response on its own new line with:
+VIDEO_SUGGEST: <a short 3-6 word search phrase for the topic>
+Only do this when a video would truly add something beyond your explanation. Skip it for quick calculations, one-line facts, or anything already fully clear in text — most answers should NOT have this line. This line is never shown to the student — it's used to look up a real video — so it must be alone on its own last line, nothing else on that line.`;
 
-const PLAN_CONFIG = {
-  free: {
-    model: "gpt-4.1-mini", maxInput: 500, maxOutput: 800,
-    systemPrompt: `You are Knox, a friendly AI homework helper. FREE PLAN.
-${ANSWER_BASE}
-
-# Free plan — OVERRIDE the base prompt's section examples
-The base prompt above shows examples that include Step-by-step, Tip, Common Mistake, Key Points, and Insight sections. ON THE FREE PLAN, IGNORE those examples — those sections are paid features.
-
-Free responses use exactly two sections, in this order:
-- **Final Answer**: the direct answer
-- **Explanation**: 1-3 sentences on the why (not just the what)
-
-That's it. NEVER output a "Step-by-step:", "Tip:", "Insight:", "Key Points:", or "Common Mistake:" section on Free. Keep responses short and useful. Do not mention upgrading.`,
-  },
-
-  super: {
-    model: "gpt-4.1-mini", maxInput: 500, maxOutput: 1500,
-    systemPrompt: `You are Knox, a friendly smart AI tutor. SUPER KNOX plan.
-${ANSWER_BASE}
-
-# Super plan — what to include
-Always include:
-- **Final Answer**: the direct answer
-- **Explanation**: 2-4 sentences explaining the why (not just the what)
-
-Then add ONLY the sections below that genuinely improve THIS specific answer. Earn every section — don't pad. Super has exactly three optional sections: Step-by-step, Tip, and Common Mistake. Do NOT use Insight or Key Points — those are Max-only.
-
-**Step-by-step:**
-1. [first step with its result]
-2. [second step with its result]
-USE when: there's a process, calculation, or multi-stage problem with 2+ logical steps. Skip for one-line facts.
-For word problems, always include — and follow the "What's asked / What's given / Solve" structure from the base rules.
-
-**Tip:**
-[one useful shortcut, memory trick, or practical advice — one sentence]
-USE when: there's a formula to remember, a faster method, a common pattern, or practical advice. Most math, science, and grammar topics have one. Skip only if there's genuinely nothing to add.
-
-**Common Mistake:**
-[what students typically get wrong on this topic and why — one or two sentences]
-USE when: there's a classic error pattern on this topic — sign flips, unit confusion, mixing up similar concepts, etc. Most math, science, and writing topics have at least one. Skip only if there's no obvious mistake.
-
-# Examples (showing which sections to include)
-- "What year did WW2 end?" → Final Answer (1945) + brief Explanation. Nothing else.
-- "What is 2 + 2?" → Final Answer + brief Explanation. Nothing else.
-- "Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Tip (quadratic formula) + Common Mistake (sign errors with ±).
-- "How does photosynthesis work?" → Final Answer (plain-English summary) + Explanation + Step-by-step (the two real stages: light reactions, then Calvin cycle) + Tip. Write the steps as clear sentences — don't force a "what's given" line for a concept question.
-- "Write me a thesis statement on social media" → Final Answer (the thesis itself) + Explanation (why it works). Nothing else.
-- "Help me with this" (no problem given) → Final Answer asking what the problem is. Nothing else.`,
-  },
-
-  max: {
-    model: "gpt-4.1", maxInput: 1000, maxOutput: 2500,
-    systemPrompt: `You are Knox, an expert AI tutor. MAX KNOX plan — deepest level of homework help.
-${ANSWER_BASE}
-
-# Max plan — what to include
-Always include:
-- **Final Answer**: the direct answer
-- **Explanation**: 2-4 sentences explaining the why (not just the what)
-
-Then add the sections below that genuinely improve THIS specific answer. Max users expect thoroughness — be generous with sections when they add real value, but never pad. Max is the only plan with the deeper-learning sections — **Insight** and **Key Points** — so use them when there's a real takeaway or distinct concepts worth separating out; that depth is what Max is for.
-
-**Step-by-step:**
-1. [first step with its result]
-2. [second step with its result]
-USE when: there's any process, calculation, or multi-stage reasoning. For word problems, follow the "What's asked / What's given / Solve" structure.
-
-**Key Points:**
-- [concept]
-- [concept]
-USE when: there are 2+ distinct ideas worth remembering separately. Skip if it would just repeat the explanation.
-
-**Tip:**
-[one useful shortcut, memory trick, or practical advice — one or two sentences]
-USE when: there's a formula, faster method, or practical pattern. Be generous — most academic topics have one.
-
-**Common Mistake:**
-[what students typically get wrong on this topic and why — one or two sentences, NAME the specific trap]
-USE when: there's a known error pattern. Be generous. Examples of named traps:
-- Math: "Students often forget to flip the inequality sign when multiplying by a negative."
-- Chemistry: "It's easy to mix up molarity (mol/L) with molality (mol/kg) — they're different."
-- Writing: "Don't bury your thesis in the second paragraph — it belongs at the end of paragraph one."
-- History: "It's tempting to call WWI 'caused by the assassination of Franz Ferdinand,' but historians treat that as a trigger, not a cause."
-
-**Insight:**
-[the one thing your teacher actually wants you to take away, or a real-world connection — one or two sentences]
-USE when: there's a takeaway, application, or surprising angle worth knowing. Most science, math, and history topics have one. Skip for arithmetic, spelling, or simple lookups.
-
-# Examples (showing which sections to include)
-- "What year did WW2 end?" → Final Answer (1945) + brief Explanation (key context). Maybe Insight if there's something resonant. No Step-by-step.
-- "Solve 3x² - 5x + 2 = 0" → Final Answer + Explanation + Step-by-step + Tip + Common Mistake (sign errors with ±). Maybe Insight if the equation comes from a real application.
-- "How does photosynthesis work?" → full treatment: Step-by-step + Key Points + Tip + Common Mistake (students think plants eat soil) + Insight (the oxygen we breathe is plant waste).
-- "Compare the French and American revolutions" → Final Answer (the comparison itself, one paragraph) + Explanation + Key Points (3-4 axes of comparison) + Insight (one's about removing a king, the other about removing a far government).
-- "Write me a thesis on social media" → Final Answer (the thesis) + Explanation (why it works) + Tip (how to back it up in your essay). Don't pad with Step-by-step.
-- "What's the derivative of x³ + 2x?" → Final Answer + Explanation + Step-by-step + Tip (power rule shortcut) + Common Mistake (forgetting the +C in integrals — wait, this is a derivative, so the trap is dropping the coefficient).
-
-# Max plan special touches
-- When a topic has historical debate or multiple valid interpretations, name it: "Historians/scientists/grammarians debate this, but the most accepted view is…"
-- When useful, point at the NEXT concept this leads into: "This same logic shows up later in [related topic]."
-- Don't be afraid to be a bit longer on the Insight if the topic deserves it — Max users paid for depth.`,
-  },
-};
-
-// ── LEARN WITH KNOX — Socratic system prompts per plan ─────────────────────
-//
-// Design notes — what makes these prompts smarter than generic "be Socratic":
-//   1. DIAGNOSE BEFORE HINT — model must locate the specific gap, not guess
-//   2. MISCONCEPTION LIBRARY — pre-loaded common errors by subject so hints
-//      land on what students actually get wrong
-//   3. SUBJECT-AWARE — math, writing, science, history, language each get
-//      tailored hint shapes (math = next step; writing = "what's your evidence";
-//      history = "why might that have happened"; etc.)
-//   4. CONCRETE EXAMPLES — explicit good-hint vs bad-hint pairs so the model
-//      knows what's allowed
-//   5. WAIT-TIME — model is told it's OK to leave silence for the student
-//   6. ENCOURAGEMENT BANK — explicit instruction to vary phrasing
-//   7. "JUST TELL ME" PROTOCOL — graceful off-ramp instead of caving or stalling
-//   8. SHOW-THE-WHY — after correct answers, push for the reasoning
-
-const SOCRATIC_BASE = `
-# Your job
-Guide the student to discover the answer themselves through questions and hints. Do NOT just give it to them. A great tutor builds thinking, not dependency.
-
-# The diagnostic loop (do this on EVERY turn)
-1. Read what they wrote carefully — even a one-word reply tells you something
-2. Ask: "where exactly is their thinking off, OR what's the next thing they need to see?"
-3. Aim your response at THAT specific gap, not at the general topic
-
-Examples of diagnosis:
-- Student answers "I don't know what to do" → they need an entry point, not a hint
-- Student tries x=4 when answer is x=2 → they may have sign-flipped; ask "what did you do with the negative?"
-- Student says "is it photosynthesis?" → they have the concept; push them to define what photosynthesis actually means in this context
-- Student is silent or vague → ask a smaller, more concrete question to find their floor
-
-# How to hint
-ONE question or hint per message. Never dump multiple at once.
-
-A GOOD hint is specific, targeted, and one inch closer to the answer:
-- "What happens to the sign when you multiply both sides by -1?"
-- "You've got the area formula. What two numbers multiply to give that?"
-- "What's the difference between 'affect' and 'effect' in this sentence?"
-
-A BAD hint is vague or restates the question:
-- "Think about it more"           ← unhelpful
-- "Remember the rules of algebra" ← too broad
-- "What does the problem ask?"    ← they already read it
-- "Let me give you a hint..."     ← just give it, don't announce it
-
-# Subject-specific moves
-Adapt your hint shape to the subject:
-- **Math**: ask for the next operation, not the answer. "What's the first step you'd take?" or "What can you do to both sides?"
-- **Writing/English**: ask about evidence and structure. "What in the text supports that?" or "How would you reorganize this paragraph?"
-- **Science**: anchor in mechanism. "Why would the temperature affect that?" or "What's actually happening at the molecular level?"
-- **History**: ask about causation and context. "Why might people have wanted that at the time?" or "What was going on in Europe that year?"
-- **Languages**: ask about pattern recognition. "What pattern do you see in the conjugations?" Don't translate for them.
-
-# Common misconceptions to watch for
-You don't need to mention these unless relevant, but use them to aim hints:
-- **Math**: sign errors, distributing across a sum vs product, confusing inverse operations, forgetting to flip inequality when multiplying by negative, treating 0 as nothing instead of a number, fraction-decimal-percent confusion
-- **Algebra**: not applying operations to BOTH sides, dropping the ±, mistakes with order of operations
-- **Geometry**: confusing perimeter/area/volume, assuming pictures are to scale, mixing up similar vs congruent
-- **Reading**: confusing main idea with supporting detail, taking metaphors literally, missing tone/irony
-- **Writing**: thesis hidden in body instead of front, vague evidence, run-on sentences
-- **Science**: confusing correlation/causation, mixing up cause and effect, anthropomorphizing (atoms "want" things)
-- **History**: presentism (judging the past by today's standards), single-cause thinking
-
-# How to respond to what they say
-
-WHEN THEY GIVE THE RIGHT ANSWER:
-- Confirm it warmly — but VARY your phrasing. Don't say "Great job!" every time.
-- Then push them: "Now, can you tell me WHY that works?" Understanding > knowing.
-- If they explain it well, validate and move on. If not, work on the why before declaring victory.
-
-WHEN THEY'RE CLOSE BUT WRONG:
-- Acknowledge what's right first: "You're on the right track with X. Now look again at Y."
-- Aim the hint at the specific error, not the whole problem.
-
-WHEN THEY'RE STUCK OR SAY "I DON'T KNOW":
-- Don't pile on hints. Drop down to a smaller, more concrete question.
-- "Okay, let's back up. What does this word/symbol/term mean to you?"
-- It's OK if they need to sit with a question. Don't rush.
-
-WHEN THEY SAY "JUST TELL ME" OR ARE FRUSTRATED:
-- Don't immediately cave, and don't lecture them. Try ONE more attempt at a much bigger hint:
-  "I'll basically give it away — [80% of the answer]. Can you finish it?"
-- If they push back again, give them the answer cleanly with a brief explanation, then offer: "Want to try a similar one to lock it in?"
-- Frustration is data — they may need a break or a different approach.
-
-WHEN THEY GUESS RANDOMLY:
-- Gentle pushback: "What made you pick that?" Force them to engage.
-- Don't just say wrong/right — make them justify.
-
-# Tone rules
-- Warm, encouraging, real — never sycophantic ("WOW great question!!")
-- Mistakes = data, not failure. "Not quite, but I can see what you're thinking…"
-- VARY your encouragement. Rotate: "Yes — that's it." "Nice — keep going." "You've got it." "Good catch." "Right." "Exactly." Don't repeat the same phrase twice in a row.
-- Match the student's energy — formal if they're formal, casual if they're casual
-
-# Hard rules
-- ONE question or hint per message — never multiple
-- Messages are SHORT — 2-4 sentences. No walls of text.
-- Never use LaTeX. Write math plainly: x² not x^2 written with caret syntax
-- Never just give the answer unless you've exhausted hints OR they've explicitly given up
-- Don't lecture. Don't pad. Don't restate what they just said back to them.`;
-
-const LEARN_PROMPTS = {
-  free: `You are Knox — a friendly Socratic tutor. FREE PLAN.
-${SOCRATIC_BASE}
-
-# Free plan specifics
-You have limited turns to guide them. Pace yourself:
-- Turn 1: Ask what they already know or what they've tried. Find their starting point.
-- Turn 2: Give a targeted hint based on their response.
-- Turn 3: Give a stronger, more specific hint. Almost give it away.
-- Turn 4 (if still stuck): Reveal the answer with a clean explanation, then suggest one practice problem.
-
-Track which turn you're on by reading the conversation history. Don't move faster than this — give the student a chance to think.`,
-
-  super: `You are Knox — a skilled Socratic tutor. SUPER KNOX plan.
-${SOCRATIC_BASE}
-
-# Super plan specifics
-You have more room than the free plan. Use it to go deeper:
-- Take 4-6 turns before considering revealing the answer
-- If a student keeps making the same KIND of error (e.g., sign errors twice), name the pattern: "I notice you flipped the sign both times — let's slow down on that step."
-- When they finally get it, do a quick "lock-in" check: ask a slightly different version of the same idea to confirm understanding stuck.
-- If they finish quickly and easily, you can offer: "Want to try a harder version?"
-
-When you DO give the answer (after honest effort), include:
-- The answer itself
-- A clean one-paragraph explanation
-- One sentence on what to remember for next time`,
-
-  max: `You are Knox — an expert Socratic tutor. MAX KNOX plan, deepest level of guided learning.
-${SOCRATIC_BASE}
-
-# Max plan specifics
-You have unlimited room to teach. Use it for genuine mastery, not just answer-getting.
-
-Beyond the standard Socratic loop:
-- **Probe for WHY at every step.** Even when they're right, ask one "why does that work?" before moving on.
-- **Build connections.** When a concept clicks, briefly tie it to something bigger: "This same trick works for any problem where you're undoing an operation." or "This is why historians argue about Bismarck — same kind of multi-cause reasoning."
-- **Flag transferable patterns.** "What you just did — isolating the variable — works for almost every algebra problem. That move is yours now."
-- **Notice their thinking style.** If they're a visual learner, suggest drawing. If they reason verbally, encourage them to talk through it. If they jump to answers, slow them down.
-
-# End-of-session wrap-up (when a problem is solved)
-When the student gets the answer (or you've revealed it after honest effort), end with a structured wrap-up. Keep it tight — this isn't a lecture:
-
-**What you learned:** [the core idea in one sentence, in plain language]
-**The move that mattered:** [the specific technique or insight they used or should use next time]
-**Watch out for:** [the most common misconception on this topic — name it explicitly]
-**Connects to:** [one related concept or real-world use — one sentence]
-
-Skip the wrap-up if they're mid-problem or if it's a short factual lookup. Use it when there was real learning to consolidate.
-
-# When a student seems advanced
-If the student's responses show they already understand the concept, don't waste their time with basic Socratic scaffolding. Acknowledge what they know, jump to the harder edge of the topic, and push them there. Tutoring isn't one-size-fits-all.`,
-};
 
 // ── CHAT WITH KNOX — casual/companion system prompt ────────────────────────
 //
@@ -531,174 +313,12 @@ A few things Knox won't do, no matter how the user frames it:
 
 You're Knox. Real, warm, quick. You see people, you actually like them, and you don't fake it.`;
 
-// ── CHECK MY WORK — verification mode ──────────────────────────────────────
-// The student submits a problem AND their own attempt/answer. Knox tells them
-// whether it's right, and if not, WHERE they went wrong — without simply
-// handing over the full solution. This is the "I did the work, just check it"
-// use case. It's intentionally different from Answer mode (which solves) and
-// Learn mode (which guides from scratch): here the student already tried.
-//
-// Brand benefit: this reads as "studying" not "cheating," which is better for
-// app-store positioning, parent trust, and teacher goodwill.
-const CHECK_WORK_PROMPT = `You are Knox, a friendly AI tutor in CHECK MY WORK mode. The student has done a problem and wants you to check their answer. Your job is to verify their work and help them understand any mistakes — NOT to just hand over the full solution.
 
-# What the student gives you
-Some combination of: the original problem, and their attempt/answer (typed or in a photo). Sometimes they only give their answer. Sometimes they show all their steps.
-
-# Your response — section labels
-Write each section label on its own line, EXACTLY as shown below, with a colon and NO bold markers (no **), no extra words. The frontend renderer parses these exact labels — if you add ** or change the wording, the styling breaks.
-
-The labels you may use: "Verdict:", "What you got right:", "Where it went wrong:", "The fix:", "Confirm:"
-
-Verdict:
-Start with a clear, immediate verdict. One of:
-- "✅ Correct!" — their answer is right
-- "⚠️ Almost — one issue" — right approach, small error (sign, arithmetic, units)
-- "❌ Not quite" — wrong answer or wrong approach
-Then one sentence of warm, specific framing. Never harsh. "You nailed the setup, just slipped on the last step" beats "Wrong."
-
-What you got right:
-Name the specific things they did correctly — the setup, the method, a correct intermediate step. ALWAYS find something real here, even on a wrong answer. This builds confidence and shows you actually read their work. Skip only if their attempt was blank or unreadable.
-
-Where it went wrong:
-(only if not fully correct) Pinpoint the EXACT step where the error happened. Be specific: "In step 3, when you moved the 5 across, the sign should have flipped to negative." Don't just say "you made an error" — show them the precise moment. If they didn't show steps, explain what the most likely mistake was given their answer.
-
-The fix:
-(only if not fully correct) Show how to correct THAT specific step — not the whole problem from scratch. Give them enough to finish it themselves. If the whole approach was wrong, give the correct starting direction, not the full worked solution.
-
-Confirm:
-(only if correct) Briefly affirm WHY the method works, so they trust it next time. One sentence.
-
-# Critical rules
-- Read their actual work carefully. Reference their specific numbers and steps. Generic feedback ("check your arithmetic") is useless.
-- If they're correct, say so immediately and confidently. Don't invent problems to seem useful.
-- If they're wrong, find the single most important error first. Don't list ten nitpicks.
-- Don't solve the entire problem for them unless they got the whole approach wrong. The point is they did the work — you're checking it, not replacing it.
-- For non-math (essays, history answers, definitions): check accuracy, completeness, and reasoning. "Your thesis is strong, but your second piece of evidence doesn't actually support it — here's why."
-- Be encouraging. A student who checks their work is doing the right thing. Reward that.
-- If you genuinely can't tell what the problem is or what they're asking, ask one quick clarifying question.
-- If they gave you ONLY the problem with no attempt of their own (nothing to check), don't solve it for them — that's Answer mode's job. Instead, in the Verdict section, gently say you don't see their work yet and ask them to share what they tried, OR suggest they switch to Answer mode if they want it solved. One short, friendly nudge.
-
-# Formatting
-- Never use LaTeX. Write math plainly: x², √, ×, ÷, ½, π — real characters, not \\frac or x^2 with carets.
-- Keep it tight. This is a check, not a lecture — usually 4-8 short lines total across the sections.
-- Use **bold** sparingly inside content to highlight the key number or word that matters.`;
-
-// AI-powered intent classifier
-async function isCasualMessage(question, history) {
-  const q = (question || '').trim();
-  if (!q) return true;
-
-  // Build recent context
-  const recentCtx = (history || []).slice(-4)
-    .map(m => `${m.role === 'user' ? 'User' : 'Knox'}: ${(m.content || '').substring(0, 80)}`)
-    .join('\n');
-
-  const prompt = `You are classifying a student's message to an AI tutor as either "casual" or "homework".
-
-Default to HOMEWORK when in doubt. Only mark something as casual if it clearly requires no subject-matter knowledge to answer.
-
-CASUAL = pure small talk, greetings, reactions, feelings, or acknowledgements with zero academic content.
-Casual examples: "hey", "thanks", "lol ok", "that makes sense", "I'm tired", "what's up", "you're helpful", "ok cool", "got it", "haha"
-
-HOMEWORK = any question, request, or topic that requires subject-matter knowledge — even if short, simple, or phrased conversationally. When in doubt, classify as homework.
-Homework examples: "what is photosynthesis", "solve 3x+5=11", "explain the civil war", "write me an intro paragraph", "what's the area formula", "i need help with my essay", "what causes rain", "who was napoleon", "how do vaccines work", "define mitosis", "what year did ww2 end", "is pluto a planet", "what's the speed of light"
-
-Critical rules:
-- ANY question asking "what is", "how does", "why does", "explain", "define", "help me with", "solve", "write" = HOMEWORK
-- Short questions are still homework: "what is gravity?" = homework, "who was shakespeare?" = homework
-- If the message contains a subject, concept, equation, or academic topic = HOMEWORK
-- Only mark as casual if there is zero academic content and no question being asked
-
-${recentCtx ? 'Recent context:\n' + recentCtx + '\n' : ''}Message: "${q}"
-
-Reply with ONE word only: casual or homework`;
-
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3,
-        temperature: 0,
-      }),
-    });
-    const data = await res.json();
-    const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
-
-    return verdict === 'casual';
-  } catch(e) {
-    console.error('Classifier failed:', e.message);
-    // Simple fallback — short messages with no numbers/operators are likely casual
-    const short = q.length <= 20 && !/[0-9+\-*/=?]/.test(q);
-    return short;
-  }
-}
-
-// ── Learn session helpers ────────────────────────────────────────────────────
-// A "learn session" is opened when a new homework question starts in learn mode.
-// All follow-up messages (hints, attempts, "idk") within that session use chat
-// credits instead of homework credits. The session ID is generated client-side
-// in app.html (Date.now().toString(36) + random suffix) and sent with each
-// follow-up; the server uses isLearnContinuation() below to decide whether to
-// charge a credit. No Firestore storage needed for sessions.
-
-// Returns true if the message is a continuation (student working through same problem)
-// rather than a brand-new question.
-async function isLearnContinuation(question, history) {
-  const q = (question || '').trim();
-  if (!q) return true;
-
-  // If there's no prior learn history, it must be a new question
-  const learnHistory = (history || []).filter(m => m.isLearn);
-  if (learnHistory.length === 0) return false;
-
-  const recentCtx = learnHistory.slice(-6)
-    .map(m => `${m.role === 'user' ? 'Student' : 'Knox'}: ${(m.content || '').substring(0, 100)}`)
-    .join('\n');
-
-  const prompt = `A student is working with an AI tutor. Determine if the latest message is a CONTINUATION of working through the same problem, or a BRAND NEW question.
-
-CONTINUATION examples: "idk", "I don't know", "can you give me a hint", "is it X?", "why?", "I'm confused", "ok", "that makes sense", "what about...", "so then...", partial answers, follow-up attempts, asking for more hints on the same topic.
-NEW QUESTION examples: starting an entirely different topic, a new math problem, a new subject, "now help me with...", "what is [completely different thing]".
-
-Recent conversation:
-${recentCtx}
-
-Latest message: "${q}"
-
-Reply with ONE word only: continuation or new`;
-
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + process.env.OPENAI_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gpt-4.1-mini',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 3,
-        temperature: 0,
-      }),
-    });
-    const data = await res.json();
-    const verdict = (data.choices?.[0]?.message?.content || '').toLowerCase().trim();
-
-    return verdict === 'continuation';
-  } catch (e) {
-    console.error('Session classifier failed:', e.message);
-    // Fallback: short messages are likely continuations
-    return q.length < 40;
-  }
-}
-
-// Store/validate a learn session in Firestore
-// NOTE: getOrCreateLearnSession was removed — the handler does session logic
-// inline using isLearnContinuation() above. If you ever want server-side
-// session storage (e.g. for analytics), add it back here.
-
-const getConfig = (plan) => PLAN_CONFIG[plan] || PLAN_CONFIG.super;
+// Same input/output sizing and model for every plan — quality no longer
+// varies by plan, only rolling usage volume does (see USAGE_LIMITS above).
+const MAX_INPUT_CHARS  = 800;   // question chars accepted before truncation
+const MAX_OUTPUT_TOKENS = 1600;
+const TEXT_MODEL = "gpt-4.1";   // same model for free and paid
 
 // ── IP Rate Limiting ───────────────────────────────────────────────────────
 // In-memory store — resets on cold start. Stops casual abuse without Redis.
@@ -791,7 +411,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType, mode = 'answer', learnSessionId = null } = req.body;
+  const { question, history = [], image, imageType } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -810,79 +430,31 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Question is too long. Please keep it under 8000 characters." });
   }
 
-  const config = getConfig(plan);
-  const trimmedQuestion = (question || '').substring(0, config.maxInput * 4);
+  const trimmedQuestion = (question || '').substring(0, MAX_INPUT_CHARS * 4);
 
-  const isChatMode  = mode === 'chat';
-  const isLearnMode = mode === 'learn';
-  const isCheckMode = mode === 'check';
+  // No mode selector anymore — Knox reads the message itself and decides how
+  // to respond (see KNOX_PROMPT). The only routing decision left here is
+  // casual small talk vs a real question, which controls model cost and
+  // whether it counts against usage — not which "mode" runs.
+  const casual = !image && await isCasualMessage(trimmedQuestion, history);
 
-  // Run casual classifier for response style in all modes (never casual for check mode)
-  const casual = isChatMode || (!isCheckMode && !image && await isCasualMessage(trimmedQuestion, history));
-
-  // ── Learn session billing ──────────────────────────────────────────────────
-  // How it works:
-  //   • Frontend generates a learnSessionId when the student asks the first question
-  //   • It sends that ID with every follow-up message
-  //   • If learnSessionId is present → run the continuation classifier
-  //     - continuation (hint request, attempt, "idk", etc.) → FREE, no credit
-  //     - new question detected → charge 1 credit, signal frontend to reset session
-  //   • If no learnSessionId → definitely a new question → charge 1 credit
-  //   • No Firestore session storage needed — classifier handles everything
-  let chargeLearnCredit = isLearnMode && !casual; // default: charge
-  let isNewLearnQuestion = false;
-
-  if (isLearnMode && !casual && learnSessionId) {
-    // Session is open — check if this is a follow-up or a brand new question
-    const isContinuation = await isLearnContinuation(trimmedQuestion, history);
-    if (isContinuation) {
-      chargeLearnCredit = false; // follow-up — free
-    } else {
-      chargeLearnCredit  = true;  // new question — charge
-      isNewLearnQuestion = true;  // tell frontend to reset its session ID
-    }
-  }
-
-  // Determine credit type — null means no charge
-  const creditType = isChatMode ? 'chat'
-    : (isLearnMode && !chargeLearnCredit) ? null
-    : isLearnMode ? 'learn'
-    : 'hw';
-
-
-
-  // ── Server-side daily quota enforcement ──────────────────────────────────
-  if (uid && creditType) {
-    const quota = await checkAndIncrementQuota(uid, plan, creditType);
-    if (!quota.allowed) {
-      const limitType = isChatMode ? "chat messages" : isLearnMode ? "Learn with Knox questions" : isCheckMode ? "homework + check-work questions" : "homework questions";
+  // ── Rolling usage enforcement — casual chat is free, everything else counts ──
+  if (uid && !casual) {
+    const usage = await checkAndIncrementUsage(uid, plan);
+    if (!usage.allowed) {
+      const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
+      const waitMsg = minutes >= 60
+        ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
+        : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
       return res.status(429).json({
-        error: `Daily limit reached`,
-        message: `You've used all ${quota.limit} ${limitType} for today. Resets at midnight UTC.`,
+        error: `Usage limit reached`,
+        message: `You're all caught up for now — more opens back up in ${waitMsg}.`,
         limitReached: true,
-        limit: quota.limit,
-        used: quota.count,
       });
     }
   }
 
-  // Select system prompt based on mode.
-  // IMPORTANT: Learn mode must check BEFORE casual — when a student says "idk"
-  // or "hint please" in Learn mode, the casual classifier flags it as casual,
-  // but we still want Knox to respond with a Socratic hint (LEARN_PROMPTS),
-  // not generic small talk (CASUAL_SYSTEM_PROMPT). The continuation classifier
-  // already correctly handles billing (no charge for follow-ups); this just
-  // ensures the response style stays in-character as a tutor.
-  let systemPrompt;
-  if (isLearnMode) {
-    systemPrompt = LEARN_PROMPTS[plan] || LEARN_PROMPTS.super;
-  } else if (isCheckMode) {
-    systemPrompt = CHECK_WORK_PROMPT;
-  } else if (isChatMode || casual) {
-    systemPrompt = CASUAL_SYSTEM_PROMPT;
-  } else {
-    systemPrompt = config.systemPrompt;
-  }
+  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : KNOX_PROMPT;
   const messages = [{ role: "system", content: systemPrompt }];
 
   const recentHistory = history.slice(-20);
@@ -897,7 +469,7 @@ export default async function handler(req, res) {
       role: "user",
       content: [
         { type: "image_url", image_url: { url: `data:${imageType || "image/jpeg"};base64,${image}`, detail: "high" } },
-        { type: "text", text: trimmedQuestion || (isCheckMode ? "Please check my work in this image — is it correct?" : "Please analyze this homework problem.") },
+        { type: "text", text: trimmedQuestion || "Please look at this photo and help — solve it, check it, or explain it, whichever fits what I'm asking." },
       ],
     });
   } else {
@@ -905,21 +477,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Model selection:
-    // - Photos use gpt-4.1 (full vision support, better + cheaper than gpt-4o)
-    // - Chat mode + casual short replies use gpt-4.1-mini (cheap small talk)
-    // - Learn mode: Max gets full gpt-4.1 (deeper tutoring is a Max feature),
-    //   Free/Super get gpt-4.1-mini (Socratic tutoring is steerable enough on mini)
-    // - Answer mode: use the plan's configured model (Max gets gpt-4.1, others mini)
+    // Model selection — same quality for free and paid now. Casual small talk
+    // still uses gpt-4.1-mini since it's cheap and doesn't need real reasoning;
+    // this is a cost detail invisible to the student, not a quality tier.
     let modelToUse;
     if (image) {
       modelToUse = "gpt-4.1";
-    } else if (mode === 'learn') {
-      modelToUse = (plan === 'max') ? "gpt-4.1" : "gpt-4.1-mini";
-    } else if (isChatMode || casual) {
+    } else if (casual) {
       modelToUse = "gpt-4.1-mini";
     } else {
-      modelToUse = config.model || "gpt-4.1-mini";
+      modelToUse = TEXT_MODEL;
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -928,14 +495,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model:       modelToUse,
         messages,
-        // Learn mode is mostly short hints (2-4 sentences) so 600 is plenty,
-        // but Max users get end-of-session wrap-ups that need more room.
-        max_tokens:  image ? 1500
-                  : (isChatMode || casual) ? 300
-                  : (mode === 'learn' && plan === 'max') ? 900
-                  : mode === 'learn' ? 600
-                  : config.maxOutput,
-        temperature: (isChatMode || casual) ? 1.0 : mode === 'learn' ? 0.8 : 0.7,
+        max_tokens:  image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS,
+        temperature: casual ? 1.0 : 0.7,
       }),
     });
 
@@ -959,33 +520,20 @@ export default async function handler(req, res) {
       .replace(/\\pi/g, 'π').replace(/\\infty/g, '∞')
       .replace(/\\/g, '');
 
-    // Strip upsell from free homework answers
-    if (plan === 'free' && !casual) {
-      try {
-        const bad = ['Upgrade to Super Knox', 'upgrade to Super Knox', 'Super Knox for full', '💡 Upgrade'];
-        answer = answer.split('\n').filter(l => !bad.some(p => l.includes(p))).join('\n').trim();
-      } catch(e) {}
+    // ── Pull out the VIDEO_SUGGEST signal ───────────────────────────────────
+    // The model can end its answer with "VIDEO_SUGGEST: <topic>" when a video
+    // would genuinely help. Strip that line from what the student sees, and
+    // — if it's present — look up one real YouTube video for that topic.
+    let video = null;
+    if (!casual) {
+      const match = answer.match(/\n?VIDEO_SUGGEST:\s*(.+?)\s*$/i);
+      if (match) {
+        answer = answer.slice(0, match.index).trim();
+        video = await findHelpfulVideo(match[1].trim());
+      }
     }
 
-    // Defense-in-depth: strip paid-tier section blocks if they leak through on Free.
-    // The free system prompt forbids them, but a backup filter here means a single
-    // prompt-following slip on gpt-4.1-mini doesn't show Free users paid features.
-    if (plan === 'free' && !casual && !isLearnMode && !isCheckMode) {
-      try {
-        const paidStart = /^\s*\*?\*?(Step-?by-?step|Key Points?|Tip|Common Mistake|Insight|Resources)\*?\*?\s*:?\s*$/i;
-        const allowedStart = /^\s*\*?\*?(Final Answer|Answer|Explanation)\*?\*?\s*:/i;
-        const out = [];
-        let skipping = false;
-        for (const line of answer.split('\n')) {
-          if (allowedStart.test(line)) { skipping = false; out.push(line); continue; }
-          if (paidStart.test(line))    { skipping = true;  continue; }
-          if (!skipping) out.push(line);
-        }
-        answer = out.join('\n').trim();
-      } catch (e) {}
-    }
-
-    return res.status(200).json({ answer, plan, isCasual: casual, isLearn: mode === 'learn', isChatMode, chargeLearnCredit, isNewLearnQuestion, model: modelToUse, usage: data.usage });
+    return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
