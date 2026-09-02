@@ -111,6 +111,50 @@ async function findHelpfulVideo(topic) {
   }
 }
 
+// ── Casual vs. substantive classifier ───────────────────────────────────────
+// Cheap, fast check (gpt-4.1-mini) that decides whether the latest message is
+// small talk (free, no usage charge, warm chat voice) or an actual question/
+// task (charged, full KNOX_PROMPT + gpt-4.1). Fails toward SUBSTANTIVE on any
+// error or uncertainty — a student should never silently lose a real answer
+// because this classifier call hiccuped.
+async function isCasualMessage(question, history = []) {
+  if (!question || !question.trim()) return false;
+
+  try {
+    const recentContext = (history || []).slice(-4)
+      .map(m => `${m.role}: ${String(m.content || '').substring(0, 300)}`)
+      .join('\n');
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Classify the LATEST user message as CASUAL or SUBSTANTIVE.
+CASUAL = small talk, greetings, jokes, venting, "how are you", emotional check-ins, general chit-chat with no academic question or task attached.
+SUBSTANTIVE = anything with an actual question, homework problem, request for an explanation, request to check work, or a task to complete — even if phrased casually ("yo can u help me with this math problem").
+Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
+          },
+          { role: "user", content: `Recent conversation:\n${recentContext}\n\nLatest message: "${question}"` },
+        ],
+        max_tokens: 5,
+        temperature: 0,
+      }),
+    });
+
+    if (!response.ok) return false; // fail toward substantive, never drop a real question
+    const data = await response.json();
+    const verdict = (data.choices?.[0]?.message?.content || "").trim().toUpperCase();
+    return verdict.startsWith("CASUAL");
+  } catch (err) {
+    console.error("Casual classifier error:", err.message);
+    return false; // fail toward substantive
+  }
+}
+
 // ── KNOX — one unified prompt, no modes, no buttons ─────────────────────────
 //
 // Design notes:
