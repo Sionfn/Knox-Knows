@@ -83,7 +83,7 @@
         "description": "AI study companion that gives step-by-step homework answers for K-12 and college students. Every subject — math, science, history, English, and more.",
         "offers": [
           { "@type": "Offer", "name": "Free",      "price": "0",    "priceCurrency": "USD" },
-          { "@type": "Offer", "name": "Knox Plus",  "price": "7.99", "priceCurrency": "USD" }
+          { "@type": "Offer", "name": "Knox Plus",  "price": "9.99", "priceCurrency": "USD" }
         ]
       },
       {
@@ -96,8 +96,8 @@
           },
           {
             "@type": "Question",
-            "name": "Will I be charged after the 7-day free trial?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $7.99/month is charged automatically. You can cancel anytime from your account page." }
+            "name": "Will I be charged after the 3-day free trial?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
           },
           {
             "@type": "Question",
@@ -2056,7 +2056,7 @@
       <div style="display:inline-flex;background:white;border:2px solid #E5E7EB;border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 #E5E7EB;">
         <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
         <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;">
-          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:#58CC02;color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 37%</span>
+          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:#58CC02;color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 33%</span>
         </button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
@@ -2066,35 +2066,49 @@
     </div>
 
     <!-- Plan headers — two full Knox-style cards side by side.
-         Free is blue with matching shadow; Plus is green with matching shadow.
-         The "table" underneath belongs to both; color at the top ties each
-         column to its plan without needing tinted rows below. -->
-    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+         Both cards use the same internal structure (badge slot at top, then
+         label, price, spacer, button) so buttons land at the same vertical
+         position and the two cards read as symmetric. Free card gets an
+         invisible badge-slot placeholder so it doesn't sit taller than Plus. -->
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;align-items:stretch;">
 
       <!-- FREE card -->
-      <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #0A85C2;padding:26px 22px;text-align:center;color:white;position:relative;">
+      <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #0A85C2;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
+        <!-- Invisible placeholder to match Plus's floating trial badge, so the two cards line up -->
+        <div style="height:8px;" aria-hidden="true"></div>
         <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
-        <div style="font-size:44px;font-weight:900;line-height:1;">$0</div>
-        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-top:4px;margin-bottom:20px;">forever</div>
+        <div style="line-height:1;">
+          <span style="font-size:44px;font-weight:900;">$0</span>
+          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);">forever</span>
+        </div>
+        <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">No card needed</div>
+        <div style="flex:1;min-height:20px;"></div>
         <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:white;color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
       </div>
 
       <!-- KNOX PLUS card -->
-      <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;">
-        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:#FF6B00;color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
+      <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
+        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:#FF6B00;color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
+        <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
+        <div style="height:8px;" aria-hidden="true"></div>
         <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
         <div style="line-height:1;">
-          <span style="font-size:44px;font-weight:900;" id="proPrice">$7.99</span>
+          <span style="font-size:44px;font-weight:900;" id="proPrice">$9.99</span>
           <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);" id="proPeriod">/mo</span>
         </div>
-        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$59.99/yr — save $35.89</div>
-        <div style="height:16px;"></div>
+        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$79.99/yr — save $39.89</div>
+        <div id="proSubline" style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">Cancel anytime</div>
+        <div style="flex:1;min-height:8px;"></div>
         <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:white;color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
       </div>
 
     </div>
 
-    <!-- Feature-comparison rows — clean rounded card, checkmarks aligned under each plan column -->
+    <!-- Feature-comparison rows — clean rounded card, checkmarks aligned under each plan column.
+         Reordered so the two rows that actually differentiate the plans (Questions,
+         Photo upload) come FIRST, right under the plan headers — that way when a
+         visitor's eye moves from the buttons down into the table, the first thing
+         they see is the real difference, not a wall of matching checkmarks. -->
     <div class="reveal" style="background:white;border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
 
       <!-- Group label -->
@@ -2102,12 +2116,19 @@
         <span style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);">What's included</span>
       </div>
 
-      <!-- Rows -->
+      <!-- Differentiating rows first -->
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
         <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">15 / 3 hrs</div>
         <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited*</div>
       </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
+      </div>
+
+      <!-- Shared feature rows below the differentiators -->
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Answers, tutoring &amp; work-checking</div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
@@ -2117,11 +2138,6 @@
         <div style="font-size:15px;font-weight:700;color:var(--text);">Full AI quality</div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
       </div>
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Priority support</div>
@@ -2135,7 +2151,7 @@
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
-      <button onclick="handlePurchase('Plus')" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 7 days</button>
+      <button onclick="handlePurchase('Plus')" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 3 days</button>
       <p style="font-size:13px;font-weight:700;color:#9CA3AF;margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
     </div>
 
@@ -2167,11 +2183,11 @@
       <!-- Q2 -->
       <details class="faq-item reveal" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:0;overflow:hidden;box-shadow:0 3px 0 #E5E7EB;transition:box-shadow 0.2s;">
         <summary style="padding:18px 22px;cursor:pointer;font-size:16px;font-weight:800;color:#1f2937;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;">
-          <span>Will I be charged after the 7-day free trial?</span>
+          <span>Will I be charged after the 3-day free trial?</span>
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $7.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+          Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
         </div>
       </details>
 
@@ -3406,23 +3422,25 @@
     if (yBtn) { yBtn.style.background = type === 'yearly' ? '#FF6B00' : 'transparent'; yBtn.style.color = type === 'yearly' ? 'white' : '#9CA3AF'; yBtn.style.boxShadow = type === 'yearly' ? '0 3px 0 #CC5500' : 'none'; }
 
     // Knox Plus pricing — the one paid plan
-    const proPrice  = document.getElementById('proPrice');
-    const proPeriod = document.getElementById('proPeriod');
-    const proNote   = document.getElementById('proYearlyNote');
-    const proBtn    = document.getElementById('proCTABtn');
-    const proTrial  = document.getElementById('proTrialBadge');
-    if (proPrice)  proPrice.textContent  = type === 'monthly' ? '$7.99'  : '$5.00';
-    if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/month' : '/month, billed yearly';
+    const proPrice   = document.getElementById('proPrice');
+    const proPeriod  = document.getElementById('proPeriod');
+    const proNote    = document.getElementById('proYearlyNote');
+    const proSubline = document.getElementById('proSubline');
+    const proBtn     = document.getElementById('proCTABtn');
+    const proTrial   = document.getElementById('proTrialBadge');
+    // Monthly → $9.99/mo · Yearly → effective $6.67/mo billed as $79.99/yr
+    if (proPrice)  proPrice.textContent  = type === 'monthly' ? '$9.99'  : '$6.67';
+    if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/mo'    : '/mo, billed yearly';
     if (proNote)   proNote.style.display = type === 'yearly'  ? 'block'  : 'none';
+    if (proSubline) proSubline.textContent = type === 'monthly' ? 'Cancel anytime' : 'Best value · save 33%';
     if (proBtn)    proBtn.textContent    = type === 'monthly' ? 'Start Free Trial' : 'Get Knox Plus Yearly';
     // The badge changes content based on billing period:
-    //   Monthly → "🎉 7-DAY FREE TRIAL"  (matches server-side trial_period_days)
-    //   Yearly  → "💰 4 MONTHS FREE"     ($35.89 saved ÷ $7.99/mo ≈ 4.5 months;
-    //                                    we round down to 4 to stay honest)
+    //   Monthly → "🎉 3-DAY FREE TRIAL" (matches server-side trial_period_days)
+    //   Yearly  → "💰 4 MONTHS FREE"    ($39.89 saved ÷ $9.99/mo ≈ 4 months)
     if (proTrial) {
       proTrial.style.display = 'flex';
       if (type === 'monthly') {
-        proTrial.textContent = '🎉 7-DAY FREE TRIAL';
+        proTrial.textContent = '🎉 3-DAY FREE TRIAL';
         proTrial.style.background = '#FF6B00';
         proTrial.style.boxShadow  = '0 2px 0 #CC5500';
       } else {
@@ -3677,7 +3695,7 @@
         '<div style="font-weight:800;font-size:17px;margin-bottom:6px;">You\'re all set!</div>',
         '<div style="color:#4b5563;font-size:14px;line-height:1.5;">',
         isSuperMonthlyTrial
-          ? 'Your 7-day free trial has started.<br>No charge until the trial ends!'
+          ? 'Your 3-day free trial has started.<br>No charge until the trial ends!'
           : 'Your subscription is now active.<br>Enjoy your upgraded access!',
         '</div>',
       ].join('');
