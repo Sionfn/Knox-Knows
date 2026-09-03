@@ -2842,10 +2842,12 @@
   let hwUsedCount = 0;
   let csUsedCount = 0;
   const DAILY_LIMIT = 10; // free plan hw quota
-  // These must match server-side PLAN_QUOTAS in api/ask.js
-  const PLAN_LIMITS    = { free: 10,  super: 40,  max: 200      };  // homework
-  const LEARN_LIMITS   = { free: 15,  super: 100, max: Infinity };  // learn
-  const CASUAL_LIMITS  = { free: 30,  super: 200, max: Infinity };  // chat
+  // Legacy constants — kept for backward compatibility with older widget
+  // code that reads them. Values map both 'super' and 'max' to the same
+  // Knox Plus tier (both are legacy Stripe plan names for the one paid plan).
+  const PLAN_LIMITS    = { free: 15, super: Infinity, max: Infinity };
+  const LEARN_LIMITS   = { free: 15, super: Infinity, max: Infinity };
+  const CASUAL_LIMITS  = { free: 30, super: Infinity, max: Infinity };
 
   document.addEventListener('click', (e) => {
     const w = document.getElementById('accountDropdownWrapper');
@@ -3663,31 +3665,25 @@
     const banner = document.getElementById('planBanner');
     if (banner) {
       const _bp = window.userPlan || userPlan || 'free';
-      if (_bp === 'max') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#FFF4EC;border-top:1.5px solid #FFCFA0;border-bottom:1.5px solid #FFCFA0;"><div style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:#CC5500;letter-spacing:0.01em;">🚀 Max Knox &nbsp;·&nbsp; 200 questions/day &nbsp;·&nbsp; Best AI</span></div>';
-      } else if (_bp === 'super') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Super Knox &nbsp;·&nbsp; 40 questions/day &nbsp;·&nbsp; <span style="cursor:pointer;text-decoration:underline;" onclick="scrollToPricing()">Upgrade to Max Knox</span></span></div>';
+      if (_bp !== 'free') {
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Knox Plus &nbsp;·&nbsp; Basically unlimited questions</span></div>';
       } else {
         banner.innerHTML = '';
       }
     }
-    if (userPlan === 'max') {
-      // Max users have nothing to upgrade to — show usage only.
-      const _lim = PLAN_LIMITS.max || 200;
-      const left = Math.max(0, _lim - (usage.count || 0));
-      counter.innerHTML = `Daily questions left: ${left}`;
-      counter.style.color = left <= 5 ? '#dc2626' : '#4b5563';
+    if (userPlan !== 'free') {
+      // Plus users — no upgrade path, just show them they're set
+      counter.innerHTML = `⚡ Knox Plus — study away`;
+      counter.style.color = '#4b5563';
     } else if (!window.currentUser) {
       counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 15 questions every 3 hours ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
-      const _pl = window.userPlan || userPlan || 'free';
-      const _lim = PLAN_LIMITS[_pl] || 10;
-      const left = Math.max(0, _lim - (usage.count || 0));
-      // Super → upgrade to Max. Free → upgrade to Super.
-      const upgradeText = _pl === 'super' ? 'Upgrade to Max 🚀' : 'Upgrade for more ⚡';
-      counter.innerHTML = `Daily questions left: ${left} &nbsp;·&nbsp; <span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">${upgradeText}</span>`;
-      counter.style.color = left <= 2 ? '#dc2626' : '#4b5563';
+      // Free user — usage is now a rolling 3-hour window, not a daily count.
+      // The old daily-quota display doesn't map cleanly here, so just show a
+      // simple call-to-action rather than a stale number.
+      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">Study more with Knox Plus ⚡</span>`;
+      counter.style.color = '#4b5563';
     }
   }
 
@@ -4201,7 +4197,9 @@
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;padding:32px;color:#9CA3AF;font-size:14px;font-weight:600;">Loading...</div>';
 
-    const planColors = { max: '#FF6B00', super: '#58CC02', free: '#1CB0F6' };
+    // Plan → color/label for the little history badge. Legacy 'super' and
+    // 'max' both display as Knox Plus since that's the one paid plan now.
+    const planColors = { max: '#58CC02', super: '#58CC02', free: '#1CB0F6' };
 
     // Try Firestore first for logged-in users (skip if just cleared)
     const _justCleared = window._knoxHistoryCleared || localStorage.getItem('knoxHistoryCleared') === '1';
@@ -4225,7 +4223,7 @@
     list.innerHTML = history.map((item, i) => {
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const label = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
+      const label = plan !== 'free' ? '⚡ Plus' : '🆓 Free';
       const q = (item.question || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `<div class="hist-card" data-index="${i}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;">${q}</div>
@@ -4291,7 +4289,8 @@
   function renderFirestoreHistory(items) {
     const list = document.getElementById('historyList');
     if (!list) return;
-    const planColors = { max: '#FF6B00', super: '#58CC02', free: '#1CB0F6' };
+    // Both legacy 'super' and 'max' render as Knox Plus now
+    const planColors = { max: '#58CC02', super: '#58CC02', free: '#1CB0F6' };
     if (items.length === 0) {
       list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:#1f2937;margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:#9CA3AF;">Ask Knox a question and it will appear here automatically.</div></div>';
       return;
@@ -4300,7 +4299,7 @@
       const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const planLabel = plan === 'max' ? '🚀 Max' : plan === 'super' ? '⚡ Super' : '🆓 Free';
+      const planLabel = plan !== 'free' ? '⚡ Plus' : '🆓 Free';
       return `<div id="hist-${item.id}" style="background:white;border:2px solid #E5E7EB;border-radius:16px;padding:14px 16px;transition:all 0.2s;">
         <div style="font-size:14px;font-weight:800;color:#1f2937;line-height:1.5;margin-bottom:12px;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -4407,7 +4406,7 @@
       return;
     }
     body.innerHTML = history.map((item, i) => {
-      const planLabel = item.plan === 'max' ? '\uD83D\uDE80 Max' : item.plan === 'super' ? '\u26A1 Super' : '\uD83C\uDD93 Free';
+      const planLabel = item.plan && item.plan !== 'free' ? '\u26A1 Plus' : '\uD83C\uDD93 Free';
       const shortQ = item.question.length > 120 ? item.question.substring(0, 120) + '\u2026' : item.question;
       return '<div class="history-item" id="hist-item-' + i + '">' +
         '<div class="history-q">' + shortQ.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
@@ -4474,8 +4473,8 @@
       else { cpl.push(line); }
     }
     fp(mode);
-    const planTag = item.plan === "max" ? "\uD83D\uDE80 Max" : item.plan === "super" ? "\u26A1 Super" : "\uD83C\uDD93 Free";
-    const planTagClass = item.plan === "max" ? "tag-max" : item.plan === "super" ? "tag-super" : "tag-free";
+    const planTag = item.plan && item.plan !== "free" ? "\u26A1 Plus" : "\uD83C\uDD93 Free";
+    const planTagClass = item.plan && item.plan !== "free" ? "tag-super" : "tag-free";
     let html = '<div class="ai-response-box">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:#f3f4f6;border-radius:8px;font-size:12px;font-weight:700;color:#6b7280;">\uD83D\uDD50 From history &nbsp;&middot;&nbsp; ' + item.time + '</div>';
     html += '<div class="resp-header"><div class="resp-brain">\uD83E\uDDE0</div><div class="resp-title">Knox Knows</div><div class="resp-plan-tag ' + planTagClass + '">' + planTag + '</div></div>';
