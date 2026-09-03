@@ -771,9 +771,8 @@
         <div class="card-lg card">
           <div class="metric-label">Plan distribution</div>
           <div style="margin-top:14px;">
-            ${planBar('Free',       users.byPlan.free,  users.total, 'orange')}
-            ${planBar('Super Knox', users.byPlan.super, users.total, 'green')}
-            ${planBar('Max Knox',   users.byPlan.max,   users.total, 'purple')}
+            ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
+            ${planBar('Knox Plus', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
           </div>
         </div>
       </div>
@@ -832,9 +831,11 @@
           </div>
           <div class="metric-label" style="margin-top:22px;">Satisfaction by plan</div>
           <div style="margin-top:14px;">
-            ${modeBar('Free',  feedback.byPlan.free,  'orange')}
-            ${modeBar('Super', feedback.byPlan.super, 'green')}
-            ${modeBar('Max',   feedback.byPlan.max,   'purple')}
+            ${modeBar('Free',      feedback.byPlan.free, 'orange')}
+            ${modeBar('Knox Plus', {
+              up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.max?.up   || 0),
+              down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.max?.down || 0),
+            }, 'green')}
           </div>
         </div>
       </div>
@@ -964,11 +965,15 @@
   }
 
   function revPlanBars(byPlan) {
+    // Even though we now market one plan (Knox Plus), existing customers
+    // still pay via their original price IDs (super_monthly / super_yearly
+    // for anyone who signed up when it was called Super, max_* for legacy
+    // Max buyers). Merge by billing cadence rather than by legacy tier
+    // name so the chart tells us what actually matters — monthly vs yearly
+    // revenue split.
     const items = [
-      ['Super Monthly', byPlan.super_monthly, 'orange'],
-      ['Super Yearly',  byPlan.super_yearly,  'green'],
-      ['Max Monthly',   byPlan.max_monthly,   'blue'],
-      ['Max Yearly',    byPlan.max_yearly,    'purple'],
+      ['Plus Monthly', (byPlan.super_monthly || 0) + (byPlan.max_monthly || 0), 'orange'],
+      ['Plus Yearly',  (byPlan.super_yearly  || 0) + (byPlan.max_yearly  || 0), 'green'],
     ];
     const total = items.reduce((s, [, n]) => s + n, 0) || 1;
     return items.map(([label, n, c]) => `
