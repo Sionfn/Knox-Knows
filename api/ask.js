@@ -64,6 +64,52 @@ async function checkAndIncrementUsage(uid, plan) {
   }
 }
 
+// ── Daily photo cap for Free users ──────────────────────────────────────────
+// Photos hit the vision model which is our most expensive per-request feature,
+// so Free is capped at 5 photos per rolling 24 hours. Paid users bypass this
+// entirely. Reasoning:
+//   • A real student rarely uploads more than 5 photos in a day; the cap only
+//     bites on genuine abuse or a monster cram session (in which case $9.99 is
+//     a fair ask).
+//   • The rolling 24-hour window is generous vs. a hard midnight reset — a
+//     student who uploads at 11 pm doesn't get frozen out until midnight UTC.
+//   • Failing OPEN on any error (Firestore hiccup) so students never see a
+//     confusing "no photos for you" error caused by our infrastructure.
+const PHOTO_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+const PHOTO_LIMIT_FREE = 5;
+
+async function checkAndIncrementPhoto(uid, plan) {
+  // Paid users bypass the photo cap — homepage promises unlimited.
+  if (planTier(plan) === 'paid') return { allowed: true };
+
+  const photoRef = db.collection("users").doc(uid).collection("usage").doc("photos");
+  const now = Date.now();
+
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(photoRef);
+      const log  = snap.exists ? (snap.data().log || []) : [];
+      const recent = log.filter(ts => now - ts < PHOTO_WINDOW_MS);
+
+      if (recent.length >= PHOTO_LIMIT_FREE) {
+        const oldest = Math.min(...recent);
+        const retryAfterMs = PHOTO_WINDOW_MS - (now - oldest);
+        return { allowed: false, remaining: 0, limit: PHOTO_LIMIT_FREE, retryAfterMs };
+      }
+
+      recent.push(now);
+      tx.set(photoRef, { log: recent, updatedAt: new Date().toISOString() });
+      return { allowed: true, remaining: PHOTO_LIMIT_FREE - recent.length, limit: PHOTO_LIMIT_FREE };
+    });
+
+    return result;
+  } catch (err) {
+    console.error("Photo quota check error:", err.message);
+    // Fail open — a broken Firestore call should never block a student.
+    return { allowed: true };
+  }
+}
+
 // ── Video lookup for visual learners ────────────────────────────────────────
 // Looks up ONE real, existing YouTube video for a topic the model flagged
 // as genuinely visual/conceptual. We never let the model invent a video or
@@ -481,6 +527,22 @@ export default async function handler(req, res) {
   // casual small talk vs a real question, which controls model cost and
   // whether it counts against usage — not which "mode" runs.
   const casual = !image && await isCasualMessage(trimmedQuestion, history);
+
+  // ── Free-tier photo cap — check BEFORE the question quota so a rejected
+  // photo doesn't burn one of their 15 questions. Paid users skip inside
+  // checkAndIncrementPhoto and never get rejected here.
+  if (uid && image) {
+    const photoUsage = await checkAndIncrementPhoto(uid, plan);
+    if (!photoUsage.allowed) {
+      const hours = Math.max(1, Math.ceil((photoUsage.retryAfterMs || 0) / 3600000));
+      return res.status(429).json({
+        error: `Photo limit reached`,
+        message: `You've used all ${photoUsage.limit} photos in your free daily limit — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Knox Plus gets unlimited photo uploads.`,
+        limitReached: true,
+        photoLimit: true,
+      });
+    }
+  }
 
   // ── Rolling usage enforcement — casual chat is free, everything else counts ──
   if (uid && !casual) {
