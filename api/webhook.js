@@ -23,22 +23,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Map Stripe price IDs → plan names.
 //
-// IMPORTANT: After the 2026 price reset, we keep BOTH the old and new price IDs
-// in this map. Why? Stripe protects existing subscribers — they stay on the
-// price they originally signed up for. The webhook will continue receiving
-// events for those old prices for as long as those customers stay subscribed.
-// Both old and new IDs must resolve to the same plan name ('super' or 'max').
+// IMPORTANT: After each price reset, we keep ALL old price IDs in this map
+// alongside the new ones. Why? Stripe protects existing subscribers — they
+// stay on the price they originally signed up for. The webhook will keep
+// receiving events for those old prices for as long as those customers stay
+// subscribed, and every entry here must resolve to a valid plan name.
+// Deleting an old entry = existing customers losing access on their next
+// billing cycle. Never remove, only add.
 const PRICE_TO_PLAN = {
-  // OLD prices (grandfathered subscribers from before 2026 reset)
+  // OLDEST prices (early 2026 — grandfathered)
   "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super",  // Super Monthly $9.99 (old)
   "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super",  // Super Yearly $79.99 (old)
   "price_1TTqWZCqlxC7aoKRESZls3vU": "max",    // Max Monthly $19.99 (old)
   "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max",    // Max Yearly $149.99 (old)
-  // NEW prices (2026 matrix)
-  "price_1Tb16gCqlxC7aoKRxPv4z4BP":    "super",  // Super Monthly $7.99 (new)
-  "price_1Tb17FCqlxC7aoKRIE0BZaWg":     "super",  // Super Yearly $59.99 (new)
-  "price_1Tb17fCqlxC7aoKRgQ3uxxlK":      "max",    // Max Monthly $14.99 (new)
-  "price_1Tb17zCqlxC7aoKRNOYaO73B":     "max",    // Max Yearly $119.99 (new)
+  // MID prices (mid-2026 — grandfathered)
+  "price_1Tb16gCqlxC7aoKRxPv4z4BP": "super",  // Super Monthly $7.99
+  "price_1Tb17FCqlxC7aoKRIE0BZaWg": "super",  // Super Yearly $59.99
+  "price_1Tb17fCqlxC7aoKRgQ3uxxlK": "max",    // Max Monthly $14.99
+  "price_1Tb17zCqlxC7aoKRNOYaO73B": "max",    // Max Yearly $119.99
+  // CURRENT prices (Sept 2026 reset — one plan: Knox Plus)
+  "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super",  // Knox Plus Monthly $9.99
+  "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super",  // Knox Plus Yearly  $79.99
 };
 
 export const config = { api: { bodyParser: false } };
