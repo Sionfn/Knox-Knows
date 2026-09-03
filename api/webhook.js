@@ -52,10 +52,13 @@ async function getRawBody(req) {
   });
 }
 
-// Human-readable plan details used in emails.
+// Human-readable plan details used in emails. Both legacy Stripe plan values
+// ('super' and 'max') map to the same Knox Plus display since we consolidated
+// into one paid tier — existing subscribers keep their old price IDs but
+// see the unified brand name in every email going forward.
 const PLAN_NAMES = {
-  super: { name: "Super Knox", perks: "40 homework answers a day, 100 Learn sessions, smarter AI, and step-by-step breakdowns" },
-  max:   { name: "Max Knox",   perks: "200 homework answers a day, unlimited Learn and Chat, and the most powerful AI" },
+  super: { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
+  max:   { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
 };
 
 // ── Shared email shell ──────────────────────────────────────────────────────
