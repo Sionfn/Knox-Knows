@@ -20,31 +20,34 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 
 // ─────────────────────────────────────────────────────────────────────────
-// PRICING MATRIX (2026 reset):
-//   Super monthly: $7.99/mo
-//   Super yearly:  $59.99/yr  ($5/mo equivalent)
-//   Max monthly:   $14.99/mo
-//   Max yearly:    $119.99/yr ($10/mo equivalent)
+// PRICING MATRIX (Sept 2026 reset — one plan: Knox Plus at $9.99/$79.99):
+//   Knox Plus monthly: $9.99/mo  (3-day free trial)
+//   Knox Plus yearly:  $79.99/yr ($6.67/mo effective, 33% savings vs monthly)
 //
-// IMPORTANT — to roll out new pricing, do this in Stripe Dashboard first:
-//   1. Go to Products. For each (Super, Max), keep the existing Product —
-//      Stripe Products are just containers. Don't delete them.
-//   2. On each Product, click "Add another price" and create the new amount
-//      with the same recurring interval. Stripe will give you a NEW price ID.
-//   3. Replace the four price_xxx values below with the new IDs.
-//   4. Replace the four price_xxx values in api/webhook.js' PRICE_TO_PLAN map.
-//   5. Update the user-facing prices in index.html (already done in this rollout).
-//   6. Existing subscribers stay on their OLD prices — Stripe handles that
-//      automatically. Only NEW signups see the new prices.
+// The "max" tier is a legacy holdover — we consolidated to one paid plan.
+// New checkouts always use `plan: "super"` which maps to Knox Plus. The
+// "max" entry stays here in case any old link/button still passes it, so
+// those requests don't 400 out — they'll fall through to the same prices.
+//
+// IMPORTANT — when rolling out new pricing:
+//   1. In Stripe Dashboard, add new Prices to the existing Product (never
+//      edit an existing Price — Stripe locks the amount after any charge).
+//   2. Replace the price_xxx values below with the new IDs.
+//   3. Also add the new IDs to api/webhook.js' PRICE_TO_PLAN map so the
+//      webhook recognizes them (do NOT remove the old IDs — grandfathered
+//      subscribers still pay via them).
+//   4. Update the user-facing prices in index.html.
 // ─────────────────────────────────────────────────────────────────────────
 const PRICES = {
+  // Both 'super' and legacy 'max' route to the same current Knox Plus
+  // prices — one paid plan across the board.
   super: {
-    monthly: "price_1Tb16gCqlxC7aoKRxPv4z4BP",  // $7.99/mo
-    yearly:  "price_1Tb17FCqlxC7aoKRIE0BZaWg",  // $59.99/yr
+    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // $9.99/mo (Sept 2026 reset)
+    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // $79.99/yr (Sept 2026 reset)
   },
   max: {
-    monthly: "price_1Tb17fCqlxC7aoKRgQ3uxxlK",  // $14.99/mo
-    yearly:  "price_1Tb17zCqlxC7aoKRNOYaO73B",  // $119.99/yr
+    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // routes to Knox Plus monthly
+    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // routes to Knox Plus yearly
   },
 };
 
@@ -91,16 +94,17 @@ export default async function handler(req, res) {
 
     const baseUrl = req.headers.origin || `https://${req.headers.host}`;
 
-    // 7-day free trial on Knox Plus MONTHLY only.
+    // 3-day free trial on Knox Plus MONTHLY only.
     // Yearly buyers are already committing — they don't need a trial, and a
-    // trial on a $59.99 annual purchase reads as gimmicky rather than useful.
-    // 7 days (up from 3) gives users a full school week to feel the value.
+    // trial on a $79.99 annual purchase reads as gimmicky rather than useful.
+    // 3 days is enough for a student to try it during a homework session or
+    // two, without giving away a full week's worth of unlimited usage.
     // Note: `plan === "super"` is the internal Stripe plan value that maps to
     // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
     // same 'super' → Knox Plus display mapping.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === "super" && billing === "monthly") {
-      subscriptionData.trial_period_days = 7;
+      subscriptionData.trial_period_days = 3;
     }
 
     const session = await stripe.checkout.sessions.create({
