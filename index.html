@@ -1749,7 +1749,7 @@
   </button>
 
   <div class="header-nav">
-    <a href="#pricing" class="pro-badge" id="proBadge" style="text-decoration:none;">⚡ Upgrade</a>
+    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="handlePurchase('Plus')">⚡ Knox Plus</button>
 
     <div class="account-dropdown-wrapper" id="accountDropdownWrapper" style="display:none;">
       <button id="accountBtn" onclick="toggleDropdown(event)" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:12px;padding:6px 12px 6px 6px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s;height:44px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -2081,10 +2081,8 @@
           </div>
         </div>
         <div style="flex:1;color:white;display:flex;flex-direction:column;">
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>The exact same AI quality as the paid plan</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Answers, tutoring, and work-checking — just ask</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every subject — math, science, history &amp; essays</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Snap a photo and Knox reads it instantly</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every mode — answers, tutoring, work-checking</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every subject, every AI quality — same as paid</div>
           <div class="plan-divider"></div>
           <div class="plan-teaser" style="color:rgba(255,255,255,0.65);">🔒 Studying a lot? Go unlimited any time.</div>
         </div>
@@ -2107,8 +2105,8 @@
           </div>
         </div>
         <div style="flex:1;color:white;display:flex;flex-direction:column;">
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Same great answers — no waiting on quota</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every mode: answers, tutoring, work-checking</div>
+          <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.8);margin-bottom:10px;">Everything in Free, plus:</div>
+          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>No waiting on quota — ever</div>
           <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Priority support if something goes wrong</div>
           <div class="plan-divider"></div>
           <div class="plan-teaser" style="color:rgba(255,255,255,0.7);">💚 One plan. No confusing tiers.</div>
