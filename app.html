@@ -1822,9 +1822,9 @@
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
-        const cfg = plan === 'max'   ? { cls: 'max',   icon: '🦊', name: 'Max Knox',   tag: 'Top tier · unlimited learning' }
-                  : plan === 'super' ? { cls: 'super', icon: '⚡', name: 'Super Knox', tag: 'Pro plan · 40/day homework' }
-                  :                    { cls: 'free',  icon: '🆓', name: 'Free',       tag: '10 homework questions / day' };
+        const cfg = plan !== 'free'
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
+          : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '15 questions every 3 hours' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -1846,9 +1846,9 @@
         ddPlan.appendChild(card);
       }
 
-      // Upgrade button shown for free + super (super can move to max).
-      // Max users are already at the top tier — no upgrade prompt.
-      if (plan === 'free' || plan === 'super') {
+      // Upgrade button shown for free users only — one paid plan now, so
+      // anyone already paying has nothing further to upgrade to.
+      if (plan === 'free') {
         if (upgradeBtn) upgradeBtn.style.display = '';
         if (ddUpgrade)  ddUpgrade.style.display  = '';
       } else {
@@ -2470,10 +2470,8 @@
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
-    const planLabel = plan === 'max'   ? 'Max Knox'
-                    : plan === 'super' ? 'Super Knox'
-                    : 'Free';
-    const badgeClass = plan;
+    const planLabel = plan !== 'free' ? 'Knox Plus' : 'Free';
+    const badgeClass = plan !== 'free' ? 'super' : 'free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
 
@@ -2510,7 +2508,7 @@
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
-      up.textContent = 'Upgrade to Super Knox';
+      up.textContent = 'Upgrade to Knox Plus';
       up.onclick     = () => { goToPricing(); closeAppSettings(); };
       wrap.appendChild(up);
       el.appendChild(wrap);
