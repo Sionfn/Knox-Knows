@@ -91,10 +91,13 @@ export default async function handler(req, res) {
 
     const baseUrl = req.headers.origin || `https://${req.headers.host}`;
 
-    // 7-day free trial on Super Knox MONTHLY only.
+    // 7-day free trial on Knox Plus MONTHLY only.
     // Yearly buyers are already committing — they don't need a trial, and a
     // trial on a $59.99 annual purchase reads as gimmicky rather than useful.
     // 7 days (up from 3) gives users a full school week to feel the value.
+    // Note: `plan === "super"` is the internal Stripe plan value that maps to
+    // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
+    // same 'super' → Knox Plus display mapping.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === "super" && billing === "monthly") {
       subscriptionData.trial_period_days = 7;
