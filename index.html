@@ -92,7 +92,7 @@
           {
             "@type": "Question",
             "name": "How is Knox different from ChatGPT or other AI tools?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students. It structures every answer with step-by-step breakdowns, key points, tips, and common mistakes — not just a wall of text. It also has a dedicated Learn mode that teaches you instead of just giving answers, and a full chat history so you never lose your work." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say 'quiz me instead' and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work." }
           },
           {
             "@type": "Question",
@@ -117,7 +117,7 @@
           {
             "@type": "Question",
             "name": "Is this just cheating?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox has two modes: Answer mode gives the solution fast when you're stuck, and Learn mode walks you through the problem step by step like a tutor would so you understand the material." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox defaults to a straight, real answer. If you'd rather be taught than told, just say so — 'walk me through it' or 'quiz me' — and Knox switches to guiding you there yourself instead of handing over the solution." }
           },
           {
             "@type": "Question",
@@ -1851,7 +1851,7 @@
       <button class="btn-blue" style="font-size:17px;padding:17px 32px;" onclick="smoothScroll('how-it-works',event)">See how it works</button>
     </div>
 
-    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free account · 10 questions every day · no credit card needed</p>
+    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free forever · no credit card · sign up in seconds</p>
 
     <!-- Social proof row -->
     <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
@@ -1863,59 +1863,7 @@
           <span style="font-size:20px;">⚡</span> Instant answers
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
-          <span style="font-size:20px;">🎓</span> Step-by-step learning
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== FOUR MODES ===================== -->
-<section style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Four ways to learn with Knox</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Pick the mode that works best for you — Knox adapts to how you learn.</p>
-    </div>
-
-    <div class="rg-2col">
-      <!-- Get the Answer -->
-      <div class="reveal delay-1" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">⚡</div>
-        <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Get the Answer</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Ask Knox any homework question. Get a full answer with step-by-step breakdown, tips, and insights.</p>
-        <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #CC5500;">
-          Try it now →
-        </div>
-      </div>
-
-      <!-- Learn with Knox -->
-      <div class="reveal delay-2" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">🧠</div>
-        <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Learn with Knox</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Knox guides you with questions and hints instead of just giving the answer. Real learning, not just copying.</p>
-        <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #0A85C2;">
-          Learn with Knox →
-        </div>
-      </div>
-
-      <!-- Check My Work -->
-      <div class="reveal delay-3" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
-        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">✓</div>
-        <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Check My Work</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Already did the problem? Send Knox your answer and find out if it's right — and exactly where you slipped up if it's not.</p>
-        <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:#7C3AED;color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #5B21B6;">
-          Check my work →
-        </div>
-      </div>
-
-      <!-- Chat with Knox -->
-      <div class="reveal delay-4" onclick="window.location.href='/app'" style="background:white;border-radius:24px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:40px 32px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;text-align:left;" onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 12px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="font-size:48px;float:right;margin:-6px 0 10px 16px;">💬</div>
-        <h3 style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:10px;">Chat with Knox</h3>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Talk to Knox like a friend. Ask follow-up questions, get things explained in simple terms, or just think out loud. Knox keeps up.</p>
-        <div style="margin-top:24px;display:inline-flex;align-items:center;gap:6px;background:var(--green);color:white;border-radius:12px;padding:11px 20px;font-size:14px;font-weight:800;box-shadow:0 3px 0 #3D9900;">
-          Start chatting →
+          <span style="font-size:20px;">🎓</span> Real understanding
         </div>
       </div>
     </div>
@@ -1923,25 +1871,25 @@
 </section>
 
 <!-- ===================== HOW IT WORKS ===================== -->
-<section id="how-it-works" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="how-it-works" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">How Knox works</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Three steps. That's it.</p>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Just ask — no menus, no modes to pick. Knox figures out what you need.</p>
     </div>
 
     <div class="rg-3col">
       <div class="reveal delay-1" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">1</div>
         <div style="font-size:48px;margin-bottom:8px;">✏️</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Type or upload</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type your question or snap a photo of your homework problem.</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Just ask</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Type your question however you'd actually say it, or snap a photo of the problem.</p>
       </div>
       <div class="reveal delay-2" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">2</div>
         <div style="font-size:48px;margin-bottom:8px;">🦊</div>
-        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Knox figures it out</h3>
-        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Knox analyzes your question and builds a clear, step-by-step explanation.</p>
+        <h3 style="font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px;">Knox reads the room</h3>
+        <p style="font-size:14px;font-weight:600;color:#777;line-height:1.6;">Want the answer? You get it. Want to be taught, or want your work checked? Just say so.</p>
       </div>
       <div class="reveal delay-3" style="background:white;border-radius:20px;border:2px solid var(--border);box-shadow:0 4px 0 var(--border);padding:32px 24px;text-align:center;">
         <div style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 4px 0 #CC5500;font-size:22px;font-weight:900;color:white;">3</div>
@@ -1954,7 +1902,7 @@
 </section>
 
 <!-- ===================== SUBJECTS ===================== -->
-<section id="subjects" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="subjects" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1100px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Every subject. Every grade.</h2>
@@ -2007,11 +1955,11 @@
 </section>
 
 <!-- ===================== ASK AI ===================== -->
-<section id="ai-helper" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="ai-helper" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1100px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:56px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">See Knox in action</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">The full Knox experience — chat history, four learning modes, step-by-step answers, and photo upload.</p>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">The full Knox experience — real conversation, chat history, and photo upload, all in one place.</p>
     </div>
 
     <!-- App showcase — real screenshot of /app -->
@@ -2030,29 +1978,29 @@
       </div>
 
       <!-- Screenshot -->
-      <img src="./knox-in-action.png" alt="Knox Knows app — answering a photosynthesis question with Final Answer, Explanation, and Step-by-step sections" loading="lazy" style="display:block;width:100%;height:auto;">
+      <img src="./knox-in-action.png" alt="Knox Knows app answering a homework question" loading="lazy" style="display:block;width:100%;height:auto;">
     </div>
 
     <!-- CTA below mockup -->
     <div style="text-align:center;">
       <a href="/app" class="btn-orange" style="font-size:18px;padding:18px 48px;text-decoration:none;">Try Knox free →</a>
-      <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 10 free questions every day</p>
+      <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · 15 free questions every 3 hours</p>
     </div>
   </div>
 </section>
 
 <!-- ===================== PRICING ===================== -->
 <section id="pricing" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:1000px;margin:0 auto;">
+  <div style="max-width:820px;margin:0 auto;">
 
     <!-- Header -->
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Pick your plan</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Start free. Every upgrade is a real step up.</p>
+    <div style="text-align:center;margin-bottom:32px;">
+      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Study more, worry less</h2>
+      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">Free forever. Upgrade when you want more.</p>
     </div>
 
-    <!-- Billing toggle -->
-    <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:40px;">
+    <!-- Billing toggle + guarantee -->
+    <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;">
       <div style="display:inline-flex;background:white;border:2px solid #E5E7EB;border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 #E5E7EB;">
         <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
         <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:#9CA3AF;transition:all 0.15s;">
@@ -2065,57 +2013,80 @@
       </div>
     </div>
 
-    <!-- 2 cards in a row -->
-    <div class="rg-pricing" style="align-items:stretch;max-width:680px;margin:0 auto;">
+    <!-- Plan headers — two full Knox-style cards side by side.
+         Free is blue with matching shadow; Plus is green with matching shadow.
+         The "table" underneath belongs to both; color at the top ties each
+         column to its plan without needing tinted rows below. -->
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
 
-      <!-- FREE -->
-      <div class="plan-card reveal delay-1" style="background:#1CB0F6;border:2px solid #0A85C2;box-shadow:0 6px 0 #0A85C2;">
-        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">Free</div>
-        <div style="font-size:40px;font-weight:900;line-height:1;color:white;">$0</div>
-        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;margin-bottom:16px;">forever</div>
-        <!-- Usage summary -->
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;flex-direction:column;gap:6px;">
-          <div style="background:rgba(255,255,255,0.95);border-radius:9px;padding:8px 12px;text-align:center;">
-            <span style="font-size:16px;font-weight:900;color:#0A85C2;">15 questions</span>
-            <span style="display:block;font-size:11px;font-weight:800;color:#1CB0F6;margin-top:1px;">every 3 hours, then it refills</span>
-          </div>
-        </div>
-        <div style="flex:1;color:white;display:flex;flex-direction:column;">
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every mode — answers, tutoring, work-checking</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Every subject, every AI quality — same as paid</div>
-          <div class="plan-divider"></div>
-          <div class="plan-teaser" style="color:rgba(255,255,255,0.65);">🔒 Studying a lot? Go unlimited any time.</div>
-        </div>
-        <button onclick="window.location.href='/app'" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#0A85C2;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.2);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.2)'">Start Free</button>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">✨ No credit card required</div>
+      <!-- FREE card -->
+      <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #0A85C2;padding:26px 22px;text-align:center;color:white;position:relative;">
+        <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
+        <div style="font-size:44px;font-weight:900;line-height:1;">$0</div>
+        <div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.85);margin-top:4px;margin-bottom:20px;">forever</div>
+        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:white;color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
       </div>
 
-      <!-- PAID — ONE PLAN -->
-      <div class="plan-card reveal delay-2" style="background:#58CC02;border:2px solid #46A302;box-shadow:0 6px 0 #2D6A00;">
-        <div id="proTrialBadge" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#FF6B00;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
-        <div style="font-size:11px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:16px;">⚡ Knox Plus</div>
-        <div style="font-size:40px;font-weight:900;line-height:1;color:white;" id="proPrice">$7.99</div>
-        <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75);margin-top:4px;" id="proPeriod">/month</div>
-        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);margin-top:4px;">$59.99/yr — save $35.89</div>
-        <!-- Usage summary -->
-        <div style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);border-radius:12px;padding:12px 14px;margin:14px 0 18px;display:flex;flex-direction:column;gap:6px;">
-          <div style="background:rgba(255,255,255,0.95);border-radius:9px;padding:8px 12px;text-align:center;">
-            <span style="font-size:16px;font-weight:900;color:#2D6A00;">Basically unlimited</span>
-            <span style="display:block;font-size:11px;font-weight:800;color:#46A302;margin-top:1px;">study as much as you need to</span>
-          </div>
+      <!-- KNOX PLUS card -->
+      <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;">
+        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:#FF6B00;color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
+        <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
+        <div style="line-height:1;">
+          <span style="font-size:44px;font-weight:900;" id="proPrice">$7.99</span>
+          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);" id="proPeriod">/mo</span>
         </div>
-        <div style="flex:1;color:white;display:flex;flex-direction:column;">
-          <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.8);margin-bottom:10px;">Everything in Free, plus:</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>No waiting on quota — ever</div>
-          <div class="plan-bullet"><span class="plan-bullet-icon" style="background:rgba(255,255,255,0.3);color:white;">✔</span>Priority support if something goes wrong</div>
-          <div class="plan-divider"></div>
-          <div class="plan-teaser" style="color:rgba(255,255,255,0.7);">💚 One plan. No confusing tiers.</div>
-        </div>
-        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="margin-top:22px;width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:900;font-family:inherit;border:none;background:white;color:#2D6A00;cursor:pointer;box-shadow:0 4px 0 #2D6A00;transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #2D6A00'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #2D6A00'">Start Free Trial</button>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;margin-top:10px;">🔒 Cancel anytime · Secure Stripe checkout</div>
+        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$59.99/yr — save $35.89</div>
+        <div style="height:16px;"></div>
+        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:white;color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
       </div>
 
-    </div><!-- /.rg-pricing -->
+    </div>
+
+    <!-- Feature-comparison rows — clean rounded card, checkmarks aligned under each plan column -->
+    <div class="reveal" style="background:white;border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
+
+      <!-- Group label -->
+      <div style="padding:18px 24px 12px;border-bottom:1.5px solid var(--border);background:#FAFAF7;">
+        <span style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);">What's included</span>
+      </div>
+
+      <!-- Rows -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">15 / 3 hrs</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited*</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Answers, tutoring &amp; work-checking</div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Full AI quality</div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Priority support</div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#F3F4F6;color:#9CA3AF;font-size:16px;font-weight:900;line-height:1;">—</span></div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+      </div>
+
+    </div>
+
+    <p style="text-align:center;font-size:12px;font-weight:600;color:#9CA3AF;margin-top:14px;">*Fair-use limit applies to prevent abuse — real students never hit it.</p>
+
+    <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
+    <div style="text-align:center;margin-top:32px;">
+      <button onclick="handlePurchase('Plus')" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 7 days</button>
+      <p style="font-size:13px;font-weight:700;color:#9CA3AF;margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
+    </div>
+
   </div><!-- /max-width wrapper -->
 </section>
 
@@ -2137,7 +2108,7 @@
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          Knox is built specifically for students. It structures every answer with step-by-step breakdowns, key points, tips, and common mistakes — not just a wall of text. It also has a dedicated Learn mode that teaches you instead of just giving answers, and a full chat history so you never lose your work.
+          Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say "quiz me instead" and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work.
         </div>
       </details>
 
@@ -2192,7 +2163,7 @@
           <span class="faq-icon" style="font-size:20px;font-weight:900;color:#FF6B00;flex-shrink:0;transition:transform 0.2s;">+</span>
         </summary>
         <div style="padding:0 22px 18px;font-size:15px;font-weight:500;color:#4b5563;line-height:1.65;">
-          That's actually why Knox has two modes. <strong style="color:#FF6B00;">Answer mode</strong> gives you the solution fast — useful when you're stuck and just need to move on. <strong style="color:#1CB0F6;">Learn mode</strong> walks you through the problem step by step like a tutor would, so you understand the material. Knox is designed to teach, not just to do your work for you.
+          Knox defaults to a straight, real answer — useful when you're stuck and just need to move on. But if you'd rather be taught than told, just say so: "walk me through it" or "quiz me instead" switches Knox into guiding you there yourself, one hint at a time, instead of handing over the solution.
         </div>
       </details>
 
@@ -3707,7 +3678,7 @@
       counter.innerHTML = `Daily questions left: ${left}`;
       counter.style.color = left <= 5 ? '#dc2626' : '#4b5563';
     } else if (!window.currentUser) {
-      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 10 questions/day ✨</span>`;
+      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 15 questions every 3 hours ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
       const _pl = window.userPlan || userPlan || 'free';
