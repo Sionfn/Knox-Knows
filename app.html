@@ -60,6 +60,23 @@
          This is what stops the page from jiggling when keyboard opens. */
       overflow: hidden;
     }
+    /* App shell — sidebar (full height) + main column (header+chat stacked),
+       sitting side by side so the sidebar's own top bar is flush with the
+       very top of the viewport instead of starting below a full-width header. */
+    #appShell {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+      min-height: 0;
+    }
+    #mainColumn {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     button, input, textarea { font-family: inherit; }
     button { cursor: pointer; }
     a { color: var(--orange); }
@@ -338,14 +355,6 @@
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
-    #appBody {
-      flex: 1;
-      display: flex;
-      flex-direction: row;
-      overflow: hidden;
-      background: var(--cream);
-    }
-
     /* SIDEBAR */
     #rightSidebar {
       width: 240px;
@@ -1352,6 +1361,53 @@
 </noscript>
 
   <!-- ═══════ HEADER ═══════════════════════════════════════ -->
+  <!-- ═══════ APP SHELL — sidebar full height, header only spans the
+       remaining width beside it (no more stacked "two orange bars") ═══ -->
+  <div id="appShell">
+
+    <!-- LEFT SIDEBAR (desktop) — logo, quick nav, history, pinned upgrade -->
+    <aside id="rightSidebar">
+
+      <!-- Logo + collapse toggle -->
+      <div class="sidebar-top">
+        <a href="/?from=app" class="sidebar-logo-link sidebar-collapsible">
+          <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+          <span class="sidebar-logo-text">Knox Knows</span>
+        </a>
+        <button class="sidebar-collapse-btn" onclick="toggleAppSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick nav -->
+      <div class="sidebar-quicknav">
+        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
+          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
+        </a>
+      </div>
+
+      <div class="sidebar-section-header sidebar-collapsible">
+        <span>📚 History</span>
+        <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
+      </div>
+      <div id="sidebarHistoryList" class="sidebar-collapsible">
+        <div id="sidebarHistoryEmpty">
+          <div style="font-size:28px;margin-bottom:6px;">🦊</div>
+          Ask Knox something and your questions will appear here.
+        </div>
+      </div>
+
+      <!-- Pinned upgrade card — free users only, toggled by JS -->
+      <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
+        <p>⚡ Go unlimited with Knox Plus</p>
+        <button onclick="goToPricing()">Upgrade</button>
+      </div>
+
+    </aside>
+
+    <!-- RIGHT COLUMN — header + chat, sits beside the sidebar -->
+    <div id="mainColumn">
+
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
       <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
@@ -1413,48 +1469,6 @@
   </div>
 
   <!-- ═══════ BODY ═════════════════════════════════════════ -->
-  <div id="appBody">
-
-    <!-- LEFT SIDEBAR (desktop) — logo, quick nav, history, pinned upgrade -->
-    <aside id="rightSidebar">
-
-      <!-- Logo + collapse toggle -->
-      <div class="sidebar-top">
-        <a href="/?from=app" class="sidebar-logo-link">
-          <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
-          <span class="sidebar-logo-text sidebar-collapsible">Knox Knows</span>
-        </a>
-        <button class="sidebar-collapse-btn" onclick="toggleAppSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-        </button>
-      </div>
-
-      <!-- Quick nav -->
-      <div class="sidebar-quicknav">
-        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
-          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
-        </a>
-      </div>
-
-      <div class="sidebar-section-header">
-        <span class="sidebar-collapsible">📚 History</span>
-        <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
-      </div>
-      <div id="sidebarHistoryList">
-        <div id="sidebarHistoryEmpty">
-          <div style="font-size:28px;margin-bottom:6px;">🦊</div>
-          <span class="sidebar-collapsible">Ask Knox something and your questions will appear here.</span>
-        </div>
-      </div>
-
-      <!-- Pinned upgrade card — free users only, toggled by JS -->
-      <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
-        <p>⚡ Go unlimited with Knox Plus</p>
-        <button onclick="goToPricing()">Upgrade</button>
-      </div>
-
-    </aside>
-
 
     <!-- CHAT + INPUT -->
     <div id="chatAndInput">
@@ -1543,7 +1557,8 @@
       </div>
     </div>
 
-  </div><!-- end appBody -->
+  </div><!-- end mainColumn -->
+  </div><!-- end appShell -->
 
   <!-- MOBILE HISTORY DRAWER -->
   <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
