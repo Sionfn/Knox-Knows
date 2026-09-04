@@ -1888,10 +1888,23 @@
     if (!usage || !text) return;
     if (!window.currentUser) { usage.style.display = 'none'; return; }
 
-    const lim = USAGE_LIMITS[planTier(window.userPlan)];
+    const tier = planTier(window.userPlan);
     const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
+    // Paid users see "⚡ Knox Plus" instead of a countdown. The 100/3hr cap
+    // is a private soft cap to stop abuse, not something we advertise —
+    // showing "87 left" would contradict the "basically unlimited" promise
+    // on the homepage. Only surface a countdown for Free users.
+    if (tier === 'paid') {
+      usage.style.display = 'inline-flex';
+      usage.classList.remove('danger');
+      usage.classList.add('unlimited');
+      text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus';
+      return;
+    }
     usage.classList.remove('unlimited');
 
+    const lim = USAGE_LIMITS.free;
     try {
       const snap = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', 'rolling'));
       const log  = snap.exists() ? (snap.data().log || []) : [];
@@ -2447,7 +2460,7 @@
         '</div>' +
         '<div class="auth-body">' +
           '<div style="background:var(--cream-warm);border:2px solid var(--orange-light);border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 var(--orange-light);">' +
-            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">10 free questions a day</strong> across every subject. Type a question or snap a photo of your homework.</p>' +
+            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">15 free questions every 3 hours</strong> across every subject. Type a question or snap a photo of your homework.</p>' +
           '</div>' +
           '<button id="welcomeStartBtn" class="auth-submit">Ask Knox your first question</button>' +
           '<button id="welcomeCloseBtn" style="width:100%;padding:11px;border-radius:12px;border:none;background:transparent;color:var(--text-light);font-size:13px;font-weight:800;font-family:inherit;">Maybe later</button>' +
