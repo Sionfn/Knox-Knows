@@ -351,7 +351,6 @@
       .rg-pricing{ grid-template-columns:1fr !important; }
       .rg-footer { grid-template-columns:1fr 1fr !important; gap:20px; }
       .section   { padding:40px 16px !important; }
-      #ai-helper { padding:40px 12px !important; }
     }
 
     /* Small phones */
@@ -657,7 +656,6 @@
     @media (max-width:500px) { .subjects-grid { grid-template-columns:repeat(2,1fr); } }
 
     /* ── AI BOX ──────────────────────────────────────────────── */
-    #ai-helper { background:#f9fafb; }
 
     /* ── Sticky chat widget ── */
     #chatWidget {
@@ -1808,9 +1806,6 @@
       <a href="#pricing" onclick="smoothScroll('pricing',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">💰</span> Pricing
       </a>
-      <a href="#ai-helper" onclick="smoothScroll('ai-helper',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
-        <span style="font-size:20px;">🦊</span> Ask Knox
-      </a>
       <a href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:#1f2937;text-decoration:none;border-bottom:1px solid #F3F4F6;transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">❓</span> FAQ
       </a>
@@ -1880,7 +1875,7 @@
 
     <div class="rg-2col">
       <!-- Same quality free -->
-      <div class="reveal delay-1" style="background:white;border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:32px 28px;">
+      <div class="reveal delay-1" style="background:white;border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <div style="width:52px;height:52px;border-radius:14px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💚</div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Free gets the same quality as paid</h3>
@@ -1889,7 +1884,7 @@
       </div>
 
       <!-- No modes -->
-      <div class="reveal delay-2" style="background:white;border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:32px 28px;">
+      <div class="reveal delay-2" style="background:white;border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <div style="width:52px;height:52px;border-radius:14px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">⚡</div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">No modes to pick. Just ask.</h3>
@@ -1898,7 +1893,7 @@
       </div>
 
       <!-- Talks like a person -->
-      <div class="reveal delay-3" style="background:white;border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:32px 28px;">
+      <div class="reveal delay-3" style="background:white;border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <div style="width:52px;height:52px;border-radius:14px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💬</div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Talks like a tutor, not a template</h3>
@@ -1907,7 +1902,7 @@
       </div>
 
       <!-- Snap a photo -->
-      <div class="reveal delay-4" style="background:white;border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:32px 28px;">
+      <div class="reveal delay-4" style="background:white;border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <div style="width:52px;height:52px;border-radius:14px;background:#EDE4FF;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📷</div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Snap a photo, done</h3>
@@ -1923,7 +1918,7 @@
 </section>
 
 <!-- ===================== HOW IT WORKS ===================== -->
-<section id="how-it-works" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="how-it-works" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Just ask however you want</h2>
@@ -1933,7 +1928,7 @@
     <div class="rg-3col">
 
       <!-- SOLVE IT — orange -->
-      <div class="reveal delay-1" style="background:white;border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:26px 24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-1" style="background:white;border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
         <div style="display:inline-flex;align-items:center;gap:6px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">⚡ Solve it</div>
         <div style="font-size:12px;font-weight:800;color:#9CA3AF;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"What's the derivative of 3x² + 5x − 2?"</p>
@@ -1942,7 +1937,7 @@
       </div>
 
       <!-- TEACH ME — blue -->
-      <div class="reveal delay-2" style="background:white;border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:26px 24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-2" style="background:white;border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
         <div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:#0A85C2;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">🧠 Teach me</div>
         <div style="font-size:12px;font-weight:800;color:#9CA3AF;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"Don't just give me the answer — teach me how."</p>
@@ -1951,7 +1946,7 @@
       </div>
 
       <!-- CHECK MY WORK — green -->
-      <div class="reveal delay-3" style="background:white;border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:26px 24px;display:flex;flex-direction:column;">
+      <div class="reveal delay-3" style="background:white;border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
         <div style="display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green-dark);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">✓ Check my work</div>
         <div style="font-size:12px;font-weight:800;color:#9CA3AF;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"I got 6x + 5x. Is that right?"</p>
@@ -1969,7 +1964,7 @@
 </section>
 
 <!-- ===================== SUBJECTS ===================== -->
-<section id="subjects" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="subjects" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:1100px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Every subject. Every grade.</h2>
@@ -2040,48 +2035,8 @@
 </section>
 
 <!-- ===================== ASK AI ===================== -->
-<section id="ai-helper" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:56px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">See Knox in action</h2>
-      <p style="font-size:17px;font-weight:600;color:#9CA3AF;">The full Knox experience — real conversation, chat history, and photo upload, all in one place.</p>
-    </div>
-
-    <!-- App showcase — real screenshot of /app.
-         Dark Mac-chrome frame is intentional: it lets the bright Knox app
-         screenshot pop as the visual star of the section, and doubles as a
-         natural rest-point among the otherwise chunky-orange sections.
-         Same pattern Linear/Vercel/Framer use for product screenshots. -->
-    <div class="reveal" style="background:#1F2937;border-radius:20px;overflow:hidden;box-shadow:0 24px 60px -12px rgba(0,0,0,0.35), 0 8px 24px -8px rgba(255,107,0,0.15);max-width:1000px;margin:0 auto 48px;">
-
-      <!-- Mac chrome topbar -->
-      <div style="background:#1F2937;padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #374151;">
-        <div style="display:flex;gap:7px;">
-          <div style="width:12px;height:12px;border-radius:50%;background:#FF5F56;"></div>
-          <div style="width:12px;height:12px;border-radius:50%;background:#FFBD2E;"></div>
-          <div style="width:12px;height:12px;border-radius:50%;background:#27C93F;"></div>
-        </div>
-        <div style="flex:1;background:#374151;border-radius:8px;height:28px;display:flex;align-items:center;justify-content:center;padding:0 12px;gap:6px;">
-          <span style="font-size:11px;">🔒</span>
-          <span style="font-size:11.5px;font-weight:600;color:#D1D5DB;">knoxknowsapp.com/app</span>
-        </div>
-        <div style="font-size:11px;font-weight:700;color:#6B7280;">Live</div>
-      </div>
-
-      <!-- Screenshot -->
-      <img src="./knox-in-action.png" alt="Knox Knows app answering a homework question" loading="lazy" style="display:block;width:100%;height:auto;">
-    </div>
-
-    <!-- CTA below mockup -->
-    <div style="text-align:center;">
-      <a href="/app" class="btn-orange" style="font-size:18px;padding:18px 48px;text-decoration:none;">Try Knox free →</a>
-      <p style="margin-top:16px;font-size:14px;font-weight:600;color:#9CA3AF;">No credit card required · Free forever</p>
-    </div>
-  </div>
-</section>
-
 <!-- ===================== PRICING ===================== -->
-<section id="pricing" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="pricing" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:820px;margin:0 auto;">
 
     <!-- Header -->
@@ -2199,7 +2154,7 @@
 
 
 <!-- ===================== FAQ ===================== -->
-<section id="faq" style="background:white;padding:80px 24px;border-top:2px solid #E5E7EB;">
+<section id="faq" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid #E5E7EB;">
   <div style="max-width:760px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Common questions</h2>
@@ -2446,7 +2401,7 @@
       <div>
         <div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin-bottom:14px;">Product</div>
         <a href="#how-it-works" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">How it works</a>
-        <a href="#ai-helper" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Ask Knox</a>
+        <a href="#subjects" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Subjects</a>
         <a href="#pricing" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Pricing</a>
         <a href="#faq" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">FAQ</a>
       </div>
