@@ -362,7 +362,6 @@
       display: flex;
       flex-direction: column;
       background: white;
-      border-right: 2px solid var(--border);
       overflow: hidden;
       transition: width 0.2s ease;
     }
@@ -373,13 +372,22 @@
     body.app-sidebar-collapsed .sidebar-quicknav-link { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-top { justify-content: center; }
 
-    /* Sidebar top — logo + collapse toggle, Knox-orange like the old header
-       (the header itself no longer shows the logo on desktop, see below) */
+    /* Sidebar top — logo + collapse toggle, Knox-orange like the header.
+       height/box-sizing/border-bottom MUST exactly match #appHeader (also
+       64px, also 4px border) or their bottom edges land on different pixels
+       and a small notch appears right where sidebar meets header.
+       border-right uses orange-dark, not grey — a light grey line has no
+       contrast against solid orange and looks washed out/inconsistent with
+       the grey line below it on white. Matching shades keeps one visually
+       continuous divider that's actually visible the whole way down. */
     .sidebar-top {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 14px;
+      height: 64px;
+      box-sizing: border-box;
+      padding: 0 14px;
       background: var(--orange);
-      border-bottom: 3px solid var(--orange-dark);
+      border-bottom: 4px solid var(--orange-dark);
+      border-right: 1.5px solid var(--orange-dark);
       flex-shrink: 0;
     }
     .sidebar-logo-link { display: flex; align-items: center; gap: 9px; text-decoration: none; min-width: 0; }
@@ -394,9 +402,22 @@
     .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.35); }
 
     /* Quick nav — Home, sits right below the top bar */
+    /* Everything below the orange top bar. Each child below gets its own
+       border-right in a shade that fits its own background — avoids
+       double-border overlap from also bordering this wrapper. */
+    .sidebar-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
     .sidebar-quicknav {
       padding: 8px; display: flex; flex-direction: column; gap: 2px;
       flex-shrink: 0; border-bottom: 1px solid var(--border);
+      border-right: 1.5px solid var(--border);
+      background: white;
     }
     .sidebar-quicknav-link {
       display: flex; align-items: center; gap: 10px;
@@ -415,6 +436,7 @@
       background: var(--orange);
       color: white;
       border-bottom: 3px solid var(--orange-dark);
+      border-right: 1.5px solid var(--orange-dark);
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
@@ -438,6 +460,7 @@
       overflow-y: auto;
       padding: 6px 8px;
       background: var(--cream);
+      border-right: 1.5px solid var(--border);
     }
     #sidebarHistoryList::-webkit-scrollbar { width: 4px; }
     #sidebarHistoryList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
@@ -597,8 +620,10 @@
       align-items: center; justify-content: center;
       padding: 40px 24px 32px;
       text-align: center;
-      overflow-y: auto;
-      overscroll-behavior: contain;
+      /* Locked — was overflow-y:auto, which let mouse/trackpad movement
+         scroll the whole welcome screen around. This content always fits,
+         so it never needs to scroll; hidden keeps it perfectly still. */
+      overflow: hidden;
       background: var(--cream);
       position: relative;
     }
@@ -906,7 +931,11 @@
     /* ═══ INPUT AREA ═══════════════════════════════════════ */
     #inputOuter {
       flex-shrink: 0;
-      background: white;
+      /* Was white — but #inputArea inside it is cream and only 900px wide,
+         centered. On any screen wider than that, the white wrapper showed
+         through as two white strips flanking the input bar. Matching the
+         colors here removes that seam entirely. */
+      background: var(--cream);
       border-top: 3px solid var(--orange);
       transition: border-color 0.2s;
       position: relative;
@@ -1379,6 +1408,8 @@
         </button>
       </div>
 
+      <div class="sidebar-body">
+
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
         <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
@@ -1402,6 +1433,8 @@
         <p>⚡ Go unlimited with Knox Plus</p>
         <button onclick="goToPricing()">Upgrade</button>
       </div>
+
+      </div><!-- end sidebar-body -->
 
     </aside>
 
