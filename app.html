@@ -355,7 +355,49 @@
       background: white;
       border-right: 2px solid var(--border);
       overflow: hidden;
+      transition: width 0.2s ease;
     }
+    body.app-sidebar-collapsed #rightSidebar { width: 68px; }
+    body.app-sidebar-collapsed .sidebar-collapsible { display: none !important; }
+    body.app-sidebar-collapsed .sidebar-new-btn { display: none; }
+    body.app-sidebar-collapsed .sidebar-section-header { justify-content: center; }
+    body.app-sidebar-collapsed .sidebar-quicknav-link { justify-content: center; }
+    body.app-sidebar-collapsed .sidebar-top { justify-content: center; }
+
+    /* Sidebar top — logo + collapse toggle, Knox-orange like the old header
+       (the header itself no longer shows the logo on desktop, see below) */
+    .sidebar-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px;
+      background: var(--orange);
+      border-bottom: 3px solid var(--orange-dark);
+      flex-shrink: 0;
+    }
+    .sidebar-logo-link { display: flex; align-items: center; gap: 9px; text-decoration: none; min-width: 0; }
+    .sidebar-logo-link img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
+    .sidebar-logo-text { font-size: 15px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-collapse-btn {
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      border-radius: 8px; width: 26px; height: 26px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.35); }
+
+    /* Quick nav — Home, sits right below the top bar */
+    .sidebar-quicknav {
+      padding: 8px; display: flex; flex-direction: column; gap: 2px;
+      flex-shrink: 0; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-quicknav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 10px;
+      font-size: 13px; font-weight: 800; color: var(--text-light);
+      text-decoration: none; transition: background 0.15s, color 0.15s;
+    }
+    .sidebar-quicknav-link:hover { background: var(--orange-cream); color: var(--orange); }
+    .sidebar-quicknav-link .sq-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
+
     .sidebar-section-header {
       padding: 14px 14px 10px;
       font-size: 11px; font-weight: 900;
@@ -397,6 +439,24 @@
       color: #BBB;
       line-height: 1.6;
     }
+
+    /* Pinned upgrade card — free users only, always visible at the bottom */
+    .sidebar-upgrade-card {
+      margin: 10px; padding: 14px;
+      background: var(--orange);
+      border-radius: 14px;
+      flex-shrink: 0;
+    }
+    .sidebar-upgrade-card p {
+      font-size: 12px; font-weight: 800; color: white; line-height: 1.5; margin-bottom: 10px;
+    }
+    .sidebar-upgrade-card button {
+      width: 100%; padding: 9px; border-radius: 10px;
+      background: white; color: var(--orange);
+      border: none; font-size: 12.5px; font-weight: 900; font-family: inherit;
+      cursor: pointer; transition: transform 0.15s;
+    }
+    .sidebar-upgrade-card button:hover { transform: translateY(-1px); }
 
     .sidebar-history-item {
       position: relative;
@@ -1205,9 +1265,14 @@
     }
 
     /* ═══ RESPONSIVE ═══════════════════════════════════════ */
+    /* Above 900px the sidebar carries the logo, so the header's own logo
+       link is redundant there — hidden by default, restored below 900px
+       where the sidebar is hidden and the logo needs a home. */
+    .app-logo-link { display: none; }
     @media (max-width: 900px) {
       #rightSidebar { display: none; }
       #mobileHistoryBtn { display: flex; }
+      .app-logo-link { display: flex; }
     }
     @media (max-width: 768px) {
       #appHeader { padding: 0 14px; gap: 8px; }
@@ -1350,25 +1415,46 @@
   <!-- ═══════ BODY ═════════════════════════════════════════ -->
   <div id="appBody">
 
-    <!-- LEFT SIDEBAR (desktop) -->
+    <!-- LEFT SIDEBAR (desktop) — logo, quick nav, history, pinned upgrade -->
     <aside id="rightSidebar">
+
+      <!-- Logo + collapse toggle -->
+      <div class="sidebar-top">
+        <a href="/?from=app" class="sidebar-logo-link">
+          <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+          <span class="sidebar-logo-text sidebar-collapsible">Knox Knows</span>
+        </a>
+        <button class="sidebar-collapse-btn" onclick="toggleAppSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick nav -->
+      <div class="sidebar-quicknav">
+        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
+          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
+        </a>
+      </div>
+
       <div class="sidebar-section-header">
-        <span>📚 History</span>
+        <span class="sidebar-collapsible">📚 History</span>
         <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
       </div>
       <div id="sidebarHistoryList">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
-          Ask Knox something and your questions will appear here.
+          <span class="sidebar-collapsible">Ask Knox something and your questions will appear here.</span>
         </div>
       </div>
-      <div class="sidebar-footer">
-        <a href="/?from=app" class="sidebar-home-link">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Back to home
-        </a>
+
+      <!-- Pinned upgrade card — free users only, toggled by JS -->
+      <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
+        <p>⚡ Go unlimited with Knox Plus</p>
+        <button onclick="goToPricing()">Upgrade</button>
       </div>
+
     </aside>
+
 
     <!-- CHAT + INPUT -->
     <div id="chatAndInput">
@@ -1885,6 +1971,13 @@
   async function updateUsageIndicator() {
     const usage = document.getElementById('headerUsage');
     const text  = document.getElementById('headerUsageText');
+    const upgradeCard = document.getElementById('sidebarUpgradeCard');
+    // Pinned sidebar upgrade card only makes sense for free users — paid
+    // users already have what it's selling.
+    if (upgradeCard) {
+      const isFree = planTier(window.userPlan) === 'free';
+      upgradeCard.style.display = isFree ? 'block' : 'none';
+    }
     if (!usage || !text) return;
     if (!window.currentUser) { usage.style.display = 'none'; return; }
 
@@ -1920,6 +2013,20 @@
     } catch (e) { /* silent */ }
   }
   window.updateUsageIndicator = updateUsageIndicator;
+
+  // ── Sidebar collapse toggle — remembers state across visits ────────────────
+  function toggleAppSidebar() {
+    const collapsed = document.body.classList.toggle('app-sidebar-collapsed');
+    try { localStorage.setItem('knoxAppSidebarCollapsed', collapsed ? '1' : '0'); } catch(e) {}
+  }
+  window.toggleAppSidebar = toggleAppSidebar;
+  (function restoreAppSidebarState() {
+    try {
+      if (localStorage.getItem('knoxAppSidebarCollapsed') === '1') {
+        document.body.classList.add('app-sidebar-collapsed');
+      }
+    } catch(e) {}
+  })();
 
   // Re-render usage text on resize so the compact/full label switches
   // when the user rotates their phone or resizes the window.
