@@ -426,6 +426,7 @@
       text-decoration: none; transition: background 0.15s, color 0.15s;
     }
     .sidebar-quicknav-link:hover { background: var(--orange-cream); color: var(--orange); }
+    .sidebar-quicknav-link.sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
     .sidebar-quicknav-link .sq-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
 
     .sidebar-section-header {
@@ -1263,25 +1264,28 @@
     .settings-value { font-size: 14px; font-weight: 700; color: var(--text-light); word-break: break-word; text-align: right; }
 
     /* ═══ CALCULATOR ═══════════════════════════════════════ */
+    /* Now an inline view inside the chat column (like Gauth's dedicated
+       Calculator page) instead of a popup modal overlaying everything. */
     .calc-modal {
-      position: fixed; inset: 0;
-      z-index: 10000;
-      background: rgba(0,0,0,0.5);
       display: none;
+      width: 100%;
+      height: 100%;
       align-items: center; justify-content: center;
-      padding: 16px;
+      padding: 24px;
+      overflow-y: auto;
+      background: var(--cream);
     }
     .calc-modal.open { display: flex; }
     .calc-card {
       background: white;
       border-radius: 24px;
-      width: 320px;
+      width: 380px;
       max-width: 95vw;
       max-height: 90vh;
       max-height: 90dvh;
       overflow-y: auto;
       overflow-x: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
     .calc-btn-num {
       background: white; border: 1.5px solid #E5E7EB; border-radius: 12px;
@@ -1415,6 +1419,9 @@
         <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
           <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
         </a>
+        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">🧮</span><span class="sidebar-collapsible">Calculator</span>
+        </button>
       </div>
 
       <div class="sidebar-section-header sidebar-collapsible">
@@ -1548,6 +1555,117 @@
 
           <!-- CHAT THREAD -->
           <div id="chatThread" class="hidden"></div>
+
+          <!-- CALCULATOR — inline view, swaps in for welcome/chat -->
+<div class="calc-modal" id="calcModal">
+  <div class="calc-card">
+    <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
+          <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" onerror="this.style.display='none'">
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:900;color:white;line-height:1.1;">Knox Calculator</div>
+          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">K-12 ready</div>
+        </div>
+      </div>
+      <button onclick="closeCalc()" aria-label="Back to chat" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>Back to chat</button>
+    </div>
+
+    <div style="display:flex;background:#1f2937;">
+      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:#FF6B00;color:white;transition:all 0.15s;">Basic</button>
+      <button id="calcTabSci" onclick="calcSetMode('scientific')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:transparent;color:#9CA3AF;transition:all 0.15s;">Science</button>
+    </div>
+
+    <div style="background:#1f2937;padding:16px 18px 12px;">
+      <div id="calcExpr" style="font-size:12px;color:#9CA3AF;font-weight:600;min-height:16px;text-align:right;margin-bottom:4px;"></div>
+      <div id="calcDisplay" style="font-size:38px;font-weight:900;color:white;text-align:right;line-height:1;word-break:break-all;min-height:46px;">0</div>
+    </div>
+
+    <div id="calcDegToggle" onclick="calcToggleDeg()" style="display:none;background:#111827;padding:6px 18px;text-align:right;cursor:pointer;">
+      <span id="calcDegLabel" style="background:#FF6B00;color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
+    </div>
+
+    <div style="display:flex;gap:6px;padding:8px 14px;background:#F9FAFB;border-bottom:1.5px solid #E5E7EB;">
+      <button onclick="calcMemClear()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MC</button>
+      <button onclick="calcMemRecall()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MR</button>
+      <button onclick="calcMemStore()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MS</button>
+      <button onclick="calcMemAdd()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M+</button>
+      <button onclick="calcMemSub()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M−</button>
+      <span id="calcMemInd" style="font-size:10px;font-weight:900;color:#FF6B00;align-self:center;"></span>
+    </div>
+
+    <div id="calcGridBasic" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;">
+      <button onclick="calcClear()"       style="background:#FEE2E2;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
+      <button onclick="calcSmartParen()"  class="calc-btn-op" style="font-size:15px;padding:18px 8px;">( )</button>
+      <button onclick="calcInput('%')"    class="calc-btn-op" style="font-size:17px;padding:18px 8px;">%</button>
+      <button onclick="calcDel()"         style="background:#F3F4F6;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#6B7280;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #E5E7EB;">⌫</button>
+
+      <button onclick="calcInput('7')" class="calc-btn-num">7</button>
+      <button onclick="calcInput('8')" class="calc-btn-num">8</button>
+      <button onclick="calcInput('9')" class="calc-btn-num">9</button>
+      <button onclick="calcInput('/')" class="calc-btn-op">÷</button>
+
+      <button onclick="calcInput('4')" class="calc-btn-num">4</button>
+      <button onclick="calcInput('5')" class="calc-btn-num">5</button>
+      <button onclick="calcInput('6')" class="calc-btn-num">6</button>
+      <button onclick="calcInput('*')" class="calc-btn-op">×</button>
+
+      <button onclick="calcInput('1')" class="calc-btn-num">1</button>
+      <button onclick="calcInput('2')" class="calc-btn-num">2</button>
+      <button onclick="calcInput('3')" class="calc-btn-num">3</button>
+      <button onclick="calcInput('-')" class="calc-btn-op">−</button>
+
+      <button onclick="calcInput('0')" class="calc-btn-num">0</button>
+      <button onclick="calcInput('.')" class="calc-btn-num">.</button>
+      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
+      <button onclick="calcInput('+')" class="calc-btn-op">+</button>
+    </div>
+
+    <div id="calcGridSci" style="display:none;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;">
+      <button onclick="calcFn('sin')"  class="calc-btn-fn">sin</button>
+      <button onclick="calcFn('cos')"  class="calc-btn-fn">cos</button>
+      <button onclick="calcFn('tan')"  class="calc-btn-fn">tan</button>
+      <button onclick="calcFn('log')"  class="calc-btn-fn">log</button>
+      <button onclick="calcFn('ln')"   class="calc-btn-fn">ln</button>
+
+      <button onclick="calcFn('sqrt')"         class="calc-btn-fn">√x</button>
+      <button onclick="calcInput('**2')"       class="calc-btn-fn">x²</button>
+      <button onclick="calcInput('**3')"       class="calc-btn-fn">x³</button>
+      <button onclick="calcInsertConst('Math.PI')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">π</button>
+      <button onclick="calcInsertConst('Math.E')"  style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
+
+      <button onclick="calcClear()"      style="background:#FEE2E2;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
+      <button onclick="calcSmartParen()" style="background:#FFF4EC;border:none;border-radius:10px;font-size:11px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">( )</button>
+      <button onclick="calcInput('%')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
+      <button onclick="calcDel()"        style="background:#F3F4F6;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#6B7280;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #E5E7EB;">⌫</button>
+      <button onclick="calcInput('/')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
+
+      <button onclick="calcInput('7')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">7</button>
+      <button onclick="calcInput('8')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">8</button>
+      <button onclick="calcInput('9')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">9</button>
+      <button onclick="calcInput('*')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">×</button>
+      <button onclick="calcInput('-')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">−</button>
+
+      <button onclick="calcInput('4')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">4</button>
+      <button onclick="calcInput('5')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">5</button>
+      <button onclick="calcInput('6')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">6</button>
+      <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
+      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
+
+      <button onclick="calcInput('1')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">1</button>
+      <button onclick="calcInput('2')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">2</button>
+      <button onclick="calcInput('3')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">3</button>
+      <button onclick="calcInput('0')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;grid-column:span 2;">0</button>
+      <button onclick="calcInput('.')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">.</button>
+    </div>
+
+    <div style="padding:0 12px 12px;">
+      <button onclick="calcInsert()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#1f2937;color:white;font-size:14px;font-weight:900;font-family:inherit;">➤ Send result to Knox</button>
+    </div>
+  </div>
+</div>
+
 
           <!-- GUEST CTA -->
           <div id="guestCta">
@@ -1695,114 +1813,6 @@
 </div>
 
 <!-- ═══════ CALCULATOR ═══════════════════════════════════════ -->
-<div class="calc-modal" id="calcModal" onclick="if(event.target===this)closeCalc()">
-  <div class="calc-card">
-    <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
-          <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" onerror="this.style.display='none'">
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:900;color:white;line-height:1.1;">Knox Calculator</div>
-          <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);">K-12 ready</div>
-        </div>
-      </div>
-      <button onclick="closeCalc()" aria-label="Close" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:16px;display:flex;align-items:center;justify-content:center;font-weight:900;">✕</button>
-    </div>
-
-    <div style="display:flex;background:#1f2937;">
-      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:#FF6B00;color:white;transition:all 0.15s;">Basic</button>
-      <button id="calcTabSci" onclick="calcSetMode('scientific')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:transparent;color:#9CA3AF;transition:all 0.15s;">Science</button>
-    </div>
-
-    <div style="background:#1f2937;padding:16px 18px 12px;">
-      <div id="calcExpr" style="font-size:12px;color:#9CA3AF;font-weight:600;min-height:16px;text-align:right;margin-bottom:4px;"></div>
-      <div id="calcDisplay" style="font-size:38px;font-weight:900;color:white;text-align:right;line-height:1;word-break:break-all;min-height:46px;">0</div>
-    </div>
-
-    <div id="calcDegToggle" onclick="calcToggleDeg()" style="display:none;background:#111827;padding:6px 18px;text-align:right;cursor:pointer;">
-      <span id="calcDegLabel" style="background:#FF6B00;color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
-    </div>
-
-    <div style="display:flex;gap:6px;padding:8px 14px;background:#F9FAFB;border-bottom:1.5px solid #E5E7EB;">
-      <button onclick="calcMemClear()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MC</button>
-      <button onclick="calcMemRecall()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MR</button>
-      <button onclick="calcMemStore()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MS</button>
-      <button onclick="calcMemAdd()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M+</button>
-      <button onclick="calcMemSub()"    style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">M−</button>
-      <span id="calcMemInd" style="font-size:10px;font-weight:900;color:#FF6B00;align-self:center;"></span>
-    </div>
-
-    <div id="calcGridBasic" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;">
-      <button onclick="calcClear()"       style="background:#FEE2E2;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
-      <button onclick="calcSmartParen()"  class="calc-btn-op" style="font-size:15px;padding:18px 8px;">( )</button>
-      <button onclick="calcInput('%')"    class="calc-btn-op" style="font-size:17px;padding:18px 8px;">%</button>
-      <button onclick="calcDel()"         style="background:#F3F4F6;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#6B7280;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #E5E7EB;">⌫</button>
-
-      <button onclick="calcInput('7')" class="calc-btn-num">7</button>
-      <button onclick="calcInput('8')" class="calc-btn-num">8</button>
-      <button onclick="calcInput('9')" class="calc-btn-num">9</button>
-      <button onclick="calcInput('/')" class="calc-btn-op">÷</button>
-
-      <button onclick="calcInput('4')" class="calc-btn-num">4</button>
-      <button onclick="calcInput('5')" class="calc-btn-num">5</button>
-      <button onclick="calcInput('6')" class="calc-btn-num">6</button>
-      <button onclick="calcInput('*')" class="calc-btn-op">×</button>
-
-      <button onclick="calcInput('1')" class="calc-btn-num">1</button>
-      <button onclick="calcInput('2')" class="calc-btn-num">2</button>
-      <button onclick="calcInput('3')" class="calc-btn-num">3</button>
-      <button onclick="calcInput('-')" class="calc-btn-op">−</button>
-
-      <button onclick="calcInput('0')" class="calc-btn-num">0</button>
-      <button onclick="calcInput('.')" class="calc-btn-num">.</button>
-      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
-      <button onclick="calcInput('+')" class="calc-btn-op">+</button>
-    </div>
-
-    <div id="calcGridSci" style="display:none;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;">
-      <button onclick="calcFn('sin')"  class="calc-btn-fn">sin</button>
-      <button onclick="calcFn('cos')"  class="calc-btn-fn">cos</button>
-      <button onclick="calcFn('tan')"  class="calc-btn-fn">tan</button>
-      <button onclick="calcFn('log')"  class="calc-btn-fn">log</button>
-      <button onclick="calcFn('ln')"   class="calc-btn-fn">ln</button>
-
-      <button onclick="calcFn('sqrt')"         class="calc-btn-fn">√x</button>
-      <button onclick="calcInput('**2')"       class="calc-btn-fn">x²</button>
-      <button onclick="calcInput('**3')"       class="calc-btn-fn">x³</button>
-      <button onclick="calcInsertConst('Math.PI')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">π</button>
-      <button onclick="calcInsertConst('Math.E')"  style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
-
-      <button onclick="calcClear()"      style="background:#FEE2E2;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
-      <button onclick="calcSmartParen()" style="background:#FFF4EC;border:none;border-radius:10px;font-size:11px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">( )</button>
-      <button onclick="calcInput('%')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
-      <button onclick="calcDel()"        style="background:#F3F4F6;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#6B7280;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #E5E7EB;">⌫</button>
-      <button onclick="calcInput('/')"   style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
-
-      <button onclick="calcInput('7')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">7</button>
-      <button onclick="calcInput('8')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">8</button>
-      <button onclick="calcInput('9')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">9</button>
-      <button onclick="calcInput('*')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">×</button>
-      <button onclick="calcInput('-')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">−</button>
-
-      <button onclick="calcInput('4')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">4</button>
-      <button onclick="calcInput('5')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">5</button>
-      <button onclick="calcInput('6')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">6</button>
-      <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
-      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
-
-      <button onclick="calcInput('1')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">1</button>
-      <button onclick="calcInput('2')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">2</button>
-      <button onclick="calcInput('3')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">3</button>
-      <button onclick="calcInput('0')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;grid-column:span 2;">0</button>
-      <button onclick="calcInput('.')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">.</button>
-    </div>
-
-    <div style="padding:0 12px 12px;">
-      <button onclick="calcInsert()" style="width:100%;padding:14px;border-radius:14px;border:none;background:#1f2937;color:white;font-size:14px;font-weight:900;font-family:inherit;">➤ Send result to Knox</button>
-    </div>
-  </div>
-</div>
 
 <!-- ═══════ GLOBAL STATE ═══════════════════════════════════════ -->
 <script>
@@ -3273,10 +3283,36 @@ window.openCalc = function() {
   if ($('calcDisplay')) $('calcDisplay').textContent = '0';
   if ($('calcExpr'))    $('calcExpr').textContent    = '';
   window.calcSetMode('standard');
-  if ($('calcModal'))   $('calcModal').classList.add('open');
+
+  // Remember which view was showing (welcome vs. an active chat) so
+  // "Back to chat" can restore the right one, then swap to the calculator
+  // as a full inline page — like Gauth's dedicated Calculator tab, not a
+  // popup over everything else.
+  const ws = $('welcomeScreen'), ct = $('chatThread'), io = $('inputOuter');
+  window._calcCameFromChat = !!(ws && ws.style.display === 'none');
+  if (ws) ws.style.display = 'none';
+  if (ct) ct.classList.add('hidden');
+  if (io) io.style.display = 'none';
+  if ($('calcModal')) $('calcModal').classList.add('open');
+
+  // Highlight the sidebar's Calculator link as the active view
+  const navBtn = document.querySelector('.sidebar-quicknav-link[data-nav="calculator"]');
+  if (navBtn) navBtn.classList.add('sidebar-nav-active');
 };
 window.closeCalc = function() {
   const m = $('calcModal'); if (m) m.classList.remove('open');
+
+  // Restore whichever view was showing before the calculator opened
+  const ws = $('welcomeScreen'), ct = $('chatThread'), io = $('inputOuter');
+  if (io) io.style.display = '';
+  if (window._calcCameFromChat) {
+    if (ct) ct.classList.remove('hidden');
+  } else {
+    if (ws) ws.style.display = '';
+  }
+
+  const navBtn = document.querySelector('.sidebar-quicknav-link[data-nav="calculator"]');
+  if (navBtn) navBtn.classList.remove('sidebar-nav-active');
 };
 
 window.calcSetMode = function(mode) {
