@@ -78,6 +78,10 @@
       overflow: hidden;
     }
     button, input, textarea { font-family: inherit; }
+    /* Images are draggable by default in Chrome/Firefox — click-and-drag on
+       the logo or any icon would show a ghost image following the cursor.
+       Disabled globally so nothing on the page can be picked up and moved. */
+    img { -webkit-user-drag: none; user-drag: none; -khtml-user-drag: none; -moz-user-drag: none; }
     button { cursor: pointer; }
     a { color: var(--orange); }
 
@@ -1434,7 +1438,7 @@
       <!-- Logo + collapse toggle -->
       <div class="sidebar-top">
         <a href="/?from=app" class="sidebar-logo-link sidebar-collapsible">
-          <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+          <img src="/knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
           <span class="sidebar-logo-text">Knox Knows</span>
         </a>
         <button class="sidebar-collapse-btn" onclick="toggleAppSidebar()" aria-label="Collapse sidebar" title="Collapse sidebar">
@@ -1451,6 +1455,9 @@
         </a>
         <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">🧮</span><span class="sidebar-collapsible">Calculator</span>
+        </button>
+        <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
         </button>
       </div>
 
@@ -1484,7 +1491,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <a href="/?from=app" class="app-logo-link" title="Back to landing page">
-        <img src="/knox-logo-square.jpg" alt="Knox" class="app-logo-img" onerror="this.style.display='none'">
+        <img src="/knox-logo-square.jpg" alt="Knox" class="app-logo-img" draggable="false" onerror="this.style.display='none'">
         <span class="app-logo-text">Knox Knows</span>
       </a>
     </div>
@@ -1592,7 +1599,7 @@
     <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
-          <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" onerror="this.style.display='none'">
+          <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" draggable="false" onerror="this.style.display='none'">
         </div>
         <div>
           <div style="font-size:14px;font-weight:900;color:white;line-height:1.1;">Knox Calculator</div>
@@ -1761,7 +1768,7 @@
 <div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
   <div class="auth-card">
     <div class="auth-header">
-      <img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display='none'">
+      <img src="/knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
       <h2 id="authHeaderTitle">Welcome to Knox</h2>
       <p id="authHeaderSubtitle">Sign in or create your free account</p>
     </div>
