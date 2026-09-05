@@ -817,6 +817,36 @@
       box-shadow: 0 3px 0 var(--border);
     }
     .knox-section-card:first-child { margin-top: 0; }
+
+    /* Fenced code blocks — monospace, whitespace/indentation preserved,
+       horizontally scrollable instead of wrapping and mangling long lines. */
+    .knox-code-block {
+      background: #1f2937;
+      border-radius: 14px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .knox-code-lang {
+      padding: 8px 16px;
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #9CA3AF;
+      background: #111827;
+      border-bottom: 1px solid #374151;
+    }
+    .knox-code-block pre {
+      margin: 0;
+      padding: 14px 16px;
+      overflow-x: auto;
+    }
+    .knox-code-block code {
+      font-family: 'SF Mono', 'Fira Code', Consolas, Monaco, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #E5E7EB;
+      white-space: pre;
+    }
     .knox-section-label {
       font-size: 11px; font-weight: 900;
       text-transform: uppercase;
@@ -3123,6 +3153,40 @@ function renderLimitCard(data, isSignedIn) {
 // went wrong, The fix...) are functionally meaningful, not padding — they
 // mark genuinely different parts of checking someone's work.
 function renderAnswerHtml(text) {
+  if (!text) return '';
+
+  // Pull fenced code blocks out BEFORE any line-trimming touches them — the
+  // existing renderer trims every line, which would silently strip all
+  // indentation from code. Each block becomes a plain-token placeholder,
+  // gets rendered through the untouched original pipeline like normal text,
+  // then swapped back in as a real monospace block with whitespace intact.
+  const codeBlocks = [];
+  const withPlaceholders = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push({ lang: (lang || '').trim(), code: code.replace(/\n$/, '') });
+    return `\n\nKNOXCODEBLOCK_${idx}_ENDBLOCK\n\n`;
+  });
+
+  let html = renderAnswerHtmlInner(withPlaceholders);
+
+  // Swap each placeholder back in as a real code block, stripping the <p>
+  // wrapper the inner renderer put around it since it treated the token
+  // like a normal line of text.
+  codeBlocks.forEach((block, idx) => {
+    const token = `KNOXCODEBLOCK_${idx}_ENDBLOCK`;
+    const codeHtml =
+      '<div class="knox-code-block">' +
+      (block.lang ? '<div class="knox-code-lang">' + escHtml(block.lang) + '</div>' : '') +
+      '<pre><code>' + escHtml(block.code) + '</code></pre>' +
+      '</div>';
+    const wrappedPattern = new RegExp('<p[^>]*>\\s*' + token + '\\s*</p>', 'g');
+    html = html.replace(wrappedPattern, codeHtml).replace(token, codeHtml);
+  });
+
+  return html;
+}
+
+function renderAnswerHtmlInner(text) {
   if (!text) return '';
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const SECTIONS = {
