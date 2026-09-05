@@ -1899,7 +1899,7 @@
     sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, deleteDoc,
+    getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
     query, orderBy, limit, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
@@ -2345,7 +2345,9 @@
     } catch (e) {}
   };
 
-  // ── Sidebar history ─────────────────────────────────────────
+  // ── Sidebar history — now grouped into real conversations, not flat
+  //    disconnected questions. Each conversation is a parent doc with a
+  //    messages subcollection, so clicking one replays the whole thread. ──
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
     const sbList  = document.getElementById('sidebarHistoryList');
@@ -2355,8 +2357,8 @@
 
     try {
       const q = query(
-        collection(db, 'users', window.currentUser.uid, 'history'),
-        orderBy('ts', 'desc'),
+        collection(db, 'users', window.currentUser.uid, 'conversations'),
+        orderBy('updatedAt', 'desc'),
         limit(20)
       );
       const snaps = await getDocs(q);
@@ -2376,8 +2378,8 @@
     if (empty) empty.style.display = 'none';
     snaps.forEach(s => {
       const d     = s.data();
-      const qText = (d.question || 'Untitled').substring(0, 36);
-      const docId = s.id;
+      const qText = (d.title || 'Untitled').substring(0, 36);
+      const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
       const row = document.createElement('div');
@@ -2399,21 +2401,21 @@
       const del = document.createElement('button');
       del.className   = 'shi-delete';
       del.textContent = '×';
-      del.setAttribute('aria-label', 'Delete this question');
+      del.setAttribute('aria-label', 'Delete this conversation');
       del.onclick = async (e) => {
         e.stopPropagation();
         del.disabled = true;
         try {
-          await deleteDoc(doc(db, 'users', window.currentUser.uid, 'history', docId));
+          await deleteConversation(convId);
           loadSidebarHistory();
         } catch (err) { del.disabled = false; }
       };
       row.appendChild(del);
       // Use full row text as accessible label
-      row.setAttribute('aria-label', 'Reload question: ' + qText);
+      row.setAttribute('aria-label', 'Open conversation: ' + qText);
       const activate = (e) => {
         if (e.target === del || del.contains(e.target)) return;
-        window.appSetQuestion(d.question || '');
+        window.openConversation(convId);
         if (window.closeMobileHistory) window.closeMobileHistory();
       };
       row.onclick = activate;
@@ -2427,18 +2429,112 @@
     });
   }
 
+  // ── Save a Q&A exchange into the current conversation thread.
+  //    First message of a fresh chat creates the conversation doc; every
+  //    later message in the same session appends to its messages
+  //    subcollection and bumps updatedAt so it sorts to the top. ──
   async function saveHistory(question, answer) {
     if (!window.currentUser) return;
     try {
-      await addDoc(collection(db, 'users', window.currentUser.uid, 'history'), {
-        question: String(question || '').substring(0, 500),
-        answer:   String(answer   || '').substring(0, 500),
-        ts:       Date.now(),
-      });
+      const now = Date.now();
+      if (!window._currentConversationId) {
+        const convRef = await addDoc(collection(db, 'users', window.currentUser.uid, 'conversations'), {
+          title:     String(question || 'Untitled').substring(0, 60),
+          createdAt: now,
+          updatedAt: now,
+        });
+        window._currentConversationId = convRef.id;
+      } else {
+        try {
+          await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId), {
+            updatedAt: now,
+          });
+        } catch (e) { /* if the parent got deleted mid-session, just keep going */ }
+      }
+      await addDoc(
+        collection(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId, 'messages'),
+        {
+          question: String(question || '').substring(0, 1000),
+          answer:   String(answer   || '').substring(0, 5000),
+          ts:       now,
+        }
+      );
       loadSidebarHistory();
     } catch (e) { /* silent */ }
   }
   window.saveHistory = saveHistory;
+
+  // ── Reopen a saved conversation — replays every message in order so it
+  //    reads exactly like Claude's history: the full thread, not just the
+  //    question re-typed into the box. ──
+  window.openConversation = async function(conversationId) {
+    if (!window.currentUser) return;
+    try {
+      const q = query(
+        collection(db, 'users', window.currentUser.uid, 'conversations', conversationId, 'messages'),
+        orderBy('ts', 'asc')
+      );
+      const snaps = await getDocs(q);
+
+      const thread = document.getElementById('chatThread');
+      if (!thread) return;
+      thread.innerHTML = '';
+      window._conversation = [];
+      window._currentConversationId = conversationId;
+
+      snaps.forEach(s => {
+        const d = s.data();
+        // User bubble
+        const userRow = document.createElement('div');
+        userRow.className = 'msg-wrap';
+        const span = document.createElement('span');
+        span.textContent = d.question || '';
+        const userInner = document.createElement('div');
+        userInner.className = 'msg-user-bubble';
+        userInner.appendChild(span);
+        const userBubble = document.createElement('div');
+        userBubble.className = 'msg-user';
+        userBubble.appendChild(userInner);
+        userRow.appendChild(userBubble);
+        thread.appendChild(userRow);
+
+        // Knox bubble
+        const knoxRow = document.createElement('div');
+        knoxRow.className = 'msg-wrap';
+        knoxRow.innerHTML =
+          '<div class="msg-knox">' +
+            '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
+            '<div class="msg-knox-content">' +
+              '<div class="msg-knox-label">Knox</div>' +
+              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '') + '</div>' +
+            '</div>' +
+          '</div>';
+        thread.appendChild(knoxRow);
+
+        window._conversation.push({ role: 'user',      content: d.question || '' });
+        window._conversation.push({ role: 'assistant', content: d.answer   || '' });
+      });
+      if (window._conversation.length > 30) window._conversation = window._conversation.slice(-30);
+
+      window.showChatThread();
+      window.scrollChat();
+    } catch (e) { /* silent — history is non-critical */ }
+  };
+
+  // ── Delete a whole conversation — Firestore doesn't cascade-delete
+  //    subcollections, so the messages have to be removed explicitly
+  //    before the parent conversation doc itself. ──
+  async function deleteConversation(conversationId) {
+    if (!window.currentUser) return;
+    const messagesRef = collection(db, 'users', window.currentUser.uid, 'conversations', conversationId, 'messages');
+    const snaps = await getDocs(messagesRef);
+    await Promise.all(snaps.docs.map(d => deleteDoc(d.ref)));
+    await deleteDoc(doc(db, 'users', window.currentUser.uid, 'conversations', conversationId));
+    if (window._currentConversationId === conversationId) {
+      window._currentConversationId = null;
+    }
+  }
+  window.deleteConversation = deleteConversation;
 
   // ── Feedback ────────────────────────────────────────────────
   async function submitFeedback(rating, question, answer) {
@@ -2816,6 +2912,7 @@ window.appStartNewChat = function() {
   const gc = $('guestCta');      if (gc) gc.style.display = 'none';
   if (window.appClearImage) window.appClearImage();
   window._conversation = [];
+  window._currentConversationId = null;
 };
 
 window.appSetQuestion = function(q) {
