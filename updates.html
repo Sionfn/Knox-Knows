@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's New — Knox Knows</title>
+  <meta name="description" content="See what's new in Knox Knows — new features, improvements, and fixes.">
+  <link rel="canonical" href="https://knoxknowsapp.com/updates">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Nunito',system-ui,sans-serif; background:#F4F4F5; color:#18181B; -webkit-font-smoothing:antialiased; }
+    img { -webkit-user-drag:none; user-drag:none; }
+    header { background:#FF6B00; border-bottom:3px solid #CC5500; padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .logo-link { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-img { width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,255,255,0.4); object-fit:cover; }
+    .logo-text { font-weight:900; font-size:18px; color:white; letter-spacing:-0.01em; }
+    .back-btn { display:inline-flex; align-items:center; gap:7px; background:white; border:none; border-radius:12px; padding:9px 18px; font-size:13px; font-weight:800; color:#FF6B00; text-decoration:none; box-shadow:0 3px 0 #CC5500; transition:all 0.15s; font-family:inherit; cursor:pointer; }
+    .back-btn:hover { transform:translateY(-2px); box-shadow:0 5px 0 #CC5500; }
+    .page-hero { background:#1a1a1a; padding:56px 24px 48px; text-align:center; border-bottom:4px solid #58CC02; }
+    .page-hero .badge { display:inline-flex; align-items:center; gap:7px; background:rgba(88,204,2,0.15); border:2px solid #58CC02; border-radius:999px; padding:6px 16px; font-size:13px; font-weight:800; color:#58CC02; margin-bottom:18px; }
+    .page-hero h1 { font-size:clamp(28px,5vw,48px); font-weight:900; color:white; letter-spacing:-0.02em; line-height:1.1; }
+    .page-hero p { margin-top:10px; font-size:15px; color:#888; font-weight:600; }
+    .content-wrap { max-width:720px; margin:0 auto; padding:48px 24px 80px; }
+
+    /* One card per version, newest first */
+    .version-card { background:white; border-radius:20px; border:2px solid #E4E4E7; box-shadow:0 4px 0 #E4E4E7; padding:30px 32px; margin-bottom:24px; }
+    .version-top { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+    .version-badge { background:#FF6B00; color:white; font-size:13px; font-weight:900; padding:5px 14px; border-radius:999px; box-shadow:0 2px 0 #CC5500; }
+    .version-date { font-size:13px; font-weight:700; color:#9CA3AF; }
+    .version-title { font-size:19px; font-weight:900; color:#18181B; margin:10px 0 18px; letter-spacing:-0.01em; }
+
+    .change-row { display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-top:1px solid #F0F0F1; }
+    .change-row:first-of-type { border-top:none; padding-top:0; }
+    .tag { flex-shrink:0; font-size:10.5px; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; padding:4px 10px; border-radius:999px; margin-top:2px; white-space:nowrap; }
+    .tag-new      { background:#F0FDF4; color:#16A34A; }
+    .tag-improved { background:#EFF6FF; color:#1D6FE0; }
+    .tag-fixed    { background:#FFF4EC; color:#CC5500; }
+    .change-text { font-size:14.5px; line-height:1.6; color:#3F3F46; font-weight:600; }
+    .change-text strong { color:#18181B; font-weight:800; }
+
+    .end-note { text-align:center; font-size:13.5px; font-weight:700; color:#9CA3AF; margin-top:8px; }
+    .end-note a { color:#FF6B00; font-weight:800; text-decoration:none; }
+    .end-note a:hover { text-decoration:underline; }
+
+    footer { background:#1a1a1a; padding:28px 24px; text-align:center; border-top:3px solid #46A302; }
+    footer p { color:#666; font-size:13px; font-weight:600; }
+    footer a { color:#FF6B00; text-decoration:none; margin:0 8px; font-weight:700; font-size:13px; }
+    footer a:hover { text-decoration:underline; }
+    .footer-links { margin-bottom:8px; }
+
+    @media(max-width:640px) {
+      .version-card { padding:22px 20px; }
+      .content-wrap { padding:32px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo-link">
+    <img src="/knox-logo.jpg" alt="Knox" class="logo-img" onerror="this.style.display='none'">
+    <span class="logo-text">Knox Knows</span>
+  </a>
+  <a href="/" class="back-btn">← Back to Knox</a>
+</header>
+
+<div class="page-hero">
+  <div class="badge">🦊 What's New</div>
+  <h1>See what's changed</h1>
+  <p>Every update to Knox, in one place.</p>
+</div>
+
+<div class="content-wrap">
+
+  <div class="version-card">
+    <div class="version-top">
+      <span class="version-badge">v1.1</span>
+      <span class="version-date">September 2026</span>
+    </div>
+    <div class="version-title">Simpler pricing, a real sidebar, and cleaner answers</div>
+
+    <div class="change-row">
+      <span class="tag tag-new">New</span>
+      <span class="change-text"><strong>One plan, not three.</strong> Knox Plus is now the only paid tier — $9.99/month or $79.99/year, with a 3-day free trial. No more picking between confusing tiers.</span>
+    </div>
+    <div class="change-row">
+      <span class="tag tag-improved">Improved</span>
+      <span class="change-text"><strong>Free gets the same AI as Plus.</strong> Paying only removes the usage limit — it never unlocks a "better" version of Knox. Free is 15 questions every 3 hours and 5 photo uploads a day; Plus is unlimited.</span>
+    </div>
+    <div class="change-row">
+      <span class="tag tag-new">New</span>
+      <span class="change-text"><strong>Calculator moved into the sidebar.</strong> It's a full page now instead of a popup — click it from anywhere in the app.</span>
+    </div>
+    <div class="change-row">
+      <span class="tag tag-new">New</span>
+      <span class="change-text"><strong>Account & Plan, one click away.</strong> Added straight to the sidebar instead of being buried in a dropdown.</span>
+    </div>
+    <div class="change-row">
+      <span class="tag tag-fixed">Fixed</span>
+      <span class="change-text"><strong>Code answers keep their indentation.</strong> Python, Java, and other code now render in a proper formatted block instead of losing its structure.</span>
+    </div>
+    <div class="change-row">
+      <span class="tag tag-improved">Improved</span>
+      <span class="change-text">Cleaned up the look and feel across the app and homepage — clearer pricing page, steadier layout, smoother sidebar.</span>
+    </div>
+  </div>
+
+  <p class="end-note">Got a suggestion? Email <a href="mailto:support@knoxknowsapp.com">support@knoxknowsapp.com</a> — Sion reads every message.</p>
+
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/refund.html">Refunds</a>
+    <a href="/updates.html">What's New</a>
+  </div>
+  <p>© 2026 Knox Knows. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
