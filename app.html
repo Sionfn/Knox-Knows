@@ -1473,6 +1473,9 @@
         <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">🧮</span><span class="sidebar-collapsible">Calculator</span>
         </button>
+        <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
+        </button>
         <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
         </button>
@@ -2454,9 +2457,12 @@
     if (!window.currentUser) return;
     try {
       const now = Date.now();
+      const isLearn = !!window._learnModeActive;
       if (!window._currentConversationId) {
+        const title = (isLearn ? '🎓 ' : '') + String(question || 'Untitled').substring(0, 58);
         const convRef = await addDoc(collection(db, 'users', window.currentUser.uid, 'conversations'), {
-          title:     String(question || 'Untitled').substring(0, 60),
+          title:     title.substring(0, 60),
+          type:      isLearn ? 'learn' : 'chat',
           createdAt: now,
           updatedAt: now,
         });
@@ -2487,17 +2493,28 @@
   window.openConversation = async function(conversationId) {
     if (!window.currentUser) return;
     try {
+      const convRef = doc(db, 'users', window.currentUser.uid, 'conversations', conversationId);
       const q = query(
-        collection(db, 'users', window.currentUser.uid, 'conversations', conversationId, 'messages'),
+        collection(convRef, 'messages'),
         orderBy('ts', 'asc')
       );
-      const snaps = await getDocs(q);
+      const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
 
       const thread = document.getElementById('chatThread');
       if (!thread) return;
       thread.innerHTML = '';
       window._conversation = [];
       window._currentConversationId = conversationId;
+
+      // Restore Learn mode if this was a guided-teaching session — otherwise
+      // continuing the conversation would silently fall back to normal
+      // direct-answer behavior, which would feel like a broken promise.
+      window._learnModeActive = convSnap.exists() && convSnap.data().type === 'learn';
+      document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
+      if (window._learnModeActive) {
+        const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
+        if (learnNav) learnNav.classList.add('sidebar-nav-active');
+      }
 
       snaps.forEach(s => {
         const d = s.data();
@@ -2930,7 +2947,53 @@ window.appStartNewChat = function() {
   if (window.appClearImage) window.appClearImage();
   window._conversation = [];
   window._currentConversationId = null;
+  window._learnModeActive = false;
+  resetWelcomeCopy();
+  const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
+  if (learnNav) learnNav.classList.remove('sidebar-nav-active');
 };
+
+// ── Learn — the sidebar's dedicated guided-teaching tool. Reuses the exact
+// same chat UI as normal Knox (not a separate view like the calculator),
+// just flagged so every real question in this session gets Knox's Socratic
+// LEARN_PROMPT instead of the default direct-answer behavior. ──
+window.openLearnMode = function() {
+  if (document.getElementById('calcModal')?.classList.contains('open')) {
+    window.closeCalc();
+  }
+  const t  = $('chatThread');
+  if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
+  const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
+  const gc = $('guestCta');      if (gc) gc.style.display = 'none';
+  if (window.appClearImage) window.appClearImage();
+  window._conversation = [];
+  window._currentConversationId = null;
+  window._learnModeActive = true;
+
+  const badge = document.querySelector('.welcome-badge');
+  const title = document.querySelector('.welcome-title');
+  const sub   = document.querySelector('.welcome-sub');
+  if (badge) badge.innerHTML = '🎓 Learn with Knox';
+  if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
+  if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.";
+
+  document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
+  const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
+  if (learnNav) learnNav.classList.add('sidebar-nav-active');
+
+  document.getElementById('appChatInput')?.focus();
+};
+
+// Restores the normal welcome copy — called whenever a Learn session ends
+// (New Chat, Home, or opening a different saved conversation).
+function resetWelcomeCopy() {
+  const badge = document.querySelector('.welcome-badge');
+  const title = document.querySelector('.welcome-title');
+  const sub   = document.querySelector('.welcome-sub');
+  if (badge) badge.innerHTML = '🦊 Hey, I\'m Knox';
+  if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
+  if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
+}
 
 window.appSetQuestion = function(q) {
   const input = $('appChatInput');
@@ -3169,6 +3232,7 @@ window.appHandleAsk = async function() {
         image:     image?.data,
         imageType: image?.type,
         history,
+        learnMode: !!window._learnModeActive,
       }),
     });
     const data = await res.json();
@@ -3480,7 +3544,9 @@ window.openCalc = function() {
   if (io) io.style.display = 'none';
   if ($('calcModal')) $('calcModal').classList.add('open');
 
-  // Highlight the sidebar's Calculator link as the active view
+  // Highlight the sidebar's Calculator link as the active view — clear any
+  // other active nav state first (e.g. Learn) so only one shows at a time.
+  document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
   const navBtn = document.querySelector('.sidebar-quicknav-link[data-nav="calculator"]');
   if (navBtn) navBtn.classList.add('sidebar-nav-active');
 };
@@ -3498,6 +3564,12 @@ window.closeCalc = function() {
 
   const navBtn = document.querySelector('.sidebar-quicknav-link[data-nav="calculator"]');
   if (navBtn) navBtn.classList.remove('sidebar-nav-active');
+  // If a Learn session was active before opening the calculator, re-highlight
+  // it now that we're back — the underlying mode never actually stopped.
+  if (window._learnModeActive) {
+    const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
+    if (learnNav) learnNav.classList.add('sidebar-nav-active');
+  }
 };
 
 window.calcSetMode = function(mode) {
