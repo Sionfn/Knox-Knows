@@ -185,7 +185,6 @@ async function getFeedbackStats() {
   let up = 0, down = 0;
   let upToday = 0, downToday = 0;
   let upWeek = 0, downWeek = 0;
-  const byMode = { answer: { up: 0, down: 0 }, learn: { up: 0, down: 0 }, chat: { up: 0, down: 0 } };
   const byPlan = { free:   { up: 0, down: 0 }, super: { up: 0, down: 0 }, max:  { up: 0, down: 0 } };
   const worstAnswers = []; // collect all down-votes, then take top N by recency
   const recentFeedback = [];
@@ -202,16 +201,14 @@ async function getFeedbackStats() {
     if (f.ts >= todayStart) { if (r === 1) upToday++; else downToday++; }
     if (f.ts >= weekStart)  { if (r === 1) upWeek++;  else downWeek++;  }
 
-    const mode = byMode[f.mode] ? f.mode : "answer";
     const plan = byPlan[f.plan] ? f.plan : "free";
-    if (r === 1) { byMode[mode].up++;   byPlan[plan].up++;   }
-    else         { byMode[mode].down++; byPlan[plan].down++; }
+    if (r === 1) { byPlan[plan].up++; }
+    else         { byPlan[plan].down++; }
 
     if (r === -1 && worstAnswers.length < 25) {
       worstAnswers.push({
         question: (f.question || "").slice(0, 240),
         answer:   (f.answer   || "").slice(0, 500),
-        mode:     f.mode,
         plan:     f.plan,
         ts:       f.ts,
       });
@@ -221,7 +218,6 @@ async function getFeedbackStats() {
       recentFeedback.push({
         rating: r,
         question: (f.question || "").slice(0, 140),
-        mode: f.mode,
         plan: f.plan,
         ts:   f.ts,
       });
@@ -237,7 +233,6 @@ async function getFeedbackStats() {
     upToday, downToday,
     upWeek,  downWeek,
     positivePct: +positivePct.toFixed(1),
-    byMode,
     byPlan,
     worstAnswers,
     recentFeedback,
@@ -245,39 +240,36 @@ async function getFeedbackStats() {
 }
 
 // ────────────────────────────────────────────────────────────
-// USAGE STATS — derived from per-user daily usage docs
+// USAGE STATS — real sitewide counters written by api/ask.js
+// (stats/daily/{date}), NOT the per-user rolling quota log, which prunes
+// itself to a few hours of history by design and can never answer "how
+// many questions today" — see the comment beside recordDailyUsage in ask.js.
 // ────────────────────────────────────────────────────────────
 async function getUsageStats() {
-  // We don't have a global usage collection (privacy-preserving design).
-  // Instead, look at today's per-user usage docs across all users.
-  const today    = new Date().toISOString().slice(0, 10);
-  const usersSnap = await db.collection("users").get();
+  const today     = new Date().toISOString().slice(0, 10);
+  const todayRef  = db.collection("stats").doc(today);
 
-  let questionsToday = 0;
-  const byModeToday = { answer: 0, learn: 0, chat: 0 };
-  let usersWithActivityToday = 0;
+  const [todaySnap, askersSnap] = await Promise.all([
+    todayRef.get(),
+    todayRef.collection("askers").get(),
+  ]);
 
-  await Promise.all(usersSnap.docs.map(async (userDoc) => {
-    const usageDoc = await db
-      .collection("users").doc(userDoc.id)
-      .collection("usage").doc(today)
-      .get();
-    if (!usageDoc.exists) return;
-    const u = usageDoc.data() || {};
-    const hw    = u.hw    || 0;
-    const learn = u.learn || 0;
-    const chat  = u.chat  || 0;
-    const total = hw + learn + chat;
-    if (total > 0) usersWithActivityToday++;
-    questionsToday      += total;
-    byModeToday.answer  += hw;
-    byModeToday.learn   += learn;
-    byModeToday.chat    += chat;
-  }));
+  const questionsToday          = todaySnap.exists ? (todaySnap.data().questions || 0) : 0;
+  const usersWithActivityToday  = askersSnap.size;
+
+  // Last 7 days' totals for a quick trend — same collection, just older docs.
+  const trendDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    trendDays.push(d.toISOString().slice(0, 10));
+  }
+  const trendSnaps = await Promise.all(trendDays.map(date => db.collection("stats").doc(date).get()));
+  const questionsThisWeek = trendSnaps.reduce((sum, s) => sum + (s.exists ? (s.data().questions || 0) : 0), 0);
 
   return {
     questionsToday,
-    byModeToday,
+    questionsThisWeek,
     usersWithActivityToday,
     avgQuestionsPerActiveUser:
       usersWithActivityToday > 0
