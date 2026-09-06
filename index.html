@@ -3075,7 +3075,10 @@
     if (!window.currentUser) {
       if (loginBtn)       loginBtn.style.display       = 'inline-flex';
       if (accountWrapper) accountWrapper.style.display = 'none';
-      if (proBadge)       proBadge.style.display       = 'inline-flex';
+      // Guests don't have an account to upgrade — showing "Knox Plus" here
+      // doesn't make sense and was crowding Login+Sign Up off the edge of
+      // the screen on mobile. Only logged-in free users see this badge.
+      if (proBadge)       proBadge.style.display       = 'none';
       return;
     }
     const { displayName, email, photoURL } = window.currentUser;
