@@ -625,16 +625,17 @@
       align-items: center; justify-content: center;
       padding: 40px 24px 32px;
       text-align: center;
-      /* Locked — was overflow-y:auto, which let mouse/trackpad movement
-         scroll the whole welcome screen around. This content always fits,
-         so it never needs to scroll; hidden keeps it perfectly still.
-         touch-action:none is the mobile-specific half of this fix — a
-         touch drag is a gesture the browser interprets separately from
-         mouse scroll, so overflow:hidden alone doesn't stop a finger-drag
-         from panning this element on a phone. Taps/clicks still work fine;
-         only continuous drag-panning is disabled. */
-      overflow: hidden;
-      touch-action: none;
+      /* Scrolling is allowed again — the earlier "lock it so it can't move"
+         fix assumed this content always fits the screen, which is false on
+         phones: 4 suggestion cards plus heading/subtext genuinely don't fit
+         a typical mobile viewport, especially with the browser's own
+         address bar and toolbar eating into the visible height. Blocking
+         scroll entirely made the last card (and part of the one above it)
+         permanently unreachable — worse than the original "moves a bit"
+         complaint. overscroll-behavior below still stops the rubber-band
+         bounce/pull-to-refresh feel without blocking real scrolling. */
+      overflow-y: auto;
+      overscroll-behavior: contain;
       background: var(--cream);
       position: relative;
     }
@@ -1360,7 +1361,7 @@
       #appHeader { padding: 0 14px; gap: 8px; }
       .header-right { gap: 6px; }
       .app-logo-text { display: none; }
-      #welcomeScreen { padding: 24px 16px; }
+      #welcomeScreen { padding: 24px 16px; justify-content: flex-start; }
       /* Hide decorative welcome circles on mobile — they make the bg feel busy */
       #welcomeScreen::before, #welcomeScreen::after { display: none; }
       .suggestion-grid { grid-template-columns: 1fr; }
@@ -1580,7 +1581,7 @@
 
             <div class="suggestion-grid">
               <button class="suggestion-chip" data-flavor="orange" onclick="appSetQuestion('Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step')">
-                <div class="chip-circle">📐</div>
+                <div class="chip-circle">🔢</div>
                 <div class="chip-content">
                   <div class="chip-text">Quadratic</div>
                   <div class="chip-sub">Step-by-step algebra</div>
