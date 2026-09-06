@@ -1489,7 +1489,7 @@
           <span class="sq-icon">💬</span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
         <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🧮</span><span class="sidebar-collapsible">Calculator</span>
+          <span class="sq-icon">🔢</span><span class="sidebar-collapsible">Calculator</span>
         </button>
         <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
@@ -1611,7 +1611,7 @@
 
             <div class="suggestion-grid">
               <button class="suggestion-chip" data-flavor="orange" onclick="appSetQuestion('Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step')">
-                <div class="chip-circle">🔢</div>
+                <div class="chip-circle">📐</div>
                 <div class="chip-content">
                   <div class="chip-text">Quadratic</div>
                   <div class="chip-sub">Step-by-step algebra</div>
@@ -1803,9 +1803,33 @@
   <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
     <div class="drawer-panel">
       <div class="drawer-header">
-        <h3>📚 History</h3>
+        <h3>🦊 Knox Knows</h3>
         <button class="drawer-close" onclick="closeMobileHistory()" aria-label="Close">✕</button>
       </div>
+
+      <!-- Nav tabs — the mobile equivalent of the desktop sidebar's quicknav.
+           The whole sidebar (and every one of these) was display:none below
+           900px, so Calculator/Learn/Ask Knox were completely unreachable
+           on mobile — this was the actual bug, not a visual one. -->
+      <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <a href="/?from=app" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);text-decoration:none;">
+          <span style="font-size:17px;">🏠</span> Home
+        </a>
+        <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">💬</span> Ask Knox
+        </button>
+        <button onclick="window.openCalc();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">🔢</span> Calculator
+        </button>
+        <button onclick="window.openLearnMode();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">🎓</span> Learn
+        </button>
+        <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">⚙️</span> Account &amp; Plan
+        </button>
+      </div>
+
+      <div style="padding:14px 14px 6px;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);flex-shrink:0;">📚 History</div>
       <div class="drawer-body" id="mobileHistoryList">
         <div id="mobileHistoryEmpty" style="padding:24px 10px;text-align:center;font-size:13px;font-weight:700;color:#BBB;line-height:1.6;">
           <div style="font-size:32px;margin-bottom:8px;">🦊</div>
