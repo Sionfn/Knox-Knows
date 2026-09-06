@@ -343,9 +343,6 @@
     }
     .tag-up    { background: var(--green-light); color: var(--green-dark); }
     .tag-down  { background: var(--red-light);   color: var(--red); }
-    .tag-mode-answer { background: var(--orange-light); color: var(--orange); }
-    .tag-mode-learn  { background: var(--blue-light);   color: var(--blue-dark); }
-    .tag-mode-chat   { background: var(--purple-light); color: var(--purple); }
     .tag-plan-free   { background: var(--gray);          color: var(--text-light); border: 1.5px solid var(--border); }
     .tag-plan-super  { background: var(--green-light);   color: var(--green-dark); }
     .tag-plan-max    { background: var(--orange-light);  color: var(--orange); }
@@ -823,13 +820,7 @@
           </div>
         </div>
         <div class="card-lg card">
-          <div class="metric-label">Satisfaction by mode</div>
-          <div style="margin-top:14px;">
-            ${modeBar('Answer', feedback.byMode.answer, 'orange')}
-            ${modeBar('Learn',  feedback.byMode.learn,  'blue')}
-            ${modeBar('Chat',   feedback.byMode.chat,   'purple')}
-          </div>
-          <div class="metric-label" style="margin-top:22px;">Satisfaction by plan</div>
+          <div class="metric-label">Satisfaction by plan</div>
           <div style="margin-top:14px;">
             ${modeBar('Free',      feedback.byPlan.free, 'orange')}
             ${modeBar('Knox Plus', {
@@ -850,7 +841,6 @@
                 <div class="data-row">
                   <div class="data-row-header">
                     <span class="tag tag-down">👎 Down</span>
-                    <span class="tag tag-mode-${f.mode || 'answer'}">${escHtml(f.mode || 'answer')}</span>
                     <span class="tag tag-plan-${f.plan || 'free'}">${escHtml((f.plan || 'free').toUpperCase())}</span>
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
@@ -869,7 +859,6 @@
                 <div class="data-row">
                   <div class="data-row-header">
                     <span class="tag ${f.rating === 1 ? 'tag-up' : 'tag-down'}">${f.rating === 1 ? '👍' : '👎'}</span>
-                    <span class="tag tag-mode-${f.mode || 'answer'}">${escHtml(f.mode || 'answer')}</span>
                     <span class="tag tag-plan-${f.plan || 'free'}">${escHtml((f.plan || 'free').toUpperCase())}</span>
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
@@ -891,7 +880,7 @@
           <div class="metric-sub">Across all users</div>
         </div>
         <div class="metric-card blue">
-          <div class="metric-label">Active users</div>
+          <div class="metric-label">Active askers</div>
           <div class="metric-value">${fmt(usage.usersWithActivityToday)}</div>
           <div class="metric-sub">Asked ≥1 question today</div>
         </div>
@@ -901,18 +890,9 @@
           <div class="metric-sub">Questions per active user</div>
         </div>
         <div class="metric-card purple">
-          <div class="metric-label">Most popular mode</div>
-          <div class="metric-value" style="font-size:24px;">${escHtml(topMode(usage.byModeToday))}</div>
-          <div class="metric-sub">Today's leader</div>
-        </div>
-      </div>
-
-      <div class="card-lg card" style="margin-top:16px;">
-        <div class="metric-label">Today's questions by mode</div>
-        <div style="margin-top:14px;">
-          ${usageBar('Answer (HW)', usage.byModeToday.answer, usage.questionsToday, 'orange')}
-          ${usageBar('Learn',       usage.byModeToday.learn,  usage.questionsToday, 'blue')}
-          ${usageBar('Chat',        usage.byModeToday.chat,   usage.questionsToday, 'purple')}
+          <div class="metric-label">This week</div>
+          <div class="metric-value">${fmt(usage.questionsThisWeek)}</div>
+          <div class="metric-sub">Questions, last 7 days</div>
         </div>
       </div>
     `;
@@ -950,20 +930,6 @@
       </div>`;
   }
 
-  function usageBar(label, count, total, color) {
-    const pct = total > 0 ? (count / total) * 100 : 0;
-    return `
-      <div class="bar-row">
-        <div class="bar-label">
-          <span>${escHtml(label)}</span>
-          <span class="bar-label-value">${fmt(count)} questions · ${fmtPct(pct)}</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill ${color}" style="width:${pct}%;"></div>
-        </div>
-      </div>`;
-  }
-
   function revPlanBars(byPlan) {
     // Even though we now market one plan (Knox Plus), existing customers
     // still pay via their original price IDs (super_monthly / super_yearly
@@ -987,13 +953,6 @@
         </div>
       </div>
     `).join('');
-  }
-
-  function topMode(byModeToday) {
-    const entries = Object.entries(byModeToday).sort((a, b) => b[1] - a[1]);
-    if (!entries[0] || entries[0][1] === 0) return '—';
-    const labels = { answer: 'Answer', learn: 'Learn', chat: 'Chat' };
-    return labels[entries[0][0]] || entries[0][0];
   }
 </script>
 
