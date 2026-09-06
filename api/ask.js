@@ -1,7 +1,7 @@
 // Knox Knows ask.js — v3.0
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 if (!getApps().length) {
   initializeApp({
@@ -62,6 +62,29 @@ async function checkAndIncrementUsage(uid, plan) {
     console.error("Quota check error:", err.message);
     return { allowed: true };
   }
+}
+
+// ── Admin-dashboard analytics counter — deliberately separate from the
+// quota log above. That log is an ENFORCEMENT mechanism: it prunes entries
+// older than the rolling window on every write, so it can never answer
+// "how many questions were asked today" — at any moment it only knows the
+// last few hours. This is a tiny, permanent, privacy-preserving counter
+// that exists purely so the admin dashboard's numbers are real instead of
+// silently always reading zero.
+//   stats/daily/{YYYY-MM-DD}.questions       — sitewide count, incremented
+//   stats/daily/{YYYY-MM-DD}/askers/{uid}    — one doc per user who asked
+//                                              at least once today (a set()
+//                                              naturally dedupes re-asks)
+// Never blocks or slows the actual answer — fire-and-forget, swallow errors.
+function recordDailyUsage(uid) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const dayRef = db.collection("stats").doc(today);
+    dayRef.set({ questions: FieldValue.increment(1) }, { merge: true }).catch(() => {});
+    if (uid) {
+      dayRef.collection("askers").doc(uid).set({ ts: Date.now() }).catch(() => {});
+    }
+  } catch (e) { /* analytics is never allowed to affect the real response */ }
 }
 
 // ── Daily photo cap for Free users ──────────────────────────────────────────
@@ -560,6 +583,9 @@ export default async function handler(req, res) {
         limitReached: true,
       });
     }
+    // Quota check passed — this is a real, counted question. Log it for the
+    // admin dashboard (separate from the quota log above, see comment there).
+    recordDailyUsage(uid);
   }
 
   const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : KNOX_PROMPT;
