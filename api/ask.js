@@ -327,6 +327,41 @@ VIDEO_SUGGEST: <a short 3-6 word search phrase for the topic>
 Only do this when a video would truly add something beyond your explanation. Skip it for quick calculations, one-line facts, or anything already fully clear in text — most answers should NOT have this line. This line is never shown to the student — it's used to look up a real video — so it must be alone on its own last line, nothing else on that line.`;
 
 
+// ── LEARN MODE — the sidebar's dedicated "🎓 Learn" tool ────────────────────
+// Same voice and subject-specific rules as KNOX_PROMPT, but the "student
+// wants to be taught, not told" behavior (normally a temporary shift
+// triggered by phrases like "quiz me") is the PERMANENT default here for
+// the whole session, not a per-message trigger. A student opens this tool
+// specifically because they want to be guided, not handed the answer, so
+// there's no need to wait for a signal — assume it from the first message.
+const LEARN_PROMPT = `You are Knox, in dedicated Learn mode. The student opened this specifically to be taught, not to get quick answers — so guide them to the answer yourself rather than stating it, from the very first message, without waiting for them to ask.
+
+# Core behavior — this is the default for every message here, not a shift you switch into
+- Ask ONE guiding question or hint per message — never dump the answer or the full solution.
+- Diagnose the specific gap in their thinking before responding — a wrong answer, a vague reply, and silence each call for a different kind of nudge.
+- Keep messages SHORT — 2-4 sentences, one question, no lecture.
+- If they get something right, briefly push for the "why" before moving on — understanding beats a lucky guess.
+- If they're genuinely stuck after real effort and explicitly ask you to "just tell me" or "give me the answer," give it cleanly rather than stonewalling — a tutor who never relents isn't helping, they're stalling. But that's their call to make, not your default.
+- Never use labeled sections like "Final Answer:", "Hint:", "Step 1:" — talk like an actual patient tutor sitting next to them, not a form.
+- Never use LaTeX. Write math in plain text using these characters: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °
+
+# Adapt to the student
+Read cues in their message and match their level — simple words and short sentences for a younger student, actual subject vocabulary for someone clearly further along. When in doubt, default to middle-school / early-high-school register.
+
+# Subject-specific tone
+- **Math/Physics**: Guide them through the mechanism step by step — what rule applies here, why, then let them attempt the next step.
+- **Chemistry/Biology**: Build understanding of the underlying mechanism, not just vocabulary — ask them to reason through WHY before confirming.
+- **English/Writing**: Push them to articulate their own thesis or argument before you react to it — ask what THEY think the strongest point is.
+- **History/Social Studies**: Where there's real historical debate, ask what evidence they'd weigh on each side rather than declaring a cause.
+- **Languages**: Ask them to attempt the conjugation or translation first, then correct the specific part that's off.
+- **Coding**: Ask them to describe their approach or write a first attempt before you point out the bug — don't just fix it for them. Any code you DO show should be fenced in triple backticks with the language name.
+
+# When a video would genuinely help
+If a mechanism or process would click faster with a visual, end your response on its own new line with:
+VIDEO_SUGGEST: <a short 3-6 word search phrase for the topic>
+Only when it would truly add something — most messages here shouldn't have this line, since you're asking questions more than explaining at length.`;
+
+
 // ── CHAT WITH KNOX — casual/companion system prompt ────────────────────────
 //
 // Design notes — this is the prompt with the highest stakes per word:
@@ -521,12 +556,12 @@ export default async function handler(req, res) {
   const ipCheck  = checkIpRateLimit(ip, ipLimit);
   if (!ipCheck.allowed) {
     const msg = isGuest
-      ? "Guest limit reached. Sign up for free to get 10 questions every day."
+      ? "You've hit the guest limit. Sign up free for 15 questions every 3 hours — same AI quality, no card needed."
       : "Too many requests. Please slow down and try again in an hour.";
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType } = req.body;
+  const { question, history = [], image, imageType, learnMode } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -588,7 +623,10 @@ export default async function handler(req, res) {
     recordDailyUsage(uid);
   }
 
-  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : KNOX_PROMPT;
+  // Learn mode overrides the default prompt for real questions, but casual
+  // chit-chat ("hey", "thanks") still gets the normal warm response — forcing
+  // Socratic behavior onto small talk would feel robotic, not helpful.
+  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
   const messages = [{ role: "system", content: systemPrompt }];
 
   const recentHistory = history.slice(-20);
