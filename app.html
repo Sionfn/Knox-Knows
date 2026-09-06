@@ -627,8 +627,14 @@
       text-align: center;
       /* Locked — was overflow-y:auto, which let mouse/trackpad movement
          scroll the whole welcome screen around. This content always fits,
-         so it never needs to scroll; hidden keeps it perfectly still. */
+         so it never needs to scroll; hidden keeps it perfectly still.
+         touch-action:none is the mobile-specific half of this fix — a
+         touch drag is a gesture the browser interprets separately from
+         mouse scroll, so overflow:hidden alone doesn't stop a finger-drag
+         from panning this element on a phone. Taps/clicks still work fine;
+         only continuous drag-panning is disabled. */
       overflow: hidden;
+      touch-action: none;
       background: var(--cream);
       position: relative;
     }
@@ -1352,6 +1358,7 @@
     }
     @media (max-width: 768px) {
       #appHeader { padding: 0 14px; gap: 8px; }
+      .header-right { gap: 6px; }
       .app-logo-text { display: none; }
       #welcomeScreen { padding: 24px 16px; }
       /* Hide decorative welcome circles on mobile — they make the bg feel busy */
@@ -1376,7 +1383,13 @@
       .auth-card, .settings-card { max-width: 100%; }
     }
     @media (max-width: 480px) {
-      #appUpgradeBtn { display: none !important; }
+      /* Upgrade shrinks to just the icon instead of disappearing entirely —
+         it's the only path to Knox Plus, so it should stay reachable even
+         on the smallest phones, not vanish along with the streak/usage
+         pills competing for the same row. */
+      #appUpgradeBtn { padding: 7px 9px; }
+      #appUpgradeLabel { display: none; }
+      #streakPill span:last-of-type { font-size: 12px; }
       #appGuestBtns .header-login-btn:not(.header-signup-btn) { display: none; }
       .msg-user-bubble, .msg-knox-bubble { max-width: 95%; }
       .msg-knox { gap: 10px; }
@@ -1409,6 +1422,10 @@
       }
       #headerUsageText { font-size: 10px; }
       #mobileHistoryBtn { width: 36px; height: 36px; }
+      /* Tightest gap of all three breakpoints — every pixel counts once
+         the streak pill, usage pill, and account button are all fighting
+         for the same narrow row. */
+      .header-right { gap: 4px; }
     }
 
     /* Reduce motion if requested */
@@ -1501,11 +1518,11 @@
         <span id="streakFlame">🔥</span>
         <span id="streakCount">0</span>
       </button>
-      <div id="headerUsage" title="Daily questions remaining">
+      <div id="headerUsage" title="Questions remaining">
         <span class="usage-dot"></span>
-        <span id="headerUsageText">5 left today</span>
+        <span id="headerUsageText">15 questions left</span>
       </div>
-      <button id="appUpgradeBtn" onclick="goToPricing()">⚡ Upgrade</button>
+      <button id="appUpgradeBtn" onclick="goToPricing()">⚡<span id="appUpgradeLabel"> Upgrade</span></button>
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
         <span id="appAccountName"></span>
