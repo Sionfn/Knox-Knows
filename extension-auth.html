@@ -78,7 +78,7 @@
     // Path A (direct chrome.runtime.sendMessage) requires both an ID here AND
     // an "externally_connectable" entry in the extension manifest matching
     // this origin.
-    const EXTENSION_ID = ""; // <-- paste your real extension ID here
+    const EXTENSION_ID = "bkhekfgklcbeidifbmdcnoafimnebnbl"; // Knox extension ID (dev). Update if it changes / after Web Store publish.
 
     let isSignup = new URLSearchParams(location.search).get("signup") === "1";
     const $ = (id) => document.getElementById(id);
@@ -93,26 +93,33 @@
     setMode();
 
     async function handoff(user) {
-      const token = await user.getIdToken();
-      let plan = "free";
+      const idToken = await user.getIdToken();
+      // Exchange the ID token for a CUSTOM token the extension can sign in
+      // with (signInWithCustomToken). ID tokens can't be used for that, which
+      // is why the extension needs this mint step.
+      let customToken = null;
       try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) plan = snap.data().plan || "free";
+        const r = await fetch("/api/mint-extension-token", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + idToken },
+        });
+        if (r.ok) { customToken = (await r.json()).customToken; }
       } catch (e) {}
+
       const auth_payload = {
         uid: user.uid,
         email: user.email,
         name: user.displayName || (user.email ? user.email.split("@")[0] : "You"),
-        token,
-        plan,
+        customToken,
       };
-      // Path A: direct external message (needs externally_connectable in manifest)
+      // Send the custom token to the extension. externally_connectable in the
+      // extension manifest lets this website message it directly.
       try {
         if (chrome?.runtime?.sendMessage && EXTENSION_ID) {
           chrome.runtime.sendMessage(EXTENSION_ID, { type: "KNOX_AUTH", auth: auth_payload });
         }
       } catch (e) {}
-      // Path B: window.postMessage — picked up by the content script bridge
+      // Fallback for a content-script bridge, if ever used.
       window.postMessage({ type: "KNOX_AUTH", auth: auth_payload }, location.origin);
 
       $("signinCard").style.display = "none";
