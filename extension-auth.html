@@ -72,13 +72,14 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // EXTENSION ID — set this once your extension is loaded in Chrome
-    // (chrome://extensions → copy the ID). Until set, we rely on Path B
-    // (window.postMessage) only — your content-script bridge must pick that up.
-    // Path A (direct chrome.runtime.sendMessage) requires both an ID here AND
-    // an "externally_connectable" entry in the extension manifest matching
-    // this origin.
-    const EXTENSION_ID = "bkhekfgklcbeidifbmdcnoafimnebnbl"; // Knox extension ID (dev). Update if it changes / after Web Store publish.
+    // EXTENSION ID — the extension passes its OWN current id in the URL
+    // (?extid=...) when it opens this page, so this never breaks when the dev
+    // id changes on reload. Falls back to a hardcoded id if absent. Only
+    // chrome-extension ids (letters, length 32) are accepted, so a random URL
+    // param can't redirect the token somewhere malicious.
+    const urlExtId = new URLSearchParams(location.search).get("extid") || "";
+    const validExtId = /^[a-p]{32}$/.test(urlExtId) ? urlExtId : "";
+    const EXTENSION_ID = validExtId || "bkhekfgklcbeidifbmdcnoafimnebnbl";
 
     let isSignup = new URLSearchParams(location.search).get("signup") === "1";
     const $ = (id) => document.getElementById(id);
