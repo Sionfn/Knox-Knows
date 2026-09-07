@@ -3493,8 +3493,20 @@ function renderAnswerHtmlInner(text) {
             } else {
               break; // not a numbered item — stop the ordered list
             }
+            // Absorb plain explanation lines that fall between numbered steps
+            // into THIS item, so they don't break the <ol> and restart
+            // numbering at 1 (same fix as the top-level list below).
+            let explain = '';
+            while (
+              i < lines.length && !isSectionLine(lines[i]) &&
+              !/^\d+[\.)]\s*/.test(lines[i]) && !/^\d+$/.test(lines[i].trim()) &&
+              !/^[•\-\*✓✔]\s/.test(lines[i]) && !/^[a-z][\.)]\s/.test(lines[i])
+            ) {
+              explain += '<div style="font-size:13.5px;font-weight:500;line-height:1.55;margin-top:4px;">' + formatInline(lines[i]) + '</div>';
+              i++;
+            }
             // gather any sub-lines (bullets or lettered) that belong under this item
-            let sub = '';
+            let sub = explain;
             while (i < lines.length && !isSectionLine(lines[i]) &&
                    (/^[•\-\*✓✔]\s/.test(lines[i]) || /^[a-z][\.)]\s/.test(lines[i]))) {
               const subItems = [];
@@ -3535,12 +3547,46 @@ function renderAnswerHtmlInner(text) {
       }
       html += '</div>';
     } else if (/^\d+[\.)]\s*/.test(line)) {
-      // Top-level numbered list — natural prose answers use these directly
-      // now (no section wrapper required) when a problem genuinely has steps.
+      // Top-level numbered list. Explanation lines that appear BETWEEN
+      // numbered steps (e.g. "a = 3", "(−5)² = 25") get folded into the
+      // current step instead of breaking the list. Previously any
+      // non-numbered line closed the <ol>, so the next "1." opened a fresh
+      // <ol> that restarted numbering at 1 — which is why every step showed
+      // "1." A single continuous <ol> keeps 1, 2, 3, 4… intact.
       html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
       while (i < lines.length && /^\d+[\.)]\s*/.test(lines[i])) {
-        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(lines[i].replace(/^\d+[\.)]\s*/, '')) + '</li>';
+        let itemText = formatInline(lines[i].replace(/^\d+[\.)]\s*/, ''));
         i++;
+        // Absorb following non-list lines as part of THIS item, until we hit
+        // the next numbered step, a bullet, a section header, or run out.
+        let extra = '';
+        while (
+          i < lines.length &&
+          !/^\d+[\.)]\s*/.test(lines[i]) &&
+          !/^[•\-\*✓✔]\s/.test(lines[i]) &&
+          !/^[a-z][\.)]\s/.test(lines[i]) &&
+          !isSectionLine(lines[i])
+        ) {
+          extra += '<div style="font-size:14.5px;font-weight:500;line-height:1.6;margin-top:4px;">' + formatInline(lines[i]) + '</div>';
+          i++;
+        }
+        // Absorb bullet/lettered sub-lists that belong under this step.
+        while (i < lines.length && (/^[•\-\*✓✔]\s/.test(lines[i]) || /^[a-z][\.)]\s/.test(lines[i])) && !isSectionLine(lines[i])) {
+          const isLettered = /^[a-z][\.)]\s/.test(lines[i]);
+          const subItems = [];
+          while (
+            i < lines.length && !isSectionLine(lines[i]) &&
+            ((isLettered && /^[a-z][\.)]\s/.test(lines[i])) || (!isLettered && /^[•\-\*✓✔]\s/.test(lines[i])))
+          ) {
+            const clean = lines[i].replace(/^[•\-\*✓✔]\s*/, '').replace(/^[a-z][\.)]\s*/, '');
+            subItems.push('<li style="font-size:13.5px;font-weight:500;line-height:1.55;">' + formatInline(clean) + '</li>');
+            i++;
+          }
+          const tag = isLettered ? 'ol type="a"' : 'ul';
+          const closeTag = isLettered ? 'ol' : 'ul';
+          extra += '<' + tag + ' style="margin:5px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">' + subItems.join('') + '</' + closeTag + '>';
+        }
+        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + itemText + extra + '</li>';
       }
       html += '</ol>';
     } else if (/^[•\-\*✓✔]\s/.test(line)) {
