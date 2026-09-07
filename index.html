@@ -342,11 +342,11 @@
     @media (max-width:768px) {
       #headerNav    { display:none !important; }
       #hamburgerBtn { display:flex !important; }
-      /* On mobile the header mirrors the app: hamburger + logo on the left,
-         a single auth button on the right. The Plus badge moves into the
-         hamburger menu (it has a Pricing link already), so it's hidden here
-         to keep the bar clean and uncrowded like the app's. */
-      #proBadge { display:none !important; }
+      /* Plus badge stays on mobile now, but shrinks to an icon-only pill so
+         it sits next to the single auth button without crowding the bar
+         (the old full "⚡ Knox Plus" text is what caused earlier overflow). */
+      #proBadge { padding:9px 11px !important; }
+      #proBadgeLabel { display:none; }
       #main-header { height:64px; border-bottom-width:4px; }
     }
     @media (min-width:769px) {
@@ -443,10 +443,6 @@
        existing handlers in this file still work; styling ported from app. */
     .pro-badge { background:#FFD900; color:#3C3C3C; border:none; border-radius:12px; padding:10px 18px; font-size:14px; font-weight:800; box-shadow:0 3px 0 #CC9900; transition:all 0.15s; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
     .pro-badge:hover { transform:translateY(-1px); box-shadow:0 4px 0 #CC9900; }
-    /* Guest state only: hide the Plus badge on mobile so it doesn't push the
-       Login + Sign Up buttons off the screen edge. Logged-in free users keep
-       it (they only have badge + account, so it fits). */
-    @media (max-width:640px) { .pro-badge-guest { display:none !important; } }
     .account-dropdown-wrapper { position:relative; }
     .account-dropdown {
       position: fixed;
@@ -1765,7 +1761,7 @@
   </div>
 
   <div class="header-nav">
-    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡ Knox Plus</button>
+    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡<span id="proBadgeLabel"> Knox Plus</span></button>
 
     <div class="account-dropdown-wrapper" id="accountDropdownWrapper" style="display:none;">
       <button id="accountBtn" onclick="toggleDropdown(event)" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:12px;padding:6px 12px 6px 6px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s;height:44px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -3086,13 +3082,11 @@
     if (!window.currentUser) {
       if (loginBtn)       loginBtn.style.display       = 'inline-flex';
       if (accountWrapper) accountWrapper.style.display = 'none';
-      // Guests DO see the "Knox Plus" badge now — it scrolls to pricing so
-      // they can browse plans before committing. But on mobile, three header
-      // buttons (badge + Login + Sign Up) overflow and clip Sign Up off the
-      // edge — so a CSS class hides it below the breakpoint while keeping it
-      // on desktop where there's room. Mobile guests still reach pricing by
-      // scrolling or via the hamburger menu's Pricing link.
-      if (proBadge) { proBadge.style.display = 'inline-flex'; proBadge.classList.add('pro-badge-guest'); }
+      // Guests see the "Knox Plus" badge on all sizes now — it scrolls to
+      // pricing so they can browse plans before committing. On mobile it
+      // shrinks to an icon-only ⚡ pill (see CSS) so it fits next to the
+      // single auth button without crowding.
+      if (proBadge) proBadge.style.display = 'inline-flex';
       return;
     }
     const { displayName, email, photoURL } = window.currentUser;
@@ -3136,11 +3130,8 @@
         iconEl.innerHTML = `<div class="default-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
       }
     }
-    // Logged-in free users see the badge on all sizes (only 2 header items
-    // now — badge + account — so no mobile overflow). Drop the guest-only
-    // mobile-hide class in case they just logged in from a guest state.
+    // Logged-in free users see the badge; paid users don't need it.
     if (proBadge) {
-      proBadge.classList.remove('pro-badge-guest');
       proBadge.style.display = (userPlan === 'free') ? 'inline-flex' : 'none';
     }
   }
