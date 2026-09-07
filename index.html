@@ -342,6 +342,12 @@
     @media (max-width:768px) {
       #headerNav    { display:none !important; }
       #hamburgerBtn { display:flex !important; }
+      /* On mobile the header mirrors the app: hamburger + logo on the left,
+         a single auth button on the right. The Plus badge moves into the
+         hamburger menu (it has a Pricing link already), so it's hidden here
+         to keep the bar clean and uncrowded like the app's. */
+      #proBadge { display:none !important; }
+      #main-header { height:64px; border-bottom-width:4px; }
     }
     @media (min-width:769px) {
       #hamburgerBtn { display:none !important; }
@@ -1746,15 +1752,17 @@
 
 <!-- ===================== HEADER ===================== -->
 <header id="main-header">
-  <a href="#home" class="header-logo">
-    <img src="./knox-logo-square.jpg" alt="Knox" class="header-logo-img" draggable="false" onerror="this.style.fontSize='24px';this.outerHTML='<span style=\'font-size:28px;\'>🦊</span>'">
-    <span class="header-logo-text">Knox Knows</span>
-  </a>
-
-  <!-- Hamburger button — mobile only -->
-  <button id="hamburgerBtn" onclick="toggleMobileNav()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;color:white;flex-shrink:0;" aria-label="Menu">
-    <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
+  <!-- Left cluster: hamburger (mobile) + logo — matches the app's header
+       layout so the site and app feel like one product on mobile. -->
+  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+    <button id="hamburgerBtn" onclick="toggleMobileNav()" style="display:none;background:rgba(255,255,255,0.2);border:none;cursor:pointer;padding:0;width:40px;height:40px;border-radius:12px;color:white;align-items:center;justify-content:center;flex-shrink:0;" aria-label="Menu">
+      <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <a href="#home" class="header-logo">
+      <img src="./knox-logo-square.jpg" alt="Knox" class="header-logo-img" draggable="false" onerror="this.style.fontSize='24px';this.outerHTML='<span style=\'font-size:28px;\'>🦊</span>'">
+      <span class="header-logo-text">Knox Knows</span>
+    </a>
+  </div>
 
   <div class="header-nav">
     <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡ Knox Plus</button>
@@ -1788,8 +1796,7 @@
     </div>
 
     <div id="loginBtn" style="display:inline-flex;gap:8px;align-items:center;">
-      <button class="header-login" onclick="openLoginModal()">Login</button>
-      <button class="header-login" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.7);" onclick="openLoginModal('signup')">Sign Up</button>
+      <button class="header-login" style="background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.7);" onclick="openLoginModal()">Log in / Sign up</button>
     </div>
   </div>
 </header>
