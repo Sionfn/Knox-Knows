@@ -342,11 +342,8 @@
     @media (max-width:768px) {
       #headerNav    { display:none !important; }
       #hamburgerBtn { display:flex !important; }
-      /* Plus badge stays on mobile now, but shrinks to an icon-only pill so
-         it sits next to the single auth button without crowding the bar
-         (the old full "⚡ Knox Plus" text is what caused earlier overflow). */
-      #proBadge { padding:9px 11px !important; }
-      #proBadgeLabel { display:none; }
+      /* Full "⚡ Knox Plus" badge shows on mobile — the single merged auth
+         button freed up enough room that the label fits without crowding. */
       #main-header { height:64px; border-bottom-width:4px; }
     }
     @media (min-width:769px) {
@@ -369,6 +366,12 @@
     @media (max-width:400px) {
       .rg-4col   { grid-template-columns:1fr 1fr !important; }
       .rg-footer { grid-template-columns:1fr !important; }
+      /* Very small phones only: if the full badge + auth button get tight,
+         shrink the Plus badge to its ⚡ icon so nothing clips. Normal-size
+         phones keep the full "Knox Plus" label. */
+      #proBadge { padding:9px 12px !important; }
+      #proBadgeLabel { display:none; }
+      #main-header { padding:0 12px; gap:6px; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
