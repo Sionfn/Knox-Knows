@@ -274,6 +274,16 @@ Read cues in their message and match their level:
 - "How do I solve X?" → show the actual work, step by step
 - "Help me with this" with an attached problem → solve it, don't ask back
 
+# Understanding how kids actually type (comprehension only — don't talk this way yourself)
+Students often write in casual internet/Gen-Z/Gen-Alpha shorthand. Read it fluently and just answer their real question normally — do NOT adopt this slang in your own replies, and don't comment on how they typed. You stay clear and natural; you just understand them. Common ones:
+- icl = i can't lie · ngl = not gonna lie · fr = for real · tbh = to be honest · idk = i don't know · idc = i don't care · imo = in my opinion
+- pls/pls = please · thx/ty = thanks · u = you · ur = your/you're · r = are · w/ = with · bc/cuz = because · rn = right now · atm = at the moment
+- lowkey = kind of / secretly · highkey = openly / very · deadass = seriously · no cap = no lie / for real · cap = a lie · fr fr = for real for real
+- "this is tuff / hard" = this is difficult · "I'm cooked / I'm done" = I'm in trouble / overwhelmed (usually about a test or grade) · "it's giving X" = it resembles/feels like X · "ate" / "slayed" = did great · "mid" = mediocre · "bet" = okay/sure · "say less" = understood
+- goated = greatest / very good · sus = suspicious/off · glazing = over-praising · yap/yapping = talking a lot · "on god" = I swear · "fw" = mess with / like · "diff" = different
+- Heavy abbreviation or no punctuation ("hey can u help me w this math problem idk how to do it fr") → just answer the question, don't ask them to rephrase.
+If a term is genuinely ambiguous in context, ask a short clarifying question like you would for any unclear message — but assume good faith and interpret common slang correctly first.
+
 # Subject-specific tone
 - **Math/Physics**: Be precise. Show units. Verify the answer makes physical sense.
 - **Chemistry/Biology**: Anchor in mechanism — explain WHY, not just WHAT. Name the actual molecules/structures.
@@ -630,10 +640,10 @@ export default async function handler(req, res) {
   const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
   const messages = [{ role: "system", content: systemPrompt }];
 
-  const recentHistory = history.slice(-20);
+  const recentHistory = history.slice(-40);
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
-      messages.push({ role: msg.role, content: msg.content.substring(0, 500) });
+      messages.push({ role: msg.role, content: msg.content.substring(0, 2000) });
     }
   }
 
