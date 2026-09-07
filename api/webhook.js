@@ -170,7 +170,7 @@ async function sendRefundEmail(email, plan) {
 
 Your ${p.name} subscription has been cancelled and you won't be charged again.
 
-Your account is still here — you're back on the free plan with 10 questions a day, so you can keep using Knox anytime.
+Your account is still here — you're back on the free plan with 15 questions every 3 hours, so you can keep using Knox anytime.
 
 If this was a mistake, or there was something about Knox that didn't work for you, just reply to this email and let me know. I read every message personally, and I'd genuinely like to hear what happened.
 
@@ -182,7 +182,7 @@ Knox Knows`;
   const htmlBody = knoxEmailShell(`
     <p style="margin:0 0 16px;">Hey,</p>
     <p style="margin:0 0 16px;">Your <strong>${p.name}</strong> subscription has been cancelled and you won't be charged again.</p>
-    <p style="margin:0 0 16px;">Your account is still here — you're back on the free plan with 10 questions a day, so you can keep using Knox anytime.</p>
+    <p style="margin:0 0 16px;">Your account is still here — you're back on the free plan with 15 questions every 3 hours, so you can keep using Knox anytime.</p>
     <p style="margin:0 0 16px;">If this was a mistake, or there was something about Knox that didn't work for you, just reply to this email and let me know. I read every message personally, and I'd genuinely like to hear what happened.</p>
     <p style="margin:0 0 16px;">Thanks for giving Knox Knows a try.</p>
     <p style="margin:0 0 2px;">— Sion</p>
