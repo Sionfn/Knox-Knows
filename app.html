@@ -2609,7 +2609,7 @@
         window._conversation.push({ role: 'user',      content: d.question || '' });
         window._conversation.push({ role: 'assistant', content: d.answer   || '' });
       });
-      if (window._conversation.length > 30) window._conversation = window._conversation.slice(-30);
+      if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
 
       window.showChatThread();
       window.scrollChat();
@@ -3282,8 +3282,12 @@ window.appHandleAsk = async function() {
     try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* fall through */ }
   }
 
-  // History sent to API — server truncates internally so no need to here
-  const history = window._conversation.slice(-10).map(m => ({
+  // History sent to API — send a generous window so Knox remembers the
+  // whole homework session, not just the last few turns. gpt-4.1 has a
+  // very large context window, so this is nowhere near a real limit; the
+  // old slice(-10) was overly conservative and made Knox forget things
+  // referenced from earlier in the same chat.
+  const history = window._conversation.slice(-30).map(m => ({
     role:    m.role,
     content: m.content,
   }));
@@ -3344,7 +3348,7 @@ window.appHandleAsk = async function() {
     // Track conversation
     window._conversation.push({ role: 'user',      content: q || '[image]' });
     window._conversation.push({ role: 'assistant', content: answer });
-    if (window._conversation.length > 30) window._conversation = window._conversation.slice(-30);
+    if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
 
     // Save history + refresh usage indicator
     if (window.saveHistory && window.currentUser) {
