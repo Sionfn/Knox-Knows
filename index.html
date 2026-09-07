@@ -366,12 +366,12 @@
     @media (max-width:400px) {
       .rg-4col   { grid-template-columns:1fr 1fr !important; }
       .rg-footer { grid-template-columns:1fr !important; }
-      /* Very small phones only: if the full badge + auth button get tight,
-         shrink the Plus badge to its ⚡ icon so nothing clips. Normal-size
-         phones keep the full "Knox Plus" label. */
-      #proBadge { padding:9px 12px !important; }
-      #proBadgeLabel { display:none; }
-      #main-header { padding:0 12px; gap:6px; }
+      /* Small phones: keep the full "⚡ Knox Plus" label visible (you want
+         it readable, not just the bolt). Tighten header padding/gaps and
+         trim the badge's own padding a touch so everything still fits. */
+      #proBadge { padding:9px 12px !important; font-size:13px !important; }
+      #main-header { padding:0 10px; gap:6px; }
+      .header-login { padding:9px 12px; font-size:13px; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
