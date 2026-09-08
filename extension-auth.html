@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign in to Knox — Extension</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=2">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Nunito', system-ui, sans-serif; background: linear-gradient(180deg,#fff,#FFF8F0); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
     .card { background: white; border: 1.5px solid #ECECEC; border-radius: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.08); padding: 40px; max-width: 420px; width: 100%; text-align: center; }
-    .fox { width: 88px; height: 88px; border-radius: 50%; border: 4px solid white; box-shadow: 0 12px 32px rgba(255,107,0,0.25); margin-bottom: 16px; }
+    .fox { width: 88px; height: 88px; border-radius: 50%; border: 4px solid white; box-shadow: 0 12px 32px rgba(255,107,0,0.25); margin-bottom: 16px; object-fit: cover; }
     h1 { font-size: 26px; font-weight: 900; color: #1A1A1A; letter-spacing: -0.02em; }
     p { font-size: 15px; font-weight: 600; color: #5A5F6A; line-height: 1.55; margin: 10px 0 24px; }
     .btn { width: 100%; font-family: inherit; font-weight: 800; font-size: 16px; padding: 15px; border-radius: 14px; border: none; cursor: pointer; margin-bottom: 12px; }
@@ -33,7 +33,7 @@
 </head>
 <body>
   <div class="card" id="signinCard">
-    <img src="/knox-logo.jpg" alt="Knox" class="fox" onerror="this.style.display='none'">
+    <img src="/knox-logo-square.jpg" alt="Knox" class="fox" onerror="this.style.display='none'">
     <h1 id="title">Sign in to Knox</h1>
     <p id="subtitle">Connect your account to use the Knox extension.</p>
     <div class="err" id="err"></div>
@@ -54,7 +54,7 @@
   </div>
 
   <div class="card success" id="successCard">
-    <img src="/knox-logo.jpg" alt="Knox" class="fox" onerror="this.style.display='none'">
+    <img src="/knox-logo-square.jpg" alt="Knox" class="fox" onerror="this.style.display='none'">
     <h1>You're in! 🦊</h1>
     <p>You can close this tab and head back to the Knox extension.</p>
   </div>
