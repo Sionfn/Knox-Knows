@@ -25,7 +25,9 @@ const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
 const USAGE_LIMITS = { free: 15, paid: 100 };
 
 function planTier(plan) {
-  return plan === 'free' ? 'free' : 'paid';
+  // Paid allowlist — anything not explicitly a paid plan is free, so a
+  // missing/blank plan can never accidentally unlock Plus limits.
+  return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
 }
 
 // UTC day key — used only for streak freshness, unrelated to usage now
