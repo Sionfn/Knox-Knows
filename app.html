@@ -2135,7 +2135,9 @@
   const USAGE_LIMITS = { free: 15, paid: 100 };
 
   function planTier(plan) {
-    return plan === 'free' ? 'free' : 'paid';
+    // Match the server's paid allowlist so the app never shows Plus perks to
+    // someone the backend treats as free (e.g. a missing/blank plan field).
+    return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
   }
 
   async function updateUsageIndicator() {
