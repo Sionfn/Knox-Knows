@@ -639,19 +639,18 @@
       align-items: center; justify-content: center;
       padding: 40px 24px 32px;
       text-align: center;
-      /* Scrolling is allowed again — the earlier "lock it so it can't move"
-         fix assumed this content always fits the screen, which is false on
-         phones: 4 suggestion cards plus heading/subtext genuinely don't fit
-         a typical mobile viewport, especially with the browser's own
-         address bar and toolbar eating into the visible height. Blocking
-         scroll entirely made the last card (and part of the one above it)
-         permanently unreachable — worse than the original "moves a bit"
-         complaint. overscroll-behavior below still stops the rubber-band
-         bounce/pull-to-refresh feel without blocking real scrolling. */
+      /* On mobile the 4 cards + heading genuinely don't fit, so scrolling
+         stays enabled there (see the media query below). On desktop the
+         content always fits, so we lock it (overflow:hidden) so it can't
+         drift/scroll at all — that's the "it moves with my mouse" complaint. */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: var(--cream);
       position: relative;
+    }
+    /* Desktop / roomy screens: content fits, so lock it completely still. */
+    @media (min-width: 768px) and (min-height: 640px) {
+      #welcomeScreen { overflow: hidden; }
     }
     #welcomeScreen > * { position: relative; z-index: 1; }
     #welcomeScreen::before {
