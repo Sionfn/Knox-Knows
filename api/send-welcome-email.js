@@ -131,7 +131,7 @@ Knox Knows`;
     <p style="margin:0 0 14px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:800;text-decoration:none;">knoxknowsapp.com</a>. Here's what you get:</p>
     <ul style="margin:0 0 14px;padding-left:20px;">
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">15 questions every 3 hours</strong>, free</li>
-      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Every subject</strong> — math, science, history, essays</li>
+      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Every subject</strong> — math, science, history, english</li>
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Snap a photo</strong> of your homework instead of typing it</li>
     </ul>
     <p style="margin:0 0 14px;">I built Knox because I wanted a tutor that actually explains the <em>why</em>, not one that just spits out answers. If Knox ever gets something wrong, hit the <strong>thumbs-down</strong> on the answer — I read those personally.</p>
