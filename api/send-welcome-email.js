@@ -74,8 +74,8 @@ export default async function handler(req, res) {
   if (!email) {
     return res.status(400).json({ error: "No email on account" });
   }
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error("SENDGRID_API_KEY is not set — cannot send welcome email");
+  if (!process.env.RESEND_API_KEY) {
+    console.error("RESEND_API_KEY is not set — cannot send welcome email");
     return res.status(500).json({ error: "Email service not configured" });
   }
 
@@ -103,27 +103,26 @@ Knox Knows`;
   `);
 
   try {
-    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const fromEmail = process.env.EMAIL_FROM || "support@knoxknowsapp.com";
+    const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`,
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
         "Content-Type":  "application/json",
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email, name: displayName }] }],
-        from:     { email: process.env.SENDGRID_FROM_EMAIL || "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
-        reply_to: { email: "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
+        from:     `Sion at Knox Knows <${fromEmail}>`,
+        to:       [email],
+        reply_to: "support@knoxknowsapp.com",
         subject:  `Your Knox Knows account is ready, ${firstName}`,
-        content: [
-          { type: "text/plain", value: textBody },
-          { type: "text/html",  value: htmlBody },
-        ],
+        html:     htmlBody,
+        text:     textBody,
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("SendGrid error (welcome):", err);
+      console.error("Resend error (welcome):", err);
       return res.status(500).json({ error: "Failed to send email" });
     }
 
