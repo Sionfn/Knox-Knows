@@ -90,37 +90,38 @@ function knoxEmailShell(bodyHtml) {
 </html>`;
 }
 
-// Generic SendGrid sender — used for both purchase and refund emails.
+// Generic email sender (Resend) — used for both purchase and refund emails.
+// Switched from SendGrid to Resend: SendGrid's post-trial "free" plan sends 0
+// emails, while Resend is free for 3,000/month. Same from/reply-to identity.
 async function sendEmail(email, subject, textBody, htmlBody, label) {
   if (!email) {
     console.warn(`Skipping ${label} email — no recipient address`);
     return;
   }
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error(`SENDGRID_API_KEY not set — cannot send ${label} email`);
+  if (!process.env.RESEND_API_KEY) {
+    console.error(`RESEND_API_KEY not set — cannot send ${label} email`);
     return;
   }
   try {
-    const r = await fetch("https://api.sendgrid.com/v3/mail/send", {
+    const fromEmail = process.env.EMAIL_FROM || "support@knoxknowsapp.com";
+    const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.SENDGRID_API_KEY}`,
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email }] }],
-        from:     { email: process.env.SENDGRID_FROM_EMAIL || "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
-        reply_to: { email: "support@knoxknowsapp.com", name: "Sion at Knox Knows" },
+        from:     `Sion at Knox Knows <${fromEmail}>`,
+        to:       [email],
+        reply_to: "support@knoxknowsapp.com",
         subject,
-        content: [
-          { type: "text/plain", value: textBody },
-          { type: "text/html",  value: htmlBody },
-        ],
+        html:     htmlBody,
+        text:     textBody,
       }),
     });
     if (!r.ok) {
       const errText = await r.text();
-      console.error(`SendGrid error (${label}):`, errText);
+      console.error(`Resend error (${label}):`, errText);
     } else {
       console.log(`✓ ${label} email sent to ${email}`);
     }
