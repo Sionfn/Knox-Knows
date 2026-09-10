@@ -34,18 +34,51 @@ function knoxEmailShell(bodyHtml) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;font-size:16px;line-height:1.65;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 24px;">
-    <div style="text-align:center;margin-bottom:28px;">
-      <img src="https://knoxknowsapp.com/knox-logo-square.jpg" alt="Knox Knows" width="48" height="48" style="border-radius:12px;display:inline-block;">
+<body style="margin:0;padding:0;background:#FFF8F0;font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#3C3C3C;">
+  <div style="background:#FFF8F0;padding:28px 16px;">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(255,107,0,0.10);border:1px solid #F0E6DA;">
+
+      <!-- Orange header bar -->
+      <div style="background:#FF6B00;padding:22px 28px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;"><tr>
+          <td style="vertical-align:middle;width:44px;">
+            <img src="https://knoxknowsapp.com/knox-logo-square.jpg" alt="Knox" width="40" height="40" style="border-radius:50%;display:block;border:2px solid rgba(255,255,255,0.5);">
+          </td>
+          <td style="vertical-align:middle;padding-left:12px;">
+            <span style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:-0.2px;">Knox Knows</span>
+          </td>
+        </tr></table>
+      </div>
+
+      <!-- Body: styled like a Knox answer bubble -->
+      <div style="padding:28px 28px 8px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;"><tr>
+          <td style="vertical-align:top;width:40px;">
+            <img src="https://knoxknowsapp.com/knox-logo-square.jpg" alt="" width="34" height="34" style="border-radius:50%;display:block;">
+          </td>
+          <td style="vertical-align:top;padding-left:12px;">
+            <div style="font-size:11px;font-weight:900;color:#999;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Knox</div>
+            <div style="background:#FFF8F0;border:1.5px solid #FFE0C2;border-radius:4px 16px 16px 16px;padding:18px 20px;font-size:15.5px;line-height:1.65;color:#3C3C3C;">
+              ${bodyHtml}
+            </div>
+          </td>
+        </tr></table>
+      </div>
+
+      <!-- Footer -->
+      <div style="padding:20px 28px 26px;">
+        <p style="margin:0;color:#B3A5A0;font-size:12px;line-height:1.6;border-top:1px solid #F0E6DA;padding-top:18px;">
+          You're receiving this because you have a Knox Knows account.<br>
+          <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:700;text-decoration:none;">knoxknowsapp.com</a> &nbsp;&middot;&nbsp;
+          <a href="https://knoxknowsapp.com/privacy.html" style="color:#B3A5A0;text-decoration:none;">Privacy</a> &nbsp;&middot;&nbsp;
+          <a href="https://knoxknowsapp.com/terms.html" style="color:#B3A5A0;text-decoration:none;">Terms</a>
+        </p>
+      </div>
+
     </div>
-    ${bodyHtml}
-    <p style="margin:28px 0 0;color:#9CA3AF;font-size:12px;line-height:1.6;border-top:1px solid #E5E7EB;padding-top:18px;">
-      You're receiving this because you have a Knox Knows account.<br>
-      <a href="https://knoxknowsapp.com" style="color:#9CA3AF;">knoxknowsapp.com</a> &middot;
-      <a href="https://knoxknowsapp.com/privacy.html" style="color:#9CA3AF;">Privacy</a> &middot;
-      <a href="https://knoxknowsapp.com/terms.html" style="color:#9CA3AF;">Terms</a>
-    </p>
+    <div style="text-align:center;margin-top:14px;">
+      <span style="font-size:12px;font-weight:700;color:#C9B8AE;">🦊 Stop guessing. Start knowing.</span>
+    </div>
   </div>
 </body>
 </html>`;
@@ -93,13 +126,18 @@ Any questions, just reply to this email. It comes straight to me.
 Knox Knows`;
 
   const htmlBody = knoxEmailShell(`
-    <p style="margin:0 0 16px;">Hey ${firstName},</p>
-    <p style="margin:0 0 16px;">Thanks for signing up for Knox Knows — your account is ready to use.</p>
-    <p style="margin:0 0 16px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:600;">knoxknowsapp.com</a>. You get 15 questions every 3 hours free, every subject, and you can snap a photo of your homework instead of typing it.</p>
-    <p style="margin:0 0 16px;">I built Knox Knows because I wanted a tutor that actually explains the <em>why</em>, not one that just spits out answers. If Knox ever gets something wrong, hit the thumbs-down on the answer — I read those personally.</p>
+    <p style="margin:0 0 14px;font-weight:800;">Hey ${firstName}, 🦊</p>
+    <p style="margin:0 0 14px;">Thanks for signing up for <strong style="color:#FF6B00;">Knox Knows</strong> — your account is ready to use.</p>
+    <p style="margin:0 0 14px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:800;text-decoration:none;">knoxknowsapp.com</a>. Here's what you get:</p>
+    <ul style="margin:0 0 14px;padding-left:20px;">
+      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">15 questions every 3 hours</strong>, free</li>
+      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Every subject</strong> — math, science, history, essays</li>
+      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Snap a photo</strong> of your homework instead of typing it</li>
+    </ul>
+    <p style="margin:0 0 14px;">I built Knox because I wanted a tutor that actually explains the <em>why</em>, not one that just spits out answers. If Knox ever gets something wrong, hit the <strong>thumbs-down</strong> on the answer — I read those personally.</p>
     <p style="margin:0 0 16px;">Any questions, just reply to this email. It comes straight to me.</p>
-    <p style="margin:0 0 2px;">— Sion</p>
-    <p style="margin:0;color:#6B7280;font-size:14px;">Knox Knows</p>
+    <p style="margin:0 0 2px;font-weight:800;">— Sion</p>
+    <p style="margin:0;color:#999;font-size:13px;font-weight:700;">Founder, Knox Knows</p>
   `);
 
   try {
