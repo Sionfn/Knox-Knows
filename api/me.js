@@ -20,9 +20,14 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db = getFirestore();
 
-// Must match api/ask.js — a rolling window, not a flat daily reset.
-const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
-const USAGE_LIMITS = { free: 15, paid: 100 };
+// Must match api/ask.js's checkAndIncrementUsage exactly, or the displayed
+// "questions left" will disagree with what actually happens when you ask.
+const FREE_DAILY_REGEN      = 5;
+const FREE_MAX_BALANCE      = 20;
+const FREE_STARTING_BALANCE = 10;
+const PLUS_LIMIT            = 500;              // effectively unlimited; abuse-only ceiling
+const PLUS_WINDOW_MS        = 3 * 60 * 60 * 1000; // 3 hours
+const oneDayMs = () => 24 * 60 * 60 * 1000;
 
 function planTier(plan) {
   // Paid allowlist — anything not explicitly a paid plan is free, so a
@@ -65,25 +70,48 @@ export default async function handler(req, res) {
 
   try {
     const userRef = db.collection("users").doc(uid);
-    const [userSnap, usageSnap] = await Promise.all([
-      userRef.get(),
-      userRef.collection("usage").doc("rolling").get(),
-    ]);
-
+    const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() : {};
     const plan     = userData.plan || "free";
-    const limit    = USAGE_LIMITS[planTier(plan)];
+    const tier     = planTier(plan);
+    const now      = Date.now();
 
-    const log    = usageSnap.exists ? (usageSnap.data().log || []) : [];
-    const now    = Date.now();
-    const recent = log.filter(ts => now - ts < USAGE_WINDOW_MS);
-    const used      = recent.length;
-    const remaining = Math.max(0, limit - used);
-    // When the student is at the cap, tell them how long until the oldest
-    // use ages out of the window and frees up a slot.
-    const resetInMs = recent.length > 0
-      ? Math.max(0, USAGE_WINDOW_MS - (now - Math.min(...recent)))
-      : 0;
+    let used, limit, remaining, resetInMs;
+
+    if (tier === "paid") {
+      const usageSnap = await userRef.collection("usage").doc("rolling").get();
+      const log    = usageSnap.exists ? (usageSnap.data().log || []) : [];
+      const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
+      used      = recent.length;
+      limit     = PLUS_LIMIT;
+      remaining = Math.max(0, limit - used);
+      resetInMs = recent.length > 0
+        ? Math.max(0, PLUS_WINDOW_MS - (now - Math.min(...recent)))
+        : 0;
+    } else {
+      // Free — read the daily bank, projecting forward any regen that's
+      // accrued since the last write (read-only here; ask.js is what
+      // actually applies + persists the regen on next use).
+      const bankSnap = await userRef.collection("usage").doc("bank").get();
+      let balance, lastRegenAt;
+      if (!bankSnap.exists) {
+        balance = FREE_STARTING_BALANCE;
+        lastRegenAt = now;
+      } else {
+        const d = bankSnap.data();
+        balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
+        lastRegenAt = d.lastRegenAt || now;
+        const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
+        if (daysElapsed > 0) {
+          balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
+          lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
+        }
+      }
+      remaining = balance;
+      limit     = FREE_MAX_BALANCE;
+      used      = Math.max(0, limit - balance);
+      resetInMs = balance < limit ? Math.max(0, (lastRegenAt + oneDayMs()) - now) : 0;
+    }
 
     // streak freshness
     let streak = userData.streakCount || 0;
@@ -100,7 +128,7 @@ export default async function handler(req, res) {
       name: userData.displayName || decoded.name || null,
       plan,
       planStatus: userData.planStatus || "none",
-      usage: { used, limit, remaining, resetInMs },
+      usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" },
       streak,
       studiedToday,
     });
