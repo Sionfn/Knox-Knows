@@ -89,14 +89,22 @@ export default async function handler(req, res) {
         ? Math.max(0, PLUS_WINDOW_MS - (now - Math.min(...recent)))
         : 0;
     } else {
-      // Free — read the daily bank, projecting forward any regen that's
-      // accrued since the last write (read-only here; ask.js is what
-      // actually applies + persists the regen on next use).
-      const bankSnap = await userRef.collection("usage").doc("bank").get();
+      // Free — read the daily bank. If it doesn't exist yet (the user
+      // hasn't asked a real question via ask.js, which is what normally
+      // creates it), CREATE it right here with a real, persisted timestamp
+      // — using the server's own write access, since the browser must never
+      // be able to set its own balance/lastRegenAt (that would let anyone
+      // grant themselves free questions from DevTools). Without this,
+      // every page load with no existing record would invent a fresh
+      // "starts now" countdown, which is why the timer looked like it kept
+      // resetting to 24h — it genuinely was, because nothing was ever saved.
+      const bankRef = userRef.collection("usage").doc("bank");
+      const bankSnap = await bankRef.get();
       let balance, lastRegenAt;
       if (!bankSnap.exists) {
         balance = FREE_STARTING_BALANCE;
         lastRegenAt = now;
+        await bankRef.set({ balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
       } else {
         const d = bankSnap.data();
         balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
@@ -105,6 +113,10 @@ export default async function handler(req, res) {
         if (daysElapsed > 0) {
           balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
           lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
+          // Persist the advanced regen too, so it's consistent for the next
+          // read (by ask.js, me.js, or the header display) instead of
+          // silently drifting.
+          await bankRef.set({ balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
         }
       }
       remaining = balance;
