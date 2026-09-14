@@ -1019,11 +1019,34 @@
       position: relative;
     }
     .usage-info-card ul li::before {
-      content: '🦊';
-      position: absolute; left: 0; top: 0;
-      font-size: 12px;
+      content: '';
+      position: absolute; left: 4px; top: 8px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
     }
+    .usage-info-card ul li { padding-left: 22px; }
     .usage-info-card ul li strong { color: var(--orange); font-weight: 800; }
+    .usage-info-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--cream);
+      border: 2px solid #FFD0A8;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px; font-weight: 800;
+      color: var(--orange);
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 0 #FFD0A8;
+      margin-bottom: 12px;
+    }
+    .usage-info-tagline {
+      font-size: 11.5px !important;
+      font-weight: 800 !important;
+      color: var(--orange) !important;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 14px 0 0 !important;
+    }
     .usage-info-upgrade {
       display: block;
       width: 100%;
@@ -2305,9 +2328,11 @@
     if (tier === 'paid') {
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <h3>You're on Knox Plus</h3>
-        <p>Unlimited questions — ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
+        <div class="usage-info-badge">⚡ Knox Plus</div>
+        <h3>Unlimited, for real</h3>
+        <p>Ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
+        <p class="usage-info-tagline">🦊 Stop guessing. Start knowing.</p>
       `;
     } else {
       const st = window._knoxUsageState || {};
@@ -2317,6 +2342,7 @@
 
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
+        <div class="usage-info-badge">🦊 Hey, I'm Knox</div>
         <h3>${left} question${left === 1 ? '' : 's'} left</h3>
         <p class="usage-info-next">${atMax
           ? `You're at your max saved balance.`
