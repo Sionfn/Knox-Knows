@@ -16,15 +16,25 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
-// ── Rolling usage window — Claude-style, not a flat daily cap ───────────────
-// Instead of "10 questions, reset at midnight UTC" (which punishes a student
-// who happens to study at 11pm), usage regenerates over a rolling window —
-// closer to how Claude's own free tier behaves. "paid" covers any non-free
-// Stripe plan (existing Super and Max subscribers both land here — no need
-// to touch Stripe products to ship this). The paid limit is a generous soft
-// cap, not advertised as a number — it exists only to stop runaway API cost.
-const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
-const USAGE_LIMITS = { free: 15, paid: 100 };
+// ── Usage limits ─────────────────────────────────────────────────────────
+// FREE: a daily-bank system, not a flat "reset at midnight" cap. Free users
+// regenerate 5 questions/day, up to a maximum bank of 20 — so a light week
+// lets you build up room for a heavy one (homework is bursty: light weeks,
+// then a midterm week), instead of punishing bursty use the way a flat
+// daily reset would. New signups start with FREE_STARTING_BALANCE (10) so
+// their very first session isn't limited — first impressions matter.
+//
+// PLUS: no meaningful cap. PLUS_LIMIT is a very high safety ceiling that
+// exists ONLY to stop a compromised/scripted account from running up real
+// API cost — no genuine student will ever come close to it (it's one
+// question every ~2 minutes non-stop for 3 hours straight). Marketed and
+// treated everywhere as "Unlimited" since no real user will ever feel it.
+const FREE_DAILY_REGEN      = 5;
+const FREE_MAX_BALANCE      = 20;
+const FREE_STARTING_BALANCE = 10;
+const PLUS_LIMIT            = 500;             // effectively unlimited; abuse-only ceiling
+const PLUS_WINDOW_MS        = 3 * 60 * 60 * 1000; // 3 hours, unchanged
+const oneDayMs = () => 24 * 60 * 60 * 1000;
 
 function planTier(plan) {
   // Explicit allowlist of PAID plan values. Anything else — including free,
@@ -34,33 +44,72 @@ function planTier(plan) {
   return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
 }
 
-// Checks and (if allowed) records one use in a rolling window, using a
-// Firestore transaction so concurrent requests can't double-spend the quota.
-// Stores a capped array of recent-use timestamps per user; old entries
-// outside the window are pruned on every check, so the doc never grows
-// unbounded even under sustained heavy use.
+// Checks and (if allowed) records one use. Paid users still use the old
+// rolling-window log (they never come close to the ceiling, no need to
+// change their mechanism). Free users use the new daily-bank system:
+// balance regenerates by FREE_DAILY_REGEN once per real calendar day since
+// their last regen, capped at FREE_MAX_BALANCE, and each question spends 1.
+// A Firestore transaction keeps concurrent requests from double-spending.
 async function checkAndIncrementUsage(uid, plan) {
-  const limit   = USAGE_LIMITS[planTier(plan)];
+  const tier = planTier(plan);
   const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
   const now = Date.now();
 
+  if (tier === "paid") {
+    try {
+      const result = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(usageRef);
+        const log  = snap.exists ? (snap.data().log || []) : [];
+        const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
+        if (recent.length >= PLUS_LIMIT) {
+          const oldest = Math.min(...recent);
+          return { allowed: false, remaining: 0, limit: PLUS_LIMIT, retryAfterMs: PLUS_WINDOW_MS - (now - oldest) };
+        }
+        recent.push(now);
+        tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
+        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT };
+      });
+      return result;
+    } catch (err) {
+      console.error("Quota check error:", err.message);
+      return { allowed: true };
+    }
+  }
+
+  // FREE — daily-bank system
+  const bankRef = db.collection("users").doc(uid).collection("usage").doc("bank");
   try {
     const result = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(usageRef);
-      const log  = snap.exists ? (snap.data().log || []) : [];
-      const recent = log.filter(ts => now - ts < USAGE_WINDOW_MS);
-
-      if (recent.length >= limit) {
-        const oldest = Math.min(...recent);
-        const retryAfterMs = USAGE_WINDOW_MS - (now - oldest);
-        return { allowed: false, remaining: 0, limit, retryAfterMs };
+      const snap = await tx.get(bankRef);
+      let balance, lastRegenAt;
+      if (!snap.exists) {
+        // First-ever question from a brand-new free account.
+        balance = FREE_STARTING_BALANCE;
+        lastRegenAt = now;
+      } else {
+        const d = snap.data();
+        balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
+        lastRegenAt = d.lastRegenAt || now;
+        // Regenerate once per full day elapsed since the last regen —
+        // e.g. 3 days unused = +15 (capped), not an infinite backlog.
+        const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
+        if (daysElapsed > 0) {
+          balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
+          lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
+        }
       }
 
-      recent.push(now);
-      tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
-      return { allowed: true, remaining: limit - recent.length, limit };
-    });
+      if (balance <= 0) {
+        // Next regen lands 1 day after lastRegenAt.
+        const retryAfterMs = Math.max(0, (lastRegenAt + oneDayMs()) - now);
+        tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
+        return { allowed: false, remaining: 0, limit: FREE_MAX_BALANCE, retryAfterMs, isDailyBank: true };
+      }
 
+      balance -= 1;
+      tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
+      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true };
+    });
     return result;
   } catch (err) {
     console.error("Quota check error:", err.message);
@@ -576,7 +625,7 @@ export default async function handler(req, res) {
   const ipCheck  = checkIpRateLimit(ip, ipLimit);
   if (!ipCheck.allowed) {
     const msg = isGuest
-      ? "You've hit the guest limit. Sign up free for 15 questions every 3 hours — same AI quality, no card needed."
+      ? "You've hit the guest limit. Sign up free for 10 questions to start, then 5 more each day — same AI quality, no card needed."
       : "Too many requests. Please slow down and try again in an hour.";
     return res.status(429).json({ error: msg, limitReached: true });
   }
@@ -624,7 +673,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── Rolling usage enforcement — casual chat is free, everything else counts ──
+  // ── Usage enforcement — casual chat is free, everything else counts ──
   if (uid && !casual) {
     const usage = await checkAndIncrementUsage(uid, plan);
     if (!usage.allowed) {
@@ -632,9 +681,12 @@ export default async function handler(req, res) {
       const waitMsg = minutes >= 60
         ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
         : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
+      const message = usage.isDailyBank
+        ? `You're out of free questions for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`
+        : `You're all caught up for now — more opens back up in ${waitMsg}.`;
       return res.status(429).json({
         error: `Usage limit reached`,
-        message: `You're all caught up for now — more opens back up in ${waitMsg}.`,
+        message,
         limitReached: true,
       });
     }
