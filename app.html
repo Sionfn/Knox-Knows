@@ -2187,10 +2187,27 @@
       }
       const left = Math.max(0, balance);
 
+      // Countdown to the next +5 regen — only shown when it's meaningful,
+      // i.e. the bank isn't already full (a maxed-out bank has nothing
+      // pending, so a countdown there would just be confusing clutter).
+      let nextRegenText = '';
+      if (left < FREE_MAX_BALANCE) {
+        const msUntilRegen = Math.max(0, (lastRegenAt + oneDayMs()) - now);
+        const hrs = Math.ceil(msUntilRegen / 3600000);
+        const waitStr = hrs >= 1 ? `${hrs}h` : `${Math.max(1, Math.ceil(msUntilRegen / 60000))}m`;
+        nextRegenText = ` · +${FREE_DAILY_REGEN} in ${waitStr}`;
+      }
+
       usage.style.display = 'inline-flex';
+      usage.title = left < FREE_MAX_BALANCE
+        ? `You'll get ${FREE_DAILY_REGEN} more questions in ${nextRegenText.replace(' · +' + FREE_DAILY_REGEN + ' in ', '')} — unused questions save up to ${FREE_MAX_BALANCE}.`
+        : `You're at the max saved balance of ${FREE_MAX_BALANCE} questions.`;
+      // Full countdown text inline on desktop; on mobile keep the header
+      // compact and rely on the tooltip (title, set above) for the detail —
+      // there isn't room for "· +5 in 14h" alongside everything else up there.
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
-        : `${left} question${left === 1 ? '' : 's'} left`;
+        : `${left} question${left === 1 ? '' : 's'} left${nextRegenText}`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
@@ -3418,7 +3435,7 @@ function renderLimitCard(data, isSignedIn) {
   } else if (plan && plan !== 'free') {
     // Already on the paid plan — no upsell, just the (very generous) soft cap
     title = "You've reached today's limit";
-    cta   = '<p style="font-size:12px;font-weight:700;color:var(--text-light);margin-top:6px;">Your daily allowance resets at midnight UTC.</p>';
+    cta   = '<p style="font-size:12px;font-weight:700;color:var(--text-light);margin-top:6px;">This is a rare, abuse-prevention limit — it clears again shortly.</p>';
   } else {
     cta   = '<button class="limit-card-btn" onclick="goToPricing()">⚡ Upgrade for more</button>';
   }
