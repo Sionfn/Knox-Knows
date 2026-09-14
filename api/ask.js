@@ -690,22 +690,24 @@ export default async function handler(req, res) {
       modelToUse = TEXT_MODEL_LUNA_TEST;
     }
 
-    // GPT-5.x models (including gpt-5.6-luna) reject the older `max_tokens`
-    // parameter in Chat Completions and require `max_completion_tokens`
-    // instead — sending the wrong one throws a request error, which is what
-    // caused the Luna test to fail with a 500. gpt-4.1 still uses the
-    // original `max_tokens` param so its behavior is completely unchanged.
+    // GPT-5.x models (including gpt-5.6-luna) reject BOTH the older
+    // `max_tokens` parameter (need `max_completion_tokens` instead) AND the
+    // `temperature` parameter entirely (only the model's default of 1 is
+    // allowed — sending any value, even 1, throws "Unsupported parameter").
+    // gpt-4.1's request is completely unchanged; only newer models skip
+    // these two fields.
     const isNewerModel = modelToUse.startsWith("gpt-5");
     const tokenLimit = image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS;
     const requestBody = {
       model:       modelToUse,
       messages,
-      temperature: casual ? 1.0 : 0.7,
     };
     if (isNewerModel) {
       requestBody.max_completion_tokens = tokenLimit;
+      // temperature intentionally omitted — unsupported on GPT-5.x
     } else {
-      requestBody.max_tokens = tokenLimit;
+      requestBody.max_tokens  = tokenLimit;
+      requestBody.temperature = casual ? 1.0 : 0.7;
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
