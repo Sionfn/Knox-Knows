@@ -125,7 +125,7 @@
           {
             "@type": "Question",
             "name": "How do I access Knox?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and you get 15 questions every 3 hours — the same quality as paid. Upgrade to Knox Plus for unlimited." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited." }
           },
           {
             "@type": "Question",
@@ -2129,8 +2129,8 @@
       <!-- Differentiating rows first -->
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">15 / 3 hrs</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited*</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day*</div>
+        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
       </div>
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
@@ -2157,7 +2157,7 @@
 
     </div>
 
-    <p style="text-align:center;font-size:12px;font-weight:600;color:#9CA3AF;margin-top:14px;">*Fair-use limit applies to prevent abuse — real students never hit it.</p>
+    <p style="text-align:center;font-size:12px;font-weight:600;color:#9CA3AF;margin-top:14px;">*Starts at 10, then +5 every day — save up unused questions up to 20.</p>
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
@@ -2252,7 +2252,7 @@
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox lives at <a href="/app">knoxknowsapp.com/app</a>. Sign up free and you get 15 questions every 3 hours — the same quality as paid. Upgrade to Knox Plus for unlimited.
+          Knox lives at <a href="/app">knoxknowsapp.com/app</a>. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited.
         </div>
       </details>
 
@@ -2889,7 +2889,7 @@
         <p style="margin:0 0 22px;font-size:15px;font-weight:600;color:#9CA3AF;line-height:1.5;">Your Knox Knows account is ready to go.</p>
         <div style="background:#FFF7F0;border:1.5px solid #FFE0C2;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
           <p style="margin:0;font-size:14px;font-weight:600;color:#4b5563;line-height:1.6;">
-            You've got <strong style="color:#1f2937;">15 free questions every 3 hours</strong> across every subject. Type a question or snap a photo of your homework — Knox handles both.
+            You've got <strong style="color:#1f2937;">10 free questions to start</strong>, plus 5 more every day (up to 20 saved) across every subject. Type a question or snap a photo of your homework — Knox handles both.
           </p>
         </div>
         <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
@@ -3108,7 +3108,7 @@
       // Render plan card (matches /app's dropdown) instead of plain text
       const cfg = userPlan !== 'free'
                 ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
-                : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '15 questions every 3 hours' };
+                : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
       dPlan.innerHTML = '';
       const card = document.createElement('div');
       card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -3397,7 +3397,7 @@
     const uPlan = window.userPlan || userPlan || 'free';
     const isPaid = uPlan !== 'free';
     const upgradeText  = 'Upgrade to Knox Plus';
-    const upgradeSub   = 'Knox Plus gives you basically unlimited questions — no more waiting on quota.';
+    const upgradeSub   = 'Knox Plus gives you unlimited questions — no more waiting on quota.';
     const upgradeBadge = '⚡ Go unlimited with Knox Plus';
     const m = document.createElement('div');
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -3653,7 +3653,7 @@
     const planColors = { free: '#6B7280', super: '#22C55E', max: '#22C55E' };
     const planEmojis = { free: '🐾', super: '⚡', max: '⚡' };
     const planDescs  = {
-      free:   'You\'re on the free plan — 15 questions every 3 hours, no card needed.',
+      free:   'You\'re on the free plan — 5 questions a day, save up to 20, no card needed.',
       super:  'Basically unlimited questions — study as much as you need to.',
       max:    'Basically unlimited questions — study as much as you need to.',
     };
@@ -3846,7 +3846,7 @@
       counter.innerHTML = `⚡ Knox Plus — study away`;
       counter.style.color = '#4b5563';
     } else if (!window.currentUser) {
-      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 15 questions every 3 hours ✨</span>`;
+      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 10 questions to start ✨</span>`;
       counter.style.color = '#4b5563';
     } else {
       // Free user — usage is now a rolling 3-hour window, not a daily count.
