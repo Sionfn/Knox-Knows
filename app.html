@@ -158,7 +158,13 @@
       color: white;
       font-size: 12px;
       font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: background 0.15s;
     }
+    #headerUsage:hover { background: rgba(255,255,255,0.24); }
     #headerUsage .usage-dot {
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
@@ -954,6 +960,78 @@
     }
     .limit-card-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
 
+    /* USAGE INFO PANEL — opens when the header question-counter is tapped */
+    .usage-info-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(30,20,15,0.45);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .usage-info-overlay.open { display: flex; }
+    .usage-info-card {
+      position: relative;
+      background: white;
+      border-radius: 22px;
+      padding: 28px 26px 24px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      text-align: center;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    .usage-info-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 30px; height: 30px; border-radius: 50%;
+      border: none; background: var(--gray);
+      color: var(--text-light); font-size: 14px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .usage-info-icon { font-size: 40px; margin-bottom: 8px; }
+    .usage-info-card h3 { font-size: 20px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+    .usage-info-next {
+      font-size: 15px; font-weight: 700; color: var(--orange);
+      margin-bottom: 16px;
+    }
+    .usage-info-next strong { color: var(--orange); }
+    .usage-info-card > p { font-size: 14px; font-weight: 600; color: var(--text-light); line-height: 1.55; margin-bottom: 10px; }
+    .usage-info-fine { font-size: 12.5px !important; color: var(--text-light) !important; }
+    .usage-info-divider { height: 1.5px; background: var(--border); margin: 16px 0; }
+    .usage-info-card ul {
+      text-align: left;
+      list-style: none;
+      display: flex; flex-direction: column; gap: 10px;
+      margin: 10px 0 18px;
+    }
+    .usage-info-card ul li {
+      font-size: 13.5px; font-weight: 600; color: var(--text);
+      line-height: 1.5;
+      padding-left: 20px;
+      position: relative;
+    }
+    .usage-info-card ul li::before {
+      content: '🦊';
+      position: absolute; left: 0; top: 0;
+      font-size: 12px;
+    }
+    .usage-info-card ul li strong { color: var(--orange); font-weight: 800; }
+    .usage-info-upgrade {
+      display: block;
+      width: 100%;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      font-size: 14.5px; font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--orange-dark);
+      transition: all 0.15s;
+    }
+    .usage-info-upgrade:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
+
     /* GUEST CTA */
     #guestCta {
       display: none;
@@ -1538,10 +1616,10 @@
         <span id="streakFlame">🔥</span>
         <span id="streakCount">0</span>
       </button>
-      <div id="headerUsage" title="Questions remaining">
+      <button id="headerUsage" onclick="openUsageInfo()" title="Tap to see how questions work">
         <span class="usage-dot"></span>
         <span id="headerUsageText">10 questions left</span>
-      </div>
+      </button>
       <button id="appUpgradeBtn" onclick="goToPricing()">⚡<span id="appUpgradeLabel"> Upgrade</span></button>
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
@@ -2187,9 +2265,11 @@
       }
       const left = Math.max(0, balance);
 
-      // Countdown to the next +5 regen — only shown when it's meaningful,
-      // i.e. the bank isn't already full (a maxed-out bank has nothing
-      // pending, so a countdown there would just be confusing clutter).
+      // Countdown to the next +5 regen, shown inline on desktop when the
+      // bank isn't already full (a maxed-out bank has nothing pending, so a
+      // countdown there would just be clutter). On mobile there's no room
+      // for "· +5 in 14h" in the compact header — tapping the pill opens the
+      // full breakdown instead (see openUsageInfo below).
       let nextRegenText = '';
       if (left < FREE_MAX_BALANCE) {
         const msUntilRegen = Math.max(0, (lastRegenAt + oneDayMs()) - now);
@@ -2198,13 +2278,12 @@
         nextRegenText = ` · +${FREE_DAILY_REGEN} in ${waitStr}`;
       }
 
+      // Stash the raw numbers so openUsageInfo() (triggered on click) can
+      // build a full explanation panel without re-querying Firestore.
+      window._knoxUsageState = { tier: 'free', left, lastRegenAt, now };
+
       usage.style.display = 'inline-flex';
-      usage.title = left < FREE_MAX_BALANCE
-        ? `You'll get ${FREE_DAILY_REGEN} more questions in ${nextRegenText.replace(' · +' + FREE_DAILY_REGEN + ' in ', '')} — unused questions save up to ${FREE_MAX_BALANCE}.`
-        : `You're at the max saved balance of ${FREE_MAX_BALANCE} questions.`;
-      // Full countdown text inline on desktop; on mobile keep the header
-      // compact and rely on the tooltip (title, set above) for the detail —
-      // there isn't room for "· +5 in 14h" alongside everything else up there.
+      usage.title = 'Tap to see how questions work';
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
         : `${left} question${left === 1 ? '' : 's'} left${nextRegenText}`;
@@ -2212,6 +2291,68 @@
     } catch (e) { /* silent */ }
   }
   window.updateUsageIndicator = updateUsageIndicator;
+
+  // ── Usage info panel — opens when the header pill is tapped/clicked.
+  // Explains the whole system in plain language (not just a bare countdown),
+  // since a tooltip was easy to miss, especially on mobile where it doesn't
+  // show at all. Free and Plus each get a version relevant to them.
+  function openUsageInfo() {
+    const tier = planTier(window.userPlan);
+    let html;
+    if (tier === 'paid') {
+      html = `
+        <div class="usage-info-icon">⚡</div>
+        <h3>You're on Knox Plus</h3>
+        <p>Unlimited questions — ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
+        <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
+      `;
+    } else {
+      const st = window._knoxUsageState || {};
+      const left = typeof st.left === 'number' ? st.left : FREE_STARTING_BALANCE;
+      const lastRegenAt = st.lastRegenAt || Date.now();
+      const now = st.now || Date.now();
+      const msUntilRegen = Math.max(0, (lastRegenAt + oneDayMs()) - now);
+      const hrs = Math.floor(msUntilRegen / 3600000);
+      const mins = Math.floor((msUntilRegen % 3600000) / 60000);
+      const waitStr = left >= FREE_MAX_BALANCE
+        ? null
+        : (hrs > 0 ? `${hrs}h ${mins}m` : `${Math.max(1, mins)}m`);
+
+      html = `
+        <div class="usage-info-icon">🦊</div>
+        <h3>${left} question${left === 1 ? '' : 's'} left</h3>
+        ${waitStr ? `<p class="usage-info-next">+${FREE_DAILY_REGEN} more in <strong>${waitStr}</strong></p>` : `<p class="usage-info-next">You're at your max saved balance.</p>`}
+        <div class="usage-info-divider"></div>
+        <p><strong>How this works:</strong></p>
+        <ul>
+          <li>New accounts start with <strong>${FREE_STARTING_BALANCE} questions</strong>.</li>
+          <li>You get <strong>+${FREE_DAILY_REGEN} more every 24 hours</strong> — not at midnight, exactly 24h after your last refill.</li>
+          <li>Unused questions save up, up to <strong>${FREE_MAX_BALANCE} total</strong> — so a light week means more room during a busy one.</li>
+          <li>Casual chit-chat with Knox doesn't use any questions — only real homework help does.</li>
+        </ul>
+        <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Knox Plus</button>
+      `;
+    }
+    let modal = document.getElementById('usageInfoModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'usageInfoModal';
+      modal.className = 'usage-info-overlay';
+      modal.onclick = (e) => { if (e.target === modal) closeUsageInfo(); };
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `<div class="usage-info-card">
+      <button class="usage-info-close" onclick="closeUsageInfo()" aria-label="Close">✕</button>
+      ${html}
+    </div>`;
+    modal.classList.add('open');
+  }
+  window.openUsageInfo = openUsageInfo;
+  function closeUsageInfo() {
+    const modal = document.getElementById('usageInfoModal');
+    if (modal) modal.classList.remove('open');
+  }
+  window.closeUsageInfo = closeUsageInfo;
 
   // ── Sidebar collapse toggle — remembers state across visits ────────────────
   function toggleAppSidebar() {
