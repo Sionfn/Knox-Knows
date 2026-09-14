@@ -484,6 +484,11 @@ You're Knox. Real, warm, quick. You see people, you actually like them, and you 
 const MAX_INPUT_CHARS  = 800;   // question chars accepted before truncation
 const MAX_OUTPUT_TOKENS = 1600;
 const TEXT_MODEL = "gpt-4.1";   // same model for free and paid
+// Testing-only: GPT-5.6 Luna, OpenAI's newer cost-efficient model, priced
+// far below gpt-4.1 ($0.20/$1.20 vs $2/$8 per million tokens) after its
+// July 2026 price cut. Being evaluated as a possible replacement for
+// TEXT_MODEL — see the ADMIN_EMAIL-gated toggle below.
+const TEXT_MODEL_LUNA_TEST = "gpt-5.6-luna";
 
 // ── IP Rate Limiting ───────────────────────────────────────────────────────
 // In-memory store — resets on cold start. Stops casual abuse without Redis.
@@ -576,7 +581,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType, learnMode } = req.body;
+  const { question, history = [], image, imageType, learnMode, testModel } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -674,6 +679,15 @@ export default async function handler(req, res) {
       modelToUse = "gpt-4.1-mini";
     } else {
       modelToUse = TEXT_MODEL;
+    }
+
+    // TESTING ONLY: lets the admin account compare GPT-5.6 Luna against the
+    // live model by passing { testModel: "luna" } in the request body. Gated
+    // to ADMIN_EMAIL so no one else can flip this — real users always get
+    // TEXT_MODEL regardless of what they send. Never applies to image
+    // questions (kept on gpt-4.1's vision support) or casual chat.
+    if (testModel === "luna" && email && process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL && !image && !casual) {
+      modelToUse = TEXT_MODEL_LUNA_TEST;
     }
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
