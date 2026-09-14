@@ -3324,7 +3324,13 @@ window.appHandleAsk = async function() {
         replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
       } else {
         const errMsg = data.error || 'Something went wrong. Try again.';
-        replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>');
+        // Luna test path includes a `debug` field with the real OpenAI
+        // error text — show it inline so there's no need to dig through
+        // Network tab / Vercel logs to see what actually went wrong.
+        const debugLine = data.debug
+          ? '<div style="margin-top:8px;font-size:12px;font-weight:600;color:#999;word-break:break-all;">DEBUG: ' + escHtml(data.debug) + '</div>'
+          : '';
+        replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>' + debugLine);
       }
       return;
     }
