@@ -690,20 +690,39 @@ export default async function handler(req, res) {
       modelToUse = TEXT_MODEL_LUNA_TEST;
     }
 
+    // GPT-5.x models (including gpt-5.6-luna) reject the older `max_tokens`
+    // parameter in Chat Completions and require `max_completion_tokens`
+    // instead — sending the wrong one throws a request error, which is what
+    // caused the Luna test to fail with a 500. gpt-4.1 still uses the
+    // original `max_tokens` param so its behavior is completely unchanged.
+    const isNewerModel = modelToUse.startsWith("gpt-5");
+    const tokenLimit = image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS;
+    const requestBody = {
+      model:       modelToUse,
+      messages,
+      temperature: casual ? 1.0 : 0.7,
+    };
+    if (isNewerModel) {
+      requestBody.max_completion_tokens = tokenLimit;
+    } else {
+      requestBody.max_tokens = tokenLimit;
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model:       modelToUse,
-        messages,
-        max_tokens:  image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS,
-        temperature: casual ? 1.0 : 0.7,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("OpenAI error:", err);
+      console.error("OpenAI error [" + modelToUse + "]:", err);
+      // In the Luna test path only, surface the real OpenAI error message
+      // back to the admin caller so we're not stuck guessing from logs —
+      // real users never see this detail, only whoever passed testModel.
+      if (testModel === "luna") {
+        return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again.", debug: err });
+      }
       return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
     }
 
