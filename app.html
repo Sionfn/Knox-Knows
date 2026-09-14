@@ -1540,7 +1540,7 @@
       </button>
       <div id="headerUsage" title="Questions remaining">
         <span class="usage-dot"></span>
-        <span id="headerUsageText">15 questions left</span>
+        <span id="headerUsageText">10 questions left</span>
       </div>
       <button id="appUpgradeBtn" onclick="goToPricing()">⚡<span id="appUpgradeLabel"> Upgrade</span></button>
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
@@ -2079,7 +2079,7 @@
         // Build a card-style plan display (icon + name + tagline)
         const cfg = plan !== 'free'
           ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
-          : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '15 questions every 3 hours' };
+          : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -2125,13 +2125,17 @@
   window.updatePlanUI = updatePlanUI;
 
   // ── Usage indicator in header ──────────────────────────────
-  // Shows X/N questions remaining today for the CURRENT mode.
-  // ⚠️ These numbers MUST match PLAN_QUOTAS in api/ask.js — if you
-  // Usage limits — must match USAGE_LIMITS in api/ask.js. Rolling window,
-  // not a flat daily count: usage regenerates over time rather than
-  // resetting once at midnight, closer to how Claude's own free tier works.
-  const USAGE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
-  const USAGE_LIMITS = { free: 15, paid: 100 };
+  // Shows how many questions are left for the CURRENT mode.
+  // ⚠️ These numbers MUST match api/ask.js exactly, or the displayed count
+  // will disagree with what actually happens when the student asks.
+  // Free users run on a daily bank (regenerates FREE_DAILY_REGEN/day, caps
+  // at FREE_MAX_BALANCE, starts new signups at FREE_STARTING_BALANCE) rather
+  // than a flat reset — homework is bursty (light weeks, then midterms), so
+  // unused days build up room for a heavy one instead of resetting to zero.
+  const FREE_DAILY_REGEN      = 5;
+  const FREE_MAX_BALANCE      = 20;
+  const FREE_STARTING_BALANCE = 10;
+  const oneDayMs = () => 24 * 60 * 60 * 1000;
 
   function planTier(plan) {
     // Match the server's paid allowlist so the app never shows Plus perks to
@@ -2155,10 +2159,9 @@
     const tier = planTier(window.userPlan);
     const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
 
-    // Paid users see "⚡ Knox Plus" instead of a countdown. The 100/3hr cap
-    // is a private soft cap to stop abuse, not something we advertise —
-    // showing "87 left" would contradict the "basically unlimited" promise
-    // on the homepage. Only surface a countdown for Free users.
+    // Paid users see "⚡ Knox Plus" instead of a countdown — Plus is
+    // marketed and treated as unlimited (the real ceiling is a very high,
+    // abuse-only safety net no genuine user will ever reach).
     if (tier === 'paid') {
       usage.style.display = 'inline-flex';
       usage.classList.remove('danger');
@@ -2168,17 +2171,25 @@
     }
     usage.classList.remove('unlimited');
 
-    const lim = USAGE_LIMITS.free;
     try {
-      const snap = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', 'rolling'));
-      const log  = snap.exists() ? (snap.data().log || []) : [];
-      const now  = Date.now();
-      const used = log.filter(ts => now - ts < USAGE_WINDOW_MS).length;
-      const left = Math.max(0, lim - used);
+      const snap = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', 'bank'));
+      const now = Date.now();
+      let balance, lastRegenAt;
+      if (!snap.exists()) {
+        balance = FREE_STARTING_BALANCE;
+        lastRegenAt = now;
+      } else {
+        const d = snap.data();
+        balance = typeof d.balance === 'number' ? d.balance : FREE_STARTING_BALANCE;
+        lastRegenAt = d.lastRegenAt || now;
+        const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
+        if (daysElapsed > 0) balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
+      }
+      const left = Math.max(0, balance);
 
       usage.style.display = 'inline-flex';
       text.textContent = isCompact
-        ? `${left}/${lim} left`
+        ? `${left}/${FREE_MAX_BALANCE} left`
         : `${left} question${left === 1 ? '' : 's'} left`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
@@ -2854,7 +2865,7 @@
         '</div>' +
         '<div class="auth-body">' +
           '<div style="background:var(--cream-warm);border:2px solid var(--orange-light);border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 var(--orange-light);">' +
-            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">15 free questions every 3 hours</strong> across every subject. Type a question or snap a photo of your homework.</p>' +
+            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">You\u2019ve got <strong style="color:var(--orange);">10 free questions to start</strong>, plus 5 more every day (up to 20 saved) across every subject. Type a question or snap a photo of your homework.</p>' +
           '</div>' +
           '<button id="welcomeStartBtn" class="auth-submit">Ask Knox your first question</button>' +
           '<button id="welcomeCloseBtn" style="width:100%;padding:11px;border-radius:12px;border:none;background:transparent;color:var(--text-light);font-size:13px;font-weight:800;font-family:inherit;">Maybe later</button>' +
