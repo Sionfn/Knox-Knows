@@ -971,12 +971,13 @@
     .usage-info-overlay.open { display: flex; }
     .usage-info-card {
       position: relative;
-      background: white;
+      background: linear-gradient(180deg, var(--orange-cream) 0%, white 45%);
+      border: 2px solid var(--orange-light);
       border-radius: 22px;
       padding: 28px 26px 24px;
       max-width: 380px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 0 var(--orange-light), 0 20px 60px rgba(0,0,0,0.2);
       text-align: center;
       max-height: 85vh;
       overflow-y: auto;
@@ -1027,26 +1028,6 @@
     }
     .usage-info-card ul li { padding-left: 22px; }
     .usage-info-card ul li strong { color: var(--orange); font-weight: 800; }
-    .usage-info-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--cream);
-      border: 2px solid #FFD0A8;
-      border-radius: 999px;
-      padding: 5px 14px;
-      font-size: 12px; font-weight: 800;
-      color: var(--orange);
-      letter-spacing: 0.02em;
-      box-shadow: 0 2px 0 #FFD0A8;
-      margin-bottom: 12px;
-    }
-    .usage-info-tagline {
-      font-size: 11.5px !important;
-      font-weight: 800 !important;
-      color: var(--orange) !important;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin: 14px 0 0 !important;
-    }
     .usage-info-upgrade {
       display: block;
       width: 100%;
@@ -2281,23 +2262,24 @@
     usage.classList.remove('unlimited');
 
     try {
-      const snap = await getDoc(doc(db, 'users', window.currentUser.uid, 'usage', 'bank'));
+      // Read from /api/me instead of Firestore directly — it now creates
+      // and PERSISTS the bank record (with a real, server-set timestamp) the
+      // very first time it's checked, using the server's write access. The
+      // old direct-Firestore read here just invented a fresh "starts now"
+      // countdown on every page load when no record existed yet, and never
+      // saved it — which is exactly why the timer looked like it reset to
+      // 24h every time you came back. Reading through the server fixes that
+      // at the source, and also keeps the client from ever being able to
+      // write its own balance (which a direct client-side write would risk).
+      const token = await window.currentUser.getIdToken();
+      const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      const data = await res.json();
+      const u = data.usage || {};
+      const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
-      let balance, lastRegenAt;
-      if (!snap.exists()) {
-        balance = FREE_STARTING_BALANCE;
-        lastRegenAt = now;
-      } else {
-        const d = snap.data();
-        balance = typeof d.balance === 'number' ? d.balance : FREE_STARTING_BALANCE;
-        lastRegenAt = d.lastRegenAt || now;
-        const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
-        if (daysElapsed > 0) balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
-      }
+      const lastRegenAt = now - ((oneDayMs()) - (u.resetInMs || 0)); // derive the real anchor from resetInMs
       // Stash the raw numbers so openUsageInfo() (triggered on click) can
-      // build a full, live-ticking explanation panel without re-querying
-      // Firestore.
-      const left = Math.max(0, balance);
+      // build a full, live-ticking explanation panel without another call.
       window._knoxUsageState = { tier: 'free', left, lastRegenAt, now };
 
       usage.style.display = 'inline-flex';
@@ -2328,11 +2310,9 @@
     if (tier === 'paid') {
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <div class="usage-info-badge">⚡ Knox Plus</div>
         <h3>Unlimited, for real</h3>
         <p>Ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
-        <p class="usage-info-tagline">🦊 Stop guessing. Start knowing.</p>
       `;
     } else {
       const st = window._knoxUsageState || {};
@@ -2342,7 +2322,6 @@
 
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <div class="usage-info-badge">🦊 Hey, I'm Knox</div>
         <h3>${left} question${left === 1 ? '' : 's'} left</h3>
         <p class="usage-info-next">${atMax
           ? `You're at your max saved balance.`
