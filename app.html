@@ -988,7 +988,15 @@
       color: var(--text-light); font-size: 14px; font-weight: 800;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
     }
-    .usage-info-icon { font-size: 40px; margin-bottom: 8px; }
+    .usage-info-icon {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 10px;
+      display: block;
+      border: 3px solid var(--orange-light);
+      box-shadow: 0 4px 12px rgba(255,107,0,0.15);
+    }
     .usage-info-card h3 { font-size: 20px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .usage-info-next {
       font-size: 15px; font-weight: 700; color: var(--orange);
@@ -2263,30 +2271,20 @@
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
       }
-      const left = Math.max(0, balance);
-
-      // Countdown to the next +5 regen, shown inline on desktop when the
-      // bank isn't already full (a maxed-out bank has nothing pending, so a
-      // countdown there would just be clutter). On mobile there's no room
-      // for "· +5 in 14h" in the compact header — tapping the pill opens the
-      // full breakdown instead (see openUsageInfo below).
-      let nextRegenText = '';
-      if (left < FREE_MAX_BALANCE) {
-        const msUntilRegen = Math.max(0, (lastRegenAt + oneDayMs()) - now);
-        const hrs = Math.ceil(msUntilRegen / 3600000);
-        const waitStr = hrs >= 1 ? `${hrs}h` : `${Math.max(1, Math.ceil(msUntilRegen / 60000))}m`;
-        nextRegenText = ` · +${FREE_DAILY_REGEN} in ${waitStr}`;
-      }
-
       // Stash the raw numbers so openUsageInfo() (triggered on click) can
-      // build a full explanation panel without re-querying Firestore.
+      // build a full, live-ticking explanation panel without re-querying
+      // Firestore.
+      const left = Math.max(0, balance);
       window._knoxUsageState = { tier: 'free', left, lastRegenAt, now };
 
       usage.style.display = 'inline-flex';
       usage.title = 'Tap to see how questions work';
+      // Header stays a plain, clean count — the countdown and full
+      // explanation live inside the click-to-open panel instead, not
+      // crammed into the small header pill.
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
-        : `${left} question${left === 1 ? '' : 's'} left${nextRegenText}`;
+        : `${left} question${left === 1 ? '' : 's'} left`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
@@ -2296,12 +2294,17 @@
   // Explains the whole system in plain language (not just a bare countdown),
   // since a tooltip was easy to miss, especially on mobile where it doesn't
   // show at all. Free and Plus each get a version relevant to them.
+  // Interval handle for the live countdown inside the usage panel — tracked
+  // globally so closeUsageInfo() can always stop it, even if the panel gets
+  // closed and reopened multiple times without leaking timers.
+  let _usageCountdownInterval = null;
+
   function openUsageInfo() {
     const tier = planTier(window.userPlan);
     let html;
     if (tier === 'paid') {
       html = `
-        <div class="usage-info-icon">⚡</div>
+        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
         <h3>You're on Knox Plus</h3>
         <p>Unlimited questions — ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
@@ -2309,19 +2312,15 @@
     } else {
       const st = window._knoxUsageState || {};
       const left = typeof st.left === 'number' ? st.left : FREE_STARTING_BALANCE;
-      const lastRegenAt = st.lastRegenAt || Date.now();
-      const now = st.now || Date.now();
-      const msUntilRegen = Math.max(0, (lastRegenAt + oneDayMs()) - now);
-      const hrs = Math.floor(msUntilRegen / 3600000);
-      const mins = Math.floor((msUntilRegen % 3600000) / 60000);
-      const waitStr = left >= FREE_MAX_BALANCE
-        ? null
-        : (hrs > 0 ? `${hrs}h ${mins}m` : `${Math.max(1, mins)}m`);
+      const nextRegenAt = (st.lastRegenAt || Date.now()) + oneDayMs();
+      const atMax = left >= FREE_MAX_BALANCE;
 
       html = `
-        <div class="usage-info-icon">🦊</div>
+        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
         <h3>${left} question${left === 1 ? '' : 's'} left</h3>
-        ${waitStr ? `<p class="usage-info-next">+${FREE_DAILY_REGEN} more in <strong>${waitStr}</strong></p>` : `<p class="usage-info-next">You're at your max saved balance.</p>`}
+        <p class="usage-info-next">${atMax
+          ? `You're at your max saved balance.`
+          : `+${FREE_DAILY_REGEN} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
         <div class="usage-info-divider"></div>
         <p><strong>How this works:</strong></p>
         <ul>
@@ -2346,11 +2345,40 @@
       ${html}
     </div>`;
     modal.classList.add('open');
+
+    // Live-ticking countdown — recomputed from the real target time every
+    // second, so it genuinely counts down (hh:mm:ss) instead of showing a
+    // static snapshot that's only accurate the instant the panel opened.
+    if (_usageCountdownInterval) clearInterval(_usageCountdownInterval);
+    if (tier !== 'paid') {
+      const st = window._knoxUsageState || {};
+      const left = typeof st.left === 'number' ? st.left : FREE_STARTING_BALANCE;
+      const nextRegenAt = (st.lastRegenAt || Date.now()) + oneDayMs();
+      if (left < FREE_MAX_BALANCE) {
+        const tick = () => {
+          const clockEl = document.getElementById('usageCountdownClock');
+          if (!clockEl) { clearInterval(_usageCountdownInterval); return; } // panel closed
+          const msLeft = Math.max(0, nextRegenAt - Date.now());
+          const h = Math.floor(msLeft / 3600000);
+          const m = Math.floor((msLeft % 3600000) / 60000);
+          const s = Math.floor((msLeft % 60000) / 1000);
+          clockEl.textContent = `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+          if (msLeft <= 0) {
+            clockEl.textContent = 'now';
+            clearInterval(_usageCountdownInterval);
+            updateUsageIndicator(); // balance just regenerated — refresh the header
+          }
+        };
+        tick();
+        _usageCountdownInterval = setInterval(tick, 1000);
+      }
+    }
   }
   window.openUsageInfo = openUsageInfo;
   function closeUsageInfo() {
     const modal = document.getElementById('usageInfoModal');
     if (modal) modal.classList.remove('open');
+    if (_usageCountdownInterval) { clearInterval(_usageCountdownInterval); _usageCountdownInterval = null; }
   }
   window.closeUsageInfo = closeUsageInfo;
 
