@@ -2414,6 +2414,16 @@
   onAuthStateChanged(auth, async (user) => {
     window.currentUser = user || null;
     if (user) {
+      // The guest limit banner ("You've used your free question! Sign up
+      // free...") has its own fixed div (#guestCta) that used to only get
+      // hidden on appStartNewChat/openLearnMode. If a guest hit the limit
+      // and signed in right from that screen without starting a new chat,
+      // the banner stayed on screen even though they were now logged in
+      // and the guest limit no longer applied to them. Hide it here so any
+      // successful sign-in clears it immediately, regardless of how the
+      // user got signed in.
+      const gc = document.getElementById('guestCta'); if (gc) gc.style.display = 'none';
+
       await fetchPlan(user.uid);
       loadSidebarHistory();
       // Track activity for the admin dashboard's DAU/WAU.
