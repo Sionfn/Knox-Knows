@@ -737,11 +737,19 @@ export default async function handler(req, res) {
       modelToUse = TEXT_MODEL;
     }
 
-    // TESTING ONLY: admin-gated override, kept so you can still A/B a
-    // different model against the live one via { testModel: "luna" }. With
-    // TEXT_MODEL already Luna this is now mostly a no-op for text, but it's
-    // harmless to leave and useful if you later test another model.
-    if (testModel === "luna" && email && process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL && !image && !casual) {
+    // TESTING ONLY: admin-gated overrides, kept so you can A/B a different
+    // model against the live one.
+    //   testModel: "luna"      → force Luna for a TEXT question
+    //   testModel: "lunaphoto" → force Luna for a PHOTO/image question,
+    //                            so you can verify its vision before
+    //                            switching IMAGE_MODEL over for everyone.
+    // Both are locked to ADMIN_EMAIL — real users are never affected no
+    // matter what they send.
+    const isAdmin = email && process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL;
+    if (testModel === "luna" && isAdmin && !image && !casual) {
+      modelToUse = TEXT_MODEL_LUNA_TEST;
+    }
+    if (testModel === "lunaphoto" && isAdmin && image) {
       modelToUse = TEXT_MODEL_LUNA_TEST;
     }
 
@@ -774,10 +782,10 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const err = await response.text();
       console.error("OpenAI error [" + modelToUse + "]:", err);
-      // In the Luna test path only, surface the real OpenAI error message
+      // In a Luna test path only, surface the real OpenAI error message
       // back to the admin caller so we're not stuck guessing from logs —
       // real users never see this detail, only whoever passed testModel.
-      if (testModel === "luna") {
+      if (testModel === "luna" || testModel === "lunaphoto") {
         return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again.", debug: err });
       }
       return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
