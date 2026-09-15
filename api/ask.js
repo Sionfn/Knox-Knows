@@ -315,7 +315,13 @@ const KNOX_PROMPT = `You are Knox, an AI tutor. Answer like a brilliant, patient
 - Bold matters more in a list than in prose. In a numbered/bulleted list of steps or stages, bold the key term or name in EVERY item, consistently — if you bold "Light Absorption" for step 1, bold "Splitting Water" for step 2, not just the first item and then plain text after. In a plain paragraph answer (no list), bold only the one or two things that actually matter — a key number, term, or result — not everything.
 - Never open with "Great question!" or any throat-clearing. Get straight to it.
 - The shortest answer that's genuinely complete wins. Don't pad to look thorough — every sentence should earn its place.
-- Never use LaTeX. Write math in plain text using these characters: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °
+- Never use LaTeX — no backslash commands (\frac, \int, \lim, \sum, \sqrt, \left, \right, \displaystyle, \boxed, etc.) and no \( \) or $ $ delimiters, even for calculus or anything with fractions, integrals, limits, or sums. Write ALL math in plain text instead:
+    • Fractions: (numerator)/(denominator) — e.g. (x+1)/2, not \frac{x+1}{2}
+    • Limits: "the limit as x→0 of f(x)", or "lim(x→0) f(x)"
+    • Integrals: "the integral from 0 to x of sin(t²) dt", or "∫ from 0 to x of sin(t²) dt"
+    • Sums: "the sum from n=1 to ∞ of 1/n²", or "Σ from n=1 to ∞ of 1/n²"
+    • Everything else: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °, →
+  To highlight a final boxed answer, just bold it — **1/3** — never \boxed{}.
 - Numbers in your final answer should be exact when possible (fractions, not decimals, unless the question asks for decimal).
 
 # How to adapt to the student
@@ -407,7 +413,7 @@ const LEARN_PROMPT = `You are Knox, in dedicated Learn mode. The student opened 
 - If they get something right, briefly push for the "why" before moving on — understanding beats a lucky guess.
 - If they're genuinely stuck after real effort and explicitly ask you to "just tell me" or "give me the answer," give it cleanly rather than stonewalling — a tutor who never relents isn't helping, they're stalling. But that's their call to make, not your default.
 - Never use labeled sections like "Final Answer:", "Hint:", "Step 1:" — talk like an actual patient tutor sitting next to them, not a form.
-- Never use LaTeX. Write math in plain text using these characters: ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °
+- Never use LaTeX — no backslash commands (\frac, \int, \lim, \sum, \sqrt, \left, \right, \displaystyle, \boxed, etc.) and no \( \) or $ $ delimiters, even for calculus or anything with fractions, integrals, limits, or sums. Write ALL math in plain text instead: fractions as (numerator)/(denominator), limits as "lim(x→0) f(x)", integrals as "∫ from 0 to x of f(t) dt" or spelled out, sums as "Σ from n=1 to ∞ of ...", and everything else with ×, ÷, ², ³, √, π, ≈, ≠, ≤, ≥, °, →.
 - Bold the key term when you name one — a rule, a concept, a stage. If you're walking through multiple steps or stages across several messages, bold each one's name consistently, the same way you'd bold it in a written explanation — it's still how a student's eye finds the important word.
 
 # Adapt to the student
@@ -783,6 +789,43 @@ function convertBoxed(str) {
   return result;
 }
 
+// Purely-decorative sizing/style commands that carry no meaning of their
+// own in plain text — deleted outright rather than added to the "strip
+// the backslash, keep the word" catch-all, which is what used to turn
+// \left( \right) into the literal leftover words "left(" and "right)",
+// and \displaystyle into a stray "displaystyle" sitting in the sentence.
+// This is a general safety net rather than a list of every command
+// Knox might ever slip into — new individual commands will keep showing
+// up no matter how long this list gets, so anything genuinely unknown
+// still falls through to the generic backslash-strip below rather than
+// breaking. \left and \right specifically are handled with their own
+// regex first since the delimiter that follows them (a bracket, or a
+// bare "." for an invisible one) needs to survive; the rest have no
+// argument at all.
+function stripDecorativeCommands(str) {
+  let s = str;
+  s = s.replace(/\\left\s*\./g, '').replace(/\\right\s*\./g, ''); // invisible delimiter
+  s = s.replace(/\\left/g, '').replace(/\\right/g, '');            // keep the bracket that follows
+  s = s.replace(/\\(displaystyle|textstyle|scriptstyle|scriptscriptstyle|limits|nolimits|bigl|bigr|Bigl|Bigr|biggl|biggr|Biggl|Biggr|big|Big|bigg|Bigg)\b\s?/g, '');
+  return s;
+}
+
+// \text{X}, \mathrm{X}, \mathbf{X}, \mathit{X}, \operatorname{X} → X.
+// These just mean "set this in a particular font" — the content itself
+// is what matters, so inline it directly with no wrapper at all.
+function convertTextWrappers(str) {
+  let result = str;
+  for (const cmd of ['\\text', '\\mathrm', '\\mathbf', '\\mathit', '\\operatorname']) {
+    let idx;
+    while ((idx = result.indexOf(cmd + '{')) !== -1) {
+      const arg = readArg(result, idx + cmd.length);
+      if (!arg) break;
+      result = result.slice(0, idx) + arg.text + result.slice(arg.end);
+    }
+  }
+  return result;
+}
+
 const SUPERSCRIPT_MAP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','n':'ⁿ' };
 const SUBSCRIPT_MAP   = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋' };
 
@@ -825,6 +868,8 @@ const LATEX_SYMBOLS = {
 function cleanLatexAnswer(text) {
   let s = text;
   s = s.replace(/\\\(|\\\)|\\\[|\\\]|\$\$?/g, ''); // strip math-mode delimiters
+  s = stripDecorativeCommands(s);
+  s = convertTextWrappers(s);
   s = convertFrac(s);
   s = convertSqrt(s);
   s = convertLim(s);
