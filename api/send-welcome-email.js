@@ -116,7 +116,7 @@ export default async function handler(req, res) {
 
 Thanks for signing up for Knox Knows — your account is ready to use.
 
-Ask Knox any homework question at https://knoxknowsapp.com. You get 15 questions every 3 hours free, every subject, and you can snap a photo of your homework instead of typing it.
+Ask Knox any homework question at https://knoxknowsapp.com. You get 10 free questions to start, then 5 more each day (save up to 20), every subject, and you can snap a photo of your homework instead of typing it.
 
 I built Knox Knows because I wanted a tutor that actually explains the why, not one that just spits out answers. If Knox ever gets something wrong, hit the thumbs-down on the answer — I read those personally.
 
@@ -130,7 +130,7 @@ Knox Knows`;
     <p style="margin:0 0 14px;">Thanks for signing up for <strong style="color:#FF6B00;">Knox Knows</strong> — your account is ready to use.</p>
     <p style="margin:0 0 14px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:800;text-decoration:none;">knoxknowsapp.com</a>. Here's what you get:</p>
     <ul style="margin:0 0 14px;padding-left:20px;">
-      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">15 questions every 3 hours</strong>, free</li>
+      <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">10 free questions to start</strong>, then +5 daily</li>
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Every subject</strong> — math, science, history, english</li>
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Snap a photo</strong> of your homework instead of typing it</li>
     </ul>
