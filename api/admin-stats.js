@@ -297,12 +297,24 @@ async function getRevenueStats() {
   let pastDueCount = 0;
   const byPlan = { super_monthly: 0, super_yearly: 0, max_monthly: 0, max_yearly: 0 };
 
-  // Stripe price IDs → labels (matches create-checkout-session.js / webhook.js)
+  // Stripe price IDs → labels (matches webhook.js's PRICE_TO_PLAN — every
+  // price ID that's ever been live needs an entry here too, or grandfathered
+  // subscribers on older prices silently vanish from this breakdown even
+  // though they still count toward mrr/activeSubscriptions above).
   const PRICE_LABELS = {
+    // OLDEST prices (early 2026 — grandfathered)
     "price_1TTqUyCqlxC7aoKR0C9AM3sX": "super_monthly",
     "price_1TTqW6CqlxC7aoKR8nzCDAF3": "super_yearly",
     "price_1TTqWZCqlxC7aoKRESZls3vU": "max_monthly",
     "price_1TTqXnCqlxC7aoKRsOSwHFBy": "max_yearly",
+    // MID prices (mid-2026 — grandfathered)
+    "price_1Tb16gCqlxC7aoKRxPv4z4BP": "super_monthly",
+    "price_1Tb17FCqlxC7aoKRIE0BZaWg": "super_yearly",
+    "price_1Tb17fCqlxC7aoKRgQ3uxxlK": "max_monthly",
+    "price_1Tb17zCqlxC7aoKRNOYaO73B": "max_yearly",
+    // CURRENT prices (Sept 2026 reset — one plan: Knox Plus)
+    "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super_monthly",
+    "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super_yearly",
   };
 
   let startingAfter = undefined;
