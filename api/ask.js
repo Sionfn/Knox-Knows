@@ -532,7 +532,9 @@ You're Knox. Real, warm, quick. You see people, you actually like them, and you 
 // varies by plan, only rolling usage volume does (see USAGE_LIMITS above).
 const MAX_INPUT_CHARS  = 800;   // question chars accepted before truncation
 const MAX_OUTPUT_TOKENS = 1600;
-const TEXT_MODEL = "gpt-4.1";   // same model for free and paid
+const TEXT_MODEL   = "gpt-5.6-luna";   // main homework model — same quality for free and paid
+const CASUAL_MODEL = "gpt-5.6-luna";   // casual chit-chat (was gpt-4.1-mini; Luna is cheaper AND newer)
+const IMAGE_MODEL  = "gpt-4.1";        // photo questions stay on gpt-4.1 until Luna's vision is verified
 // Testing-only: GPT-5.6 Luna, OpenAI's newer cost-efficient model, priced
 // far below gpt-4.1 ($0.20/$1.20 vs $2/$8 per million tokens) after its
 // July 2026 price cut. Being evaluated as a possible replacement for
@@ -721,23 +723,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Model selection — same quality for free and paid now. Casual small talk
-    // still uses gpt-4.1-mini since it's cheap and doesn't need real reasoning;
-    // this is a cost detail invisible to the student, not a quality tier.
+    // Model selection. Text + casual now run on GPT-5.6 Luna (newer and
+    // cheaper than the old gpt-4.1 / gpt-4.1-mini). Photo questions stay on
+    // gpt-4.1 for now — Luna's image/vision handling hasn't been verified,
+    // so we don't risk silently degrading photo homework help. Switch
+    // IMAGE_MODEL to Luna once vision is tested.
     let modelToUse;
     if (image) {
-      modelToUse = "gpt-4.1";
+      modelToUse = IMAGE_MODEL;
     } else if (casual) {
-      modelToUse = "gpt-4.1-mini";
+      modelToUse = CASUAL_MODEL;
     } else {
       modelToUse = TEXT_MODEL;
     }
 
-    // TESTING ONLY: lets the admin account compare GPT-5.6 Luna against the
-    // live model by passing { testModel: "luna" } in the request body. Gated
-    // to ADMIN_EMAIL so no one else can flip this — real users always get
-    // TEXT_MODEL regardless of what they send. Never applies to image
-    // questions (kept on gpt-4.1's vision support) or casual chat.
+    // TESTING ONLY: admin-gated override, kept so you can still A/B a
+    // different model against the live one via { testModel: "luna" }. With
+    // TEXT_MODEL already Luna this is now mostly a no-op for text, but it's
+    // harmless to leave and useful if you later test another model.
     if (testModel === "luna" && email && process.env.ADMIN_EMAIL && email === process.env.ADMIN_EMAIL && !image && !casual) {
       modelToUse = TEXT_MODEL_LUNA_TEST;
     }
@@ -745,9 +748,9 @@ export default async function handler(req, res) {
     // GPT-5.x models (including gpt-5.6-luna) reject BOTH the older
     // `max_tokens` parameter (need `max_completion_tokens` instead) AND the
     // `temperature` parameter entirely (only the model's default of 1 is
-    // allowed — sending any value, even 1, throws "Unsupported parameter").
-    // gpt-4.1's request is completely unchanged; only newer models skip
-    // these two fields.
+    // allowed — sending any value throws "Unsupported parameter"). gpt-4.1
+    // (still used for images) keeps its original params; any gpt-5.x model
+    // skips these two fields automatically via the isNewerModel check below.
     const isNewerModel = modelToUse.startsWith("gpt-5");
     const tokenLimit = image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS;
     const requestBody = {
