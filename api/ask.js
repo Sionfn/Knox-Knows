@@ -1,7 +1,8 @@
-// Knox Knows ask.js — v3.0
+// Knox Knows ask.js — v3.1
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import crypto from "crypto";
 
 if (!getApps().length) {
   initializeApp({
@@ -530,7 +531,9 @@ You're Knox. Real, warm, quick. You see people, you actually like them, and you 
 
 // Same input/output sizing and model for every plan — quality no longer
 // varies by plan, only rolling usage volume does (see USAGE_LIMITS above).
-const MAX_INPUT_CHARS  = 800;   // question chars accepted before truncation
+// (The hard input-length guard is the 8000-char check earlier in the
+// handler; there's no separate truncation constant anymore — see the note
+// where trimmedQuestion is built.)
 const MAX_OUTPUT_TOKENS = 1600;
 const TEXT_MODEL   = "gpt-5.6-luna";   // main homework model — same quality for free and paid
 const CASUAL_MODEL = "gpt-5.6-luna";   // casual chit-chat (was gpt-4.1-mini; Luna is cheaper AND newer)
@@ -542,9 +545,19 @@ const IMAGE_MODEL  = "gpt-5.6-luna";   // photo questions — verified against g
 const TEXT_MODEL_LUNA_TEST = "gpt-5.6-luna";
 
 // ── IP Rate Limiting ───────────────────────────────────────────────────────
-// In-memory store — resets on cold start. Stops casual abuse without Redis.
-const IP_RATE_LIMIT    = 60;  // max requests per IP per hour (all users)
-const GUEST_HARD_LIMIT = 3;   // max requests per IP per hour for guests
+// In-memory store — resets on cold start, and isn't shared across concurrent
+// serverless instances. It's a fine cheap first line of defense for LOGGED-IN
+// users (who are also enforced by the real per-uid Firestore quota below,
+// so this is just a courtesy speed-bump for them). It is NOT sufficient on
+// its own for guests, since guests have no uid to hang a quota on — a script
+// that triggers a few cold starts, or just runs from a couple of IPs, could
+// otherwise get effectively free, uncapped access to a paid vision model.
+// So guests get a second, PERSISTENT check (checkGuestUsage below) backed by
+// Firestore, keyed off a hash of their IP — same "fail open on infra error,
+// never block a real student over our own hiccup" philosophy as everywhere
+// else in this file, but the cap itself is real and survives cold starts.
+const IP_RATE_LIMIT    = 60;  // max requests per IP per hour (all users) — in-memory speed bump
+const GUEST_HARD_LIMIT = 3;   // max requests per IP per hour for guests — in-memory speed bump
 const IP_WINDOW_MS     = 60 * 60 * 1000; // 1 hour
 
 const ipStore = new Map();
@@ -556,6 +569,12 @@ function getIp(req) {
     req.socket?.remoteAddress ||
     "unknown"
   );
+}
+
+// Never store a raw IP in Firestore — hash it. One-way, still lets us key a
+// per-IP counter without keeping anything that identifies the visitor.
+function hashIp(ip) {
+  return crypto.createHash("sha256").update(String(ip)).digest("hex");
 }
 
 function checkIpRateLimit(ip, limit) {
@@ -577,6 +596,46 @@ setInterval(() => {
     if (now - entry.windowStart > IP_WINDOW_MS * 2) ipStore.delete(ip);
   }
 }, IP_WINDOW_MS);
+
+// ── Persistent guest quota (Firestore-backed) ───────────────────────────────
+// Guests have no uid, so this is the real enforcement for them — the
+// in-memory limiter above is just a fast pre-check. Rolling 24h windows,
+// same shape as the free-user photo cap. Kept deliberately tight since a
+// guest question already costs the same OpenAI call a signed-up free user's
+// does, and we WANT guests to feel the nudge to make a free account (which
+// unlocks the much more generous daily-bank system).
+const GUEST_WINDOW_MS      = 24 * 60 * 60 * 1000; // 24 hours
+const GUEST_QUESTION_LIMIT = 3;  // matches the old in-memory GUEST_HARD_LIMIT, now actually enforced
+const GUEST_PHOTO_LIMIT    = 1;  // vision calls are the most expensive request we serve
+
+async function checkGuestUsage(ipHash, kind) {
+  const limit = kind === "photo" ? GUEST_PHOTO_LIMIT : GUEST_QUESTION_LIMIT;
+  const ref   = db.collection("guestUsage").doc(ipHash).collection("log").doc(kind);
+  const now   = Date.now();
+
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap   = await tx.get(ref);
+      const log    = snap.exists ? (snap.data().log || []) : [];
+      const recent = log.filter(ts => now - ts < GUEST_WINDOW_MS);
+
+      if (recent.length >= limit) {
+        const oldest = Math.min(...recent);
+        return { allowed: false, remaining: 0, limit, retryAfterMs: GUEST_WINDOW_MS - (now - oldest) };
+      }
+
+      recent.push(now);
+      tx.set(ref, { log: recent, updatedAt: new Date().toISOString() });
+      return { allowed: true, remaining: limit - recent.length, limit };
+    });
+    return result;
+  } catch (err) {
+    console.error("Guest quota check error:", err.message);
+    // Fail open — an infra hiccup should never block a real visitor, and
+    // the in-memory IP limiter above still applies as a backstop.
+    return { allowed: true };
+  }
+}
 
 export default async function handler(req, res) {
   // Handle CORS preflight
@@ -619,10 +678,13 @@ export default async function handler(req, res) {
   }
 
   const isGuest = !uid;
+  const ipHash  = hashIp(ip);
 
   // ── IP rate limiting ───────────────────────────────────────────────────────
-  // Guests: hard limit of 3 requests/hour per IP — enforced server-side.
-  // Logged-in users: 60 requests/hour per IP — stops scripted abuse.
+  // Fast in-memory pre-check for both guests and logged-in users. For guests
+  // this is only a speed bump — the real, persistent limit is the Firestore
+  // check below, since this in-memory one resets on cold start and isn't
+  // shared across instances.
   const ipLimit  = isGuest ? GUEST_HARD_LIMIT : IP_RATE_LIMIT;
   const ipCheck  = checkIpRateLimit(ip, ipLimit);
   if (!ipCheck.allowed) {
@@ -651,13 +713,46 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Question is too long. Please keep it under 8000 characters." });
   }
 
-  const trimmedQuestion = (question || '').substring(0, MAX_INPUT_CHARS * 4);
+  // Send the full question through — the 8000-char guard above is the real
+  // limit. (Previously this also truncated to MAX_INPUT_CHARS*4 = 3200 chars
+  // on top of that guard, which silently cut off anything between 3200 and
+  // 8000 chars — a student pasting a long problem would get an answer to a
+  // truncated, possibly garbled version of their question with no warning.)
+  const trimmedQuestion = (question || '').trim();
 
   // No mode selector anymore — Knox reads the message itself and decides how
   // to respond (see KNOX_PROMPT). The only routing decision left here is
   // casual small talk vs a real question, which controls model cost and
   // whether it counts against usage — not which "mode" runs.
   const casual = !image && await isCasualMessage(trimmedQuestion, history);
+
+  // ── Guest quota — persistent, Firestore-backed (see checkGuestUsage) ────
+  // Casual chit-chat is free for guests too, same as logged-in users, but
+  // real questions and photos both count. This is the actual enforcement
+  // for guests; the in-memory IP limiter earlier is just a fast pre-check.
+  if (isGuest && image) {
+    const guestPhoto = await checkGuestUsage(ipHash, "photo");
+    if (!guestPhoto.allowed) {
+      const hours = Math.max(1, Math.ceil((guestPhoto.retryAfterMs || 0) / 3600000));
+      return res.status(429).json({
+        error: "Photo limit reached",
+        message: `Guests get ${guestPhoto.limit} free photo upload per day — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Sign up free for unlimited photo questions (up to your daily allowance).`,
+        limitReached: true,
+        photoLimit: true,
+      });
+    }
+  }
+  if (isGuest && !casual) {
+    const guestUsage = await checkGuestUsage(ipHash, "question");
+    if (!guestUsage.allowed) {
+      const hours = Math.max(1, Math.ceil((guestUsage.retryAfterMs || 0) / 3600000));
+      return res.status(429).json({
+        error: "Usage limit reached",
+        message: `You've hit the guest limit of ${guestUsage.limit} questions per day — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Sign up free for 10 questions to start, then 5 more each day, no card needed.`,
+        limitReached: true,
+      });
+    }
+  }
 
   // ── Free-tier photo cap — check BEFORE the question quota so a rejected
   // photo doesn't burn one of their 15 questions. Paid users skip inside
@@ -723,11 +818,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Model selection. Text + casual now run on GPT-5.6 Luna (newer and
-    // cheaper than the old gpt-4.1 / gpt-4.1-mini). Photo questions stay on
-    // gpt-4.1 for now — Luna's image/vision handling hasn't been verified,
-    // so we don't risk silently degrading photo homework help. Switch
-    // IMAGE_MODEL to Luna once vision is tested.
+    // Model selection. Text, casual, and photo questions all run on GPT-5.6
+    // Luna now (see TEXT_MODEL / CASUAL_MODEL / IMAGE_MODEL above) — Luna's
+    // vision handling was verified against gpt-4.1 via the testModel:
+    // "lunaphoto" admin flag below before this became the default for
+    // everyone. That flag (and TEXT_MODEL_LUNA_TEST) are now redundant since
+    // there's no non-Luna model left to A/B against, but they're harmless
+    // and left in place for the next model migration.
     let modelToUse;
     if (image) {
       modelToUse = IMAGE_MODEL;
