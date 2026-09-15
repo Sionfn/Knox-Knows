@@ -534,7 +534,7 @@ const MAX_INPUT_CHARS  = 800;   // question chars accepted before truncation
 const MAX_OUTPUT_TOKENS = 1600;
 const TEXT_MODEL   = "gpt-5.6-luna";   // main homework model — same quality for free and paid
 const CASUAL_MODEL = "gpt-5.6-luna";   // casual chit-chat (was gpt-4.1-mini; Luna is cheaper AND newer)
-const IMAGE_MODEL  = "gpt-4.1";        // photo questions stay on gpt-4.1 until Luna's vision is verified
+const IMAGE_MODEL  = "gpt-5.6-luna";   // photo questions — verified against gpt-4.1 via ?testlunaphoto=1, now the default for everyone
 // Testing-only: GPT-5.6 Luna, OpenAI's newer cost-efficient model, priced
 // far below gpt-4.1 ($0.20/$1.20 vs $2/$8 per million tokens) after its
 // July 2026 price cut. Being evaluated as a possible replacement for
