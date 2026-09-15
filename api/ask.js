@@ -533,8 +533,9 @@ You're Knox. Real, warm, quick. You see people, you actually like them, and you 
 // varies by plan, only rolling usage volume does (see USAGE_LIMITS above).
 // (The hard input-length guard is the 8000-char check earlier in the
 // handler; there's no separate truncation constant anymore — see the note
-// where trimmedQuestion is built.)
-const MAX_OUTPUT_TOKENS = 1600;
+// where trimmedQuestion is built. Output token limits are set inline where
+// tokenLimit is built below, since they now differ meaningfully by request
+// type — see the comment there.)
 const TEXT_MODEL   = "gpt-5.6-luna";   // main homework model — same quality for free and paid
 const CASUAL_MODEL = "gpt-5.6-luna";   // casual chit-chat (was gpt-4.1-mini; Luna is cheaper AND newer)
 const IMAGE_MODEL  = "gpt-5.6-luna";   // photo questions — verified against gpt-4.1 via ?testlunaphoto=1, now the default for everyone
@@ -857,7 +858,17 @@ export default async function handler(req, res) {
     // (still used for images) keeps its original params; any gpt-5.x model
     // skips these two fields automatically via the isNewerModel check below.
     const isNewerModel = modelToUse.startsWith("gpt-5");
-    const tokenLimit = image ? 1500 : casual ? 300 : MAX_OUTPUT_TOKENS;
+    // gpt-5.x is a reasoning-family model: max_completion_tokens has to cover
+    // BOTH its hidden reasoning tokens and the visible answer, not just the
+    // answer. A worksheet photo with a dozen dense multi-step problems (e.g.
+    // several quadratic-formula / complex-number questions) can need a lot
+    // of reasoning to OCR and solve every part — enough that the old 1500
+    // cap let the model spend its whole budget thinking and leave nothing
+    // for the actual reply. That showed up as a completely blank answer
+    // bubble, not an error, since nothing failed — the API call succeeded
+    // with 0 visible output tokens. Raised well above what even a long,
+    // many-part worksheet needs.
+    const tokenLimit = image ? 4000 : casual ? 300 : 3000;
     const requestBody = {
       model:       modelToUse,
       messages,
@@ -890,6 +901,23 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     let answer = data.choices?.[0]?.message?.content || "";
+
+    // ── Safety net: never silently send an empty answer to the client ──
+    // If the model's entire token budget got consumed by internal reasoning
+    // (or anything else) and there's no visible text left, don't return an
+    // empty bubble the student can't do anything with — tell them plainly
+    // what likely happened and how to get a real answer, and log the
+    // finish_reason so this is diagnosable instead of a silent mystery.
+    if (!answer.trim()) {
+      console.error(
+        "Empty answer from " + modelToUse + " — finish_reason:",
+        data.choices?.[0]?.finish_reason, "usage:", data.usage
+      );
+      const message = image
+        ? "That photo has a lot going on and Knox ran out of room working through it. Try asking about a few of the problems at a time, or type out just the one you need help with."
+        : "Knox ran out of room working through that one — try breaking it into smaller parts, or ask again.";
+      return res.status(200).json({ answer: message, video: null, plan, isCasual: casual, model: modelToUse, usage: data.usage, ranOutOfRoom: true });
+    }
 
     // Clean LaTeX
     answer = answer
