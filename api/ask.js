@@ -638,6 +638,210 @@ async function checkGuestUsage(ipHash, kind) {
   }
 }
 
+// ── LaTeX → plain-text conversion for Knox's answers ────────────────────
+// KNOX_PROMPT tells the model never to use LaTeX, but on a genuinely hard
+// multi-step problem (this file's whole reason for existing) it sometimes
+// slips into real LaTeX anyway. The old version of this only replaced a
+// short list of symbols and then blindly stripped every remaining
+// backslash — so \frac13 became the literal text "frac13" and
+// \boxed{\frac13} became "boxed{frac13}" instead of real math. This is
+// the same conversion logic the app.html paste-cleaner uses (kept in sync
+// deliberately — if you improve one, improve the other), minus the
+// browser-only HTML-clipboard fallback, which doesn't apply server-side.
+
+// Finds the index of the '}' matching the '{' at str[openIdx].
+function findMatchingBrace(str, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === '{') depth++;
+    else if (str[i] === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// Finds the index of the ')' matching the '(' at str[openIdx].
+function findMatchingParen(str, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === '(') depth++;
+    else if (str[i] === ')') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// Grabs one \command's argument: a {...} group, a (...) group (needed
+// because our own conversions below sometimes emit "^(1/3)"-style
+// exponents that later passes need to re-read as a single unit), or a
+// single bare token (a digit, letter, or another \command) — covers
+// \frac{1}{3}, the bare shorthand \frac13, \lim_{x \to 0}, and \lim_x.
+function readArg(str, i) {
+  if (str[i] === '{') {
+    const close = findMatchingBrace(str, i);
+    if (close === -1) return null;
+    return { text: str.slice(i + 1, close), end: close + 1 };
+  }
+  if (str[i] === '(') {
+    const close = findMatchingParen(str, i);
+    if (close === -1) return null;
+    return { text: str.slice(i + 1, close), end: close + 1 };
+  }
+  const m = /^(\\[a-zA-Z]+|.)/.exec(str.slice(i));
+  if (!m) return null;
+  return { text: m[1], end: i + m[1].length };
+}
+
+// \frac{A}{B} → (A)/(B), and the bare shorthand \frac12 → (1)/(2) — both
+// forms are valid LaTeX and the model uses both. Runs in a loop rather
+// than recursion so nested fractions resolve naturally on a later pass.
+function convertFrac(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\frac')) !== -1) {
+    const numArg = readArg(result, idx + 5);
+    if (!numArg) break;
+    const denArg = readArg(result, numArg.end);
+    if (!denArg) break;
+    result = result.slice(0, idx) + '(' + numArg.text + ')/(' + denArg.text + ')' + result.slice(denArg.end);
+  }
+  return result;
+}
+
+// \sqrt{X} → √(X), \sqrt[n]{X} → (X)^(1/n)
+function convertSqrt(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\sqrt')) !== -1) {
+    let i = idx + 5;
+    let root = null;
+    if (result[i] === '[') {
+      const close = result.indexOf(']', i);
+      if (close === -1) break;
+      root = result.slice(i + 1, close);
+      i = close + 1;
+    }
+    if (result[i] !== '{') break;
+    const close = findMatchingBrace(result, i);
+    if (close === -1) break;
+    const inner = result.slice(i + 1, close);
+    const replacement = root ? '(' + inner + ')^(1/' + root + ')' : '√(' + inner + ')';
+    result = result.slice(0, idx) + replacement + result.slice(close + 1);
+  }
+  return result;
+}
+
+// \lim_{x \to a} → lim(x→a)
+function convertLim(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\lim')) !== -1) {
+    let i = idx + 4;
+    let sub = '';
+    if (result[i] === '_') {
+      const arg = readArg(result, i + 1);
+      if (arg) { sub = arg.text; i = arg.end; }
+    }
+    const replacement = sub ? 'lim(' + sub + ')' : 'lim';
+    result = result.slice(0, idx) + replacement + result.slice(i);
+  }
+  return result;
+}
+
+// \int (with optional bounds), \sum, \prod, \oint
+function convertBigOps(str) {
+  const ops = { '\\int': '∫', '\\sum': 'Σ', '\\prod': '∏', '\\oint': '∮' };
+  let result = str;
+  for (const [cmd, symbol] of Object.entries(ops)) {
+    let idx;
+    while ((idx = result.indexOf(cmd)) !== -1) {
+      let i = idx + cmd.length;
+      let lower = null, upper = null;
+      for (let pass = 0; pass < 2; pass++) {
+        if (result[i] === '_' && lower === null) {
+          const arg = readArg(result, i + 1);
+          if (arg) { lower = arg.text; i = arg.end; }
+        } else if (result[i] === '^' && upper === null) {
+          const arg = readArg(result, i + 1);
+          if (arg) { upper = arg.text; i = arg.end; }
+        }
+      }
+      let replacement = symbol;
+      if (lower !== null && upper !== null) replacement += ' from ' + lower + ' to ' + upper;
+      else if (lower !== null) replacement += ' over ' + lower;
+      result = result.slice(0, idx) + replacement + result.slice(i);
+    }
+  }
+  return result;
+}
+
+// \boxed{X} → **X** (Markdown bold, matching how Knox already emphasizes
+// a key term or final answer elsewhere) — must run before the final
+// brace-stripping catch-all below, while the braces are still there.
+function convertBoxed(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\boxed')) !== -1) {
+    const arg = readArg(result, idx + 6);
+    if (!arg) break;
+    result = result.slice(0, idx) + '**' + arg.text + '**' + result.slice(arg.end);
+  }
+  return result;
+}
+
+const SUPERSCRIPT_MAP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','n':'ⁿ' };
+const SUBSCRIPT_MAP   = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋' };
+
+// x^{2} / x^2 → x², using real unicode superscripts when every character
+// maps cleanly; anything else falls back to x^(...). Uses an advancing
+// search cursor rather than re-scanning from the start each time: the
+// fallback text intentionally starts with the same marker character it
+// just matched, and re-running indexOf(marker) from 0 would find that
+// same character again and reprocess it forever.
+function convertScripts(str, marker, map) {
+  let result = str;
+  let searchFrom = 0;
+  while (true) {
+    const idx = result.indexOf(marker, searchFrom);
+    if (idx === -1) break;
+    const arg = readArg(result, idx + 1);
+    if (!arg) { searchFrom = idx + 1; continue; }
+    const chars = arg.text.split('');
+    const allMapped = arg.text.length > 0 && chars.every(c => map[c] !== undefined);
+    const mapped = allMapped ? chars.map(c => map[c]).join('') : marker + '(' + arg.text + ')';
+    result = result.slice(0, idx) + mapped + result.slice(arg.end);
+    searchFrom = idx + mapped.length;
+  }
+  return result;
+}
+
+const LATEX_SYMBOLS = {
+  '\\times': '×', '\\div': '÷', '\\cdot': '·', '\\pm': '±', '\\mp': '∓',
+  '\\neq': '≠', '\\leq': '≤', '\\geq': '≥', '\\approx': '≈', '\\equiv': '≡',
+  '\\infty': '∞', '\\partial': '∂', '\\nabla': '∇',
+  '\\pi': 'π', '\\theta': 'θ', '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ',
+  '\\delta': 'δ', '\\Delta': 'Δ', '\\sigma': 'σ', '\\Sigma': 'Σ',
+  '\\lambda': 'λ', '\\mu': 'μ', '\\phi': 'φ', '\\omega': 'ω',
+  '\\rightarrow': '→', '\\to': '→', '\\leftarrow': '←', '\\Rightarrow': '⇒',
+  '\\in': '∈', '\\subset': '⊂', '\\cup': '∪', '\\cap': '∩',
+  '\\forall': '∀', '\\exists': '∃',
+  '\\quad': '  ', '\\qquad': '    ', '\\,': ' ', '\\;': ' ', '\\:': ' ', '\\!': '',
+};
+
+function cleanLatexAnswer(text) {
+  let s = text;
+  s = s.replace(/\\\(|\\\)|\\\[|\\\]|\$\$?/g, ''); // strip math-mode delimiters
+  s = convertFrac(s);
+  s = convertSqrt(s);
+  s = convertLim(s);
+  s = convertBigOps(s);
+  s = convertBoxed(s);
+  const keys = Object.keys(LATEX_SYMBOLS).sort((a, b) => b.length - a.length);
+  for (const k of keys) s = s.split(k).join(LATEX_SYMBOLS[k]);
+  s = s.replace(/\\(sin|cos|tan|sec|csc|cot|sinh|cosh|tanh|arcsin|arccos|arctan|log|ln|exp|min|max|gcd|det)\b/g, '$1');
+  s = convertScripts(s, '^', SUPERSCRIPT_MAP);
+  s = convertScripts(s, '_', SUBSCRIPT_MAP);
+  // Catch-all for anything left: strip the backslash off any remaining
+  // \command (keeps the word itself), then drop any now-orphaned braces.
+  s = s.replace(/\\([a-zA-Z]+)/g, '$1');
+  s = s.replace(/[{}]/g, '');
+  return s;
+}
+
 export default async function handler(req, res) {
   // Handle CORS preflight
   // localhost is only allowed in non-production environments
@@ -919,16 +1123,8 @@ export default async function handler(req, res) {
       return res.status(200).json({ answer: message, video: null, plan, isCasual: casual, model: modelToUse, usage: data.usage, ranOutOfRoom: true });
     }
 
-    // Clean LaTeX
-    answer = answer
-      .replace(/\\\(/g, '').replace(/\\\)/g, '')
-      .replace(/\\\[/g, '').replace(/\\\]/g, '')
-      .replace(/\\times/g, '×').replace(/\\div/g, '÷')
-      .replace(/\\cdot/g, '·').replace(/\\pm/g, '±')
-      .replace(/\\neq/g, '≠').replace(/\\leq/g, '≤')
-      .replace(/\\geq/g, '≥').replace(/\\approx/g, '≈')
-      .replace(/\\pi/g, 'π').replace(/\\infty/g, '∞')
-      .replace(/\\/g, '');
+    // Clean LaTeX (see cleanLatexAnswer above)
+    answer = cleanLatexAnswer(answer);
 
     // ── Pull out the VIDEO_SUGGEST signal ───────────────────────────────────
     // The model can end its answer with "VIDEO_SUGGEST: <topic>" when a video
