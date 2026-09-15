@@ -27,6 +27,20 @@ if (!getApps().length) {
 
 const adminAuth = getAdminAuth();
 
+// Minimal HTML-escape for anything user-supplied that lands in the email
+// HTML (the display name). Without this, someone could set an arbitrary
+// name value in the request body and have it render as raw HTML/script in
+// their own inbox — low-impact since it only affects their own email
+// rendering, but there's no reason to leave it unescaped.
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ── Shared email shell ──────────────────────────────────────────────────────
 // Every Knox email is built from this same wrapper so they look identical.
 // `bodyHtml` is the inner content (a series of <p> tags).
@@ -125,8 +139,9 @@ Any questions, just reply to this email. It comes straight to me.
 — Sion
 Knox Knows`;
 
+  const safeFirstName = escapeHtml(firstName);
   const htmlBody = knoxEmailShell(`
-    <p style="margin:0 0 14px;font-weight:800;">Hey ${firstName}, 🦊</p>
+    <p style="margin:0 0 14px;font-weight:800;">Hey ${safeFirstName}, 🦊</p>
     <p style="margin:0 0 14px;">Thanks for signing up for <strong style="color:#FF6B00;">Knox Knows</strong> — your account is ready to use.</p>
     <p style="margin:0 0 14px;">Ask Knox any homework question at <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:800;text-decoration:none;">knoxknowsapp.com</a>. Here's what you get:</p>
     <ul style="margin:0 0 14px;padding-left:20px;">
