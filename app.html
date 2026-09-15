@@ -3499,12 +3499,17 @@ window.appHandleAsk = async function() {
     const headers = { 'Content-Type': 'application/json' };
     if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
 
-    // TESTING ONLY — visit app.html?testluna=1 while signed into the admin
-    // account to route this question to GPT-5.6 Luna instead of gpt-4.1, so
-    // you can compare real answers side by side. Server re-checks the admin
-    // email itself, so this flag does nothing for anyone else even if they
-    // guess the URL param.
-    const wantLunaTest = new URLSearchParams(location.search).get('testluna') === '1';
+    // TESTING ONLY (admin account) — URL params force a specific model so
+    // you can compare answers. The server re-checks the admin email itself,
+    // so these flags do nothing for anyone else even if they guess the URL.
+    //   ?testluna=1      → force Luna for TEXT questions
+    //   ?testlunaphoto=1 → force Luna for PHOTO questions (vision test)
+    const params = new URLSearchParams(location.search);
+    const wantLunaTest      = params.get('testluna') === '1';
+    const wantLunaPhotoTest = params.get('testlunaphoto') === '1';
+    let testModelFlag;
+    if (wantLunaPhotoTest && image) testModelFlag = 'lunaphoto';
+    else if (wantLunaTest)          testModelFlag = 'luna';
 
     const res = await fetch('/api/ask', {
       method: 'POST',
@@ -3515,7 +3520,7 @@ window.appHandleAsk = async function() {
         imageType: image?.type,
         history,
         learnMode: !!window._learnModeActive,
-        testModel: wantLunaTest ? 'luna' : undefined,
+        testModel: testModelFlag,
       }),
     });
     const data = await res.json();
