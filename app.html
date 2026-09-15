@@ -90,6 +90,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative; /* anchors #appDropOverlay */
     }
     button, input, textarea { font-family: inherit; }
     /* Images are draggable by default in Chrome/Firefox — click-and-drag on
@@ -1128,6 +1129,32 @@
       padding: 0 4px;
     }
 
+    /* DRAG-AND-DROP OVERLAY — shown over #mainColumn while a file is being
+       dragged over the chat area. Pointer-events:none so it never itself
+       becomes the dragenter/dragleave target (that's handled with a depth
+       counter in JS instead, to avoid the classic flicker you get from
+       dragleave firing on every child element as the cursor moves). */
+    #appDropOverlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 500;
+      background: rgba(255, 244, 236, 0.94);
+      border: 3px dashed var(--orange);
+      border-radius: 16px;
+      margin: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      text-align: center;
+    }
+    #appDropOverlay.active { display: flex; }
+    #appDropOverlay .drop-icon { font-size: 40px; }
+    #appDropOverlay .drop-title { font-size: 17px; font-weight: 900; color: var(--orange); }
+    #appDropOverlay .drop-sub   { font-size: 13px; font-weight: 700; color: var(--text-light); }
+
     .input-box {
       display: flex; align-items: center; gap: 8px;
       background: white;
@@ -1611,6 +1638,15 @@
 
     <!-- RIGHT COLUMN — header + chat, sits beside the sidebar -->
     <div id="mainColumn">
+
+  <!-- Drag-and-drop overlay — shown while dragging an image file over the
+       chat area; see the dragenter/dragover/dragleave/drop wiring near the
+       image-upload JS below. -->
+  <div id="appDropOverlay">
+    <div class="drop-icon">🦊📸</div>
+    <div class="drop-title">Drop your photo here</div>
+    <div class="drop-sub">Knox will read it like any uploaded homework photo</div>
+  </div>
 
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
@@ -3378,32 +3414,101 @@ window.closeMobileHistory = function() {
 };
 
 // ── Image upload ─────────────────────────────────────────────
+// Shared by both the file-picker input and drag-and-drop below, so a
+// dropped image goes through the exact same validation and preview path
+// as one picked with the upload button — same size cap, same error
+// message, same attached-pill UI.
+function handleImageFile(file) {
+  if (!file) return;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Image too large — please use an image under 5MB.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = String(ev.target.result);
+    const base64  = dataUrl.split(',')[1];
+    window._appImage = { data: base64, type: file.type, name: file.name, dataUrl };
+    const pill  = $('appImagePill');
+    const thumb = $('appImagePillThumb');
+    const name  = $('appImagePillName');
+    if (thumb) thumb.src = dataUrl;
+    if (name)  name.textContent  = file.name;
+    if (pill)  pill.style.display = 'inline-flex';
+  };
+  reader.readAsDataURL(file);
+}
+window.handleImageFile = handleImageFile;
+
 const _fi = $('appFileInput');
 if (_fi) {
   _fi.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image too large — please use an image under 5MB.');
-      e.target.value = '';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = String(ev.target.result);
-      const base64  = dataUrl.split(',')[1];
-      window._appImage = { data: base64, type: file.type, name: file.name, dataUrl };
-      const pill  = $('appImagePill');
-      const thumb = $('appImagePillThumb');
-      const name  = $('appImagePillName');
-      if (thumb) thumb.src = dataUrl;
-      if (name)  name.textContent  = file.name;
-      if (pill)  pill.style.display = 'inline-flex';
-    };
-    reader.readAsDataURL(file);
+    handleImageFile(file);
     e.target.value = '';
   });
 }
+
+// ── Drag-and-drop ─────────────────────────────────────────────
+// Dropping an image anywhere on the chat column (header, thread, or input
+// area) attaches it exactly like picking it with the upload button — it
+// doesn't send automatically, since the student may still want to type a
+// question to go with it.
+//
+// The dragenter/dragleave pair uses a depth counter rather than toggling
+// the overlay directly on each event: as the cursor moves over child
+// elements inside mainColumn, the browser fires dragleave on the old child
+// and dragenter on the new one, which would otherwise flicker the overlay
+// on and off on every pixel of movement. Counting nested enters/leaves and
+// only hiding at 0 keeps it stable.
+(function setupImageDragAndDrop() {
+  const dropZone = $('mainColumn');
+  const overlay  = $('appDropOverlay');
+  if (!dropZone || !overlay) return;
+  let depth = 0;
+
+  function hasFiles(e) {
+    return e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  }
+
+  dropZone.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth++;
+    overlay.classList.add('active');
+  });
+  dropZone.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); // required for drop to fire at all
+  });
+  dropZone.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    depth = Math.max(0, depth - 1);
+    if (depth === 0) overlay.classList.remove('active');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth = 0;
+    overlay.classList.remove('active');
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    handleImageFile(file);
+  });
+
+  // Without this, dragging a file over any OTHER part of the page (or
+  // dropping just outside the zone) makes the browser navigate away and
+  // open the raw image — losing whatever the student was doing.
+  ['dragover', 'drop'].forEach(evt => {
+    window.addEventListener(evt, (e) => {
+      if (hasFiles(e)) e.preventDefault();
+    });
+  });
+})();
 
 window.appClearImage = function() {
   window._appImage = null;
