@@ -3531,6 +3531,251 @@ if (_ci) {
   });
 }
 
+// ── Clean up pasted LaTeX ─────────────────────────────────────
+// Copying a math problem off a lot of sites (Canvas, textbook PDFs,
+// Quizlet, anything rendered with MathJax/KaTeX) doesn't copy the
+// rendered symbols — it copies the underlying LaTeX SOURCE, e.g. pasting
+// "lim(x→0) of [∫₀ˣ sin(t²)dt] / x³" actually lands as the literal text
+// \(\lim_{x \to 0} \frac{\int_0^x \sin(t^2) \, dt}{x^3}\). That's not a
+// bug in Knox's copy — it's what the SOURCE site puts on the clipboard —
+// but there's no reason to just hand that raw markup to the student's
+// textbox and to Knox as-is. This intercepts a paste, and if it looks
+// like LaTeX, rewrites it into the same plain-text math notation Knox's
+// own answers use (×, ÷, √, ², →, etc.) instead of backslash commands.
+// A normal paste (no LaTeX-looking content) is left completely alone.
+
+// Only fires on actual LaTeX math-mode markers or a recognized command
+// name — NOT on any generic "\word", because that also matches things
+// like a pasted Windows path (C:\Users\branden\...), which would
+// otherwise get its backslashes stripped and words run together.
+const KNOWN_LATEX_COMMANDS =
+  'frac|sqrt|lim|int|sum|prod|oint|left|right|times|div|cdot|pm|mp|neq|leq|geq|' +
+  'approx|equiv|infty|partial|nabla|pi|theta|alpha|beta|gamma|delta|Delta|sigma|' +
+  'Sigma|lambda|mu|phi|omega|rightarrow|to|leftarrow|Rightarrow|in|subset|cup|cap|' +
+  'forall|exists|quad|qquad|sin|cos|tan|sec|csc|cot|sinh|cosh|tanh|arcsin|arccos|' +
+  'arctan|log|ln|exp|min|max|gcd|det';
+const LATEX_DETECT_RE = new RegExp('\\\\(' + KNOWN_LATEX_COMMANDS + ')(?![a-zA-Z])|\\^\\{|_\\{|\\\\\\(|\\\\\\[|\\$\\$');
+
+function looksLikeLatex(text) {
+  return LATEX_DETECT_RE.test(text);
+}
+
+// Finds the index of the '}' matching the '{' at str[openIdx].
+function findMatchingBrace(str, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === '{') depth++;
+    else if (str[i] === '}') { depth--; if (depth === 0) return i; }
+  }
+  return -1; // unmatched — treat as malformed and bail on this one
+}
+
+// \frac{A}{B} → (A)/(B). Runs in a loop rather than recursion so nested
+// fractions (a fraction inside a numerator/denominator) resolve naturally
+// on the next pass, innermost text unchanged until its turn comes up.
+function convertFrac(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\frac{')) !== -1) {
+    const openNum = idx + 5;
+    const closeNum = findMatchingBrace(result, openNum);
+    if (closeNum === -1 || result[closeNum + 1] !== '{') break;
+    const openDen = closeNum + 1;
+    const closeDen = findMatchingBrace(result, openDen);
+    if (closeDen === -1) break;
+    const num = result.slice(openNum + 1, closeNum);
+    const den = result.slice(openDen + 1, closeDen);
+    result = result.slice(0, idx) + '(' + num + ')/(' + den + ')' + result.slice(closeDen + 1);
+  }
+  return result;
+}
+
+// \sqrt{X} → √(X), \sqrt[n]{X} → (X)^(1/n)
+function convertSqrt(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\sqrt')) !== -1) {
+    let i = idx + 5;
+    let root = null;
+    if (result[i] === '[') {
+      const close = result.indexOf(']', i);
+      if (close === -1) break;
+      root = result.slice(i + 1, close);
+      i = close + 1;
+    }
+    if (result[i] !== '{') break;
+    const close = findMatchingBrace(result, i);
+    if (close === -1) break;
+    const inner = result.slice(i + 1, close);
+    const replacement = root ? '(' + inner + ')^(1/' + root + ')' : '√(' + inner + ')';
+    result = result.slice(0, idx) + replacement + result.slice(close + 1);
+  }
+  return result;
+}
+
+// Finds the index of the ')' matching the '(' at str[openIdx].
+function findMatchingParen(str, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < str.length; i++) {
+    if (str[i] === '(') depth++;
+    else if (str[i] === ')') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+// Grabs one \command's argument, whether it's a {...} group, a (...)
+// group (needed because our own \sqrt[n]{} fallback below writes
+// exponents as e.g. "^(1/3)" — without this, convertScripts would later
+// misread that as a bare single-character exponent of just "("), or a
+// single bare token (a digit, letter, or another \command) — covers
+// \lim_{x \to 0} and the much rarer \lim_x forms too.
+function readArg(str, i) {
+  if (str[i] === '{') {
+    const close = findMatchingBrace(str, i);
+    if (close === -1) return null;
+    return { text: str.slice(i + 1, close), end: close + 1 };
+  }
+  if (str[i] === '(') {
+    const close = findMatchingParen(str, i);
+    if (close === -1) return null;
+    return { text: str.slice(i + 1, close), end: close + 1 };
+  }
+  const m = /^(\\[a-zA-Z]+|.)/.exec(str.slice(i));
+  if (!m) return null;
+  return { text: m[1], end: i + m[1].length };
+}
+
+// \lim_{x \to a} → lim(x→a)
+function convertLim(str) {
+  let result = str, idx;
+  while ((idx = result.indexOf('\\lim')) !== -1) {
+    let i = idx + 4;
+    let sub = '';
+    if (result[i] === '_') {
+      const arg = readArg(result, i + 1);
+      if (arg) { sub = arg.text; i = arg.end; }
+    }
+    const replacement = sub ? 'lim(' + sub + ')' : 'lim';
+    result = result.slice(0, idx) + replacement + result.slice(i);
+  }
+  return result;
+}
+
+// \int (with optional _lower^upper or ^upper_lower bounds), \sum, \prod
+function convertBigOps(str) {
+  const ops = { '\\int': '∫', '\\sum': 'Σ', '\\prod': '∏', '\\oint': '∮' };
+  let result = str;
+  for (const [cmd, symbol] of Object.entries(ops)) {
+    let idx;
+    while ((idx = result.indexOf(cmd)) !== -1) {
+      let i = idx + cmd.length;
+      let lower = null, upper = null;
+      for (let pass = 0; pass < 2; pass++) {
+        if (result[i] === '_' && lower === null) {
+          const arg = readArg(result, i + 1);
+          if (arg) { lower = arg.text; i = arg.end; }
+        } else if (result[i] === '^' && upper === null) {
+          const arg = readArg(result, i + 1);
+          if (arg) { upper = arg.text; i = arg.end; }
+        }
+      }
+      let replacement = symbol;
+      if (lower !== null && upper !== null) replacement += ' from ' + lower + ' to ' + upper;
+      else if (lower !== null) replacement += ' over ' + lower;
+      result = result.slice(0, idx) + replacement + result.slice(i);
+    }
+  }
+  return result;
+}
+
+const SUPERSCRIPT_MAP = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻','n':'ⁿ' };
+const SUBSCRIPT_MAP   = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','+':'₊','-':'₋' };
+
+// x^{2} / x^2 → x², using real unicode superscripts when every character
+// maps cleanly; anything else (a variable, a fraction) falls back to
+// x^(...) so it stays unambiguous instead of silently dropping meaning.
+//
+// Uses an advancing search cursor rather than re-scanning from the start
+// each time: the fallback text intentionally starts with the same marker
+// character it just matched (so "x^(a+b)" still reads as a superscript),
+// and re-running indexOf(marker) from 0 would find that same character
+// again and reprocess it forever, growing the string every pass instead
+// of terminating.
+function convertScripts(str, marker, map) {
+  let result = str;
+  let searchFrom = 0;
+  while (true) {
+    const idx = result.indexOf(marker, searchFrom);
+    if (idx === -1) break;
+    const arg = readArg(result, idx + 1);
+    if (!arg) { searchFrom = idx + 1; continue; }
+    const chars = arg.text.split('');
+    const allMapped = arg.text.length > 0 && chars.every(c => map[c] !== undefined);
+    const mapped = allMapped ? chars.map(c => map[c]).join('') : marker + '(' + arg.text + ')';
+    result = result.slice(0, idx) + mapped + result.slice(arg.end);
+    searchFrom = idx + mapped.length; // always past what we just wrote
+  }
+  return result;
+}
+
+// Multi-character LaTeX commands with a direct plain-text/unicode
+// equivalent. Longest keys first so e.g. \leq is matched before a shorter
+// overlapping key could (there are none currently, but keeps this safe
+// if more are added later).
+const LATEX_SYMBOLS = {
+  '\\times': '×', '\\div': '÷', '\\cdot': '·', '\\pm': '±', '\\mp': '∓',
+  '\\neq': '≠', '\\leq': '≤', '\\geq': '≥', '\\approx': '≈', '\\equiv': '≡',
+  '\\infty': '∞', '\\partial': '∂', '\\nabla': '∇',
+  '\\pi': 'π', '\\theta': 'θ', '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ',
+  '\\delta': 'δ', '\\Delta': 'Δ', '\\sigma': 'σ', '\\Sigma': 'Σ',
+  '\\lambda': 'λ', '\\mu': 'μ', '\\phi': 'φ', '\\omega': 'ω',
+  '\\rightarrow': '→', '\\to': '→', '\\leftarrow': '←', '\\Rightarrow': '⇒',
+  '\\in': '∈', '\\subset': '⊂', '\\cup': '∪', '\\cap': '∩',
+  '\\forall': '∀', '\\exists': '∃',
+  '\\quad': '  ', '\\qquad': '    ', '\\,': ' ', '\\;': ' ', '\\:': ' ', '\\!': '',
+};
+
+function cleanPastedMath(text) {
+  let s = text;
+  s = s.replace(/\\\(|\\\)|\\\[|\\\]|\$\$?/g, ''); // strip math-mode delimiters
+  s = convertFrac(s);
+  s = convertSqrt(s);
+  s = convertLim(s);
+  s = convertBigOps(s);
+  // Longest-key-first so no shorter key ever shadows a longer one that
+  // starts the same way.
+  const keys = Object.keys(LATEX_SYMBOLS).sort((a, b) => b.length - a.length);
+  for (const k of keys) {
+    s = s.split(k).join(LATEX_SYMBOLS[k]);
+  }
+  // Function names — just drop the backslash, the word alone reads fine.
+  s = s.replace(/\\(sin|cos|tan|sec|csc|cot|sinh|cosh|tanh|arcsin|arccos|arctan|log|ln|exp|min|max|gcd|det)\b/g, '$1');
+  s = convertScripts(s, '^', SUPERSCRIPT_MAP);
+  s = convertScripts(s, '_', SUBSCRIPT_MAP);
+  // Catch-all for anything left: strip the backslash off any remaining
+  // \command (keeps the word itself, e.g. an uncommon Greek letter or
+  // spacing command this list didn't name), then drop any now-orphaned
+  // grouping braces.
+  s = s.replace(/\\([a-zA-Z]+)/g, '$1');
+  s = s.replace(/[{}]/g, '');
+  s = s.replace(/[ \t]+/g, ' ').trim();
+  return s;
+}
+
+function insertTextAtCursor(el, text) {
+  const start = el.selectionStart, end = el.selectionEnd;
+  el.value = el.value.slice(0, start) + text + el.value.slice(end);
+  el.selectionStart = el.selectionEnd = start + text.length;
+  el.dispatchEvent(new Event('input', { bubbles: true })); // keeps auto-grow in sync
+}
+
+if (_ci) {
+  _ci.addEventListener('paste', function(e) {
+    const text = (e.clipboardData || window.clipboardData)?.getData('text');
+    if (!text || !looksLikeLatex(text)) return; // ordinary paste — don't touch it
+    e.preventDefault();
+    insertTextAtCursor(this, cleanPastedMath(text));
+  });
+}
+
 // ── Ask Knox ─────────────────────────────────────────────────
 window.appHandleAsk = async function() {
   const input = $('appChatInput');
