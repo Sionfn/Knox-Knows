@@ -3774,12 +3774,76 @@ function insertTextAtCursor(el, text) {
   el.dispatchEvent(new Event('input', { bubbles: true })); // keeps auto-grow in sync
 }
 
+// Some sites — math quizzes and similar rendered-equation tools especially
+// — only ever populate the HTML clipboard flavor, never plain text. When
+// that happens, clipboardData.getData('text') comes back empty and the
+// browser's own default paste has nothing to fall back to either, so
+// nothing appears in the box at all. This pulls readable text out of the
+// HTML flavor instead, as a last resort.
+function extractTextFromHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+
+// A visually laid-out fraction/equation (numerator, a bar, a denominator,
+// stacked) doesn't have one natural linear reading order — when a site's
+// plain-text export (or our own HTML-fallback extraction above) flattens
+// that 2D layout into 1D text, it commonly comes out with several blank
+// lines between every piece, e.g. "3x - 5\n\n\n2\n\n\n= 5" instead of
+// "(3x - 5)/2 = 5". This collapses a run of 2+ blank lines down to a
+// single blank line — leaving one blank line (an ordinary paragraph
+// break) completely alone — and never touches a non-blank line's own
+// content, so a pasted code block's indentation survives untouched.
+function collapseExcessBlankLines(text) {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  const out = [];
+  let blankRun = 0;
+  for (const line of lines) {
+    if (line.trim() === '') {
+      blankRun++;
+      if (blankRun <= 1) out.push(''); // keep the first blank line of a run, drop the rest
+    } else {
+      blankRun = 0;
+      out.push(line);
+    }
+  }
+  return out.join('\n').trim();
+}
+
+// True only when there's a run of 2+ consecutive blank lines somewhere —
+// an ordinary single blank line (a normal paragraph break) doesn't count,
+// so this only flags the "flattened 2D layout" pattern above, not every
+// multi-paragraph paste.
+function hasExcessBlankLines(text) {
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  let blankRun = 0;
+  for (const line of lines) {
+    if (line.trim() === '') { blankRun++; if (blankRun >= 2) return true; }
+    else blankRun = 0;
+  }
+  return false;
+}
+
 if (_ci) {
   _ci.addEventListener('paste', function(e) {
-    const text = (e.clipboardData || window.clipboardData)?.getData('text');
-    if (!text || !looksLikeLatex(text)) return; // ordinary paste — don't touch it
+    const clipboardData = e.clipboardData || window.clipboardData;
+    const plain = clipboardData?.getData('text') || '';
+    const isLatex      = looksLikeLatex(plain);
+    const isExcessive   = hasExcessBlankLines(plain);
+    const plainIsEmpty = !plain.trim();
+
+    // None of the three problem cases — an ordinary paste. Leave it to
+    // the browser exactly as before, so pasted code, normal sentences,
+    // multi-paragraph text, etc. are never touched.
+    if (!isLatex && !isExcessive && !plainIsEmpty) return;
+
     e.preventDefault();
-    insertTextAtCursor(this, cleanPastedMath(text));
+    let text = plainIsEmpty ? extractTextFromHtml(clipboardData?.getData('text/html') || '') : plain;
+    if (!text) return; // truly nothing usable on the clipboard — nothing to insert
+    text = collapseExcessBlankLines(text);
+    if (looksLikeLatex(text)) text = cleanPastedMath(text);
+    insertTextAtCursor(this, text);
   });
 }
 
