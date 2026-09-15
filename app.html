@@ -1129,20 +1129,23 @@
       padding: 0 4px;
     }
 
-    /* DRAG-AND-DROP OVERLAY — shown over #mainColumn while a file is being
-       dragged over the chat area. Pointer-events:none so it never itself
-       becomes the dragenter/dragleave target (that's handled with a depth
-       counter in JS instead, to avoid the classic flicker you get from
-       dragleave firing on every child element as the cursor moves). */
+    /* DRAG-AND-DROP OVERLAY — shown over the whole page while a file is
+       being dragged anywhere over the app. position:fixed so it covers
+       the full viewport regardless of where in the DOM it sits (including
+       the sidebar/header, not just the chat column) — pointer-events:none
+       so it never itself becomes the dragenter/dragleave target (that's
+       handled with a depth counter in JS instead, to avoid the classic
+       flicker you get from dragleave firing on every child element as the
+       cursor moves). */
     #appDropOverlay {
       display: none;
-      position: absolute;
+      position: fixed;
       inset: 0;
-      z-index: 500;
+      z-index: 5000;
       background: rgba(255, 244, 236, 0.94);
       border: 3px dashed var(--orange);
       border-radius: 16px;
-      margin: 10px;
+      margin: 14px;
       align-items: center;
       justify-content: center;
       flex-direction: column;
@@ -3455,19 +3458,22 @@ if (_fi) {
 }
 
 // ── Drag-and-drop ─────────────────────────────────────────────
-// Dropping an image anywhere on the chat column (header, thread, or input
-// area) attaches it exactly like picking it with the upload button — it
-// doesn't send automatically, since the student may still want to type a
-// question to go with it.
+// Dropping an image ANYWHERE in the app — sidebar, header, chat thread, or
+// input area — attaches it exactly like picking it with the upload button.
+// It doesn't send automatically, since the student may still want to type
+// a question to go with it.
+//
+// The drop target is document.body (the whole page), not just the chat
+// column, since a drag doesn't care which panel it lands on.
 //
 // The dragenter/dragleave pair uses a depth counter rather than toggling
 // the overlay directly on each event: as the cursor moves over child
-// elements inside mainColumn, the browser fires dragleave on the old child
-// and dragenter on the new one, which would otherwise flicker the overlay
-// on and off on every pixel of movement. Counting nested enters/leaves and
+// elements on the page, the browser fires dragleave on the old child and
+// dragenter on the new one, which would otherwise flicker the overlay on
+// and off on every pixel of movement. Counting nested enters/leaves and
 // only hiding at 0 keeps it stable.
 (function setupImageDragAndDrop() {
-  const dropZone = $('mainColumn');
+  const dropZone = document.body;
   const overlay  = $('appDropOverlay');
   if (!dropZone || !overlay) return;
   let depth = 0;
@@ -3500,9 +3506,10 @@ if (_fi) {
     handleImageFile(file);
   });
 
-  // Without this, dragging a file over any OTHER part of the page (or
-  // dropping just outside the zone) makes the browser navigate away and
-  // open the raw image — losing whatever the student was doing.
+  // Belt-and-suspenders: dropZone is document.body, so this mostly can't
+  // fire in practice, but it's a harmless backstop against the browser's
+  // default "navigate to the dropped file" behavior for any edge case
+  // (e.g. a layout where body doesn't fully cover the viewport).
   ['dragover', 'drop'].forEach(evt => {
     window.addEventListener(evt, (e) => {
       if (hasFiles(e)) e.preventDefault();
