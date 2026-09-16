@@ -1095,9 +1095,11 @@ export default async function handler(req, res) {
     // GPT-5.x models (including gpt-5.6-luna) reject BOTH the older
     // `max_tokens` parameter (need `max_completion_tokens` instead) AND the
     // `temperature` parameter entirely (only the model's default of 1 is
-    // allowed — sending any value throws "Unsupported parameter"). gpt-4.1
-    // (still used for images) keeps its original params; any gpt-5.x model
-    // skips these two fields automatically via the isNewerModel check below.
+    // allowed — sending any value throws "Unsupported parameter"). Every
+    // real model in use here is now gpt-5.x, so this branch effectively
+    // always takes the newer path — the else branch is kept only as a
+    // safety net if you ever swap one of the model constants back to a
+    // pre-5.x model like gpt-4.1.
     const isNewerModel = modelToUse.startsWith("gpt-5");
     // gpt-5.x is a reasoning-family model: max_completion_tokens has to cover
     // BOTH its hidden reasoning tokens and the visible answer, not just the
