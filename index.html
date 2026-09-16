@@ -199,39 +199,48 @@
       --danger-border: #FECACA;
     }
 
-    /* DARK MODE — mirrors :root one variable at a time, same as the app.
+    /* DARK MODE — the ONLY things that change from light mode are the
+       neutrals (page background, card surfaces, borders, text). Every
+       accent color — orange, blue, green, yellow, purple, red — stays
+       EXACTLY the same as light mode, because those are Knox's brand
+       colors and they should look like Knox in either theme, not a washed-
+       out version of it. Earlier iterations of this darkened the accent
+       colors too, thinking they needed to be "toned down" for dark
+       backgrounds — that's what made everything feel muddy and colorblind.
+       They don't need to be toned down; they need to stay themselves,
+       sitting on top of dark neutrals. That's how Discord, Linear, Notion,
+       and every other dark theme that actually feels premium works.
+
        Applied via [data-theme="dark"] on <html>, set by an inline script
        at the very top of <head> so it's in place before first paint. Light
-       is the default for everyone until they explicitly switch.
-       The "-light" pastel fills (icon circles, badges, feature cards) are
-       deliberately kept RICH here — same hue as their light-mode
-       counterpart, saturation held at 60-75%, lightness dropped to ~22%.
-       An earlier version of this just darkened+desaturated those pastels
-       toward brown/olive/near-black, which read as washed-out and cheap
-       instead of premium — a jewel-tone (dark but still saturated) keeps
-       each accent color distinguishable and intentional, the same way a
-       colorful accent looks on Linear, Discord, or Stripe's dark
-       dashboards, rather than collapsing everything toward gray. */
+       is the default for everyone until they explicitly switch. */
     html[data-theme="dark"] {
-      --orange:  #E86A2E;
-      --orange2: #FFA366;
+      /* Accents — deliberately unchanged from light mode. */
+      --orange:  #FF6B00;
+      --orange2: #FF8C00;
+      --blue:    #1CB0F6;
+      --blue-dark: #0A85C2;
+      --green:   #58CC02;
+      --green-dark: #46A302;
+      --red:     #FF4B4B;
+      --yellow:  #FFD900;
+      --purple:  #CE82FF;
+      --purple-dark: #9B59B6;
+
+      /* Tinted fills (behind icon circles, badges, feature cards) — same
+         hue as their light-mode pastels, dropped in lightness to ~20%
+         and kept at high saturation so they read as a rich, obvious tint
+         of their color rather than a muddy near-black. These are
+         backgrounds, not the accent color itself. */
       --orange-light: #62370E;
-      --blue:    #4DC8FF;
-      --blue-dark: #7DD8FF;
       --blue-light: #0E4A62;
-      --green:   #7EDB3A;
-      --green-dark: #9BE85C;
       --green-light: #33620E;
-      --red:     #FF6B6B;
-      --yellow:  #FFE066;
       --yellow-light: #62580E;
-      --purple:  #D9A6FF;
-      --purple-dark: #C58AFF;
       --purple-light: #360E62;
-      /* Page bg → hover/alt → card surface → border: a deliberate 4-step
-         lightness ladder (7% / 12% / 17% / 22%) instead of a flat wash of
-         near-identical dark grays, so cards actually read as elevated
-         above the page instead of blending into it. */
+
+      /* Neutrals — 4-step lightness ladder (7% / 12% / 17% / 22%) so
+         cards read as elevated above the page instead of blending into
+         a flat wash of near-identical dark grays. */
       --cream:   #101013;
       --gray:    #1F1F23;
       --text:    #EDEDED;
