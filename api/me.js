@@ -138,13 +138,21 @@ export default async function handler(req, res) {
       else if (gap === 0) studiedToday = true;
     }
 
+    // The Plus ceiling is an operational abuse safeguard, not a product
+    // allowance. Never send its numeric value to clients: the web app and
+    // Chrome extension should consistently present the paid plan as
+    // unlimited, while api/ask.js continues enforcing the private ceiling.
+    const publicUsage = tier === "paid"
+      ? { used: 0, limit: "Unlimited", remaining: "Unlimited", resetInMs: 0, isUnlimited: true, isDailyBank: false }
+      : { used, limit, remaining, resetInMs, isUnlimited: false, isDailyBank: true };
+
     return res.status(200).json({
       uid,
       email: decoded.email || userData.email || null,
       name: userData.displayName || decoded.name || null,
       plan,
       planStatus: userData.planStatus || "none",
-      usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" },
+      usage: publicUsage,
       streak,
       studiedToday,
     });
