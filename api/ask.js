@@ -48,6 +48,8 @@ const FREE_STARTING_BALANCE = 10;
 const PHOTO_CREDIT_COST     = 2;   // a photo costs 2 credits; a text question costs 1
 const PLUS_LIMIT            = 500;             // effectively unlimited; abuse-only ceiling
 const PLUS_WINDOW_MS        = 3 * 60 * 60 * 1000; // 3 hours, unchanged
+const LEARN_SESSION_MAX_TURNS = 15;
+const LEARN_SESSION_TTL_MS    = 6 * 60 * 60 * 1000;
 const oneDayMs = () => 24 * 60 * 60 * 1000;
 
 function planTier(plan) {
@@ -158,6 +160,35 @@ async function refundUsage(uid, plan, cost, usageId) {
   } catch (error) {
     console.error("Quota refund failed:", error.message);
   }
+}
+
+function validLearnSession(data, uid, now) {
+  return data?.uid === uid
+    && Number.isInteger(data.turnCount)
+    && data.turnCount > 0
+    && data.turnCount < LEARN_SESSION_MAX_TURNS
+    && typeof data.lastUsedAt === "number"
+    && now - data.lastUsedAt < LEARN_SESSION_TTL_MS;
+}
+
+async function getLearnSession(uid, sessionId) {
+  const snap = await db.collection("users").doc(uid).collection("learnSessions").doc(sessionId).get();
+  return snap.exists && validLearnSession(snap.data(), uid, Date.now());
+}
+
+async function reserveLearnTurn(uid, sessionId) {
+  const ref = db.collection("users").doc(uid).collection("learnSessions").doc(sessionId);
+  const now = Date.now();
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : null;
+    if (!validLearnSession(data, uid, now)) {
+      tx.set(ref, { uid, turnCount: 1, createdAt: now, lastUsedAt: now });
+      return { allowed: true, startsSession: true };
+    }
+    tx.update(ref, { turnCount: data.turnCount + 1, lastUsedAt: now });
+    return { allowed: true, startsSession: false };
+  });
 }
 
 // ── Admin-dashboard analytics counter — deliberately separate from the
@@ -945,7 +976,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType, learnMode, testModel } = req.body;
+  const { question, history = [], image, imageType, learnMode, learnSessionId, testModel } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -1029,10 +1060,19 @@ export default async function handler(req, res) {
   // This only applies to signed-in free/paid users; guests use a separate,
   // smaller quota mechanism (checkGuestUsage above) that isn't part of
   // this credit system and is unaffected either way.
-  const isLearnFollowUp = learnMode && safeHistory.length > 0;
   let chargedUsage = null;
   if (uid && !casual) {
-    if (!isLearnFollowUp) {
+    let startsLearnSession = false;
+    let sessionId = null;
+    if (learnMode) {
+      if (typeof learnSessionId !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(learnSessionId)) {
+        return res.status(400).json({ error: "Invalid Learn session. Please start a new Learn chat." });
+      }
+      sessionId = learnSessionId;
+      startsLearnSession = !(await getLearnSession(uid, sessionId));
+    }
+
+    if (!learnMode || startsLearnSession) {
       const cost = learnMode ? 1 : (image ? PHOTO_CREDIT_COST : 1);
       const usage = await checkAndIncrementUsage(uid, plan, cost);
       if (!usage.allowed) {
@@ -1057,6 +1097,7 @@ export default async function handler(req, res) {
       }
       if (usage.cost || usage.usageId) chargedUsage = { cost, usageId: usage.usageId };
     }
+    if (learnMode) await reserveLearnTurn(uid, sessionId);
     // Quota check passed (or this was a free Learn-mode follow-up) —
     // either way it's a real, counted question for the admin dashboard
     // (separate from the credit quota above, see comment there).
@@ -1069,10 +1110,10 @@ export default async function handler(req, res) {
   const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
   const messages = [{ role: "system", content: systemPrompt }];
 
-  const recentHistory = safeHistory.slice(-40);
+  const recentHistory = safeHistory.slice(-20);
   for (const msg of recentHistory) {
     if ((msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string") {
-      messages.push({ role: msg.role, content: msg.content.substring(0, 2000) });
+      messages.push({ role: msg.role, content: msg.content.substring(0, 1500) });
     }
   }
 

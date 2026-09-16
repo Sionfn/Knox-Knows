@@ -78,14 +78,17 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // EXTENSION ID — the extension passes its OWN current id in the URL
-    // (?extid=...) when it opens this page, so this never breaks when the dev
-    // id changes on reload. Falls back to a hardcoded id if absent. Only
-    // chrome-extension ids (letters, length 32) are accepted, so a random URL
-    // param can't redirect the token somewhere malicious.
+    // Never trust an extension id supplied in the URL. Otherwise a malicious
+    // extension can open this page with its own id and receive a Firebase
+    // custom token after the user signs in. Add a new id only when publishing
+    // a deliberate additional Knox extension build.
+    const ALLOWED_EXTENSION_IDS = new Set([
+      "bkhekfgklcbeidifbmdcnoafimnebnbl",
+    ]);
     const urlExtId = new URLSearchParams(location.search).get("extid") || "";
-    const validExtId = /^[a-p]{32}$/.test(urlExtId) ? urlExtId : "";
-    const EXTENSION_ID = validExtId || "bkhekfgklcbeidifbmdcnoafimnebnbl";
+    const EXTENSION_ID = ALLOWED_EXTENSION_IDS.has(urlExtId)
+      ? urlExtId
+      : "bkhekfgklcbeidifbmdcnoafimnebnbl";
 
     let isSignup = new URLSearchParams(location.search).get("signup") === "1";
     const $ = (id) => document.getElementById(id);

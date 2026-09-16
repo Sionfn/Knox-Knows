@@ -22,11 +22,11 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 
 export default async function handler(req, res) {
-  // CORS — same policy as ask.js: website origins + any extension origin.
+  // Only the Knox website mints extension tokens. The extension receives the
+  // result through the page handoff; it never needs direct CORS access here.
   const allowedOrigins = ["https://knoxknowsapp.com", "https://www.knoxknowsapp.com"];
   const origin = req.headers.origin || "";
-  const isExtension = /^(chrome-extension|moz-extension):\/\//.test(origin);
-  const corsOrigin = (allowedOrigins.includes(origin) || isExtension) ? origin : "https://knoxknowsapp.com";
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : "https://knoxknowsapp.com";
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");

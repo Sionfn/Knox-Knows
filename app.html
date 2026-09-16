@@ -2198,6 +2198,7 @@
   window._appImage      = null;
   window._conversation  = [];
   window._fbPayloads    = {};
+  window._learnSessionId = null;
 
   // Calculator state — globals so non-module script can access
   window._calcExpr        = '';
@@ -2512,7 +2513,7 @@
           <li>You get <strong>+${FREE_DAILY_REGEN} more every 24 hours</strong> — not at midnight, exactly 24h after your last refill.</li>
           <li>Unused credits save up, up to <strong>${FREE_MAX_BALANCE} total</strong> — so a light week means more room during a busy one.</li>
           <li>A typed question costs <strong>1 credit</strong>; a photo costs <strong>${PHOTO_CREDIT_COST}</strong>, since it takes more work to read.</li>
-          <li>🎓 <strong>Learn mode</strong> only charges once per topic — starting one costs 1 credit (even with a photo), and the whole guided back-and-forth after that is free.</li>
+          <li>🎓 <strong>Learn mode</strong> charges once to start a topic (even with a photo), then includes up to 14 guided follow-ups before you start a new topic.</li>
           <li>Casual chit-chat with Knox doesn't use any credits — only real homework help does.</li>
         </ul>
         <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Knox Plus</button>
@@ -2940,6 +2941,9 @@
       // continuing the conversation would silently fall back to normal
       // direct-answer behavior, which would feel like a broken promise.
       window._learnModeActive = convSnap.exists() && convSnap.data().type === 'learn';
+      window._learnSessionId = window._learnModeActive
+        ? (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)))
+        : null;
       document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
       const lb = document.getElementById('learnModeBar');
       if (window._learnModeActive) {
@@ -3440,6 +3444,7 @@ window.appStartNewChat = function() {
   window._conversation = [];
   window._currentConversationId = null;
   window._learnModeActive = false;
+  window._learnSessionId = null;
   const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
   resetWelcomeCopy();
   // Clear every nav tab's active state, then highlight "Ask Knox" as the
@@ -3467,6 +3472,7 @@ window.openLearnMode = function() {
   window._conversation = [];
   window._currentConversationId = null;
   window._learnModeActive = true;
+  window._learnSessionId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)));
   const lb = $('learnModeBar'); if (lb) lb.style.display = 'flex';
 
   const badge = document.querySelector('.welcome-badge');
@@ -4124,14 +4130,8 @@ window.appHandleAsk = async function() {
   const q = (input?.value || '').trim();
   if (!q && !window._appImage) return;
 
-  // Guest gate — 1 free question per day, tracked in localStorage
-  if (!window.currentUser) {
-    const used = window._getGuestCount();
-    if (used >= 1) {
-      const gc = $('guestCta'); if (gc) gc.style.display = 'flex';
-      return;
-    }
-  }
+  // Guest allowances are enforced by /api/ask. A separate browser-only
+  // counter used to disagree with the server and blocked free casual chat.
 
   const sendBtn = $('appSendBtn');
   if (sendBtn) sendBtn.disabled = true;
@@ -4222,6 +4222,7 @@ window.appHandleAsk = async function() {
         imageType: image?.type,
         history,
         learnMode: !!window._learnModeActive,
+        learnSessionId: window._learnModeActive ? window._learnSessionId : undefined,
         testModel: testModelFlag,
       }),
     });
@@ -4243,9 +4244,6 @@ window.appHandleAsk = async function() {
       }
       return;
     }
-
-    // Successful answer — increment guest count
-    if (!window.currentUser) window._incGuestCount();
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
