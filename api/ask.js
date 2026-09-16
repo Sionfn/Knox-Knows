@@ -19,20 +19,33 @@ const db        = getFirestore();
 
 // ── Usage limits ─────────────────────────────────────────────────────────
 // FREE: a daily-bank system, not a flat "reset at midnight" cap. Free users
-// regenerate 5 questions/day, up to a maximum bank of 20 — so a light week
+// regenerate 5 credits/day, up to a maximum bank of 20 — so a light week
 // lets you build up room for a heavy one (homework is bursty: light weeks,
 // then a midterm week), instead of punishing bursty use the way a flat
 // daily reset would. New signups start with FREE_STARTING_BALANCE (10) so
 // their very first session isn't limited — first impressions matter.
+//
+// A single credit pool covers both text questions and photo uploads —
+// there's no separate daily photo cap anymore. Photos just cost more
+// credits (PHOTO_CREDIT_COST) than a text question, since a photo hits the
+// vision model, Knox's most expensive request type. This is simpler to
+// explain ("N credits a day, use them however") than two independent caps,
+// while still protecting against a free account spending its whole daily
+// balance on the priciest request type. checkAndIncrementUsage's `cost`
+// parameter is what applies this — see there.
 //
 // PLUS: no meaningful cap. PLUS_LIMIT is a very high safety ceiling that
 // exists ONLY to stop a compromised/scripted account from running up real
 // API cost — no genuine student will ever come close to it (it's one
 // question every ~2 minutes non-stop for 3 hours straight). Marketed and
 // treated everywhere as "Unlimited" since no real user will ever feel it.
+// Paid users are NOT cost-weighted by photo vs text — the ceiling is high
+// enough that it doesn't matter, and there's no need to add that
+// complexity where it isn't protecting anything.
 const FREE_DAILY_REGEN      = 5;
 const FREE_MAX_BALANCE      = 20;
 const FREE_STARTING_BALANCE = 10;
+const PHOTO_CREDIT_COST     = 2;   // a photo costs 2 credits; a text question costs 1
 const PLUS_LIMIT            = 500;             // effectively unlimited; abuse-only ceiling
 const PLUS_WINDOW_MS        = 3 * 60 * 60 * 1000; // 3 hours, unchanged
 const oneDayMs = () => 24 * 60 * 60 * 1000;
@@ -47,11 +60,14 @@ function planTier(plan) {
 
 // Checks and (if allowed) records one use. Paid users still use the old
 // rolling-window log (they never come close to the ceiling, no need to
-// change their mechanism). Free users use the new daily-bank system:
-// balance regenerates by FREE_DAILY_REGEN once per real calendar day since
-// their last regen, capped at FREE_MAX_BALANCE, and each question spends 1.
-// A Firestore transaction keeps concurrent requests from double-spending.
-async function checkAndIncrementUsage(uid, plan) {
+// change their mechanism, and no need to cost-weight it either — see the
+// comment above PLUS_LIMIT). Free users use the daily-bank system: balance
+// regenerates by FREE_DAILY_REGEN once per real calendar day since their
+// last regen, capped at FREE_MAX_BALANCE, and each use spends `cost`
+// credits — 1 for a text question, PHOTO_CREDIT_COST for a photo — from
+// the SAME pool, rather than a separate daily photo cap. A Firestore
+// transaction keeps concurrent requests from double-spending.
+async function checkAndIncrementUsage(uid, plan, cost = 1) {
   const tier = planTier(plan);
   const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
   const now = Date.now();
@@ -77,7 +93,7 @@ async function checkAndIncrementUsage(uid, plan) {
     }
   }
 
-  // FREE — daily-bank system
+  // FREE — daily-bank system, shared pool for questions and photos
   const bankRef = db.collection("users").doc(uid).collection("usage").doc("bank");
   try {
     const result = await db.runTransaction(async (tx) => {
@@ -100,14 +116,14 @@ async function checkAndIncrementUsage(uid, plan) {
         }
       }
 
-      if (balance <= 0) {
+      if (balance < cost) {
         // Next regen lands 1 day after lastRegenAt.
         const retryAfterMs = Math.max(0, (lastRegenAt + oneDayMs()) - now);
         tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-        return { allowed: false, remaining: 0, limit: FREE_MAX_BALANCE, retryAfterMs, isDailyBank: true };
+        return { allowed: false, remaining: balance, limit: FREE_MAX_BALANCE, retryAfterMs, isDailyBank: true };
       }
 
-      balance -= 1;
+      balance -= cost;
       tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
       return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true };
     });
@@ -139,52 +155,6 @@ function recordDailyUsage(uid) {
       dayRef.collection("askers").doc(uid).set({ ts: Date.now() }).catch(() => {});
     }
   } catch (e) { /* analytics is never allowed to affect the real response */ }
-}
-
-// ── Daily photo cap for Free users ──────────────────────────────────────────
-// Photos hit the vision model which is our most expensive per-request feature,
-// so Free is capped at 5 photos per rolling 24 hours. Paid users bypass this
-// entirely. Reasoning:
-//   • A real student rarely uploads more than 5 photos in a day; the cap only
-//     bites on genuine abuse or a monster cram session (in which case $9.99 is
-//     a fair ask).
-//   • The rolling 24-hour window is generous vs. a hard midnight reset — a
-//     student who uploads at 11 pm doesn't get frozen out until midnight UTC.
-//   • Failing OPEN on any error (Firestore hiccup) so students never see a
-//     confusing "no photos for you" error caused by our infrastructure.
-const PHOTO_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
-const PHOTO_LIMIT_FREE = 5;
-
-async function checkAndIncrementPhoto(uid, plan) {
-  // Paid users bypass the photo cap — homepage promises unlimited.
-  if (planTier(plan) === 'paid') return { allowed: true };
-
-  const photoRef = db.collection("users").doc(uid).collection("usage").doc("photos");
-  const now = Date.now();
-
-  try {
-    const result = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(photoRef);
-      const log  = snap.exists ? (snap.data().log || []) : [];
-      const recent = log.filter(ts => now - ts < PHOTO_WINDOW_MS);
-
-      if (recent.length >= PHOTO_LIMIT_FREE) {
-        const oldest = Math.min(...recent);
-        const retryAfterMs = PHOTO_WINDOW_MS - (now - oldest);
-        return { allowed: false, remaining: 0, limit: PHOTO_LIMIT_FREE, retryAfterMs };
-      }
-
-      recent.push(now);
-      tx.set(photoRef, { log: recent, updatedAt: new Date().toISOString() });
-      return { allowed: true, remaining: PHOTO_LIMIT_FREE - recent.length, limit: PHOTO_LIMIT_FREE };
-    });
-
-    return result;
-  } catch (err) {
-    console.error("Photo quota check error:", err.message);
-    // Fail open — a broken Firestore call should never block a student.
-    return { allowed: true };
-  }
 }
 
 // ── Video lookup for visual learners ────────────────────────────────────────
@@ -1004,37 +974,31 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── Free-tier photo cap — check BEFORE the question quota so a rejected
-  // photo doesn't burn one of their 15 questions. Paid users skip inside
-  // checkAndIncrementPhoto and never get rejected here.
-  if (uid && image) {
-    const photoUsage = await checkAndIncrementPhoto(uid, plan);
-    if (!photoUsage.allowed) {
-      const hours = Math.max(1, Math.ceil((photoUsage.retryAfterMs || 0) / 3600000));
-      return res.status(429).json({
-        error: `Photo limit reached`,
-        message: `You've used all ${photoUsage.limit} photos in your free daily limit — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Knox Plus gets unlimited photo uploads.`,
-        limitReached: true,
-        photoLimit: true,
-      });
-    }
-  }
-
-  // ── Usage enforcement — casual chat is free, everything else counts ──
+  // ── Usage enforcement — casual chat is free, everything else counts.
+  // A photo costs PHOTO_CREDIT_COST credits from the SAME pool a text
+  // question draws from (see the comment above checkAndIncrementUsage) —
+  // there's no separate daily photo cap anymore.
   if (uid && !casual) {
-    const usage = await checkAndIncrementUsage(uid, plan);
+    const cost = image ? PHOTO_CREDIT_COST : 1;
+    const usage = await checkAndIncrementUsage(uid, plan, cost);
     if (!usage.allowed) {
       const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
       const waitMsg = minutes >= 60
         ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
         : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
-      const message = usage.isDailyBank
-        ? `You're out of free questions for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`
-        : `You're all caught up for now — more opens back up in ${waitMsg}.`;
+      let message;
+      if (usage.isDailyBank && image) {
+        message = `A photo costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited photos and questions.`;
+      } else if (usage.isDailyBank) {
+        message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`;
+      } else {
+        message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
+      }
       return res.status(429).json({
         error: `Usage limit reached`,
         message,
         limitReached: true,
+        photoLimit: !!image,
       });
     }
     // Quota check passed — this is a real, counted question. Log it for the
