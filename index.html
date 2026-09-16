@@ -5,11 +5,11 @@
     // Applied as early as possible — before any CSS has a chance to paint —
     // so a returning dark-mode user never sees a flash of the light theme
     // first. Light is the default for everyone until they explicitly
-    // switch. The marketing site intentionally keeps its own preference so
-    // changing it does not unexpectedly alter the chat app.
+    // switch. The preference is shared with the app, so a choice made here
+    // follows the student into Knox instead of flipping back on navigation.
     (function() {
       try {
-        if (localStorage.getItem('knoxLandingTheme') === 'dark') {
+        if (localStorage.getItem('knoxTheme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
@@ -31,7 +31,7 @@
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         if (isDark) document.documentElement.removeAttribute('data-theme');
         else document.documentElement.setAttribute('data-theme', 'dark');
-        try { localStorage.setItem('knoxLandingTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
         window.syncDarkModeIcon();
       };
       document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
@@ -2231,7 +2231,7 @@
     <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;align-items:stretch;">
 
       <!-- FREE card -->
-      <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #075E8D;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
+      <div class="pricing-plan-card pricing-free-card" style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #075E8D;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
         <!-- Invisible placeholder to match Plus's floating trial badge, so the two cards line up -->
         <div style="height:8px;" aria-hidden="true"></div>
         <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
@@ -2245,7 +2245,7 @@
       </div>
 
       <!-- KNOX PLUS card -->
-      <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
+      <div class="pricing-plan-card pricing-plus-card" style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
         <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:var(--orange);color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
         <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
         <div style="height:8px;" aria-hidden="true"></div>
@@ -2267,7 +2267,7 @@
          Photo upload) come FIRST, right under the plan headers — that way when a
          visitor's eye moves from the buttons down into the table, the first thing
          they see is the real difference, not a wall of matching checkmarks. -->
-    <div class="reveal" style="background:var(--surface);border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
+    <div class="reveal pricing-comparison-card" style="background:var(--surface);border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
 
       <!-- Group label -->
       <div style="padding:18px 24px 12px;border-bottom:1.5px solid var(--border);background:#FAFAF7;">
@@ -2513,6 +2513,83 @@
     transition: border-color 0.15s;
   }
   .knox-faq-body a:hover { border-color: var(--orange); }
+</style>
+
+<style>
+  /* Dark mode is a deliberately art-directed surface, rather than a light
+     page with dark variables swapped underneath. These overrides only apply
+     in dark mode and keep the bright Knox brand colors as focal points. */
+  html[data-theme="dark"] #home {
+    background:
+      radial-gradient(ellipse 65% 45% at 50% -8%, rgba(255, 107, 0, 0.18), transparent 72%),
+      linear-gradient(180deg, #15161c 0%, #101013 100%) !important;
+  }
+  html[data-theme="dark"] #why-knox,
+  html[data-theme="dark"] #subjects,
+  html[data-theme="dark"] #faq {
+    background: linear-gradient(180deg, #1c1d23 0%, #18191e 100%) !important;
+  }
+  html[data-theme="dark"] #how-it-works {
+    background: linear-gradient(180deg, #14151a 0%, #101013 100%) !important;
+  }
+  html[data-theme="dark"] #pricing {
+    background:
+      radial-gradient(ellipse 60% 38% at 50% 0%, rgba(88, 204, 2, 0.10), transparent 76%),
+      linear-gradient(180deg, #17191f 0%, #0f1014 100%) !important;
+    border-color: #3a3c47 !important;
+  }
+  html[data-theme="dark"] #pricing > div > div > div[style*="background:var(--surface)"] {
+    background: #1d1f26 !important;
+    border-color: #3a3d48 !important;
+    box-shadow: 0 5px 0 #111217 !important;
+  }
+  html[data-theme="dark"] #pricing .pricing-plan-card {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32), 0 6px 0 rgba(0, 0, 0, 0.30) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  html[data-theme="dark"] #pricing .pricing-plan-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.42), 0 8px 0 rgba(0, 0, 0, 0.28) !important;
+  }
+  html[data-theme="dark"] #pricing .pricing-free-card {
+    background: linear-gradient(145deg, #249fe1 0%, #087ab5 100%) !important;
+    border-color: #45c7ff !important;
+  }
+  html[data-theme="dark"] #pricing .pricing-plus-card {
+    background: linear-gradient(145deg, #70d51a 0%, #3f9c08 100%) !important;
+    border-color: #9bea55 !important;
+  }
+  html[data-theme="dark"] #pricing .pricing-comparison-card {
+    background: linear-gradient(145deg, #252831 0%, #1b1d24 100%) !important;
+    border-color: #3e424e !important;
+    box-shadow: 0 8px 0 #111217 !important;
+  }
+  html[data-theme="dark"] #pricing [style*="background:var(--surface)"] {
+    background: #262933 !important;
+    border-color: #454955 !important;
+  }
+  html[data-theme="dark"] #pricing [style*="color:#0A85C2"] { color: #71d1ff !important; }
+  html[data-theme="dark"] #pricing [style*="color:#2D6A00"] { color: #a4ee69 !important; }
+  html[data-theme="dark"] #pricing [style*="color:#16A34A"] { color: #86efac !important; }
+  html[data-theme="dark"] #pricing [style*="stroke:#16A34A"] { stroke: #86efac !important; }
+  html[data-theme="dark"] #pricing [style*="background:var(--green-light)"] { background: #24401c !important; }
+  html[data-theme="dark"] #pricing [style*="background:var(--border)"] { background: #363943 !important; }
+  html[data-theme="dark"] #pricing [style*="box-shadow:0 3px 0 var(--border)"] { box-shadow: 0 3px 0 #101116 !important; }
+  html[data-theme="dark"] #pricing button:focus-visible,
+  html[data-theme="dark"] #pricing a:focus-visible {
+    outline: 3px solid #ffd900;
+    outline-offset: 3px;
+  }
+  html[data-theme="dark"] body [style*="color:#555"],
+  html[data-theme="dark"] body [style*="color:#666"] {
+    color: #b7bbc5 !important;
+  }
+  html[data-theme="dark"] .knox-faq {
+    background: linear-gradient(145deg, #24262e, #1b1d23);
+    border-color: #393c47;
+    box-shadow: 0 5px 0 #111217;
+  }
+  html[data-theme="dark"] .knox-faq:hover { border-color: #805126; box-shadow: 0 5px 0 #40260f; }
 </style>
 
 
@@ -2941,9 +3018,8 @@
   window.redirectToApp = redirectToApp;
 
   // ── Dark mode toggle ─────────────────────────────────────────
-  // The landing page has its own saved theme choice. Its actual theme for
-  // this page load is already set by the inline script in <head>; this just
-  // handles the control after the rest of the page has loaded.
+  // The shared theme choice is already applied by the inline script in
+  // <head>; this just handles the control after the rest of the page loads.
   function syncDarkModeIcon() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const moon = document.getElementById('darkModeIconMoon');
@@ -2960,7 +3036,7 @@
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     if (isDark) document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', 'dark');
-    try { localStorage.setItem('knoxLandingTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+    try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
     syncDarkModeIcon();
   };
   syncDarkModeIcon();

@@ -7,11 +7,11 @@
     // first. Light is the default for everyone until they explicitly
     // switch — deliberately NOT following the OS-level color-scheme
     // preference, so a first-time visitor always sees light mode first.
-    // The app has its own saved preference; it should not be changed by
-    // visiting the marketing site.
+    // Theme choice is shared with the marketing site, so it stays consistent
+    // when someone moves between the landing page and Knox.
     (function() {
       try {
-        if (localStorage.getItem('knoxAppTheme') === 'dark') {
+        if (localStorage.getItem('knoxTheme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
@@ -34,7 +34,7 @@
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         if (isDark) document.documentElement.removeAttribute('data-theme');
         else document.documentElement.setAttribute('data-theme', 'dark');
-        try { localStorage.setItem('knoxAppTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
         window.syncDarkModeIcon();
       };
       document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
@@ -3554,7 +3554,7 @@ window.toggleDarkMode = function() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   if (isDark) document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', 'dark');
-  try { localStorage.setItem('knoxAppTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+  try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
   syncDarkModeIcon();
 };
 syncDarkModeIcon();
