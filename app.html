@@ -2261,9 +2261,12 @@
   // at FREE_MAX_BALANCE, starts new signups at FREE_STARTING_BALANCE) rather
   // than a flat reset — homework is bursty (light weeks, then midterms), so
   // unused days build up room for a heavy one instead of resetting to zero.
+  // A photo costs PHOTO_CREDIT_COST credits from this same pool, a text
+  // question costs 1 — there's no separate daily photo cap.
   const FREE_DAILY_REGEN      = 5;
   const FREE_MAX_BALANCE      = 20;
   const FREE_STARTING_BALANCE = 10;
+  const PHOTO_CREDIT_COST     = 2;
   const oneDayMs = () => 24 * 60 * 60 * 1000;
 
   function planTier(plan) {
@@ -2361,17 +2364,18 @@
 
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <h3>${left} question${left === 1 ? '' : 's'} left</h3>
+        <h3>${left} credit${left === 1 ? '' : 's'} left</h3>
         <p class="usage-info-next">${atMax
           ? `You're at your max saved balance.`
           : `+${FREE_DAILY_REGEN} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
         <div class="usage-info-divider"></div>
         <p><strong>How this works:</strong></p>
         <ul>
-          <li>New accounts start with <strong>${FREE_STARTING_BALANCE} questions</strong>.</li>
+          <li>New accounts start with <strong>${FREE_STARTING_BALANCE} credits</strong>.</li>
           <li>You get <strong>+${FREE_DAILY_REGEN} more every 24 hours</strong> — not at midnight, exactly 24h after your last refill.</li>
-          <li>Unused questions save up, up to <strong>${FREE_MAX_BALANCE} total</strong> — so a light week means more room during a busy one.</li>
-          <li>Casual chit-chat with Knox doesn't use any questions — only real homework help does.</li>
+          <li>Unused credits save up, up to <strong>${FREE_MAX_BALANCE} total</strong> — so a light week means more room during a busy one.</li>
+          <li>A typed question costs <strong>1 credit</strong>; a photo costs <strong>${PHOTO_CREDIT_COST}</strong>, since it takes more work to read.</li>
+          <li>Casual chit-chat with Knox doesn't use any credits — only real homework help does.</li>
         </ul>
         <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Knox Plus</button>
       `;
