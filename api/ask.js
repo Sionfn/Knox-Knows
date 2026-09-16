@@ -975,34 +975,57 @@ export default async function handler(req, res) {
   }
 
   // ── Usage enforcement — casual chat is free, everything else counts.
-  // A photo costs PHOTO_CREDIT_COST credits from the SAME pool a text
-  // question draws from (see the comment above checkAndIncrementUsage) —
-  // there's no separate daily photo cap anymore.
+  // A photo normally costs PHOTO_CREDIT_COST credits from the SAME pool a
+  // text question draws from (see the comment above checkAndIncrementUsage)
+  // — there's no separate daily photo cap.
+  //
+  // Learn mode is the one exception to that, on both axes:
+  //   1. Only the message that STARTS a new Learn conversation costs
+  //      anything — every follow-up reply within that same back-and-forth
+  //      is free. Learn mode is deliberately multi-turn by design (LEARN_
+  //      PROMPT: one guiding hint per message, never the full answer up
+  //      front), so without this, working through a single problem here
+  //      could cost several times more than just asking Knox directly for
+  //      the answer — taxing exactly the mode we most want students to
+  //      use. `history` reflects what the CLIENT sent for this request,
+  //      built before the current turn is appended to it (see app.html),
+  //      so an empty history reliably means this is the first message of
+  //      a fresh conversation, not a later one.
+  //   2. A photo that starts a Learn conversation costs the same 1 credit
+  //      as a typed question, not the usual PHOTO_CREDIT_COST — same
+  //      reasoning: don't add friction to the mode we want picked.
+  // This only applies to signed-in free/paid users; guests use a separate,
+  // smaller quota mechanism (checkGuestUsage above) that isn't part of
+  // this credit system and is unaffected either way.
+  const isLearnFollowUp = learnMode && Array.isArray(history) && history.length > 0;
   if (uid && !casual) {
-    const cost = image ? PHOTO_CREDIT_COST : 1;
-    const usage = await checkAndIncrementUsage(uid, plan, cost);
-    if (!usage.allowed) {
-      const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
-      const waitMsg = minutes >= 60
-        ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
-        : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
-      let message;
-      if (usage.isDailyBank && image) {
-        message = `A photo costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited photos and questions.`;
-      } else if (usage.isDailyBank) {
-        message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`;
-      } else {
-        message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
+    if (!isLearnFollowUp) {
+      const cost = learnMode ? 1 : (image ? PHOTO_CREDIT_COST : 1);
+      const usage = await checkAndIncrementUsage(uid, plan, cost);
+      if (!usage.allowed) {
+        const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
+        const waitMsg = minutes >= 60
+          ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
+          : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
+        let message;
+        if (usage.isDailyBank && image && !learnMode) {
+          message = `A photo costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited photos and questions.`;
+        } else if (usage.isDailyBank) {
+          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`;
+        } else {
+          message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
+        }
+        return res.status(429).json({
+          error: `Usage limit reached`,
+          message,
+          limitReached: true,
+          photoLimit: !!image,
+        });
       }
-      return res.status(429).json({
-        error: `Usage limit reached`,
-        message,
-        limitReached: true,
-        photoLimit: !!image,
-      });
     }
-    // Quota check passed — this is a real, counted question. Log it for the
-    // admin dashboard (separate from the quota log above, see comment there).
+    // Quota check passed (or this was a free Learn-mode follow-up) —
+    // either way it's a real, counted question for the admin dashboard
+    // (separate from the credit quota above, see comment there).
     recordDailyUsage(uid);
   }
 
