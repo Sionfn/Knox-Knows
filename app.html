@@ -584,6 +584,12 @@
     .sidebar-history-launch { margin:10px 8px 0; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; background:var(--cream); color:var(--text); display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:13px; font-weight:900; }
     .sidebar-history-launch:hover { border-color:var(--orange); color:var(--orange); }
     .sidebar-history-launch small { color:var(--text-light); font-size:11px; font-weight:800; }
+    .sidebar-next-panel { margin:16px 12px; padding:15px; border:1.5px solid var(--border); border-radius:16px; background:linear-gradient(145deg,var(--cream),var(--surface)); }
+    .sidebar-next-kicker { color:var(--text-light); font-size:10px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; }
+    .sidebar-next-title { color:var(--text); font-size:15px; font-weight:900; margin:5px 0 11px; }
+    .sidebar-next-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .sidebar-next-actions button { padding:9px 8px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); font:inherit; font-size:11px; font-weight:900; }
+    .sidebar-next-actions button:hover { color:var(--orange); border-color:var(--orange); }
     .sidebar-profile-dock { margin-top:auto; padding:12px; border-top:1px solid var(--border); background:var(--surface); display:none; align-items:center; gap:10px; }
     .sidebar-profile-avatar { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--orange-light); color:var(--orange); font-weight:900; flex:0 0 36px; overflow:hidden; }
     .sidebar-profile-avatar img { width:100%; height:100%; object-fit:cover; }
@@ -1815,8 +1821,16 @@
       </div>
 
       <button class="sidebar-history-launch sidebar-collapsible" onclick="openMobileHistory()" title="Open your saved conversations">
-        <span>◷ History</span><small>View all →</small>
+        <span>◷ Your history</span><small>Questions &amp; Learn →</small>
       </button>
+      <div class="sidebar-next-panel sidebar-collapsible">
+        <div class="sidebar-next-kicker">Study next</div>
+        <div class="sidebar-next-title">Keep the momentum going.</div>
+        <div class="sidebar-next-actions">
+          <button onclick="openLearnMode()">◈ Learn</button>
+          <button onclick="openStudyHub()">▣ Study Hub</button>
+        </div>
+      </div>
       <div id="sidebarHistoryList" class="sidebar-collapsible" style="display:none;">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
@@ -2942,8 +2956,19 @@
         limit(20)
       );
       const snaps = await getDocs(q);
-      renderHistoryInto(sbList, sbEmpty, snaps);
-      renderHistoryInto(mbList, mbEmpty, snaps);
+      // History is intentionally limited to actual Knox conversations:
+      // normal questions and Learn-mode sessions. Utility views never appear
+      // here, and older saved question threads (without a type) remain valid.
+      const historyDocs = snaps.docs.filter(s => {
+        const type = s.data()?.type;
+        return !type || type === 'chat' || type === 'learn';
+      });
+      const history = {
+        empty: historyDocs.length === 0,
+        forEach: (callback) => historyDocs.forEach(callback),
+      };
+      renderHistoryInto(sbList, sbEmpty, history);
+      renderHistoryInto(mbList, mbEmpty, history);
     } catch (e) { /* sidebar is non-critical */ }
   }
   window.loadSidebarHistory = loadSidebarHistory;
