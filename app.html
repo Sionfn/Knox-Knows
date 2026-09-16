@@ -1624,6 +1624,14 @@
     .settings-plan-hero { padding:18px; border-radius:18px; background:var(--cream); border:2px solid var(--border); margin-bottom:18px; }
     .settings-plan-hero strong { display:block; font-size:18px; color:var(--text); margin:3px 0; }
     .settings-plan-hero p { color:var(--text-light); font-size:13px; font-weight:700; line-height:1.5; }
+    .settings-section { margin:22px 0 4px; }
+    .settings-section-title { color:var(--text-light); font-size:11px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; margin-bottom:9px; }
+    .settings-choice-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+    .settings-choice { padding:12px; border:2px solid var(--border); border-radius:13px; background:var(--cream); color:var(--text); font:inherit; text-align:left; font-size:13px; font-weight:900; }
+    .settings-choice small { display:block; color:var(--text-light); font-size:11px; font-weight:700; line-height:1.35; margin-top:3px; }
+    .settings-choice.active { background:var(--orange-light); border-color:var(--orange); color:var(--orange); }
+    .settings-link-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:14px 0; border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text); font:inherit; font-size:14px; font-weight:800; text-align:left; }
+    .settings-link-btn span:last-child { color:var(--orange); }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 0;
@@ -3475,6 +3483,16 @@
   }
   window.showWelcomeModal = showWelcomeModal;
 
+  window.getKnoxPreferences = function() {
+    try { return JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}'); } catch (e) { return {}; }
+  };
+  window.setKnoxPreference = function(key, value) {
+    const prefs = window.getKnoxPreferences();
+    prefs[key] = value;
+    try { localStorage.setItem('knoxLearningPreferences', JSON.stringify(prefs)); } catch (e) {}
+    window.openAppSettings();
+  };
+
   // ── Settings ────────────────────────────────────────────────
   window.openAppSettings = function() {
     const u = window.currentUser;
@@ -3493,6 +3511,26 @@
       '<strong>' + (plan !== 'free' ? '⚡ Knox Plus' : '🦊 Knox Free') + '</strong>' +
       '<p>' + (plan !== 'free' ? 'Unlimited study help, photos, and every Knox tool.' : 'Your full Knox workspace is ready whenever you need it.') + '</p>';
     el.appendChild(hero);
+    const prefs = window.getKnoxPreferences();
+    const section = (title, html) => {
+      const s = document.createElement('section'); s.className = 'settings-section';
+      s.innerHTML = '<div class="settings-section-title">' + title + '</div>' + html;
+      el.appendChild(s);
+    };
+    const choice = (key, value, icon, title, copy) =>
+      '<button class="settings-choice ' + (prefs[key] === value ? 'active' : '') + '" onclick="setKnoxPreference(\'' + key + '\',\'' + value + '\')">' + icon + ' ' + title + '<small>' + copy + '</small></button>';
+    section('How Knox teaches', '<div class="settings-choice-grid">' +
+      choice('learningStyle','standard','✦','Standard','Clear, natural explanations') +
+      choice('learningStyle','visual','◈','Visual learner','Diagrams, examples & mental pictures') +
+      choice('learningStyle','step','⌘','Step-by-step','Slow down and show every move') +
+      choice('learningStyle','concise','↗','Quick review','Short answers and key takeaways') + '</div>');
+    section('Language', '<div class="settings-choice-grid">' +
+      choice('language','english','EN','English','Knox replies in English') +
+      choice('language','spanish','ES','Español','Knox replies in Spanish') + '</div>');
+    section('Appearance', '<div class="settings-choice-grid">' +
+      '<button class="settings-choice" onclick="toggleDarkMode()">☾ Dark mode<small>Switch the whole app theme</small></button>' +
+      '<button class="settings-choice" onclick="appStartNewChat();closeAppSettings()">✦ New chat<small>Start with a clean conversation</small></button></div>');
+    section('Help & support', '<button class="settings-link-btn" onclick="window.location.href=\'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20support\'">Contact support <span>›</span></button><button class="settings-link-btn" onclick="window.location.href=\'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback\'">Send product feedback <span>›</span></button>');
 
     // Build DOM safely
     function row(label, valueNode) {
@@ -4438,6 +4476,7 @@ window.appHandleAsk = async function() {
         history,
         learnMode: !!window._learnModeActive,
         learnSessionId: window._learnModeActive ? window._learnSessionId : undefined,
+        preferences: window.getKnoxPreferences?.() || {},
         testModel: testModelFlag,
       }),
     });

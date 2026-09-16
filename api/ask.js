@@ -976,7 +976,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType, learnMode, learnSessionId, testModel } = req.body;
+  const { question, history = [], image, imageType, learnMode, learnSessionId, preferences = {}, testModel } = req.body;
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -1107,7 +1107,18 @@ export default async function handler(req, res) {
   // Learn mode overrides the default prompt for real questions, but casual
   // chit-chat ("hey", "thanks") still gets the normal warm response — forcing
   // Socratic behavior onto small talk would feel robotic, not helpful.
-  const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
+  const basePrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
+  const learningStyle = ['standard', 'visual', 'step', 'concise'].includes(preferences?.learningStyle) ? preferences.learningStyle : 'standard';
+  const language = preferences?.language === 'spanish' ? 'spanish' : 'english';
+  const preferencePrompt = learningStyle === 'visual'
+    ? ' The student prefers visual teaching: use simple mental pictures, concrete examples, and compact text diagrams when useful.'
+    : learningStyle === 'step'
+      ? ' The student prefers step-by-step teaching: show each important step and do not skip reasoning.'
+      : learningStyle === 'concise'
+        ? ' The student prefers quick review: be concise, prioritize key takeaways, and avoid filler.'
+        : '';
+  const languagePrompt = language === 'spanish' ? ' Reply in Spanish unless the student asks otherwise.' : '';
+  const systemPrompt = basePrompt + preferencePrompt + languagePrompt;
   const messages = [{ role: "system", content: systemPrompt }];
 
   const recentHistory = safeHistory.slice(-20);
