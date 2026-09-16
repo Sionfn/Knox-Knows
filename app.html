@@ -510,7 +510,7 @@
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
     /* SIDEBAR */
     #rightSidebar {
-      width: 240px;
+      width: 252px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -538,21 +538,21 @@
       height: 64px;
       box-sizing: border-box;
       padding: 0 14px;
-      background: var(--orange);
-      border-bottom: 4px solid var(--orange-dark);
-      border-right: 1.5px solid var(--orange-dark);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
       flex-shrink: 0;
     }
     .sidebar-logo-link { display: flex; align-items: center; gap: 9px; text-decoration: none; min-width: 0; }
-    .sidebar-logo-link img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
-    .sidebar-logo-text { font-size: 15px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-logo-link img { width: 32px; height: 32px; border-radius: 11px; object-fit: cover; border: 2px solid var(--orange); flex-shrink: 0; box-shadow:0 2px 0 var(--orange-dark); }
+    .sidebar-logo-text { font-size: 16px; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sidebar-collapse-btn {
-      background: rgba(255,255,255,0.2); border: none; color: white;
+      background: var(--cream); border: 1px solid var(--border); color: var(--text-light);
       border-radius: 8px; width: 26px; height: 26px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: background 0.15s;
     }
-    .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.35); }
+    .sidebar-collapse-btn:hover { background: var(--orange-light); color:var(--orange); }
 
     /* Quick nav — Home, sits right below the top bar */
     /* Everything below the orange top bar. Each child below gets its own
@@ -581,6 +581,9 @@
     .sidebar-quicknav-link:hover { background: var(--orange-cream); color: var(--orange); }
     .sidebar-quicknav-link.sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
     .sidebar-quicknav-link .sq-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
+    .sidebar-history-launch { margin:10px 8px 0; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; background:var(--cream); color:var(--text); display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:13px; font-weight:900; }
+    .sidebar-history-launch:hover { border-color:var(--orange); color:var(--orange); }
+    .sidebar-history-launch small { color:var(--text-light); font-size:11px; font-weight:800; }
 
     .sidebar-section-header {
       padding: 14px 14px 10px;
@@ -1086,6 +1089,7 @@
       transition: all 0.12s;
     }
     .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); transform: translateY(-1px); }
+    .fb-retry { display:inline-flex; align-items:center; gap:5px; color:var(--text); font-size:12px; font-weight:900; }
     .fb-copy {
       display: inline-flex; align-items: center; justify-content: center;
       padding: 6px 9px; color: var(--text-light);
@@ -1575,7 +1579,7 @@
     .settings-card {
       background: var(--surface);
       border-radius: 24px;
-      max-width: 460px;
+      max-width: 540px;
       width: 100%;
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
@@ -1585,7 +1589,7 @@
       overflow-y: auto;
     }
     .settings-header {
-      background: var(--orange);
+      background: linear-gradient(135deg, var(--orange), #ff9500);
       border-bottom: 4px solid var(--orange-dark);
       padding: 22px 28px;
       display: flex; align-items: center; justify-content: space-between;
@@ -1603,6 +1607,9 @@
     }
     .settings-close:hover { background: rgba(255,255,255,0.3); }
     .settings-body { padding: 26px 28px; }
+    .settings-plan-hero { padding:18px; border-radius:18px; background:var(--cream); border:2px solid var(--border); margin-bottom:18px; }
+    .settings-plan-hero strong { display:block; font-size:18px; color:var(--text); margin:3px 0; }
+    .settings-plan-hero p { color:var(--text-light); font-size:13px; font-weight:700; line-height:1.5; }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 0;
@@ -1661,6 +1668,7 @@
        link is redundant there — hidden by default, restored below 900px
        where the sidebar is hidden and the logo needs a home. */
     .app-logo-link { display: none; }
+    @media (min-width:901px) { #appHeader { display:none; } }
     @media (max-width: 900px) {
       #rightSidebar { display: none; }
       #mobileHistoryBtn { display: flex; }
@@ -1778,33 +1786,32 @@
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
         <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
-          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
+          <span class="sq-icon">⌂</span><span class="sidebar-collapsible">Home</span>
         </a>
         <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">💬</span><span class="sidebar-collapsible">Ask Knox</span>
+          <span class="sq-icon">✦</span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
         <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🔢</span><span class="sidebar-collapsible">Calculator</span>
+          <span class="sq-icon">⌘</span><span class="sidebar-collapsible">Calculator</span>
         </button>
         <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
+          <span class="sq-icon">◈</span><span class="sidebar-collapsible">Learn</span>
         </button>
         <button class="sidebar-quicknav-link" data-nav="study" onclick="openStudyHub()" title="Study Hub — make flashcards, quizzes, and study guides" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🗂️</span><span class="sidebar-collapsible">Study Hub</span>
+          <span class="sq-icon">▣</span><span class="sidebar-collapsible">Study Hub</span>
         </button>
         <a class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
-          <span class="sq-icon">🧩</span><span class="sidebar-collapsible">Chrome extension</span>
+          <span class="sq-icon">◌</span><span class="sidebar-collapsible">Chrome extension</span>
         </a>
         <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
+          <span class="sq-icon">⚙</span><span class="sidebar-collapsible">Account &amp; Plan</span>
         </button>
       </div>
 
-      <div class="sidebar-section-header sidebar-collapsible">
-        <span>📚 History</span>
-        <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
-      </div>
-      <div id="sidebarHistoryList" class="sidebar-collapsible">
+      <button class="sidebar-history-launch sidebar-collapsible" onclick="openMobileHistory()" title="Open your saved conversations">
+        <span>◷ History</span><small>View all →</small>
+      </button>
+      <div id="sidebarHistoryList" class="sidebar-collapsible" style="display:none;">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
           Ask Knox something and your questions will appear here.
@@ -3176,6 +3183,18 @@
     }
   };
 
+  // Retry asks Knox to take a fresh pass at the original question. It uses
+  // the normal request path so the new answer is saved and counted exactly
+  // like any other deliberate question.
+  window.appRetryAnswer = function(fbId) {
+    const payload = window._fbPayloads[fbId];
+    if (!payload?.question || payload.question === '[image]') return;
+    window.appStartNewChat();
+    const input = $('appChatInput');
+    if (input) input.value = payload.question;
+    window.appHandleAsk?.();
+  };
+
   // Builds the action row under a Knox answer: Copy is always shown (no
   // account needed); the "Was this helpful?" thumbs only show when
   // `showFeedback` is true (signed-in users, on a freshly answered
@@ -3188,7 +3207,8 @@
         '<span class="fb-divider"></span>' +
         '<span>Was this helpful?</span>' +
         '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Helpful">👍</button>' +
-        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>';
+        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>' +
+        '<button class="fb-btn fb-retry" onclick="appRetryAnswer(\'' + fbId + '\')" aria-label="Retry answer" title="Ask Knox again">↻ Retry</button>';
     }
     html += '</div>';
     return html;
@@ -3405,6 +3425,13 @@
     if (!el) return;
 
     el.innerHTML = '';
+
+    const hero = document.createElement('div');
+    hero.className = 'settings-plan-hero';
+    hero.innerHTML = '<div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);">Your Knox account</div>' +
+      '<strong>' + (plan !== 'free' ? '⚡ Knox Plus' : '🦊 Knox Free') + '</strong>' +
+      '<p>' + (plan !== 'free' ? 'Unlimited study help, photos, and every Knox tool.' : 'Your full Knox workspace is ready whenever you need it.') + '</p>';
+    el.appendChild(hero);
 
     // Build DOM safely
     function row(label, valueNode) {
