@@ -207,9 +207,13 @@ async function findHelpfulVideo(topic) {
 // ── Casual vs. substantive classifier ───────────────────────────────────────
 // Cheap, fast check (gpt-4.1-mini) that decides whether the latest message is
 // small talk (free, no usage charge, warm chat voice) or an actual question/
-// task (charged, full KNOX_PROMPT + gpt-4.1). Fails toward SUBSTANTIVE on any
-// error or uncertainty — a student should never silently lose a real answer
-// because this classifier call hiccuped.
+// task (charged, full KNOX_PROMPT on the main TEXT_MODEL). Fails toward
+// SUBSTANTIVE on any error or uncertainty — a student should never silently
+// lose a real answer because this classifier call hiccuped.
+// (The classifier itself intentionally stays on gpt-4.1-mini rather than
+// Luna: it uses temperature:0 and max_tokens:5, both of which the newer
+// GPT-5.x models reject, and this one-word yes/no check gains nothing from
+// a stronger model.)
 async function isCasualMessage(question, history = []) {
   if (!question || !question.trim()) return false;
 
@@ -506,7 +510,8 @@ You're Knox. Real, warm, quick. You see people, you actually like them, and you 
 
 
 // Same input/output sizing and model for every plan — quality no longer
-// varies by plan, only rolling usage volume does (see USAGE_LIMITS above).
+// varies by plan, only volume does (Plus gets a rolling PLUS_LIMIT ceiling,
+// free runs on the daily bank in FREE_DAILY_REGEN / FREE_MAX_BALANCE above).
 // (The hard input-length guard is the 8000-char check earlier in the
 // handler; there's no separate truncation constant anymore — see the note
 // where trimmedQuestion is built. Output token limits are set inline where
