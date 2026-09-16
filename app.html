@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/knox-i18n.js"></script>
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
     // so a returning dark-mode user never sees a flash of the light theme
@@ -1852,7 +1853,7 @@
           <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
           <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
         </div>
-        <button class="sidebar-profile-settings" onclick="openAppSettings()" aria-label="Open settings" title="Settings">⚙</button>
+        <button class="sidebar-profile-settings" onclick="window.location.href='/settings.html'" aria-label="Open settings" title="Settings">⚙</button>
       </div>
 
     </aside>
@@ -1912,7 +1913,7 @@
       <span class="dd-email" id="ddEmail">—</span>
       <div id="ddPlan"></div>
     </div>
-    <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
+    <button class="app-dropdown-item" onclick="window.location.href='/settings.html'">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Account &amp; Plan
     </button>
@@ -2209,7 +2210,7 @@
         <button onclick="window.openStudyHub();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">🗂️</span> Study Hub
         </button>
-        <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+        <button onclick="window.location.href='/settings.html'" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">⚙️</span> Account &amp; Plan
         </button>
       </div>
@@ -2451,6 +2452,7 @@
       if (accountBtn) accountBtn.style.display = 'inline-flex';
 
       const initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+      try { localStorage.setItem('knoxAccountDisplay', JSON.stringify({ name: user.displayName || '', email: user.email || '', plan })); } catch (e) {}
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = (user.displayName || user.email || 'Your account').split(' ')[0];
       if (profilePlan) profilePlan.textContent = plan !== 'free' ? '⚡ Knox Plus' : 'Free plan';
@@ -3489,13 +3491,17 @@
   window.showWelcomeModal = showWelcomeModal;
 
   window.getKnoxPreferences = function() {
-    try { return JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}'); } catch (e) { return {}; }
+    try {
+      const preferences = JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}');
+      return { ...preferences, language: preferences.language || localStorage.getItem('knoxLanguage') || 'english' };
+    } catch (e) { return { language: localStorage.getItem('knoxLanguage') || 'english' }; }
   };
   window.setKnoxPreference = function(key, value) {
     const prefs = window.getKnoxPreferences();
     prefs[key] = value;
     try { localStorage.setItem('knoxLearningPreferences', JSON.stringify(prefs)); } catch (e) {}
-    window.openAppSettings();
+    if (key === 'language') localStorage.setItem('knoxLanguage', value);
+    window.location.href = '/settings.html';
   };
 
   // ── Settings ────────────────────────────────────────────────
