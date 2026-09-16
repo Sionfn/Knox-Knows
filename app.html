@@ -908,6 +908,33 @@
     #chatThread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     #chatThread.hidden { display: none; }
 
+    /* ═══ STUDY HUB ═════════════════════════════════════════ */
+    #studyHub { display:none; flex:1; overflow:auto; padding:32px 24px 42px; background:var(--cream); }
+    #studyHub.open { display:block; }
+    .study-hub-inner { max-width:900px; margin:0 auto; }
+    .study-kicker { color:var(--orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .study-title { color:var(--text); font-size:clamp(30px,5vw,46px); line-height:1.04; font-weight:900; margin:8px 0 10px; }
+    .study-copy { color:var(--text-light); font-weight:700; line-height:1.55; max-width:600px; }
+    .study-topic-box { margin:26px 0 22px; padding:18px; border:2px solid var(--border); border-radius:20px; background:var(--surface); box-shadow:0 4px 0 var(--border); }
+    .study-topic-label { display:block; color:var(--text); font-size:13px; font-weight:900; margin-bottom:9px; }
+    #studyTopicInput { width:100%; min-height:78px; resize:vertical; font:inherit; font-size:15px; font-weight:600; line-height:1.5; color:var(--text); background:var(--cream); border:2px solid var(--border); border-radius:14px; padding:12px 14px; outline:none; }
+    #studyTopicInput:focus { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); }
+    .study-tools-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .study-tool-card { min-height:230px; text-align:left; border:2px solid var(--border); border-radius:22px; padding:22px; background:var(--surface); box-shadow:0 5px 0 var(--border); font:inherit; cursor:pointer; transition:transform .18s,box-shadow .18s,border-color .18s; }
+    .study-tool-card:hover { transform:translateY(-4px); box-shadow:0 9px 0 var(--border); }
+    .study-tool-card:nth-child(1):hover { border-color:var(--purple); box-shadow:0 9px 0 var(--purple-light); }
+    .study-tool-card:nth-child(2):hover { border-color:var(--blue); box-shadow:0 9px 0 var(--blue-light); }
+    .study-tool-card:nth-child(3):hover { border-color:var(--green); box-shadow:0 9px 0 var(--green-light); }
+    .study-tool-icon { width:48px; height:48px; display:grid; place-items:center; border-radius:15px; font-size:25px; margin-bottom:17px; }
+    .study-tool-card:nth-child(1) .study-tool-icon { background:var(--purple-light); }
+    .study-tool-card:nth-child(2) .study-tool-icon { background:var(--blue-light); }
+    .study-tool-card:nth-child(3) .study-tool-icon { background:var(--green-light); }
+    .study-tool-title { display:block; color:var(--text); font-weight:900; font-size:18px; margin-bottom:7px; }
+    .study-tool-desc { display:block; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.5; }
+    .study-tool-action { display:inline-block; margin-top:16px; color:var(--orange); font-size:13px; font-weight:900; }
+    .study-promise { margin-top:22px; display:flex; gap:9px; align-items:flex-start; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.45; }
+    @media (max-width:680px) { #studyHub { padding:22px 16px 30px; } .study-tools-grid { grid-template-columns:1fr; } .study-tool-card { min-height:0; } }
+
     .msg-wrap { margin-bottom: 18px; }
     .msg-user { display: flex; justify-content: flex-end; }
     .msg-user-bubble {
@@ -1759,6 +1786,9 @@
         <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
         </button>
+        <button class="sidebar-quicknav-link" data-nav="study" onclick="openStudyHub()" title="Study Hub — make flashcards, quizzes, and study guides" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">🗂️</span><span class="sidebar-collapsible">Study Hub</span>
+        </button>
         <a class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
           <span class="sq-icon">🧩</span><span class="sidebar-collapsible">Chrome extension</span>
         </a>
@@ -1936,6 +1966,25 @@
 
           <!-- CHAT THREAD -->
           <div id="chatThread" class="hidden"></div>
+
+          <!-- STUDY HUB — turns any topic into a useful Knox learning session. -->
+          <section id="studyHub" aria-labelledby="studyHubTitle">
+            <div class="study-hub-inner">
+              <div class="study-kicker">Your student workspace</div>
+              <h1 class="study-title" id="studyHubTitle">Make your next study session count.</h1>
+              <p class="study-copy">Give Knox a topic, your notes, or a chapter. Pick how you want to study and Knox will build it with you.</p>
+              <div class="study-topic-box">
+                <label class="study-topic-label" for="studyTopicInput">What are you studying?</label>
+                <textarea id="studyTopicInput" placeholder="Example: Biology cell division — mitosis vs. meiosis, phases, and why they matter"></textarea>
+              </div>
+              <div class="study-tools-grid">
+                <button class="study-tool-card" onclick="startStudyTool('guide')"><span class="study-tool-icon">📝</span><span class="study-tool-title">Study guide</span><span class="study-tool-desc">Turn the important ideas into a clean, memorable review guide.</span><span class="study-tool-action">Build my guide →</span></button>
+                <button class="study-tool-card" onclick="startStudyTool('flashcards')"><span class="study-tool-icon">🃏</span><span class="study-tool-title">Flashcards</span><span class="study-tool-desc">Practice the vocabulary, formulas, events, and facts you need to remember.</span><span class="study-tool-action">Make flashcards →</span></button>
+                <button class="study-tool-card" onclick="startStudyTool('quiz')"><span class="study-tool-icon">🎯</span><span class="study-tool-title">Practice quiz</span><span class="study-tool-desc">Test yourself one question at a time, with feedback when you need it.</span><span class="study-tool-action">Start a quiz →</span></button>
+              </div>
+              <p class="study-promise"><span>🦊</span><span>Knox keeps the session conversational, so you can ask follow-ups, get hints, or switch to Learn mode anytime.</span></p>
+            </div>
+          </section>
 
           <!-- CALCULATOR — inline view, swaps in for welcome/chat -->
 <div class="calc-modal" id="calcModal">
@@ -2117,6 +2166,9 @@
         </button>
         <button onclick="window.openLearnMode();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">🎓</span> Learn
+        </button>
+        <button onclick="window.openStudyHub();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">🗂️</span> Study Hub
         </button>
         <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">⚙️</span> Account &amp; Plan
@@ -3465,6 +3517,8 @@ function scrollChat() {
 }
 
 window.appStartNewChat = function() {
+  const study = $('studyHub'); if (study) study.classList.remove('open');
+  const io = $('inputOuter'); if (io) io.style.display = '';
   const t  = $('chatThread');
   if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
@@ -3495,6 +3549,8 @@ window.openLearnMode = function() {
   }
   const t  = $('chatThread');
   if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
+  const study = $('studyHub'); if (study) study.classList.remove('open');
+  const io = $('inputOuter'); if (io) io.style.display = '';
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
   const gc = $('guestCta');      if (gc) gc.style.display = 'none';
   if (window.appClearImage) window.appClearImage();
@@ -3517,6 +3573,40 @@ window.openLearnMode = function() {
   if (learnNav) learnNav.classList.add('sidebar-nav-active');
 
   document.getElementById('appChatInput')?.focus();
+};
+
+// ── Study Hub ────────────────────────────────────────────────
+// A focused entry point for study-material workflows. Selecting a tool sends
+// a clear, purpose-built request through the same protected Knox API as chat,
+// so students can continue the session naturally once it is created.
+window.openStudyHub = function() {
+  if ($('calcModal')?.classList.contains('open')) window.closeCalc();
+  const ws = $('welcomeScreen'); if (ws) ws.style.display = 'none';
+  const ct = $('chatThread'); if (ct) ct.classList.add('hidden');
+  const io = $('inputOuter'); if (io) io.style.display = 'none';
+  const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
+  const hub = $('studyHub'); if (hub) hub.classList.add('open');
+  window._learnModeActive = false;
+  document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
+  document.querySelector('.sidebar-quicknav-link[data-nav="study"]')?.classList.add('sidebar-nav-active');
+  $('studyTopicInput')?.focus();
+};
+
+window.startStudyTool = function(tool) {
+  const topic = ($('studyTopicInput')?.value || '').trim();
+  if (!topic) {
+    $('studyTopicInput')?.focus();
+    return;
+  }
+  const prompts = {
+    guide: `Create a clear, well-structured study guide for: ${topic}. Use short sections, explain the most important concepts in simple language, include examples where useful, and finish with the 5 things I need to remember most.`,
+    flashcards: `Make interactive flashcards for: ${topic}. Give me one flashcard at a time: ask the question first, wait for my answer, then tell me if I got it right and explain briefly before moving to the next card.`,
+    quiz: `Quiz me on: ${topic}. Ask one question at a time, wait for my answer, then give feedback and a short explanation. Start easy and adapt based on how I do. Don't reveal the answer before I try.`
+  };
+  window.appStartNewChat();
+  const input = $('appChatInput');
+  if (input) input.value = prompts[tool] || prompts.guide;
+  window.appHandleAsk?.();
 };
 
 // Restores the normal welcome copy — called whenever a Learn session ends

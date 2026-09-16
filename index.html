@@ -710,6 +710,28 @@
       .extension-install-btn { width:100%; }
     }
 
+    /* ── STUDENT WORKSPACE ─────────────────────────────────── */
+    .workspace-section { background:var(--surface); padding:88px 24px; border-top:2px solid var(--border); }
+    .workspace-wrap { max-width:1080px; margin:0 auto; }
+    .workspace-layout { display:grid; grid-template-columns:1fr 1.08fr; gap:44px; align-items:center; }
+    .workspace-eyebrow { color:var(--orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px; }
+    .workspace-title { color:var(--text); font-size:clamp(30px,4vw,48px); line-height:1.06; font-weight:900; letter-spacing:-.03em; }
+    .workspace-copy { color:var(--text-light); font-size:16px; font-weight:650; line-height:1.65; margin-top:16px; max-width:475px; }
+    .workspace-points { display:grid; gap:13px; margin-top:26px; }
+    .workspace-point { display:flex; gap:12px; align-items:flex-start; color:var(--text); font-size:14px; font-weight:800; line-height:1.45; }
+    .workspace-point-icon { width:28px; height:28px; display:grid; place-items:center; flex:0 0 28px; border-radius:9px; background:var(--orange-light); font-size:15px; }
+    .workspace-preview { padding:18px; border:2px solid var(--border); border-radius:28px; background:var(--gray); box-shadow:0 9px 0 var(--border); }
+    .workspace-preview-top { display:flex; justify-content:space-between; align-items:center; padding:5px 5px 17px; color:var(--text); font-size:13px; font-weight:900; }
+    .workspace-preview-badge { color:white; background:var(--orange); border-radius:999px; padding:5px 10px; font-size:11px; box-shadow:0 2px 0 var(--orange-dark); }
+    .workspace-preview-card { border:2px solid var(--border); border-radius:20px; padding:20px; background:var(--surface); box-shadow:0 4px 0 var(--border); }
+    .workspace-preview-label { color:var(--text-light); font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .workspace-preview-topic { color:var(--text); font-size:20px; font-weight:900; margin-top:5px; }
+    .workspace-tool-row { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:17px; }
+    .workspace-tool { border-radius:14px; padding:13px 10px; text-align:center; font-size:12px; font-weight:900; color:var(--text); border:1.5px solid var(--border); background:var(--cream); }
+    .workspace-tool span { display:block; font-size:20px; margin-bottom:6px; }
+    .workspace-preview-note { margin-top:14px; padding:12px 14px; border-radius:13px; background:var(--green-light); color:var(--text); font-size:12px; font-weight:800; line-height:1.4; }
+    @media (max-width:760px) { .workspace-section { padding:64px 24px; } .workspace-layout { grid-template-columns:1fr; gap:34px; } }
+
     /* ── STATS STRIP ─────────────────────────────────────────── */
     .stats-strip {
       background:var(--gray); border-top:2px solid var(--border);
@@ -2029,6 +2051,38 @@
   </div>
 </section>
 
+<!-- ===================== STUDENT WORKSPACE ===================== -->
+<section class="workspace-section" aria-labelledby="workspace-title">
+  <div class="workspace-wrap">
+    <div class="workspace-layout">
+      <div>
+        <div class="workspace-eyebrow">More than homework help</div>
+        <h2 class="workspace-title" id="workspace-title">One place to get unstuck, learn it, and remember it.</h2>
+        <p class="workspace-copy">Knox starts with the question in front of you, then stays with you while you study. Build a guide, practice with flashcards, or let Knox quiz you until it clicks.</p>
+        <div class="workspace-points">
+          <div class="workspace-point"><span class="workspace-point-icon">📝</span><span><strong>Study guides</strong> for a topic, chapter, or your own pasted notes.</span></div>
+          <div class="workspace-point"><span class="workspace-point-icon">🃏</span><span><strong>Flashcards</strong> that keep the important stuff in front of you.</span></div>
+          <div class="workspace-point"><span class="workspace-point-icon">🎯</span><span><strong>Practice quizzes</strong> that explain mistakes instead of just marking them wrong.</span></div>
+        </div>
+        <div style="margin-top:30px;"><a class="btn-orange" href="/app">Open Study Hub&nbsp; →</a></div>
+      </div>
+      <div class="workspace-preview" aria-label="Preview of Knox Study Hub">
+        <div class="workspace-preview-top"><span>🗂️ Study Hub</span><span class="workspace-preview-badge">New</span></div>
+        <div class="workspace-preview-card">
+          <div class="workspace-preview-label">Today’s topic</div>
+          <div class="workspace-preview-topic">Cell division</div>
+          <div class="workspace-tool-row">
+            <div class="workspace-tool"><span>📝</span>Guide</div>
+            <div class="workspace-tool"><span>🃏</span>Cards</div>
+            <div class="workspace-tool"><span>🎯</span>Quiz</div>
+          </div>
+          <div class="workspace-preview-note">✓ Pick a format, then keep asking Knox for hints, examples, and follow-up help.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===================== WHY KNOX IS DIFFERENT ===================== -->
 <section id="why-knox" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
   <div style="max-width:1050px;margin:0 auto;">
@@ -2532,6 +2586,18 @@
   html[data-theme="dark"] #how-it-works {
     background: linear-gradient(180deg, #14151a 0%, #101013 100%) !important;
   }
+  html[data-theme="dark"] .workspace-section {
+    background:
+      radial-gradient(ellipse 58% 60% at 82% 22%, rgba(206, 130, 255, 0.11), transparent 72%),
+      linear-gradient(180deg, #111218 0%, #16171d 100%);
+  }
+  html[data-theme="dark"] .workspace-preview {
+    background: #1d1f27;
+    border-color: #3b3f4a;
+    box-shadow: 0 9px 0 #0d0e12;
+  }
+  html[data-theme="dark"] .workspace-preview-card { background:#252833; border-color:#414550; box-shadow:0 4px 0 #111217; }
+  html[data-theme="dark"] .workspace-tool { background:#191b22; border-color:#3b3f4a; }
   html[data-theme="dark"] #pricing {
     background:
       radial-gradient(ellipse 60% 38% at 50% 0%, rgba(88, 204, 2, 0.10), transparent 76%),
