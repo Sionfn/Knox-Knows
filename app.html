@@ -393,7 +393,10 @@
       font-size: 14px;
     }
 
-    #appGuestBtns { display: inline-flex; gap: 8px; align-items: center; }
+    /* Firebase restores a saved session asynchronously. Keep guest controls
+       hidden until that answer arrives so signed-in students never see a
+       distracting Login / Sign up flash on refresh or navigation. */
+    #appGuestBtns { display: none; gap: 8px; align-items: center; }
     .header-login-btn {
       padding: 9px 16px;
       background: rgba(255,255,255,0.18);
@@ -2687,6 +2690,10 @@
       // user got signed in.
       const gc = document.getElementById('guestCta'); if (gc) gc.style.display = 'none';
 
+      // Update the account shell immediately. Plan data can take another
+      // request, but the account identity is already known at this point.
+      window.userPlan = window.userPlan || 'free';
+      updatePlanUI();
       await fetchPlan(user.uid);
       loadSidebarHistory();
       // Track activity for the admin dashboard's DAU/WAU.
