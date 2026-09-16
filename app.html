@@ -1,6 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Applied as early as possible — before any CSS has a chance to paint —
+    // so a returning dark-mode user never sees a flash of the light theme
+    // first. Falls back to the OS-level color-scheme preference for a
+    // first-time visitor who hasn't explicitly chosen a mode yet.
+    (function() {
+      try {
+        var saved = localStorage.getItem('knoxTheme');
+        var isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) { /* localStorage/matchMedia unavailable — default to light */ }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
@@ -51,6 +64,42 @@
       --border:        #E5E5E5;
       --text:          #3C3C3C;
       --text-light:    #777;
+      /* Cards, buttons, modals, dropdowns — anything that was hardcoded
+         "white" before dark mode existed now uses this instead, so it
+         inverts along with everything else. */
+      --surface:       #FFFFFF;
+      --danger-bg:     #FEF2F2;
+      --danger-border: #FECACA;
+    }
+
+    /* DARK MODE — same structure as :root, one variable at a time. Applied
+       via a data-theme attribute on <html> (see the toggle script near the
+       end of the file) rather than a class, so it can be set before first
+       paint and avoid a light-mode flash for anyone who's chosen dark. */
+    html[data-theme="dark"] {
+      --orange:        #FF8A3D;
+      --orange-dark:   #FFA366;
+      --orange-light:  #4A2E1A;
+      --orange-cream:  #241C14;
+      --blue:          #4DC8FF;
+      --blue-dark:     #7DD8FF;
+      --blue-light:    #1B3542;
+      --green:         #7EDB3A;
+      --green-dark:    #9BE85C;
+      --green-light:   #23331A;
+      --red:           #FF6B6B;
+      --yellow:        #FFE066;
+      --yellow-dark:   #FFD966;
+      --purple:        #D9A6FF;
+      --cream:         #17171A;
+      --cream-warm:    #1E1E22;
+      --gray:          #202024;
+      --border:        #33333A;
+      --text:          #EDEDED;
+      --text-light:    #9B9BA3;
+      --surface:       #232327;
+      --danger-bg:     #3A2020;
+      --danger-border: #5C2E2E;
     }
 
     html, body {
@@ -148,6 +197,20 @@
     #mobileHistoryBtn:hover { background: rgba(255,255,255,0.3); }
 
     /* Usage pill in header — shows X/N today for free/super */
+    #darkModeToggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      color: white;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.15s;
+    }
+    #darkModeToggle:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
     #headerUsage {
       display: none;
       align-items: center;
@@ -169,7 +232,7 @@
     #headerUsage .usage-dot {
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
-    #headerUsage.danger .usage-dot { background: #FFB4B4; }
+    #headerUsage.danger .usage-dot { background: var(--red); }
     #headerUsage.unlimited {
       background: rgba(255,217,0,0.22);
       border-color: rgba(255,217,0,0.55);
@@ -283,19 +346,19 @@
     }
     .header-login-btn:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
     .header-signup-btn {
-      background: white;
+      background: var(--surface);
       color: var(--orange);
       border-color: white;
       box-shadow: 0 3px 0 rgba(0,0,0,0.15);
     }
-    .header-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); background: white; }
+    .header-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); background: var(--surface); }
 
     /* ═══ ACCOUNT DROPDOWN ════════════════════════════════ */
     #appAccountDropdown {
       position: fixed;
       top: 72px;
       right: 24px;
-      background: white;
+      background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 20px;
       box-shadow: 0 12px 28px rgba(0,0,0,0.15);
@@ -344,10 +407,10 @@
       line-height: 1;
       flex-shrink: 0;
     }
-    .dd-plan-free   { background: white;             border-color: var(--border);       }
+    .dd-plan-free   { background: var(--surface);             border-color: var(--border);       }
     .dd-plan-free   .plan-name { color: var(--text); }
     .dd-plan-free   .plan-tag  { color: var(--text-light); }
-    .dd-plan-super  { background: var(--green-light); border-color: #B9F6CA;             box-shadow: 0 2px 0 #B9F6CA; }
+    .dd-plan-super  { background: var(--green-light); border-color: var(--green-dark);             box-shadow: 0 2px 0 var(--green-dark); }
     .dd-plan-super  .plan-name { color: var(--green-dark); }
     .dd-plan-super  .plan-tag  { color: var(--green-dark); }
     .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
@@ -364,7 +427,7 @@
     }
     .app-dropdown-item:hover { background: var(--cream); }
     .app-dropdown-item.danger { color: var(--red); }
-    .app-dropdown-item.danger:hover { background: #FEF2F2; }
+    .app-dropdown-item.danger:hover { background: var(--danger-bg); }
     .app-dropdown-divider { height: 2px; background: var(--border); margin: 2px 0; }
     .plan-badge {
       font-size: 11px; font-weight: 900;
@@ -376,7 +439,7 @@
       display: inline-block;
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
-    .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: #B9F6CA; }
+    .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: var(--green-dark); }
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
@@ -386,7 +449,7 @@
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      background: white;
+      background: var(--surface);
       overflow: hidden;
       transition: width 0.2s ease;
     }
@@ -442,7 +505,7 @@
       padding: 8px; display: flex; flex-direction: column; gap: 2px;
       flex-shrink: 0; border-bottom: 1px solid var(--border);
       border-right: 1.5px solid var(--border);
-      background: white;
+      background: var(--surface);
     }
     .sidebar-quicknav-link {
       display: flex; align-items: center; gap: 10px;
@@ -467,7 +530,7 @@
       flex-shrink: 0;
     }
     .sidebar-new-btn {
-      background: white;
+      background: var(--surface);
       color: var(--orange);
       border: none;
       border-radius: 10px;
@@ -494,7 +557,7 @@
       padding: 24px 10px;
       text-align: center;
       font-size: 12px; font-weight: 700;
-      color: #BBB;
+      color: var(--text-light);
       line-height: 1.6;
     }
 
@@ -510,7 +573,7 @@
     }
     .sidebar-upgrade-card button {
       width: 100%; padding: 9px; border-radius: 10px;
-      background: white; color: var(--orange);
+      background: var(--surface); color: var(--orange);
       border: none; font-size: 12.5px; font-weight: 900; font-family: inherit;
       cursor: pointer; transition: transform 0.15s;
     }
@@ -525,7 +588,7 @@
       color: var(--text-light);
       transition: all 0.15s;
       border: 2px solid transparent;
-      background: white;
+      background: var(--surface);
       width: 100%;
       text-align: left;
       margin-bottom: 4px;
@@ -551,7 +614,7 @@
       transition: opacity 0.15s, background 0.15s;
     }
     .sidebar-history-item:hover .shi-delete { opacity: 1; }
-    .sidebar-history-item .shi-delete:hover { background: #FEE2E2; color: var(--red); }
+    .sidebar-history-item .shi-delete:hover { background: var(--danger-bg); color: var(--red); }
     /* Touch devices have no hover — show delete buttons by default */
     @media (hover: none) {
       .sidebar-history-item .shi-delete { opacity: 0.6; width: 28px; height: 28px; }
@@ -561,7 +624,7 @@
       padding: 10px 8px;
       border-top: 2px solid var(--border);
       flex-shrink: 0;
-      background: white;
+      background: var(--surface);
     }
     .sidebar-home-link {
       display: flex; align-items: center; gap: 8px;
@@ -589,7 +652,7 @@
       top: 0; left: 0; bottom: 0;
       width: 85%;
       max-width: 300px;
-      background: white;
+      background: var(--surface);
       display: flex; flex-direction: column;
       overflow: hidden;
       animation: slideRight 0.25s ease;
@@ -706,7 +769,7 @@
     .welcome-accent { color: var(--orange); }
     .welcome-sub {
       font-size: 16px; font-weight: 700;
-      color: #666;
+      color: var(--text-light);
       max-width: 480px;
       line-height: 1.55;
       margin-bottom: 28px;
@@ -720,7 +783,7 @@
       max-width: 580px;
     }
     .suggestion-chip {
-      background: white;
+      background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 20px;
       padding: 18px 16px;
@@ -822,7 +885,7 @@
     }
 
     .msg-knox-bubble {
-      background: white;
+      background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 4px 20px 20px 20px;
       padding: 18px 20px;
@@ -840,7 +903,7 @@
       box-shadow: none;
     }
     .knox-section-card {
-      background: white;
+      background: var(--surface);
       border: 2px solid var(--border);
       border-radius: 16px;
       padding: 14px 16px;
@@ -918,7 +981,7 @@
       padding: 5px 12px;
       border-radius: 10px;
       border: 2px solid var(--border);
-      background: white;
+      background: var(--surface);
       font-size: 14px;
       box-shadow: 0 2px 0 var(--border);
       transition: all 0.12s;
@@ -1094,6 +1157,13 @@
       position: relative;
       z-index: 10;
     }
+    .input-disclaimer {
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-light);
+      padding: 0 16px 10px;
+    }
     #inputArea {
       padding: 14px 24px 16px;
       background: var(--cream);
@@ -1167,7 +1237,7 @@
 
     .input-box {
       display: flex; align-items: center; gap: 8px;
-      background: white;
+      background: var(--surface);
       border: 2px solid #E8E8E8;
       border-radius: 20px;
       padding: 8px 8px 8px 12px;
@@ -1187,7 +1257,7 @@
       padding: 6px 0;
       line-height: 1.5;
     }
-    #appChatInput::placeholder { color: #999; }
+    #appChatInput::placeholder { color: var(--text-light); }
 
     .input-tools { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .input-icon-btn {
@@ -1230,7 +1300,7 @@
     @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
     .auth-card {
-      background: white;
+      background: var(--surface);
       border-radius: 24px;
       max-width: 440px;
       width: 100%;
@@ -1285,7 +1355,7 @@
       letter-spacing: 0.04em;
     }
     .auth-tab.active {
-      background: white;
+      background: var(--surface);
       color: var(--text);
       box-shadow: 0 2px 0 var(--border);
     }
@@ -1344,7 +1414,7 @@
 
     .auth-divider {
       display: flex; align-items: center; gap: 10px;
-      color: #CCC;
+      color: var(--text-light);
       font-size: 12px; font-weight: 800;
       margin: 16px 0;
       text-transform: uppercase;
@@ -1361,7 +1431,7 @@
       padding: 13px;
       border-radius: 14px;
       border: 2px solid var(--border);
-      background: white;
+      background: var(--surface);
       font-size: 14px; font-weight: 800;
       display: flex; align-items: center; justify-content: center; gap: 10px;
       color: var(--text);
@@ -1384,16 +1454,16 @@
       border: 2px solid;
     }
     .auth-error {
-      background: #FEF2F2;
-      border-color: #FECACA;
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
       color: var(--red);
-      box-shadow: 0 2px 0 #FECACA;
+      box-shadow: 0 2px 0 var(--danger-border);
     }
     .auth-success {
       background: var(--green-light);
-      border-color: #B9F6CA;
+      border-color: var(--green-dark);
       color: var(--green-dark);
-      box-shadow: 0 2px 0 #B9F6CA;
+      box-shadow: 0 2px 0 var(--green-dark);
     }
     .auth-terms {
       text-align: center;
@@ -1404,7 +1474,7 @@
     .auth-terms a { color: var(--orange); text-decoration: none; }
 
     .settings-card {
-      background: white;
+      background: var(--surface);
       border-radius: 24px;
       max-width: 460px;
       width: 100%;
@@ -1458,7 +1528,7 @@
     }
     .calc-modal.open { display: flex; }
     .calc-card {
-      background: white;
+      background: var(--surface);
       border-radius: 24px;
       width: 380px;
       max-width: 95vw;
@@ -1469,22 +1539,22 @@
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
     .calc-btn-num {
-      background: white; border: 1.5px solid #E5E7EB; border-radius: 12px;
-      font-size: 20px; font-weight: 700; color: #1f2937;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+      font-size: 20px; font-weight: 700; color: var(--text);
       padding: 16px 8px; font-family: inherit;
-      box-shadow: 0 2px 0 #E5E7EB;
+      box-shadow: 0 2px 0 var(--border);
     }
     .calc-btn-op {
-      background: #FFF4EC; border: none; border-radius: 12px;
-      font-size: 20px; font-weight: 900; color: #FF6B00;
+      background: var(--orange-cream); border: none; border-radius: 12px;
+      font-size: 20px; font-weight: 900; color: var(--orange);
       padding: 16px 8px; font-family: inherit;
-      box-shadow: 0 3px 0 #FFD0A0;
+      box-shadow: 0 3px 0 var(--orange-light);
     }
     .calc-btn-fn {
-      background: #EEF2FF; border: none; border-radius: 10px;
-      font-size: 12px; font-weight: 800; color: #4338CA;
+      background: var(--blue-light); border: none; border-radius: 10px;
+      font-size: 12px; font-weight: 800; color: var(--blue-dark);
       padding: 12px 2px; font-family: inherit;
-      box-shadow: 0 2px 0 #C7D2FE;
+      box-shadow: 0 2px 0 var(--blue-light);
     }
 
     /* ═══ RESPONSIVE ═══════════════════════════════════════ */
@@ -1670,6 +1740,10 @@
     </div>
 
     <div class="header-right">
+      <button id="darkModeToggle" onclick="window.toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <svg id="darkModeIconMoon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="darkModeIconSun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </button>
       <button id="streakPill" onclick="showStreakDetail()" title="Your study streak" style="display:none;">
         <span id="streakFlame">🔥</span>
         <span id="streakCount">0</span>
@@ -1940,6 +2014,7 @@
             </div>
           </div>
         </div>
+        <p class="input-disclaimer">Knox is AI and can make mistakes — check important answers. Use 👍 / 👎 under a reply to send us feedback.</p>
       </div>
     </div>
 
@@ -3400,6 +3475,33 @@ function resetWelcomeCopy() {
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);
 }
+
+// ── Dark mode toggle ─────────────────────────────────────────
+// The actual theme for this page load is already set by the inline
+// script in <head> (it has to run before first paint, or a returning
+// dark-mode user would see a flash of light mode first). This just
+// handles the toggle button itself — flipping the attribute, persisting
+// the choice, and keeping the sun/moon icon in sync (including once on
+// load, to match whatever <head> already decided).
+function syncDarkModeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const moon = document.getElementById('darkModeIconMoon');
+  const sun  = document.getElementById('darkModeIconSun');
+  if (moon) moon.style.display = isDark ? 'none' : '';
+  if (sun)  sun.style.display  = isDark ? '' : 'none';
+}
+window.toggleDarkMode = function() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
+  }
+  syncDarkModeIcon();
+};
+syncDarkModeIcon();
 
 window.appSetQuestion = function(q) {
   const input = $('appChatInput');
