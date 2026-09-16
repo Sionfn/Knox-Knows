@@ -2599,6 +2599,11 @@
       const token = await window.currentUser.getIdToken();
       const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
       const data = await res.json();
+      // Authentication restores in two async steps (Firebase session, then
+      // the user plan). A free-plan request may still finish after the paid
+      // plan is known; never let that stale response overwrite Plus with a
+      // free credit balance in the sidebar.
+      if (planTier(window.userPlan) !== 'free') return;
       const u = data.usage || {};
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
