@@ -590,7 +590,11 @@
     .sidebar-profile-copy { min-width:0; flex:1; }
     .sidebar-profile-name { color:var(--text); font-size:13px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .sidebar-profile-plan { color:var(--text-light); font-size:11px; font-weight:700; margin-top:1px; }
-    .sidebar-profile-usage { color:var(--orange); font-size:11px; font-weight:900; margin-bottom:3px; }
+    .sidebar-usage-button { margin:12px 12px 0; padding:12px; border:1.5px solid var(--border); border-radius:13px; background:var(--cream); color:var(--text); display:none; align-items:center; justify-content:space-between; gap:8px; font:inherit; text-align:left; }
+    .sidebar-usage-button:hover { border-color:var(--orange); }
+    .sidebar-usage-button span { display:block; font-size:12px; font-weight:900; }
+    .sidebar-usage-button small { display:block; color:var(--text-light); font-size:10px; font-weight:700; margin-top:2px; }
+    .sidebar-usage-arrow { color:var(--orange); font-size:16px; }
     .sidebar-profile-settings { width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:var(--cream); color:var(--text-light); font-size:17px; }
     .sidebar-profile-settings:hover { color:var(--orange); border-color:var(--orange); }
 
@@ -1822,6 +1826,10 @@
         </div>
       </div>
 
+      <button class="sidebar-usage-button sidebar-collapsible" id="sidebarUsageButton" onclick="openUsageInfo()" title="See how your plan works">
+        <span><span id="sidebarUsageText">Checking your plan…</span><small id="sidebarUsageHint">Tap for details</small></span><b class="sidebar-usage-arrow">›</b>
+      </button>
+
       <!-- Pinned upgrade card — free users only, toggled by JS -->
       <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
         <p>⚡ Go unlimited with Knox Plus</p>
@@ -1833,7 +1841,6 @@
       <div class="sidebar-profile-dock" id="sidebarProfileDock">
         <div class="sidebar-profile-avatar" id="sidebarProfileAvatar">?</div>
         <div class="sidebar-profile-copy">
-          <div class="sidebar-profile-usage" id="sidebarProfileUsage"></div>
           <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
           <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
         </div>
@@ -2426,8 +2433,10 @@
     const profileDock = document.getElementById('sidebarProfileDock');
     const profileName = document.getElementById('sidebarProfileName');
     const profilePlan = document.getElementById('sidebarProfilePlan');
-    const profileUsage = document.getElementById('sidebarProfileUsage');
     const profileAvatar = document.getElementById('sidebarProfileAvatar');
+    const sidebarUsage = document.getElementById('sidebarUsageButton');
+    const sidebarUsageText = document.getElementById('sidebarUsageText');
+    const sidebarUsageHint = document.getElementById('sidebarUsageHint');
 
     if (user) {
       if (guestBtns)  guestBtns.style.display  = 'none';
@@ -2437,7 +2446,9 @@
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = (user.displayName || user.email || 'Your account').split(' ')[0];
       if (profilePlan) profilePlan.textContent = plan !== 'free' ? '⚡ Knox Plus' : 'Free plan';
-      if (profileUsage) profileUsage.textContent = plan !== 'free' ? '∞ Unlimited questions' : '';
+      if (sidebarUsage) sidebarUsage.style.display = 'flex';
+      if (sidebarUsageText && plan !== 'free') sidebarUsageText.textContent = '∞ Unlimited questions';
+      if (sidebarUsageHint && plan !== 'free') sidebarUsageHint.textContent = 'Plus plan details';
       if (profileAvatar) {
         profileAvatar.innerHTML = user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : initials;
       }
@@ -2500,7 +2511,7 @@
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = 'Sign in to Knox';
       if (profilePlan) profilePlan.textContent = 'Save your study history';
-      if (profileUsage) profileUsage.textContent = '';
+      if (sidebarUsage) sidebarUsage.style.display = 'none';
       if (profileAvatar) profileAvatar.textContent = '🦊';
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
@@ -2559,8 +2570,10 @@
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
       text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus';
-      const profileUsage = document.getElementById('sidebarProfileUsage');
-      if (profileUsage) profileUsage.textContent = '∞ Unlimited questions';
+      const sidebarUsageText = document.getElementById('sidebarUsageText');
+      if (sidebarUsageText) sidebarUsageText.textContent = '∞ Unlimited questions';
+      const sidebarUsageHint = document.getElementById('sidebarUsageHint');
+      if (sidebarUsageHint) sidebarUsageHint.textContent = 'Plus plan details';
       return;
     }
     usage.classList.remove('unlimited');
@@ -2594,8 +2607,10 @@
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
         : `${left} question${left === 1 ? '' : 's'} left`;
-      const profileUsage = document.getElementById('sidebarProfileUsage');
-      if (profileUsage) profileUsage.textContent = `${left} credit${left === 1 ? '' : 's'} left`;
+      const sidebarUsageText = document.getElementById('sidebarUsageText');
+      if (sidebarUsageText) sidebarUsageText.textContent = `${left} credit${left === 1 ? '' : 's'} left`;
+      const sidebarUsageHint = document.getElementById('sidebarUsageHint');
+      if (sidebarUsageHint) sidebarUsageHint.textContent = 'Credits refresh daily';
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
