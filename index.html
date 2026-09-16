@@ -13,6 +13,27 @@
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
+
+      // Theme controls must not depend on Firebase or any other module.
+      window.syncDarkModeIcon = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const moon = document.getElementById('darkModeIconMoon');
+        const sun = document.getElementById('darkModeIconSun');
+        const toggle = document.getElementById('darkModeToggle');
+        if (moon) moon.style.display = isDark ? 'none' : '';
+        if (sun) sun.style.display = isDark ? '' : 'none';
+        if (toggle) {
+          toggle.setAttribute('aria-pressed', String(isDark));
+          toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+      };
+      window.toggleDarkMode = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.toggleAttribute('data-theme', !isDark);
+        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        window.syncDarkModeIcon();
+      };
+      document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
     })();
   </script>
   <meta charset="UTF-8">
@@ -215,6 +236,7 @@
        at the very top of <head> so it's in place before first paint. Light
        is the default for everyone until they explicitly switch. */
     html[data-theme="dark"] {
+      color-scheme: dark;
       /* Accents — deliberately unchanged from light mode. */
       --orange:  #FF6B00;
       --orange2: #FF8C00;
@@ -372,8 +394,8 @@
     .h1 { font-size:clamp(28px,4vw,48px); font-weight:900; line-height:1.1; letter-spacing:-0.01em; }
     .h2 { font-size:clamp(22px,3vw,36px); font-weight:900; line-height:1.15; }
     .h3 { font-size:20px; font-weight:800; line-height:1.2; }
-    .body-lg { font-size:18px; font-weight:500; line-height:1.65; color:#555; }
-    .body { font-size:16px; font-weight:500; line-height:1.6; color:#555; }
+    .body-lg { font-size:18px; font-weight:500; line-height:1.65; color:var(--text-light); }
+    .body { font-size:16px; font-weight:500; line-height:1.6; color:var(--text-light); }
 
     /* ── UTILS ───────────────────────────────────────────────── */
     .text-center { text-align:center; }
@@ -660,6 +682,33 @@
       margin-top:16px; position:relative; z-index:1;
     }
 
+    /* ── CHROME EXTENSION LAUNCH ─────────────────────────────── */
+    .extension-launch {
+      background:var(--blue-light);
+      border-top:2px solid var(--blue);
+      border-bottom:2px solid var(--blue);
+      padding:28px 24px;
+    }
+    .extension-launch-inner {
+      max-width:960px; margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap:24px;
+    }
+    .extension-launch-copy { display:flex; align-items:center; gap:16px; }
+    .extension-launch-icon {
+      width:54px; height:54px; border-radius:16px; flex-shrink:0;
+      display:grid; place-items:center; background:var(--surface);
+      border:2px solid var(--blue); box-shadow:0 4px 0 var(--blue-dark);
+      font-size:27px;
+    }
+    .extension-launch-eyebrow { color:var(--blue-dark); font-size:12px; font-weight:900; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:3px; }
+    .extension-launch-title { color:var(--text); font-size:20px; font-weight:900; line-height:1.2; }
+    .extension-launch-desc { color:var(--text-light); font-size:14px; font-weight:700; line-height:1.45; margin-top:3px; }
+    .extension-install-btn { flex-shrink:0; text-decoration:none; white-space:nowrap; }
+    @media (max-width:640px) {
+      .extension-launch-inner { align-items:stretch; flex-direction:column; }
+      .extension-install-btn { width:100%; }
+    }
+
     /* ── STATS STRIP ─────────────────────────────────────────── */
     .stats-strip {
       background:var(--gray); border-top:2px solid var(--border);
@@ -699,7 +748,7 @@
     .mode-card-blue:hover { box-shadow:0 10px 0 #0A85C2; }
     .mode-card-icon { font-size:48px; margin-bottom:16px; }
     .mode-card-title { font-size:22px; font-weight:900; color:var(--text); margin-bottom:8px; }
-    .mode-card-desc  { font-size:15px; font-weight:600; color:#555; line-height:1.55; }
+    .mode-card-desc  { font-size:15px; font-weight:600; color:var(--text-light); line-height:1.55; }
     .mode-card-btn   { margin-top:24px; }
     @media (max-width:640px) { .modes-grid { grid-template-columns:1fr; } }
 
@@ -724,7 +773,7 @@
     }
     .step-icon { font-size:40px; margin-bottom:12px; }
     .step-title { font-size:18px; font-weight:800; color:var(--text); margin-bottom:8px; }
-    .step-desc  { font-size:14px; font-weight:600; color:#666; line-height:1.6; }
+    .step-desc  { font-size:14px; font-weight:600; color:var(--text-light); line-height:1.6; }
     @media (max-width:640px) { .steps-grid { grid-template-columns:1fr; } }
 
     /* ── SUBJECTS ────────────────────────────────────────────── */
@@ -1200,7 +1249,7 @@
     .faq-item.open .faq-arrow { transform:rotate(180deg); }
     .faq-a {
       display:none; padding:0 22px 18px;
-      font-size:15px; font-weight:600; color:#555; line-height:1.65;
+      font-size:15px; font-weight:600; color:var(--text-light); line-height:1.65;
     }
     .faq-item.open .faq-a { display:block; }
     /* Native <details> styling — used by new FAQ section */
@@ -1905,6 +1954,9 @@
       <a href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
         <span style="font-size:20px;">❓</span> FAQ
       </a>
+      <a href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web" target="_blank" rel="noopener" onclick="closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+        <span style="font-size:20px;">🧩</span> Get the Chrome extension
+      </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid var(--border);">
       <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
@@ -1933,7 +1985,7 @@
       <span style="color:var(--orange);">Start Knowing.</span>
     </h1>
 
-    <p style="font-size:18px;font-weight:600;color:#666;line-height:1.65;max-width:520px;margin:18px auto 0;">
+    <p style="font-size:18px;font-weight:600;color:var(--text-light);line-height:1.65;max-width:520px;margin:18px auto 0;">
       The homework AI that talks like a real tutor, not a form to fill out. No menus, no modes — just ask. Free gets the same quality as paid.
     </p>
 
@@ -1947,17 +1999,32 @@
     <!-- Social proof row -->
     <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
           <span style="font-size:20px;">📚</span> Every subject K-12 → College
         </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
           <span style="font-size:20px;">📷</span> Snap a photo, done
         </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#555;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
           <span style="font-size:20px;">🎓</span> Teaches, doesn't just tell
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===================== CHROME EXTENSION ===================== -->
+<section class="extension-launch" aria-labelledby="extension-launch-title">
+  <div class="extension-launch-inner">
+    <div class="extension-launch-copy">
+      <div class="extension-launch-icon" aria-hidden="true">🧩</div>
+      <div>
+        <div class="extension-launch-eyebrow">New: Chrome extension</div>
+        <h2 class="extension-launch-title" id="extension-launch-title">Get Knox help without leaving your homework.</h2>
+        <p class="extension-launch-desc">Install Knox Knows for Chrome and keep your AI study companion one click away.</p>
+      </div>
+    </div>
+    <a class="btn-blue extension-install-btn" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web" target="_blank" rel="noopener">Add to Chrome&nbsp; →</a>
   </div>
 </section>
 
@@ -2500,6 +2567,7 @@
         <a href="#subjects" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Subjects</a>
         <a href="#pricing" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Pricing</a>
         <a href="#faq" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">FAQ</a>
+        <a href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web" target="_blank" rel="noopener" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Chrome Extension</a>
       </div>
 
       <!-- Legal -->
@@ -2882,18 +2950,18 @@
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const moon = document.getElementById('darkModeIconMoon');
     const sun  = document.getElementById('darkModeIconSun');
+    const toggle = document.getElementById('darkModeToggle');
     if (moon) moon.style.display = isDark ? 'none' : '';
     if (sun)  sun.style.display  = isDark ? '' : 'none';
+    if (toggle) {
+      toggle.setAttribute('aria-pressed', String(isDark));
+      toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+    }
   }
   window.toggleDarkMode = function() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
-    }
+    document.documentElement.toggleAttribute('data-theme', !isDark);
+    try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
     syncDarkModeIcon();
   };
   syncDarkModeIcon();

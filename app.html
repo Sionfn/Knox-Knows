@@ -13,6 +13,28 @@
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
+
+      // Keep theme controls independent from the Firebase module so the
+      // toggle remains available even if a third-party request is delayed.
+      window.syncDarkModeIcon = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const moon = document.getElementById('darkModeIconMoon');
+        const sun = document.getElementById('darkModeIconSun');
+        const toggle = document.getElementById('darkModeToggle');
+        if (moon) moon.style.display = isDark ? 'none' : '';
+        if (sun) sun.style.display = isDark ? '' : 'none';
+        if (toggle) {
+          toggle.setAttribute('aria-pressed', String(isDark));
+          toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+      };
+      window.toggleDarkMode = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.toggleAttribute('data-theme', !isDark);
+        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        window.syncDarkModeIcon();
+      };
+      document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
     })();
   </script>
   <meta charset="UTF-8">
@@ -98,6 +120,7 @@
        before first paint and avoid a light-mode flash for anyone who's
        chosen dark. */
     html[data-theme="dark"] {
+      color-scheme: dark;
       /* Accents — deliberately unchanged from light mode. */
       --orange:        #FF6B00;
       --orange-dark:   #CC5500;
@@ -1733,6 +1756,9 @@
         <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
         </button>
+        <a class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
+          <span class="sq-icon">🧩</span><span class="sidebar-collapsible">Chrome extension</span>
+        </a>
         <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
         </button>
@@ -3513,18 +3539,18 @@ function syncDarkModeIcon() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const moon = document.getElementById('darkModeIconMoon');
   const sun  = document.getElementById('darkModeIconSun');
+  const toggle = document.getElementById('darkModeToggle');
   if (moon) moon.style.display = isDark ? 'none' : '';
   if (sun)  sun.style.display  = isDark ? '' : 'none';
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', String(isDark));
+    toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+  }
 }
 window.toggleDarkMode = function() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (isDark) {
-    document.documentElement.removeAttribute('data-theme');
-    try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
-  } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
-  }
+  document.documentElement.toggleAttribute('data-theme', !isDark);
+  try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
   syncDarkModeIcon();
 };
 syncDarkModeIcon();
