@@ -3514,7 +3514,8 @@
     hero.className = 'settings-plan-hero';
     hero.innerHTML = '<div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);">Your Knox account</div>' +
       '<strong>' + (plan !== 'free' ? '⚡ Knox Plus' : '🦊 Knox Free') + '</strong>' +
-      '<p>' + (plan !== 'free' ? 'Unlimited study help, photos, and every Knox tool.' : 'Your full Knox workspace is ready whenever you need it.') + '</p>';
+      '<p>' + (plan !== 'free' ? 'Unlimited study help, photos, and every Knox tool.' : 'Your full Knox workspace is ready whenever you need it.') + '</p>' +
+      '<p style="margin-top:8px;color:var(--text);font-size:12px;font-weight:900;">Signed in as ' + String(u.displayName || u.email || 'your Knox account').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>';
     el.appendChild(hero);
     const prefs = window.getKnoxPreferences();
     const section = (title, html) => {
@@ -3523,7 +3524,7 @@
       el.appendChild(s);
     };
     const choice = (key, value, icon, title, copy) =>
-      '<button class="settings-choice ' + (prefs[key] === value ? 'active' : '') + '" onclick="setKnoxPreference(\'' + key + '\',\'' + value + '\')">' + icon + ' ' + title + '<small>' + copy + '</small></button>';
+      '<button class="settings-choice ' + (prefs[key] === value ? 'active' : '') + '" data-pref-key="' + key + '" data-pref-value="' + value + '">' + icon + ' ' + title + '<small>' + copy + '</small></button>';
     section('How Knox teaches', '<div class="settings-choice-grid">' +
       choice('learningStyle','standard','✦','Standard','Clear, natural explanations') +
       choice('learningStyle','visual','◈','Visual learner','Diagrams, examples & mental pictures') +
@@ -3533,9 +3534,21 @@
       choice('language','english','EN','English','Knox replies in English') +
       choice('language','spanish','ES','Español','Knox replies in Spanish') + '</div>');
     section('Appearance', '<div class="settings-choice-grid">' +
-      '<button class="settings-choice" onclick="toggleDarkMode()">☾ Dark mode<small>Switch the whole app theme</small></button>' +
-      '<button class="settings-choice" onclick="appStartNewChat();closeAppSettings()">✦ New chat<small>Start with a clean conversation</small></button></div>');
-    section('Help & support', '<button class="settings-link-btn" onclick="window.location.href=\'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20support\'">Contact support <span>›</span></button><button class="settings-link-btn" onclick="window.location.href=\'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback\'">Send product feedback <span>›</span></button>');
+      '<button class="settings-choice" data-settings-action="theme">☾ Dark mode<small>Switch the whole app theme</small></button>' +
+      '<button class="settings-choice" data-settings-action="new-chat">✦ New chat<small>Start with a clean conversation</small></button></div>');
+    section('Help & support', '<button class="settings-link-btn" data-settings-action="support">Contact support <span>›</span></button><button class="settings-link-btn" data-settings-action="feedback">Send product feedback <span>›</span></button>');
+    el.querySelectorAll('[data-pref-key]').forEach(button => {
+      button.addEventListener('click', () => window.setKnoxPreference(button.dataset.prefKey, button.dataset.prefValue));
+    });
+    el.querySelectorAll('[data-settings-action]').forEach(button => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.settingsAction;
+        if (action === 'theme') window.toggleDarkMode();
+        if (action === 'new-chat') { window.appStartNewChat(); window.closeAppSettings(); }
+        if (action === 'support') window.location.href = 'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20support';
+        if (action === 'feedback') window.location.href = 'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback';
+      });
+    });
 
     // Build DOM safely
     function row(label, valueNode) {
