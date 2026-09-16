@@ -7,9 +7,11 @@
     // first. Light is the default for everyone until they explicitly
     // switch — deliberately NOT following the OS-level color-scheme
     // preference, so a first-time visitor always sees light mode first.
+    // The app has its own saved preference; it should not be changed by
+    // visiting the marketing site.
     (function() {
       try {
-        if (localStorage.getItem('knoxTheme') === 'dark') {
+        if (localStorage.getItem('knoxAppTheme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
@@ -30,8 +32,9 @@
       };
       window.toggleDarkMode = function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.toggleAttribute('data-theme', !isDark);
-        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        if (isDark) document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('knoxAppTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
         window.syncDarkModeIcon();
       };
       document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
@@ -3549,8 +3552,9 @@ function syncDarkModeIcon() {
 }
 window.toggleDarkMode = function() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.toggleAttribute('data-theme', !isDark);
-  try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+  if (isDark) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('knoxAppTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
   syncDarkModeIcon();
 };
 syncDarkModeIcon();

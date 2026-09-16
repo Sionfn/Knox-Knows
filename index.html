@@ -5,11 +5,11 @@
     // Applied as early as possible — before any CSS has a chance to paint —
     // so a returning dark-mode user never sees a flash of the light theme
     // first. Light is the default for everyone until they explicitly
-    // switch (same logic and localStorage key as the app, so the choice
-    // carries over between the marketing site and /app).
+    // switch. The marketing site intentionally keeps its own preference so
+    // changing it does not unexpectedly alter the chat app.
     (function() {
       try {
-        if (localStorage.getItem('knoxTheme') === 'dark') {
+        if (localStorage.getItem('knoxLandingTheme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
@@ -29,8 +29,9 @@
       };
       window.toggleDarkMode = function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.toggleAttribute('data-theme', !isDark);
-        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+        if (isDark) document.documentElement.removeAttribute('data-theme');
+        else document.documentElement.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('knoxLandingTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
         window.syncDarkModeIcon();
       };
       document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
@@ -2940,12 +2941,9 @@
   window.redirectToApp = redirectToApp;
 
   // ── Dark mode toggle ─────────────────────────────────────────
-  // Mirrors app.html's implementation exactly, including the localStorage
-  // key ('knoxTheme'), so a theme choice made on either the marketing site
-  // or in the app carries over to the other. The actual theme for this
-  // page load is already set by the inline script in <head> (has to run
-  // before first paint) — this just handles the toggle button and keeps
-  // the sun/moon icon in sync, including once on load.
+  // The landing page has its own saved theme choice. Its actual theme for
+  // this page load is already set by the inline script in <head>; this just
+  // handles the control after the rest of the page has loaded.
   function syncDarkModeIcon() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const moon = document.getElementById('darkModeIconMoon');
@@ -2960,8 +2958,9 @@
   }
   window.toggleDarkMode = function() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    document.documentElement.toggleAttribute('data-theme', !isDark);
-    try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+    if (isDark) document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('knoxLandingTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
     syncDarkModeIcon();
   };
   syncDarkModeIcon();
