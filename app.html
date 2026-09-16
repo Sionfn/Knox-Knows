@@ -59,6 +59,14 @@
       --yellow:        #FFD900;
       --yellow-dark:   #CC9900;
       --purple:        #CE82FF;
+      --purple-dark:   #7C3AED;
+      --purple-light:  #F3E8FF;
+      /* Specifically for text sitting ON a --purple-light fill (like the
+         Learn Mode bar label) — a role that needs to FLIP between themes
+         (dark text on a pale fill in light mode, light text on a deep
+         fill in dark mode), which --purple-dark can't also do without
+         breaking its OTHER role as a button fill with white text on top. */
+      --purple-on-tint: #5B21B6;
       --cream:         #FFF8F0;
       --cream-warm:    #FFF4E5;
       --gray:          #F7F7F7;
@@ -76,29 +84,45 @@
     /* DARK MODE — same structure as :root, one variable at a time. Applied
        via a data-theme attribute on <html> (see the toggle script near the
        end of the file) rather than a class, so it can be set before first
-       paint and avoid a light-mode flash for anyone who's chosen dark. */
+       paint and avoid a light-mode flash for anyone who's chosen dark.
+       The "-light" pastel fills (used behind icon circles, badges, plan
+       cards) are deliberately kept RICH here — same hue as their light-mode
+       counterpart, saturation held at 60-75%, lightness dropped to ~22%.
+       An earlier version of this just darkened+desaturated those pastels
+       toward brown/olive/near-black, which read as washed-out and cheap
+       instead of premium — a jewel-tone (dark but still saturated) is what
+       actually keeps the four suggestion-chip colors distinguishable and
+       feeling intentional, the same way a colorful accent looks on Linear,
+       Discord, or Stripe's dark dashboards. */
     html[data-theme="dark"] {
-      --orange:        #FF8A3D;
+      --orange:        #E86A2E;
       --orange-dark:   #FFA366;
-      --orange-light:  #4A2E1A;
+      --orange-light:  #62370E;
       --orange-cream:  #241C14;
       --blue:          #4DC8FF;
       --blue-dark:     #7DD8FF;
-      --blue-light:    #1B3542;
+      --blue-light:    #0E4A62;
       --green:         #7EDB3A;
       --green-dark:    #9BE85C;
-      --green-light:   #23331A;
+      --green-light:   #33620E;
       --red:           #FF6B6B;
       --yellow:        #FFE066;
       --yellow-dark:   #FFD966;
       --purple:        #D9A6FF;
-      --cream:         #17171A;
-      --cream-warm:    #1E1E22;
-      --gray:          #202024;
-      --border:        #33333A;
+      --purple-dark:   #7C3AED;
+      --purple-light:  #360E62;
+      --purple-on-tint: #D9A6FF;
+      /* Page bg → hover/alt → card surface → border: a deliberate 4-step
+         lightness ladder (7% / 12% / 17% / 22%) instead of a flat wash of
+         near-identical dark grays, so cards actually read as elevated
+         above the page rather than blending into it. */
+      --cream:         #101013;
+      --cream-warm:    #1A1A1E;
+      --gray:          #1F1F23;
+      --border:        #34343D;
       --text:          #EDEDED;
       --text-light:    #9B9BA3;
-      --surface:       #232327;
+      --surface:       #29292E;
       --danger-bg:     #3A2020;
       --danger-border: #5C2E2E;
     }
@@ -414,7 +438,7 @@
     .dd-plan-super  { background: var(--green-light); border-color: var(--green-dark);             box-shadow: 0 2px 0 var(--green-dark); }
     .dd-plan-super  .plan-name { color: var(--green-dark); }
     .dd-plan-super  .plan-tag  { color: var(--green-dark); }
-    .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
+    .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), var(--orange-dark)); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max    .plan-name { color: var(--orange-dark); }
     .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
     .app-dropdown-item {
@@ -589,7 +613,14 @@
       color: var(--text-light);
       transition: all 0.15s;
       border: 2px solid transparent;
-      background: var(--surface);
+      /* Deliberately --gray, not --surface, which #rightSidebar itself
+         uses — a nested list needs to read as slightly recessed within
+         its panel, not the identical color as the panel around it. In
+         light mode this is a subtle off-white-on-white distinction; in
+         dark mode, where shadows barely read against dark surfaces, this
+         color difference is what actually keeps each item visible as its
+         own card instead of one flat undifferentiated block. */
+      background: var(--gray);
       width: 100%;
       text-align: left;
       margin-bottom: 4px;
@@ -598,7 +629,7 @@
       user-select: none;
     }
     .sidebar-history-item:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
-    .sidebar-history-item:hover { color: var(--text); border-color: var(--orange-light); }
+    .sidebar-history-item:hover { color: var(--text); border-color: var(--orange-light); background: var(--surface); }
     .sidebar-history-item .shi-text {
       flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -750,14 +781,14 @@
     .welcome-badge {
       display: inline-flex; align-items: center; gap: 6px;
       background: var(--cream);
-      border: 2px solid #FFD0A8;
+      border: 2px solid var(--orange-light);
       border-radius: 999px;
       padding: 6px 16px;
       font-size: 13px; font-weight: 800;
       color: var(--orange);
       margin-bottom: 16px;
       letter-spacing: 0.02em;
-      box-shadow: 0 2px 0 #FFD0A8;
+      box-shadow: 0 2px 0 var(--orange-light);
     }
     .welcome-title {
       font-size: clamp(26px, 4vw, 40px);
@@ -798,7 +829,7 @@
     .suggestion-chip[data-flavor="orange"]:hover { border-color: var(--orange); box-shadow: 0 7px 0 var(--orange-light); }
     .suggestion-chip[data-flavor="blue"]:hover   { border-color: var(--blue);   box-shadow: 0 7px 0 var(--blue-light); }
     .suggestion-chip[data-flavor="green"]:hover  { border-color: var(--green);  box-shadow: 0 7px 0 var(--green-light); }
-    .suggestion-chip[data-flavor="purple"]:hover { border-color: var(--purple); box-shadow: 0 7px 0 #EBD5FF; }
+    .suggestion-chip[data-flavor="purple"]:hover { border-color: var(--purple); box-shadow: 0 7px 0 var(--purple-light); }
 
     .chip-circle {
       width: 56px; height: 56px;
@@ -810,7 +841,7 @@
     .suggestion-chip[data-flavor="orange"] .chip-circle { background: var(--orange-light); border: 3px solid var(--orange); box-shadow: 0 3px 0 var(--orange); }
     .suggestion-chip[data-flavor="blue"]   .chip-circle { background: var(--blue-light);   border: 3px solid var(--blue);   box-shadow: 0 3px 0 var(--blue); }
     .suggestion-chip[data-flavor="green"]  .chip-circle { background: var(--green-light);  border: 3px solid var(--green);  box-shadow: 0 3px 0 var(--green); }
-    .suggestion-chip[data-flavor="purple"] .chip-circle { background: #F3E8FF;             border: 3px solid var(--purple); box-shadow: 0 3px 0 var(--purple); }
+    .suggestion-chip[data-flavor="purple"] .chip-circle { background: var(--purple-light);   border: 3px solid var(--purple); box-shadow: 0 3px 0 var(--purple); }
 
     .chip-content { flex: 1; min-width: 0; }
     .chip-text {
@@ -870,7 +901,7 @@
       overflow: hidden;
       flex-shrink: 0;
       background: var(--orange-light);
-      border: 3px solid white;
+      border: 3px solid var(--surface);
       box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       margin-top: 2px;
     }
@@ -1805,9 +1836,9 @@
                showing. This is the "back to normal chat" affordance that
                was missing — the welcome badge alone disappears the moment
                you send your first message. -->
-          <div id="learnModeBar" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:#EDE4FF;border-bottom:2px solid #7C3AED;padding:10px 16px;flex-shrink:0;">
-            <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#5B21B6;">🎓 Learn Mode — Knox will guide you, not just answer</span>
-            <button onclick="window.appStartNewChat()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseover="this.style.background='#5B21B6'" onmouseout="this.style.background='#7C3AED'">
+          <div id="learnModeBar" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--purple-light);border-bottom:2px solid var(--purple-dark);padding:10px 16px;flex-shrink:0;">
+            <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--purple-on-tint);">🎓 Learn Mode — Knox will guide you, not just answer</span>
+            <button onclick="window.appStartNewChat()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:var(--purple-dark);color:white;border:none;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               Back to Knox
             </button>
@@ -1869,7 +1900,7 @@
           <!-- CALCULATOR — inline view, swaps in for welcome/chat -->
 <div class="calc-modal" id="calcModal">
   <div class="calc-card">
-    <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
+    <div style="background:var(--orange);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
           <img src="/knox-logo-square.jpg" style="width:100%;height:100%;object-fit:cover;" alt="Knox" draggable="false" onerror="this.style.display='none'">
@@ -1883,7 +1914,7 @@
     </div>
 
     <div style="display:flex;background:#1f2937;">
-      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:#FF6B00;color:white;transition:all 0.15s;">Basic</button>
+      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:var(--orange);color:white;transition:all 0.15s;">Basic</button>
       <button id="calcTabSci" onclick="calcSetMode('scientific')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;background:transparent;color:#9CA3AF;transition:all 0.15s;">Science</button>
     </div>
 
@@ -1893,10 +1924,10 @@
     </div>
 
     <div id="calcDegToggle" onclick="calcToggleDeg()" style="display:none;background:#111827;padding:6px 18px;text-align:right;cursor:pointer;">
-      <span id="calcDegLabel" style="background:#FF6B00;color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
+      <span id="calcDegLabel" style="background:var(--orange);color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
     </div>
 
-    <div style="display:flex;gap:6px;padding:8px 14px;background:#F9FAFB;border-bottom:1.5px solid #E5E7EB;">
+    <div style="display:flex;gap:6px;padding:8px 14px;background:var(--gray);border-bottom:1.5px solid #E5E7EB;">
       <button onclick="calcMemClear()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MC</button>
       <button onclick="calcMemRecall()" style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MR</button>
       <button onclick="calcMemStore()"  style="flex:1;padding:6px 2px;border-radius:8px;border:1.5px solid #E5E7EB;background:white;font-size:11px;font-weight:800;color:#6B7280;font-family:inherit;">MS</button>
@@ -1928,7 +1959,7 @@
 
       <button onclick="calcInput('0')" class="calc-btn-num">0</button>
       <button onclick="calcInput('.')" class="calc-btn-num">.</button>
-      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
+      <button onclick="calcEquals()"   style="background:var(--orange);border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
       <button onclick="calcInput('+')" class="calc-btn-op">+</button>
     </div>
 
@@ -1961,7 +1992,7 @@
       <button onclick="calcInput('5')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">5</button>
       <button onclick="calcInput('6')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">6</button>
       <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
-      <button onclick="calcEquals()"   style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
+      <button onclick="calcEquals()"   style="background:var(--orange);border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
 
       <button onclick="calcInput('1')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">1</button>
       <button onclick="calcInput('2')" style="background:white;border:1.5px solid #E5E7EB;border-radius:10px;font-size:16px;font-weight:700;color:#1f2937;padding:12px 2px;font-family:inherit;">2</button>
@@ -3334,7 +3365,7 @@
 
     const outWrap = document.createElement('div'); outWrap.style.marginTop = '14px';
     const out = document.createElement('button');
-    out.style.cssText = 'width:100%;padding:13px;border-radius:14px;border:2px solid #FECACA;background:#FEF2F2;color:var(--red);font-size:14px;font-weight:900;font-family:inherit;';
+    out.style.cssText = 'width:100%;padding:13px;border-radius:14px;border:2px solid var(--danger-border);background:var(--danger-bg);color:var(--red);font-size:14px;font-weight:900;font-family:inherit;';
     out.textContent = 'Sign out';
     out.onclick     = () => { appHandleLogout(); closeAppSettings(); };
     outWrap.appendChild(out);
