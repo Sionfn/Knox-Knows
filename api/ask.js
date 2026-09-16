@@ -56,8 +56,8 @@ function planTier(plan) {
   // Explicit allowlist of PAID plan values. Anything else — including free,
   // an empty string, null, undefined, or an unknown value — is treated as
   // free, so a missing/blank plan field can never accidentally grant Plus.
-  // ('super' and 'max' are the legacy Stripe values for Knox Plus.)
-  return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
+  // ('super', 'max', and 'pro' are legacy paid values for Knox Plus.)
+  return (plan === 'super' || plan === 'max' || plan === 'plus' || plan === 'pro') ? 'paid' : 'free';
 }
 
 // Checks and (if allowed) records one use. Paid users still use the old

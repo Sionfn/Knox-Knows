@@ -2543,7 +2543,7 @@
   function planTier(plan) {
     // Match the server's paid allowlist so the app never shows Plus perks to
     // someone the backend treats as free (e.g. a missing/blank plan field).
-    return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
+    return (plan === 'super' || plan === 'max' || plan === 'plus' || plan === 'pro') ? 'paid' : 'free';
   }
 
   async function updateUsageIndicator() {
