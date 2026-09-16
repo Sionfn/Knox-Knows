@@ -584,18 +584,13 @@
     .sidebar-history-launch { margin:10px 8px 0; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; background:var(--cream); color:var(--text); display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:13px; font-weight:900; }
     .sidebar-history-launch:hover { border-color:var(--orange); color:var(--orange); }
     .sidebar-history-launch small { color:var(--text-light); font-size:11px; font-weight:800; }
-    .sidebar-next-panel { margin:16px 12px; padding:15px; border:1.5px solid var(--border); border-radius:16px; background:linear-gradient(145deg,var(--cream),var(--surface)); }
-    .sidebar-next-kicker { color:var(--text-light); font-size:10px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; }
-    .sidebar-next-title { color:var(--text); font-size:15px; font-weight:900; margin:5px 0 11px; }
-    .sidebar-next-actions { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-    .sidebar-next-actions button { padding:9px 8px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); font:inherit; font-size:11px; font-weight:900; }
-    .sidebar-next-actions button:hover { color:var(--orange); border-color:var(--orange); }
     .sidebar-profile-dock { margin-top:auto; padding:12px; border-top:1px solid var(--border); background:var(--surface); display:none; align-items:center; gap:10px; }
     .sidebar-profile-avatar { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--orange-light); color:var(--orange); font-weight:900; flex:0 0 36px; overflow:hidden; }
     .sidebar-profile-avatar img { width:100%; height:100%; object-fit:cover; }
     .sidebar-profile-copy { min-width:0; flex:1; }
     .sidebar-profile-name { color:var(--text); font-size:13px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .sidebar-profile-plan { color:var(--text-light); font-size:11px; font-weight:700; margin-top:1px; }
+    .sidebar-profile-usage { color:var(--orange); font-size:11px; font-weight:900; margin-bottom:3px; }
     .sidebar-profile-settings { width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:var(--cream); color:var(--text-light); font-size:17px; }
     .sidebar-profile-settings:hover { color:var(--orange); border-color:var(--orange); }
 
@@ -955,9 +950,6 @@
     .study-promise { margin-top:22px; display:flex; gap:9px; align-items:flex-start; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.45; }
     @media (max-width:680px) { #studyHub { padding:22px 16px 30px; } .study-tools-grid { grid-template-columns:1fr; } .study-tool-card { min-height:0; } }
 
-    .welcome-study-strip { margin-top:22px; width:100%; max-width:580px; display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
-    .welcome-study-item { padding:11px 10px; border:1.5px solid var(--border); border-radius:13px; background:var(--surface); color:var(--text-light); font-size:11px; font-weight:800; text-align:left; }
-    .welcome-study-item b { display:block; color:var(--text); font-size:12px; margin-top:3px; }
 
     .msg-wrap { margin-bottom: 18px; }
     .msg-user { display: flex; justify-content: flex-end; }
@@ -1823,14 +1815,6 @@
       <button class="sidebar-history-launch sidebar-collapsible" onclick="openMobileHistory()" title="Open your saved conversations">
         <span>◷ Your history</span><small>Questions &amp; Learn →</small>
       </button>
-      <div class="sidebar-next-panel sidebar-collapsible">
-        <div class="sidebar-next-kicker">Study next</div>
-        <div class="sidebar-next-title">Keep the momentum going.</div>
-        <div class="sidebar-next-actions">
-          <button onclick="openLearnMode()">◈ Learn</button>
-          <button onclick="openStudyHub()">▣ Study Hub</button>
-        </div>
-      </div>
       <div id="sidebarHistoryList" class="sidebar-collapsible" style="display:none;">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
@@ -1849,6 +1833,7 @@
       <div class="sidebar-profile-dock" id="sidebarProfileDock">
         <div class="sidebar-profile-avatar" id="sidebarProfileAvatar">?</div>
         <div class="sidebar-profile-copy">
+          <div class="sidebar-profile-usage" id="sidebarProfileUsage"></div>
           <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
           <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
         </div>
@@ -2000,11 +1985,6 @@
                   <div class="chip-sub" data-sub-normal="Essay writing help" data-sub-learn="Thesis coaching">Essay writing help</div>
                 </div>
               </button>
-            </div>
-            <div class="welcome-study-strip" aria-label="Ways Knox can help">
-              <div class="welcome-study-item">✦ <b>Ask anything</b>Homework help, explained.</div>
-              <div class="welcome-study-item">◈ <b>Learn it</b>Get hints, not spoilers.</div>
-              <div class="welcome-study-item">▣ <b>Study Hub</b>Guides, cards &amp; quizzes.</div>
             </div>
           </div>
 
@@ -2446,6 +2426,7 @@
     const profileDock = document.getElementById('sidebarProfileDock');
     const profileName = document.getElementById('sidebarProfileName');
     const profilePlan = document.getElementById('sidebarProfilePlan');
+    const profileUsage = document.getElementById('sidebarProfileUsage');
     const profileAvatar = document.getElementById('sidebarProfileAvatar');
 
     if (user) {
@@ -2456,6 +2437,7 @@
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = (user.displayName || user.email || 'Your account').split(' ')[0];
       if (profilePlan) profilePlan.textContent = plan !== 'free' ? '⚡ Knox Plus' : 'Free plan';
+      if (profileUsage) profileUsage.textContent = plan !== 'free' ? '∞ Unlimited questions' : '';
       if (profileAvatar) {
         profileAvatar.innerHTML = user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : initials;
       }
@@ -2518,6 +2500,7 @@
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = 'Sign in to Knox';
       if (profilePlan) profilePlan.textContent = 'Save your study history';
+      if (profileUsage) profileUsage.textContent = '';
       if (profileAvatar) profileAvatar.textContent = '🦊';
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
@@ -2576,6 +2559,8 @@
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
       text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus';
+      const profileUsage = document.getElementById('sidebarProfileUsage');
+      if (profileUsage) profileUsage.textContent = '∞ Unlimited questions';
       return;
     }
     usage.classList.remove('unlimited');
@@ -2609,6 +2594,8 @@
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
         : `${left} question${left === 1 ? '' : 's'} left`;
+      const profileUsage = document.getElementById('sidebarProfileUsage');
+      if (profileUsage) profileUsage.textContent = `${left} credit${left === 1 ? '' : 's'} left`;
       usage.classList.toggle('danger', left <= 1);
     } catch (e) { /* silent */ }
   }
