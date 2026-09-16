@@ -84,7 +84,7 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
         }
         recent.push(now);
         tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
-        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT };
+        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT, usageId: now };
       });
       return result;
     } catch (err) {
@@ -125,12 +125,38 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
 
       balance -= cost;
       tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true };
+      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true, cost };
     });
     return result;
   } catch (err) {
     console.error("Quota check error:", err.message);
     return { allowed: true };
+  }
+}
+
+// A provider failure must not consume a student's credit. This is deliberately
+// best-effort: quota availability must never depend on a compensating write.
+async function refundUsage(uid, plan, cost, usageId) {
+  try {
+    if (planTier(plan) === "paid") {
+      const ref = db.collection("users").doc(uid).collection("usage").doc("rolling");
+      await db.runTransaction(async tx => {
+        const snap = await tx.get(ref);
+        const log = snap.exists ? (snap.data().log || []) : [];
+        const index = log.lastIndexOf(usageId);
+        if (index >= 0) log.splice(index, 1);
+        tx.set(ref, { log, updatedAt: new Date().toISOString() }, { merge: true });
+      });
+      return;
+    }
+    const ref = db.collection("users").doc(uid).collection("usage").doc("bank");
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      const balance = snap.exists && typeof snap.data().balance === "number" ? snap.data().balance : FREE_STARTING_BALANCE;
+      tx.set(ref, { balance: Math.min(FREE_MAX_BALANCE, balance + cost), updatedAt: new Date().toISOString() }, { merge: true });
+    });
+  } catch (error) {
+    console.error("Quota refund failed:", error.message);
   }
 }
 
@@ -949,7 +975,8 @@ export default async function handler(req, res) {
   // to respond (see KNOX_PROMPT). The only routing decision left here is
   // casual small talk vs a real question, which controls model cost and
   // whether it counts against usage — not which "mode" runs.
-  const casual = !image && await isCasualMessage(trimmedQuestion, history);
+  const safeHistory = Array.isArray(history) ? history : [];
+  const casual = !image && await isCasualMessage(trimmedQuestion, safeHistory);
 
   // ── Guest quota — persistent, Firestore-backed (see checkGuestUsage) ────
   // Casual chit-chat is free for guests too, same as logged-in users, but
@@ -1002,7 +1029,8 @@ export default async function handler(req, res) {
   // This only applies to signed-in free/paid users; guests use a separate,
   // smaller quota mechanism (checkGuestUsage above) that isn't part of
   // this credit system and is unaffected either way.
-  const isLearnFollowUp = learnMode && Array.isArray(history) && history.length > 0;
+  const isLearnFollowUp = learnMode && safeHistory.length > 0;
+  let chargedUsage = null;
   if (uid && !casual) {
     if (!isLearnFollowUp) {
       const cost = learnMode ? 1 : (image ? PHOTO_CREDIT_COST : 1);
@@ -1027,6 +1055,7 @@ export default async function handler(req, res) {
           photoLimit: !!image,
         });
       }
+      if (usage.cost || usage.usageId) chargedUsage = { cost, usageId: usage.usageId };
     }
     // Quota check passed (or this was a free Learn-mode follow-up) —
     // either way it's a real, counted question for the admin dashboard
@@ -1040,9 +1069,9 @@ export default async function handler(req, res) {
   const systemPrompt = casual ? CASUAL_SYSTEM_PROMPT : (learnMode ? LEARN_PROMPT : KNOX_PROMPT);
   const messages = [{ role: "system", content: systemPrompt }];
 
-  const recentHistory = history.slice(-40);
+  const recentHistory = safeHistory.slice(-40);
   for (const msg of recentHistory) {
-    if (msg.role && msg.content) {
+    if ((msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string") {
       messages.push({ role: msg.role, content: msg.content.substring(0, 2000) });
     }
   }
@@ -1136,6 +1165,7 @@ export default async function handler(req, res) {
       // In a Luna test path only, surface the real OpenAI error message
       // back to the admin caller so we're not stuck guessing from logs —
       // real users never see this detail, only whoever passed testModel.
+      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
       if (testModel === "luna" || testModel === "lunaphoto") {
         return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again.", debug: err });
       }
@@ -1156,6 +1186,7 @@ export default async function handler(req, res) {
         "Empty answer from " + modelToUse + " — finish_reason:",
         data.choices?.[0]?.finish_reason, "usage:", data.usage
       );
+      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
       const message = image
         ? "That photo has a lot going on and Knox ran out of room working through it. Try asking about a few of the problems at a time, or type out just the one you need help with."
         : "Knox ran out of room working through that one — try breaking it into smaller parts, or ask again.";
@@ -1182,6 +1213,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("Ask error:", err.message);
+    if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 }

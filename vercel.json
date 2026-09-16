@@ -19,8 +19,12 @@
     "api/customer-portal.js":         { "maxDuration": 15 },
     "api/webhook.js":                 { "maxDuration": 15 },
     "api/send-welcome-email.js":      { "maxDuration": 15 },
-    "api/admin-stats.js":             { "maxDuration": 30 }
+    "api/admin-stats.js":             { "maxDuration": 30 },
+    "api/cleanup-history.js":         { "maxDuration": 60 }
   },
+  "crons": [
+    { "path": "/api/cleanup-history", "schedule": "0 3 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -2239,8 +2239,8 @@
     sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
-    query, orderBy, limit, serverTimestamp
+    getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
+    query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -2608,9 +2608,8 @@
       await fetchPlan(user.uid);
       loadSidebarHistory();
       // Track activity for the admin dashboard's DAU/WAU.
-      // Uses setDoc with merge so it doesn't clobber other user fields.
-      // firestore.rules permits writing lastActiveAt/firstSeenAt because
-      // they're not in the server-only field list.
+      // This goes through the server so analytics fields cannot be forged in
+      // the browser or by a compromised client.
       trackActivity(user.uid).catch(() => {});
       loadStreak(user.uid).catch(() => {});
       if (_firstAuth) {
@@ -2640,13 +2639,13 @@
       const last = parseInt(sessionStorage.getItem(key) || '0', 10);
       const now  = Date.now();
       if (now - last < 60 * 60 * 1000) return; // throttle 1h
-      const userRef = doc(db, 'users', uid);
-      const snap = await getDoc(userRef);
-      const patch = { lastActiveAt: serverTimestamp() };
-      if (!snap.exists() || !snap.data().firstSeenAt) {
-        patch.firstSeenAt = serverTimestamp();
-      }
-      await setDoc(userRef, patch, { merge: true });
+      const token = await window.currentUser.getIdToken();
+      const response = await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'active' }),
+      });
+      if (!response.ok) throw new Error('Activity update failed');
       sessionStorage.setItem(key, String(now));
     } catch (e) { /* non-critical — ignore */ }
   }
@@ -2680,34 +2679,16 @@
   async function updateStreak(uid) {
     if (!uid) return;
     try {
-      const userRef = doc(db, 'users', uid);
-      const snap = await getDoc(userRef);
-      const data = snap.exists() ? snap.data() : {};
-      const today = localDayKey();
-      const lastDay = data.streakLastDay || null;
-      let count = data.streakCount || 0;
-
-      if (lastDay === today) {
-        // Already counted today — nothing to advance, just make sure pill shows
-        renderStreak(count, true);
-        return;
-      }
-
-      let milestone = null;
-      if (!lastDay) {
-        count = 1; // first ever study day
-      } else {
-        const gap = daysBetween(lastDay, today);
-        if (gap === 1)      count = count + 1;  // consecutive day → advance
-        else if (gap > 1)   count = 1;          // missed a day → reset to 1
-        else                count = count || 1; // clock weirdness → keep
-      }
-
-      if (STREAK_MILESTONES.includes(count)) milestone = count;
-
-      await setDoc(userRef, { streakCount: count, streakLastDay: today }, { merge: true });
-      renderStreak(count, true);
-      if (milestone) celebrateStreak(milestone);
+      const token = await window.currentUser.getIdToken();
+      const response = await fetch('/api/activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'study' }),
+      });
+      if (!response.ok) throw new Error('Streak update failed');
+      const data = await response.json();
+      renderStreak(data.count || 0, !!data.studiedToday);
+      if (STREAK_MILESTONES.includes(data.count)) celebrateStreak(data.count);
     } catch (e) { /* non-critical */ }
   }
   window.updateStreak = updateStreak;
@@ -3033,17 +3014,13 @@
     if (!window.currentUser) return false;
     if (rating !== 1 && rating !== -1) return false;
     try {
-      const uid = window.currentUser.uid;
-      const payload = {
-        rating,
-        question: String(question || '').substring(0, 500),
-        answer:   String(answer   || '').substring(0, 2000),
-        plan:     window.userPlan || 'free',
-        ts:       Date.now(),
-      };
-      await addDoc(collection(db, 'feedback'), { ...payload, uid });
-      await addDoc(collection(db, 'users', uid, 'feedback'), payload);
-      return true;
+      const token = await window.currentUser.getIdToken();
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ rating, question, answer, mode: window._learnModeActive ? 'learn' : 'answer' }),
+      });
+      return response.ok;
     } catch (e) { return false; }
   }
 
@@ -4272,7 +4249,7 @@ window.appHandleAsk = async function() {
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
-    if (window.currentUser && window.updateStreak) {
+    if (window.currentUser && !data.isCasual && window.updateStreak) {
       window.updateStreak(window.currentUser.uid).catch(() => {});
     }
 

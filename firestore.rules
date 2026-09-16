@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedInAs(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasOnly(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    match /users/{userId} {
+      allow read: if signedInAs(userId);
+      // Billing, quotas, analytics, and streaks are written only by trusted
+      // server code. The browser has no legitimate reason to edit this doc.
+      allow create, update, delete: if false;
+
+      match /usage/{documentId} {
+        allow read: if signedInAs(userId);
+        allow write: if false;
+      }
+
+      match /conversations/{conversationId} {
+        allow read, delete: if signedInAs(userId);
+        allow create: if signedInAs(userId)
+          && hasOnly(['title', 'type', 'createdAt', 'updatedAt'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 200
+          && request.resource.data.type in ['chat', 'learn']
+          && request.resource.data.createdAt is int
+          && request.resource.data.updatedAt is int;
+        allow update: if signedInAs(userId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])
+          && request.resource.data.updatedAt is int;
+
+        match /messages/{messageId} {
+          allow read, delete: if signedInAs(userId);
+          allow create: if signedInAs(userId)
+            && hasOnly(['question', 'answer', 'ts'])
+            && request.resource.data.question is string
+            && request.resource.data.question.size() <= 1000
+            && request.resource.data.answer is string
+            && request.resource.data.answer.size() <= 5000
+            && request.resource.data.ts is int;
+          allow update: if false;
+        }
+      }
+
+      match /history/{documentId} {
+        allow read, delete: if signedInAs(userId);
+        allow create: if signedInAs(userId)
+          && hasOnly(['question', 'answer', 'plan', 'ts'])
+          && request.resource.data.question is string
+          && request.resource.data.question.size() <= 1000
+          && request.resource.data.answer is string
+          && request.resource.data.answer.size() <= 5000
+          && request.resource.data.plan in ['free', 'super', 'max', 'plus']
+          && request.resource.data.ts is int;
+        allow update: if false;
+      }
+
+      match /learnSessions/{documentId} {
+        allow read: if signedInAs(userId);
+        allow write: if false;
+      }
+
+      match /feedback/{documentId} {
+        allow read: if signedInAs(userId);
+        allow create: if signedInAs(userId)
+          && hasOnly(['rating', 'question', 'answer', 'mode', 'plan', 'ts'])
+          && request.resource.data.rating in [1, -1]
+          && request.resource.data.question is string
+          && request.resource.data.question.size() <= 1000
+          && request.resource.data.answer is string
+          && request.resource.data.answer.size() <= 5000
+          && request.resource.data.mode is string
+          && request.resource.data.plan in ['free', 'super', 'max', 'plus']
+          && request.resource.data.ts is int;
+        allow update, delete: if false;
+      }
+    }
+
+    // Global feedback is written by the server so its uid, plan, and timestamp
+    // are trustworthy and it cannot be spammed from a browser.
+    match /feedback/{documentId} {
+      allow read, write: if false;
+    }
+
+    match /webhookEvents/{eventId} { allow read, write: if false; }
+    match /feedbackRate/{userId} { allow read, write: if false; }
+    match /guestUsage/{ipHash}/{document=**} { allow read, write: if false; }
+    match /stats/{date}/{document=**} { allow read, write: if false; }
+  }
+}

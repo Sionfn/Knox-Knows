@@ -14,6 +14,7 @@
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (!getApps().length) {
   initializeApp({
@@ -26,6 +27,18 @@ if (!getApps().length) {
 }
 
 const adminAuth = getAdminAuth();
+const db = getFirestore();
+
+async function claimWelcomeEmail(uid) {
+  const ref = db.collection("users").doc(uid);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : {};
+    if (data.welcomeSentAt || data.welcomeEmailState === "sending") return false;
+    tx.set(ref, { welcomeEmailState: "sending" }, { merge: true });
+    return true;
+  });
+}
 
 // Minimal HTML-escape for anything user-supplied that lands in the email
 // HTML (the display name). Without this, someone could set an arbitrary
@@ -113,7 +126,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { email, name: tokenName } = decodedToken;
+  const { uid, email, name: tokenName } = decodedToken;
   const bodyName    = req.body?.name;
   const displayName = bodyName || tokenName || email?.split("@")[0] || "there";
   const firstName   = displayName.split(" ")[0];
@@ -124,6 +137,12 @@ export default async function handler(req, res) {
   if (!process.env.RESEND_API_KEY) {
     console.error("RESEND_API_KEY is not set — cannot send welcome email");
     return res.status(500).json({ error: "Email service not configured" });
+  }
+  try {
+    if (!(await claimWelcomeEmail(uid))) return res.status(200).json({ sent: false, duplicate: true });
+  } catch (error) {
+    console.error("Welcome-email claim failed:", error.message);
+    return res.status(500).json({ error: "Could not send welcome email" });
   }
 
   const textBody = `Hey ${firstName},
@@ -176,14 +195,20 @@ Knox Knows`;
     if (!response.ok) {
       const err = await response.text();
       console.error("Resend error (welcome):", err);
+      await db.collection("users").doc(uid).set({ welcomeEmailState: null }, { merge: true }).catch(() => {});
       return res.status(500).json({ error: "Failed to send email" });
     }
 
     console.log(`✓ Welcome email sent to ${email}`);
+    await db.collection("users").doc(uid).set({
+      welcomeSentAt: new Date().toISOString(),
+      welcomeEmailState: "sent",
+    }, { merge: true });
     return res.status(200).json({ sent: true });
 
   } catch (err) {
     console.error("Welcome email send error:", err.message);
+    await db.collection("users").doc(uid).set({ welcomeEmailState: null }, { merge: true }).catch(() => {});
     return res.status(500).json({ error: "Failed to send email" });
   }
 }

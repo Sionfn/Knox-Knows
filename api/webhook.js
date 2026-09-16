@@ -195,20 +195,38 @@ Knox Knows`;
 
 // ── Idempotency check ──────────────────────────────────────────────────────
 // Stripe occasionally retries webhooks. Without idempotency we'd send
-// duplicate emails and run duplicate Firestore writes. Returns true if we've
-// already processed this event ID, false otherwise (and marks it as seen).
-async function alreadyProcessed(eventId) {
-  if (!eventId) return false;
+// duplicate emails and run duplicate Firestore writes. A claim is a lease,
+// not completion: an upstream failure must leave Stripe able to retry.
+async function claimEvent(eventId) {
+  if (!eventId) return { claimed: true };
   const ref = db.collection("webhookEvents").doc(eventId);
   try {
-    const snap = await ref.get();
-    if (snap.exists) return true;
-    await ref.set({ processedAt: new Date().toISOString() });
-    return false;
+    return await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      const event = snap.exists ? snap.data() : {};
+      if (event.status === "complete") return { complete: true };
+      if (event.status === "processing" && now - (event.startedAt || 0) < 10 * 60 * 1000) {
+        return { inProgress: true };
+      }
+      tx.set(ref, { status: "processing", startedAt: now, updatedAt: now }, { merge: true });
+      return { claimed: true };
+    });
   } catch (err) {
-    console.warn("Idempotency check failed:", err.message);
-    return false; // fail open — better to risk a duplicate than skip a valid event
+    throw new Error(`Could not claim webhook event: ${err.message}`);
   }
+}
+
+async function completeEvent(eventId) {
+  if (!eventId) return;
+  await db.collection("webhookEvents").doc(eventId).set({
+    status: "complete", processedAt: Date.now(),
+  }, { merge: true });
+}
+
+async function releaseEvent(eventId) {
+  if (!eventId) return;
+  await db.collection("webhookEvents").doc(eventId).delete().catch(() => {});
 }
 
 // Resolve uid from a subscription object — checks metadata first, then
@@ -250,11 +268,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
   }
 
-  // ── Idempotency: skip events we've already handled ──────────────────────
-  if (await alreadyProcessed(event.id)) {
+  // ── Idempotency: claim before processing; mark complete only afterwards ──
+  let claim;
+  try { claim = await claimEvent(event.id); }
+  catch (err) {
+    console.error("Webhook claim error:", err.message);
+    return res.status(500).json({ error: "Internal error" });
+  }
+  if (claim.complete) {
     console.log(`Skipping duplicate event: ${event.id}`);
     return res.status(200).json({ received: true, duplicate: true });
   }
+  if (claim.inProgress) return res.status(500).json({ error: "Event is being processed" });
 
   // ── Handle events ─────────────────────────────────────────────────────────
   try {
@@ -270,7 +295,8 @@ export default async function handler(req, res) {
         // Get the price ID from the subscription
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
         const priceId      = subscription.items.data[0]?.price?.id;
-        const plan         = PRICE_TO_PLAN[priceId] || "super";
+        const plan         = PRICE_TO_PLAN[priceId];
+        if (!plan) throw new Error(`Unknown Stripe price: ${priceId}`);
 
         await db.collection("users").doc(uid).set({
           plan,
@@ -294,7 +320,8 @@ export default async function handler(req, res) {
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         const uid          = await resolveUid(subscription);
         const priceId      = subscription.items.data[0]?.price?.id;
-        const plan         = PRICE_TO_PLAN[priceId] || "super";
+        const plan         = PRICE_TO_PLAN[priceId];
+        if (!plan) throw new Error(`Unknown Stripe price: ${priceId}`);
 
         if (uid) {
           await db.collection("users").doc(uid).set({
@@ -383,8 +410,16 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error("Webhook handler error:", err.message);
+    await releaseEvent(event.id);
     return res.status(500).json({ error: "Internal error" });
   }
 
+  try {
+    await completeEvent(event.id);
+  } catch (err) {
+    console.error("Webhook completion marker error:", err.message);
+    await releaseEvent(event.id);
+    return res.status(500).json({ error: "Internal error" });
+  }
   res.status(200).json({ received: true });
 }

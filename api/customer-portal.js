@@ -4,6 +4,7 @@
 import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (!getApps().length) {
   initializeApp({
@@ -16,6 +17,8 @@ if (!getApps().length) {
 }
 
 const adminAuth = getAdminAuth();
+const db = getFirestore();
+const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -31,27 +34,29 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(401).json({ error: "Unauthorized — invalid token." });
   }
-  const { email: verifiedEmail } = decodedToken;
-  if (!verifiedEmail) {
-    return res.status(401).json({ error: "Unauthorized — no email on token." });
+  const { uid: verifiedUid } = decodedToken;
+  if (!verifiedUid) {
+    return res.status(401).json({ error: "Unauthorized — no user ID on token." });
   }
 
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-    // Find the Stripe customer by email
-    const existingList = await stripe.customers.list({ email: verifiedEmail, limit: 1 });
-    if (existingList.data.length === 0) {
+    const userSnap = await db.collection("users").doc(verifiedUid).get();
+    const customerId = userSnap.exists ? userSnap.data().stripeCustomerId : null;
+    if (!customerId) {
       return res.status(404).json({ error: "No billing account found. Please subscribe first." });
     }
-    const customer = existingList.data[0];
-
-    const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted || customer.metadata?.uid !== verifiedUid) {
+      return res.status(404).json({ error: "No billing account found. Please subscribe first." });
+    }
+    if (!APP_URL.startsWith("https://")) throw new Error("APP_URL is not configured");
 
     // Create billing portal session
     const session = await stripe.billingPortal.sessions.create({
       customer:   customer.id,
-      return_url: baseUrl,
+      return_url: `${APP_URL}/app`,
     });
 
     return res.status(200).json({ url: session.url });

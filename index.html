@@ -2696,20 +2696,13 @@
     if (!window.currentUser) return false;
     if (rating !== 1 && rating !== -1) return false;
     try {
-      const uid = window.currentUser.uid;
-      const payload = {
-        rating:   rating,                            // 1 = up, -1 = down
-        mode:     mode || 'answer',
-        question: (question || '').substring(0, 500),
-        answer:   (answer   || '').substring(0, 2000),
-        plan:     window.userPlan || 'free',
-        ts:       Date.now(),
-      };
-      // Write to global feedback collection (for owner review)
-      await addDoc(collection(db, "feedback"), { ...payload, uid });
-      // Also write a per-user copy (for "your feedback" view if ever needed)
-      await addDoc(collection(db, "users", uid, "feedback"), payload);
-      return true;
+      const token = await window.currentUser.getIdToken();
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ rating, question, answer, mode: mode || 'answer' }),
+      });
+      return response.ok;
     } catch (err) {
       console.warn('Feedback save failed:', err.message);
       return false;

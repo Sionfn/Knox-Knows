@@ -6,6 +6,7 @@
 import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
 
 if (!getApps().length) {
   initializeApp({
@@ -18,6 +19,8 @@ if (!getApps().length) {
 }
 
 const adminAuth = getAdminAuth();
+const db = getFirestore();
+const APP_URL = (process.env.APP_URL || "").replace(/\/$/, "");
 
 // ─────────────────────────────────────────────────────────────────────────
 // PRICING MATRIX (Sept 2026 reset — one plan: Knox Plus at $9.99/$79.99):
@@ -80,19 +83,27 @@ export default async function handler(req, res) {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-    // Find or create Stripe customer
-    const existingList = await stripe.customers.list({ email: verifiedEmail, limit: 1 });
-    let customer;
-    if (existingList.data.length > 0) {
-      customer = existingList.data[0];
-    } else {
+    // Prefer the customer ID recorded by a verified webhook. Email alone is
+    // not a stable identity: Stripe can contain multiple customers per email.
+    const userSnap = await db.collection("users").doc(verifiedUid).get();
+    const storedCustomerId = userSnap.exists ? userSnap.data().stripeCustomerId : null;
+    let customer = null;
+    if (storedCustomerId) {
+      const storedCustomer = await stripe.customers.retrieve(storedCustomerId);
+      if (!storedCustomer.deleted && storedCustomer.metadata?.uid === verifiedUid) customer = storedCustomer;
+    }
+    if (!customer) {
+      const existingList = await stripe.customers.list({ email: verifiedEmail, limit: 100 });
+      customer = existingList.data.find(c => c.metadata?.uid === verifiedUid) || null;
+    }
+    if (!customer) {
       customer = await stripe.customers.create({
         email: verifiedEmail,
         metadata: { uid: verifiedUid },
       });
     }
 
-    const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+    if (!APP_URL.startsWith("https://")) throw new Error("APP_URL is not configured");
 
     // 3-day free trial on Knox Plus MONTHLY only.
     // Yearly buyers are already committing — they don't need a trial, and a
@@ -112,8 +123,8 @@ export default async function handler(req, res) {
       customer:          customer.id,
       line_items:        [{ price: priceId, quantity: 1 }],
       subscription_data: subscriptionData,
-      success_url:       `${baseUrl}?payment=success`,
-      cancel_url:        `${baseUrl}?payment=cancelled`,
+      success_url:       `${APP_URL}/app?payment=success`,
+      cancel_url:        `${APP_URL}/app?payment=cancelled`,
       allow_promotion_codes: true,
       // Send Stripe's official payment receipt to the customer. This is in
       // addition to our own SendGrid plan-upgrade email — Stripe's receipt
