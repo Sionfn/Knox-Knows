@@ -924,6 +924,13 @@
       transition: all 0.12s;
     }
     .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); transform: translateY(-1px); }
+    .fb-copy {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 6px 9px; color: var(--text-light);
+    }
+    .fb-copy:hover { color: var(--orange); }
+    .fb-copy:disabled { opacity: 0.7; cursor: default; transform: none; }
+    .fb-divider { width: 1px; align-self: stretch; background: var(--border); margin: 0 2px; }
 
     /* LIMIT REACHED UPSELL CARD */
     .limit-card {
@@ -1738,32 +1745,44 @@
             <p class="welcome-sub">Pick a topic below to get started — or type your own question in the box.</p>
 
             <div class="suggestion-grid">
-              <button class="suggestion-chip" data-flavor="orange" onclick="appSetQuestion('Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step')">
+              <button class="suggestion-chip" data-flavor="orange"
+                data-q-normal="Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step"
+                data-q-learn="Quiz me on the quadratic formula — walk me through solving 3x² - 5x + 2 = 0 with hints, don't just give me the answer"
+                onclick="appSuggestionClick(this)">
                 <div class="chip-circle">📐</div>
                 <div class="chip-content">
                   <div class="chip-text">Quadratic</div>
-                  <div class="chip-sub">Step-by-step algebra</div>
+                  <div class="chip-sub" data-sub-normal="Step-by-step algebra" data-sub-learn="Guided algebra practice">Step-by-step algebra</div>
                 </div>
               </button>
-              <button class="suggestion-chip" data-flavor="green" onclick="appSetQuestion('How does photosynthesis work? Walk me through it.')">
+              <button class="suggestion-chip" data-flavor="green"
+                data-q-normal="How does photosynthesis work? Walk me through it."
+                data-q-learn="Help me actually understand photosynthesis — ask me questions instead of just explaining it to me"
+                onclick="appSuggestionClick(this)">
                 <div class="chip-circle">🌿</div>
                 <div class="chip-content">
                   <div class="chip-text">Photosynthesis</div>
-                  <div class="chip-sub">Biology explained</div>
+                  <div class="chip-sub" data-sub-normal="Biology explained" data-sub-learn="Guided biology">Biology explained</div>
                 </div>
               </button>
-              <button class="suggestion-chip" data-flavor="blue" onclick="appSetQuestion('What caused World War 1? Explain the main reasons.')">
+              <button class="suggestion-chip" data-flavor="blue"
+                data-q-normal="What caused World War 1? Explain the main reasons."
+                data-q-learn="Quiz me on what caused World War 1 until I can explain the main reasons myself"
+                onclick="appSuggestionClick(this)">
                 <div class="chip-circle">🌍</div>
                 <div class="chip-content">
                   <div class="chip-text">World War 1</div>
-                  <div class="chip-sub">History breakdown</div>
+                  <div class="chip-sub" data-sub-normal="History breakdown" data-sub-learn="Guided history">History breakdown</div>
                 </div>
               </button>
-              <button class="suggestion-chip" data-flavor="purple" onclick="appSetQuestion('Help me write a strong thesis statement for an essay about climate change')">
+              <button class="suggestion-chip" data-flavor="purple"
+                data-q-normal="Help me write a strong thesis statement for an essay about climate change"
+                data-q-learn="Help me come up with my own thesis statement for an essay about climate change — ask me questions, don't write it for me"
+                onclick="appSuggestionClick(this)">
                 <div class="chip-circle">✍️</div>
                 <div class="chip-content">
                   <div class="chip-text">Thesis</div>
-                  <div class="chip-sub">Essay writing help</div>
+                  <div class="chip-sub" data-sub-normal="Essay writing help" data-sub-learn="Thesis coaching">Essay writing help</div>
                 </div>
               </button>
             </div>
@@ -2853,12 +2872,15 @@
         // Knox bubble
         const knoxRow = document.createElement('div');
         knoxRow.className = 'msg-wrap';
+        const historyFbId = 'fb_' + Math.random().toString(36).slice(2, 8);
+        window._fbPayloads[historyFbId] = { question: d.question || '', answer: d.answer || '' };
         knoxRow.innerHTML =
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
             '<div class="msg-knox-content">' +
               '<div class="msg-knox-label">Knox</div>' +
               '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '') + '</div>' +
+              buildMessageActionsHtml(historyFbId, false) +
             '</div>' +
           '</div>';
         thread.appendChild(knoxRow);
@@ -2926,8 +2948,65 @@
         ? (rating === 1 ? 'Thanks! 🦊' : 'Thanks — helps Knox improve')
         : 'Could not save';
     }
-    delete window._fbPayloads[fbId];
+    // NOTE: deliberately NOT deleting window._fbPayloads[fbId] here — the
+    // Copy button on this same message reads from that payload too, and
+    // used to silently stop working the moment someone rated the answer,
+    // since this used to delete it right after submitting feedback.
   };
+
+  // ── Copy answer to clipboard ─────────────────────────────────
+  // Available on every message regardless of sign-in — unlike feedback,
+  // copying doesn't need an account.
+  function fallbackCopyText(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* best effort */ }
+    document.body.removeChild(ta);
+  }
+
+  const COPY_ICON  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  window.appCopyAnswer = function(fbId, btn) {
+    const payload = window._fbPayloads[fbId];
+    const text = payload ? payload.answer : '';
+    if (!text) return;
+    const showCopied = () => {
+      if (!btn) return;
+      btn.innerHTML = CHECK_ICON;
+      btn.disabled = true;
+      setTimeout(() => { btn.innerHTML = COPY_ICON; btn.disabled = false; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopied).catch(() => { fallbackCopyText(text); showCopied(); });
+    } else {
+      fallbackCopyText(text);
+      showCopied();
+    }
+  };
+
+  // Builds the action row under a Knox answer: Copy is always shown (no
+  // account needed); the "Was this helpful?" thumbs only show when
+  // `showFeedback` is true (signed-in users, on a freshly answered
+  // message — not on messages replayed from saved history).
+  function buildMessageActionsHtml(fbId, showFeedback) {
+    let html = '<div class="feedback-bar">' +
+      '<button class="fb-btn fb-copy" onclick="appCopyAnswer(\'' + fbId + '\', this)" aria-label="Copy answer" title="Copy">' + COPY_ICON + '</button>';
+    if (showFeedback) {
+      html +=
+        '<span class="fb-divider"></span>' +
+        '<span>Was this helpful?</span>' +
+        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Helpful">👍</button>' +
+        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>';
+    }
+    html += '</div>';
+    return html;
+  }
+  window.buildMessageActionsHtml = buildMessageActionsHtml;
 
   // ── Auth handlers ───────────────────────────────────────────
   function showAuthError(msg) {
@@ -3301,6 +3380,7 @@ window.openLearnMode = function() {
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
   if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.";
+  updateSuggestionChipsForMode(true);
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
   const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
@@ -3318,6 +3398,7 @@ function resetWelcomeCopy() {
   if (badge) badge.innerHTML = '🦊 Hey, I\'m Knox';
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
+  updateSuggestionChipsForMode(false);
 }
 
 window.appSetQuestion = function(q) {
@@ -3328,6 +3409,25 @@ window.appSetQuestion = function(q) {
   input.style.height = Math.min(input.scrollHeight, 140) + 'px';
   input.focus();
 };
+
+// The 4 welcome-screen suggestion chips carry two versions of their
+// question text and sub-label (data-q-normal/data-q-learn and
+// data-sub-normal/data-sub-learn) — normal mode's phrasing asks Knox to
+// just solve/explain/write the thing, which is exactly backwards for
+// Learn mode, where the whole point is Knox NOT just handing over the
+// answer. This picks whichever version matches the current mode.
+window.appSuggestionClick = function(btn) {
+  const isLearn = !!window._learnModeActive;
+  const q = isLearn ? btn.dataset.qLearn : btn.dataset.qNormal;
+  if (q) window.appSetQuestion(q);
+};
+
+function updateSuggestionChipsForMode(isLearn) {
+  document.querySelectorAll('.suggestion-chip .chip-sub').forEach(el => {
+    const text = isLearn ? el.dataset.subLearn : el.dataset.subNormal;
+    if (text) el.textContent = text;
+  });
+}
 
 // ── Auth modal ───────────────────────────────────────────────
 window.openAuthModal = function(initialTab) {
@@ -4036,15 +4136,9 @@ window.appHandleAsk = async function() {
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: q || '[image]', answer };
 
-    let bodyHtml = '<div>' + html + '</div>';
-    if (window.currentUser) {
-      bodyHtml +=
-        '<div class="feedback-bar">' +
-          '<span>Was this helpful?</span>' +
-          '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Helpful">👍</button>' +
-          '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>' +
-        '</div>';
-    }
+    // Copy is always shown (works for guests too); "Was this helpful?"
+    // only for signed-in users, same as before.
+    const bodyHtml = '<div>' + html + '</div>' + window.buildMessageActionsHtml(fbId, !!window.currentUser);
     replaceThinking(thinkId, bodyHtml);
 
     // Track conversation
