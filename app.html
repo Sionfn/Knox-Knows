@@ -584,6 +584,14 @@
     .sidebar-history-launch { margin:10px 8px 0; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; background:var(--cream); color:var(--text); display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:13px; font-weight:900; }
     .sidebar-history-launch:hover { border-color:var(--orange); color:var(--orange); }
     .sidebar-history-launch small { color:var(--text-light); font-size:11px; font-weight:800; }
+    .sidebar-profile-dock { margin-top:auto; padding:12px; border-top:1px solid var(--border); background:var(--surface); display:none; align-items:center; gap:10px; }
+    .sidebar-profile-avatar { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--orange-light); color:var(--orange); font-weight:900; flex:0 0 36px; overflow:hidden; }
+    .sidebar-profile-avatar img { width:100%; height:100%; object-fit:cover; }
+    .sidebar-profile-copy { min-width:0; flex:1; }
+    .sidebar-profile-name { color:var(--text); font-size:13px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sidebar-profile-plan { color:var(--text-light); font-size:11px; font-weight:700; margin-top:1px; }
+    .sidebar-profile-settings { width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:var(--cream); color:var(--text-light); font-size:17px; }
+    .sidebar-profile-settings:hover { color:var(--orange); border-color:var(--orange); }
 
     .sidebar-section-header {
       padding: 14px 14px 10px;
@@ -940,6 +948,10 @@
     .study-tool-action { display:inline-block; margin-top:16px; color:var(--orange); font-size:13px; font-weight:900; }
     .study-promise { margin-top:22px; display:flex; gap:9px; align-items:flex-start; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.45; }
     @media (max-width:680px) { #studyHub { padding:22px 16px 30px; } .study-tools-grid { grid-template-columns:1fr; } .study-tool-card { min-height:0; } }
+
+    .welcome-study-strip { margin-top:22px; width:100%; max-width:580px; display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+    .welcome-study-item { padding:11px 10px; border:1.5px solid var(--border); border-radius:13px; background:var(--surface); color:var(--text-light); font-size:11px; font-weight:800; text-align:left; }
+    .welcome-study-item b { display:block; color:var(--text); font-size:12px; margin-top:3px; }
 
     .msg-wrap { margin-bottom: 18px; }
     .msg-user { display: flex; justify-content: flex-end; }
@@ -1785,9 +1797,6 @@
 
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
-        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
-          <span class="sq-icon">⌂</span><span class="sidebar-collapsible">Home</span>
-        </a>
         <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
           <span class="sq-icon">✦</span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
@@ -1803,9 +1812,6 @@
         <a class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
           <span class="sq-icon">◌</span><span class="sidebar-collapsible">Chrome extension</span>
         </a>
-        <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">⚙</span><span class="sidebar-collapsible">Account &amp; Plan</span>
-        </button>
       </div>
 
       <button class="sidebar-history-launch sidebar-collapsible" onclick="openMobileHistory()" title="Open your saved conversations">
@@ -1825,6 +1831,15 @@
       </div>
 
       </div><!-- end sidebar-body -->
+
+      <div class="sidebar-profile-dock" id="sidebarProfileDock">
+        <div class="sidebar-profile-avatar" id="sidebarProfileAvatar">?</div>
+        <div class="sidebar-profile-copy">
+          <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
+          <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
+        </div>
+        <button class="sidebar-profile-settings" onclick="openAppSettings()" aria-label="Open settings" title="Settings">⚙</button>
+      </div>
 
     </aside>
 
@@ -1971,6 +1986,11 @@
                   <div class="chip-sub" data-sub-normal="Essay writing help" data-sub-learn="Thesis coaching">Essay writing help</div>
                 </div>
               </button>
+            </div>
+            <div class="welcome-study-strip" aria-label="Ways Knox can help">
+              <div class="welcome-study-item">✦ <b>Ask anything</b>Homework help, explained.</div>
+              <div class="welcome-study-item">◈ <b>Learn it</b>Get hints, not spoilers.</div>
+              <div class="welcome-study-item">▣ <b>Study Hub</b>Guides, cards &amp; quizzes.</div>
             </div>
           </div>
 
@@ -2409,12 +2429,22 @@
     const guestBtns  = document.getElementById('appGuestBtns');
     const upgradeBtn = document.getElementById('appUpgradeBtn');
     const ddUpgrade  = document.getElementById('ddUpgradeRow');
+    const profileDock = document.getElementById('sidebarProfileDock');
+    const profileName = document.getElementById('sidebarProfileName');
+    const profilePlan = document.getElementById('sidebarProfilePlan');
+    const profileAvatar = document.getElementById('sidebarProfileAvatar');
 
     if (user) {
       if (guestBtns)  guestBtns.style.display  = 'none';
       if (accountBtn) accountBtn.style.display = 'inline-flex';
 
       const initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+      if (profileDock) profileDock.style.display = 'flex';
+      if (profileName) profileName.textContent = (user.displayName || user.email || 'Your account').split(' ')[0];
+      if (profilePlan) profilePlan.textContent = plan !== 'free' ? '⚡ Knox Plus' : 'Free plan';
+      if (profileAvatar) {
+        profileAvatar.innerHTML = user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : initials;
+      }
       const icon     = document.getElementById('appAccountIcon');
       if (icon) {
         if (user.photoURL) {
@@ -2471,6 +2501,10 @@
       // Refresh usage pill
       updateUsageIndicator();
     } else {
+      if (profileDock) profileDock.style.display = 'flex';
+      if (profileName) profileName.textContent = 'Sign in to Knox';
+      if (profilePlan) profilePlan.textContent = 'Save your study history';
+      if (profileAvatar) profileAvatar.textContent = '🦊';
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
       if (upgradeBtn) upgradeBtn.style.display = 'none';
