@@ -2726,12 +2726,25 @@
         try { window.resumePendingCheckoutIfAny(); } catch(e) {}
       }
       // ── Returning user behavior ────────────────────────────────────────
-      // Returning users stay on the marketing site. The header's "Open Knox"
-      // button (and the chat preview anchor) gives them the choice of when
-      // to enter the app. We deliberately do NOT redirect them automatically,
-      // because doing so breaks browsing — they can't read legal pages,
-      // compare plans, or follow internal links without getting bounced to
-      // the app on every page reload.
+      // Returning users stay on the marketing site by default — the
+      // header's "Open Knox" button (and the chat preview anchor) let them
+      // choose when to enter the app, and auto-redirecting on every page
+      // unconditionally broke browsing: they couldn't read legal pages,
+      // compare plans, or follow internal links without getting bounced
+      // to the app on every reload.
+      //
+      // The one carve-out: landing on the bare homepage itself (not any
+      // other page, and not via the "back to landing page" link from the
+      // app, which passes ?from=app) with an already-restored session —
+      // that's the specific case being asked for here, so send them
+      // straight into /app instead of showing the marketing landing page
+      // they've already seen and don't need again. isBareHomepageVisit()
+      // is intentionally narrow: any other path, or the from=app / payment
+      // query params, leaves this alone entirely.
+      if (_isFirstAuthEvent && isBareHomepageVisit()) {
+        redirectToApp();
+        return;
+      }
       _isFirstAuthEvent = false;
     } else {
       window.userPlan = "free";
@@ -2741,6 +2754,27 @@
       if (window.updateLoginUI) window.updateLoginUI();
     }
   });
+
+  // ── Bare-homepage check for the auto-redirect above ───────────────────────
+  // Deliberately narrow: only the homepage itself, with no query string that
+  // signals a specific intent. Two exclusions matter most —
+  //   • ?from=app — the app's own "back to landing page" link. Without this,
+  //     clicking that link would instantly bounce right back into /app,
+  //     making it impossible to ever actually reach the landing page again.
+  //   • ?payment=... — mid Stripe-checkout-return flow; that flow shows its
+  //     own success modal and handles its own navigation.
+  // Any other path (terms, pricing, updates, a deep link someone sent) is
+  // excluded by the path check alone, so browsing while signed in still
+  // works exactly as it did before this was added.
+  function isBareHomepageVisit() {
+    const path = window.location.pathname;
+    const isHomePath = path === '/' || path === '/index.html' || path === '';
+    if (!isHomePath) return false;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') === 'app') return false;
+    if (params.get('payment')) return false;
+    return true;
+  }
 
   // ── Redirect to /app — used by EXPLICIT login flows ──────────────────
   // Called only when the user has just clicked Sign In / Sign Up and
