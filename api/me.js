@@ -21,7 +21,11 @@ const adminAuth = getAdminAuth();
 const db = getFirestore();
 
 // Must match api/ask.js's checkAndIncrementUsage exactly, or the displayed
-// "questions left" will disagree with what actually happens when you ask.
+// "credits left" will disagree with what actually happens when you ask.
+// This endpoint only READS the balance — it never deducts — so it doesn't
+// need to know about per-action costs (a photo now costs more credits than
+// a text question; see PHOTO_CREDIT_COST in ask.js). The regen/cap numbers
+// below are what matter for display and are unaffected by that weighting.
 const FREE_DAILY_REGEN      = 5;
 const FREE_MAX_BALANCE      = 20;
 const FREE_STARTING_BALANCE = 10;
