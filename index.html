@@ -182,6 +182,7 @@
       --yellow-light: #FFF8C6;
       --purple:  #CE82FF;
       --purple-dark: #9B59B6;
+      --purple-light: #F3E8FF;
       --cream:   #FFF8F0;
       --gray:    #F7F7F7;
       --text:    #3C3C3C;
@@ -201,32 +202,46 @@
     /* DARK MODE — mirrors :root one variable at a time, same as the app.
        Applied via [data-theme="dark"] on <html>, set by an inline script
        at the very top of <head> so it's in place before first paint. Light
-       is the default for everyone until they explicitly switch. */
+       is the default for everyone until they explicitly switch.
+       The "-light" pastel fills (icon circles, badges, feature cards) are
+       deliberately kept RICH here — same hue as their light-mode
+       counterpart, saturation held at 60-75%, lightness dropped to ~22%.
+       An earlier version of this just darkened+desaturated those pastels
+       toward brown/olive/near-black, which read as washed-out and cheap
+       instead of premium — a jewel-tone (dark but still saturated) keeps
+       each accent color distinguishable and intentional, the same way a
+       colorful accent looks on Linear, Discord, or Stripe's dark
+       dashboards, rather than collapsing everything toward gray. */
     html[data-theme="dark"] {
-      --orange:  #FF8A3D;
+      --orange:  #E86A2E;
       --orange2: #FFA366;
-      --orange-light: #4A2E1A;
+      --orange-light: #62370E;
       --blue:    #4DC8FF;
       --blue-dark: #7DD8FF;
-      --blue-light: #1B3542;
+      --blue-light: #0E4A62;
       --green:   #7EDB3A;
       --green-dark: #9BE85C;
-      --green-light: #23331A;
+      --green-light: #33620E;
       --red:     #FF6B6B;
       --yellow:  #FFE066;
-      --yellow-light: #3A331A;
+      --yellow-light: #62580E;
       --purple:  #D9A6FF;
       --purple-dark: #C58AFF;
-      --cream:   #17171A;
-      --gray:    #202024;
+      --purple-light: #360E62;
+      /* Page bg → hover/alt → card surface → border: a deliberate 4-step
+         lightness ladder (7% / 12% / 17% / 22%) instead of a flat wash of
+         near-identical dark grays, so cards actually read as elevated
+         above the page instead of blending into it. */
+      --cream:   #101013;
+      --gray:    #1F1F23;
       --text:    #EDEDED;
       --text-light: #9B9BA3;
-      --border:  #33333A;
+      --border:  #34343D;
       --shadow:  0 4px 0 rgba(0,0,0,0.4);
       --shadow-orange: 0 4px 0 #A34700;
       --shadow-blue:   0 4px 0 #06638F;
       --shadow-green:  0 4px 0 #327A01;
-      --surface: #232327;
+      --surface: #29292E;
       --danger-bg: #3A2020;
       --danger-border: #5C2E2E;
     }
@@ -442,7 +457,7 @@
     .header-logo-img {
       width:42px; height:42px; border-radius:50%;
       border:3px solid white;
-      overflow:hidden; background:#FFE0C2;
+      overflow:hidden; background:var(--orange-light);
       object-fit:cover; object-position:top center;
       flex-shrink:0;
     }
@@ -454,7 +469,7 @@
       display:flex; align-items:center; gap:8px; flex-shrink:0;
     }
     .header-try-pro {
-      background:#FFD900; color:#3C3C3C;
+      background:var(--yellow); color:#3C3C3C;
       border:none; border-radius:12px;
       padding:10px 18px; font-size:14px; font-weight:800;
       box-shadow:0 3px 0 #CC9900;
@@ -496,7 +511,7 @@
     /* Account dropdown — matches /app's profile dropdown for consistency.
        Class names preserved (.dropdown-header, .dropdown-item, etc.) so
        existing handlers in this file still work; styling ported from app. */
-    .pro-badge { background:#FFD900; color:#3C3C3C; border:none; border-radius:12px; padding:10px 18px; font-size:14px; font-weight:800; box-shadow:0 3px 0 #CC9900; transition:all 0.15s; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+    .pro-badge { background:var(--yellow); color:#3C3C3C; border:none; border-radius:12px; padding:10px 18px; font-size:14px; font-weight:800; box-shadow:0 3px 0 #CC9900; transition:all 0.15s; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
     .pro-badge:hover { transform:translateY(-1px); box-shadow:0 4px 0 #CC9900; }
     .account-dropdown-wrapper { position:relative; }
     .account-dropdown {
@@ -515,7 +530,7 @@
     .account-dropdown.open { display: block; }
     .dropdown-header {
       padding: 18px;
-      background: #FFF8F0;
+      background:var(--cream);
       border-bottom: 2px solid var(--border);
     }
     .dropdown-header p {
@@ -578,9 +593,9 @@
       font-family: inherit;
       text-decoration: none;
     }
-    .dropdown-item:hover { background: #FFF8F0; }
+    .dropdown-item:hover { background:var(--cream); }
     .dropdown-item.danger { color: var(--red); }
-    .dropdown-item.danger:hover { background: #FEF2F2; }
+    .dropdown-item.danger:hover { background:var(--danger-bg); }
     .dropdown-divider { height: 2px; background: var(--border); margin: 2px 0; }
 
     /* ── HERO ────────────────────────────────────────────────── */
@@ -757,7 +772,7 @@
     .ai-box-knox {
       width:52px; height:52px; border-radius:50%;
       border:3px solid rgba(255,255,255,0.5);
-      overflow:hidden; background:#FFE0C2; flex-shrink:0;
+      overflow:hidden; background:var(--orange-light); flex-shrink:0;
     }
     .ai-box-knox img { width:100%; height:100%; object-fit:cover; object-position:top center; }
     .ai-box-header-text h3 { font-size:20px; font-weight:900; color:white; }
@@ -871,8 +886,8 @@
     }
     .tag-free     { background:#EFF6FF; color:#1D4ED8; border:1.5px solid #93C5FD; }
     .tag-pro      { background:var(--green-light); color:var(--green-dark); border:1.5px solid var(--green); }
-    .tag-super    { background:#F0FDF4; color:#166534; border:1.5px solid #86EFAC; }
-    .tag-max      { background:#FFF4EC; color:#CC5500; border:1.5px solid #FDBA74; }
+    .tag-super    { background:var(--green-light); color:#166534; border:1.5px solid #86EFAC; }
+    .tag-max      { background:var(--orange-light); color:#CC5500; border:1.5px solid #FDBA74; }
 
     .resp-final {
       background:var(--green-light); border-left:5px solid var(--green);
@@ -925,7 +940,7 @@
     .resp-tip-text  { font-size:14px; font-weight:600; color:#555; line-height:1.55; }
 
     .resp-insight {
-      background:#F3E8FF; border:2px solid var(--purple);
+      background:var(--purple-light); border:2px solid var(--purple);
       border-radius:14px; padding:14px 16px; margin:0 16px 12px;
     }
     .resp-insight-label { font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.08em; color:var(--purple-dark); margin-bottom:4px; }
@@ -933,7 +948,7 @@
 
     .resp-common-mistake {
       display:flex; align-items:flex-start; gap:12px;
-      background:#FFF0F0; border:2px solid var(--red);
+      background:var(--danger-bg); border:2px solid var(--red);
       border-radius:14px; padding:14px 16px; margin:0 16px 12px;
     }
     .resp-common-mistake-icon  { font-size:22px; flex-shrink:0; }
@@ -1005,7 +1020,7 @@
     @keyframes thinking-dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
 
     /* ── PRICING ─────────────────────────────────────────────── */
-    #pricing { background:#F5F4F0; }
+    #pricing { background:var(--gray); }
     .pricing-toggle {
       display:inline-flex; background:var(--gray);
       border-radius:14px; padding:5px; gap:4px;
@@ -1184,7 +1199,7 @@
     details.faq-item summary::-webkit-details-marker { display:none; }
     details.faq-item .faq-icon { transition:transform 0.2s ease; }
     details.faq-item[open] .faq-icon { transform:rotate(45deg); }
-    details.faq-item[open] { background:#FFF7F0 !important; border-color:#FFD0A0 !important; }
+    details.faq-item[open] { background:var(--cream) !important; border-color:#FFD0A0 !important; }
 
     /* ── CTA BANNER ──────────────────────────────────────────── */
     .cta-banner {
@@ -1287,7 +1302,7 @@
 
     .login-tabs {
       display: flex;
-      background: #FFF8F0;
+      background:var(--cream);
       border: 2px solid var(--border);
       border-radius: 14px;
       padding: 4px;
@@ -1410,7 +1425,7 @@
     .login-social-btn:hover {
       border-color: var(--orange);
       box-shadow: 0 2px 0 var(--orange-light);
-      background: #FFF8F0;
+      background:var(--cream);
       transform: translateY(-1px);
     }
 
@@ -1423,7 +1438,7 @@
       border: 2px solid;
     }
     .login-error {
-      background: #FEF2F2;
+      background:var(--danger-bg);
       border-color: #FECACA;
       color: var(--red);
       box-shadow: 0 2px 0 #FECACA;
@@ -1554,7 +1569,7 @@
     .settings-billing-btn:hover {
       border-color: var(--orange);
       box-shadow: 0 2px 0 var(--orange-light);
-      background: #FFF8F0;
+      background:var(--cream);
     }
 
     /* Primary button (Upgrade) and danger button (Sign out) — match /app */
@@ -1580,14 +1595,14 @@
       padding: 13px;
       border-radius: 14px;
       border: 2px solid #FECACA;
-      background: #FEF2F2;
+      background:var(--danger-bg);
       color: var(--red);
       font-size: 14px; font-weight: 900;
       font-family: inherit;
       cursor: pointer;
       transition: background 0.15s;
     }
-    .settings-danger-btn:hover { background: #FEE2E2; }
+    .settings-danger-btn:hover { background:var(--danger-bg); }
 
     /* Calc specific */
     .calc-mode-tab { padding:4px 10px; font-size:11px; font-weight:800; font-family:inherit; border:2px solid var(--border); border-radius:8px; cursor:pointer; background: var(--surface); transition:all 0.15s; white-space:nowrap; }
@@ -1656,7 +1671,7 @@
       width:38px; height:38px; border-radius:50%;
       border:2px solid var(--orange-light);
       overflow:hidden; flex-shrink:0; margin-top:2px;
-      background:#FED7AA;
+      background:var(--orange-light);
     }
     .chat-knox-avatar img { width:100%; height:100%; object-fit:cover; }
     .chat-knox-bubble {
@@ -1733,13 +1748,13 @@
     .usage-bar-wrap { padding:10px 16px 12px;background:#FAFAFA;border-top:1.5px solid var(--border); }
     .usage-bar-label { display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--text-light);margin-bottom:5px; }
     .usage-bar-track { height:8px;border-radius:999px;overflow:hidden; }
-    .usage-bar-track.orange { background:#FFE0C2; }
-    .usage-bar-track.blue   { background:#D7F2FD; }
-    .usage-bar-track.green  { background:#DCFCE7; }
+    .usage-bar-track.orange { background:var(--orange-light); }
+    .usage-bar-track.blue   { background:var(--blue-light); }
+    .usage-bar-track.green  { background:var(--green-light); }
     .usage-bar-fill         { height:100%;border-radius:999px;transition:width 0.4s ease; }
-    .usage-bar-fill.hw-fill   { background:#FF6B00; }
+    .usage-bar-fill.hw-fill   { background:var(--orange); }
     .usage-bar-fill.cs-fill   { background:#1CB0F6; }
-    .usage-bar-fill.chat-fill { background:#58CC02; }
+    .usage-bar-fill.chat-fill { background:var(--green); }
     .usage-bar-fill.warn    { background:#F59E0B; }
     .usage-bar-fill.danger  { background:#EF4444; }
 
@@ -1859,7 +1874,7 @@
 <!-- ── MOBILE NAV DRAWER ── -->
 <div id="mobileNav" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,0.5);" onclick="closeMobileNav()">
   <div style="position:absolute;top:0;left:0;width:280px;height:100%;background:var(--surface);box-shadow:8px 0 32px rgba(0,0,0,0.15);display:flex;flex-direction:column;" onclick="event.stopPropagation()">
-    <div style="background:#FF6B00;padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--orange);padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:10px;">
         <img src="./knox-logo-square.jpg" alt="Knox" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);object-fit:cover;" onerror="this.style.display='none'">
         <span style="font-size:18px;font-weight:900;color:white;">Knox Knows</span>
@@ -1883,7 +1898,7 @@
       </a>
     </div>
     <div style="padding:16px 20px;border-top:2px solid var(--border);">
-      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
     </div>
   </div>
 </div>
@@ -1938,7 +1953,7 @@
 </section>
 
 <!-- ===================== WHY KNOX IS DIFFERENT ===================== -->
-<section id="why-knox" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid var(--border);">
+<section id="why-knox" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
   <div style="max-width:1050px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Why Knox is different</h2>
@@ -1976,7 +1991,7 @@
       <!-- Snap a photo -->
       <div class="reveal delay-4" style="background:var(--surface);border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:#EDE4FF;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📷</div>
+          <div style="width:52px;height:52px;border-radius:14px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📷</div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Snap a photo, done</h3>
         </div>
         <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Point your camera at a worksheet, whiteboard, textbook, or your own handwriting. Knox reads it, confirms what it sees so you know it got the right problem, then helps.</p>
@@ -2036,7 +2051,7 @@
 </section>
 
 <!-- ===================== SUBJECTS ===================== -->
-<section id="subjects" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid var(--border);">
+<section id="subjects" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
   <div style="max-width:1100px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Every subject. Every grade.</h2>
@@ -2060,7 +2075,7 @@
 
       <!-- History — purple -->
       <div class="reveal delay-3" style="background:var(--surface);border-radius:18px;border:3px solid #7C3AED;box-shadow:0 5px 0 #5B21B6;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #5B21B6'">
-        <div style="width:44px;height:44px;border-radius:12px;background:#EDE4FF;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌍</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌍</div>
         <div style="font-size:16px;font-weight:900;color:var(--text);">History</div>
         <div style="font-size:12px;font-weight:700;color:#7C3AED;margin-top:6px;line-height:1.5;">World · US · AP · Geography</div>
       </div>
@@ -2074,28 +2089,28 @@
 
       <!-- Computer Science — pink -->
       <div class="reveal delay-1" style="background:var(--surface);border-radius:18px;border:3px solid #EC4899;box-shadow:0 5px 0 #BE185D;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #BE185D'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #BE185D'">
-        <div style="width:44px;height:44px;border-radius:12px;background:#FCE7F3;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">💻</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">💻</div>
         <div style="font-size:16px;font-weight:900;color:var(--text);">Computer Science</div>
         <div style="font-size:12px;font-weight:700;color:#EC4899;margin-top:6px;line-height:1.5;">Python · Java · Algorithms</div>
       </div>
 
       <!-- Languages — teal -->
       <div class="reveal delay-2" style="background:var(--surface);border-radius:18px;border:3px solid #14B8A6;box-shadow:0 5px 0 #0F766E;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #0F766E'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #0F766E'">
-        <div style="width:44px;height:44px;border-radius:12px;background:#CCFBF1;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌐</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌐</div>
         <div style="font-size:16px;font-weight:900;color:var(--text);">Languages</div>
         <div style="font-size:12px;font-weight:700;color:#0F766E;margin-top:6px;line-height:1.5;">Spanish · French · German · Latin</div>
       </div>
 
       <!-- Economics — amber/yellow -->
       <div class="reveal delay-3" style="background:var(--surface);border-radius:18px;border:3px solid #F59E0B;box-shadow:0 5px 0 #B45309;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #B45309'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #B45309'">
-        <div style="width:44px;height:44px;border-radius:12px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">📊</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--yellow-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">📊</div>
         <div style="font-size:16px;font-weight:900;color:var(--text);">Economics</div>
         <div style="font-size:12px;font-weight:700;color:#B45309;margin-top:6px;line-height:1.5;">Micro · Macro · Accounting</div>
       </div>
 
       <!-- Test Prep — red -->
       <div class="reveal delay-4" style="background:var(--surface);border-radius:18px;border:3px solid #EF4444;box-shadow:0 5px 0 #B91C1C;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #B91C1C'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #B91C1C'">
-        <div style="width:44px;height:44px;border-radius:12px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🎓</div>
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🎓</div>
         <div style="font-size:16px;font-weight:900;color:var(--text);">Test Prep</div>
         <div style="font-size:12px;font-weight:700;color:#B91C1C;margin-top:6px;line-height:1.5;">SAT · ACT · AP · GRE · LSAT</div>
       </div>
@@ -2120,12 +2135,12 @@
     <!-- Billing toggle + guarantee -->
     <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;">
       <div style="display:inline-flex;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 var(--border);">
-        <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:#FF6B00;color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
+        <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:var(--orange);color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
         <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:var(--text-light);transition:all 0.15s;">
-          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:#58CC02;color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 33%</span>
+          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:var(--green);color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 33%</span>
         </button>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--green-light);border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span style="font-size:12px;font-weight:800;color:#16A34A;">30-day money back</span>
       </div>
@@ -2154,7 +2169,7 @@
 
       <!-- KNOX PLUS card -->
       <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:#FF6B00;color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
+        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:var(--orange);color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
         <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
         <div style="height:8px;" aria-hidden="true"></div>
         <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
@@ -2226,7 +2241,7 @@
 
 
 <!-- ===================== FAQ ===================== -->
-<section id="faq" style="background:#F5F4F0;padding:80px 24px;border-top:2px solid var(--border);">
+<section id="faq" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
   <div style="max-width:760px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Common questions</h2>
@@ -3004,12 +3019,12 @@
         <img src="./knox-logo-square.jpg" alt="Knox" style="width:72px;height:72px;border-radius:20px;object-fit:cover;display:block;margin:0 auto 22px;box-shadow:0 6px 18px rgba(255,107,0,0.28);" onerror="this.outerHTML='<div style=&quot;font-size:60px;line-height:1;margin-bottom:18px;&quot;>🦊</div>'">
         <h2 style="margin:0 0 8px;font-size:25px;font-weight:900;color:var(--text);font-family:Fredoka,sans-serif;line-height:1.25;letter-spacing:-0.01em;">Welcome, ${firstName}</h2>
         <p style="margin:0 0 22px;font-size:15px;font-weight:600;color:var(--text-light);line-height:1.5;">Your Knox Knows account is ready to go.</p>
-        <div style="background:#FFF7F0;border:1.5px solid #FFE0C2;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
+        <div style="background:var(--cream);border:1.5px solid #FFE0C2;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
           <p style="margin:0;font-size:14px;font-weight:600;color:var(--text-light);line-height:1.6;">
             You've got <strong style="color:var(--text);">10 free questions to start</strong>, plus 5 more every day (up to 20 saved) across every subject. Type a question or snap a photo of your homework — Knox handles both.
           </p>
         </div>
-        <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
+        <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
           Ask Knox your first question →
         </button>
         <button onclick="document.getElementById('knoxWelcomeModal').remove();if(window.redirectToApp)window.redirectToApp();" style="width:100%;padding:11px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:var(--text-light);cursor:pointer;transition:color 0.12s;" onmouseover="this.style.color='#6B7280'" onmouseout="this.style.color='#9CA3AF'">
@@ -3519,7 +3534,7 @@
     const m = document.createElement('div');
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
     const upgradeSection = isPaid ? '' : `
-      <div style="background:#FFF4EC;border:2px solid #FFCFA0;border-radius:14px;padding:14px 16px;margin-bottom:2px;">
+      <div style="background:var(--orange-light);border:2px solid #FFCFA0;border-radius:14px;padding:14px 16px;margin-bottom:2px;">
         <div style="font-size:13px;font-weight:900;color:#CC5500;margin-bottom:4px;">${upgradeBadge}</div>
         <div style="font-size:12px;font-weight:600;color:#888;">${upgradeSub}</div>
       </div>
@@ -3588,12 +3603,12 @@
         <img src="./knox-logo-square.jpg" alt="Knox" style="width:72px;height:72px;border-radius:20px;object-fit:cover;display:block;margin:0 auto 22px;box-shadow:0 6px 18px rgba(88,204,2,0.3);" onerror="this.outerHTML='<div style=&quot;font-size:60px;line-height:1;margin-bottom:18px;&quot;>🎉</div>'">
         <h2 style="margin:0 0 8px;font-size:25px;font-weight:900;color:var(--text);font-family:Fredoka,sans-serif;line-height:1.25;letter-spacing:-0.01em;">You're in</h2>
         <p style="margin:0 0 22px;font-size:15px;font-weight:600;color:var(--text-light);line-height:1.5;">Payment received — welcome to the upgrade.</p>
-        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
+        <div style="background:var(--green-light);border:1.5px solid #BBF7D0;border-radius:16px;padding:18px 20px;margin-bottom:24px;text-align:left;">
           <p style="margin:0;font-size:14px;font-weight:600;color:var(--text-light);line-height:1.6;">
             Your <strong style="color:var(--text);">upgraded plan is now active</strong>. A confirmation email is on its way, and you can manage your subscription anytime from your account menu.
           </p>
         </div>
-        <button onclick="document.getElementById('knoxPaymentSuccessModal').remove();" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
+        <button onclick="document.getElementById('knoxPaymentSuccessModal').remove();" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:transform 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">
           Start using Knox
         </button>
         <p style="margin:16px 0 0;font-size:12px;color:var(--text-light);font-weight:500;line-height:1.5;">
@@ -3813,7 +3828,7 @@
           <div style="display:flex;flex-direction:column;gap:10px;">
 
             <button id="knoxPortalBtn" onclick="window._goToStripePortal()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--border);background:var(--surface);cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.background='#FFF4EC'" onmouseout="this.style.borderColor='var(--border)';this.style.background='white'">
-              <div style="width:36px;height:36px;border-radius:10px;background:#FFF4EC;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">💳</div>
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">💳</div>
               <div>
                 <div style="font-size:14px;font-weight:800;color:var(--text);">Update Payment Method</div>
                 <div style="font-size:12px;font-weight:600;color:var(--text-light);margin-top:1px;">Change your card on file</div>
@@ -3822,7 +3837,7 @@
             </button>
 
             <button onclick="window._goToStripePortal()" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:14px;border:2px solid #FEE2E2;background:var(--surface);cursor:pointer;font-family:inherit;text-align:left;transition:all 0.15s;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
-              <div style="width:36px;height:36px;border-radius:10px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">❌</div>
+              <div style="width:36px;height:36px;border-radius:10px;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">❌</div>
               <div>
                 <div style="font-size:14px;font-weight:800;color:#DC2626;">Cancel Subscription</div>
                 <div style="font-size:12px;font-weight:600;color:var(--text-light);margin-top:1px;">You'll keep access until the billing period ends</div>
@@ -3953,7 +3968,7 @@
     if (banner) {
       const _bp = window.userPlan || userPlan || 'free';
       if (_bp !== 'free') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:#F0FDF4;border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Knox Plus &nbsp;·&nbsp; Basically unlimited questions</span></div>';
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:var(--green-light);border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Knox Plus &nbsp;·&nbsp; Basically unlimited questions</span></div>';
       } else {
         banner.innerHTML = '';
       }
@@ -4097,7 +4112,7 @@
           html += `<div style="display:flex;flex-direction:column;gap:8px;margin:10px 14px;">`;
           steps.forEach(({ num, txt }) => {
             html += `<div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:2px solid #FFE0C2;border-radius:12px;padding:12px 14px;box-shadow:0 2px 0 #FFD0A0;">
-              <div style="min-width:28px;height:28px;border-radius:9px;background:#FF6B00;color:white;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 0 #CC5500;">${num}</div>
+              <div style="min-width:28px;height:28px;border-radius:9px;background:var(--orange);color:white;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 0 #CC5500;">${num}</div>
               <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.6;padding-top:4px;">${formatInline(txt, plan)}</div>
             </div>`;
           });
@@ -4112,7 +4127,7 @@
             bullets.push(allLines[i].replace(/^[-•*]\s*/, ''));
             i++;
           }
-          html += `<div style="background:#F5F3FF;border-left:5px solid #8B5CF6;border-radius:0 12px 12px 0;padding:12px 16px;margin:10px 14px;display:flex;flex-direction:column;gap:6px;">`;
+          html += `<div style="background:var(--purple-light);border-left:5px solid #8B5CF6;border-radius:0 12px 12px 0;padding:12px 16px;margin:10px 14px;display:flex;flex-direction:column;gap:6px;">`;
           bullets.forEach(b => {
             html += `<div style="display:flex;align-items:flex-start;gap:8px;font-size:14px;font-weight:600;color:#333;line-height:1.55;">
               <div style="width:18px;height:18px;border-radius:50%;background:#8B5CF6;color:white;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;flex-shrink:0;margin-top:2px;">✓</div>
@@ -4126,27 +4141,27 @@
         // ── Labeled sections ──────────────────────────────────────────────────
         if (/^Explanation:\s*/i.test(line)) {
           const txt = line.replace(/^Explanation:\s*/i, '');
-          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#1CB0F6;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #0A85C2;">Explanation</div></div><div style="background:#D7F2FD;border-left:5px solid #1CB0F6;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:15px;font-weight:500;color:#333;line-height:1.75;">${formatInline(txt, plan)}</div></div></div>`;
+          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#1CB0F6;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #0A85C2;">Explanation</div></div><div style="background:var(--blue-light);border-left:5px solid #1CB0F6;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:15px;font-weight:500;color:#333;line-height:1.75;">${formatInline(txt, plan)}</div></div></div>`;
           i++; continue;
         }
         if (/^Tip:\s*/i.test(line)) {
           const txt = line.replace(/^Tip:\s*/i, '');
-          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#F59E0B;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B45309;">Tip</div></div><div style="background:#FFFBEB;border-left:5px solid #F59E0B;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
+          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#F59E0B;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B45309;">Tip</div></div><div style="background:var(--yellow-light);border-left:5px solid #F59E0B;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
           i++; continue;
         }
         if (/^Insight:\s*/i.test(line)) {
           const txt = line.replace(/^Insight:\s*/i, '');
-          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#EC4899;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #BE185D;">Insight</div></div><div style="background:#FDF2F8;border-left:5px solid #EC4899;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
+          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#EC4899;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #BE185D;">Insight</div></div><div style="background:var(--purple-light);border-left:5px solid #EC4899;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
           i++; continue;
         }
         if (/^Common Mistake:\s*/i.test(line)) {
           const txt = line.replace(/^Common Mistake:\s*/i, '');
-          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#EF4444;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B91C1C;">Common Mistake</div></div><div style="background:#FEF2F2;border-left:5px solid #EF4444;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
+          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#EF4444;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #B91C1C;">Common Mistake</div></div><div style="background:var(--danger-bg);border-left:5px solid #EF4444;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:14px;font-weight:600;color:#333;line-height:1.65;">${formatInline(txt, plan)}</div></div></div>`;
           i++; continue;
         }
         if (/^Final Answer:\s*/i.test(line)) {
           const txt = line.replace(/^Final Answer:\s*/i, '');
-          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:#58CC02;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #46A302;">Answer</div></div><div style="background:#D7FFB8;border-left:5px solid #58CC02;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:16px;font-weight:800;color:#1a1a1a;line-height:1.5;">${formatInline(txt, plan)}</div></div></div>`;
+          html += `<div style="margin:10px 14px 0;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div style="background:var(--green);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #46A302;">Answer</div></div><div style="background:var(--green-light);border-left:5px solid #58CC02;border-radius:0 12px 12px 0;padding:14px 16px;"><div style="font-size:16px;font-weight:800;color:#1a1a1a;line-height:1.5;">${formatInline(txt, plan)}</div></div></div>`;
           isFirstPara = false; i++; continue;
         }
 
@@ -4166,9 +4181,9 @@
           // First paragraph = Answer card (green)
           html += `<div style="margin:10px 14px 0;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <div style="background:#58CC02;color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #46A302;">Answer</div>
+              <div style="background:var(--green);color:white;font-size:10px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:999px;box-shadow:0 2px 0 #46A302;">Answer</div>
             </div>
-            <div style="background:#D7FFB8;border-left:5px solid #58CC02;border-radius:0 12px 12px 0;padding:14px 16px;">
+            <div style="background:var(--green-light);border-left:5px solid #58CC02;border-radius:0 12px 12px 0;padding:14px 16px;">
               <div style="font-size:16px;font-weight:800;color:#1a1a1a;line-height:1.5;">${paraText}</div>
             </div>
           </div>`;
@@ -4521,7 +4536,7 @@
           </div>
           <div style="display:flex;gap:6px;">
             <button class="hist-ask-btn" data-index="${i}" style="padding:6px 12px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:2px solid var(--border);background:var(--surface);color:var(--text-light);cursor:pointer;transition:all 0.15s;">Ask Again</button>
-            <button class="hist-del-btn" data-index="${i}" style="width:30px;height:30px;border-radius:50%;border:none;background:#FEE2E2;color:#DC2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
+            <button class="hist-del-btn" data-index="${i}" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--danger-bg);color:#DC2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
           </div>
         </div>
       </div>`;
@@ -4596,7 +4611,7 @@
           </div>
           <div style="display:flex;gap:6px;">
             <button onclick="(function(){closeHistory();var q=arguments[0];var inp=document.getElementById('chatInput');if(inp){inp.value=q;}setTimeout(function(){handleAskQuestion();},200);}).call(this,'${(item.question||'').substring(0,500)}')" style="padding:6px 12px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:2px solid var(--border);background:var(--surface);color:var(--text-light);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='var(--border)';this.style.color='#6B7280'">Ask Again</button>
-            <button onclick="(function(id){const el=document.getElementById('hist-'+id);if(el){el.style.transition='all 0.2s';el.style.opacity='0';el.style.transform='scale(0.95)';el.style.maxHeight=el.offsetHeight+'px';setTimeout(()=>{el.style.maxHeight='0';el.style.padding='0';el.style.marginBottom='0';el.style.border='none';},150);setTimeout(()=>{el.remove();if(window.deleteFirestoreHistory)window.deleteFirestoreHistory(id);},350);}})('${item.id}')" style="width:30px;height:30px;border-radius:50%;border:none;background:#FEE2E2;color:#DC2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
+            <button onclick="(function(id){const el=document.getElementById('hist-'+id);if(el){el.style.transition='all 0.2s';el.style.opacity='0';el.style.transform='scale(0.95)';el.style.maxHeight=el.offsetHeight+'px';setTimeout(()=>{el.style.maxHeight='0';el.style.padding='0';el.style.marginBottom='0';el.style.border='none';},150);setTimeout(()=>{el.remove();if(window.deleteFirestoreHistory)window.deleteFirestoreHistory(id);},350);}})('${item.id}')" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--danger-bg);color:#DC2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
           </div>
         </div>
       </div>`;
@@ -4623,7 +4638,7 @@
         <div style="font-size:14px;font-weight:600;color:var(--text-light);margin-bottom:24px;line-height:1.5;">This will permanently delete all your past questions. This cannot be undone.</div>
         <div style="display:flex;gap:10px;">
           <button onclick="document.getElementById('knoxClearHistoryConfirm').remove()" style="flex:1;padding:13px;border-radius:14px;font-size:14px;font-weight:800;font-family:inherit;border:2px solid var(--border);background:var(--surface);color:var(--text-light);cursor:pointer;box-shadow:0 3px 0 var(--border);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">Cancel</button>
-          <button id="knoxConfirmClearBtn" style="flex:1;padding:13px;border-radius:14px;font-size:14px;font-weight:800;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">🗑 Clear All</button>
+          <button id="knoxConfirmClearBtn" style="flex:1;padding:13px;border-radius:14px;font-size:14px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 #CC5500'">🗑 Clear All</button>
         </div>
       </div>
     `;
@@ -4945,7 +4960,7 @@
   <div style="background:var(--surface);border-radius:24px;width:320px;max-width:95vw;max-height:90vh;overflow-y:auto;overflow-x:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
 
     <!-- Header -->
-    <div style="background:#FF6B00;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
+    <div style="background:var(--orange);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
           <img src="./knox-logo-square.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
@@ -4960,7 +4975,7 @@
 
     <!-- Mode tabs -->
     <div style="display:flex;background:#1f2937;gap:0;">
-      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;background:#FF6B00;color:white;transition:all 0.15s;">Basic</button>
+      <button id="calcTabBasic" onclick="calcSetMode('standard')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;background:var(--orange);color:white;transition:all 0.15s;">Basic</button>
       <button id="calcTabSci" onclick="calcSetMode('scientific')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:900;font-family:inherit;cursor:pointer;background:transparent;color:var(--text-light);transition:all 0.15s;">Science</button>
     </div>
 
@@ -4972,7 +4987,7 @@
 
     <!-- DEG toggle (science only) -->
     <div id="calcDegToggle" onclick="calcToggleDeg()" style="display:none;background:#111827;padding:6px 18px;text-align:right;cursor:pointer;">
-      <span id="calcDegLabel" style="background:#FF6B00;color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
+      <span id="calcDegLabel" style="background:var(--orange);color:white;font-size:10px;font-weight:800;padding:2px 10px;border-radius:999px;">DEG</span>
     </div>
 
     <!-- Memory bar -->
@@ -4987,63 +5002,63 @@
 
     <!-- BASIC GRID -->
     <div id="calcGridBasic" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;">
-      <button onclick="calcClear()" style="background:#FEE2E2;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
-      <button onclick="calcSmartParen()" style="background:#FFF4EC;border:none;border-radius:12px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">( )</button>
-      <button onclick="calcInput('%')" style="background:#FFF4EC;border:none;border-radius:12px;font-size:17px;font-weight:900;color:#FF6B00;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">%</button>
+      <button onclick="calcClear()" style="background:var(--danger-bg);border:none;border-radius:12px;font-size:17px;font-weight:900;color:#DC2626;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FECACA;">C</button>
+      <button onclick="calcSmartParen()" style="background:var(--orange-light);border:none;border-radius:12px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">( )</button>
+      <button onclick="calcInput('%')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:17px;font-weight:900;color:#FF6B00;cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">%</button>
       <button onclick="calcDel()" style="background:var(--border);border:none;border-radius:12px;font-size:17px;font-weight:900;color:var(--text-light);cursor:pointer;padding:18px 8px;font-family:inherit;box-shadow:0 3px 0 var(--border);">⌫</button>
 
       <button onclick="calcInput('7')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">7</button>
       <button onclick="calcInput('8')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">8</button>
       <button onclick="calcInput('9')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">9</button>
-      <button onclick="calcInput('/')" style="background:#FFF4EC;border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">÷</button>
+      <button onclick="calcInput('/')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">÷</button>
 
       <button onclick="calcInput('4')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">4</button>
       <button onclick="calcInput('5')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">5</button>
       <button onclick="calcInput('6')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">6</button>
-      <button onclick="calcInput('*')" style="background:#FFF4EC;border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">×</button>
+      <button onclick="calcInput('*')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">×</button>
 
       <button onclick="calcInput('1')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">1</button>
       <button onclick="calcInput('2')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">2</button>
       <button onclick="calcInput('3')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">3</button>
-      <button onclick="calcInput('-')" style="background:#FFF4EC;border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">−</button>
+      <button onclick="calcInput('-')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">−</button>
 
       <button onclick="calcInput('0')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">0</button>
       <button onclick="calcInput('.')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">.</button>
-      <button onclick="calcEquals()" style="background:#FF6B00;border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
-      <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">+</button>
+      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
+      <button onclick="calcInput('+')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">+</button>
     </div>
 
     <!-- SCIENCE GRID -->
     <div id="calcGridSci" style="display:none;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;">
-      <button onclick="calcFn('sin')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">sin</button>
-      <button onclick="calcFn('cos')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">cos</button>
-      <button onclick="calcFn('tan')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">tan</button>
-      <button onclick="calcFn('log')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">log</button>
-      <button onclick="calcFn('ln')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">ln</button>
+      <button onclick="calcFn('sin')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">sin</button>
+      <button onclick="calcFn('cos')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">cos</button>
+      <button onclick="calcFn('tan')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">tan</button>
+      <button onclick="calcFn('log')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">log</button>
+      <button onclick="calcFn('ln')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">ln</button>
 
-      <button onclick="calcFn('sqrt')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">√x</button>
-      <button onclick="calcInput('**2')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">x²</button>
-      <button onclick="calcInput('**3')" style="background:#EEF2FF;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">x³</button>
-      <button onclick="calcInsertConst('Math.PI')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">π</button>
-      <button onclick="calcInsertConst('Math.E')" style="background:#F0FDF4;border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
+      <button onclick="calcFn('sqrt')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">√x</button>
+      <button onclick="calcInput('**2')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">x²</button>
+      <button onclick="calcInput('**3')" style="background:var(--blue-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#4338CA;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #C7D2FE;">x³</button>
+      <button onclick="calcInsertConst('Math.PI')" style="background:var(--green-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">π</button>
+      <button onclick="calcInsertConst('Math.E')" style="background:var(--green-light);border:none;border-radius:10px;font-size:12px;font-weight:800;color:#166534;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #86EFAC;">e</button>
 
-      <button onclick="calcClear()" style="background:#FEE2E2;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
-      <button onclick="calcSmartParen()" style="background:#FFF4EC;border:none;border-radius:10px;font-size:11px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">( )</button>
-      <button onclick="calcInput('%')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
+      <button onclick="calcClear()" style="background:var(--danger-bg);border:none;border-radius:10px;font-size:13px;font-weight:900;color:#DC2626;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FECACA;">C</button>
+      <button onclick="calcSmartParen()" style="background:var(--orange-light);border:none;border-radius:10px;font-size:11px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">( )</button>
+      <button onclick="calcInput('%')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:13px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">%</button>
       <button onclick="calcDel()" style="background:var(--border);border:none;border-radius:10px;font-size:13px;font-weight:900;color:var(--text-light);cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 var(--border);" colspan="2">⌫</button>
-      <button onclick="calcInput('/')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
+      <button onclick="calcInput('/')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">÷</button>
 
       <button onclick="calcInput('7')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">7</button>
       <button onclick="calcInput('8')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">8</button>
       <button onclick="calcInput('9')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">9</button>
-      <button onclick="calcInput('*')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">×</button>
-      <button onclick="calcInput('-')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">−</button>
+      <button onclick="calcInput('*')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">×</button>
+      <button onclick="calcInput('-')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">−</button>
 
       <button onclick="calcInput('4')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">4</button>
       <button onclick="calcInput('5')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">5</button>
       <button onclick="calcInput('6')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">6</button>
-      <button onclick="calcInput('+')" style="background:#FFF4EC;border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
-      <button onclick="calcEquals()" style="background:#FF6B00;border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
+      <button onclick="calcInput('+')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
+      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
 
       <button onclick="calcInput('1')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">1</button>
       <button onclick="calcInput('2')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">2</button>
@@ -5062,7 +5077,7 @@
 <div id="historyModal" onclick="if(event.target===this)closeHistory()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
   <div style="background:var(--surface);border-radius:24px;width:100%;max-width:540px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
     <!-- Header -->
-    <div style="background:#FF6B00;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+    <div style="background:var(--orange);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
           <img src="./knox-logo-square.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
@@ -5081,7 +5096,7 @@
     <!-- Footer -->
     <div style="padding:12px 16px;border-top:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <p style="font-size:12px;font-weight:600;color:var(--text-light);margin:0;">Saved automatically · Kept for 30 days</p>
-      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:#FF6B00;color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">🗑 Clear All</button>
+      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">🗑 Clear All</button>
     </div>
   </div>
 </div>
