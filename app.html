@@ -4,14 +4,15 @@
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
     // so a returning dark-mode user never sees a flash of the light theme
-    // first. Falls back to the OS-level color-scheme preference for a
-    // first-time visitor who hasn't explicitly chosen a mode yet.
+    // first. Light is the default for everyone until they explicitly
+    // switch — deliberately NOT following the OS-level color-scheme
+    // preference, so a first-time visitor always sees light mode first.
     (function() {
       try {
-        var saved = localStorage.getItem('knoxTheme');
-        var isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
-      } catch (e) { /* localStorage/matchMedia unavailable — default to light */ }
+        if (localStorage.getItem('knoxTheme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) { /* localStorage unavailable — default to light */ }
     })();
   </script>
   <meta charset="UTF-8">
