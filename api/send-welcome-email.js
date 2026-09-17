@@ -34,8 +34,8 @@ async function claimWelcomeEmail(uid) {
   return db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() : {};
-    if (data.welcomeSentAt || data.welcomeEmailState === "sending") return false;
-    tx.set(ref, { welcomeEmailState: "sending" }, { merge: true });
+    if (data.welcomeSentAt || (data.welcomeEmailState === "sending" && Date.now() - (data.welcomeEmailStartedAt || 0) < 600000)) return false;
+    tx.set(ref, { welcomeEmailState: "sending", welcomeEmailStartedAt: Date.now() }, { merge: true });
     return true;
   });
 }
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
 
   const { uid, email, name: tokenName } = decodedToken;
   const bodyName    = req.body?.name;
-  const displayName = bodyName || tokenName || email?.split("@")[0] || "there";
+  const displayName = (typeof bodyName === 'string' && bodyName.trim() ? bodyName.slice(0, 100) : tokenName) || email?.split("@")[0] || "there";
   const firstName   = displayName.split(" ")[0];
 
   if (!email) {

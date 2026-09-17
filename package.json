@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "test:source": "node scripts/check-source.mjs"
+    "test:source": "node scripts/check-source.mjs",
+    "test": "node scripts/check-source.mjs && node scripts/check-behavior.mjs"
   },
   "dependencies": {
     "stripe": "^14.21.0",

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/knox-boot.js"></script>
   <script src="/knox-i18n.js"></script>
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
@@ -2195,9 +2196,6 @@
            900px, so Calculator/Learn/Ask Knox were completely unreachable
            on mobile — this was the actual bug, not a visual one. -->
       <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
-        <a href="/?from=app" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);text-decoration:none;">
-          <span style="font-size:17px;">🏠</span> Home
-        </a>
         <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">💬</span> Ask Knox
         </button>
@@ -2403,13 +2401,11 @@
 
   // ── Plan fetch ──────────────────────────────────────────────
   async function fetchPlan(uid) {
-    try {
-      const snap = await getDoc(doc(db, 'users', uid));
-      window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
-    } catch (e) {
-      window.userPlan = 'free';
-    }
-    updatePlanUI();
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (window.currentUser?.uid !== uid) return;
+    const plan = snap.exists() ? snap.data().plan : 'free';
+    window.userPlan = planTier(plan) === 'paid' ? plan : 'free';
+    await updatePlanUI();
   }
 
   // Poll for plan after payment success — webhook may not be done yet.
@@ -2428,11 +2424,11 @@
       await new Promise(r => setTimeout(r, 2000));
     }
     // Last try — accept whatever we get
-    fetchPlan(uid);
+    await fetchPlan(uid).catch(() => {});
   }
   window.pollForPlanUpdate = pollForPlanUpdate;
 
-  function updatePlanUI() {
+  async function updatePlanUI() {
     const plan       = window.userPlan;
     const user       = window.currentUser;
     const accountBtn = document.getElementById('appAccountBtn');
@@ -2460,13 +2456,13 @@
       if (sidebarUsageText && plan !== 'free') sidebarUsageText.textContent = '∞ Unlimited questions';
       if (sidebarUsageHint && plan !== 'free') sidebarUsageHint.textContent = 'Plus plan details';
       if (profileAvatar) {
-        profileAvatar.innerHTML = user.photoURL ? '<img src="' + user.photoURL + '" alt="">' : initials;
+        profileAvatar.innerHTML = user.photoURL ? '<img src="' + escHtml(user.photoURL) + '" alt="">' : escHtml(initials);
       }
       const icon     = document.getElementById('appAccountIcon');
       if (icon) {
         if (user.photoURL) {
           icon.style.background = 'transparent';
-          icon.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+          icon.innerHTML = '<img src="' + escHtml(user.photoURL) + '" alt="">';
         } else {
           icon.style.background = 'rgba(255,255,255,0.25)';
           icon.textContent = initials;
@@ -2516,8 +2512,9 @@
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
       // Refresh usage pill
-      updateUsageIndicator();
+      await updateUsageIndicator();
     } else {
+      try { localStorage.removeItem('knoxAccountDisplay'); } catch (_) {}
       if (profileDock) profileDock.style.display = 'flex';
       if (profileName) profileName.textContent = 'Sign in to Knox';
       if (profilePlan) profilePlan.textContent = 'Save your study history';
@@ -2557,6 +2554,7 @@
   }
 
   async function updateUsageIndicator() {
+    const requestUser = window.currentUser;
     const usage = document.getElementById('headerUsage');
     const text  = document.getElementById('headerUsageText');
     const upgradeCard = document.getElementById('sidebarUpgradeCard');
@@ -2598,14 +2596,20 @@
       // 24h every time you came back. Reading through the server fixes that
       // at the source, and also keeps the client from ever being able to
       // write its own balance (which a direct client-side write would risk).
-      const token = await window.currentUser.getIdToken();
+      const token = await requestUser.getIdToken();
       const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!res.ok) throw new Error('Account unavailable');
       const data = await res.json();
       // Authentication restores in two async steps (Firebase session, then
       // the user plan). A free-plan request may still finish after the paid
       // plan is known; never let that stale response overwrite Plus with a
       // free credit balance in the sidebar.
-      if (planTier(window.userPlan) !== 'free') return;
+      if (window.currentUser?.uid !== requestUser.uid || planTier(window.userPlan) !== 'free') return;
+      if (planTier(data.plan) === 'paid') {
+        window.userPlan = data.plan;
+        await updatePlanUI();
+        return;
+      }
       const u = data.usage || {};
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
@@ -2627,7 +2631,10 @@
       const sidebarUsageHint = document.getElementById('sidebarUsageHint');
       if (sidebarUsageHint) sidebarUsageHint.textContent = 'Credits refresh daily';
       usage.classList.toggle('danger', left <= 1);
-    } catch (e) { /* silent */ }
+    } catch (e) {
+      const label = document.getElementById('sidebarUsageText');
+      if (label && window.currentUser?.uid === requestUser?.uid && planTier(window.userPlan) === 'free') label.textContent = 'Credits unavailable — retry shortly';
+    }
   }
   window.updateUsageIndicator = updateUsageIndicator;
 
@@ -2749,7 +2756,10 @@
 
   // ── Auth state ──────────────────────────────────────────────
   let _firstAuth = true;
+  let authRevision = 0;
   onAuthStateChanged(auth, async (user) => {
+    const revision = ++authRevision;
+    try {
     window.currentUser = user || null;
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
@@ -2764,10 +2774,9 @@
 
       // Update the account shell immediately. Plan data can take another
       // request, but the account identity is already known at this point.
-      window.userPlan = window.userPlan || 'free';
-      updatePlanUI();
       await fetchPlan(user.uid);
-      loadSidebarHistory();
+      if (revision !== authRevision) return;
+      await loadSidebarHistory();
       // Track activity for the admin dashboard's DAU/WAU.
       // This goes through the server so analytics fields cannot be forged in
       // the browser or by a compromised client.
@@ -2785,11 +2794,18 @@
       }
     } else {
       _firstAuth = false;
+      window._chatRevision = (window._chatRevision || 0) + 1;
+      window.appStartNewChat?.();
+      window._fbPayloads = {};
       window.userPlan = 'free';
       window._conversation = [];
-      updatePlanUI();
+      window._currentConversationId = null;
+      document.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+      await updatePlanUI();
     }
-  });
+    if (revision === authRevision) window.knoxBoot?.ready();
+    } catch (error) { if (revision === authRevision) window.knoxBoot?.fail(); }
+  }, () => window.knoxBoot?.fail());
 
   // Update a user's lastActiveAt and (on first ever sign-in) firstSeenAt.
   // Throttled to once per hour per browser session via sessionStorage so we
@@ -2961,6 +2977,7 @@
   //    messages subcollection, so clicking one replays the whole thread. ──
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
+    const owner = window.currentUser.uid;
     const sbList  = document.getElementById('sidebarHistoryList');
     const sbEmpty = document.getElementById('sidebarHistoryEmpty');
     const mbList  = document.getElementById('mobileHistoryList');
@@ -2973,6 +2990,7 @@
         limit(20)
       );
       const snaps = await getDocs(q);
+      if (window.currentUser?.uid !== owner) return;
       // History is intentionally limited to actual Knox conversations:
       // normal questions and Learn-mode sessions. Utility views never appear
       // here, and older saved question threads (without a type) remain valid.
@@ -3057,27 +3075,31 @@
   //    subcollection and bumps updatedAt so it sorts to the top. ──
   async function saveHistory(question, answer) {
     if (!window.currentUser) return;
+    const owner = window.currentUser.uid;
+    const revision = window._chatRevision || 0;
+    let conversationId = window._currentConversationId;
     try {
       const now = Date.now();
       const isLearn = !!window._learnModeActive;
-      if (!window._currentConversationId) {
+      if (!conversationId) {
         const title = (isLearn ? '🎓 ' : '') + String(question || 'Untitled').substring(0, 58);
-        const convRef = await addDoc(collection(db, 'users', window.currentUser.uid, 'conversations'), {
+        const convRef = await addDoc(collection(db, 'users', owner, 'conversations'), {
           title:     title.substring(0, 60),
           type:      isLearn ? 'learn' : 'chat',
           createdAt: now,
           updatedAt: now,
         });
-        window._currentConversationId = convRef.id;
+        conversationId = convRef.id;
+        if (window.currentUser?.uid === owner && (window._chatRevision || 0) === revision) window._currentConversationId = conversationId;
       } else {
         try {
-          await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId), {
+          await updateDoc(doc(db, 'users', owner, 'conversations', conversationId), {
             updatedAt: now,
           });
         } catch (e) { /* if the parent got deleted mid-session, just keep going */ }
       }
       await addDoc(
-        collection(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId, 'messages'),
+        collection(db, 'users', owner, 'conversations', conversationId, 'messages'),
         {
           question: String(question || '').substring(0, 1000),
           answer:   String(answer   || '').substring(0, 5000),
@@ -3094,6 +3116,8 @@
   //    question re-typed into the box. ──
   window.openConversation = async function(conversationId) {
     if (!window.currentUser) return;
+    const owner = window.currentUser.uid;
+    const revision = window._chatRevision = (window._chatRevision || 0) + 1;
     try {
       const convRef = doc(db, 'users', window.currentUser.uid, 'conversations', conversationId);
       const q = query(
@@ -3101,6 +3125,10 @@
         orderBy('ts', 'asc')
       );
       const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
+      if (window.currentUser?.uid !== owner || window._chatRevision !== revision) return;
+      document.getElementById('calcModal')?.classList.remove('open');
+      document.getElementById('studyHub')?.classList.remove('open');
+      document.getElementById('inputOuter').style.display = '';
 
       const thread = document.getElementById('chatThread');
       if (!thread) return;
@@ -3264,8 +3292,12 @@
   // like any other deliberate question.
   window.appRetryAnswer = function(fbId) {
     const payload = window._fbPayloads[fbId];
-    if (!payload?.question || payload.question === '[image]') return;
+    if (!payload?.question || window._askBusy) return;
+    if (payload.question === '[image]' && !payload.image) { alert('Please attach the photo again to retry this saved answer.'); return; }
+    const learn = payload.learnMode ?? window._learnModeActive;
     window.appStartNewChat();
+    if (learn) window.openLearnMode();
+    if (payload.image) window._appImage = payload.image;
     const input = $('appChatInput');
     if (input) input.value = payload.question;
     window.appHandleAsk?.();
@@ -3654,7 +3686,7 @@
 
 function $(id) { return document.getElementById(id); }
 function escHtml(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 // Apply **bold** markdown — safe because we escape FIRST then transform.
 // The escape neutralizes any HTML in the source, and we only insert <strong>.
@@ -3674,6 +3706,8 @@ function scrollChat() {
 }
 
 window.appStartNewChat = function() {
+  window._chatRevision = (window._chatRevision || 0) + 1;
+  $('calcModal')?.classList.remove('open');
   const study = $('studyHub'); if (study) study.classList.remove('open');
   const io = $('inputOuter'); if (io) io.style.display = '';
   const t  = $('chatThread');
@@ -3701,6 +3735,7 @@ window.appStartNewChat = function() {
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
 window.openLearnMode = function() {
+  window._chatRevision = (window._chatRevision || 0) + 1;
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
   }
@@ -3737,6 +3772,7 @@ window.openLearnMode = function() {
 // a clear, purpose-built request through the same protected Knox API as chat,
 // so students can continue the session naturally once it is created.
 window.openStudyHub = function() {
+  window._chatRevision = (window._chatRevision || 0) + 1;
   if ($('calcModal')?.classList.contains('open')) window.closeCalc();
   const ws = $('welcomeScreen'); if (ws) ws.style.display = 'none';
   const ct = $('chatThread'); if (ct) ct.classList.add('hidden');
@@ -4403,9 +4439,14 @@ if (_ci) {
 
 // ── Ask Knox ─────────────────────────────────────────────────
 window.appHandleAsk = async function() {
+  if (window._askBusy || document.documentElement.dataset.boot) return;
   const input = $('appChatInput');
   const q = (input?.value || '').trim();
   if (!q && !window._appImage) return;
+  if (q.length > 8000) { alert('Please keep your question under 8,000 characters.'); return; }
+  window._askBusy = true;
+  const revision = window._chatRevision || 0;
+  const requestUser = window.currentUser;
 
   // Guest allowances are enforced by /api/ask. A separate browser-only
   // counter used to disagree with the server and blocked free casual chat.
@@ -4460,9 +4501,6 @@ window.appHandleAsk = async function() {
   window.appClearImage();
 
   let idToken = '';
-  if (window.currentUser) {
-    try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* fall through */ }
-  }
 
   // History sent to API — send a generous window so Knox remembers the
   // whole homework session, not just the last few turns. gpt-4.1 has a
@@ -4475,6 +4513,7 @@ window.appHandleAsk = async function() {
   }));
 
   try {
+    if (window.currentUser) idToken = await window.currentUser.getIdToken();
     const headers = { 'Content-Type': 'application/json' };
     if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
 
@@ -4506,6 +4545,8 @@ window.appHandleAsk = async function() {
     });
     const data = await res.json();
 
+    if ((window._chatRevision || 0) !== revision || window.currentUser?.uid !== requestUser?.uid) return;
+
     if (!res.ok) {
       // Rich rate-limit handling — show upgrade card on quota errors
       if (data.limitReached) {
@@ -4525,14 +4566,14 @@ window.appHandleAsk = async function() {
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
-    if (window.currentUser && !data.isCasual && window.updateStreak) {
+    if (window.currentUser && !data.isCasual && !data.ranOutOfRoom && window.updateStreak) {
       window.updateStreak(window.currentUser.uid).catch(() => {});
     }
 
     const answer = data.answer || '';
     const html   = renderAnswerHtml(answer) + renderVideoCard(data.video);
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q || '[image]', answer };
+    window._fbPayloads[fbId] = { question: q || '[image]', answer, image, learnMode: !!window._learnModeActive };
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
@@ -4546,13 +4587,14 @@ window.appHandleAsk = async function() {
 
     // Save history + refresh usage indicator
     if (window.saveHistory && window.currentUser) {
-      window.saveHistory(q || '[image]', answer);
+      await window.saveHistory(q || '[image]', answer);
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
 
   } catch (e) {
     replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 Network error. Check your connection and try again.</p>');
   } finally {
+    window._askBusy = false;
     if (sendBtn) sendBtn.disabled = false;
   }
 };
@@ -4675,7 +4717,7 @@ function renderAnswerHtmlInner(text) {
       i++;
       while (i < lines.length && !isSectionLine(lines[i])) {
         const next = lines[i];
-        if (/^\d+[\.)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
+        if (/^\d+[\.)]\s*/.test(next) || (/^\d+$/.test(next.trim()) && i + 1 < lines.length && !isSectionLine(lines[i + 1]))) {
           // Numbered list — ONE continuous <ol> so numbering never resets.
           // Bullets / lettered lines that follow a number nest INSIDE that item.
           html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
@@ -4839,6 +4881,7 @@ document.addEventListener('keydown', (e) => {
 
 // ═══════ CALCULATOR ═══════════════════════════════════════════
 window.openCalc = function() {
+  $('studyHub')?.classList.remove('open');
   window._calcExpr        = '';
   window._calcOpenParens  = 0;
   if ($('calcDisplay')) $('calcDisplay').textContent = '0';

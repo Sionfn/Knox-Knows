@@ -11,18 +11,32 @@
     'Pick a topic below to get started — or type your own question in the box.': 'Elige un tema para comenzar o escribe tu propia pregunta.',
     'Ask Knox anything...': 'Pregúntale lo que sea a Knox...'
   };
-  function replaceText(root) {
+  const originals = new WeakMap();
+  function replaceText(root, isSpanish) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(node => { const text = node.nodeValue.trim(); if (spanish[text]) node.nodeValue = node.nodeValue.replace(text, spanish[text]); });
+    nodes.forEach(node => {
+      if (node.parentElement?.closest('script, style, code, pre, textarea, #chatThread, #knoxBoot, #profile, #signedIn')) return;
+      const previous = originals.get(node);
+      if (!previous || (node.nodeValue !== previous.original && node.nodeValue !== previous.translated)) {
+        const text = node.nodeValue.trim();
+        if (!Object.hasOwn(spanish, text)) return;
+        originals.set(node, { original: node.nodeValue, translated: node.nodeValue.replace(text, spanish[text]) });
+      }
+      const pair = originals.get(node);
+      node.nodeValue = isSpanish ? pair.translated : pair.original;
+    });
   }
   function applyLanguage() {
-    let language = localStorage.getItem('knoxLanguage');
-    if (!language) try { language = JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}').language; } catch (_) {}
+    let language;
+    try { language = localStorage.getItem('knoxLanguage') || JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}').language; } catch (_) {}
     document.documentElement.lang = language === 'spanish' ? 'es' : 'en';
-    if (language === 'spanish') replaceText(document.body);
+    if (document.body) replaceText(document.body, language === 'spanish');
   }
   window.addEventListener('DOMContentLoaded', applyLanguage);
-  window.addEventListener('storage', event => { if (event.key === 'knoxLanguage' || event.key === 'knoxLearningPreferences') location.reload(); });
+  window.addEventListener('storage', event => {
+    if (event.key === 'knoxLanguage' || event.key === 'knoxLearningPreferences') applyLanguage();
+    if (event.key === 'knoxTheme') { document.documentElement.dataset.theme = event.newValue === 'dark' ? 'dark' : 'light'; window.syncDarkModeIcon?.(); }
+  });
   window.knoxApplyLanguage = applyLanguage;
 })();

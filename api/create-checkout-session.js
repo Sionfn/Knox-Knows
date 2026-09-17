@@ -74,7 +74,7 @@ export default async function handler(req, res) {
   }
 
   // 2. Validate plan and billing from request body
-  const { plan, billing = "monthly" } = req.body;
+  const { plan, billing = "monthly" } = req.body || {};
   const priceId = PRICES[plan]?.[billing];
   if (!priceId) {
     return res.status(400).json({ error: "Invalid plan or billing period." });
@@ -86,6 +86,13 @@ export default async function handler(req, res) {
     // Prefer the customer ID recorded by a verified webhook. Email alone is
     // not a stable identity: Stripe can contain multiple customers per email.
     const userSnap = await db.collection("users").doc(verifiedUid).get();
+    const currentSubscription = userSnap.exists ? userSnap.data().stripeSubscription : null;
+    if (currentSubscription) {
+      const subscription = await stripe.subscriptions.retrieve(currentSubscription);
+      if (['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused'].includes(subscription.status)) {
+        return res.status(409).json({ error: 'You already have a subscription. Manage it from Settings → Billing.' });
+      }
+    }
     const storedCustomerId = userSnap.exists ? userSnap.data().stripeCustomerId : null;
     let customer = null;
     if (storedCustomerId) {
@@ -114,7 +121,7 @@ export default async function handler(req, res) {
     // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
     // same 'super' → Knox Plus display mapping.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
-    if (plan === "super" && billing === "monthly") {
+    if (plan === "super" && billing === "monthly" && !userSnap.data()?.planActivatedAt) {
       subscriptionData.trial_period_days = 3;
     }
 

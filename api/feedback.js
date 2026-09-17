@@ -41,13 +41,13 @@ export default async function handler(req, res) {
   if (![1, -1].includes(rating) || typeof question !== "string" || typeof answer !== "string" || !allowedModes.has(mode)) {
     return res.status(400).json({ error: "Invalid feedback" });
   }
+  try {
   if (!(await reserveFeedbackSlot(decoded.uid))) {
     return res.status(429).json({ error: "Feedback limit reached. Please try again tomorrow." });
   }
   const user = await db.collection("users").doc(decoded.uid).get();
   const plan = user.exists && ["super", "max", "plus", "pro"].includes(user.data().plan) ? user.data().plan : "free";
   const payload = { rating, question: question.slice(0, 1000), answer: answer.slice(0, 5000), mode, plan, ts: Date.now() };
-  try {
     await Promise.all([
       db.collection("feedback").add({ ...payload, uid: decoded.uid }),
       db.collection("users").doc(decoded.uid).collection("feedback").add(payload),

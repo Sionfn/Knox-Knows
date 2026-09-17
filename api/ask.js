@@ -69,14 +69,26 @@ function planTier(plan) {
 // credits — 1 for a text question, PHOTO_CREDIT_COST for a photo — from
 // the SAME pool, rather than a separate daily photo cap. A Firestore
 // transaction keeps concurrent requests from double-spending.
-async function checkAndIncrementUsage(uid, plan, cost = 1) {
+async function checkAndIncrementUsage(uid, plan, cost = 1, sessionId = null) {
   const tier = planTier(plan);
   const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
   const now = Date.now();
+  const sessionRef = sessionId ? db.collection('users').doc(uid).collection('learnSessions').doc(sessionId) : null;
+  async function continueSession(tx) {
+    if (!sessionRef) return false;
+    const session = await tx.get(sessionRef);
+    if (!session.exists || !validLearnSession(session.data(), uid, now)) return false;
+    tx.update(sessionRef, { turnCount: session.data().turnCount + 1, lastUsedAt: now });
+    return true;
+  }
+  function startSession(tx) {
+    if (sessionRef) tx.set(sessionRef, { uid, turnCount: 1, createdAt: now, lastUsedAt: now });
+  }
 
   if (tier === "paid") {
     try {
       const result = await db.runTransaction(async (tx) => {
+        if (await continueSession(tx)) return { allowed: true };
         const snap = await tx.get(usageRef);
         const log  = snap.exists ? (snap.data().log || []) : [];
         const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
@@ -85,13 +97,14 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
           return { allowed: false, remaining: 0, limit: PLUS_LIMIT, retryAfterMs: PLUS_WINDOW_MS - (now - oldest) };
         }
         recent.push(now);
+        startSession(tx);
         tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
-        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT, usageId: now };
+        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT, usageId: now, sessionCreatedAt: sessionId ? now : null };
       });
       return result;
     } catch (err) {
       console.error("Quota check error:", err.message);
-      return { allowed: true };
+      return { allowed: false, unavailable: true };
     }
   }
 
@@ -99,6 +112,7 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
   const bankRef = db.collection("users").doc(uid).collection("usage").doc("bank");
   try {
     const result = await db.runTransaction(async (tx) => {
+      if (await continueSession(tx)) return { allowed: true };
       const snap = await tx.get(bankRef);
       let balance, lastRegenAt;
       if (!snap.exists) {
@@ -126,36 +140,47 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
       }
 
       balance -= cost;
+      startSession(tx);
       tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true, cost };
+      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true, cost, sessionCreatedAt: sessionId ? now : null };
     });
     return result;
   } catch (err) {
     console.error("Quota check error:", err.message);
-    return { allowed: true };
+    return { allowed: false, unavailable: true };
   }
 }
 
 // A provider failure must not consume a student's credit. This is deliberately
 // best-effort: quota availability must never depend on a compensating write.
-async function refundUsage(uid, plan, cost, usageId) {
+async function refundUsage(uid, plan, cost, usageId, sessionId, sessionCreatedAt) {
   try {
+    // A refunded first answer must not leave a free follow-up session behind.
+    const sessionRef = sessionId && sessionCreatedAt ? db.collection('users').doc(uid).collection('learnSessions').doc(sessionId) : null;
+    async function readSession(tx) { return sessionRef ? await tx.get(sessionRef) : null; }
+    function invalidateSession(tx, snap) {
+      if (snap?.exists && snap.data().createdAt === sessionCreatedAt) tx.delete(sessionRef);
+    }
     if (planTier(plan) === "paid") {
       const ref = db.collection("users").doc(uid).collection("usage").doc("rolling");
       await db.runTransaction(async tx => {
         const snap = await tx.get(ref);
+        const session = await readSession(tx);
         const log = snap.exists ? (snap.data().log || []) : [];
         const index = log.lastIndexOf(usageId);
         if (index >= 0) log.splice(index, 1);
         tx.set(ref, { log, updatedAt: new Date().toISOString() }, { merge: true });
+        invalidateSession(tx, session);
       });
       return;
     }
     const ref = db.collection("users").doc(uid).collection("usage").doc("bank");
     await db.runTransaction(async tx => {
       const snap = await tx.get(ref);
+      const session = await readSession(tx);
       const balance = snap.exists && typeof snap.data().balance === "number" ? snap.data().balance : FREE_STARTING_BALANCE;
       tx.set(ref, { balance: Math.min(FREE_MAX_BALANCE, balance + cost), updatedAt: new Date().toISOString() }, { merge: true });
+      invalidateSession(tx, session);
     });
   } catch (error) {
     console.error("Quota refund failed:", error.message);
@@ -236,7 +261,7 @@ async function findHelpfulVideo(topic) {
       q: `${topic} explained`,
       key: apiKey,
     });
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) {
       console.error("YouTube search error:", await res.text());
       return null;
@@ -280,6 +305,7 @@ async function isCasualMessage(question, history = []) {
       .join('\n');
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      signal: AbortSignal.timeout(3000),
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -898,6 +924,14 @@ const LATEX_SYMBOLS = {
 };
 
 function cleanLatexAnswer(text) {
+  // Never rewrite source code, inline identifiers, currency, or ordinary prose.
+  return text.split(/(```[\s\S]*?(?:```|$)|`[^`\n]*`)/g).map(part => {
+    if (part.startsWith('`') || !/\\[a-zA-Z]+|\\[()[\]]/.test(part)) return part;
+    return cleanLatexMath(part);
+  }).join('');
+}
+
+function cleanLatexMath(text) {
   let s = text;
   s = s.replace(/\\\(|\\\)|\\\[|\\\]|\$\$?/g, ''); // strip math-mode delimiters
   s = stripDecorativeCommands(s);
@@ -976,7 +1010,12 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: msg, limitReached: true });
   }
 
-  const { question, history = [], image, imageType, learnMode, learnSessionId, preferences = {}, testModel } = req.body;
+  const { question, history = [], image, imageType, learnMode, learnSessionId, preferences = {}, testModel } = req.body || {};
+  if ((question != null && typeof question !== 'string') || (image != null && typeof image !== 'string') ||
+      !Array.isArray(history) || history.some(message => !message || typeof message !== 'object') ||
+      (learnMode != null && typeof learnMode !== 'boolean')) {
+    return res.status(400).json({ error: 'Invalid question format.' });
+  }
   if (!question && !image) return res.status(400).json({ error: "No question provided." });
 
   // ── Image size guard — reject images over 5MB (base64 ~6.67MB encoded) ──
@@ -1001,6 +1040,7 @@ export default async function handler(req, res) {
   // 8000 chars — a student pasting a long problem would get an answer to a
   // truncated, possibly garbled version of their question with no warning.)
   const trimmedQuestion = (question || '').trim();
+  if (!trimmedQuestion && !image) return res.status(400).json({ error: 'No question provided.' });
 
   // No mode selector anymore — Knox reads the message itself and decides how
   // to respond (see KNOX_PROMPT). The only routing decision left here is
@@ -1062,19 +1102,18 @@ export default async function handler(req, res) {
   // this credit system and is unaffected either way.
   let chargedUsage = null;
   if (uid && !casual) {
-    let startsLearnSession = false;
     let sessionId = null;
     if (learnMode) {
       if (typeof learnSessionId !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(learnSessionId)) {
         return res.status(400).json({ error: "Invalid Learn session. Please start a new Learn chat." });
       }
       sessionId = learnSessionId;
-      startsLearnSession = !(await getLearnSession(uid, sessionId));
     }
 
-    if (!learnMode || startsLearnSession) {
+    {
       const cost = learnMode ? 1 : (image ? PHOTO_CREDIT_COST : 1);
-      const usage = await checkAndIncrementUsage(uid, plan, cost);
+      const usage = await checkAndIncrementUsage(uid, plan, cost, sessionId);
+      if (usage.unavailable) return res.status(503).json({ error: 'Could not check your credits. Please try again shortly.' });
       if (!usage.allowed) {
         const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
         const waitMsg = minutes >= 60
@@ -1095,9 +1134,8 @@ export default async function handler(req, res) {
           photoLimit: !!image,
         });
       }
-      if (usage.cost || usage.usageId) chargedUsage = { cost, usageId: usage.usageId };
+      if (usage.cost || usage.usageId) chargedUsage = { cost, usageId: usage.usageId, sessionId: learnSessionId, sessionCreatedAt: usage.sessionCreatedAt };
     }
-    if (learnMode) await reserveLearnTurn(uid, sessionId);
     // Quota check passed (or this was a free Learn-mode follow-up) —
     // either way it's a real, counted question for the admin dashboard
     // (separate from the credit quota above, see comment there).
@@ -1209,6 +1247,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(20000),
     });
 
     if (!response.ok) {
@@ -1217,8 +1256,8 @@ export default async function handler(req, res) {
       // In a Luna test path only, surface the real OpenAI error message
       // back to the admin caller so we're not stuck guessing from logs —
       // real users never see this detail, only whoever passed testModel.
-      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
-      if (testModel === "luna" || testModel === "lunaphoto") {
+      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId, chargedUsage.sessionId, chargedUsage.sessionCreatedAt);
+      if (isAdmin && (testModel === "luna" || testModel === "lunaphoto")) {
         return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again.", debug: err });
       }
       return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
@@ -1238,7 +1277,7 @@ export default async function handler(req, res) {
         "Empty answer from " + modelToUse + " — finish_reason:",
         data.choices?.[0]?.finish_reason, "usage:", data.usage
       );
-      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
+      if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId, chargedUsage.sessionId, chargedUsage.sessionCreatedAt);
       const message = image
         ? "That photo has a lot going on and Knox ran out of room working through it. Try asking about a few of the problems at a time, or type out just the one you need help with."
         : "Knox ran out of room working through that one — try breaking it into smaller parts, or ask again.";
@@ -1265,7 +1304,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("Ask error:", err.message);
-    if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId);
+    if (chargedUsage) await refundUsage(uid, plan, chargedUsage.cost, chargedUsage.usageId, chargedUsage.sessionId, chargedUsage.sessionCreatedAt);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 }

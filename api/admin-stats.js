@@ -67,7 +67,7 @@ export default async function handler(req, res) {
   if (!ADMIN_EMAIL) {
     return res.status(500).json({ error: "ADMIN_EMAIL not configured" });
   }
-  if ((decodedToken.email || "").toLowerCase() !== ADMIN_EMAIL) {
+  if (!decodedToken.email_verified || (decodedToken.email || "").toLowerCase() !== ADMIN_EMAIL) {
     // Don't reveal anything — looks identical to an unauthenticated request
     return res.status(403).json({ error: "Forbidden" });
   }
@@ -118,7 +118,7 @@ async function getUserStats() {
 
     const plan = u.plan || "free";
     if      (plan === "max")   max++;
-    else if (plan === "super") superCount++;
+    else if (["super", "plus", "pro"].includes(plan)) superCount++;
     else                       free++;
 
     // Created — Firebase Auth provides `createdAt` on the user record,
@@ -201,7 +201,7 @@ async function getFeedbackStats() {
     if (f.ts >= todayStart) { if (r === 1) upToday++; else downToday++; }
     if (f.ts >= weekStart)  { if (r === 1) upWeek++;  else downWeek++;  }
 
-    const plan = byPlan[f.plan] ? f.plan : "free";
+    const plan = ['plus', 'pro'].includes(f.plan) ? 'super' : (byPlan[f.plan] ? f.plan : "free");
     if (r === 1) { byPlan[plan].up++; }
     else         { byPlan[plan].down++; }
 
@@ -366,6 +366,7 @@ function toMs(maybeTs) {
   // Firestore Timestamps, JS dates, and ms numbers all welcome
   if (!maybeTs) return 0;
   if (typeof maybeTs === "number") return maybeTs;
+  if (typeof maybeTs === "string") return Date.parse(maybeTs) || 0;
   if (typeof maybeTs.toMillis === "function") return maybeTs.toMillis();
   if (maybeTs.seconds) return maybeTs.seconds * 1000;
   if (maybeTs instanceof Date) return maybeTs.getTime();

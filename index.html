@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/knox-boot.js"></script>
   <script src="/knox-i18n.js"></script>
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
@@ -2968,6 +2969,7 @@
   async function fetchAndSetPlan(uid) {
     try {
       const snap = await getDoc(doc(db, "users", uid));
+      if (window.currentUser?.uid !== uid) return;
       if (snap.exists()) {
         const data = snap.data();
         const plan = data.plan || "free";
@@ -2979,8 +2981,7 @@
       }
     } catch (err) {
       console.warn("Could not fetch plan:", err.message);
-      window.userPlan = "free";
-      userPlan = "free";
+      throw err;
     }
     if (window.updateLoginUI) window.updateLoginUI();
     // Unlock input if it was locked as guest, and refresh bars
@@ -2996,9 +2997,11 @@
   let _isFirstAuthEvent = true;
 
   onAuthStateChanged(auth, async (user) => {
+    try {
     window.currentUser = user || null;
     if (user) {
       await fetchAndSetPlan(user.uid);
+      if (window.currentUser?.uid !== user.uid) return;
       // Dispatch event for Knox Knows Chrome extension content script
       try {
         const token = await user.getIdToken();
@@ -3009,7 +3012,11 @@
       // If the user was trying to subscribe before signing in, resume that flow.
       // Safe to call on every auth-restore; the helper checks for stale intent.
       if (typeof window.resumePendingCheckoutIfAny === 'function') {
-        try { window.resumePendingCheckoutIfAny(); } catch(e) {}
+        if (await window.resumePendingCheckoutIfAny()) {
+          _isFirstAuthEvent = false;
+          window.knoxBoot?.ready();
+          return;
+        }
       }
       // ── Returning user behavior ────────────────────────────────────────
       // Returning users stay on the marketing site by default — the
@@ -3028,8 +3035,7 @@
       // is intentionally narrow: any other path, or the from=app / payment
       // query params, leaves this alone entirely.
       if (_isFirstAuthEvent && isBareHomepageVisit()) {
-        redirectToApp();
-        return;
+        if (redirectToApp()) return;
       }
       _isFirstAuthEvent = false;
     } else {
@@ -3039,7 +3045,9 @@
       window.dispatchEvent(new CustomEvent('knoxAuthChange', { detail: { loggedIn: false } }));
       if (window.updateLoginUI) window.updateLoginUI();
     }
-  });
+    window.knoxBoot?.ready();
+    } catch (error) { window.knoxBoot?.fail(); }
+  }, () => window.knoxBoot?.fail());
 
   // ── Bare-homepage check for the auto-redirect above ───────────────────────
   // Deliberately narrow: only the homepage itself, with no query string that
@@ -3056,6 +3064,7 @@
     const path = window.location.pathname;
     const isHomePath = path === '/' || path === '/index.html' || path === '';
     if (!isHomePath) return false;
+    if (window.location.hash) return false;
     const params = new URLSearchParams(window.location.search);
     if (params.get('from') === 'app') return false;
     if (params.get('payment')) return false;
@@ -3081,6 +3090,7 @@
       }
     } catch(e) {}
     window.location.href = '/app';
+    return true;
   }
   window.redirectToApp = redirectToApp;
 
@@ -3222,7 +3232,7 @@
 
   function showWelcomeModal(name) {
     document.getElementById('knoxWelcomeModal')?.remove();
-    const firstName = (name || '').split(' ')[0] || 'friend';
+    const firstName = String((name || '').split(' ')[0] || 'friend').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const modal = document.createElement('div');
     modal.id = 'knoxWelcomeModal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.72);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;';
@@ -3472,7 +3482,10 @@
     }
     if (iconEl) {
       if (photoURL) {
-        iconEl.innerHTML = `<img src="${photoURL}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;">`;
+        const avatar = document.createElement('img');
+        avatar.src = photoURL; avatar.alt = '';
+        avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;object-fit:cover;display:block';
+        iconEl.replaceChildren(avatar);
       } else {
         iconEl.innerHTML = `<div class="default-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
       }
@@ -3913,8 +3926,7 @@
         }));
       } catch(e) {}
       // Open login modal on the signup tab — that's what most clickers need
-      if (window.switchLoginTab) window.switchLoginTab('signup');
-      openLoginModal();
+      openLoginModal('signup');
       return;
     }
 
@@ -3942,7 +3954,7 @@
 
     } catch (err) {
       console.error('Checkout error:', err);
-      alert('Could not open checkout — please try again.');
+      alert(err.message || 'Could not open checkout — please try again.');
       if (btn) { btn.textContent = originalText; btn.disabled = false; }
     }
   }
@@ -3970,7 +3982,7 @@
       if (!raw) return;
       pending = JSON.parse(raw);
       // Stale intent (>30 min old) — discard
-      if (!pending || !pending.plan || Date.now() - (pending.ts || 0) > 30 * 60 * 1000) {
+      if (!pending || !pending.plan || Date.now() - (pending.ts || 0) > 5 * 60 * 1000) {
         sessionStorage.removeItem('pendingCheckout');
         return;
       }
@@ -3980,9 +3992,11 @@
     }
     sessionStorage.removeItem('pendingCheckout');
     // Close login modal if it's open, then route through handlePurchase
-    try { document.getElementById('loginModal')?.classList?.remove('show'); } catch(e) {}
+    setBilling(pending.billing === 'yearly' ? 'yearly' : 'monthly');
+    try { document.getElementById('loginModal')?.classList?.remove('open'); } catch(e) {}
     // Brief delay so the UI settles after auth state propagates
     setTimeout(() => { handlePurchase('Plus'); }, 400);
+    return true;
   }
   window.resumePendingCheckoutIfAny = resumePendingCheckoutIfAny;
 
@@ -4387,6 +4401,8 @@
           paraLines.push(allLines[i]);
           i++;
         }
+        // Unknown section labels must still advance the parser.
+        if (!paraLines.length) paraLines.push(allLines[i++]);
         const paraText = formatInline(paraLines.join(' '), plan);
 
         if (isFirstPara) {
@@ -4801,33 +4817,27 @@
   };
 
   function renderFirestoreHistory(items) {
-    const list = document.getElementById('historyList');
-    if (!list) return;
-    // Both legacy 'super' and 'max' render as Knox Plus now
-    const planColors = { max: '#58CC02', super: '#58CC02', free: '#1CB0F6' };
-    if (items.length === 0) {
-      list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:var(--text-light);">Ask Knox a question and it will appear here automatically.</div></div>';
-      return;
+    // Saved questions are untrusted text, never inline JavaScript.
+    const container = document.getElementById('historyList');
+    if (!container) return;
+    container.replaceChildren();
+    for (const item of items) {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:16px;border-bottom:1px solid var(--border)';
+      const question = document.createElement('p');
+      question.textContent = item.question || 'Question';
+      const again = document.createElement('button');
+      again.textContent = 'Ask again';
+      again.onclick = () => {
+        closeHistory();
+        const input = document.getElementById('chatInput');
+        if (input) input.value = item.question || '';
+        handleAskQuestion();
+      };
+      row.append(question, again);
+      container.append(row);
     }
-    list.innerHTML = items.map(item => {
-      const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
-      const plan  = item.plan || 'free';
-      const color = planColors[plan] || '#1CB0F6';
-      const planLabel = plan !== 'free' ? '⚡ Plus' : '🆓 Free';
-      return `<div id="hist-${item.id}" style="background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:14px 16px;transition:all 0.2s;">
-        <div style="font-size:14px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${(item.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="background:${color};color:white;font-size:10px;font-weight:900;padding:2px 8px;border-radius:999px;">${planLabel}</span>
-            <span style="font-size:12px;font-weight:600;color:var(--text-light);">${date}</span>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button onclick="(function(){closeHistory();var q=arguments[0];var inp=document.getElementById('chatInput');if(inp){inp.value=q;}setTimeout(function(){handleAskQuestion();},200);}).call(this,'${(item.question||'').substring(0,500)}')" style="padding:6px 12px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:2px solid var(--border);background:var(--surface);color:var(--text-light);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.borderColor='#FF6B00';this.style.color='#FF6B00'" onmouseout="this.style.borderColor='var(--border)';this.style.color='#6B7280'">Ask Again</button>
-            <button onclick="(function(id){const el=document.getElementById('hist-'+id);if(el){el.style.transition='all 0.2s';el.style.opacity='0';el.style.transform='scale(0.95)';el.style.maxHeight=el.offsetHeight+'px';setTimeout(()=>{el.style.maxHeight='0';el.style.padding='0';el.style.marginBottom='0';el.style.border='none';},150);setTimeout(()=>{el.remove();if(window.deleteFirestoreHistory)window.deleteFirestoreHistory(id);},350);}})('${item.id}')" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--danger-bg);color:#DC2626;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🗑</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    if (!items.length) container.textContent = 'No history yet.';
   }
 
   window.closeHistory = function() {
@@ -5089,64 +5099,7 @@
 
   // ======= SETTINGS MODAL =======
   // Body built dynamically to mirror /app's openAppSettings exactly.
-  window.openSettings = function() {
-    closeDropdown();
-    const u = window.currentUser;
-    if (!u) { openLoginModal(); return; }
-
-    const _plan = window.userPlan || userPlan || 'free';
-    userPlan = _plan;
-    const planLabel = _plan !== 'free' ? 'Knox Plus' : 'Free';
-    const el = document.getElementById('settingsContent');
-    if (!el) return;
-    el.innerHTML = '';
-
-    function row(label, valueNode) {
-      const r = document.createElement('div'); r.className = 'settings-row';
-      const l = document.createElement('span'); l.className = 'settings-label'; l.textContent = label;
-      r.appendChild(l);
-      r.appendChild(valueNode);
-      return r;
-    }
-    function spanVal(text) {
-      const s = document.createElement('span'); s.className = 'settings-value'; s.textContent = text || '—';
-      return s;
-    }
-
-    el.appendChild(row('Name',  spanVal(u.displayName || '—')));
-    el.appendChild(row('Email', spanVal(u.email || '—')));
-
-    const planBadge = document.createElement('span');
-    planBadge.className   = 'plan-badge badge-' + _plan;
-    planBadge.textContent = planLabel;
-    el.appendChild(row('Plan', planBadge));
-
-    if (_plan !== 'free') {
-      const billBtn = document.createElement('button');
-      billBtn.className   = 'settings-billing-btn';
-      billBtn.textContent = 'Manage billing';
-      billBtn.onclick     = () => { closeSettings(); if (window.openCustomerPortal) window.openCustomerPortal(); };
-      el.appendChild(row('Billing', billBtn));
-    } else {
-      const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
-      const up = document.createElement('button');
-      up.className   = 'settings-primary-btn';
-      up.textContent = 'Upgrade to Knox Plus';
-      up.onclick     = () => { closeSettings(); scrollToPricing(); };
-      wrap.appendChild(up);
-      el.appendChild(wrap);
-    }
-
-    const outWrap = document.createElement('div'); outWrap.style.marginTop = '14px';
-    const out = document.createElement('button');
-    out.className   = 'settings-danger-btn';
-    out.textContent = 'Sign out';
-    out.onclick     = () => { closeSettings(); if (window.handleLogout) window.handleLogout(); };
-    outWrap.appendChild(out);
-    el.appendChild(outWrap);
-
-    document.getElementById('settingsModal').classList.add('open');
-  };
+  window.openSettings = function() { window.location.href = '/settings.html'; };
 
   window.closeSettings = function() {
     document.getElementById('settingsModal').classList.remove('open');

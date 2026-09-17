@@ -83,12 +83,13 @@
     // custom token after the user signs in. Add a new id only when publishing
     // a deliberate additional Knox extension build.
     const ALLOWED_EXTENSION_IDS = new Set([
+      "pjhciemclfgmgfapnecoageieniegfnp",
       "bkhekfgklcbeidifbmdcnoafimnebnbl",
     ]);
     const urlExtId = new URLSearchParams(location.search).get("extid") || "";
     const EXTENSION_ID = ALLOWED_EXTENSION_IDS.has(urlExtId)
       ? urlExtId
-      : "bkhekfgklcbeidifbmdcnoafimnebnbl";
+      : "pjhciemclfgmgfapnecoageieniegfnp";
 
     let isSignup = new URLSearchParams(location.search).get("signup") === "1";
     const $ = (id) => document.getElementById(id);
@@ -124,6 +125,8 @@
         if (r.ok) { customToken = (await r.json()).customToken; }
       } catch (e) {}
 
+      if (!customToken) throw new Error('Could not connect your account. Please try again.');
+
       const auth_payload = {
         uid: user.uid,
         email: user.email,
@@ -133,7 +136,7 @@
       // Send the custom token to the extension. externally_connectable in the
       // extension manifest lets this website message it directly.
       try {
-        if (chrome?.runtime?.sendMessage && EXTENSION_ID) {
+        if (globalThis.chrome?.runtime?.sendMessage && EXTENSION_ID) {
           chrome.runtime.sendMessage(EXTENSION_ID, { type: "KNOX_AUTH", auth: auth_payload });
         }
       } catch (e) {}
@@ -158,6 +161,9 @@
         const res = await signInWithPopup(auth, new GoogleAuthProvider());
         await handoff(res.user);
       } catch (e) {
+        $("googleBtn").disabled = false;
+        $("googleBtn").textContent = "Continue with Google";
+        $("useEmailToggle").style.display = "";
         // Only bring the email/password form back if the user actually
         // cancelled/closed the Google popup. For any other state, keep it
         // hidden so it doesn't flash back mid-sign-in.

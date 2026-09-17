@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
+<script src="/knox-boot.js"></script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Settings — Knox Knows</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet"><script src="/knox-i18n.js"></script>
 <style>
@@ -7,14 +8,82 @@
 </style></head><body>
 <div class="shell"><aside class="side"><div class="brand">🦊 Knox Knows</div><a class="back" href="/app">← Back to Knox</a><div class="profile" id="profile">Loading account…</div></aside><main>
 <h1>Settings</h1><p class="intro">Make Knox feel like your own study partner.</p>
-<div class="label">Account & plan</div><div class="card"><button class="row" onclick="location.href='/app'"><span>Profile <small id="signedIn">Checking your account…</small></span><span>›</span></button><button class="row" onclick="location.href='/#pricing'"><span>Plan <small id="plan">Manage your Knox plan</small></span><span>›</span></button></div>
+<div class="label">Account & plan</div><div class="card"><div class="row"><span>Profile <small id="signedIn">Checking your account…</small></span></div><button class="row" id="billingButton"><span>Plan & billing <small id="plan">Checking your plan…</small></span><span>›</span></button><button class="row" id="signOutButton">Sign out</button><a class="row" href="mailto:support@knoxknowsapp.com?subject=Delete%20my%20Knox%20account">Request account deletion</a></div>
 <div class="label">How Knox helps you learn</div><div class="card"><div class="row"><span>Response style <small>Applied to every new Knox answer</small></span><span class="options" id="styles"></span></div><div class="row"><span>Display language <small>Changes Knox replies and core app and landing-page labels</small></span><span class="options" id="languages"></span></div><button class="row" onclick="toggleTheme()"><span>Appearance <small>Use dark mode across Knox</small></span><span id="theme">›</span></button></div><p class="hint">Visual adds examples and text diagrams. Steps shows each important move. Brief gives a quick review. Standard keeps Knox’s normal clear explanations.</p>
 <div class="label">Support</div><div class="card"><button class="row" onclick="location.href='mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20support'"><span>Contact support <small>Get help from the Knox team</small></span><span>›</span></button><button class="row" onclick="location.href='mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback'"><span>Send feedback <small>Help improve Knox</small></span><span>›</span></button></div>
 </main></div>
-<script>
-const preferences=()=>{try{return JSON.parse(localStorage.getItem('knoxLearningPreferences')||'{}')}catch(_){return{}}};
-function save(key,value){const values=preferences();values[key]=value;localStorage.setItem('knoxLearningPreferences',JSON.stringify(values));if(key==='language')localStorage.setItem('knoxLanguage',value);render();if(key==='language')location.reload()}
-function toggleTheme(){localStorage.setItem('knoxTheme',localStorage.getItem('knoxTheme')==='dark'?'light':'dark');render()}
-function render(){const current=preferences();document.querySelector('#styles').innerHTML=[['standard','Standard'],['visual','Visual'],['step','Steps'],['concise','Brief']].map(([value,label])=>`<button class="choice ${current.learningStyle===value?'active':''}" onclick="save('learningStyle','${value}')">${label}</button>`).join('');document.querySelector('#languages').innerHTML=[['english','English'],['spanish','Español']].map(([value,label])=>`<button class="choice ${current.language===value?'active':''}" onclick="save('language','${value}')">${label}</button>`).join('');const dark=localStorage.getItem('knoxTheme')==='dark';document.documentElement.dataset.theme=dark?'dark':'light';document.querySelector('#theme').textContent=dark?'Dark ›':'Light ›';try{const account=JSON.parse(localStorage.getItem('knoxAccountDisplay')||'{}');const name=account.name||account.email||'Signed in to Knox';document.querySelector('#profile').textContent=name;document.querySelector('#signedIn').textContent=account.email||name;document.querySelector('#plan').textContent=account.plan&&account.plan!=='free'?'⚡ Knox Plus':'Free plan'}catch(_){}}
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+const auth = getAuth(initializeApp({
+  apiKey: "AIzaSyAlu0ARxOD4kmtRSuEoVJaqCDh4lr4_h9E", authDomain: "knox-knows.firebaseapp.com",
+  projectId: "knox-knows", appId: "1:217543758511:web:f5451b30eea1918caa3a5a"
+}));
+let account = null;
+const preferences = () => {
+  try { return { learningStyle: 'standard', language: 'english', ...JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}') }; }
+  catch (_) { return { learningStyle: 'standard', language: 'english' }; }
+};
+window.save = (key, value) => {
+  const values = preferences(); values[key] = value;
+  try {
+    localStorage.setItem('knoxLearningPreferences', JSON.stringify(values));
+    if (key === 'language') localStorage.setItem('knoxLanguage', value);
+  } catch (_) { alert('Your browser could not save this preference. Check its storage settings.'); return; }
+  render(); window.knoxApplyLanguage?.();
+};
+window.toggleTheme = () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem('knoxTheme', theme); } catch (_) {}
+  render();
+};
+function render() {
+  const current = preferences();
+  for (const [id, key, choices] of [
+    ['styles', 'learningStyle', [['standard','Standard'],['visual','Visual'],['step','Steps'],['concise','Brief']]],
+    ['languages', 'language', [['english','English'],['spanish','Español']]]
+  ]) {
+    const target = document.getElementById(id); target.replaceChildren();
+    choices.forEach(([value, label]) => {
+      const button = document.createElement('button'); button.className = 'choice';
+      button.classList.toggle('active', current[key] === value);
+      button.setAttribute('aria-pressed', String(current[key] === value));
+      button.textContent = label; button.onclick = () => window.save(key, value); target.append(button);
+    });
+  }
+  document.getElementById('theme').textContent = document.documentElement.dataset.theme === 'dark' ? 'Dark ›' : 'Light ›';
+}
+onAuthStateChanged(auth, async user => {
+  try {
+    account = null;
+    document.getElementById('profile').textContent = user?.displayName || user?.email || 'Guest';
+    document.getElementById('signedIn').textContent = user?.email || 'You are not signed in';
+    document.getElementById('signOutButton').textContent = user ? 'Sign out' : 'Sign in';
+    if (user) {
+      const token = await user.getIdToken();
+      const response = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + token } });
+      if (!response.ok) throw new Error('Account unavailable');
+      account = await response.json();
+    }
+    document.getElementById('plan').textContent = account?.usage?.isUnlimited ? 'Knox Plus · Manage subscription' : 'Free plan · Explore Plus';
+    render(); window.knoxApplyLanguage?.(); window.knoxBoot?.ready();
+  } catch (_) { window.knoxBoot?.fail(); }
+}, () => window.knoxBoot?.fail());
+document.getElementById('signOutButton').onclick = async () => {
+  try { if (auth.currentUser) await signOut(auth); localStorage.removeItem('knoxAccountDisplay'); location.href = '/app'; }
+  catch (_) { alert('Could not sign out. Please try again.'); }
+};
+document.getElementById('billingButton').onclick = async event => {
+  if (!auth.currentUser || !account?.usage?.isUnlimited) { location.href = '/?from=app#pricing'; return; }
+  const button = event.currentTarget; button.disabled = true;
+  try {
+    const token = await auth.currentUser.getIdToken();
+    const response = await fetch('/api/customer-portal', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+    const data = await response.json();
+    if (!response.ok || !data.url) throw new Error(data.error || 'Could not open billing.');
+    location.href = data.url;
+  } catch (error) { alert(error.message); button.disabled = false; }
+};
 render();
 </script></body></html>

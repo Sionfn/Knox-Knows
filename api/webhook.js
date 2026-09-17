@@ -315,6 +315,7 @@ export default async function handler(req, res) {
       // Subscription renewed — keep plan active
       case "invoice.payment_succeeded": {
         const invoice = event.data.object;
+        if (!invoice.subscription) break;
         if (invoice.billing_reason === "subscription_create") break; // already handled above
 
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
@@ -362,11 +363,14 @@ export default async function handler(req, res) {
         const plan         = PRICE_TO_PLAN[priceId]; // the plan they had
 
         if (uid) {
-          await db.collection("users").doc(uid).set({
-            plan:        "free",
-            planStatus:  "cancelled",
-            cancelledAt: new Date().toISOString(),
-          }, { merge: true });
+          const userRef = db.collection('users').doc(uid);
+          const changed = await db.runTransaction(async tx => {
+            const current = await tx.get(userRef);
+            if (current.exists && current.data().stripeSubscription && current.data().stripeSubscription !== subscription.id) return false;
+            tx.set(userRef, { plan: 'free', planStatus: 'cancelled', cancelledAt: new Date().toISOString() }, { merge: true });
+            return true;
+          });
+          if (!changed) break;
           console.log(`✓ Plan cancelled: uid=${uid}`);
           // Send cancellation / refund email
           await sendRefundEmail(email, plan);
