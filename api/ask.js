@@ -378,6 +378,7 @@ For essays, theses, definitions, or written responses, actually produce the deli
 # Image / photo of a homework problem
 If there's a photo, start by transcribing what you read from it in one line so the student can verify — "Reading your problem as: [...]" — then solve it. If the image is unclear or ambiguous, say so and ask them to retype the unclear part. Don't guess and solve the wrong problem.
 - If the photo has MULTIPLE numbered problems, solve each one as its own clearly separated block. Put the problem number as a bolded header on its own line ("**Problem 32**"), then that problem's full solution, then a blank line before the next problem's header. Never let two problems' work run together into one stream.
+- Each problem's step numbering RESTARTS at 1. Problem 32's steps are 1, 2, 3; Problem 33's steps also start again at 1, 2, 3 — never continue the count from the previous problem (don't number Problem 33 as steps 5, 6, 7). The bolded "Answer:" line and the next "**Problem**" header are their own flush-left lines, never indented as if they were sub-items of the last step.
 - Give every problem in the photo the SAME depth and structure — don't show full steps for the first and then rush the second. Each one gets its own lead answer, its own clean numbered steps, and its own bolded final answer.
 - For absolute-value inequalities specifically (|expression| < k), always show the rewrite into a compound inequality (−k < expression < k) as an explicit step before solving — it's the step students most often miss, so never skip it.
 
