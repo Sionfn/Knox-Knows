@@ -4571,7 +4571,7 @@ window.appHandleAsk = async function() {
     }
 
     const answer = data.answer || '';
-    const html   = renderAnswerHtml(answer) + renderVideoCard(data.video);
+    const html   = renderAnswerHtml(answer);
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: q || '[image]', answer, image, learnMode: !!window._learnModeActive };
 
@@ -4647,6 +4647,8 @@ function renderLimitCard(data, isSignedIn) {
 // mark genuinely different parts of checking someone's work.
 function renderAnswerHtml(text) {
   if (!text) return '';
+  // Hide legacy video metadata in saved answers as well as new replies.
+  text = text.replace(/(?:^|\n)[ \t]*(?:\*\*)?VIDEO_SUGGEST\s*:[\s\S]*$/i, '').trim();
 
   // Pull fenced code blocks out BEFORE any line-trimming touches them — the
   // existing renderer trims every line, which would silently strip all
@@ -4844,26 +4846,6 @@ function renderAnswerHtmlInner(text) {
   return html;
 }
 
-// ── Render a video suggestion card (visual-learner topics) ─────
-// data.video comes from the server's real YouTube search — never fabricated
-// client-side. Rendered as a soft, optional card, not a forced section.
-function renderVideoCard(video) {
-  if (!video || !video.videoId) return '';
-  const title   = escHtml(video.title || 'Watch on YouTube');
-  const channel = escHtml(video.channel || '');
-  const thumb   = video.thumbnail ? escHtml(video.thumbnail) : '';
-  return (
-    '<a href="' + escHtml(video.url) + '" target="_blank" rel="noopener noreferrer" class="knox-video-card" ' +
-    'style="display:flex;gap:10px;align-items:center;margin-top:10px;padding:8px;border-radius:12px;border:1px solid var(--border,#E5E7EB);text-decoration:none;color:inherit;">' +
-      (thumb ? '<img src="' + thumb + '" alt="" style="width:88px;height:66px;border-radius:8px;object-fit:cover;flex-shrink:0;">' : '') +
-      '<div style="min-width:0;">' +
-        '<div style="font-size:11px;font-weight:700;color:var(--text-light,#6B7280);margin-bottom:2px;">🎥 See it visually</div>' +
-        '<div style="font-size:13.5px;font-weight:700;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' + title + '</div>' +
-        (channel ? '<div style="font-size:12px;color:var(--text-light,#6B7280);margin-top:2px;">' + channel + '</div>' : '') +
-      '</div>' +
-    '</a>'
-  );
-}
 
 // ── Keyboard shortcuts ───────────────────────────────────────
 // Only Escape — closes whatever is open. We deliberately don't bind

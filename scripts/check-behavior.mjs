@@ -10,7 +10,11 @@ const landingRenderer = vm.createContext({ formatInline: String });
 vm.runInContext(landing.slice(landing.indexOf('  function renderFreeformText('), landing.indexOf('  // ── RENDER RESPONSE')), landingRenderer);
 assert.ok(vm.runInContext('renderFreeformText("Key Points: example", "free")', landingRenderer, { timeout: 1000 }));
 const renderer = vm.createContext({ escHtml: String, formatInline: String });
-vm.runInContext(app.slice(app.indexOf('function renderAnswerHtml(text)'), app.indexOf('// ── Render a video suggestion card')), renderer);
+vm.runInContext(app.slice(app.indexOf('function renderAnswerHtml(text)'), app.indexOf('// ── Keyboard shortcuts')), renderer);
+renderer.input = 'Photosynthesis uses light.\nVIDEO_SUGGEST: photosynthesis stages\n//';
+assert.ok(!vm.runInContext('renderAnswerHtml(input)', renderer).includes('VIDEO_SUGGEST'));
+assert.ok(!ask.includes('findHelpfulVideo'));
+assert.ok(!app.includes('renderVideoCard'));
 for (const input of ['Verdict:\n1', 'Verdict:\n1\nConfirm:\nCorrect', 'The fix:\n1. First\n- Detail\n2. Second']) {
   renderer.input = input;
   assert.ok(vm.runInContext('renderAnswerHtml(input)', renderer, { timeout: 1000 }));

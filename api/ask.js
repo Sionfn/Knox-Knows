@@ -239,52 +239,6 @@ function recordDailyUsage(uid) {
   } catch (e) { /* analytics is never allowed to affect the real response */ }
 }
 
-// ── Video lookup for visual learners ────────────────────────────────────────
-// Looks up ONE real, existing YouTube video for a topic the model flagged
-// as genuinely visual/conceptual. We never let the model invent a video or
-// creator name — a fabricated link/title is worse than no suggestion, so
-// this always goes through a real search. If YOUTUBE_API_KEY isn't set, or
-// the search fails or returns nothing, this quietly returns null and the
-// answer is shown without a video — never a broken feature, just no bonus.
-async function findHelpfulVideo(topic) {
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  if (!apiKey || !topic) return null;
-
-  try {
-    const params = new URLSearchParams({
-      part: "snippet",
-      maxResults: "1",
-      type: "video",
-      safeSearch: "strict",
-      videoEmbeddable: "true",
-      relevanceLanguage: "en",
-      q: `${topic} explained`,
-      key: apiKey,
-    });
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`, { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) {
-      console.error("YouTube search error:", await res.text());
-      return null;
-    }
-    const data = await res.json();
-    const item = data.items?.[0];
-    if (!item) return null;
-
-    const videoId = item.id?.videoId;
-    if (!videoId) return null;
-
-    return {
-      videoId,
-      title:     item.snippet?.title || "",
-      channel:   item.snippet?.channelTitle || "",
-      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
-      url:       `https://www.youtube.com/watch?v=${videoId}`,
-    };
-  } catch (err) {
-    console.error("Video lookup failed:", err.message);
-    return null;
-  }
-}
 
 // ── Casual vs. substantive classifier ───────────────────────────────────────
 // Cheap, fast check (gpt-4.1-mini) that decides whether the latest message is
@@ -352,11 +306,6 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
 //      student, not a form with boxes to fill in.
 //   3. Light structure (a numbered list) is allowed ONLY when a problem
 //      genuinely has steps. It's earned, never forced.
-//   4. VIDEO_SUGGEST — for genuinely visual/conceptual topics, the model can
-//      flag a short search phrase on its own last line. The server strips
-//      this line out of the displayed answer and uses it to look up a real
-//      YouTube video (see findHelpfulVideo above). This is never shown raw
-//      to the student and is not a section — it's a signal to the backend.
 //
 // Renderer note: the frontend's renderAnswerHtml renders natural paragraphs,
 // **bold**, numbered/bulleted lists, and ```fenced code blocks``` directly —
@@ -448,10 +397,7 @@ If they've included their own attempt or answer (typed or in a photo) and are as
 - Show how to fix that specific step — enough for them to finish it themselves, not the whole problem re-solved from scratch (unless their whole approach was wrong, in which case point them in the right direction).
 - If they gave you a bare problem with no attempt of their own to check, there's nothing to check — just answer the problem normally instead.
 
-# When a video would genuinely help
-Some things click faster with a visual — a mechanism, a process, a historical event, something with real motion or stages. If (and only if) this specific question is one of those, end your response on its own new line with:
-VIDEO_SUGGEST: <a short 3-6 word search phrase for the topic>
-Only do this when a video would truly add something beyond your explanation. Skip it for quick calculations, one-line facts, or anything already fully clear in text — most answers should NOT have this line. This line is never shown to the student — it's used to look up a real video — so it must be alone on its own last line, nothing else on that line.`;
+Do not append video suggestions or video-search metadata to answers.`;
 
 
 // ── LEARN MODE — the sidebar's dedicated "🎓 Learn" tool ────────────────────
@@ -484,10 +430,7 @@ Read cues in their message and match their level — simple words and short sent
 - **Languages**: Ask them to attempt the conjugation or translation first, then correct the specific part that's off.
 - **Coding**: Ask them to describe their approach or write a first attempt before you point out the bug — don't just fix it for them. Any code you DO show should be fenced in triple backticks with the language name.
 
-# When a video would genuinely help
-If a mechanism or process would click faster with a visual, end your response on its own new line with:
-VIDEO_SUGGEST: <a short 3-6 word search phrase for the topic>
-Only when it would truly add something — most messages here shouldn't have this line, since you're asking questions more than explaining at length.`;
+Do not append video suggestions or video-search metadata to answers.`;
 
 
 // ── CHAT WITH KNOX — casual/companion system prompt ────────────────────────
@@ -1287,20 +1230,9 @@ export default async function handler(req, res) {
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(answer);
 
-    // ── Pull out the VIDEO_SUGGEST signal ───────────────────────────────────
-    // The model can end its answer with "VIDEO_SUGGEST: <topic>" when a video
-    // would genuinely help. Strip that line from what the student sees, and
-    // — if it's present — look up one real YouTube video for that topic.
-    let video = null;
-    if (!casual) {
-      const match = answer.match(/\n?VIDEO_SUGGEST:\s*(.+?)\s*$/i);
-      if (match) {
-        answer = answer.slice(0, match.index).trim();
-        video = await findHelpfulVideo(match[1].trim());
-      }
-    }
-
-    return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage });
+    // Suppress legacy metadata echoed from earlier conversation turns.
+    answer = answer.replace(/(?:^|\n)[ \t]*(?:\*\*)?VIDEO_SUGGEST\s*:[\s\S]*$/i, '').trim();
+    return res.status(200).json({ answer, video: null, plan, isCasual: casual, model: modelToUse, usage: data.usage });
 
   } catch (err) {
     console.error("Ask error:", err.message);
