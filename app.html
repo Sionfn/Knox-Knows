@@ -526,6 +526,14 @@
     body.app-sidebar-collapsed .sidebar-section-header { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-quicknav-link { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-top { justify-content: center; }
+    body.app-sidebar-collapsed .sidebar-profile-dock { flex-direction:column; padding:10px 6px; gap:8px; }
+    body.app-sidebar-collapsed .sidebar-profile-copy { display:none; }
+    body.app-sidebar-collapsed .sidebar-history-launch { justify-content:center; padding:12px 0; }
+    .sidebar-profile-dock, .sidebar-usage-button, .sidebar-history-launch { flex-shrink:0; }
+    #sidebarHistoryList { min-height:0; }
+    .history-navigation { display:none; }
+    #mobileHistoryDrawer.navigation-mode .history-navigation { display:flex; }
+    #historyLoadMore { margin:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text); cursor:pointer; }
 
     /* Sidebar top — logo + collapse toggle, Knox-orange like the header.
        height/box-sizing/border-bottom MUST exactly match #appHeader (also
@@ -1161,7 +1169,8 @@
     .usage-info-overlay.open { display: flex; }
     .usage-info-card {
       position: relative;
-      background: linear-gradient(180deg, var(--orange-cream) 0%, white 45%);
+      background: var(--surface);
+      color: var(--text);
       border: 2px solid var(--orange-light);
       border-radius: 22px;
       padding: 28px 26px 24px;
@@ -1826,19 +1835,16 @@
         </a>
       </div>
 
-      <button class="sidebar-history-launch sidebar-collapsible" onclick="openMobileHistory()" title="Open your saved conversations">
-        <span>◷ Your history</span><small>Questions &amp; Learn →</small>
+      <button class="sidebar-history-launch" onclick="openMobileHistory()" title="View all history" aria-label="View all history">
+        <span aria-hidden="true">◷</span><span class="sidebar-collapsible">Recent chats</span><small class="sidebar-collapsible">View all →</small>
       </button>
-      <div id="sidebarHistoryList" class="sidebar-collapsible" style="display:none;">
+      <div id="sidebarHistoryList" class="sidebar-collapsible">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
           Ask Knox something and your questions will appear here.
         </div>
       </div>
 
-      <button class="sidebar-usage-button sidebar-collapsible" id="sidebarUsageButton" onclick="openUsageInfo()" title="See how your plan works">
-        <span><span id="sidebarUsageText">Checking your plan…</span><small id="sidebarUsageHint">Tap for details</small></span><b class="sidebar-usage-arrow">›</b>
-      </button>
 
       <!-- Pinned upgrade card — free users only, toggled by JS -->
       <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
@@ -1847,6 +1853,10 @@
       </div>
 
       </div><!-- end sidebar-body -->
+
+      <button class="sidebar-usage-button sidebar-collapsible" id="sidebarUsageButton" onclick="openUsageInfo()" title="See how your plan works" style="margin:10px 12px;">
+        <span><span id="sidebarUsageText">Checking your plan…</span><small id="sidebarUsageHint">Tap for details</small></span><b class="sidebar-usage-arrow">›</b>
+      </button>
 
       <div class="sidebar-profile-dock" id="sidebarProfileDock">
         <div class="sidebar-profile-avatar" id="sidebarProfileAvatar">?</div>
@@ -1873,7 +1883,7 @@
 
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
+      <button id="mobileHistoryBtn" onclick="openMobileHistory(true)" aria-label="Open navigation and history">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <a href="/?from=app" class="app-logo-link" title="Back to landing page">
@@ -2187,7 +2197,7 @@
   <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
     <div class="drawer-panel">
       <div class="drawer-header">
-        <h3>🦊 Knox Knows</h3>
+        <h3>Your history</h3>
         <button class="drawer-close" onclick="closeMobileHistory()" aria-label="Close">✕</button>
       </div>
 
@@ -2195,7 +2205,7 @@
            The whole sidebar (and every one of these) was display:none below
            900px, so Calculator/Learn/Ask Knox were completely unreachable
            on mobile — this was the actual bug, not a visual one. -->
-      <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div class="history-navigation" style="padding:10px;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
         <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">💬</span> Ask Knox
         </button>
@@ -2220,6 +2230,7 @@
           Your past questions will show up here.
         </div>
       </div>
+      <button id="historyLoadMore" onclick="loadAllHistory(false)" hidden>Load more history</button>
     </div>
   </div>
 
@@ -2360,7 +2371,7 @@
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
-    query, orderBy, limit
+    query, orderBy, limit, startAfter
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -2735,6 +2746,7 @@
   // ── Sidebar collapse toggle — remembers state across visits ────────────────
   function toggleAppSidebar() {
     const collapsed = document.body.classList.toggle('app-sidebar-collapsed');
+    document.querySelector('.sidebar-collapse-btn')?.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
     try { localStorage.setItem('knoxAppSidebarCollapsed', collapsed ? '1' : '0'); } catch(e) {}
   }
   window.toggleAppSidebar = toggleAppSidebar;
@@ -3003,10 +3015,40 @@
         forEach: (callback) => historyDocs.forEach(callback),
       };
       renderHistoryInto(sbList, sbEmpty, history);
-      renderHistoryInto(mbList, mbEmpty, history);
+      if (document.getElementById('mobileHistoryDrawer')?.classList.contains('open')) window.loadAllHistory?.(true);
     } catch (e) { /* sidebar is non-critical */ }
   }
   window.loadSidebarHistory = loadSidebarHistory;
+
+  let historyCursor = null, historyRows = [], historyRequest = 0;
+  window.loadAllHistory = async function(reset = true) {
+    const request = ++historyRequest;
+    const owner = window.currentUser?.uid;
+    const list = document.getElementById('mobileHistoryList');
+    const empty = document.getElementById('mobileHistoryEmpty');
+    const more = document.getElementById('historyLoadMore');
+    if (reset) { historyCursor = null; historyRows = []; list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove()); }
+    more.hidden = true;
+    empty.style.display = ''; empty.textContent = owner ? 'Loading conversations…' : 'Sign in to see your history.';
+    if (!owner) return;
+    try {
+      const constraints = [orderBy('updatedAt', 'desc')];
+      if (historyCursor) constraints.push(startAfter(historyCursor));
+      const page = await getDocs(query(collection(db, 'users', owner, 'conversations'), ...constraints, limit(50)));
+      if (request !== historyRequest || window.currentUser?.uid !== owner) return;
+      historyCursor = page.docs.at(-1) || historyCursor;
+      for (const entry of page.docs) {
+        if ((!entry.data().type || ['chat', 'learn'].includes(entry.data().type)) && !historyRows.some(row => row.id === entry.id)) historyRows.push(entry);
+      }
+      empty.textContent = 'No saved questions or Learn sessions yet.';
+      renderHistoryInto(list, empty, { empty: !historyRows.length, forEach: callback => historyRows.forEach(callback) });
+      more.textContent = 'Load more history'; more.disabled = false; more.hidden = page.docs.length < 50;
+    } catch (_) {
+      if (request !== historyRequest) return;
+      empty.style.display = ''; empty.textContent = 'Could not load history. Please try again.';
+      more.hidden = false; more.disabled = false; more.textContent = 'Retry';
+    }
+  };
 
   function renderHistoryInto(list, empty, snaps) {
     if (!list) return;
@@ -3018,7 +3060,7 @@
     if (empty) empty.style.display = 'none';
     snaps.forEach(s => {
       const d     = s.data();
-      const qText = (d.title || 'Untitled').substring(0, 36);
+      const qText = (d.title || 'Untitled').replace(/^🎓\s*/, '');
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
@@ -3029,7 +3071,7 @@
       // icon
       const icon = document.createElement('span');
       icon.className   = 'shi-icon';
-      icon.textContent = '💬';
+      icon.textContent = d.type === 'learn' ? '◈' : '◇';
       icon.setAttribute('aria-hidden', 'true');
       row.appendChild(icon);
       // text — textContent prevents XSS
@@ -3053,6 +3095,7 @@
       row.appendChild(del);
       // Use full row text as accessible label
       row.setAttribute('aria-label', 'Open conversation: ' + qText);
+      row.title = (d.type === 'learn' ? 'Learn: ' : 'Question: ') + qText;
       const activate = (e) => {
         if (e.target === del || del.contains(e.target)) return;
         window.openConversation(convId);
@@ -3953,8 +3996,10 @@ document.addEventListener('click', (e) => {
 // pre-selected mode. Input placeholder stays generic and unstyled.
 
 // ── Mobile history drawer ────────────────────────────────────
-window.openMobileHistory = function() {
+window.openMobileHistory = function(navigation = false) {
   const d = $('mobileHistoryDrawer'); if (d) d.classList.add('open');
+  d?.classList.toggle('navigation-mode', navigation);
+  window.loadAllHistory?.(true);
   document.body.style.overflow = 'hidden';
 };
 window.closeMobileHistory = function() {
