@@ -133,7 +133,7 @@
           {
             "@type": "Question",
             "name": "How is Knox different from ChatGPT or other AI tools?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say 'quiz me instead' and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say 'quiz me instead' and Knox switches to teaching mode on the spot. Use Ask Knox for answers, Learn for guided practice, and Study Hub for study materials. Revisit saved conversations from the sidebar." }
           },
           {
             "@type": "Question",
@@ -143,7 +143,7 @@
           {
             "@type": "Question",
             "name": "Can I cancel anytime?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Sign in, click your name in the top-right, then Manage Billing — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Sign in, open Settings using the gear beside your profile, then Plan & billing — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period." }
           },
           {
             "@type": "Question",
@@ -1894,6 +1894,7 @@
       .header-logo-img { width: 36px; height: 36px; }
     }
   </style>
+<link rel="stylesheet" href="/knox-brand.css">
 </head>
 <body>
 
@@ -1990,53 +1991,23 @@
 </div>
 
 <!-- ===================== HERO ===================== -->
-<section id="home" style="background:var(--surface);padding:72px 24px 64px;text-align:center;position:relative;overflow:hidden;">
-  <div style="position:absolute;top:-100px;left:-80px;width:400px;height:400px;border-radius:50%;background:var(--orange-light);opacity:0.35;pointer-events:none;"></div>
-  <div style="position:absolute;bottom:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:var(--blue-light);opacity:0.35;pointer-events:none;"></div>
-
-  <div style="position:relative;z-index:1;max-width:900px;margin:0 auto;">
-    <!-- Knox laptop character - official logo -->
-    <div style="margin-bottom:8px;">
-      <img src="./knox-logo.jpg" alt="Knox the Fox" draggable="false" style="width:200px;height:200px;object-fit:cover;border-radius:50%;filter:drop-shadow(0 8px 20px rgba(255,107,0,0.25));" onerror="this.outerHTML='<div style=\'font-size:120px;\'>🦊</div>'">
-    </div>
-
-    <!-- Knox wave badge -->
-    <div style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      Your AI homework companion 🦊
-    </div>
-
-    <h1 style="font-size:clamp(38px,6.5vw,74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
-      Stop Guessing.<br>
-      <span style="color:var(--orange);">Start Knowing.</span>
-    </h1>
-
-    <p style="font-size:18px;font-weight:600;color:var(--text-light);line-height:1.65;max-width:520px;margin:18px auto 0;">
-      The homework AI that talks like a real tutor, not a form to fill out. No menus, no modes — just ask. Free gets the same quality as paid.
-    </p>
-
-    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
-      <button class="btn-orange" style="font-size:17px;padding:17px 40px;" onclick="window.location.href='/app'">Try Knox free →</button>
-    </div>
-    <a href="#how-it-works" onclick="smoothScroll('how-it-works',event)" style="display:inline-block;margin-top:14px;font-size:14px;font-weight:700;color:var(--text-light);text-decoration:underline;text-underline-offset:3px;">See how it works</a>
-
-    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free forever · no credit card · sign up in seconds</p>
-
-    <!-- Social proof row -->
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">📚</span> Every subject K-12 → College
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">📷</span> Snap a photo, done
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">🎓</span> Teaches, doesn't just tell
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<section id="home" class="knox-hero">
+<div class="knox-hero-inner">
+<div class="knox-hero-copy">
+<div class="knox-eyebrow"><img src="/knox-logo-square.jpg" alt="" width="32" height="32">Your study partner, always curious.</div>
+<h1>Get unstuck.<br><span>Keep knowing.</span></h1>
+<p>Ask a question, work through it in Learn, or turn your notes into a study session. One familiar space, with Knox by your side.</p>
+<div class="knox-hero-actions"><a class="btn-orange" href="/app">Start with Knox →</a><a class="knox-secondary" href="#how-it-works">Explore how it works</a></div>
+<p class="knox-hero-note">Free to start. No credit card required.</p>
+</div>
+<div class="knox-app-preview" aria-label="Illustrative preview of the Knox workspace">
+<aside class="knox-preview-nav"><img src="/knox-logo-square.jpg" alt="Knox Knows" width="36" height="36">
+<span class="selected"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg>Ask Knox</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg>Learn</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg>Study Hub</span><small>Your space to study</small></aside>
+<div class="knox-preview-main"><div class="knox-preview-label">A little help. A lot of understanding.</div>
+<h2>What are we<br><em>tackling today?</em></h2>
+<div class="knox-preview-topics"><span>Understand a concept</span><span>Check your work</span><span>Practice together</span><span>Build a study guide</span></div>
+<a class="knox-preview-input" href="/app">Ask Knox anything… <b aria-hidden="true">↑</b></a><small>Workspace preview · Open the app to begin</small>
+</div></div></div></section>
 
 <!-- ===================== CHROME EXTENSION ===================== -->
 <section class="extension-launch" aria-labelledby="extension-launch-title">
@@ -2107,9 +2078,9 @@
       <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
           <div style="width:52px;height:52px;border-radius:14px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">⚡</div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">No modes to pick. Just ask.</h3>
+          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Your question. Your way to learn.</h3>
         </div>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Other apps make you choose "Answer mode" or "Solver mode" or "Tutor mode" before you even type. Knox reads what you actually need from how you ask. Say "quiz me" and it teaches. Say "just tell me" and it tells you.</p>
+        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Get a clear answer in Ask Knox, practice step by step in Learn, or build study materials in Study Hub. Set your preferred explanation style in Settings, then keep asking naturally.</p>
       </div>
 
       <!-- Talks like a person -->
@@ -2142,7 +2113,7 @@
   <div style="max-width:1000px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:48px;">
       <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Just ask however you want</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:560px;margin:0 auto;">No modes, no menus. Type the way you'd actually ask a friend — Knox reads what you need. Real examples:</p>
+      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:560px;margin:0 auto;">Ask directly in Ask Knox, or open Learn for guided practice. Tell Knox what you need in your own words:</p>
     </div>
 
     <div class="rg-3col">
@@ -2390,7 +2361,7 @@
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say "quiz me instead" and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work.
+          Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say "quiz me instead" and Knox switches to teaching mode on the spot. Use Ask Knox for answers, Learn for guided practice, and Study Hub for study materials. Revisit saved conversations from the sidebar.
         </div>
       </details>
 
@@ -2412,7 +2383,7 @@
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yep. Sign in, click your name in the top-right, then "Manage Billing" — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period, no questions asked.
+          Yep. Sign in, open Settings using the gear beside your profile, then "Plan & billing" — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period, no questions asked.
         </div>
       </details>
 
@@ -2610,14 +2581,6 @@
     background: #1d1f26 !important;
     border-color: #3a3d48 !important;
     box-shadow: 0 5px 0 #111217 !important;
-  }
-  html[data-theme="dark"] #pricing .pricing-plan-card {
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32), 0 6px 0 rgba(0, 0, 0, 0.30) !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  html[data-theme="dark"] #pricing .pricing-plan-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.42), 0 8px 0 rgba(0, 0, 0, 0.28) !important;
   }
   html[data-theme="dark"] #pricing .pricing-free-card {
     background: linear-gradient(145deg, #249fe1 0%, #087ab5 100%) !important;

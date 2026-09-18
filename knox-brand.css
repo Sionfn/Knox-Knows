@@ -1,0 +1,39 @@
+.knox-icon{width:22px;height:22px;display:inline-block;vertical-align:middle;flex-shrink:0}
+#rightSidebar .sidebar-quicknav-link .sq-icon{width:28px;height:28px;display:grid;place-items:center;color:var(--orange)}
+.sidebar-quicknav-link:hover .sq-icon,.sidebar-quicknav-link.active .sq-icon{background:var(--orange-light);border-radius:9px}
+.sidebar-profile-settings{display:grid;place-items:center;flex-shrink:0}
+.sidebar-profile-settings .knox-icon{width:19px;height:19px}
+#home.knox-hero{padding:80px 28px;background:var(--cream);overflow:hidden}
+.knox-hero-inner{max-width:1180px;margin:auto;display:grid;grid-template-columns:1fr 1.12fr;align-items:center;gap:52px}
+.knox-hero-copy{text-align:left}
+.knox-hero-actions .btn-orange{text-decoration:none}
+.knox-eyebrow{display:flex;align-items:center;gap:10px;color:var(--orange);font-size:13px;font-weight:900;margin-bottom:22px}
+.knox-eyebrow img{border-radius:11px}
+.knox-hero-copy h1{font-size:clamp(42px,5.4vw,72px);line-height:1.06;letter-spacing:-.035em;font-weight:900;color:var(--text)}
+.knox-hero-copy h1 span{color:var(--orange)}
+.knox-hero-copy>p{font-size:17px;line-height:1.7;color:var(--text-light);max-width:460px;margin-top:22px}
+.knox-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:18px;margin-top:30px}
+.knox-secondary{color:var(--text);font-weight:800;text-underline-offset:5px;font-size:14px}
+.knox-hero-copy .knox-hero-note{font-size:12px;margin-top:20px}
+.knox-app-preview{display:grid;grid-template-columns:128px 1fr;border:2px solid var(--border);border-radius:24px;overflow:hidden;box-shadow:0 7px 0 var(--border);background:var(--cream);text-align:left}
+.knox-preview-nav{padding:20px 12px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;gap:20px}
+.knox-preview-nav>img{border:2px solid var(--orange);border-radius:12px;margin-bottom:10px}
+.knox-preview-nav>span{display:flex;align-items:center;gap:7px;color:var(--text-light);font-size:11px;font-weight:800}
+.knox-preview-nav .selected{color:var(--orange)}
+.knox-preview-nav small{margin-top:auto;font-size:10px;color:var(--text-light)}
+.knox-preview-main{padding:38px 20px 22px;text-align:center}
+.knox-preview-label{font-size:10px;font-weight:800;color:var(--orange);margin-bottom:20px}
+.knox-preview-main h2{font-size:clamp(22px,2.5vw,34px);font-weight:900;line-height:1.2;color:var(--text)}
+.knox-preview-main em{color:var(--orange);font-style:normal}
+.knox-preview-topics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:28px 0}
+.knox-preview-topics span{padding:15px 9px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 3px 0 var(--border);color:var(--text);font-size:11px;font-weight:800}
+.knox-preview-input{display:flex;align-items:center;justify-content:space-between;gap:8px;border:2px solid var(--border);border-radius:15px;background:var(--surface);padding:10px;color:var(--text-light);font-size:11px;text-decoration:none}
+.knox-preview-input b{background:var(--orange);color:white;padding:5px 11px;border-radius:10px;font-size:18px}
+.knox-preview-main>small{display:block;font-size:9px;color:var(--text-light);margin-top:12px}
+/* Motion is shared; theme overrides only change colors and lighting. */
+#pricing .pricing-plan-card{transition:transform .2s ease,box-shadow .2s ease}
+#pricing .pricing-plan-card:hover{transform:translateY(-4px)}
+#pricing button:focus-visible,#pricing a:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+@media(max-width:900px){.knox-hero-inner{grid-template-columns:1fr;gap:38px;max-width:620px}.knox-hero-copy{text-align:center}.knox-eyebrow,.knox-hero-actions{justify-content:center}.knox-hero-copy>p{margin-left:auto;margin-right:auto}}
+@media(max-width:480px){#home.knox-hero{padding:44px 18px}.knox-app-preview{grid-template-columns:58px 1fr}.knox-preview-nav{padding:18px 10px}.knox-preview-nav>span{font-size:0;gap:0;justify-content:center}.knox-preview-nav small{display:none}.knox-preview-main{padding:28px 14px 18px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

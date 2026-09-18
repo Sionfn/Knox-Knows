@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <script src="/knox-boot.js"></script>
+  <link rel="stylesheet" href="/knox-brand.css">
   <script src="/knox-i18n.js"></script>
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
@@ -1818,25 +1819,25 @@
 
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
-        <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">✦</span><span class="sidebar-collapsible">Ask Knox</span>
+        <button aria-label="Ask Knox" class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg></span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">⌘</span><span class="sidebar-collapsible">Calculator</span>
+        <button aria-label="Calculator" class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg></span><span class="sidebar-collapsible">Calculator</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">◈</span><span class="sidebar-collapsible">Learn</span>
+        <button aria-label="Learn" class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg></span><span class="sidebar-collapsible">Learn</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="study" onclick="openStudyHub()" title="Study Hub — make flashcards, quizzes, and study guides" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">▣</span><span class="sidebar-collapsible">Study Hub</span>
+        <button aria-label="Study Hub" class="sidebar-quicknav-link" data-nav="study" onclick="openStudyHub()" title="Study Hub — make flashcards, quizzes, and study guides" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg></span><span class="sidebar-collapsible">Study Hub</span>
         </button>
-        <a class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
-          <span class="sq-icon">◌</span><span class="sidebar-collapsible">Chrome extension</span>
+        <a aria-label="Chrome extension" class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
+          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#extension"></use></svg></span><span class="sidebar-collapsible">Chrome extension</span>
         </a>
       </div>
 
       <button class="sidebar-history-launch" onclick="openMobileHistory()" title="View all history" aria-label="View all history">
-        <span aria-hidden="true">◷</span><span class="sidebar-collapsible">Recent chats</span><small class="sidebar-collapsible">View all →</small>
+        <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#history"></use></svg><span class="sidebar-collapsible">Recent chats</span><small class="sidebar-collapsible">View all →</small>
       </button>
       <div id="sidebarHistoryList" class="sidebar-collapsible">
         <div id="sidebarHistoryEmpty">
@@ -1864,7 +1865,7 @@
           <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
           <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
         </div>
-        <button class="sidebar-profile-settings" onclick="window.location.href='/settings.html'" aria-label="Open settings" title="Settings">⚙</button>
+        <button class="sidebar-profile-settings" onclick="window.location.href='/settings.html'" aria-label="Open settings" title="Settings"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg></button>
       </div>
 
     </aside>
@@ -2207,19 +2208,19 @@
            on mobile — this was the actual bug, not a visual one. -->
       <div class="history-navigation" style="padding:10px;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
         <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">💬</span> Ask Knox
+          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> Ask Knox
         </button>
         <button onclick="window.openCalc();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">🔢</span> Calculator
+          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg> Calculator
         </button>
         <button onclick="window.openLearnMode();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">🎓</span> Learn
+          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg> Learn
         </button>
         <button onclick="window.openStudyHub();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">🗂️</span> Study Hub
+          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg> Study Hub
         </button>
         <button onclick="window.location.href='/settings.html'" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">⚙️</span> Account &amp; Plan
+          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg> Account &amp; Plan
         </button>
       </div>
 

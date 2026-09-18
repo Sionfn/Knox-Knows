@@ -6,6 +6,13 @@ const ask = readFileSync(new URL('api/ask.js', root), 'utf8');
 const me = readFileSync(new URL('api/me.js', root), 'utf8');
 const app = readFileSync(new URL('app.html', root), 'utf8');
 const landing = readFileSync(new URL('index.html', root), 'utf8');
+for (const rule of landing.matchAll(/html\[data-theme="dark"\][^{]*\{([^}]+)\}/g)) {
+  assert.ok(!/(?:^|;)\s*(?:animation|transition|transform)\s*:/.test(rule[1]), 'Dark-mode rules must not change motion');
+}
+const iconSprite = readFileSync(new URL('knox-icons.svg', root), 'utf8');
+for (const match of (app + landing).matchAll(/knox-icons\.svg#([a-z-]+)/g)) {
+  assert.ok(iconSprite.includes('id="' + match[1] + '"'), 'Every brand icon must exist');
+}
 const landingRenderer = vm.createContext({ formatInline: String });
 vm.runInContext(landing.slice(landing.indexOf('  function renderFreeformText('), landing.indexOf('  // ── RENDER RESPONSE')), landingRenderer);
 assert.ok(vm.runInContext('renderFreeformText("Key Points: example", "free")', landingRenderer, { timeout: 1000 }));
