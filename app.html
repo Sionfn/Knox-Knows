@@ -1,46 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="/knox-boot.js"></script>
-  <link rel="stylesheet" href="/knox-brand.css">
-  <script src="/knox-i18n.js"></script>
   <script>
     // Applied as early as possible — before any CSS has a chance to paint —
     // so a returning dark-mode user never sees a flash of the light theme
     // first. Light is the default for everyone until they explicitly
     // switch — deliberately NOT following the OS-level color-scheme
     // preference, so a first-time visitor always sees light mode first.
-    // Theme choice is shared with the marketing site, so it stays consistent
-    // when someone moves between the landing page and Knox.
     (function() {
       try {
         if (localStorage.getItem('knoxTheme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) { /* localStorage unavailable — default to light */ }
-
-      // Keep theme controls independent from the Firebase module so the
-      // toggle remains available even if a third-party request is delayed.
-      window.syncDarkModeIcon = function() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const moon = document.getElementById('darkModeIconMoon');
-        const sun = document.getElementById('darkModeIconSun');
-        const toggle = document.getElementById('darkModeToggle');
-        if (moon) moon.style.display = isDark ? 'none' : '';
-        if (sun) sun.style.display = isDark ? '' : 'none';
-        if (toggle) {
-          toggle.setAttribute('aria-pressed', String(isDark));
-          toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-        }
-      };
-      window.toggleDarkMode = function() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDark) document.documentElement.removeAttribute('data-theme');
-        else document.documentElement.setAttribute('data-theme', 'dark');
-        try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
-        window.syncDarkModeIcon();
-      };
-      document.addEventListener('DOMContentLoaded', window.syncDarkModeIcon, { once: true });
     })();
   </script>
   <meta charset="UTF-8">
@@ -126,7 +98,6 @@
        before first paint and avoid a light-mode flash for anyone who's
        chosen dark. */
     html[data-theme="dark"] {
-      color-scheme: dark;
       /* Accents — deliberately unchanged from light mode. */
       --orange:        #FF6B00;
       --orange-dark:   #CC5500;
@@ -396,10 +367,7 @@
       font-size: 14px;
     }
 
-    /* Firebase restores a saved session asynchronously. Keep guest controls
-       hidden until that answer arrives so signed-in students never see a
-       distracting Login / Sign up flash on refresh or navigation. */
-    #appGuestBtns { display: none; gap: 8px; align-items: center; }
+    #appGuestBtns { display: inline-flex; gap: 8px; align-items: center; }
     .header-login-btn {
       padding: 9px 16px;
       background: rgba(255,255,255,0.18);
@@ -513,7 +481,7 @@
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
     /* SIDEBAR */
     #rightSidebar {
-      width: 252px;
+      width: 240px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -527,14 +495,6 @@
     body.app-sidebar-collapsed .sidebar-section-header { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-quicknav-link { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-top { justify-content: center; }
-    body.app-sidebar-collapsed .sidebar-profile-dock { flex-direction:column; padding:10px 6px; gap:8px; }
-    body.app-sidebar-collapsed .sidebar-profile-copy { display:none; }
-    body.app-sidebar-collapsed .sidebar-history-launch { justify-content:center; padding:12px 0; }
-    .sidebar-profile-dock, .sidebar-usage-button, .sidebar-history-launch { flex-shrink:0; }
-    #sidebarHistoryList { min-height:0; }
-    .history-navigation { display:none; }
-    #mobileHistoryDrawer.navigation-mode .history-navigation { display:flex; }
-    #historyLoadMore { margin:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--text); cursor:pointer; }
 
     /* Sidebar top — logo + collapse toggle, Knox-orange like the header.
        height/box-sizing/border-bottom MUST exactly match #appHeader (also
@@ -549,21 +509,21 @@
       height: 64px;
       box-sizing: border-box;
       padding: 0 14px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      border-right: 1px solid var(--border);
+      background: var(--orange);
+      border-bottom: 4px solid var(--orange-dark);
+      border-right: 1.5px solid var(--orange-dark);
       flex-shrink: 0;
     }
     .sidebar-logo-link { display: flex; align-items: center; gap: 9px; text-decoration: none; min-width: 0; }
-    .sidebar-logo-link img { width: 32px; height: 32px; border-radius: 11px; object-fit: cover; border: 2px solid var(--orange); flex-shrink: 0; box-shadow:0 2px 0 var(--orange-dark); }
-    .sidebar-logo-text { font-size: 16px; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-logo-link img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
+    .sidebar-logo-text { font-size: 15px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sidebar-collapse-btn {
-      background: var(--cream); border: 1px solid var(--border); color: var(--text-light);
+      background: rgba(255,255,255,0.2); border: none; color: white;
       border-radius: 8px; width: 26px; height: 26px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: background 0.15s;
     }
-    .sidebar-collapse-btn:hover { background: var(--orange-light); color:var(--orange); }
+    .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.35); }
 
     /* Quick nav — Home, sits right below the top bar */
     /* Everything below the orange top bar. Each child below gets its own
@@ -592,22 +552,6 @@
     .sidebar-quicknav-link:hover { background: var(--orange-cream); color: var(--orange); }
     .sidebar-quicknav-link.sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
     .sidebar-quicknav-link .sq-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
-    .sidebar-history-launch { margin:10px 8px 0; padding:11px 12px; border:1.5px solid var(--border); border-radius:12px; background:var(--cream); color:var(--text); display:flex; align-items:center; justify-content:space-between; font:inherit; font-size:13px; font-weight:900; }
-    .sidebar-history-launch:hover { border-color:var(--orange); color:var(--orange); }
-    .sidebar-history-launch small { color:var(--text-light); font-size:11px; font-weight:800; }
-    .sidebar-profile-dock { margin-top:auto; padding:12px; border-top:1px solid var(--border); background:var(--surface); display:none; align-items:center; gap:10px; }
-    .sidebar-profile-avatar { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--orange-light); color:var(--orange); font-weight:900; flex:0 0 36px; overflow:hidden; }
-    .sidebar-profile-avatar img { width:100%; height:100%; object-fit:cover; }
-    .sidebar-profile-copy { min-width:0; flex:1; }
-    .sidebar-profile-name { color:var(--text); font-size:13px; font-weight:900; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .sidebar-profile-plan { color:var(--text-light); font-size:11px; font-weight:700; margin-top:1px; }
-    .sidebar-usage-button { margin:12px 12px 0; padding:12px; border:1.5px solid var(--border); border-radius:13px; background:var(--cream); color:var(--text); display:none; align-items:center; justify-content:space-between; gap:8px; font:inherit; text-align:left; }
-    .sidebar-usage-button:hover { border-color:var(--orange); }
-    .sidebar-usage-button span { display:block; font-size:12px; font-weight:900; }
-    .sidebar-usage-button small { display:block; color:var(--text-light); font-size:10px; font-weight:700; margin-top:2px; }
-    .sidebar-usage-arrow { color:var(--orange); font-size:16px; }
-    .sidebar-profile-settings { width:34px; height:34px; border:1px solid var(--border); border-radius:10px; background:var(--cream); color:var(--text-light); font-size:17px; }
-    .sidebar-profile-settings:hover { color:var(--orange); border-color:var(--orange); }
 
     .sidebar-section-header {
       padding: 14px 14px 10px;
@@ -938,34 +882,6 @@
     #chatThread::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
     #chatThread.hidden { display: none; }
 
-    /* ═══ STUDY HUB ═════════════════════════════════════════ */
-    #studyHub { display:none; flex:1; overflow:auto; padding:32px 24px 42px; background:var(--cream); }
-    #studyHub.open { display:block; }
-    .study-hub-inner { max-width:900px; margin:0 auto; }
-    .study-kicker { color:var(--orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
-    .study-title { color:var(--text); font-size:clamp(30px,5vw,46px); line-height:1.04; font-weight:900; margin:8px 0 10px; }
-    .study-copy { color:var(--text-light); font-weight:700; line-height:1.55; max-width:600px; }
-    .study-topic-box { margin:26px 0 22px; padding:18px; border:2px solid var(--border); border-radius:20px; background:var(--surface); box-shadow:0 4px 0 var(--border); }
-    .study-topic-label { display:block; color:var(--text); font-size:13px; font-weight:900; margin-bottom:9px; }
-    #studyTopicInput { width:100%; min-height:78px; resize:vertical; font:inherit; font-size:15px; font-weight:600; line-height:1.5; color:var(--text); background:var(--cream); border:2px solid var(--border); border-radius:14px; padding:12px 14px; outline:none; }
-    #studyTopicInput:focus { border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-light); }
-    .study-tools-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-    .study-tool-card { min-height:230px; text-align:left; border:2px solid var(--border); border-radius:22px; padding:22px; background:var(--surface); box-shadow:0 5px 0 var(--border); font:inherit; cursor:pointer; transition:transform .18s,box-shadow .18s,border-color .18s; }
-    .study-tool-card:hover { transform:translateY(-4px); box-shadow:0 9px 0 var(--border); }
-    .study-tool-card:nth-child(1):hover { border-color:var(--purple); box-shadow:0 9px 0 var(--purple-light); }
-    .study-tool-card:nth-child(2):hover { border-color:var(--blue); box-shadow:0 9px 0 var(--blue-light); }
-    .study-tool-card:nth-child(3):hover { border-color:var(--green); box-shadow:0 9px 0 var(--green-light); }
-    .study-tool-icon { width:48px; height:48px; display:grid; place-items:center; border-radius:15px; font-size:25px; margin-bottom:17px; }
-    .study-tool-card:nth-child(1) .study-tool-icon { background:var(--purple-light); }
-    .study-tool-card:nth-child(2) .study-tool-icon { background:var(--blue-light); }
-    .study-tool-card:nth-child(3) .study-tool-icon { background:var(--green-light); }
-    .study-tool-title { display:block; color:var(--text); font-weight:900; font-size:18px; margin-bottom:7px; }
-    .study-tool-desc { display:block; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.5; }
-    .study-tool-action { display:inline-block; margin-top:16px; color:var(--orange); font-size:13px; font-weight:900; }
-    .study-promise { margin-top:22px; display:flex; gap:9px; align-items:flex-start; color:var(--text-light); font-size:13px; font-weight:700; line-height:1.45; }
-    @media (max-width:680px) { #studyHub { padding:22px 16px 30px; } .study-tools-grid { grid-template-columns:1fr; } .study-tool-card { min-height:0; } }
-
-
     .msg-wrap { margin-bottom: 18px; }
     .msg-user { display: flex; justify-content: flex-end; }
     .msg-user-bubble {
@@ -1114,7 +1030,6 @@
       transition: all 0.12s;
     }
     .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); transform: translateY(-1px); }
-    .fb-retry { display:inline-flex; align-items:center; gap:5px; color:var(--text); font-size:12px; font-weight:900; }
     .fb-copy {
       display: inline-flex; align-items: center; justify-content: center;
       padding: 6px 9px; color: var(--text-light);
@@ -1170,8 +1085,7 @@
     .usage-info-overlay.open { display: flex; }
     .usage-info-card {
       position: relative;
-      background: var(--surface);
-      color: var(--text);
+      background: linear-gradient(180deg, var(--orange-cream) 0%, white 45%);
       border: 2px solid var(--orange-light);
       border-radius: 22px;
       padding: 28px 26px 24px;
@@ -1605,7 +1519,7 @@
     .settings-card {
       background: var(--surface);
       border-radius: 24px;
-      max-width: 540px;
+      max-width: 460px;
       width: 100%;
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
@@ -1615,7 +1529,7 @@
       overflow-y: auto;
     }
     .settings-header {
-      background: linear-gradient(135deg, var(--orange), #ff9500);
+      background: var(--orange);
       border-bottom: 4px solid var(--orange-dark);
       padding: 22px 28px;
       display: flex; align-items: center; justify-content: space-between;
@@ -1633,17 +1547,6 @@
     }
     .settings-close:hover { background: rgba(255,255,255,0.3); }
     .settings-body { padding: 26px 28px; }
-    .settings-plan-hero { padding:18px; border-radius:18px; background:var(--cream); border:2px solid var(--border); margin-bottom:18px; }
-    .settings-plan-hero strong { display:block; font-size:18px; color:var(--text); margin:3px 0; }
-    .settings-plan-hero p { color:var(--text-light); font-size:13px; font-weight:700; line-height:1.5; }
-    .settings-section { margin:22px 0 4px; }
-    .settings-section-title { color:var(--text-light); font-size:11px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; margin-bottom:9px; }
-    .settings-choice-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
-    .settings-choice { padding:12px; border:2px solid var(--border); border-radius:13px; background:var(--cream); color:var(--text); font:inherit; text-align:left; font-size:13px; font-weight:900; }
-    .settings-choice small { display:block; color:var(--text-light); font-size:11px; font-weight:700; line-height:1.35; margin-top:3px; }
-    .settings-choice.active { background:var(--orange-light); border-color:var(--orange); color:var(--orange); }
-    .settings-link-btn { display:flex; align-items:center; justify-content:space-between; width:100%; padding:14px 0; border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text); font:inherit; font-size:14px; font-weight:800; text-align:left; }
-    .settings-link-btn span:last-child { color:var(--orange); }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 0;
@@ -1702,7 +1605,6 @@
        link is redundant there — hidden by default, restored below 900px
        where the sidebar is hidden and the logo needs a home. */
     .app-logo-link { display: none; }
-    @media (min-width:901px) { #appHeader { display:none; } }
     @media (max-width: 900px) {
       #rightSidebar { display: none; }
       #mobileHistoryBtn { display: flex; }
@@ -1819,33 +1721,33 @@
 
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
-        <button aria-label="Ask Knox" class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg></span><span class="sidebar-collapsible">Ask Knox</span>
-        </button>
-        <button aria-label="Calculator" class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg></span><span class="sidebar-collapsible">Calculator</span>
-        </button>
-        <button aria-label="Learn" class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg></span><span class="sidebar-collapsible">Learn</span>
-        </button>
-        <button aria-label="Study Hub" class="sidebar-quicknav-link" data-nav="study" onclick="openStudyHub()" title="Study Hub — make flashcards, quizzes, and study guides" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg></span><span class="sidebar-collapsible">Study Hub</span>
-        </button>
-        <a aria-label="Chrome extension" class="sidebar-quicknav-link" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web_app" target="_blank" rel="noopener" title="Get the Knox Knows Chrome extension">
-          <span class="sq-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#extension"></use></svg></span><span class="sidebar-collapsible">Chrome extension</span>
+        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
+          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
         </a>
+        <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">💬</span><span class="sidebar-collapsible">Ask Knox</span>
+        </button>
+        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">🔢</span><span class="sidebar-collapsible">Calculator</span>
+        </button>
+        <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
+        </button>
+        <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
+          <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
+        </button>
       </div>
 
-      <button class="sidebar-history-launch" onclick="openMobileHistory()" title="View all history" aria-label="View all history">
-        <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#history"></use></svg><span class="sidebar-collapsible">Recent chats</span><small class="sidebar-collapsible">View all →</small>
-      </button>
+      <div class="sidebar-section-header sidebar-collapsible">
+        <span>📚 History</span>
+        <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
+      </div>
       <div id="sidebarHistoryList" class="sidebar-collapsible">
         <div id="sidebarHistoryEmpty">
           <div style="font-size:28px;margin-bottom:6px;">🦊</div>
           Ask Knox something and your questions will appear here.
         </div>
       </div>
-
 
       <!-- Pinned upgrade card — free users only, toggled by JS -->
       <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
@@ -1854,19 +1756,6 @@
       </div>
 
       </div><!-- end sidebar-body -->
-
-      <button class="sidebar-usage-button sidebar-collapsible" id="sidebarUsageButton" onclick="openUsageInfo()" title="See how your plan works" style="margin:10px 12px;">
-        <span><span id="sidebarUsageText">Checking your plan…</span><small id="sidebarUsageHint">Tap for details</small></span><b class="sidebar-usage-arrow">›</b>
-      </button>
-
-      <div class="sidebar-profile-dock" id="sidebarProfileDock">
-        <div class="sidebar-profile-avatar" id="sidebarProfileAvatar">?</div>
-        <div class="sidebar-profile-copy">
-          <div class="sidebar-profile-name" id="sidebarProfileName">Your account</div>
-          <div class="sidebar-profile-plan" id="sidebarProfilePlan">Loading…</div>
-        </div>
-        <button class="sidebar-profile-settings" onclick="window.location.href='/settings.html'" aria-label="Open settings" title="Settings"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg></button>
-      </div>
 
     </aside>
 
@@ -1884,7 +1773,7 @@
 
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <button id="mobileHistoryBtn" onclick="openMobileHistory(true)" aria-label="Open navigation and history">
+      <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <a href="/?from=app" class="app-logo-link" title="Back to landing page">
@@ -1925,7 +1814,7 @@
       <span class="dd-email" id="ddEmail">—</span>
       <div id="ddPlan"></div>
     </div>
-    <button class="app-dropdown-item" onclick="window.location.href='/settings.html'">
+    <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Account &amp; Plan
     </button>
@@ -2018,25 +1907,6 @@
 
           <!-- CHAT THREAD -->
           <div id="chatThread" class="hidden"></div>
-
-          <!-- STUDY HUB — turns any topic into a useful Knox learning session. -->
-          <section id="studyHub" aria-labelledby="studyHubTitle">
-            <div class="study-hub-inner">
-              <div class="study-kicker">Your student workspace</div>
-              <h1 class="study-title" id="studyHubTitle">Make your next study session count.</h1>
-              <p class="study-copy">Give Knox a topic, your notes, or a chapter. Pick how you want to study and Knox will build it with you.</p>
-              <div class="study-topic-box">
-                <label class="study-topic-label" for="studyTopicInput">What are you studying?</label>
-                <textarea id="studyTopicInput" placeholder="Example: Biology cell division — mitosis vs. meiosis, phases, and why they matter"></textarea>
-              </div>
-              <div class="study-tools-grid">
-                <button class="study-tool-card" onclick="startStudyTool('guide')"><span class="study-tool-icon">📝</span><span class="study-tool-title">Study guide</span><span class="study-tool-desc">Turn the important ideas into a clean, memorable review guide.</span><span class="study-tool-action">Build my guide →</span></button>
-                <button class="study-tool-card" onclick="startStudyTool('flashcards')"><span class="study-tool-icon">🃏</span><span class="study-tool-title">Flashcards</span><span class="study-tool-desc">Practice the vocabulary, formulas, events, and facts you need to remember.</span><span class="study-tool-action">Make flashcards →</span></button>
-                <button class="study-tool-card" onclick="startStudyTool('quiz')"><span class="study-tool-icon">🎯</span><span class="study-tool-title">Practice quiz</span><span class="study-tool-desc">Test yourself one question at a time, with feedback when you need it.</span><span class="study-tool-action">Start a quiz →</span></button>
-              </div>
-              <p class="study-promise"><span>🦊</span><span>Knox keeps the session conversational, so you can ask follow-ups, get hints, or switch to Learn mode anytime.</span></p>
-            </div>
-          </section>
 
           <!-- CALCULATOR — inline view, swaps in for welcome/chat -->
 <div class="calc-modal" id="calcModal">
@@ -2198,7 +2068,7 @@
   <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
     <div class="drawer-panel">
       <div class="drawer-header">
-        <h3>Your history</h3>
+        <h3>🦊 Knox Knows</h3>
         <button class="drawer-close" onclick="closeMobileHistory()" aria-label="Close">✕</button>
       </div>
 
@@ -2206,21 +2076,21 @@
            The whole sidebar (and every one of these) was display:none below
            900px, so Calculator/Learn/Ask Knox were completely unreachable
            on mobile — this was the actual bug, not a visual one. -->
-      <div class="history-navigation" style="padding:10px;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <a href="/?from=app" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);text-decoration:none;">
+          <span style="font-size:17px;">🏠</span> Home
+        </a>
         <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> Ask Knox
+          <span style="font-size:17px;">💬</span> Ask Knox
         </button>
         <button onclick="window.openCalc();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg> Calculator
+          <span style="font-size:17px;">🔢</span> Calculator
         </button>
         <button onclick="window.openLearnMode();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg> Learn
+          <span style="font-size:17px;">🎓</span> Learn
         </button>
-        <button onclick="window.openStudyHub();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg> Study Hub
-        </button>
-        <button onclick="window.location.href='/settings.html'" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg> Account &amp; Plan
+        <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
+          <span style="font-size:17px;">⚙️</span> Account &amp; Plan
         </button>
       </div>
 
@@ -2231,7 +2101,6 @@
           Your past questions will show up here.
         </div>
       </div>
-      <button id="historyLoadMore" onclick="loadAllHistory(false)" hidden>Load more history</button>
     </div>
   </div>
 
@@ -2372,7 +2241,7 @@
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
-    query, orderBy, limit, startAfter
+    query, orderBy, limit
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -2413,11 +2282,13 @@
 
   // ── Plan fetch ──────────────────────────────────────────────
   async function fetchPlan(uid) {
-    const snap = await getDoc(doc(db, 'users', uid));
-    if (window.currentUser?.uid !== uid) return;
-    const plan = snap.exists() ? snap.data().plan : 'free';
-    window.userPlan = planTier(plan) === 'paid' ? plan : 'free';
-    await updatePlanUI();
+    try {
+      const snap = await getDoc(doc(db, 'users', uid));
+      window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
+    } catch (e) {
+      window.userPlan = 'free';
+    }
+    updatePlanUI();
   }
 
   // Poll for plan after payment success — webhook may not be done yet.
@@ -2436,45 +2307,28 @@
       await new Promise(r => setTimeout(r, 2000));
     }
     // Last try — accept whatever we get
-    await fetchPlan(uid).catch(() => {});
+    fetchPlan(uid);
   }
   window.pollForPlanUpdate = pollForPlanUpdate;
 
-  async function updatePlanUI() {
+  function updatePlanUI() {
     const plan       = window.userPlan;
     const user       = window.currentUser;
     const accountBtn = document.getElementById('appAccountBtn');
     const guestBtns  = document.getElementById('appGuestBtns');
     const upgradeBtn = document.getElementById('appUpgradeBtn');
     const ddUpgrade  = document.getElementById('ddUpgradeRow');
-    const profileDock = document.getElementById('sidebarProfileDock');
-    const profileName = document.getElementById('sidebarProfileName');
-    const profilePlan = document.getElementById('sidebarProfilePlan');
-    const profileAvatar = document.getElementById('sidebarProfileAvatar');
-    const sidebarUsage = document.getElementById('sidebarUsageButton');
-    const sidebarUsageText = document.getElementById('sidebarUsageText');
-    const sidebarUsageHint = document.getElementById('sidebarUsageHint');
 
     if (user) {
       if (guestBtns)  guestBtns.style.display  = 'none';
       if (accountBtn) accountBtn.style.display = 'inline-flex';
 
       const initials = (user.displayName || user.email || '?').charAt(0).toUpperCase();
-      try { localStorage.setItem('knoxAccountDisplay', JSON.stringify({ name: user.displayName || '', email: user.email || '', plan })); } catch (e) {}
-      if (profileDock) profileDock.style.display = 'flex';
-      if (profileName) profileName.textContent = (user.displayName || user.email || 'Your account').split(' ')[0];
-      if (profilePlan) profilePlan.textContent = plan !== 'free' ? '⚡ Knox Plus' : 'Free plan';
-      if (sidebarUsage) sidebarUsage.style.display = 'flex';
-      if (sidebarUsageText && plan !== 'free') sidebarUsageText.textContent = '∞ Unlimited questions';
-      if (sidebarUsageHint && plan !== 'free') sidebarUsageHint.textContent = 'Plus plan details';
-      if (profileAvatar) {
-        profileAvatar.innerHTML = user.photoURL ? '<img src="' + escHtml(user.photoURL) + '" alt="">' : escHtml(initials);
-      }
       const icon     = document.getElementById('appAccountIcon');
       if (icon) {
         if (user.photoURL) {
           icon.style.background = 'transparent';
-          icon.innerHTML = '<img src="' + escHtml(user.photoURL) + '" alt="">';
+          icon.innerHTML = '<img src="' + user.photoURL + '" alt="">';
         } else {
           icon.style.background = 'rgba(255,255,255,0.25)';
           icon.textContent = initials;
@@ -2524,14 +2378,8 @@
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
       // Refresh usage pill
-      await updateUsageIndicator();
+      updateUsageIndicator();
     } else {
-      try { localStorage.removeItem('knoxAccountDisplay'); } catch (_) {}
-      if (profileDock) profileDock.style.display = 'flex';
-      if (profileName) profileName.textContent = 'Sign in to Knox';
-      if (profilePlan) profilePlan.textContent = 'Save your study history';
-      if (sidebarUsage) sidebarUsage.style.display = 'none';
-      if (profileAvatar) profileAvatar.textContent = '🦊';
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
       if (upgradeBtn) upgradeBtn.style.display = 'none';
@@ -2566,7 +2414,6 @@
   }
 
   async function updateUsageIndicator() {
-    const requestUser = window.currentUser;
     const usage = document.getElementById('headerUsage');
     const text  = document.getElementById('headerUsageText');
     const upgradeCard = document.getElementById('sidebarUpgradeCard');
@@ -2590,10 +2437,6 @@
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
       text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus';
-      const sidebarUsageText = document.getElementById('sidebarUsageText');
-      if (sidebarUsageText) sidebarUsageText.textContent = '∞ Unlimited questions';
-      const sidebarUsageHint = document.getElementById('sidebarUsageHint');
-      if (sidebarUsageHint) sidebarUsageHint.textContent = 'Plus plan details';
       return;
     }
     usage.classList.remove('unlimited');
@@ -2608,20 +2451,9 @@
       // 24h every time you came back. Reading through the server fixes that
       // at the source, and also keeps the client from ever being able to
       // write its own balance (which a direct client-side write would risk).
-      const token = await requestUser.getIdToken();
+      const token = await window.currentUser.getIdToken();
       const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
-      if (!res.ok) throw new Error('Account unavailable');
       const data = await res.json();
-      // Authentication restores in two async steps (Firebase session, then
-      // the user plan). A free-plan request may still finish after the paid
-      // plan is known; never let that stale response overwrite Plus with a
-      // free credit balance in the sidebar.
-      if (window.currentUser?.uid !== requestUser.uid || planTier(window.userPlan) !== 'free') return;
-      if (planTier(data.plan) === 'paid') {
-        window.userPlan = data.plan;
-        await updatePlanUI();
-        return;
-      }
       const u = data.usage || {};
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
@@ -2638,15 +2470,8 @@
       text.textContent = isCompact
         ? `${left}/${FREE_MAX_BALANCE} left`
         : `${left} question${left === 1 ? '' : 's'} left`;
-      const sidebarUsageText = document.getElementById('sidebarUsageText');
-      if (sidebarUsageText) sidebarUsageText.textContent = `${left} credit${left === 1 ? '' : 's'} left`;
-      const sidebarUsageHint = document.getElementById('sidebarUsageHint');
-      if (sidebarUsageHint) sidebarUsageHint.textContent = 'Credits refresh daily';
       usage.classList.toggle('danger', left <= 1);
-    } catch (e) {
-      const label = document.getElementById('sidebarUsageText');
-      if (label && window.currentUser?.uid === requestUser?.uid && planTier(window.userPlan) === 'free') label.textContent = 'Credits unavailable — retry shortly';
-    }
+    } catch (e) { /* silent */ }
   }
   window.updateUsageIndicator = updateUsageIndicator;
 
@@ -2747,7 +2572,6 @@
   // ── Sidebar collapse toggle — remembers state across visits ────────────────
   function toggleAppSidebar() {
     const collapsed = document.body.classList.toggle('app-sidebar-collapsed');
-    document.querySelector('.sidebar-collapse-btn')?.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
     try { localStorage.setItem('knoxAppSidebarCollapsed', collapsed ? '1' : '0'); } catch(e) {}
   }
   window.toggleAppSidebar = toggleAppSidebar;
@@ -2769,10 +2593,7 @@
 
   // ── Auth state ──────────────────────────────────────────────
   let _firstAuth = true;
-  let authRevision = 0;
   onAuthStateChanged(auth, async (user) => {
-    const revision = ++authRevision;
-    try {
     window.currentUser = user || null;
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
@@ -2785,11 +2606,8 @@
       // user got signed in.
       const gc = document.getElementById('guestCta'); if (gc) gc.style.display = 'none';
 
-      // Update the account shell immediately. Plan data can take another
-      // request, but the account identity is already known at this point.
       await fetchPlan(user.uid);
-      if (revision !== authRevision) return;
-      await loadSidebarHistory();
+      loadSidebarHistory();
       // Track activity for the admin dashboard's DAU/WAU.
       // This goes through the server so analytics fields cannot be forged in
       // the browser or by a compromised client.
@@ -2807,18 +2625,11 @@
       }
     } else {
       _firstAuth = false;
-      window._chatRevision = (window._chatRevision || 0) + 1;
-      window.appStartNewChat?.();
-      window._fbPayloads = {};
       window.userPlan = 'free';
       window._conversation = [];
-      window._currentConversationId = null;
-      document.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
-      await updatePlanUI();
+      updatePlanUI();
     }
-    if (revision === authRevision) window.knoxBoot?.ready();
-    } catch (error) { if (revision === authRevision) window.knoxBoot?.fail(); }
-  }, () => window.knoxBoot?.fail());
+  });
 
   // Update a user's lastActiveAt and (on first ever sign-in) firstSeenAt.
   // Throttled to once per hour per browser session via sessionStorage so we
@@ -2990,7 +2801,6 @@
   //    messages subcollection, so clicking one replays the whole thread. ──
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
-    const owner = window.currentUser.uid;
     const sbList  = document.getElementById('sidebarHistoryList');
     const sbEmpty = document.getElementById('sidebarHistoryEmpty');
     const mbList  = document.getElementById('mobileHistoryList');
@@ -3003,53 +2813,11 @@
         limit(20)
       );
       const snaps = await getDocs(q);
-      if (window.currentUser?.uid !== owner) return;
-      // History is intentionally limited to actual Knox conversations:
-      // normal questions and Learn-mode sessions. Utility views never appear
-      // here, and older saved question threads (without a type) remain valid.
-      const historyDocs = snaps.docs.filter(s => {
-        const type = s.data()?.type;
-        return !type || type === 'chat' || type === 'learn';
-      });
-      const history = {
-        empty: historyDocs.length === 0,
-        forEach: (callback) => historyDocs.forEach(callback),
-      };
-      renderHistoryInto(sbList, sbEmpty, history);
-      if (document.getElementById('mobileHistoryDrawer')?.classList.contains('open')) window.loadAllHistory?.(true);
+      renderHistoryInto(sbList, sbEmpty, snaps);
+      renderHistoryInto(mbList, mbEmpty, snaps);
     } catch (e) { /* sidebar is non-critical */ }
   }
   window.loadSidebarHistory = loadSidebarHistory;
-
-  let historyCursor = null, historyRows = [], historyRequest = 0;
-  window.loadAllHistory = async function(reset = true) {
-    const request = ++historyRequest;
-    const owner = window.currentUser?.uid;
-    const list = document.getElementById('mobileHistoryList');
-    const empty = document.getElementById('mobileHistoryEmpty');
-    const more = document.getElementById('historyLoadMore');
-    if (reset) { historyCursor = null; historyRows = []; list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove()); }
-    more.hidden = true;
-    empty.style.display = ''; empty.textContent = owner ? 'Loading conversations…' : 'Sign in to see your history.';
-    if (!owner) return;
-    try {
-      const constraints = [orderBy('updatedAt', 'desc')];
-      if (historyCursor) constraints.push(startAfter(historyCursor));
-      const page = await getDocs(query(collection(db, 'users', owner, 'conversations'), ...constraints, limit(50)));
-      if (request !== historyRequest || window.currentUser?.uid !== owner) return;
-      historyCursor = page.docs.at(-1) || historyCursor;
-      for (const entry of page.docs) {
-        if ((!entry.data().type || ['chat', 'learn'].includes(entry.data().type)) && !historyRows.some(row => row.id === entry.id)) historyRows.push(entry);
-      }
-      empty.textContent = 'No saved questions or Learn sessions yet.';
-      renderHistoryInto(list, empty, { empty: !historyRows.length, forEach: callback => historyRows.forEach(callback) });
-      more.textContent = 'Load more history'; more.disabled = false; more.hidden = page.docs.length < 50;
-    } catch (_) {
-      if (request !== historyRequest) return;
-      empty.style.display = ''; empty.textContent = 'Could not load history. Please try again.';
-      more.hidden = false; more.disabled = false; more.textContent = 'Retry';
-    }
-  };
 
   function renderHistoryInto(list, empty, snaps) {
     if (!list) return;
@@ -3061,7 +2829,7 @@
     if (empty) empty.style.display = 'none';
     snaps.forEach(s => {
       const d     = s.data();
-      const qText = (d.title || 'Untitled').replace(/^🎓\s*/, '');
+      const qText = (d.title || 'Untitled').substring(0, 36);
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
@@ -3072,7 +2840,7 @@
       // icon
       const icon = document.createElement('span');
       icon.className   = 'shi-icon';
-      icon.textContent = d.type === 'learn' ? '◈' : '◇';
+      icon.textContent = '💬';
       icon.setAttribute('aria-hidden', 'true');
       row.appendChild(icon);
       // text — textContent prevents XSS
@@ -3096,7 +2864,6 @@
       row.appendChild(del);
       // Use full row text as accessible label
       row.setAttribute('aria-label', 'Open conversation: ' + qText);
-      row.title = (d.type === 'learn' ? 'Learn: ' : 'Question: ') + qText;
       const activate = (e) => {
         if (e.target === del || del.contains(e.target)) return;
         window.openConversation(convId);
@@ -3119,31 +2886,27 @@
   //    subcollection and bumps updatedAt so it sorts to the top. ──
   async function saveHistory(question, answer) {
     if (!window.currentUser) return;
-    const owner = window.currentUser.uid;
-    const revision = window._chatRevision || 0;
-    let conversationId = window._currentConversationId;
     try {
       const now = Date.now();
       const isLearn = !!window._learnModeActive;
-      if (!conversationId) {
+      if (!window._currentConversationId) {
         const title = (isLearn ? '🎓 ' : '') + String(question || 'Untitled').substring(0, 58);
-        const convRef = await addDoc(collection(db, 'users', owner, 'conversations'), {
+        const convRef = await addDoc(collection(db, 'users', window.currentUser.uid, 'conversations'), {
           title:     title.substring(0, 60),
           type:      isLearn ? 'learn' : 'chat',
           createdAt: now,
           updatedAt: now,
         });
-        conversationId = convRef.id;
-        if (window.currentUser?.uid === owner && (window._chatRevision || 0) === revision) window._currentConversationId = conversationId;
+        window._currentConversationId = convRef.id;
       } else {
         try {
-          await updateDoc(doc(db, 'users', owner, 'conversations', conversationId), {
+          await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId), {
             updatedAt: now,
           });
         } catch (e) { /* if the parent got deleted mid-session, just keep going */ }
       }
       await addDoc(
-        collection(db, 'users', owner, 'conversations', conversationId, 'messages'),
+        collection(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId, 'messages'),
         {
           question: String(question || '').substring(0, 1000),
           answer:   String(answer   || '').substring(0, 5000),
@@ -3160,8 +2923,6 @@
   //    question re-typed into the box. ──
   window.openConversation = async function(conversationId) {
     if (!window.currentUser) return;
-    const owner = window.currentUser.uid;
-    const revision = window._chatRevision = (window._chatRevision || 0) + 1;
     try {
       const convRef = doc(db, 'users', window.currentUser.uid, 'conversations', conversationId);
       const q = query(
@@ -3169,10 +2930,6 @@
         orderBy('ts', 'asc')
       );
       const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
-      if (window.currentUser?.uid !== owner || window._chatRevision !== revision) return;
-      document.getElementById('calcModal')?.classList.remove('open');
-      document.getElementById('studyHub')?.classList.remove('open');
-      document.getElementById('inputOuter').style.display = '';
 
       const thread = document.getElementById('chatThread');
       if (!thread) return;
@@ -3331,22 +3088,6 @@
     }
   };
 
-  // Retry asks Knox to take a fresh pass at the original question. It uses
-  // the normal request path so the new answer is saved and counted exactly
-  // like any other deliberate question.
-  window.appRetryAnswer = function(fbId) {
-    const payload = window._fbPayloads[fbId];
-    if (!payload?.question || window._askBusy) return;
-    if (payload.question === '[image]' && !payload.image) { alert('Please attach the photo again to retry this saved answer.'); return; }
-    const learn = payload.learnMode ?? window._learnModeActive;
-    window.appStartNewChat();
-    if (learn) window.openLearnMode();
-    if (payload.image) window._appImage = payload.image;
-    const input = $('appChatInput');
-    if (input) input.value = payload.question;
-    window.appHandleAsk?.();
-  };
-
   // Builds the action row under a Knox answer: Copy is always shown (no
   // account needed); the "Was this helpful?" thumbs only show when
   // `showFeedback` is true (signed-in users, on a freshly answered
@@ -3359,8 +3100,7 @@
         '<span class="fb-divider"></span>' +
         '<span>Was this helpful?</span>' +
         '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Helpful">👍</button>' +
-        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>' +
-        '<button class="fb-btn fb-retry" onclick="appRetryAnswer(\'' + fbId + '\')" aria-label="Retry answer" title="Ask Knox again">↻ Retry</button>';
+        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>';
     }
     html += '</div>';
     return html;
@@ -3566,20 +3306,6 @@
   }
   window.showWelcomeModal = showWelcomeModal;
 
-  window.getKnoxPreferences = function() {
-    try {
-      const preferences = JSON.parse(localStorage.getItem('knoxLearningPreferences') || '{}');
-      return { ...preferences, language: preferences.language || localStorage.getItem('knoxLanguage') || 'english' };
-    } catch (e) { return { language: localStorage.getItem('knoxLanguage') || 'english' }; }
-  };
-  window.setKnoxPreference = function(key, value) {
-    const prefs = window.getKnoxPreferences();
-    prefs[key] = value;
-    try { localStorage.setItem('knoxLearningPreferences', JSON.stringify(prefs)); } catch (e) {}
-    if (key === 'language') localStorage.setItem('knoxLanguage', value);
-    window.location.href = '/settings.html';
-  };
-
   // ── Settings ────────────────────────────────────────────────
   window.openAppSettings = function() {
     const u = window.currentUser;
@@ -3591,46 +3317,6 @@
     if (!el) return;
 
     el.innerHTML = '';
-
-    const hero = document.createElement('div');
-    hero.className = 'settings-plan-hero';
-    hero.innerHTML = '<div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);">Your Knox account</div>' +
-      '<strong>' + (plan !== 'free' ? '⚡ Knox Plus' : '🦊 Knox Free') + '</strong>' +
-      '<p>' + (plan !== 'free' ? 'Unlimited study help, photos, and every Knox tool.' : 'Your full Knox workspace is ready whenever you need it.') + '</p>' +
-      '<p style="margin-top:8px;color:var(--text);font-size:12px;font-weight:900;">Signed in as ' + String(u.displayName || u.email || 'your Knox account').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>';
-    el.appendChild(hero);
-    const prefs = window.getKnoxPreferences();
-    const section = (title, html) => {
-      const s = document.createElement('section'); s.className = 'settings-section';
-      s.innerHTML = '<div class="settings-section-title">' + title + '</div>' + html;
-      el.appendChild(s);
-    };
-    const choice = (key, value, icon, title, copy) =>
-      '<button class="settings-choice ' + (prefs[key] === value ? 'active' : '') + '" data-pref-key="' + key + '" data-pref-value="' + value + '">' + icon + ' ' + title + '<small>' + copy + '</small></button>';
-    section('How Knox teaches', '<div class="settings-choice-grid">' +
-      choice('learningStyle','standard','✦','Standard','Clear, natural explanations') +
-      choice('learningStyle','visual','◈','Visual learner','Diagrams, examples & mental pictures') +
-      choice('learningStyle','step','⌘','Step-by-step','Slow down and show every move') +
-      choice('learningStyle','concise','↗','Quick review','Short answers and key takeaways') + '</div>');
-    section('Language', '<div class="settings-choice-grid">' +
-      choice('language','english','EN','English','Knox replies in English') +
-      choice('language','spanish','ES','Español','Knox replies in Spanish') + '</div>');
-    section('Appearance', '<div class="settings-choice-grid">' +
-      '<button class="settings-choice" data-settings-action="theme">☾ Dark mode<small>Switch the whole app theme</small></button>' +
-      '<button class="settings-choice" data-settings-action="new-chat">✦ New chat<small>Start with a clean conversation</small></button></div>');
-    section('Help & support', '<button class="settings-link-btn" data-settings-action="support">Contact support <span>›</span></button><button class="settings-link-btn" data-settings-action="feedback">Send product feedback <span>›</span></button>');
-    el.querySelectorAll('[data-pref-key]').forEach(button => {
-      button.addEventListener('click', () => window.setKnoxPreference(button.dataset.prefKey, button.dataset.prefValue));
-    });
-    el.querySelectorAll('[data-settings-action]').forEach(button => {
-      button.addEventListener('click', () => {
-        const action = button.dataset.settingsAction;
-        if (action === 'theme') window.toggleDarkMode();
-        if (action === 'new-chat') { window.appStartNewChat(); window.closeAppSettings(); }
-        if (action === 'support') window.location.href = 'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20support';
-        if (action === 'feedback') window.location.href = 'mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback';
-      });
-    });
 
     // Build DOM safely
     function row(label, valueNode) {
@@ -3730,7 +3416,7 @@
 
 function $(id) { return document.getElementById(id); }
 function escHtml(s) {
-  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 // Apply **bold** markdown — safe because we escape FIRST then transform.
 // The escape neutralizes any HTML in the source, and we only insert <strong>.
@@ -3750,10 +3436,6 @@ function scrollChat() {
 }
 
 window.appStartNewChat = function() {
-  window._chatRevision = (window._chatRevision || 0) + 1;
-  $('calcModal')?.classList.remove('open');
-  const study = $('studyHub'); if (study) study.classList.remove('open');
-  const io = $('inputOuter'); if (io) io.style.display = '';
   const t  = $('chatThread');
   if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
@@ -3779,14 +3461,11 @@ window.appStartNewChat = function() {
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
 window.openLearnMode = function() {
-  window._chatRevision = (window._chatRevision || 0) + 1;
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
   }
   const t  = $('chatThread');
   if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
-  const study = $('studyHub'); if (study) study.classList.remove('open');
-  const io = $('inputOuter'); if (io) io.style.display = '';
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
   const gc = $('guestCta');      if (gc) gc.style.display = 'none';
   if (window.appClearImage) window.appClearImage();
@@ -3809,41 +3488,6 @@ window.openLearnMode = function() {
   if (learnNav) learnNav.classList.add('sidebar-nav-active');
 
   document.getElementById('appChatInput')?.focus();
-};
-
-// ── Study Hub ────────────────────────────────────────────────
-// A focused entry point for study-material workflows. Selecting a tool sends
-// a clear, purpose-built request through the same protected Knox API as chat,
-// so students can continue the session naturally once it is created.
-window.openStudyHub = function() {
-  window._chatRevision = (window._chatRevision || 0) + 1;
-  if ($('calcModal')?.classList.contains('open')) window.closeCalc();
-  const ws = $('welcomeScreen'); if (ws) ws.style.display = 'none';
-  const ct = $('chatThread'); if (ct) ct.classList.add('hidden');
-  const io = $('inputOuter'); if (io) io.style.display = 'none';
-  const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
-  const hub = $('studyHub'); if (hub) hub.classList.add('open');
-  window._learnModeActive = false;
-  document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
-  document.querySelector('.sidebar-quicknav-link[data-nav="study"]')?.classList.add('sidebar-nav-active');
-  $('studyTopicInput')?.focus();
-};
-
-window.startStudyTool = function(tool) {
-  const topic = ($('studyTopicInput')?.value || '').trim();
-  if (!topic) {
-    $('studyTopicInput')?.focus();
-    return;
-  }
-  const prompts = {
-    guide: `Create a clear, well-structured study guide for: ${topic}. Use short sections, explain the most important concepts in simple language, include examples where useful, and finish with the 5 things I need to remember most.`,
-    flashcards: `Make interactive flashcards for: ${topic}. Give me one flashcard at a time: ask the question first, wait for my answer, then tell me if I got it right and explain briefly before moving to the next card.`,
-    quiz: `Quiz me on: ${topic}. Ask one question at a time, wait for my answer, then give feedback and a short explanation. Start easy and adapt based on how I do. Don't reveal the answer before I try.`
-  };
-  window.appStartNewChat();
-  const input = $('appChatInput');
-  if (input) input.value = prompts[tool] || prompts.guide;
-  window.appHandleAsk?.();
 };
 
 // Restores the normal welcome copy — called whenever a Learn session ends
@@ -3869,19 +3513,18 @@ function syncDarkModeIcon() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   const moon = document.getElementById('darkModeIconMoon');
   const sun  = document.getElementById('darkModeIconSun');
-  const toggle = document.getElementById('darkModeToggle');
   if (moon) moon.style.display = isDark ? 'none' : '';
   if (sun)  sun.style.display  = isDark ? '' : 'none';
-  if (toggle) {
-    toggle.setAttribute('aria-pressed', String(isDark));
-    toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
-  }
 }
 window.toggleDarkMode = function() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (isDark) document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme', 'dark');
-  try { localStorage.setItem('knoxTheme', isDark ? 'light' : 'dark'); } catch (e) { /* best effort */ }
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
+  }
   syncDarkModeIcon();
 };
 syncDarkModeIcon();
@@ -3997,10 +3640,8 @@ document.addEventListener('click', (e) => {
 // pre-selected mode. Input placeholder stays generic and unstyled.
 
 // ── Mobile history drawer ────────────────────────────────────
-window.openMobileHistory = function(navigation = false) {
+window.openMobileHistory = function() {
   const d = $('mobileHistoryDrawer'); if (d) d.classList.add('open');
-  d?.classList.toggle('navigation-mode', navigation);
-  window.loadAllHistory?.(true);
   document.body.style.overflow = 'hidden';
 };
 window.closeMobileHistory = function() {
@@ -4485,14 +4126,9 @@ if (_ci) {
 
 // ── Ask Knox ─────────────────────────────────────────────────
 window.appHandleAsk = async function() {
-  if (window._askBusy || document.documentElement.dataset.boot) return;
   const input = $('appChatInput');
   const q = (input?.value || '').trim();
   if (!q && !window._appImage) return;
-  if (q.length > 8000) { alert('Please keep your question under 8,000 characters.'); return; }
-  window._askBusy = true;
-  const revision = window._chatRevision || 0;
-  const requestUser = window.currentUser;
 
   // Guest allowances are enforced by /api/ask. A separate browser-only
   // counter used to disagree with the server and blocked free casual chat.
@@ -4547,6 +4183,9 @@ window.appHandleAsk = async function() {
   window.appClearImage();
 
   let idToken = '';
+  if (window.currentUser) {
+    try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* fall through */ }
+  }
 
   // History sent to API — send a generous window so Knox remembers the
   // whole homework session, not just the last few turns. gpt-4.1 has a
@@ -4559,7 +4198,6 @@ window.appHandleAsk = async function() {
   }));
 
   try {
-    if (window.currentUser) idToken = await window.currentUser.getIdToken();
     const headers = { 'Content-Type': 'application/json' };
     if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
 
@@ -4585,13 +4223,10 @@ window.appHandleAsk = async function() {
         history,
         learnMode: !!window._learnModeActive,
         learnSessionId: window._learnModeActive ? window._learnSessionId : undefined,
-        preferences: window.getKnoxPreferences?.() || {},
         testModel: testModelFlag,
       }),
     });
     const data = await res.json();
-
-    if ((window._chatRevision || 0) !== revision || window.currentUser?.uid !== requestUser?.uid) return;
 
     if (!res.ok) {
       // Rich rate-limit handling — show upgrade card on quota errors
@@ -4612,14 +4247,14 @@ window.appHandleAsk = async function() {
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
-    if (window.currentUser && !data.isCasual && !data.ranOutOfRoom && window.updateStreak) {
+    if (window.currentUser && !data.isCasual && window.updateStreak) {
       window.updateStreak(window.currentUser.uid).catch(() => {});
     }
 
     const answer = data.answer || '';
     const html   = renderAnswerHtml(answer);
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q || '[image]', answer, image, learnMode: !!window._learnModeActive };
+    window._fbPayloads[fbId] = { question: q || '[image]', answer };
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
@@ -4633,14 +4268,13 @@ window.appHandleAsk = async function() {
 
     // Save history + refresh usage indicator
     if (window.saveHistory && window.currentUser) {
-      await window.saveHistory(q || '[image]', answer);
+      window.saveHistory(q || '[image]', answer);
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
 
   } catch (e) {
     replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 Network error. Check your connection and try again.</p>');
   } finally {
-    window._askBusy = false;
     if (sendBtn) sendBtn.disabled = false;
   }
 };
@@ -4892,7 +4526,6 @@ function renderAnswerHtmlInner(text) {
   return html;
 }
 
-
 // ── Keyboard shortcuts ───────────────────────────────────────
 // Only Escape — closes whatever is open. We deliberately don't bind
 // Cmd/Ctrl+K because it conflicts with browser address-bar focus on
@@ -4909,7 +4542,6 @@ document.addEventListener('keydown', (e) => {
 
 // ═══════ CALCULATOR ═══════════════════════════════════════════
 window.openCalc = function() {
-  $('studyHub')?.classList.remove('open');
   window._calcExpr        = '';
   window._calcOpenParens  = 0;
   if ($('calcDisplay')) $('calcDisplay').textContent = '0';

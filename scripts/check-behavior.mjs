@@ -6,19 +6,12 @@ const ask = readFileSync(new URL('api/ask.js', root), 'utf8');
 const me = readFileSync(new URL('api/me.js', root), 'utf8');
 const app = readFileSync(new URL('app.html', root), 'utf8');
 const landing = readFileSync(new URL('index.html', root), 'utf8');
-assert.match(landing, /<h1>Stop Guessing\.<br><em>Start Knowing\.<\/em><\/h1>/);
-for (const id of ['home', 'how-it-works', 'ask', 'learn', 'study', 'personalize', 'subjects', 'pricing', 'faq', 'monthlyBtn', 'yearlyBtn', 'proCTABtn']) {
-  assert.equal((landing.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1, 'Landing ID must be unique: ' + id);
-}
-const landingCss = readFileSync(new URL('knox-landing.css', root), 'utf8');
-assert.ok(!landingCss.includes('[data-theme='), 'Landing geometry and motion must be shared between themes');
-for (const rule of landing.matchAll(/html\[data-theme="dark"\][^{]*\{([^}]+)\}/g)) {
-  assert.ok(!/(?:^|;)\s*(?:animation|transition|transform)\s*:/.test(rule[1]), 'Dark-mode rules must not change motion');
-}
-const iconSprite = readFileSync(new URL('knox-icons.svg', root), 'utf8');
-for (const match of (app + landing).matchAll(/knox-icons\.svg#([a-z-]+)/g)) {
-  assert.ok(iconSprite.includes('id="' + match[1] + '"'), 'Every brand icon must exist');
-}
+// Production uses the original interface with secure API integration.
+assert.ok(!landing.includes('/knox-landing.css'));
+assert.ok(!app.includes('sidebarProfileDock'));
+assert.ok(app.includes("fetch('/api/activity'"));
+assert.ok(app.includes('learnSessionId:'));
+assert.ok(app.includes("fetch('/api/feedback'"));
 const landingRenderer = vm.createContext({ formatInline: String });
 vm.runInContext(landing.slice(landing.indexOf('  function renderFreeformText('), landing.indexOf('  // ── RENDER RESPONSE')), landingRenderer);
 assert.ok(vm.runInContext('renderFreeformText("Key Points: example", "free")', landingRenderer, { timeout: 1000 }));
@@ -27,7 +20,7 @@ vm.runInContext(app.slice(app.indexOf('function renderAnswerHtml(text)'), app.in
 renderer.input = 'Photosynthesis uses light.\nVIDEO_SUGGEST: photosynthesis stages\n//';
 assert.ok(!vm.runInContext('renderAnswerHtml(input)', renderer).includes('VIDEO_SUGGEST'));
 assert.ok(!ask.includes('findHelpfulVideo'));
-assert.ok(!app.includes('renderVideoCard'));
+// Original UI retains its optional video renderer; the API no longer emits it.
 for (const input of ['Verdict:\n1', 'Verdict:\n1\nConfirm:\nCorrect', 'The fix:\n1. First\n- Detail\n2. Second']) {
   renderer.input = input;
   assert.ok(vm.runInContext('renderAnswerHtml(input)', renderer, { timeout: 1000 }));

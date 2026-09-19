@@ -1,7 +1,10 @@
 {
+  "redirects": [
+    { "source": "/settings", "destination": "/app", "permanent": false },
+    { "source": "/settings.html", "destination": "/app", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/app",          "destination": "/app.html"     },
-    { "source": "/settings",     "destination": "/settings.html" },
     { "source": "/updates",      "destination": "/updates.html"  },
     { "source": "/app.html",     "destination": "/app.html"     },
     { "source": "/admin",        "destination": "/admin.html"   },
