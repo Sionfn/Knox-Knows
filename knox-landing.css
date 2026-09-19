@@ -102,3 +102,42 @@
 @media(max-width:390px){.lp-preview{grid-template-columns:86px minmax(0,1fr)}.lp-preview aside{font-size:9px;gap:16px}.lp-preview aside strong{font-size:11px}.lp-preview-chat{padding:16px 10px}.lp-answer{padding:12px}.lp-question{margin-left:10px}.lp-billing button{padding:10px 14px}.lp-actions .lp-btn{width:100%}}
 @media(prefers-reduced-motion:reduce){.lp *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 @media(max-width:760px){#home.lp-hero{padding:48px 0}}
+
+/* Restore Knox's original full palette. Theme variables change fills only;
+   placement, interaction, and motion remain identical in light and dark. */
+.lp {--lp-accent:var(--orange);--lp-tint:var(--orange-light)}
+#home.lp-hero {background:radial-gradient(ellipse at 92% 16%,color-mix(in srgb,var(--blue-light) 55%,transparent),transparent 48%),radial-gradient(ellipse at 7% 100%,color-mix(in srgb,var(--purple-light) 40%,transparent),transparent 42%),var(--cream)}
+.lp-preview {border-color:var(--blue);box-shadow:0 8px 0 var(--blue-dark)}
+.lp-preview-chat .lp-equation {background:var(--blue-light);border-left:3px solid var(--blue)}
+.lp-preview aside span:nth-of-type(2) .knox-icon {color:var(--blue)}
+.lp-preview aside span:nth-of-type(3) .knox-icon {color:var(--green)}
+.lp-preview aside span:nth-of-type(4) .knox-icon {color:var(--purple)}
+.lp-actions .lp-secondary {border-color:var(--blue);background:var(--blue-light);box-shadow:0 4px 0 var(--blue-dark)}
+#ask,#how-it-works .lp-card:nth-child(1) {--lp-accent:var(--blue);--lp-tint:var(--blue-light)}
+#learn,#how-it-works .lp-card:nth-child(2) {--lp-accent:var(--green);--lp-tint:var(--green-light)}
+#study,#how-it-works .lp-card:nth-child(3) {--lp-accent:var(--purple);--lp-tint:var(--purple-light)}
+#personalize .lp-card:nth-child(1),#subjects .lp-subject:nth-child(3) {--lp-accent:var(--purple);--lp-tint:var(--purple-light)}
+#personalize .lp-card:nth-child(2),#subjects .lp-subject:nth-child(4) {--lp-accent:var(--yellow);--lp-tint:var(--yellow-light)}
+#personalize .lp-card:nth-child(3),#subjects .lp-subject:nth-child(1) {--lp-accent:var(--blue);--lp-tint:var(--blue-light)}
+#personalize .lp-card:nth-child(4),#subjects .lp-subject:nth-child(2) {--lp-accent:var(--green);--lp-tint:var(--green-light)}
+#subjects .lp-subject:nth-child(5) {--lp-accent:var(--red);--lp-tint:var(--orange-light)}
+.lp :is(#how-it-works,#personalize) .lp-card,
+#study .lp-card {border-color:var(--lp-accent);box-shadow:0 5px 0 color-mix(in srgb,var(--lp-accent) 65%,var(--border));background:linear-gradient(145deg,color-mix(in srgb,var(--lp-tint) 42%,var(--surface)),var(--surface) 65%)}
+.lp-icon {border-color:var(--lp-accent);background:var(--lp-tint);color:color-mix(in srgb,var(--lp-accent) 55%,var(--text))}
+.lp-card>.knox-icon {color:color-mix(in srgb,var(--lp-accent) 55%,var(--text))}
+.lp-card>a:not(.lp-btn),#ask .lp-text-link,
+:is(#ask,#learn,#study) .lp-eyebrow,
+#study .lp-number {color:color-mix(in srgb,var(--lp-accent) 45%,var(--text))}
+:is(#ask,#learn) .lp-example {border-color:var(--lp-accent);box-shadow:0 5px 0 var(--lp-accent)}
+:is(#ask,#learn) .lp-answer {background:var(--lp-tint)}
+:is(#ask,#learn) .lp-fox {color:color-mix(in srgb,var(--lp-accent) 40%,var(--text))}
+#learn .lp-question {background:var(--green-light);border:1px solid var(--green);color:var(--text)}
+#learn .lp-checks li:before {color:color-mix(in srgb,var(--green) 45%,var(--text))}
+#study .lp-prompt {background:var(--purple-light);border-color:var(--purple)}
+.lp-subject {border-top-color:var(--lp-accent)}
+.lp-tags span {background:var(--lp-tint);border-color:color-mix(in srgb,var(--lp-accent) 45%,var(--border))}
+.lp-extension {border-color:var(--yellow);box-shadow:0 6px 0 color-mix(in srgb,var(--yellow) 65%,var(--border))}
+.lp-extension-art {background:var(--yellow-light);border-color:var(--yellow)}
+.lp-plans>.lp-card:first-child {border-color:var(--blue);box-shadow:0 5px 0 var(--blue-dark)}
+.lp-plans>.lp-card:first-child .lp-secondary {background:var(--blue-light);border-color:var(--blue);box-shadow:0 4px 0 var(--blue-dark)}
+.lp-final {background:radial-gradient(ellipse at 18% 55%,color-mix(in srgb,var(--green-light) 38%,transparent),transparent 48%),radial-gradient(ellipse at 82% 45%,color-mix(in srgb,var(--blue-light) 45%,transparent),transparent 48%)}
