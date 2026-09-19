@@ -98,93 +98,117 @@
        Helps Google show richer snippets (price, rating, FAQ accordion) in
        search results. Schemas describe the same content that's visible in
        the FAQ section below; keep them in sync if FAQ content changes. -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://knoxknowsapp.com/#org",
-        "name": "Knox Knows",
-        "url": "https://knoxknowsapp.com",
-        "logo": "https://knoxknowsapp.com/knox-logo-square.jpg",
-        "email": "support@knoxknowsapp.com",
-        "sameAs": [
-          "https://x.com/KnoxKnowsApp",
-          "https://www.instagram.com/KnoxKnowsApp/",
-          "https://www.tiktok.com/@KnoxKnowsApp"
-        ]
-      },
-      {
-        "@type": "SoftwareApplication",
-        "name": "Knox Knows",
-        "url": "https://knoxknowsapp.com",
-        "applicationCategory": "EducationalApplication",
-        "operatingSystem": "Web Browser",
-        "description": "AI study companion that gives step-by-step homework answers for K-12 and college students. Every subject — math, science, history, English, and more.",
-        "offers": [
-          { "@type": "Offer", "name": "Free",      "price": "0",    "priceCurrency": "USD" },
-          { "@type": "Offer", "name": "Knox Plus",  "price": "9.99", "priceCurrency": "USD" }
-        ]
-      },
-      {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How is Knox different from ChatGPT or other AI tools?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say 'quiz me instead' and Knox switches to teaching mode on the spot. Use Ask Knox for answers, Learn for guided practice, and Study Hub for study materials. Revisit saved conversations from the sidebar." }
-          },
-          {
-            "@type": "Question",
-            "name": "Will I be charged after the 3-day free trial?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I cancel anytime?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Sign in, open Settings using the gear beside your profile, then Plan & billing — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period." }
-          },
-          {
-            "@type": "Question",
-            "name": "What subjects does Knox cover?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Every subject you'd see in K-12 through college: math, all sciences, history, English/essays, foreign languages, economics, computer science, and more." }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I upload a photo of my homework?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question." }
-          },
-          {
-            "@type": "Question",
-            "name": "Is this just cheating?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox defaults to a straight, real answer. If you'd rather be taught than told, just say so — 'walk me through it' or 'quiz me' — and Knox switches to guiding you there yourself instead of handing over the solution." }
-          },
-          {
-            "@type": "Question",
-            "name": "How do I access Knox?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited." }
-          },
-          {
-            "@type": "Question",
-            "name": "Does Knox remember my previous questions?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account." }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you offer refunds?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — 30-day money-back guarantee on any paid plan (monthly or yearly). You can cancel anytime to stop future renewals. Email support@knoxknowsapp.com and we'll take care of it." }
-          },
-          {
-            "@type": "Question",
-            "name": "What if Knox gets something wrong?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the thumbs-down button below the response and we'll use that to make Knox smarter. Direct feedback also welcome at support@knoxknowsapp.com." }
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://knoxknowsapp.com/#org",
+      "name": "Knox Knows",
+      "url": "https://knoxknowsapp.com",
+      "logo": "https://knoxknowsapp.com/knox-logo-square.jpg",
+      "email": "support@knoxknowsapp.com",
+      "sameAs": [
+        "https://x.com/KnoxKnowsApp",
+        "https://www.instagram.com/KnoxKnowsApp/",
+        "https://www.tiktok.com/@KnoxKnowsApp"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Knox Knows",
+      "url": "https://knoxknowsapp.com",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web Browser",
+      "description": "AI study companion that gives step-by-step homework answers for K-12 and college students. Every subject — math, science, history, English, and more.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        {
+          "@type": "Offer",
+          "name": "Knox Plus",
+          "price": "9.99",
+          "priceCurrency": "USD"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Knox Knows?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Knox Knows is an AI study companion with direct explanations in Ask Knox, guided practice in Learn, and study guides, flashcards, and quizzes in Study Hub. You can type a question or attach a photo."
           }
-        ]
-      }
-    ]
-  }
-  </script>
+        },
+        {
+          "@type": "Question",
+          "name": "How is Learn different from Ask Knox?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ask Knox explains your question directly. Learn guides you with hints and questions so you can work through the next step yourself. Choose Ask for an explanation, or Learn when you want to practice your reasoning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do free credits work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "New free accounts start with 10 credits. Your balance replenishes by 5 each day, up to 20. A text question costs 1 credit and a photo question costs 2. Starting a Learn session costs 1 credit and includes up to 14 guided follow-ups within that session."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does unlimited mean on Knox Plus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Plus removes the free credit balance for questions and photos. Fair-use protections still apply to prevent automated or excessive abuse; unlimited does not mean unrestricted automated use."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I change how Knox explains things?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. In Settings, choose standard, visual, step-by-step, or concise explanations. Visual explanations can include examples and text diagrams. You can also select English or Spanish for AI answers. Interface translations are still being expanded."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use Knox on my phone?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The website adapts to phones, tablets, and desktops. You can type a question or upload a clear photo. There is also a Knox Knows extension for Chrome."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will Knox always be right?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. AI can misunderstand a photo or make a mistake. Check important answers, compare the reasoning with your class materials, and ask follow-up questions. Use Knox to understand your work and follow your school's rules."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do subscriptions and support work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Plus is $9.99 monthly or $79.99 billed yearly. Eligible new monthly subscriptions include a 3-day trial; the paid subscription starts afterward unless you cancel. Manage billing in Settings, review the refund policy below, or email support@knoxknowsapp.com for help."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1895,6 +1919,7 @@
     }
   </style>
 <link rel="stylesheet" href="/knox-brand.css">
+<link rel="stylesheet" href="/knox-landing.css">
 </head>
 <body>
 
@@ -1990,657 +2015,70 @@
   </div>
 </div>
 
-<!-- ===================== HERO ===================== -->
-<section id="home" class="knox-hero">
-<div class="knox-hero-inner">
-<div class="knox-hero-copy">
-<div class="knox-eyebrow"><img src="/knox-logo-square.jpg" alt="" width="32" height="32">Your study partner, always curious.</div>
-<h1>Get unstuck.<br><span>Keep knowing.</span></h1>
-<p>Ask a question, work through it in Learn, or turn your notes into a study session. One familiar space, with Knox by your side.</p>
-<div class="knox-hero-actions"><a class="btn-orange" href="/app">Start with Knox →</a><a class="knox-secondary" href="#how-it-works">Explore how it works</a></div>
-<p class="knox-hero-note">Free to start. No credit card required.</p>
-</div>
-<div class="knox-app-preview" aria-label="Illustrative preview of the Knox workspace">
-<aside class="knox-preview-nav"><img src="/knox-logo-square.jpg" alt="Knox Knows" width="36" height="36">
-<span class="selected"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg>Ask Knox</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg>Learn</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg>Study Hub</span><small>Your space to study</small></aside>
-<div class="knox-preview-main"><div class="knox-preview-label">A little help. A lot of understanding.</div>
-<h2>What are we<br><em>tackling today?</em></h2>
-<div class="knox-preview-topics"><span>Understand a concept</span><span>Check your work</span><span>Practice together</span><span>Build a study guide</span></div>
-<a class="knox-preview-input" href="/app">Ask Knox anything… <b aria-hidden="true">↑</b></a><small>Workspace preview · Open the app to begin</small>
-</div></div></div></section>
-
-<!-- ===================== CHROME EXTENSION ===================== -->
-<section class="extension-launch" aria-labelledby="extension-launch-title">
-  <div class="extension-launch-inner">
-    <div class="extension-launch-copy">
-      <div class="extension-launch-icon" aria-hidden="true">🧩</div>
-      <div>
-        <div class="extension-launch-eyebrow">New: Chrome extension</div>
-        <h2 class="extension-launch-title" id="extension-launch-title">Get Knox help without leaving your homework.</h2>
-        <p class="extension-launch-desc">Install Knox Knows for Chrome and keep your AI study companion one click away.</p>
-      </div>
-    </div>
-    <a class="btn-blue extension-install-btn" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web" target="_blank" rel="noopener">Add to Chrome&nbsp; →</a>
+<main class="lp">
+<section id="home" class="lp-hero lp-wrap">
+  <div><span class="lp-eyebrow"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> YOUR STUDY COMPANION, KNOX THE FOX</span>
+    <h1>Stop Guessing.<br><em>Start Knowing.</em></h1>
+    <p class="lp-lead">The answer is just the beginning. Work through tricky homework, understand the steps, and turn what you learn into your next study session—all in one place.</p>
+    <div class="lp-actions"><a class="lp-btn" href="/app">Start learning free <span aria-hidden="true">→</span></a><a class="lp-btn lp-secondary" href="#how-it-works">Meet your study space</a></div>
+    <p class="lp-small">10 free credits to start · No credit card required</p>
+  </div>
+  <div class="lp-preview" aria-label="Illustrative preview of the Knox study workspace">
+    <aside><img src="/knox-logo-square.jpg" alt="Knox the Fox"><strong>Knox Knows</strong><span class="lp-selected"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> Ask Knox</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg> Calculator</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg> Learn</span><span><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg> Study Hub</span><span class="lp-preview-bottom"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg> Your space</span></aside>
+    <div class="lp-preview-chat"><span class="lp-eyebrow">A LITTLE HELP. A BIG AHA.</span><div class="lp-question">Why does 2x + 6 = 14 give x = 4?</div><div class="lp-answer"><span class="lp-fox"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> KNOX <small>Example</small></span><p>Think of an equation as a balanced scale. Do the same thing to both sides.</p><div class="lp-equation">2x + 6 = 14<br><span>Subtract 6 →</span> 2x = 8<br><span>Divide by 2 →</span> x = 4</div><p>Check it: 2 × 4 + 6 = 14. Balanced!</p></div><div class="lp-compose">Ask a follow-up… <span aria-hidden="true">↑</span></div></div>
   </div>
 </section>
-
-<!-- ===================== STUDENT WORKSPACE ===================== -->
-<section class="workspace-section" aria-labelledby="workspace-title">
-  <div class="workspace-wrap">
-    <div class="workspace-layout">
-      <div>
-        <div class="workspace-eyebrow">More than homework help</div>
-        <h2 class="workspace-title" id="workspace-title">One place to get unstuck, learn it, and remember it.</h2>
-        <p class="workspace-copy">Knox starts with the question in front of you, then stays with you while you study. Build a guide, practice with flashcards, or let Knox quiz you until it clicks.</p>
-        <div class="workspace-points">
-          <div class="workspace-point"><span class="workspace-point-icon">📝</span><span><strong>Study guides</strong> for a topic, chapter, or your own pasted notes.</span></div>
-          <div class="workspace-point"><span class="workspace-point-icon">🃏</span><span><strong>Flashcards</strong> that keep the important stuff in front of you.</span></div>
-          <div class="workspace-point"><span class="workspace-point-icon">🎯</span><span><strong>Practice quizzes</strong> that explain mistakes instead of just marking them wrong.</span></div>
-        </div>
-        <div style="margin-top:30px;"><a class="btn-orange" href="/app">Open Study Hub&nbsp; →</a></div>
-      </div>
-      <div class="workspace-preview" aria-label="Preview of Knox Study Hub">
-        <div class="workspace-preview-top"><span>🗂️ Study Hub</span><span class="workspace-preview-badge">New</span></div>
-        <div class="workspace-preview-card">
-          <div class="workspace-preview-label">Today’s topic</div>
-          <div class="workspace-preview-topic">Cell division</div>
-          <div class="workspace-tool-row">
-            <div class="workspace-tool"><span>📝</span>Guide</div>
-            <div class="workspace-tool"><span>🃏</span>Cards</div>
-            <div class="workspace-tool"><span>🎯</span>Quiz</div>
-          </div>
-          <div class="workspace-preview-note">✓ Pick a format, then keep asking Knox for hints, examples, and follow-up help.</div>
-        </div>
-      </div>
-    </div>
+<nav class="lp-section-nav" aria-label="Explore Knox"><a href="#how-it-works">How it works</a><a href="#learn">Learn with Knox</a><a href="#study">Study tools</a><a href="#personalize">Your workspace</a><a href="#pricing">Plans</a><a href="#faq">Questions</a></nav>
+<section id="how-it-works" class="lp-section lp-wrap">
+  <div class="lp-heading"><span class="lp-eyebrow">ONE SPACE. THREE WAYS TO MOVE FORWARD.</span><h2>Help for the moment you're in.</h2><p>Sometimes you need a clear explanation. Sometimes you need a hint. Sometimes you need to get ready for a test. Pick the mode that fits.</p></div>
+  <div class="lp-grid lp-three">
+    <article class="lp-card"><span class="lp-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg></span><h3>Ask Knox</h3><p>Bring a question, an image, or the work you've already tried. Get an explanation, then keep the conversation going until it makes sense.</p><a href="#ask">Explore Ask Knox →</a></article>
+    <article class="lp-card"><span class="lp-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg></span><h3>Learn</h3><p>Take an active role. Knox uses hints and guiding questions to help you work through a problem, one decision at a time.</p><a href="#learn">See guided learning →</a></article>
+    <article class="lp-card"><span class="lp-icon"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg></span><h3>Study Hub</h3><p>Move from understanding to reviewing. Build a study guide, practice with flashcards, or test yourself with a quiz.</p><a href="#study">Find your study format →</a></article>
   </div>
 </section>
-
-<!-- ===================== WHY KNOX IS DIFFERENT ===================== -->
-<section id="why-knox" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1050px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Why Knox is different</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:560px;margin:0 auto;">Every AI homework app promises "answers." Here's what we actually did differently.</p>
-    </div>
-
-    <div class="rg-2col">
-      <!-- Same quality free -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💚</div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Free gets the same quality as paid</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Most apps stick free users on a lite version to push you to upgrade. Knox gives you the full AI on day one. Paying only removes the usage limit — it doesn't unlock better answers.</p>
-      </div>
-
-      <!-- No modes -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">⚡</div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Your question. Your way to learn.</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Get a clear answer in Ask Knox, practice step by step in Learn, or build study materials in Study Hub. Set your preferred explanation style in Settings, then keep asking naturally.</p>
-      </div>
-
-      <!-- Talks like a person -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💬</div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Talks like a tutor, not a template</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">You won't get "Final Answer:" / "Explanation:" / "Key Points:" like it's a filled-out form. Knox answers the way a smart friend would — direct, natural, with real reasoning. No filler.</p>
-      </div>
-
-      <!-- Snap a photo -->
-      <div class="reveal delay-4" style="background:var(--surface);border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:14px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📷</div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Snap a photo, done</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:#666;line-height:1.6;">Point your camera at a worksheet, whiteboard, textbook, or your own handwriting. Knox reads it, confirms what it sees so you know it got the right problem, then helps.</p>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:40px;">
-      <button class="btn-orange" onclick="window.location.href='/app'" style="font-size:16px;padding:15px 32px;">Try it free →</button>
-    </div>
-  </div>
+<section id="ask" class="lp-band"><div class="lp-wrap lp-split lp-section">
+  <div><span class="lp-eyebrow"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> ASK KNOX</span><h2>Bring the question.<br>Leave with the reasoning.</h2><p class="lp-lead">Don't stop at “what's the answer?” Ask why a step works, where your solution went off track, or how the idea connects to something you already know.</p>
+  <ol class="lp-steps"><li><strong>Type it or take a photo.</strong><p>Enter your question, or attach a clear picture with the whole problem visible.</p></li><li><strong>Follow the explanation.</strong><p>Work through the reasoning and compare it with your own attempt.</p></li><li><strong>Make it click.</strong><p>Ask a follow-up, request another example, or retry the response. Copy useful explanations for your notes.</p></li></ol><a class="lp-text-link" href="/app">Ask your first question →</a></div>
+  <div class="lp-card lp-example"><span class="lp-eyebrow">FROM “I'M STUCK” TO “I SEE IT” · EXAMPLE</span><div class="lp-question">I got x = 10. Where did I go wrong?</div><div class="lp-answer"><span class="lp-fox"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg> KNOX</span><p>Let's check the step where you moved the 6. To keep the equation balanced, subtract 6 from <strong>both</strong> sides—not just one.</p><div class="lp-equation">2x + 6 − 6 = 14 − 6<br>2x = 8</div><p>What happens when you divide both sides by 2?</p></div><p class="lp-small">Show your attempt so Knox can focus on the part you need help with.</p></div>
+</div></section>
+<section id="learn" class="lp-wrap lp-section lp-split">
+  <div class="lp-card lp-example"><span class="lp-eyebrow">A GUIDED CONVERSATION · EXAMPLE</span><div class="lp-answer"><span class="lp-fox"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg> KNOX</span><p>We need to solve 3x + 5 = 20. What could we undo first to get the x-term on its own?</p></div><div class="lp-question">Subtract 5 from both sides?</div><div class="lp-answer"><p>Exactly. That leaves 3x = 15. What operation undoes multiplying by 3?</p></div><div class="lp-question">Divide by 3. So x = 5!</div><p class="lp-small">Your thinking stays at the center of the conversation.</p></div>
+  <div><span class="lp-eyebrow"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#learn"></use></svg> LEARN MODE</span><h2>A nudge forward.<br>Not a shortcut past it.</h2><p class="lp-lead">Learn is for the moments when you want to figure it out yourself, with someone there to help.</p><ul class="lp-checks"><li>Break a larger problem into smaller decisions.</li><li>Try the next step and talk through your reasoning.</li><li>Ask for a hint when you're unsure.</li><li>Build understanding you can use on the next problem.</li></ul><a class="lp-btn" href="/app">Learn something with Knox →</a></div>
 </section>
-
-<!-- ===================== HOW IT WORKS ===================== -->
-<section id="how-it-works" style="background:var(--surface);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1000px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Just ask however you want</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:560px;margin:0 auto;">Ask directly in Ask Knox, or open Learn for guided practice. Tell Knox what you need in your own words:</p>
-    </div>
-
-    <div class="rg-3col">
-
-      <!-- SOLVE IT — orange -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">⚡ Solve it</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"What's the derivative of 3x² + 5x − 2?"</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:#555;line-height:1.55;flex:1;">The derivative is <strong style="color:var(--orange);">6x + 5</strong>. Power rule — bring the exponent down, subtract one. Constants disappear.</p>
-      </div>
-
-      <!-- TEACH ME — blue -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--blue-light);color:#0A85C2;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">🧠 Teach me</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"Don't just give me the answer — teach me how."</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:#555;line-height:1.55;flex:1;">Sounds good. Start with 3x² — there's a rule for x-to-a-power terms. <strong style="color:#0A85C2;">What do you think it becomes?</strong></p>
-      </div>
-
-      <!-- CHECK MY WORK — green -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green-dark);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">✓ Check my work</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"I got 6x + 5x. Is that right?"</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:#555;line-height:1.55;flex:1;">Close — one slip. First term's right. But 5x becomes <strong style="color:var(--green-dark);">5</strong>, not 5x — x¹ turns into x⁰ = 1.</p>
-      </div>
-
-    </div>
-
-    <div style="text-align:center;margin-top:36px;">
-      <button class="btn-orange" onclick="window.location.href='/app'" style="font-size:16px;padding:15px 32px;">Try it yourself →</button>
-      <p style="margin-top:12px;font-size:13px;font-weight:700;color:var(--text-light);">Free forever · no credit card</p>
-    </div>
-  </div>
+<section id="study" class="lp-band"><div class="lp-wrap lp-section">
+  <div class="lp-heading"><span class="lp-eyebrow"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#study"></use></svg> STUDY HUB</span><h2>Turn today's lesson into tomorrow's practice.</h2><p>Choose your topic and tell Knox what you're preparing for. Pick a format that helps you review—not just reread.</p></div>
+  <div class="lp-grid lp-three">
+    <article class="lp-card"><span class="lp-number">01 / ORGANIZE</span><h3>Study guides</h3><p>Bring the key ideas together into a structured overview. Ask for definitions, worked examples, or the concepts you're finding hardest.</p><div class="lp-prompt">“Build a study guide on cell division, with mitosis and meiosis compared.”</div></article>
+    <article class="lp-card"><span class="lp-number">02 / RECALL</span><h3>Flashcards</h3><p>Turn a topic into question-and-answer practice. Try recalling the idea yourself before checking the answer.</p><div class="lp-prompt">“Make flashcards for the key terms in my biology unit.”</div></article>
+    <article class="lp-card"><span class="lp-number">03 / CHECK</span><h3>Quizzes</h3><p>See what sticks. Use a practice quiz to find gaps, then return to Ask or Learn to work through the parts you missed.</p><div class="lp-prompt">“Quiz me on linear equations and explain the answers afterward.”</div></article>
+  </div><p class="lp-note">Study materials are AI-generated. Compare them with your syllabus and class notes.</p>
+</div></section>
+<section id="personalize" class="lp-wrap lp-section">
+  <div class="lp-heading"><span class="lp-eyebrow">A WORKSPACE THAT FEELS LIKE YOURS</span><h2>Less hunting around.<br>More getting into it.</h2><p>The same clean sidebar, familiar Knox orange, and thoughtful controls—from your first question to your next study session.</p></div>
+  <div class="lp-grid lp-two"><article class="lp-card"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#settings"></use></svg><h3>Your explanation style</h3><p>Choose Standard for a balanced explanation, Visual for examples and text diagrams, Step-by-step for a slower walkthrough, or Concise when you want the essentials.</p><div class="lp-tags"><span>Standard</span><span>Visual</span><span>Step-by-step</span><span>Concise</span></div></article>
+  <article class="lp-card"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#history"></use></svg><h3>Pick up the thread</h3><p>Find recent questions and Learn conversations in the sidebar. Open your history to browse more, revisit a saved explanation, or remove conversations you no longer need.</p></article>
+  <article class="lp-card"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#calculator"></use></svg><h3>Keep useful tools close</h3><p>Open the calculator without leaving your study workspace. Your plan details sit above your profile, and account settings have a page of their own.</p></article>
+  <article class="lp-card"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#ask"></use></svg><h3>Comfortable, day or night</h3><p>Switch between light and dark themes across the landing page and app. Choose English or Spanish for Knox's replies. Preferences are saved in your browser; interface translations are still expanding.</p></article></div>
 </section>
-
-<!-- ===================== SUBJECTS ===================== -->
-<section id="subjects" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Every subject. Every grade.</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);">From 4th grade math to college organic chem — Knox has you covered.</p>
-    </div>
-
-    <div class="rg-4col">
-      <!-- Math — orange -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:18px;border:3px solid var(--orange);box-shadow:0 5px 0 #CC5500;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #CC5500'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--orange-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">📐</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Math</div>
-        <div style="font-size:12px;font-weight:700;color:var(--orange);margin-top:6px;line-height:1.5;">Algebra · Geometry · Calculus · Stats</div>
-      </div>
-
-      <!-- Science — green -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:18px;border:3px solid var(--green);box-shadow:0 5px 0 #3D9900;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #3D9900'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🔬</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Science</div>
-        <div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-top:6px;line-height:1.5;">Biology · Chemistry · Physics</div>
-      </div>
-
-      <!-- History — purple -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:18px;border:3px solid #7C3AED;box-shadow:0 5px 0 #5B21B6;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #5B21B6'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌍</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">History</div>
-        <div style="font-size:12px;font-weight:700;color:#7C3AED;margin-top:6px;line-height:1.5;">World · US · AP · Geography</div>
-      </div>
-
-      <!-- English — blue -->
-      <div class="reveal delay-4" style="background:var(--surface);border-radius:18px;border:3px solid var(--blue);box-shadow:0 5px 0 #0A85C2;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #0A85C2'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">📖</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">English</div>
-        <div style="font-size:12px;font-weight:700;color:#0A85C2;margin-top:6px;line-height:1.5;">Essays · Grammar · Literature</div>
-      </div>
-
-      <!-- Computer Science — pink -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:18px;border:3px solid #EC4899;box-shadow:0 5px 0 #BE185D;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #BE185D'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #BE185D'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--purple-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">💻</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Computer Science</div>
-        <div style="font-size:12px;font-weight:700;color:#EC4899;margin-top:6px;line-height:1.5;">Python · Java · Algorithms</div>
-      </div>
-
-      <!-- Languages — teal -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:18px;border:3px solid #14B8A6;box-shadow:0 5px 0 #0F766E;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #0F766E'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #0F766E'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🌐</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Languages</div>
-        <div style="font-size:12px;font-weight:700;color:#0F766E;margin-top:6px;line-height:1.5;">Spanish · French · German · Latin</div>
-      </div>
-
-      <!-- Economics — amber/yellow -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:18px;border:3px solid #F59E0B;box-shadow:0 5px 0 #B45309;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #B45309'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #B45309'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--yellow-light);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">📊</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Economics</div>
-        <div style="font-size:12px;font-weight:700;color:#B45309;margin-top:6px;line-height:1.5;">Micro · Macro · Accounting</div>
-      </div>
-
-      <!-- Test Prep — red -->
-      <div class="reveal delay-4" style="background:var(--surface);border-radius:18px;border:3px solid #EF4444;box-shadow:0 5px 0 #B91C1C;padding:24px 20px;text-align:left;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 9px 0 #B91C1C'" onmouseout="this.style.transform='';this.style.boxShadow='0 5px 0 #B91C1C'">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--danger-bg);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">🎓</div>
-        <div style="font-size:16px;font-weight:900;color:var(--text);">Test Prep</div>
-        <div style="font-size:12px;font-weight:700;color:#B91C1C;margin-top:6px;line-height:1.5;">SAT · ACT · AP · GRE · LSAT</div>
-      </div>
-    </div>
-
-    <!-- Reassurance line for anyone whose subject isn't listed -->
-    <p style="text-align:center;font-size:14px;font-weight:700;color:var(--text-light);margin-top:36px;">Not on the list? Knox handles it anyway. Just ask.</p>
-  </div>
-</section>
-
-<!-- ===================== ASK AI ===================== -->
-<!-- ===================== PRICING ===================== -->
-<section id="pricing" style="background:var(--surface);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:820px;margin:0 auto;">
-
-    <!-- Header -->
-    <div style="text-align:center;margin-bottom:32px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Study more, worry less</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);">Free forever. Upgrade when you want more.</p>
-    </div>
-
-    <!-- Billing toggle + guarantee -->
-    <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;">
-      <div style="display:inline-flex;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 var(--border);">
-        <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:var(--orange);color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
-        <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:var(--text-light);transition:all 0.15s;">
-          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:var(--green);color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 33%</span>
-        </button>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;background:var(--green-light);border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span style="font-size:12px;font-weight:800;color:#16A34A;">30-day money back</span>
-      </div>
-    </div>
-
-    <!-- Plan headers — two full Knox-style cards side by side.
-         Both cards use the same internal structure (badge slot at top, then
-         label, price, spacer, button) so buttons land at the same vertical
-         position and the two cards read as symmetric. Free card gets an
-         invisible badge-slot placeholder so it doesn't sit taller than Plus. -->
-    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;align-items:stretch;">
-
-      <!-- FREE card -->
-      <div class="pricing-plan-card pricing-free-card" style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #075E8D;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <!-- Invisible placeholder to match Plus's floating trial badge, so the two cards line up -->
-        <div style="height:8px;" aria-hidden="true"></div>
-        <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
-        <div style="line-height:1;">
-          <span style="font-size:44px;font-weight:900;">$0</span>
-          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);">forever</span>
-        </div>
-        <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">No card needed</div>
-        <div style="flex:1;min-height:20px;"></div>
-        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
-      </div>
-
-      <!-- KNOX PLUS card -->
-      <div class="pricing-plan-card pricing-plus-card" style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:var(--orange);color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 3-DAY FREE TRIAL</div>
-        <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
-        <div style="height:8px;" aria-hidden="true"></div>
-        <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
-        <div style="line-height:1;">
-          <span style="font-size:44px;font-weight:900;" id="proPrice">$9.99</span>
-          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);" id="proPeriod">/mo</span>
-        </div>
-        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$79.99/yr — save $39.89</div>
-        <div id="proSubline" style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">Cancel anytime</div>
-        <div style="flex:1;min-height:8px;"></div>
-        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
-      </div>
-
-    </div>
-
-    <!-- Feature-comparison rows — clean rounded card, checkmarks aligned under each plan column.
-         Reordered so the two rows that actually differentiate the plans (Questions,
-         Photo upload) come FIRST, right under the plan headers — that way when a
-         visitor's eye moves from the buttons down into the table, the first thing
-         they see is the real difference, not a wall of matching checkmarks. -->
-    <div class="reveal pricing-comparison-card" style="background:var(--surface);border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
-
-      <!-- Group label -->
-      <div style="padding:18px 24px 12px;border-bottom:1.5px solid var(--border);background:#FAFAF7;">
-        <span style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);">What's included</span>
-      </div>
-
-      <!-- Differentiating rows first -->
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day*</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
-      </div>
-
-      <!-- Shared feature rows below the differentiators -->
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Answers, tutoring &amp; work-checking</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Full AI quality</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Priority support</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-light);font-size:16px;font-weight:900;line-height:1;">—</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-
-    </div>
-
-    <p style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin-top:14px;">*Starts at 10, then +5 every day — save up unused questions up to 20.</p>
-
-    <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
-    <div style="text-align:center;margin-top:32px;">
-      <button onclick="handlePurchase('Plus')" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 3 days</button>
-      <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
-    </div>
-
-  </div><!-- /max-width wrapper -->
-</section>
-
-
-<!-- ===================== FAQ ===================== -->
-<section id="faq" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:760px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Common questions</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);">Quick answers to what most people ask before signing up.</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:14px;">
-
-      <!-- Q1 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>How is Knox different from ChatGPT or other AI tools?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say "quiz me instead" and Knox switches to teaching mode on the spot. Use Ask Knox for answers, Learn for guided practice, and Study Hub for study materials. Revisit saved conversations from the sidebar.
-        </div>
-      </details>
-
-      <!-- Q2 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Will I be charged after the 3-day free trial?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 3 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
-        </div>
-      </details>
-
-      <!-- Q3 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Can I cancel anytime?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Yep. Sign in, open Settings using the gear beside your profile, then "Plan & billing" — that takes you to a secure Stripe page where one click cancels. You'll keep using Knox until the end of your current billing period, no questions asked.
-        </div>
-      </details>
-
-      <!-- Q4 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>What subjects does Knox cover?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Every subject you'd see in K-12 through college: math (algebra, geometry, calculus, stats), all sciences (biology, chemistry, physics), history, English/essays, foreign languages, economics, computer science, and more. If your teacher assigns it, Knox can help with it.
-        </div>
-      </details>
-
-      <!-- Q5 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Can I upload a photo of my homework?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question. Free users draw photos from the same daily credit pool as questions (a photo just uses a bit more of it); Knox Plus gets unlimited.
-        </div>
-      </details>
-
-      <!-- Q6 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Is this just cheating?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Knox defaults to a straight, real answer — useful when you're stuck and just need to move on. But if you'd rather be taught than told, just say so: "walk me through it" or "quiz me instead" switches Knox into guiding you there yourself, one hint at a time, instead of handing over the solution.
-        </div>
-      </details>
-
-      <!-- Q7 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>How do I access Knox?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Knox lives at <a href="/app">knoxknowsapp.com/app</a>. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited.
-        </div>
-      </details>
-
-      <!-- Q8 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Does Knox remember my previous questions?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account.
-        </div>
-      </details>
-
-      <!-- Q9 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>Do you offer refunds?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Yes — 30-day money-back guarantee on any paid plan (monthly or yearly). You can cancel anytime to stop future renewals. Email <a href="mailto:support@knoxknowsapp.com">support@knoxknowsapp.com</a> and we'll take care of it. See our full <a href="/refund.html">refund policy</a>.
-        </div>
-      </details>
-
-      <!-- Q10 -->
-      <details class="knox-faq reveal">
-        <summary>
-          <span>What if Knox gets something wrong?</span>
-          <span class="knox-faq-icon" aria-hidden="true">+</span>
-        </summary>
-        <div class="knox-faq-body">
-          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the 👎 button below the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com">support@knoxknowsapp.com</a>.
-        </div>
-      </details>
-
-    </div>
-
-    <p style="text-align:center;font-size:14px;font-weight:600;color:var(--text-light);margin-top:36px;">
-      Still have questions? Email <a href="mailto:support@knoxknowsapp.com" style="color:#FF6B00;font-weight:800;">support@knoxknowsapp.com</a> — Sion (a real human) reads every message.
-    </p>
-  </div>
-</section>
-
-<style>
-  /* Knox-style FAQ cards — chunky border/shadow language, warm accent on open.
-     Kept the borders subtle enough that 10 stacked cards don't scream, but
-     the shadow depth (4px) and warm border-hover match the rest of the page. */
-  .knox-faq {
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 4px 0 var(--border);
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  }
-  .knox-faq:hover {
-    border-color: #FFCFA0;
-    box-shadow: 0 4px 0 #FFCFA0;
-  }
-  .knox-faq[open] {
-    border-color: var(--orange);
-    box-shadow: 0 4px 0 #CC5500;
-  }
-  .knox-faq > summary {
-    padding: 18px 22px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 800;
-    color:var(--text);
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-  .knox-faq > summary::-webkit-details-marker { display: none; }
-  .knox-faq-icon {
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--orange);
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--orange-light);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: transform 0.25s, background 0.2s;
-  }
-  .knox-faq[open] .knox-faq-icon {
-    transform: rotate(45deg);
-    background: var(--orange);
-    color: white;
-  }
-  .knox-faq-body {
-    padding: 0 22px 20px;
-    font-size: 15px;
-    font-weight: 500;
-    color:var(--text-light);
-    line-height: 1.65;
-  }
-  .knox-faq-body a {
-    color: var(--orange);
-    font-weight: 700;
-    text-decoration: none;
-    border-bottom: 1.5px solid rgba(255,107,0,0.3);
-    transition: border-color 0.15s;
-  }
-  .knox-faq-body a:hover { border-color: var(--orange); }
-</style>
-
-<style>
-  /* Dark mode is a deliberately art-directed surface, rather than a light
-     page with dark variables swapped underneath. These overrides only apply
-     in dark mode and keep the bright Knox brand colors as focal points. */
-  html[data-theme="dark"] #home {
-    background:
-      radial-gradient(ellipse 65% 45% at 50% -8%, rgba(255, 107, 0, 0.18), transparent 72%),
-      linear-gradient(180deg, #15161c 0%, #101013 100%) !important;
-  }
-  html[data-theme="dark"] #why-knox,
-  html[data-theme="dark"] #subjects,
-  html[data-theme="dark"] #faq {
-    background: linear-gradient(180deg, #1c1d23 0%, #18191e 100%) !important;
-  }
-  html[data-theme="dark"] #how-it-works {
-    background: linear-gradient(180deg, #14151a 0%, #101013 100%) !important;
-  }
-  html[data-theme="dark"] .workspace-section {
-    background:
-      radial-gradient(ellipse 58% 60% at 82% 22%, rgba(206, 130, 255, 0.11), transparent 72%),
-      linear-gradient(180deg, #111218 0%, #16171d 100%);
-  }
-  html[data-theme="dark"] .workspace-preview {
-    background: #1d1f27;
-    border-color: #3b3f4a;
-    box-shadow: 0 9px 0 #0d0e12;
-  }
-  html[data-theme="dark"] .workspace-preview-card { background:#252833; border-color:#414550; box-shadow:0 4px 0 #111217; }
-  html[data-theme="dark"] .workspace-tool { background:#191b22; border-color:#3b3f4a; }
-  html[data-theme="dark"] #pricing {
-    background:
-      radial-gradient(ellipse 60% 38% at 50% 0%, rgba(88, 204, 2, 0.10), transparent 76%),
-      linear-gradient(180deg, #17191f 0%, #0f1014 100%) !important;
-    border-color: #3a3c47 !important;
-  }
-  html[data-theme="dark"] #pricing > div > div > div[style*="background:var(--surface)"] {
-    background: #1d1f26 !important;
-    border-color: #3a3d48 !important;
-    box-shadow: 0 5px 0 #111217 !important;
-  }
-  html[data-theme="dark"] #pricing .pricing-free-card {
-    background: linear-gradient(145deg, #249fe1 0%, #087ab5 100%) !important;
-    border-color: #45c7ff !important;
-  }
-  html[data-theme="dark"] #pricing .pricing-plus-card {
-    background: linear-gradient(145deg, #70d51a 0%, #3f9c08 100%) !important;
-    border-color: #9bea55 !important;
-  }
-  html[data-theme="dark"] #pricing .pricing-comparison-card {
-    background: linear-gradient(145deg, #252831 0%, #1b1d24 100%) !important;
-    border-color: #3e424e !important;
-    box-shadow: 0 8px 0 #111217 !important;
-  }
-  html[data-theme="dark"] #pricing [style*="background:var(--surface)"] {
-    background: #262933 !important;
-    border-color: #454955 !important;
-  }
-  html[data-theme="dark"] #pricing [style*="color:#0A85C2"] { color: #71d1ff !important; }
-  html[data-theme="dark"] #pricing [style*="color:#2D6A00"] { color: #a4ee69 !important; }
-  html[data-theme="dark"] #pricing [style*="color:#16A34A"] { color: #86efac !important; }
-  html[data-theme="dark"] #pricing [style*="stroke:#16A34A"] { stroke: #86efac !important; }
-  html[data-theme="dark"] #pricing [style*="background:var(--green-light)"] { background: #24401c !important; }
-  html[data-theme="dark"] #pricing [style*="background:var(--border)"] { background: #363943 !important; }
-  html[data-theme="dark"] #pricing [style*="box-shadow:0 3px 0 var(--border)"] { box-shadow: 0 3px 0 #101116 !important; }
-  html[data-theme="dark"] #pricing button:focus-visible,
-  html[data-theme="dark"] #pricing a:focus-visible {
-    outline: 3px solid #ffd900;
-    outline-offset: 3px;
-  }
-  html[data-theme="dark"] body [style*="color:#555"],
-  html[data-theme="dark"] body [style*="color:#666"] {
-    color: #b7bbc5 !important;
-  }
-  html[data-theme="dark"] .knox-faq {
-    background: linear-gradient(145deg, #24262e, #1b1d23);
-    border-color: #393c47;
-    box-shadow: 0 5px 0 #111217;
-  }
-  html[data-theme="dark"] .knox-faq:hover { border-color: #805126; box-shadow: 0 5px 0 #40260f; }
-</style>
-
-
-<!-- ===================== GAMIFICATION ===================== -->
-
-
-
-<!-- ===================== CTA BANNER ===================== -->
-<section style="background:var(--orange);padding:80px 24px;text-align:center;position:relative;overflow:hidden;">
-  <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
-  <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
-    <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:4px solid rgba(255,255,255,0.4);margin:0 auto 16px;background:rgba(255,255,255,0.2);"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-    <h2 style="font-size:clamp(28px,5vw,52px);font-weight:900;color:white;letter-spacing:-0.02em;">Ready to stop guessing?</h2>
-    <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Join students who already use Knox to ace their homework. Free to start — no credit card needed.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
-      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Open Knox now</button>
-      <button onclick="scrollToPricing()" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:15px 28px;font-size:17px;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">View Plans →</button>
-    </div>
-  </div>
-</section>
+<section id="subjects" class="lp-band"><div class="lp-wrap lp-section">
+  <div class="lp-heading"><span class="lp-eyebrow">DIFFERENT SUBJECTS. THE SAME CURIOUS FOX.</span><h2>From equations to “explain why.”</h2><p>Bring the actual question, your grade level, and what you've tried. More context helps Knox give a more useful explanation.</p></div>
+  <div class="lp-grid lp-three"><article class="lp-subject"><h3>Math</h3><p>Work through algebra, geometry, functions, and calculus. Ask what each step means, not just which formula to use.</p></article><article class="lp-subject"><h3>Science</h3><p>Explore biology, chemistry, and physics with explanations that connect terms, processes, and examples.</p></article><article class="lp-subject"><h3>Writing</h3><p>Brainstorm ideas, strengthen a thesis, or ask for feedback on your draft while keeping the work in your own voice.</p></article><article class="lp-subject"><h3>History</h3><p>Connect events, compare perspectives, and ask about the reasons behind what happened.</p></article><article class="lp-subject"><h3>Reading</h3><p>Discuss a passage, unpack an argument, or work through unfamiliar vocabulary in context.</p></article><article class="lp-subject"><h3>Your next topic</h3><p>Ask about the concept on your mind. Be specific about the course and the kind of help you need.</p></article></div>
+</div></section>
+<section class="lp-wrap lp-section"><div class="lp-extension">
+  <div><span class="lp-eyebrow"><svg class="knox-icon" aria-hidden="true"><use href="/knox-icons.svg#extension"></use></svg> KNOX KNOWS FOR CHROME</span><h2>Your study companion.<br>Now in your browser.</h2><p>Already studying in Chrome? Explore the Knox Knows extension and bring Knox into your browser routine. View the listing for features, permissions, and installation details.</p><a class="lp-btn" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp?utm_source=knox_web" target="_blank" rel="noopener">Explore the Chrome extension ↗</a></div><div class="lp-extension-art" aria-hidden="true"><img src="/knox-logo-square.jpg" alt=""><span>KNOX KNOWS</span><strong>A little closer<br>to your next aha.</strong></div>
+</div></section>
+<section id="pricing" class="lp-band"><div class="lp-wrap lp-section">
+ <div class="lp-heading"><span class="lp-eyebrow">START FREE. MAKE ROOM FOR MORE.</span><h2>Your pace. Your plan.</h2><p>Try the workspace with free credits. Choose Plus when you want to keep asking without the free credit balance.</p></div>
+ <div class="lp-billing" aria-label="Billing period"><button id="monthlyBtn" onclick="setBilling('monthly')" aria-pressed="true">Monthly</button><button id="yearlyBtn" onclick="setBilling('yearly')" aria-pressed="false">Yearly · save 33%</button></div>
+ <div class="lp-grid lp-two lp-plans">
+  <article class="lp-card"><span class="lp-eyebrow">KNOX FREE</span><h3>A good place to begin.</h3><p class="lp-price">$0 <small>to get started</small></p><p>Meet Knox and find your favorite way to study.</p><ul class="lp-checks"><li>10 credits when you start</li><li>5 credits replenished daily, up to 20</li><li>Text questions: 1 credit · Photos: 2 credits</li><li>Learn sessions: 1 credit to start</li><li>Ask, Learn, and Study Hub in one workspace</li></ul><a class="lp-btn lp-secondary" href="/app">Start learning free →</a></article>
+  <article class="lp-card lp-plus"><span id="proTrialBadge" class="lp-trial">3-DAY FREE TRIAL</span><span class="lp-eyebrow">KNOX PLUS</span><h3>Keep your curiosity going.</h3><p class="lp-price"><span id="proPrice">$9.99</span> <small id="proPeriod">/mo</small></p><p id="proYearlyNote" style="display:none">$79.99 billed yearly — save $39.89.</p><p id="proSubline">Cancel anytime</p><ul class="lp-checks"><li>Unlimited questions and photo help*</li><li>Guided practice with Learn</li><li>Study guides, flashcards, and quizzes</li><li>Your preferred explanation style</li><li>Manage your subscription in Settings</li></ul><button id="proCTABtn" class="lp-btn" onclick="handlePurchase('Plus')">Start Free Trial</button><p class="lp-small">Eligible new monthly subscriptions only. Then $9.99/month unless canceled. Yearly subscriptions are billed upfront and do not include the trial.</p></article>
+ </div><p class="lp-note">*Fair-use protections apply to prevent automated or excessive abuse. Learn sessions include up to 14 guided follow-ups after the first question. See our <a href="/terms.html">terms</a> and <a href="/refund.html">refund policy</a>.</p>
+</div></section>
+<section id="faq" class="lp-wrap lp-section"><div class="lp-heading"><span class="lp-eyebrow">A FEW MORE THINGS TO KNOW</span><h2>Good questions. Clear answers.</h2></div><div class="lp-faq"><details><summary>What is Knox Knows?</summary><p>Knox Knows is an AI study companion with direct explanations in Ask Knox, guided practice in Learn, and study guides, flashcards, and quizzes in Study Hub. You can type a question or attach a photo.</p></details><details><summary>How is Learn different from Ask Knox?</summary><p>Ask Knox explains your question directly. Learn guides you with hints and questions so you can work through the next step yourself. Choose Ask for an explanation, or Learn when you want to practice your reasoning.</p></details><details><summary>How do free credits work?</summary><p>New free accounts start with 10 credits. Your balance replenishes by 5 each day, up to 20. A text question costs 1 credit and a photo question costs 2. Starting a Learn session costs 1 credit and includes up to 14 guided follow-ups within that session.</p></details><details><summary>What does unlimited mean on Knox Plus?</summary><p>Plus removes the free credit balance for questions and photos. Fair-use protections still apply to prevent automated or excessive abuse; unlimited does not mean unrestricted automated use.</p></details><details><summary>Can I change how Knox explains things?</summary><p>Yes. In Settings, choose standard, visual, step-by-step, or concise explanations. Visual explanations can include examples and text diagrams. You can also select English or Spanish for AI answers. Interface translations are still being expanded.</p></details><details><summary>Can I use Knox on my phone?</summary><p>Yes. The website adapts to phones, tablets, and desktops. You can type a question or upload a clear photo. There is also a Knox Knows extension for Chrome.</p></details><details><summary>Will Knox always be right?</summary><p>No. AI can misunderstand a photo or make a mistake. Check important answers, compare the reasoning with your class materials, and ask follow-up questions. Use Knox to understand your work and follow your school's rules.</p></details><details><summary>How do subscriptions and support work?</summary><p>Plus is $9.99 monthly or $79.99 billed yearly. Eligible new monthly subscriptions include a 3-day trial; the paid subscription starts afterward unless you cancel. Manage billing in Settings, review the refund policy below, or email support@knoxknowsapp.com for help.</p></details></div><p class="lp-note">Still need a hand? <a href="mailto:support@knoxknowsapp.com">Talk to Knox Knows support →</a></p></section>
+<section class="lp-wrap lp-section lp-final"><img src="/knox-logo-square.jpg" alt="Knox the Fox"><span class="lp-eyebrow">YOUR NEXT AHA STARTS WITH A QUESTION.</span><h2>Stop Guessing.<br><em>Start Knowing.</em></h2><p>Bring the thing you're stuck on. We'll take it one step at a time.</p><a class="lp-btn" href="/app">Meet Knox. Start free. →</a><p class="lp-small">Knox is AI and can make mistakes. Always check important work.</p></section>
+</main>
 
 <!-- ===================== FOOTER ===================== -->
 <footer>
@@ -3824,6 +3262,8 @@
 
   function setBilling(type) {
     billing = type;
+    document.getElementById('monthlyBtn')?.setAttribute('aria-pressed', String(type === 'monthly'));
+    document.getElementById('yearlyBtn')?.setAttribute('aria-pressed', String(type === 'yearly'));
     const mBtn = document.getElementById('monthlyBtn');
     const yBtn = document.getElementById('yearlyBtn');
     if (mBtn) { mBtn.style.background = type === 'monthly' ? '#FF6B00' : 'transparent'; mBtn.style.color = type === 'monthly' ? 'white' : '#9CA3AF'; mBtn.style.boxShadow = type === 'monthly' ? '0 3px 0 #CC5500' : 'none'; }

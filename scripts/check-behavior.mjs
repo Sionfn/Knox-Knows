@@ -6,6 +6,12 @@ const ask = readFileSync(new URL('api/ask.js', root), 'utf8');
 const me = readFileSync(new URL('api/me.js', root), 'utf8');
 const app = readFileSync(new URL('app.html', root), 'utf8');
 const landing = readFileSync(new URL('index.html', root), 'utf8');
+assert.match(landing, /<h1>Stop Guessing\.<br><em>Start Knowing\.<\/em><\/h1>/);
+for (const id of ['home', 'how-it-works', 'ask', 'learn', 'study', 'personalize', 'subjects', 'pricing', 'faq', 'monthlyBtn', 'yearlyBtn', 'proCTABtn']) {
+  assert.equal((landing.match(new RegExp('id="' + id + '"', 'g')) || []).length, 1, 'Landing ID must be unique: ' + id);
+}
+const landingCss = readFileSync(new URL('knox-landing.css', root), 'utf8');
+assert.ok(!landingCss.includes('[data-theme='), 'Landing geometry and motion must be shared between themes');
 for (const rule of landing.matchAll(/html\[data-theme="dark"\][^{]*\{([^}]+)\}/g)) {
   assert.ok(!/(?:^|;)\s*(?:animation|transition|transform)\s*:/.test(rule[1]), 'Dark-mode rules must not change motion');
 }
