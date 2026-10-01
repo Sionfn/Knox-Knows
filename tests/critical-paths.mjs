@@ -338,7 +338,9 @@ test('Text, photo and Learn use GPT-6 Luna; exact small talk is local', async ()
   assert.equal(casual.body.isCasual, true);
   assert.equal(requests.length, 3);
   assert.equal(learn.body.model, 'gpt-6-luna');
-  assert.equal(requests[1].max_completion_tokens, 4000);
+  assert.equal(requests[1].max_completion_tokens, 12000);
+  assert.match(requests[1].messages[0].content, /solve every problem in the photo/);
+  assert.doesNotMatch(requests[1].messages[0].content, /ask where to start/);
   assert.ok(requests.every(request => request.temperature === undefined));
 });
 
