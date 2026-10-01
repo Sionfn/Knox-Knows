@@ -4358,7 +4358,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     // upgrade button.
     if (isPaid || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
-      billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
+      billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
       billBtn.textContent = 'Manage Billing';
       billBtn.onclick = function() { openBillingPortal(this); };
       el.appendChild(row('Billing', billBtn));
