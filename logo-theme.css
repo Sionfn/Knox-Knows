@@ -1,0 +1,22 @@
+/* Shared by static pages and dynamically inserted Knox avatars. */
+img[src*="knox-logo"] {
+  vertical-align:middle;
+  flex-shrink:0;
+  aspect-ratio:1;
+}
+
+/* Light mode: the original Knox fox, set up exactly like the pre-Halloween
+   site — every logo shows knox-logo-original.jpg (the original square art,
+   full resolution) with object-fit:cover, matching the pages' inline styles. */
+html:not([data-theme="dark"]) img[src*="knox-logo"] {
+  content:url('/knox-logo-original.jpg');
+  object-fit:cover !important;
+  object-position:center !important;
+}
+
+/* Dark mode: the Halloween fox (knox-logo-square.jpg / knox-logo.jpg),
+   full-bleed art framed like the light logo, so it uses cover too. */
+html[data-theme="dark"] img[src*="knox-logo"] {
+  object-fit:cover !important;
+  object-position:center !important;
+}

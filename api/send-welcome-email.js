@@ -14,6 +14,7 @@
 
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
   initializeApp({
@@ -26,6 +27,7 @@ if (!getApps().length) {
 }
 
 const adminAuth = getAdminAuth();
+const db = getFirestore();
 
 // Minimal HTML-escape for anything user-supplied that lands in the email
 // HTML (the display name). Without this, someone could set an arbitrary
@@ -114,8 +116,7 @@ export default async function handler(req, res) {
   }
 
   const { email, name: tokenName } = decodedToken;
-  const bodyName    = req.body?.name;
-  const displayName = bodyName || tokenName || email?.split("@")[0] || "there";
+  const displayName = tokenName || email?.split("@")[0] || "there";
   const firstName   = displayName.split(" ")[0];
 
   if (!email) {
@@ -124,6 +125,21 @@ export default async function handler(req, res) {
   if (!process.env.RESEND_API_KEY) {
     console.error("RESEND_API_KEY is not set — cannot send welcome email");
     return res.status(500).json({ error: "Email service not configured" });
+  }
+
+  const userRef = db.collection('users').doc(decodedToken.uid);
+  try {
+    const claimed = await db.runTransaction(async tx => {
+      const snap = await tx.get(userRef);
+      const data = snap.exists ? snap.data() : {};
+      if (data.welcomeSentAt || (data.welcomeEmailSendingAt && Date.now() - data.welcomeEmailSendingAt < 120000)) return false;
+      tx.set(userRef, { welcomeEmailSendingAt: Date.now() }, { merge: true });
+      return true;
+    });
+    if (!claimed) return res.status(200).json({ sent: false, alreadyHandled: true });
+  } catch (err) {
+    console.error('Welcome email claim failed:', err);
+    return res.status(503).json({ error: 'Email service temporarily unavailable' });
   }
 
   const textBody = `Hey ${firstName},
@@ -176,14 +192,17 @@ Knox Knows`;
     if (!response.ok) {
       const err = await response.text();
       console.error("Resend error (welcome):", err);
+      await userRef.set({ welcomeEmailSendingAt: FieldValue.delete() }, { merge: true });
       return res.status(500).json({ error: "Failed to send email" });
     }
 
+    await userRef.set({ welcomeSentAt: new Date().toISOString(), welcomeEmailSendingAt: FieldValue.delete() }, { merge: true });
     console.log(`✓ Welcome email sent to ${email}`);
     return res.status(200).json({ sent: true });
 
   } catch (err) {
     console.error("Welcome email send error:", err.message);
+    try { await userRef.set({ welcomeEmailSendingAt: FieldValue.delete() }, { merge: true }); } catch (releaseError) { console.error('Welcome email release failed:', releaseError); }
     return res.status(500).json({ error: "Failed to send email" });
   }
 }

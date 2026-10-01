@@ -8,12 +8,12 @@
 //   • Retention signals (DAU, WAU)
 //
 // Security model:
-//   • Locked to a single allow-listed admin email (env: ADMIN_EMAIL).
-//   • Verifies Firebase ID token, checks decoded email matches.
+//   • Locked to a single immutable admin UID (env: ADMIN_UID).
+//   • Verifies Firebase ID token and requires a verified email.
 //   • Uses Admin SDK to bypass firestore.rules (so rules can stay locked).
 //   • Returns 403 with no body details for any other authenticated user.
 //
-// Add ADMIN_EMAIL=your@email.com to Vercel env vars before this works.
+// Set ADMIN_UID to the owner's Firebase Authentication UID before deployment.
 
 import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
@@ -37,9 +37,14 @@ const db        = getFirestore();
 const DAY_MS  = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7  * DAY_MS;
 
+// UTC day boundary — matches how the writers key their day buckets
+// (api/ask.js writes stats/{new Date().toISOString().slice(0,10)}, which
+// is always the UTC day). Using local time here worked only because
+// Vercel runs UTC; if the function were ever deployed to another region,
+// "today" and the stats/{today} doc would silently drift out of sync.
 const startOfDay = (offset = 0) => {
   const d = new Date();
-  d.setHours(0, 0, 0, 0);
+  d.setUTCHours(0, 0, 0, 0);
   return d.getTime() - (offset * DAY_MS);
 };
 
@@ -63,11 +68,11 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
-  if (!ADMIN_EMAIL) {
-    return res.status(500).json({ error: "ADMIN_EMAIL not configured" });
+  const ADMIN_UID = (process.env.ADMIN_UID || "").trim();
+  if (!ADMIN_UID) {
+    return res.status(503).json({ error: "Admin access is not configured." });
   }
-  if ((decodedToken.email || "").toLowerCase() !== ADMIN_EMAIL) {
+  if (decodedToken.uid !== ADMIN_UID || decodedToken.email_verified !== true) {
     // Don't reveal anything — looks identical to an unauthenticated request
     return res.status(403).json({ error: "Forbidden" });
   }
@@ -95,7 +100,7 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     console.error("Admin stats error:", err);
-    return res.status(500).json({ error: "Could not load stats", detail: err.message });
+    return res.status(500).json({ error: "Could not load stats" });
   }
 }
 
@@ -118,7 +123,7 @@ async function getUserStats() {
 
     const plan = u.plan || "free";
     if      (plan === "max")   max++;
-    else if (plan === "super") superCount++;
+    else if (plan === "super" || plan === "plus") superCount++;
     else                       free++;
 
     // Created — Firebase Auth provides `createdAt` on the user record,
@@ -366,6 +371,7 @@ function toMs(maybeTs) {
   // Firestore Timestamps, JS dates, and ms numbers all welcome
   if (!maybeTs) return 0;
   if (typeof maybeTs === "number") return maybeTs;
+  if (typeof maybeTs === 'string') return Date.parse(maybeTs) || 0;
   if (typeof maybeTs.toMillis === "function") return maybeTs.toMillis();
   if (maybeTs.seconds) return maybeTs.seconds * 1000;
   if (maybeTs instanceof Date) return maybeTs.getTime();

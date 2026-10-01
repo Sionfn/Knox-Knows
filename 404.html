@@ -79,12 +79,19 @@
     .btn:hover  { transform:translateY(-2px); box-shadow:0 6px 0 #CC5500; }
     .btn:active { transform:translateY(2px);  box-shadow:none; }
   </style>
+<link rel="stylesheet" href="/logo-theme.css">
 </head>
 <body>
   <div class="fox">🦊</div>
   <div class="code">404 — Page not found</div>
   <h1>Knox looked everywhere.<br>Nothing here.</h1>
   <p>This page doesn't exist or may have moved. Let's get you back on track.</p>
-  <a href="/" class="btn">← Back to Knox Knows</a>
+  <!-- /about instead of / so signed-in users landing on a bad URL don't get
+       immediately redirected into the app by index.html's entry route —
+       they clicked a "Back to Knox Knows" link, they want the marketing
+       landing, not the app. -->
+  <a href="/about" class="btn">← Back to Knox Knows</a>
+
+<script src="/legal-navigation.js"></script>
 </body>
 </html>

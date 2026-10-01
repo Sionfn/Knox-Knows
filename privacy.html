@@ -59,15 +59,16 @@
 
     @media(max-width:640px) { .policy-section { padding:20px 18px; } .summary-card { padding:22px 20px; } .content-wrap { padding:32px 16px 60px; } }
   </style>
+<link rel="stylesheet" href="/logo-theme.css">
 </head>
 <body>
 
 <header>
-  <a href="/" class="logo-link">
+  <a href="/about" class="logo-link">
     <img src="/knox-logo.jpg" alt="Knox" class="logo-img" onerror="this.style.display='none'">
     <span class="logo-text">Knox Knows</span>
   </a>
-  <a href="/" class="back-btn">← Back to Knox</a>
+  <a href="/about" class="back-btn">← Back to Knox</a>
 </header>
 
 <div class="page-hero">
@@ -99,8 +100,8 @@
     <p>We collect the following information when you use Knox Knows:</p>
     <ul>
       <li><span class="highlight">Account info</span> — your name and email address when you sign up via Google, Microsoft, or email</li>
-      <li><span class="highlight">Usage data</span> — daily question counts to enforce plan limits (stored for 30 days, then deleted)</li>
-      <li><span class="highlight">Questions &amp; chat history</span> — the questions and images you submit to Knox, and Knox's answers. Stored for 30 days so you can access your history across devices, then automatically deleted</li>
+      <li><span class="highlight">Usage data</span> — question counts and balances needed to enforce plan limits</li>
+      <li><span class="highlight">Questions &amp; chat history</span> — the questions you submit to Knox and Knox's answers. Chat history is saved to your account until you delete it or ask us to remove your account. Uploaded image files are sent for the answer but are not saved in chat history</li>
       <li><span class="highlight">Billing info</span> — handled entirely by Stripe. We only store your Stripe customer ID, not card details</li>
       <li><span class="highlight">Device info</span> — browser type and basic technical info for debugging</li>
       <li><span class="highlight">Analytics</span> — anonymized page views and interaction data via Google Analytics, used only to improve the product</li>
@@ -137,7 +138,7 @@
       <li><span class="highlight">Stripe</span> — handles all payment processing. We never see or store your card details. <a href="https://stripe.com/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
       <li><span class="highlight">Vercel</span> — hosts the Knox Knows platform. <a href="https://vercel.com/legal/privacy-policy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
       <li><span class="highlight">Google Analytics</span> — anonymized usage analytics. <a href="https://policies.google.com/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
-      <li><span class="highlight">SendGrid</span> — sends transactional emails (welcome, billing). <a href="https://www.twilio.com/en-us/legal/privacy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
+      <li><span class="highlight">Resend</span> — sends transactional emails (welcome, billing). <a href="https://resend.com/legal/privacy-policy" target="_blank" style="color:#FF6B00;">Privacy policy ↗</a></li>
     </ul>
   </div>
 
@@ -152,7 +153,7 @@
       <li><span class="highlight">Authentication</span> — Firebase uses cookies to keep you signed in</li>
       <li><span class="highlight">Usage tracking</span> — we store your daily question count locally so the progress bar updates instantly</li>
       <li><span class="highlight">Theme preference</span> — we remember whether you prefer dark or light mode</li>
-      <li><span class="highlight">Chat history</span> — saved both locally in your browser and to your account (so it follows you between devices). Server-stored history is kept for 30 days and then automatically deleted</li>
+      <li><span class="highlight">Chat history</span> — saved to your account so it follows you between devices. You can delete conversations in the app</li>
       <li><span class="highlight">Analytics</span> — we use Google Analytics to understand which features get used and where users get stuck. It sets a first-party cookie. We do not use this data for advertising</li>
     </ul>
     <p>We do not use advertising cookies. You can disable analytics by using your browser's "Do Not Track" setting or a privacy extension.</p>
@@ -164,7 +165,7 @@
       <div class="section-num">5</div>
       <div class="section-title">Data retention</div>
     </div>
-    <p>We retain your account data for as long as your account is active. Usage records (daily question counts) are stored for 30 days and then automatically deleted.</p>
+    <p>We retain account and usage data needed to operate your plan while your account is active. Chat history remains available until you delete it or request account deletion. Some older browser-saved history may be removed automatically when you visit the site.</p>
     <p>If you delete your account, we will delete your personal data from our systems within 30 days, except where we are required to retain it for legal or financial compliance (Stripe retains billing records as required by law).</p>
   </div>
 
@@ -226,5 +227,6 @@
   <p>© 2026 Knox Knows · All rights reserved</p>
 </footer>
 
+<script src="/legal-navigation.js"></script>
 </body>
 </html>

@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Billing and usage are written only by the server's Admin SDK.
+    function clientUserFields() {
+      return ['lastActiveAt', 'firstSeenAt', 'streakCount', 'streakLastDay'];
+    }
+
+    match /users/{userId} {
+      allow read: if owner(userId);
+      allow create: if owner(userId)
+                    && request.resource.data.keys().hasOnly(clientUserFields());
+      allow update: if owner(userId)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(clientUserFields());
+      allow delete: if false;
+
+      match /usage/{day} {
+        allow read: if owner(userId);
+        allow write: if false;
+      }
+
+      match /conversations/{conversationId} {
+        allow read, delete: if owner(userId);
+        allow create, update: if owner(userId)
+                              && request.resource.data.title is string
+                              && request.resource.data.title.size() < 200;
+        match /messages/{messageId} {
+          allow read, delete: if owner(userId);
+          allow create: if owner(userId)
+                        && getAfter(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)).data.get('deleting', false) == false
+                        && request.resource.data.question is string
+                        && request.resource.data.question.size() <= 8000
+                        && request.resource.data.answer is string
+                        && request.resource.data.answer.size() <= 100000;
+          allow update: if false;
+        }
+      }
+
+      match /history/{docId} {
+        allow read, delete: if owner(userId);
+        allow create, update: if owner(userId)
+                              && request.resource.data.question is string
+                              && request.resource.data.question.size() < 1000
+                              && request.resource.data.answer is string
+                              && request.resource.data.answer.size() < 5000;
+      }
+
+      match /learnSessions/{sessionId} {
+        allow read: if owner(userId);
+        allow write: if false;
+      }
+
+      match /feedback/{docId} {
+        allow read: if owner(userId);
+        allow create: if owner(userId)
+                      && request.resource.data.rating in [1, -1]
+                      && request.resource.data.question is string
+                      && request.resource.data.question.size() < 1000
+                      && request.resource.data.answer is string
+                      && request.resource.data.answer.size() < 5000;
+        allow update, delete: if false;
+      }
+    }
+
+    match /feedback/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.rating in [1, -1]
+                    && request.resource.data.question is string
+                    && request.resource.data.question.size() < 1000
+                    && request.resource.data.answer is string
+                    && request.resource.data.answer.size() < 5000;
+      allow read, update, delete: if false;
+    }
+
+    match /webhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+    match /checkoutLocks/{uid} {
+      allow read, write: if false;
+    }
+    match /billingReview/{eventId} {
+      allow read, write: if false;
+    }
+  }
+}

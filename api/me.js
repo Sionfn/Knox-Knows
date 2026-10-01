@@ -52,6 +52,7 @@ function daysBetween(aKey, bKey) {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
@@ -103,26 +104,25 @@ export default async function handler(req, res) {
       // "starts now" countdown, which is why the timer looked like it kept
       // resetting to 24h — it genuinely was, because nothing was ever saved.
       const bankRef = userRef.collection("usage").doc("bank");
-      const bankSnap = await bankRef.get();
-      let balance, lastRegenAt;
-      if (!bankSnap.exists) {
-        balance = FREE_STARTING_BALANCE;
-        lastRegenAt = now;
-        await bankRef.set({ balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-      } else {
+      // The read and any regeneration must be atomic with /api/ask's spend;
+      // otherwise a simultaneous page refresh can overwrite a new charge.
+      const { balance, lastRegenAt } = await db.runTransaction(async tx => {
+        const bankSnap = await tx.get(bankRef);
+        if (!bankSnap.exists) {
+          tx.set(bankRef, { balance: FREE_STARTING_BALANCE, lastRegenAt: now, updatedAt: new Date().toISOString() });
+          return { balance: FREE_STARTING_BALANCE, lastRegenAt: now };
+        }
         const d = bankSnap.data();
-        balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
-        lastRegenAt = d.lastRegenAt || now;
+        let balance = typeof d.balance === 'number' ? d.balance : FREE_STARTING_BALANCE;
+        let lastRegenAt = d.lastRegenAt || now;
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) {
           balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
-          lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
-          // Persist the advanced regen too, so it's consistent for the next
-          // read (by ask.js, me.js, or the header display) instead of
-          // silently drifting.
-          await bankRef.set({ balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
+          lastRegenAt += daysElapsed * oneDayMs();
+          tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
         }
-      }
+        return { balance, lastRegenAt };
+      });
       remaining = balance;
       limit     = FREE_MAX_BALANCE;
       used      = Math.max(0, limit - balance);

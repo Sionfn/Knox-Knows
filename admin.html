@@ -470,6 +470,7 @@
       .score-ring-pct { font-size: 24px; }
     }
   </style>
+<link rel="stylesheet" href="/logo-theme.css">
 </head>
 <body>
 
@@ -537,6 +538,10 @@
 
   // Wait for auth state
   onAuthStateChanged(auth, async (user) => {
+    document.getElementById('dashboard').replaceChildren();
+    document.getElementById('authGate').style.display = 'flex';
+    document.getElementById('adminHeader').style.display = 'none';
+    document.getElementById('adminMain').style.display = 'none';
     if (!user) {
       // Not signed in
       document.getElementById('gateMsg').textContent =
@@ -568,6 +573,8 @@
   };
 
   window.loadStats = async function(isRefresh) {
+    const requestUser = auth.currentUser;
+    if (!requestUser) return;
     const dash    = document.getElementById('dashboard');
     const errBan  = document.getElementById('errorBanner');
     const adminHeader = document.getElementById('adminHeader');
@@ -585,7 +592,8 @@
 
     let token;
     try {
-      token = await auth.currentUser.getIdToken();
+      token = await requestUser.getIdToken();
+      if (auth.currentUser !== requestUser) return;
     } catch (err) {
       document.getElementById('gateMsg').textContent =
         'Could not get auth token. Please sign in again.';
@@ -601,6 +609,7 @@
       const res = await fetch('/api/admin-stats', {
         headers: { 'Authorization': 'Bearer ' + token },
       });
+      if (auth.currentUser !== requestUser) return;
 
       if (res.status === 403) {
         document.getElementById('gateMsg').textContent =
@@ -622,7 +631,9 @@
         throw new Error(errData.error || `HTTP ${res.status}`);
       }
       data = await res.json();
+      if (auth.currentUser !== requestUser) return;
     } catch (err) {
+      if (auth.currentUser !== requestUser) return;
       gate.style.display = 'none';
       adminHeader.style.display = 'flex';
       adminMain.style.display   = 'block';
@@ -659,6 +670,9 @@
     return String(s || '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function planClass(plan) {
+    return ['super', 'max', 'plus'].includes(plan) ? plan : 'free';
   }
   function relTime(ts) {
     if (!ts) return '—';
@@ -841,7 +855,7 @@
                 <div class="data-row">
                   <div class="data-row-header">
                     <span class="tag tag-down">👎 Down</span>
-                    <span class="tag tag-plan-${f.plan || 'free'}">${escHtml((f.plan || 'free').toUpperCase())}</span>
+                    <span class="tag tag-plan-${planClass(f.plan)}">${escHtml((f.plan || 'free').toUpperCase())}</span>
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
                   <div class="row-question">${escHtml(f.question || '—')}</div>
@@ -859,7 +873,7 @@
                 <div class="data-row">
                   <div class="data-row-header">
                     <span class="tag ${f.rating === 1 ? 'tag-up' : 'tag-down'}">${f.rating === 1 ? '👍' : '👎'}</span>
-                    <span class="tag tag-plan-${f.plan || 'free'}">${escHtml((f.plan || 'free').toUpperCase())}</span>
+                    <span class="tag tag-plan-${planClass(f.plan)}">${escHtml((f.plan || 'free').toUpperCase())}</span>
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
                   <div class="row-question">${escHtml(f.question || '—')}</div>

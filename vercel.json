@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/about",        "destination": "/index.html"   },
     { "source": "/app",          "destination": "/app.html"     },
     { "source": "/app.html",     "destination": "/app.html"     },
     { "source": "/admin",        "destination": "/admin.html"   },
@@ -14,8 +15,8 @@
     { "source": "/robots.txt",   "destination": "/robots.txt"   }
   ],
   "functions": {
-    "api/ask.js":                     { "maxDuration": 30 },
-    "api/create-checkout-session.js": { "maxDuration": 15 },
+    "api/ask.js":                     { "maxDuration": 60 },
+    "api/create-checkout-session.js": { "maxDuration": 30 },
     "api/customer-portal.js":         { "maxDuration": 15 },
     "api/webhook.js":                 { "maxDuration": 15 },
     "api/send-welcome-email.js":      { "maxDuration": 15 },

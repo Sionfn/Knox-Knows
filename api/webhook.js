@@ -1,10 +1,11 @@
 // /api/webhook.js — Knox Knows
 // Listens for Stripe events and saves the user's plan to Firestore.
 // Also sends transactional emails (purchase confirmation, refund/cancellation)
-// via SendGrid, using the same minimal house style as the welcome email so
+// via Resend, using the same minimal house style as the welcome email so
 // all Knox emails look consistent and land in the Primary inbox.
 
 import Stripe from "stripe";
+import crypto from 'crypto';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -197,18 +198,60 @@ Knox Knows`;
 // Stripe occasionally retries webhooks. Without idempotency we'd send
 // duplicate emails and run duplicate Firestore writes. Returns true if we've
 // already processed this event ID, false otherwise (and marks it as seen).
-async function alreadyProcessed(eventId) {
-  if (!eventId) return false;
+async function claimEvent(eventId) {
   const ref = db.collection("webhookEvents").doc(eventId);
-  try {
-    const snap = await ref.get();
-    if (snap.exists) return true;
-    await ref.set({ processedAt: new Date().toISOString() });
-    return false;
-  } catch (err) {
-    console.warn("Idempotency check failed:", err.message);
-    return false; // fail open — better to risk a duplicate than skip a valid event
-  }
+  const claimId = crypto.randomUUID();
+  const state = await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    if (snap.exists && snap.data().status === 'done') return 'done';
+    if (snap.exists && snap.data().status === 'processing' && Date.now() - snap.data().claimedAt < 120000) return 'processing';
+    tx.set(ref, { status: 'processing', claimedAt: Date.now(), claimId });
+    return 'claimed';
+  });
+  return { state, ref, claimId };
+}
+
+async function finishEvent(claim, success) {
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(claim.ref);
+    if (!snap.exists || snap.data().claimId !== claim.claimId) return;
+    if (success) tx.set(claim.ref, { status: 'done', processedAt: new Date().toISOString() }, { merge: true });
+    else tx.delete(claim.ref);
+  });
+}
+
+async function currentSubscription(subscription) {
+  return stripe.subscriptions.retrieve(subscription.id);
+}
+
+async function applyActiveSubscription(uid, subscription, options = {}) {
+  const plan = PRICE_TO_PLAN[subscription.items?.data?.[0]?.price?.id];
+  if (!plan || !['active', 'trialing'].includes(subscription.status)) return false;
+  const ref = db.collection('users').doc(uid);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const existing = snap.exists ? snap.data() : {};
+    // A delayed checkout event must never replace a different subscription.
+    // Its deletion event will clear the old ID before a replacement is applied.
+    if (existing.stripeSubscription && existing.stripeSubscription !== subscription.id) return false;
+    if (existing.stripeCustomerId && existing.stripeCustomerId !== subscription.customer) return false;
+    // Once a subscription has been cancelled, a stale/out-of-order active
+    // event for THAT SAME subscription id must not resurrect it. Without
+    // this guard, `subscription.deleted` clears stripeSubscription to null,
+    // then a straggler `subscription.updated` or `invoice.payment_succeeded`
+    // passes the null-short-circuited guard above and writes planStatus:
+    // 'active' again — silently re-granting Plus after cancellation.
+    // Only a fresh checkout (options.checkout) is allowed to re-activate,
+    // and only after the subscription id has been cleared.
+    if (!options.checkout && existing.planStatus === 'cancelled' && !existing.stripeSubscription) return false;
+    tx.set(ref, {
+      plan, planStatus: subscription.status,
+      stripeCustomerId: subscription.customer,
+      stripeSubscription: subscription.id,
+      ...(options.checkout ? { planActivatedAt: new Date().toISOString() } : { planRenewedAt: new Date().toISOString() }),
+    }, { merge: true });
+    return true;
+  });
 }
 
 // Resolve uid from a subscription object — checks metadata first, then
@@ -251,10 +294,14 @@ export default async function handler(req, res) {
   }
 
   // ── Idempotency: skip events we've already handled ──────────────────────
-  if (await alreadyProcessed(event.id)) {
+  let claim;
+  try { claim = await claimEvent(event.id); }
+  catch (err) { console.error('Webhook claim failed:', err); return res.status(500).json({ error: 'Could not process webhook' }); }
+  if (claim.state === 'done') {
     console.log(`Skipping duplicate event: ${event.id}`);
     return res.status(200).json({ received: true, duplicate: true });
   }
+  if (claim.state === 'processing') return res.status(503).json({ error: 'Event is being processed' });
 
   // ── Handle events ─────────────────────────────────────────────────────────
   try {
@@ -268,17 +315,21 @@ export default async function handler(req, res) {
         if (!uid) break;
 
         // Get the price ID from the subscription
+        if (!session.subscription) break;
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        const priceId      = subscription.items.data[0]?.price?.id;
-        const plan         = PRICE_TO_PLAN[priceId] || "super";
-
-        await db.collection("users").doc(uid).set({
-          plan,
-          stripeCustomerId:   session.customer,
-          stripeSubscription: session.subscription,
-          planActivatedAt:    new Date().toISOString(),
-          planStatus:         "active",
-        }, { merge: true });
+        const activated = await applyActiveSubscription(uid, subscription, { checkout: true });
+        if (!activated) {
+          if (['active', 'trialing'].includes(subscription.status)) {
+            await db.collection('billingReview').doc(session.id || event.id).set({
+              uid, subscriptionId: subscription.id, customerId: subscription.customer,
+              eventId: event.id, reason: 'Checkout subscription could not be reconciled',
+              createdAt: new Date().toISOString(), resolved: false,
+            }, { merge: true });
+            console.error('BILLING_REVIEW_REQUIRED', event.id, subscription.id);
+          }
+          break;
+        }
+        const plan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
 
         console.log(`✓ Plan activated: uid=${uid} plan=${plan}`);
         // Send purchase confirmation email
@@ -291,17 +342,11 @@ export default async function handler(req, res) {
         const invoice = event.data.object;
         if (invoice.billing_reason === "subscription_create") break; // already handled above
 
+        if (!invoice.subscription) break;
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         const uid          = await resolveUid(subscription);
-        const priceId      = subscription.items.data[0]?.price?.id;
-        const plan         = PRICE_TO_PLAN[priceId] || "super";
-
-        if (uid) {
-          await db.collection("users").doc(uid).set({
-            plan,
-            planStatus:    "active",
-            planRenewedAt: new Date().toISOString(),
-          }, { merge: true });
+        if (uid && await applyActiveSubscription(uid, subscription)) {
+          const plan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
           console.log(`✓ Plan renewed: uid=${uid} plan=${plan}`);
         }
         break;
@@ -309,17 +354,26 @@ export default async function handler(req, res) {
 
       // Plan changed via customer portal (Super → Max, monthly → yearly, etc.)
       case "customer.subscription.updated": {
-        const subscription = event.data.object;
+        const subscription = await currentSubscription(event.data.object);
         const uid          = await resolveUid(subscription);
-        const priceId      = subscription.items.data[0]?.price?.id;
-        const plan         = PRICE_TO_PLAN[priceId];
-
-        if (uid && plan && (subscription.status === "active" || subscription.status === "trialing")) {
-          await db.collection("users").doc(uid).set({
-            plan,
-            planStatus:    "active",
-            planRenewedAt: new Date().toISOString(),
-          }, { merge: true });
+        if (uid && subscription.status === 'unpaid') {
+          // Stripe can end failed-payment retries by marking a subscription
+          // "unpaid" instead of cancelling it (Billing → Subscriptions settings).
+          // No deletion event follows, so without this the account kept Plus
+          // with no payment. The subscription id is kept, so paying the open
+          // invoice (status → active) restores Plus through the normal path.
+          const ref = db.collection('users').doc(uid);
+          const paused = await db.runTransaction(async tx => {
+            const snap = await tx.get(ref);
+            if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
+            tx.set(ref, { plan: 'free', planStatus: 'unpaid' }, { merge: true });
+            return true;
+          });
+          if (paused) console.log(`⚠ Subscription unpaid: uid=${uid} — Plus paused until payment`);
+          break;
+        }
+        if (uid && await applyActiveSubscription(uid, subscription)) {
+          const plan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
           console.log(`✓ Plan updated: uid=${uid} plan=${plan} status=${subscription.status}`);
         }
         break;
@@ -335,14 +389,17 @@ export default async function handler(req, res) {
         const plan         = PRICE_TO_PLAN[priceId]; // the plan they had
 
         if (uid) {
-          await db.collection("users").doc(uid).set({
-            plan:        "free",
-            planStatus:  "cancelled",
-            cancelledAt: new Date().toISOString(),
-          }, { merge: true });
-          console.log(`✓ Plan cancelled: uid=${uid}`);
-          // Send cancellation / refund email
-          await sendRefundEmail(email, plan);
+          const ref = db.collection('users').doc(uid);
+          const cancelled = await db.runTransaction(async tx => {
+            const snap = await tx.get(ref);
+            if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
+            tx.set(ref, { plan: 'free', planStatus: 'cancelled', cancelledAt: new Date().toISOString(), stripeSubscription: null }, { merge: true });
+            return true;
+          });
+          if (cancelled) {
+            console.log(`✓ Plan cancelled: uid=${uid}`);
+            await sendRefundEmail(email, plan);
+          }
         }
         break;
       }
@@ -369,9 +426,14 @@ export default async function handler(req, res) {
         const uid          = await resolveUid(subscription);
 
         if (uid) {
-          await db.collection("users").doc(uid).set({
-            planStatus: "past_due",
-          }, { merge: true });
+          const ref = db.collection('users').doc(uid);
+          const updated = await db.runTransaction(async tx => {
+            const snap = await tx.get(ref);
+            if (!snap.exists || snap.data().stripeSubscription !== subscription.id || !['past_due', 'unpaid'].includes(subscription.status)) return false;
+            tx.set(ref, { planStatus: 'past_due' }, { merge: true });
+            return true;
+          });
+          if (!updated) break;
           console.log(`⚠ Payment failed: uid=${uid} — marked past_due, access continues`);
         }
         break;
@@ -383,8 +445,11 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error("Webhook handler error:", err.message);
+    try { await finishEvent(claim, false); } catch (releaseError) { console.error('Webhook release failed:', releaseError); }
     return res.status(500).json({ error: "Internal error" });
   }
 
+  try { await finishEvent(claim, true); }
+  catch (err) { console.error('Webhook completion failed:', err); return res.status(500).json({ error: 'Could not finish webhook' }); }
   res.status(200).json({ received: true });
 }

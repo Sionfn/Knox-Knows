@@ -4,6 +4,7 @@
 import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { getFirestore } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
   initializeApp({
@@ -16,9 +17,13 @@ if (!getApps().length) {
 }
 
 const adminAuth = getAdminAuth();
+const db = getFirestore();
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (process.env.VERCEL_ENV === 'preview') {
+    return res.status(403).json({ error: 'Billing is disabled in the private preview. Use the public site for subscription changes.' });
+  }
 
   // 1. Verify Firebase token
   const authHeader = req.headers.authorization || "";
@@ -31,22 +36,20 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(401).json({ error: "Unauthorized — invalid token." });
   }
-  const { email: verifiedEmail } = decodedToken;
-  if (!verifiedEmail) {
-    return res.status(401).json({ error: "Unauthorized — no email on token." });
-  }
-
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    // Find the Stripe customer by email
-    const existingList = await stripe.customers.list({ email: verifiedEmail, limit: 1 });
-    if (existingList.data.length === 0) {
+    const userSnap = await db.collection('users').doc(decodedToken.uid).get();
+    const customerId = userSnap.exists ? userSnap.data().stripeCustomerId : null;
+    if (!customerId) {
       return res.status(404).json({ error: "No billing account found. Please subscribe first." });
     }
-    const customer = existingList.data[0];
-
-    const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (customer.deleted || (customer.metadata?.uid && customer.metadata.uid !== decodedToken.uid)) {
+      return res.status(403).json({ error: 'Billing account mismatch. Please contact support.' });
+    }
+    const baseUrl = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
 
     // Create billing portal session
     const session = await stripe.billingPortal.sessions.create({

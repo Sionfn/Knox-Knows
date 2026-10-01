@@ -1,0 +1,43 @@
+allowBuilds:
+  '@firebase/util': false
+  esbuild: false
+  protobufjs: false
+overrides:
+  'gaxios>uuid': '11.1.1'
+  'tar@^7': '^7.5.21'
+  'js-yaml@^4': '^4.3.2'
+  'smol-toml@^1': '^1.7.1'
+  'path-to-regexp@6.1.0': '6.3.0'
+  'path-to-regexp@^8': '^8.4.0'
+  'minimatch@^10': '^10.2.3'
+  'ajv@^8': '^8.18.0'
+minimumReleaseAgeExclude:
+  - '@vercel/backends@10.0.0'
+  - '@vercel/build-utils@14.12.0'
+  - '@vercel/cervel@0.1.68'
+  - '@vercel/container@10.0.0'
+  - '@vercel/elysia@10.0.0'
+  - '@vercel/express@10.0.0'
+  - '@vercel/fastify@10.0.0'
+  - '@vercel/gatsby-plugin-vercel-builder@2.2.60'
+  - '@vercel/go@13.0.0'
+  - '@vercel/h3@10.0.0'
+  - '@vercel/hono@10.0.0'
+  - '@vercel/hydrogen@11.0.0'
+  - '@vercel/koa@10.0.0'
+  - '@vercel/nestjs@10.0.0'
+  - '@vercel/next@14.0.0'
+  - '@vercel/node@15.0.0'
+  - '@vercel/python@16.0.0'
+  - '@vercel/redwood@12.0.0'
+  - '@vercel/remix-builder@15.0.0'
+  - '@vercel/ruby@12.0.0'
+  - '@vercel/rust@11.0.0'
+  - '@vercel/static-build@12.0.0'
+  - '@vercel/vc-native-darwin-arm64@60.0.0 || 61.1.0'
+  - '@vercel/vc-native-darwin-x64@60.0.0 || 61.1.0'
+  - '@vercel/vc-native-linux-arm64@60.0.0 || 61.1.0'
+  - '@vercel/vc-native-linux-x64@60.0.0 || 61.1.0'
+  - '@vercel/vc-native-win32-arm64@60.0.0 || 61.1.0'
+  - '@vercel/vc-native-win32-x64@60.0.0 || 61.1.0'
+  - vercel@60.0.0 || 61.1.0

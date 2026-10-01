@@ -15,6 +15,34 @@
       } catch (e) { /* localStorage unavailable — default to light */ }
     })();
   </script>
+  <script>
+    // Halloween season: adds .knox-halloween to <html> (Sep 20 → Nov 1).
+    // The theme itself only shows in dark mode — light mode just gets a
+    // small "turn on dark mode" hint. ?halloween=on / off forces it.
+    (function() {
+      try {
+        var d = new Date(), m = d.getMonth(), day = d.getDate();
+        var on = (m === 8 && day >= 20) || m === 9 || (m === 10 && day <= 1);
+        var q = new URLSearchParams(location.search).get('halloween');
+        if (q === 'on') on = true;
+        if (q === 'off') on = false;
+        var root = document.documentElement;
+        if (on) root.classList.add('knox-halloween');
+        if (localStorage.getItem('knoxHalloweenHint') === 'hidden') root.classList.add('knox-hh-hidden');
+      } catch (e) { /* decorative only */ }
+      // Hint button: use the page's real toggle when it's ready, otherwise
+      // flip the theme directly (same attribute + storage key it uses).
+      window.knoxHalloweenDarkMode = function() {
+        if (typeof window.toggleDarkMode === 'function') return window.toggleDarkMode();
+        document.documentElement.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) {}
+      };
+      window.knoxHideHalloweenHint = function() {
+        document.documentElement.classList.add('knox-hh-hidden');
+        try { localStorage.setItem('knoxHalloweenHint', 'hidden'); } catch (e) {}
+      };
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
@@ -136,6 +164,9 @@
       --surface:       #29292E;
       --danger-bg:     #3A2020;
       --danger-border: #5C2E2E;
+      /* Tell the browser this page is dark so native form controls,
+         autofill and scrollbars render dark too (not white boxes). */
+      color-scheme: dark;
     }
 
     html, body {
@@ -295,14 +326,12 @@
       transition: background 0.15s, transform 0.15s;
     }
     #streakPill:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+    /* Static flame — no animation, no filter. Every animated/filtered
+       version distorted the emoji glyph and read as broken. A plain emoji
+       is what looks right. The "keep it alive" (not-studied-today) state
+       dims the whole pill slightly rather than filtering the flame. */
     #streakPill #streakFlame { font-size: 13px; line-height: 1; }
-    /* Flame flickers gently when streak is active */
-    #streakPill.active #streakFlame { animation: flameFlicker 2.2s ease-in-out infinite; }
-    @keyframes flameFlicker {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      30%      { transform: scale(1.12) rotate(-4deg); }
-      60%      { transform: scale(1.05) rotate(3deg); }
-    }
+    #streakPill.dim { opacity: 0.72; }
     /* Milestone celebration pulse */
     #streakPill.celebrate {
       animation: streakCelebrate 0.6s cubic-bezier(0.34,1.56,0.64,1);
@@ -396,7 +425,7 @@
       right: 24px;
       background: var(--surface);
       border: 2px solid var(--border);
-      border-radius: 20px;
+      border-radius: 14px;
       box-shadow: 0 12px 28px rgba(0,0,0,0.15);
       min-width: 260px;
       overflow: hidden;
@@ -404,10 +433,17 @@
       z-index: 200;
     }
     .app-dropdown-header {
-      padding: 18px;
+      padding: 16px;
       background: var(--cream);
-      border-bottom: 2px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }
+    .dd-identity { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    #ddAvatar { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--orange); color: white; font-size: 15px; font-weight: 900; }
+    #ddAvatar img { width: 100%; height: 100%; object-fit: cover; }
+    .dd-identity-copy { min-width: 0; }
+    .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .dd-badge { border: 1px solid var(--border); background: var(--surface); color: var(--text-light); padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
+    .dd-badge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
     .app-dropdown-header .dd-name {
       font-size: 15px; font-weight: 900; color: var(--text);
       margin-bottom: 2px; word-break: break-word;
@@ -447,16 +483,16 @@
     .dd-plan-free   .plan-name { color: var(--text); }
     .dd-plan-free   .plan-tag  { color: var(--text-light); }
     .dd-plan-super  { background: var(--green-light); border-color: var(--green-dark);             box-shadow: 0 2px 0 var(--green-dark); }
-    .dd-plan-super  .plan-name { color: var(--green-dark); }
-    .dd-plan-super  .plan-tag  { color: var(--green-dark); }
+    .dd-plan-super  .plan-name { color: var(--text); }
+    .dd-plan-super  .plan-tag  { color: var(--text); }
     .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), var(--orange-dark)); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max    .plan-name { color: var(--orange-dark); }
     .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
     .app-dropdown-item {
       width: 100%;
       display: flex; align-items: center; gap: 10px;
-      padding: 14px 18px;
-      font-size: 14px; font-weight: 800;
+      padding: 11px 16px;
+      font-size: 13px; font-weight: 800;
       color: var(--text);
       background: none; border: none; text-align: left;
       transition: background 0.15s;
@@ -480,55 +516,81 @@
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
     /* SIDEBAR */
+    /* No border-right: the surface / bg contrast already separates the
+       sidebar from the chat area, and the border was showing up as an
+       "extra line" against the header at the top corner. Width transition
+       stays smooth by promoting the sidebar to its own layer with
+       will-change; contain: layout prevents inside reflows from cascading
+       out to the main column mid-animation (which is what read as "lag"). */
     #rightSidebar {
-      width: 240px;
+      width: 264px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       background: var(--surface);
       overflow: hidden;
-      transition: width 0.2s ease;
+      box-sizing: border-box;
+      contain: layout;
     }
+    /* Collapse is INSTANT — no width transition. Animating the sidebar's
+       width made the flex sibling (#mainColumn, which holds the entire chat
+       thread) re-layout and re-wrap all its text on every single frame —
+       that's why the whole app stuttered on collapse, not just the sidebar.
+       Snapping the width means one layout pass instead of ~11, so it feels
+       instant and responsive instead of laggy. The label fade below still
+       gives it a touch of polish without touching layout. */
     body.app-sidebar-collapsed #rightSidebar { width: 68px; }
-    body.app-sidebar-collapsed .sidebar-collapsible { display: none !important; }
+    .sidebar-body { contain: layout paint; }
+    #sidebarHistoryList { contain: layout paint; }
+    .sidebar-collapsible {
+      transition: opacity 100ms ease-out;
+      white-space: nowrap;
+    }
+    /* overflow:hidden ONLY while collapsed — needed to clip the text as its
+       max-width goes to 0. Applying it in the expanded state too was clipping
+       the logo's sticker shadow (0 2px 0) since the logo link carries this
+       class, which made the round logo look cut off at the bottom. */
+    body.app-sidebar-collapsed .sidebar-collapsible {
+      opacity: 0;
+      max-width: 0;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
     body.app-sidebar-collapsed .sidebar-new-btn { display: none; }
     body.app-sidebar-collapsed .sidebar-section-header { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-quicknav-link { justify-content: center; }
     body.app-sidebar-collapsed .sidebar-top { justify-content: center; }
 
-    /* Sidebar top — logo + collapse toggle, Knox-orange like the header.
-       height/box-sizing/border-bottom MUST exactly match #appHeader (also
-       64px, also 4px border) or their bottom edges land on different pixels
-       and a small notch appears right where sidebar meets header.
-       border-right uses orange-dark, not grey — a light grey line has no
-       contrast against solid orange and looks washed out/inconsistent with
-       the grey line below it on white. Matching shades keeps one visually
-       continuous divider that's actually visible the whole way down. */
+    /* Keep Knox's fox and rounded type prominent in a quiet sidebar shell. */
     .sidebar-top {
       display: flex; align-items: center; justify-content: space-between;
-      height: 64px;
+      height: 76px;
       box-sizing: border-box;
-      padding: 0 14px;
-      background: var(--orange);
-      border-bottom: 4px solid var(--orange-dark);
-      border-right: 1.5px solid var(--orange-dark);
+      padding: 0 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
     .sidebar-logo-link { display: flex; align-items: center; gap: 9px; text-decoration: none; min-width: 0; }
-    .sidebar-logo-link img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.4); flex-shrink: 0; }
-    .sidebar-logo-text { font-size: 15px; font-weight: 900; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Round logo — matches the header logo, one shape for one asset. */
+    .sidebar-logo-link img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: top; border: 2px solid var(--orange); flex-shrink: 0; box-shadow: 0 2px 0 var(--orange-dark); }
+    .sidebar-logo-text { font-size: 16px; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Collapse toggle — lives in the Knox family (orange-cream + orange icon)
+       rather than reading as a generic gray utility button. */
     .sidebar-collapse-btn {
-      background: rgba(255,255,255,0.2); border: none; color: white;
-      border-radius: 8px; width: 26px; height: 26px; flex-shrink: 0;
+      background: var(--orange-cream); border: 1px solid var(--orange-light); color: var(--orange);
+      border-radius: 9px; width: 30px; height: 30px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background 0.15s;
+      cursor: pointer; transition: background 0.15s, transform 0.15s;
     }
-    .sidebar-collapse-btn:hover { background: rgba(255,255,255,0.35); }
+    .sidebar-collapse-btn:hover { background: var(--orange-light); transform: translateY(-1px); }
 
     /* Quick nav — Home, sits right below the top bar */
-    /* Everything below the orange top bar. Each child below gets its own
-       border-right in a shade that fits its own background — avoids
-       double-border overlap from also bordering this wrapper. */
+    /* One continuous separator belongs to the sidebar, not its children. */
     .sidebar-body {
       flex: 1;
       display: flex;
@@ -538,57 +600,87 @@
     }
 
     .sidebar-quicknav {
-      padding: 8px; display: flex; flex-direction: column; gap: 2px;
+      padding: 14px 10px 12px; display: flex; flex-direction: column; gap: 3px;
       flex-shrink: 0; border-bottom: 1px solid var(--border);
-      border-right: 1.5px solid var(--border);
       background: var(--surface);
     }
     .sidebar-quicknav-link {
       display: flex; align-items: center; gap: 10px;
-      padding: 9px 10px; border-radius: 10px;
+      padding: 9px 12px; border-radius: 10px;
       font-size: 13px; font-weight: 800; color: var(--text-light);
       text-decoration: none; transition: background 0.15s, color 0.15s;
+      width: 100%; border: 0; background: transparent; cursor: pointer; font-family: inherit; text-align: left;
     }
-    .sidebar-quicknav-link:hover { background: var(--orange-cream); color: var(--orange); }
-    .sidebar-quicknav-link.sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
-    .sidebar-quicknav-link .sq-icon { font-size: 15px; flex-shrink: 0; width: 18px; text-align: center; }
+    /* Each quick-nav item hovers/highlights in ITS OWN icon color, not a
+       blanket orange — Ask = orange, Calculator = blue, Learn = purple. */
+    .sidebar-quicknav-link[data-nav="chat"]:hover,
+    .sidebar-quicknav-link[data-nav="chat"].sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
+    .sidebar-quicknav-link[data-nav="calculator"]:hover,
+    .sidebar-quicknav-link[data-nav="calculator"].sidebar-nav-active { background: var(--blue-light); color: var(--blue); }
+    .sidebar-quicknav-link[data-nav="learn"]:hover,
+    .sidebar-quicknav-link[data-nav="learn"].sidebar-nav-active { background: var(--purple-light); color: var(--purple); }
+    /* Sticker icon tiles — chunkier bottom shadow (0 3px 0) in each color's
+       darker shade, matching the Duolingo-style depth Knox uses everywhere
+       else. currentColor made the shadow the exact same tone as the icon,
+       which read as flat; darker shadow reads as a raised sticker. */
+    .sidebar-quicknav-link .sq-icon { flex: 0 0 32px; width: 32px; height: 32px; border-radius: 11px; display: flex; align-items: center; justify-content: center; border: 1.5px solid; }
+    .sq-icon svg { width: 21px; height: 21px; }
+    .sq-ask { color: var(--orange); background: var(--orange-light); box-shadow: 0 3px 0 var(--orange-dark); }
+    .sq-calc { color: var(--blue); background: var(--blue-light); box-shadow: 0 3px 0 var(--blue-dark); }
+    .sq-learn { color: var(--purple); background: var(--purple-light); box-shadow: 0 3px 0 var(--purple-dark); }
 
     .sidebar-section-header {
-      padding: 14px 14px 10px;
+      padding: 15px 15px 8px;
       font-size: 11px; font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      background: var(--orange);
-      color: white;
-      border-bottom: 3px solid var(--orange-dark);
-      border-right: 1.5px solid var(--orange-dark);
+      background: var(--surface);
+      color: var(--text-light);
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
     .sidebar-new-btn {
-      background: var(--surface);
+      background: var(--orange-cream);
       color: var(--orange);
-      border: none;
-      border-radius: 10px;
-      padding: 5px 12px;
+      border: 1px solid var(--orange-light);
+      border-radius: 8px;
+      padding: 6px 9px;
       font-size: 11px; font-weight: 900;
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+      text-transform: none;
+      letter-spacing: 0;
+      /* Tiny sticker shadow so it reads like every other Knox button. */
       box-shadow: 0 2px 0 var(--orange-light);
-      transition: all 0.15s;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      cursor: pointer;
     }
-    .sidebar-new-btn:hover { transform: translateY(-1px); }
-    .sidebar-new-btn:active { transform: translateY(1px); box-shadow: none; }
+    .sidebar-new-btn:hover { background: var(--orange-light); transform: translateY(-1px); box-shadow: 0 3px 0 var(--orange); }
+    .sidebar-new-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--orange-light); }
 
     #sidebarHistoryList {
       flex: 1;
-      overflow-y: auto;
-      padding: 6px 8px;
-      background: var(--cream);
-      border-right: 1.5px solid var(--border);
+      /* Always-reserve the scrollbar gutter with `overflow-y: scroll`
+         instead of `auto` + `scrollbar-gutter: stable`. `auto` combined
+         with `scrollbar-gutter: stable` still made the layout shift on
+         browsers/OSes where scrollbars appear on scroll (macOS Safari,
+         iOS), so history items looked like they were resizing while you
+         scrolled. Forcing `scroll` reserves the gutter on every device
+         so the item width never changes. */
+      overflow-y: scroll;
+      padding: 4px 9px 8px;
+      background: var(--surface);
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      /* Firefox: keep the reserved gutter but hide the visible track/thumb
+         so it doesn't read as a vertical line down the sidebar (especially
+         in dark mode where the thumb color contrasted with the surface). */
+      scrollbar-width: none;
     }
+    /* WebKit: the gutter is still reserved by `overflow-y: scroll`, but the
+       scrollbar itself is transparent until you actually hover the list —
+       so no permanent line, no wobble. */
     #sidebarHistoryList::-webkit-scrollbar { width: 4px; }
-    #sidebarHistoryList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+    #sidebarHistoryList::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background 0.15s; }
+    #sidebarHistoryList:hover::-webkit-scrollbar-thumb { background: var(--border); }
     #sidebarHistoryEmpty {
       padding: 24px 10px;
       text-align: center;
@@ -597,11 +689,15 @@
       line-height: 1.6;
     }
 
-    /* Pinned upgrade card — free users only, always visible at the bottom */
+    /* Pinned upgrade card — free users only, always visible at the bottom.
+       Sticker treatment (darker border + drop-shadow ledge) so it reads as
+       a raised card matching Knox Plus pricing cards on the landing page. */
     .sidebar-upgrade-card {
       margin: 10px; padding: 14px;
       background: var(--orange);
+      border: 3px solid var(--orange-dark);
       border-radius: 14px;
+      box-shadow: 0 4px 0 var(--orange-dark);
       flex-shrink: 0;
     }
     .sidebar-upgrade-card p {
@@ -611,40 +707,50 @@
       width: 100%; padding: 9px; border-radius: 10px;
       background: var(--surface); color: var(--orange);
       border: none; font-size: 12.5px; font-weight: 900; font-family: inherit;
-      cursor: pointer; transition: transform 0.15s;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 3px 0 var(--orange-light);
     }
-    .sidebar-upgrade-card button:hover { transform: translateY(-1px); }
+    .sidebar-upgrade-card button:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--orange-light); }
+    .sidebar-upgrade-card button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-light); }
 
     .sidebar-history-item {
       position: relative;
-      display: flex; align-items: center; gap: 8px;
-      padding: 10px 12px;
-      border-radius: 12px;
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px;
+      border-radius: 9px;
       font-size: 13px; font-weight: 700;
       color: var(--text-light);
-      transition: all 0.15s;
-      border: 2px solid transparent;
-      /* Deliberately --gray, not --surface, which #rightSidebar itself
-         uses — a nested list needs to read as slightly recessed within
-         its panel, not the identical color as the panel around it. In
-         light mode this is a subtle off-white-on-white distinction; in
-         dark mode, where shadows barely read against dark surfaces, this
-         color difference is what actually keeps each item visible as its
-         own card instead of one flat undifferentiated block. */
-      background: var(--gray);
+      transition: background 0.15s, color 0.15s;
+      border: 1px solid transparent;
+      background: transparent;
       width: 100%;
       text-align: left;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       font-family: inherit;
       cursor: pointer;
       user-select: none;
     }
     .sidebar-history-item:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
-    .sidebar-history-item:hover { color: var(--text); border-color: var(--orange-light); background: var(--surface); }
+    /* Smooth removal — the row fades, slides left, and collapses its height
+       before it's removed from the DOM, so deleting a chat glides instead of
+       snapping. */
+    .sidebar-history-item.shi-removing {
+      opacity: 0;
+      transform: translateX(-12px);
+      margin-bottom: 0 !important;
+      padding-top: 0; padding-bottom: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transition: height 0.22s ease, opacity 0.18s ease, transform 0.22s ease, padding 0.22s ease;
+    }
+    .sidebar-history-item:hover { color: var(--text); background: var(--cream); }
+    .sidebar-history-item.is-current { color: var(--orange); background: var(--orange-cream); }
     .sidebar-history-item .shi-text {
       flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-    .sidebar-history-item .shi-icon { font-size: 14px; flex-shrink: 0; }
+    .sidebar-history-item .shi-icon { width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
+    .sidebar-history-item.is-current .shi-icon { color: var(--orange); }
+    .sidebar-history-item .shi-icon svg { width: 16px; height: 16px; }
     .sidebar-history-item .shi-delete {
       opacity: 0;
       background: transparent;
@@ -656,7 +762,7 @@
       display: flex; align-items: center; justify-content: center;
       transition: opacity 0.15s, background 0.15s;
     }
-    .sidebar-history-item:hover .shi-delete { opacity: 1; }
+    .sidebar-history-item:hover .shi-delete, .sidebar-history-item:focus-within .shi-delete { opacity: 1; }
     .sidebar-history-item .shi-delete:hover { background: var(--danger-bg); color: var(--red); }
     /* Touch devices have no hover — show delete buttons by default */
     @media (hover: none) {
@@ -664,10 +770,138 @@
     }
 
     .sidebar-footer {
-      padding: 10px 8px;
-      border-top: 2px solid var(--border);
+      padding: 10px;
+      border-top: 1px solid var(--border);
       flex-shrink: 0;
-      background: var(--surface);
+      background: var(--gray);
+    }
+    .sidebar-extension-card {
+      display: flex; align-items: center; gap: 10px;
+      margin: 8px 10px 10px; padding: 11px;
+      border: 1.5px solid var(--blue);
+      border-radius: 13px;
+      background: var(--blue-light);
+      color: var(--text);
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .sidebar-extension-card:hover, .sidebar-extension-card:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 0 var(--blue);
+      outline: none;
+    }
+    .sidebar-extension-card img { width: 34px; height: 34px; border: 2px solid var(--orange); border-radius: 10px; flex-shrink: 0; }
+    .sidebar-extension-copy { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+    .sidebar-extension-copy strong { font-size: 12px; line-height: 1.2; }
+    .sidebar-extension-copy span { font-size: 11px; font-weight: 800; color: var(--blue); }
+    .sidebar-extension-arrow { margin-left: auto; color: var(--blue); font-size: 17px; font-weight: 900; }
+    #mobileHistoryDrawer .sidebar-extension-card { margin: 8px; }
+    .sidebar-control-label { display: none; }
+    .account-status-row, .account-dock { display: contents; }
+    #sidebarSettingsBtn, #appAccountPlanBadge { display: none; }
+    @media (min-width: 901px) {
+      #appHeader { display: none; }
+      #sidebarHistoryList { min-height: 0; }
+      .sidebar-quicknav-link { padding-top: 8px; padding-bottom: 8px; }
+      .sidebar-history-item { padding-top: 7px; padding-bottom: 7px; }
+      #sidebarUpgradeCard[style*="display: block"] { display: flex !important; }
+      #sidebarUpgradeCard { align-items: center; gap: 8px; margin: 5px 8px; padding: 8px; }
+      #sidebarUpgradeCard p { margin: 0; font-size: 11px; line-height: 1.2; }
+      #sidebarUpgradeCard button { width: auto; flex-shrink: 0; padding: 7px; font-size: 11px; }
+      #sidebarControlsSlot .header-right { flex-direction: column; align-items: stretch; gap: 8px; }
+      #sidebarControlsSlot .account-status-row { display: flex; align-items: stretch; gap: 5px; min-width: 0; }
+      #sidebarControlsSlot .account-dock { display: flex; align-items: center; gap: 5px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--border); }
+      #sidebarControlsSlot #darkModeToggle,
+      #sidebarControlsSlot #streakPill,
+      #sidebarControlsSlot #headerUsage,
+      #sidebarControlsSlot #appAccountBtn,
+      #sidebarSettingsBtn {
+        height: 36px;
+        min-height: 36px;
+        box-sizing: border-box;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 8px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 11px;
+        text-align: left;
+        overflow: hidden;
+      }
+      #sidebarControlsSlot #headerUsage { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+      #sidebarControlsSlot #streakPill { flex: 0 0 auto; }
+      #sidebarControlsSlot #darkModeToggle { width: 36px; flex: 0 0 36px; }
+      /* Member status row mirrors the guest one: the plan/credit pill fills the
+         left, the compact streak sits to its right (🔥 on the right). */
+      #sidebarControlsSlot .account-status-row #headerUsage { order: 0; }
+      #sidebarControlsSlot .account-status-row #streakPill { order: 1; }
+      /* Guest footer: no isolated credit "section". The theme toggle and the
+         credit pill share one row (JS moves the toggle into .account-status-row
+         for guests), sitting directly above the Login / Sign up buttons — the
+         same clean stack members see. The empty dock/divider is removed. */
+      body.app-guest #sidebarControlsSlot .account-dock { display: none !important; }
+      body.app-guest #sidebarControlsSlot .account-status-row {
+        display: flex !important; flex-direction: row !important; flex-wrap: nowrap;
+        align-items: center; gap: 8px;
+      }
+      body.app-guest #sidebarControlsSlot #darkModeToggle { flex: 0 0 36px; }
+      body.app-guest #sidebarControlsSlot #headerUsage {
+        flex: 1 1 auto; width: auto; white-space: nowrap; justify-content: center;
+      }
+      #sidebarControlsSlot .sidebar-control-label { display: none; }
+      #sidebarControlsSlot #darkModeToggle:hover,
+      #sidebarControlsSlot #streakPill:hover,
+      #sidebarControlsSlot #headerUsage:hover,
+      #sidebarControlsSlot #appAccountBtn:hover,
+      #sidebarSettingsBtn:hover { background: var(--orange-cream); }
+      #sidebarControlsSlot #headerUsage.unlimited { border-color: var(--yellow); }
+      #sidebarControlsSlot #appAccountBtn { flex: 1; min-width: 0; height: 52px; justify-content: flex-start; background: transparent; border-color: transparent; padding: 5px 3px; }
+      #sidebarControlsSlot #appAccountIcon { width: 34px; height: 34px; background: var(--orange); }
+      #sidebarControlsSlot .account-identity { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      #sidebarControlsSlot #appAccountName { max-width: 135px; font-size: 12px; line-height: 1.2; }
+      #sidebarControlsSlot #appAccountPlanBadge { display: inline-block; align-self: flex-start; padding: 1px 6px; margin-top: 3px; border-radius: 6px; border: 1px solid var(--border); font-size: 9px; color: var(--text-light); background: var(--surface); font-weight: 900; white-space: nowrap; }
+      #sidebarControlsSlot #appAccountPlanBadge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+      #sidebarSettingsBtn { display: flex; align-items: center; width: 36px; height: 36px; cursor: pointer; flex: 0 0 36px; }
+      #sidebarControlsSlot #appUpgradeBtn { width: 100%; }
+      #sidebarControlsSlot #appGuestBtns { display: flex; }
+      #sidebarControlsSlot #appGuestBtns button { flex: 1; color: var(--text); border-color: var(--border); background: var(--cream); padding: 7px 5px; }
+      #sidebarControlsSlot #appGuestBtns .header-signup-btn { color: white; background: var(--orange); }
+      body.app-sidebar-collapsed .sidebar-section-header { display: none; }
+      body.app-sidebar-collapsed #sidebarControlsSlot .header-right { align-items: center; }
+      body.app-sidebar-collapsed #sidebarControlsSlot .account-status-row,
+      body.app-sidebar-collapsed #sidebarControlsSlot .account-dock { flex-direction: column; align-items: center; width: 100%; }
+      body.app-sidebar-collapsed #sidebarControlsSlot #darkModeToggle,
+      body.app-sidebar-collapsed #sidebarControlsSlot #streakPill,
+      body.app-sidebar-collapsed #sidebarControlsSlot #headerUsage,
+      body.app-sidebar-collapsed #sidebarControlsSlot #appAccountBtn,
+      body.app-sidebar-collapsed #sidebarSettingsBtn {
+        width: 42px;
+        flex: 0 0 42px;
+        justify-content: center;
+        padding: 5px;
+      }
+      body.app-sidebar-collapsed #sidebarControlsSlot #appAccountBtn { height: 44px; }
+      body.app-sidebar-collapsed #sidebarSettingsBtn { height: 36px; }
+      body.app-sidebar-collapsed #sidebarControlsSlot .sidebar-control-label,
+      body.app-sidebar-collapsed #sidebarControlsSlot #headerUsageText,
+      body.app-sidebar-collapsed #sidebarControlsSlot .account-identity,
+      body.app-sidebar-collapsed #sidebarControlsSlot #streakCount,
+      body.app-sidebar-collapsed #sidebarControlsSlot #appUpgradeLabel { display: none; }
+      body.app-sidebar-collapsed #sidebarControlsSlot #appGuestBtns { flex-direction: column; }
+      body.app-sidebar-collapsed #sidebarControlsSlot #appGuestBtns button { width: 42px; font-size: 10px; }
+      body.app-sidebar-collapsed #sidebarUpgradeCard { display: none !important; }
+      body.app-sidebar-collapsed #sidebarControlsSlot .account-status-row,
+      body.app-sidebar-collapsed #sidebarControlsSlot #darkModeToggle { display: none !important; }
+      body.app-sidebar-collapsed #sidebarControlsSlot .account-dock { border-top: 0; padding-top: 0; }
+      body.app-sidebar-collapsed .sidebar-quicknav { padding-left: 8px; padding-right: 8px; }
+      body.app-sidebar-collapsed .sidebar-quicknav-link { padding-left: 0; padding-right: 0; }
+      .sidebar-quicknav-link, .sidebar-section-header { white-space: nowrap; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #rightSidebar { transition: none; }
     }
     .sidebar-home-link {
       display: flex; align-items: center; gap: 8px;
@@ -791,15 +1025,13 @@
 
     .welcome-badge {
       display: inline-flex; align-items: center; gap: 6px;
-      background: var(--cream);
-      border: 2px solid var(--orange-light);
+      background: var(--orange-light);
+      border: 2px solid var(--orange);
       border-radius: 999px;
-      padding: 6px 16px;
-      font-size: 13px; font-weight: 800;
+      padding: 7px 18px;
+      font-size: 14px; font-weight: 800;
       color: var(--orange);
-      margin-bottom: 16px;
-      letter-spacing: 0.02em;
-      box-shadow: 0 2px 0 var(--orange-light);
+      margin-bottom: 18px;
     }
     .welcome-title {
       font-size: clamp(26px, 4vw, 40px);
@@ -825,22 +1057,27 @@
       width: 100%;
       max-width: 580px;
     }
+    /* Matches the landing page's feature cards: full color border with a
+       solid darker "ledge" underneath. */
     .suggestion-chip {
+      --chip: var(--border); --chip-ledge: var(--border);
       background: var(--surface);
-      border: 2px solid var(--border);
+      border: 2px solid var(--chip);
       border-radius: 20px;
       padding: 18px 16px;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      box-shadow: 0 4px 0 var(--border);
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 0 var(--chip-ledge);
       display: flex; align-items: center; gap: 14px;
       text-align: left;
       font-family: inherit;
+      cursor: pointer;
     }
-    .suggestion-chip:hover { transform: translateY(-4px); box-shadow: 0 8px 0 var(--border); }
-    .suggestion-chip[data-flavor="orange"]:hover { border-color: var(--orange); box-shadow: 0 7px 0 var(--orange-light); }
-    .suggestion-chip[data-flavor="blue"]:hover   { border-color: var(--blue);   box-shadow: 0 7px 0 var(--blue-light); }
-    .suggestion-chip[data-flavor="green"]:hover  { border-color: var(--green);  box-shadow: 0 7px 0 var(--green-light); }
-    .suggestion-chip[data-flavor="purple"]:hover { border-color: var(--purple); box-shadow: 0 7px 0 var(--purple-light); }
+    .suggestion-chip[data-flavor="orange"] { --chip: var(--orange); --chip-ledge: var(--orange-dark); }
+    .suggestion-chip[data-flavor="blue"]   { --chip: var(--blue);   --chip-ledge: var(--blue-dark); }
+    .suggestion-chip[data-flavor="green"]  { --chip: var(--green);  --chip-ledge: var(--green-dark); }
+    .suggestion-chip[data-flavor="purple"] { --chip: var(--purple); --chip-ledge: var(--purple-dark); }
+    .suggestion-chip:hover  { transform: translateY(-3px); box-shadow: 0 7px 0 var(--chip-ledge); }
+    .suggestion-chip:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--chip-ledge); }
 
     .chip-circle {
       width: 56px; height: 56px;
@@ -869,9 +1106,9 @@
     #chatThread {
       flex: 1;
       overflow-y: auto;
-      padding: 24px 24px 12px;
-      max-width: 900px;
-      margin: 0 auto;
+      /* The scroll container spans the main column so its scrollbar sits at
+         the viewport edge; the padding still centers the conversation. */
+      padding: 24px max(24px, calc((100% - 900px) / 2)) 12px;
       width: 100%;
       scroll-behavior: smooth;
       background: var(--cream);
@@ -930,8 +1167,9 @@
     .msg-knox-bubble {
       background: var(--surface);
       border: 2px solid var(--border);
-      border-radius: 4px 20px 20px 20px;
-      padding: 18px 20px;
+      border-left: 4px solid var(--orange);
+      border-radius: 6px 20px 20px 20px;
+      padding: 0;
       font-size: 15px; font-weight: 500;
       line-height: 1.65;
       color: var(--text);
@@ -939,11 +1177,54 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-    .msg-knox-bubble:has(.knox-section-card) {
-      background: transparent;
-      border: none;
-      padding: 0;
-      box-shadow: none;
+    .msg-knox-bubble > .thinking-row,
+    .msg-knox-bubble > p,
+    .msg-knox-bubble > .limit-card { margin: 18px 20px; }
+    .knox-response-heading {
+      display: flex; align-items: center; gap: 8px;
+      padding: 13px 18px 0;
+      color: var(--purple-dark);
+      background: var(--surface);
+      font-size: 12px; font-weight: 900;
+      letter-spacing: .07em; text-transform: uppercase;
+    }
+    html[data-theme="dark"] .knox-response-heading.learn { color: var(--purple-on-tint); }
+    .knox-final-answer {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      margin: 0 20px 20px;
+      padding: 10px 14px;
+      border: 1px solid var(--blue);
+      border-left: 4px solid var(--blue);
+      border-radius: 12px;
+      background: var(--blue-light);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+    .knox-final-answer:first-child { margin-top: 18px; }
+    .knox-final-answer-label {
+      flex: none;
+      color: var(--blue-dark);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    html[data-theme="dark"] .knox-final-answer-label { color: #74D4FF; }
+    .knox-response-body { padding: 18px 20px 16px; }
+    .knox-response-body > :first-child { margin-top: 0 !important; }
+    .knox-response-body > :last-child { margin-bottom: 0 !important; }
+    .knox-response-body > .knox-section-card:first-child { margin-top: 0; }
+    .knox-response-body > .knox-section-card:last-child { margin-bottom: 0; }
+    .msg-knox-bubble > .knox-video-card { margin: 0 20px 20px !important; }
+    @media (max-width: 640px) {
+      .knox-response-body { padding: 15px 15px 14px; }
+      .knox-response-heading { padding: 12px 15px 0; }
+      .knox-final-answer { margin: 0 15px 15px; padding: 9px 12px; }
     }
     .knox-section-card {
       background: var(--surface);
@@ -1085,32 +1366,41 @@
     .usage-info-overlay.open { display: flex; }
     .usage-info-card {
       position: relative;
-      background: linear-gradient(180deg, var(--orange-cream) 0%, white 45%);
-      border: 2px solid var(--orange-light);
-      border-radius: 22px;
-      padding: 28px 26px 24px;
+      /* Token-based gradient so it works in light AND dark. The old hardcoded
+         `white` at 45% stayed white in dark mode, making the text unreadable.
+         var(--surface) is white in light, dark card color in dark. */
+      background: linear-gradient(180deg, var(--orange-cream) 0%, var(--surface) 42%);
+      /* Solid orange sticker border (was pale --orange-light, invisible on
+         the cream background). */
+      border: 3px solid var(--orange);
+      border-radius: 24px;
+      padding: 30px 26px 24px;
       max-width: 380px;
       width: 100%;
-      box-shadow: 0 4px 0 var(--orange-light), 0 20px 60px rgba(0,0,0,0.2);
+      /* Chunky Knox sticker ledge + soft drop for depth. */
+      box-shadow: 0 6px 0 var(--orange-dark), 0 24px 60px rgba(0,0,0,0.35);
       text-align: center;
       max-height: 85vh;
       overflow-y: auto;
     }
     .usage-info-close {
       position: absolute; top: 14px; right: 14px;
-      width: 30px; height: 30px; border-radius: 50%;
-      border: none; background: var(--gray);
-      color: var(--text-light); font-size: 14px; font-weight: 800;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--surface);
+      color: var(--text-light); font-size: 15px; font-weight: 900;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s, transform 0.15s;
     }
+    .usage-info-close:hover { background: var(--orange-cream); color: var(--orange); transform: translateY(-1px); }
     .usage-info-icon {
-      width: 64px; height: 64px;
+      width: 72px; height: 72px;
       border-radius: 50%;
       object-fit: cover;
-      margin: 0 auto 10px;
+      margin: 0 auto 12px;
       display: block;
-      border: 3px solid var(--orange-light);
-      box-shadow: 0 4px 12px rgba(255,107,0,0.15);
+      /* Matches the header/sidebar logo treatment: orange ring + sticker shadow. */
+      border: 3px solid var(--orange);
+      box-shadow: 0 3px 0 var(--orange-dark);
     }
     .usage-info-card h3 { font-size: 20px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
     .usage-info-next {
@@ -1213,6 +1503,14 @@
       max-width: 900px;
       margin: 0 auto;
       width: 100%;
+    }
+    .knox-model-reply {
+      display: inline-block;
+      margin: 0 0 8px;
+      color: var(--text-light);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
     }
 
     /* IMAGE PREVIEW PILL */
@@ -1332,8 +1630,11 @@
     /* ═══ MODALS ═══════════════════════════════════════════ */
     .modal-backdrop {
       position: fixed; inset: 0;
-      background: rgba(60,60,60,0.6);
-      backdrop-filter: blur(6px);
+      /* Solid dark overlay instead of backdrop-filter: blur(). The blur had
+         to re-render everything behind the modal on every scroll frame,
+         which made scrolling the auth/settings modal lag badly. A slightly
+         darker plain overlay reads the same and scrolls smoothly. */
+      background: rgba(30,25,22,0.72);
       z-index: 9999;
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
@@ -1418,6 +1719,9 @@
       border-radius: 14px;
       font-size: 16px; font-weight: 600;
       color: var(--text);
+      /* Explicit surface — without it the field stayed browser-white in dark
+         mode while the text turned light, so typed emails were invisible. */
+      background: var(--surface);
       outline: none;
       transition: all 0.2s;
       box-shadow: 0 2px 0 var(--border);
@@ -1609,6 +1913,7 @@
       #rightSidebar { display: none; }
       #mobileHistoryBtn { display: flex; }
       .app-logo-link { display: flex; }
+      .sidebar-control-label { display: none; }
     }
     @media (max-width: 768px) {
       #appHeader { padding: 0 14px; gap: 8px; }
@@ -1658,7 +1963,7 @@
       .input-box { font-size: 16px; /* prevents iOS zoom on input focus */ }
       .input-box textarea, .input-box input { font-size: 16px !important; }
       /* Modal heights respect dynamic viewport on iOS */
-      .auth-card, .settings-card { max-height: 92dvh; max-height: 92vh; }
+      .auth-card, .settings-card { max-height: 92vh; max-height: 92dvh; }
       /* Make modal padding even tighter on tiny phones */
       .auth-body, .settings-body { padding: 22px 20px; }
       .auth-header, .settings-header { padding: 18px 20px; }
@@ -1681,22 +1986,273 @@
          for the same narrow row. */
       .header-right { gap: 4px; }
     }
+    /* Small phones (360–400px): the guest row — menu, logo, theme, credit
+       pill, Sign up — overflowed the screen edge. Trim the logo, the gap
+       beside it and the Sign up button so everything fits with its padding. */
+    @media (max-width: 400px) {
+      .app-logo-img { width: 34px; height: 34px; border-width: 2px; }
+      #appHeader > div:first-child { gap: 6px !important; }
+      #appGuestBtns .header-signup-btn { padding: 8px 11px; font-size: 12px; letter-spacing: 0.02em; }
+    }
 
     /* Reduce motion if requested */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
-  </style>
+    /* First paint and account transitions stay covered until auth and the
+       account-dependent UI have settled. Never show the guest app briefly. */
+    .app-auth-pending #appShell { visibility: hidden; }
+    #appLoading {
+      display: none;
+      position: fixed; inset: 0; z-index: 10000;
+      align-items: center; justify-content: center;
+      padding: 24px; text-align: center;
+      background: var(--cream); color: var(--text);
+    }
+    .app-auth-pending #appLoading { display: flex; }
+    .app-loading-content { display: flex; flex-direction: column; align-items: center; gap: 13px; }
+    .app-loading-logo { width: 76px; height: 76px; border: 4px solid var(--orange); border-radius: 22px; box-shadow: 0 5px 0 var(--orange-dark); }
+    .app-loading-title { font-size: 24px; font-weight: 900; }
+    .app-loading-status { color: var(--text-light); font-size: 14px; font-weight: 700; }
+    .app-loading-spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: app-loading-spin .8s linear infinite; }
+    @keyframes app-loading-spin { to { transform: rotate(360deg); } }
+    #appLoadingRetry { display: none; border: 2px solid var(--orange); border-radius: 10px; background: var(--surface); color: var(--text); padding: 8px 16px; font-weight: 800; }
+    .app-loading-slow #appLoadingRetry { display: inline-block; }
+    @media (prefers-reduced-motion: reduce) { .app-loading-spinner { animation: none; border-color: var(--orange); } }
+
+.knox-response-body { overflow-wrap: anywhere; }
+.knox-response-body p { margin: 8px 0 14px; line-height: 1.65; }
+.knox-response-body h3 { margin: 24px 0 12px; color: var(--orange); font-size: 1.1em; }
+.knox-response-body h3:first-child { margin-top: 0; }
+.knox-response-body li { margin: 10px 0; line-height: 1.65; }
+.knox-response-body ol, .knox-response-body ul { padding-left: 24px; }
+.knox-response-body code { font-family: monospace; }
+.knox-response-body .knox-final-answer { margin: 18px 0 24px; }
+.knox-final-answer strong { color: inherit; }
+
+/* ═══ HALLOWEEN (shared with the landing page — keep both copies in sync) ═══
+   Seasonal theme only shows in DARK mode. In light mode the site stays in its
+   normal Knox look and shows a small hint pointing people to dark mode.
+   The .knox-halloween class is added in <head> during the season
+   (Sep 20 → Nov 1). Force it with ?halloween=on / ?halloween=off.        */
+.halloween-sky, .halloween-hint, .hw-only { display: none; }
+
+/* Light mode: the little "turn on dark mode" hint */
+html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint {
+  display: inline-flex; align-items: center; gap: 10px;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  padding: 6px 6px 6px 14px;
+  background: var(--surface);
+  border: 2px solid var(--orange);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--orange-light);
+  font-family: inherit; font-size: 13px; font-weight: 800;
+  color: var(--text);
+  text-align: left;
+  position: relative; z-index: 2;
+}
+.halloween-hint .hh-emoji { font-size: 16px; line-height: 1; }
+.halloween-hint .hh-text { line-height: 1.3; }
+.halloween-hint .hh-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  /* Knox orange sticker button instead of the flat dark pill. */
+  background: var(--orange); color: #fff;
+  border: none; border-radius: 999px;
+  padding: 8px 15px;
+  font-family: inherit; font-size: 12.5px; font-weight: 900;
+  box-shadow: 0 3px 0 var(--orange-dark);
+  cursor: pointer; white-space: nowrap;
+  transition: transform .15s, box-shadow .15s, background .15s;
+}
+.halloween-hint .hh-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--orange-dark); }
+.halloween-hint .hh-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-dark); }
+.halloween-hint .hh-x {
+  width: 26px; height: 26px; flex-shrink: 0;
+  border: none; border-radius: 50%;
+  background: transparent; color: var(--text-light);
+  font-size: 17px; font-weight: 900; line-height: 1; cursor: pointer;
+}
+.halloween-hint .hh-x:hover { background: var(--gray); color: var(--text); }
+@media (max-width: 520px) {
+  html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint { border-radius: 18px; flex-wrap: wrap; padding: 8px 8px 8px 12px; row-gap: 8px; }
+  .halloween-hint .hh-text { flex: 1 1 160px; }
+}
+
+/* Dark mode: night palette (same neutrals ladder as regular dark, tinted
+   toward midnight purple so it feels spooky but still reads as Knox). */
+html.knox-halloween[data-theme="dark"] {
+  --cream:        #120E17;
+  --cream-warm:   #1A1421;
+  --gray:         #1C1623;
+  --surface:      #261E2E;
+  --border:       #3E3249;
+  --text:         #F5EEF7;
+  --text-light:   #B6A8BD;
+  --orange-cream: #2A1D1A;
+  --orange-light: #5A3012;
+  --purple-light: #3A1C52;
+  --shadow:       0 4px 0 rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+html.knox-halloween[data-theme="dark"] .halloween-sky {
+  display: block;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+html.knox-halloween[data-theme="dark"] .hw-only { display: inline; }
+html.knox-halloween[data-theme="dark"] .hw-hide { display: none; }
+
+/* motion — gentle, and fully off for reduced-motion users */
+/* Bats drift gently at a similar slow speed, but each one follows a DIFFERENT
+   path (its own keyframe set) so they don't all bob up-and-down in unison —
+   they wander in different directions like real bats meandering. */
+.halloween-sky .hw-bat { transform-box: fill-box; transform-origin: center; --bat-eye: #FFB347; }
+/* Each bat drifts on its own path AND blinks on its own timer (staggered
+   delays) so their glowing eyes wink out for a beat, out of sync. */
+.halloween-sky .hw-bat.b1 { animation: hwDrift1 17s ease-in-out infinite, hwBlink 6.5s steps(1) infinite; }
+.halloween-sky .hw-bat.b2 { animation: hwDrift2 18s ease-in-out infinite, hwBlink 7.5s steps(1) infinite -2s; }
+.halloween-sky .hw-bat.b3 { animation: hwDrift3 16s ease-in-out infinite, hwBlink 5.5s steps(1) infinite -4s; }
+.halloween-sky .hw-bat.b4 { animation: hwDrift4 19s ease-in-out infinite, hwBlink 8s steps(1) infinite -1s; }
+@keyframes hwBlink {
+  0%, 86% { --bat-eye: #FFB347; }
+  88%, 96% { --bat-eye: transparent; }   /* eyes dark ~a beat */
+  98%, 100% { --bat-eye: #FFB347; }
+}
+.halloween-sky .hw-bat use { transform-box: fill-box; transform-origin: center; animation: hwFlap 1.6s ease-in-out infinite alternate; }
+.halloween-sky .hw-bat.b2 use { animation-duration: 1.4s; }
+.halloween-sky .hw-bat.b3 use { animation-duration: 1.8s; }
+.halloween-sky .hw-spider { animation: hwDangle 6s ease-in-out infinite; }
+.halloween-sky .hw-tw { animation: hwTwinkle 3.2s ease-in-out infinite; }
+.halloween-sky .hw-tw.d2 { animation-delay: -.8s; } .halloween-sky .hw-tw.d3 { animation-delay: -1.6s; } .halloween-sky .hw-tw.d4 { animation-delay: -2.4s; }
+.hw-face { animation: hwFlicker 2.8s ease-in-out infinite; }
+/* Four distinct gentle wander paths — small movement (~6-9px), each drifting
+   a different way so the bats don't move in sync. */
+@keyframes hwDrift1 {
+  0%,100% { transform: translate(0,0) rotate(-2deg); }
+  25%     { transform: translate(7px,-4px) rotate(2deg); }
+  50%     { transform: translate(3px,5px) rotate(-1deg); }
+  75%     { transform: translate(-6px,-2px) rotate(3deg); }
+}
+@keyframes hwDrift2 {
+  0%,100% { transform: translate(0,0) rotate(2deg); }
+  33%     { transform: translate(-8px,3px) rotate(-3deg); }
+  66%     { transform: translate(5px,6px) rotate(1deg); }
+}
+@keyframes hwDrift3 {
+  0%,100% { transform: translate(0,0) rotate(1deg); }
+  30%     { transform: translate(6px,4px) rotate(-2deg); }
+  60%     { transform: translate(-4px,-5px) rotate(3deg); }
+  85%     { transform: translate(2px,-2px) rotate(-1deg); }
+}
+@keyframes hwDrift4 {
+  0%,100% { transform: translate(0,0) rotate(-1deg); }
+  40%     { transform: translate(-5px,-6px) rotate(2deg); }
+  70%     { transform: translate(7px,2px) rotate(-2deg); }
+}
+@keyframes hwFlap { from { transform: scaleY(1); } to { transform: scaleY(.78); } }
+/* Original gentle bob (this animation was fine). Strand + spider are one
+   group so they move together; the strand is drawn long (from above the web
+   down into the spider body) so it never visibly detaches at either end. */
+@keyframes hwDangle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@keyframes hwTwinkle { 0%,100% { opacity: .9; } 50% { opacity: .25; } }
+@keyframes hwFlicker { 0%,100% { opacity: 1; } 42% { opacity: .78; } 47% { opacity: 1; } 71% { opacity: .85; } }
+
+/* Pumpkin lives in its own small SVG pinned to the corner, so it never gets
+   cropped by the full-screen sky on wide/short screens. */
+.hw-pumpkin-svg { display: none; }
+html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-svg {
+  display: block; position: absolute; z-index: 0; pointer-events: none;
+  left: 20px; bottom: 8px; width: 150px; height: auto;
+}
+/* Second pumpkin, mirrored to the right edge, same size/baseline. */
+html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-right {
+  left: auto; right: 20px;
+}
+@media (max-width: 768px) {
+  html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-svg { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .halloween-sky *, .halloween-sky, .hw-face { animation: none !important; }
+}
+
+/* App-specific Halloween (dark only) */
+html.knox-halloween[data-theme="dark"] #welcomeScreen {
+  background-color: var(--cream);
+  background-image:
+    radial-gradient(ellipse at 80% 10%, rgba(255,154,60,.10), transparent 45%),
+    radial-gradient(ellipse at 10% 95%, rgba(142,111,176,.16), transparent 45%);
+}
+html.knox-halloween[data-theme="dark"] #welcomeScreen::before,
+html.knox-halloween[data-theme="dark"] #welcomeScreen::after { display: none; }
+html.knox-halloween[data-theme="dark"] #welcomeScreen > .halloween-sky { position: absolute; z-index: 0; }
+html.knox-halloween[data-theme="dark"] .welcome-badge {
+  background: #2A1D1A;
+  border-color: var(--orange);
+  box-shadow: 0 3px 0 #A34700, 0 0 26px rgba(255,107,0,.22);
+}
+html.knox-halloween[data-theme="dark"] .welcome-accent { text-shadow: 0 0 28px rgba(255,107,0,.35); }
+html.knox-halloween[data-theme="dark"] .suggestion-chip {
+  background: rgba(38,30,46,.97);
+}
+html.knox-halloween[data-theme="dark"] .sidebar-top { box-shadow: none; }
+html.knox-halloween[data-theme="dark"] .sidebar-section-header > span::before { content: '🦇'; margin-right: 6px; font-size: 11px; }
+html.knox-halloween[data-theme="dark"] #inputOuter { box-shadow: 0 -10px 28px rgba(255,107,0,.06); }
+html.knox-halloween[data-theme="dark"] .app-loading-content {
+  padding: 28px; border: 2px solid var(--border); border-radius: 24px;
+  background: var(--surface); box-shadow: 0 6px 0 var(--border), 0 0 40px rgba(255,107,0,.08);
+}
+@media (max-width: 768px) {
+  html.knox-halloween[data-theme="dark"] #welcomeScreen > .halloween-sky { height: 260px; bottom: auto; opacity: .7; }
+  html.knox-halloween[data-theme="dark"] .halloween-sky .hw-pumpkin,
+  html.knox-halloween[data-theme="dark"] .halloween-sky .hw-fog { display: none; }
+}
+</style>
+<link rel="stylesheet" href="/logo-theme.css">
+<script src="/payment-status.js" defer></script>
+<script src="/calc-percent.js"></script>
 </head>
-<body>
+<body class="app-auth-pending">
 
 <noscript>
+  <style>#appLoading { display: none !important; }</style>
   <div style="padding:32px 24px;text-align:center;font-family:'Nunito',system-ui,sans-serif;background:#FFF8F0;border-bottom:3px solid #FF6B00;">
     <div style="font-size:48px;margin-bottom:8px;">🦊</div>
     <h2 style="font-weight:900;color:#1f2937;margin-bottom:8px;font-size:22px;">Knox needs JavaScript</h2>
     <p style="color:#666;font-weight:600;font-size:15px;max-width:420px;margin:0 auto;">Please enable JavaScript in your browser to use Knox Knows. Knox is a fully interactive app — questions, answers, and your history all need JS to work.</p>
   </div>
 </noscript>
+
+  <div id="appLoading" role="status" aria-live="polite">
+    <div class="app-loading-content">
+      <img class="app-loading-logo" src="/knox-logo-square.jpg" alt="" aria-hidden="true">
+      <div class="app-loading-title">Knox Knows</div>
+      <div class="app-loading-spinner" aria-hidden="true"></div>
+      <p id="appLoadingStatus" class="app-loading-status">Getting your study space ready…</p>
+      <button id="appLoadingRetry" type="button" onclick="location.reload()">Try again</button>
+    </div>
+  </div>
+  <script>
+    // Runs before Firebase modules are downloaded, including on slow links.
+    // Keep the retry visible if the auth SDK or network never becomes ready.
+    window.showAppLoading = function() {
+      document.body.classList.add('app-auth-pending');
+      document.body.classList.remove('app-loading-slow');
+      clearTimeout(window._appLoadingTimer);
+      const status = document.getElementById('appLoadingStatus');
+      if (status) status.textContent = 'Getting your study space ready…';
+      window._appLoadingTimer = setTimeout(() => {
+        document.body.classList.add('app-loading-slow');
+        if (status) status.textContent = 'Still connecting. Check your internet and try again.';
+      }, 12000);
+    };
+    window.finishAppLoading = function() {
+      clearTimeout(window._appLoadingTimer);
+      document.body.classList.remove('app-auth-pending', 'app-loading-slow');
+    };
+    window.showAppLoading();
+  </script>
 
   <!-- ═══════ HEADER ═══════════════════════════════════════ -->
   <!-- ═══════ APP SHELL — sidebar full height, header only spans the
@@ -1708,7 +2264,7 @@
 
       <!-- Logo + collapse toggle -->
       <div class="sidebar-top">
-        <a href="/?from=app" class="sidebar-logo-link sidebar-collapsible">
+        <a href="/about" class="sidebar-logo-link sidebar-collapsible" title="About Knox Knows">
           <img src="/knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
           <span class="sidebar-logo-text">Knox Knows</span>
         </a>
@@ -1721,26 +2277,20 @@
 
       <!-- Quick nav -->
       <div class="sidebar-quicknav">
-        <a href="/?from=app" class="sidebar-quicknav-link" title="Back to home">
-          <span class="sq-icon">🏠</span><span class="sidebar-collapsible">Home</span>
-        </a>
-        <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">💬</span><span class="sidebar-collapsible">Ask Knox</span>
+        <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat">
+          <span class="sq-icon sq-ask" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 13v3a3 3 0 0 1-3 3H8l-4 3V8a3 3 0 0 1 3-3h5"/><path d="m18 2 1.4 3.6L23 7l-3.6 1.4L18 12l-1.4-3.6L13 7l3.6-1.4L18 2Z"/><path d="M8 13h4"/></svg></span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🔢</span><span class="sidebar-collapsible">Calculator</span>
+        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator">
+          <span class="sq-icon sq-calc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg></span><span class="sidebar-collapsible">Calculator</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">🎓</span><span class="sidebar-collapsible">Learn</span>
-        </button>
-        <button class="sidebar-quicknav-link" onclick="openAppSettings()" title="Account & Plan" style="width:100%;border:none;background:none;cursor:pointer;font-family:inherit;text-align:left;">
-          <span class="sq-icon">⚙️</span><span class="sidebar-collapsible">Account &amp; Plan</span>
+        <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering">
+          <span class="sq-icon sq-learn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg></span><span class="sidebar-collapsible">Learn</span>
         </button>
       </div>
 
       <div class="sidebar-section-header sidebar-collapsible">
-        <span>📚 History</span>
-        <button class="sidebar-new-btn" onclick="appStartNewChat()">+ New</button>
+        <span>Recent chats</span>
+        <button class="sidebar-new-btn" onclick="appStartNewChat()" aria-label="New chat">+ New chat</button>
       </div>
       <div id="sidebarHistoryList" class="sidebar-collapsible">
         <div id="sidebarHistoryEmpty">
@@ -1748,14 +2298,20 @@
           Ask Knox something and your questions will appear here.
         </div>
       </div>
+      <a class="sidebar-extension-card sidebar-collapsible" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
+        <img src="/knox-logo-square.jpg" alt="" loading="lazy">
+        <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+      </a>
 
-      <!-- Pinned upgrade card — free users only, toggled by JS -->
+      </div><!-- end sidebar-body -->
+
+      <!-- Account tools stay at the bottom of the desktop sidebar. -->
       <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
         <p>⚡ Go unlimited with Knox Plus</p>
         <button onclick="goToPricing()">Upgrade</button>
       </div>
-
-      </div><!-- end sidebar-body -->
+      <div id="sidebarControlsSlot" class="sidebar-footer"></div>
 
     </aside>
 
@@ -1776,30 +2332,36 @@
       <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <a href="/?from=app" class="app-logo-link" title="Back to landing page">
+      <a href="/about" class="app-logo-link" title="About Knox Knows">
         <img src="/knox-logo-square.jpg" alt="Knox" class="app-logo-img" draggable="false" onerror="this.style.display='none'">
         <span class="app-logo-text">Knox Knows</span>
       </a>
     </div>
 
     <div class="header-right">
+      <div class="account-status-row">
       <button id="darkModeToggle" onclick="window.toggleDarkMode()" title="Toggle dark mode" aria-label="Toggle dark mode">
         <svg id="darkModeIconMoon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg id="darkModeIconSun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="display:none;"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <span class="sidebar-control-label">Appearance</span>
       </button>
       <button id="streakPill" onclick="showStreakDetail()" title="Your study streak" style="display:none;">
         <span id="streakFlame">🔥</span>
         <span id="streakCount">0</span>
+        <span class="sidebar-control-label">day streak</span>
       </button>
       <button id="headerUsage" onclick="openUsageInfo()" title="Tap to see how questions work">
         <span class="usage-dot"></span>
         <span id="headerUsageText">10 questions left</span>
       </button>
+      </div>
       <button id="appUpgradeBtn" onclick="goToPricing()">⚡<span id="appUpgradeLabel"> Upgrade</span></button>
+      <div class="account-dock">
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
-        <span id="appAccountName"></span>
+        <span class="account-identity"><span id="appAccountName"></span><span id="appAccountPlanBadge">Free plan</span></span>
       </button>
+      </div>
       <div id="appGuestBtns">
         <button class="header-login-btn" onclick="openAuthModal()">Login</button>
         <button class="header-login-btn header-signup-btn" onclick="openAuthModal('signup')">Sign up</button>
@@ -1810,8 +2372,11 @@
   <!-- ACCOUNT DROPDOWN -->
   <div id="appAccountDropdown">
     <div class="app-dropdown-header">
-      <p class="dd-name"  id="ddName">—</p>
-      <span class="dd-email" id="ddEmail">—</span>
+      <div class="dd-identity">
+        <span id="ddAvatar">?</span>
+        <div class="dd-identity-copy"><p class="dd-name" id="ddName">—</p><span class="dd-email" id="ddEmail">—</span></div>
+      </div>
+      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
       <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
@@ -1849,15 +2414,130 @@
                you send your first message. -->
           <div id="learnModeBar" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--purple-light);border-bottom:2px solid var(--purple-dark);padding:10px 16px;flex-shrink:0;">
             <span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--purple-on-tint);">🎓 Learn Mode — Knox will guide you, not just answer</span>
-            <button onclick="window.appStartNewChat()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:var(--purple-dark);color:white;border:none;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              Back to Knox
-            </button>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+              <button onclick="window.appStartNewChat()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;background:var(--purple-dark);color:white;border:none;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;flex-shrink:0;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Back to Knox
+              </button>
+              <button onclick="window.hideLearnBar()" aria-label="Hide this banner" title="Hide — you'll still be in Learn Mode" style="width:26px;height:26px;border-radius:8px;border:none;background:transparent;color:var(--purple-on-tint);font-size:16px;font-weight:900;cursor:pointer;flex-shrink:0;line-height:1;display:flex;align-items:center;justify-content:center;transition:background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.08)'" onmouseout="this.style.background='transparent'">×</button>
+            </div>
           </div>
 
           <!-- WELCOME -->
           <div id="welcomeScreen">
-            <div class="welcome-badge">🦊 Hey, I'm Knox</div>
+            <svg class="halloween-sky" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <defs>
+                <radialGradient id="hwMoonGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0" stop-color="#FFD9A0" stop-opacity=".55"/>
+                  <stop offset=".45" stop-color="#FF9A3C" stop-opacity=".16"/>
+                  <stop offset="1" stop-color="#FF9A3C" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="hwMoon" cx="40%" cy="38%" r="65%">
+                  <stop offset="0" stop-color="#FFF1D6"/>
+                  <stop offset="1" stop-color="#FFC56B"/>
+                </radialGradient>
+                <radialGradient id="hwPumpkinGlow" cx="50%" cy="55%" r="50%">
+                  <stop offset="0" stop-color="#FF8A1F" stop-opacity=".45"/>
+                  <stop offset="1" stop-color="#FF8A1F" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="hwFog" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#8E6FB0" stop-opacity="0"/>
+                  <stop offset="1" stop-color="#8E6FB0" stop-opacity=".16"/>
+                </linearGradient>
+                <symbol id="hwBat" viewBox="0 0 100 52">
+                  <path d="M50 20 44 10 41 22C29 15 16 12 3 18c7 4 9 8 7 12 0 4-3 7-6 9 12-3 21-1 26 6 3-7 9-9 14-6 2 6 4 10 6 13 2-3 4-7 6-13 5-3 11-1 14 6 5-7 14-9 26-6-3-2-6-5-6-9-2-4 0-8 7-12-13-6-26-3-38 4L56 10 50 20Z"/>
+                  <!-- Eyes use a custom property so each bat can blink (the
+                       property inherits through <use>, and each .hw-bat gets
+                       its own blink timing below). -->
+                  <circle cx="46" cy="27" r="1.6" fill="var(--bat-eye,#FFB347)"/>
+                  <circle cx="54" cy="27" r="1.6" fill="var(--bat-eye,#FFB347)"/>
+                </symbol>
+              </defs>
+
+              <!-- moon -->
+              <g class="hw-moon">
+                <circle cx="845" cy="120" r="150" fill="url(#hwMoonGlow)"/>
+                <circle cx="845" cy="120" r="62" fill="url(#hwMoon)"/>
+                <g fill="#E9A64F" opacity=".35">
+                  <circle cx="825" cy="102" r="10"/><circle cx="866" cy="138" r="7"/><circle cx="846" cy="152" r="4.5"/><circle cx="870" cy="96" r="4"/>
+                </g>
+              </g>
+
+              <!-- cobweb + spider -->
+              <g class="hw-web" fill="none" stroke="#CDB6E3" stroke-width="1.6" opacity=".38">
+                <path d="M0 0h190M0 0v190M0 0l160 160M0 0l178 70M0 0l70 178"/>
+                <path d="M34 0Q33 31 0 34M72 0Q66 64 0 72M114 0Q104 104 0 114M160 0Q147 147 0 160"/>
+              </g>
+              <!-- Strand + spider live in ONE group that sways from the web
+                   anchor (118,88) via rotation, so the thread stays attached
+                   to both the web and the spider at all times. The old setup
+                   animated only the spider with translateY while the strand
+                   stayed fixed, so the line detached / "cut off" as it moved. -->
+              <g class="hw-spider">
+                <line x1="118" y1="40" x2="118" y2="214" stroke="#CDB6E3" stroke-width="1.2" opacity=".5"/>
+                <g transform="translate(118 216)" fill="#CDB6E3" opacity=".75">
+                  <ellipse rx="7" ry="8.5"/><circle cy="-10" r="4.5"/>
+                  <path d="M-6-2-17-9M-6 2-18 1M-6 5-16 12M6-2 17-9M6 2 18 1M6 5 16 12" stroke="#CDB6E3" stroke-width="1.6" stroke-linecap="round"/>
+                </g>
+              </g>
+
+              <!-- stars -->
+              <g class="hw-stars" fill="#FFD9A0">
+                <path class="hw-tw" d="m690 70 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z"/>
+                <path class="hw-tw d2" d="m935 268 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"/>
+                <path class="hw-tw d3" d="m250 330 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"/>
+                <path class="hw-tw d4" d="m730 300 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z"/>
+                <circle class="hw-tw d2" cx="600" cy="48" r="2"/><circle class="hw-tw" cx="655" cy="170" r="1.6"/>
+                <circle class="hw-tw d3" cx="320" cy="60" r="2"/><circle class="hw-tw d4" cx="962" cy="430" r="1.8"/>
+                <circle class="hw-tw" cx="40" cy="330" r="1.8"/><circle class="hw-tw d2" cx="420" cy="120" r="1.4"/>
+              </g>
+
+              <!-- bats -->
+              <g fill="#3B2A4A" class="hw-bats">
+                <g class="hw-bat b1"><use href="#hwBat" x="700" y="190" width="96" height="50"/></g>
+                <g class="hw-bat b2"><use href="#hwBat" x="600" y="110" width="58" height="30"/></g>
+                <g class="hw-bat b3"><use href="#hwBat" x="170" y="250" width="74" height="38"/></g>
+                <g class="hw-bat b4"><use href="#hwBat" x="270" y="190" width="44" height="23"/></g>
+              </g>
+
+              <!-- fog -->
+              <rect class="hw-fog" x="0" y="480" width="1000" height="220" fill="url(#hwFog)"/>
+
+              
+            </svg>
+            <svg class="hw-pumpkin-svg" viewBox="-40 -10 180 150" aria-hidden="true" focusable="false">
+              <g class="hw-pumpkin" >
+                <ellipse cx="50" cy="62" rx="90" ry="70" fill="url(#hwPumpkinGlow)"/>
+                <path d="M47 22c-2-9 0-16 9-21l6 5c-7 3-9 8-8 16" fill="#6B8E23"/>
+                <ellipse cx="30" cy="62" rx="26" ry="36" fill="#E8620C"/>
+                <ellipse cx="70" cy="62" rx="26" ry="36" fill="#E8620C"/>
+                <ellipse cx="50" cy="62" rx="24" ry="38" fill="#FF7A1A"/>
+                <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#C94F06" stroke-width="2" fill="none" opacity=".6"/>
+                <g class="hw-face" fill="#FFD66B"><path d="M28 46 L42 46 L35 58 Z"/><path d="M58 46 L72 46 L65 58 Z"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 73 Q50 79 73 73 L68 82 63 75 58 82 54 75 50 82 46 75 42 82 37 75 32 82 Z"/></g>
+              </g>
+            </svg>
+            <!-- Second pumpkin (right side) — different face: round eyes and a
+                 wide oval grin, curlier stem, slightly deeper orange. -->
+            <svg class="hw-pumpkin-svg hw-pumpkin-right" viewBox="-40 -10 180 150" aria-hidden="true" focusable="false">
+              <g class="hw-pumpkin">
+                <ellipse cx="50" cy="62" rx="90" ry="70" fill="url(#hwPumpkinGlow)"/>
+                <path d="M50 22c1-9-3-16-12-19l-4 6c7 2 9 7 8 15q4-1 8-2" fill="#6B8E23"/>
+                <ellipse cx="30" cy="62" rx="26" ry="36" fill="#D2560A"/>
+                <ellipse cx="70" cy="62" rx="26" ry="36" fill="#D2560A"/>
+                <ellipse cx="50" cy="62" rx="24" ry="38" fill="#F26A12"/>
+                <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#B84606" stroke-width="2" fill="none" opacity=".55"/>
+                <g class="hw-face" fill="#FFD66B">
+                  <circle cx="34" cy="50" r="7"/><circle cx="66" cy="50" r="7"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 70 Q50 100 73 70 Q50 82 27 70 Z"/>
+                </g>
+              </g>
+            </svg>
+            <div class="halloween-hint" role="note">
+              <span class="hh-emoji" aria-hidden="true">🎃</span>
+              <span class="hh-text">Halloween mode is here — it lives in dark mode.</span>
+              <button type="button" class="hh-btn" onclick="window.knoxHalloweenDarkMode()">🌙 Turn on dark mode</button>
+              <button type="button" class="hh-x" aria-label="Hide Halloween tip" title="Hide" onclick="window.knoxHideHalloweenHint()">×</button>
+            </div>
+            <div class="welcome-badge"><span class="hw-hide">🦊 Hey, I'm Knox</span><span class="hw-only">🎃 Happy Halloween — I'm Knox</span></div>
             <h1 class="welcome-title">What are we<br><span class="welcome-accent">tackling today?</span></h1>
             <p class="welcome-sub">Pick a topic below to get started — or type your own question in the box.</p>
 
@@ -2021,7 +2701,7 @@
 
           <!-- GUEST CTA -->
           <div id="guestCta">
-            <p>You've used your free question! <strong>Sign up free</strong> to get 5 a day — no credit card.</p>
+            <p>You've used your free question! <strong>Sign up free</strong> for 10 questions to start, then 5 more every day — no credit card.</p>
             <button onclick="openAuthModal('signup')">Sign up free</button>
           </div>
 
@@ -2077,17 +2757,14 @@
            900px, so Calculator/Learn/Ask Knox were completely unreachable
            on mobile — this was the actual bug, not a visual one. -->
       <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
-        <a href="/?from=app" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);text-decoration:none;">
-          <span style="font-size:17px;">🏠</span> Home
-        </a>
-        <button onclick="window.appStartNewChat();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">💬</span> Ask Knox
+        <button class="sidebar-quicknav-link" data-mobile-nav="chat" onclick="window.appStartNewChat();closeMobileHistory();">
+          <span class="sq-icon" aria-hidden="true"></span> Ask Knox
         </button>
-        <button onclick="window.openCalc();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">🔢</span> Calculator
+        <button class="sidebar-quicknav-link" data-mobile-nav="calculator" onclick="window.openCalc();closeMobileHistory();">
+          <span class="sq-icon" aria-hidden="true"></span> Calculator
         </button>
-        <button onclick="window.openLearnMode();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">🎓</span> Learn
+        <button class="sidebar-quicknav-link" data-mobile-nav="learn" onclick="window.openLearnMode();closeMobileHistory();">
+          <span class="sq-icon" aria-hidden="true"></span> Learn
         </button>
         <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
           <span style="font-size:17px;">⚙️</span> Account &amp; Plan
@@ -2101,6 +2778,11 @@
           Your past questions will show up here.
         </div>
       </div>
+      <a class="sidebar-extension-card" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
+        <img src="/knox-logo-square.jpg" alt="" loading="lazy">
+        <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+      </a>
     </div>
   </div>
 
@@ -2197,6 +2879,9 @@
   window.currentUser    = null;
   window._appImage      = null;
   window._conversation  = [];
+  window._appViewVersion = 0;
+  window._appAskBusy = false;
+  window._learnSessionId = null;
   window._fbPayloads    = {};
 
   // Calculator state — globals so non-module script can access
@@ -2240,7 +2925,7 @@
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
     getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, getDocs, deleteDoc,
-    query, orderBy, limit, serverTimestamp
+    query, orderBy, limit, startAfter, serverTimestamp, writeBatch, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -2283,11 +2968,16 @@
   async function fetchPlan(uid) {
     try {
       const snap = await getDoc(doc(db, 'users', uid));
+      if (window.currentUser?.uid !== uid) return;
       window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
+      window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
     } catch (e) {
+      if (window.currentUser?.uid !== uid) return;
       window.userPlan = 'free';
     }
-    updatePlanUI();
+    // Include the usage request in initial readiness so the count does not
+    // flash a placeholder after the loading screen goes away.
+    await updatePlanUI();
   }
 
   // Poll for plan after payment success — webhook may not be done yet.
@@ -2296,8 +2986,9 @@
     for (let i = 0; i < 5; i++) {
       try {
         const snap = await getDoc(doc(db, 'users', uid));
+        if (window.currentUser?.uid !== uid) return;
         const plan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
-        if (plan !== 'free') {
+        if (planTier(plan) === 'paid') {
           window.userPlan = plan;
           updatePlanUI();
           return;
@@ -2318,6 +3009,14 @@
     const upgradeBtn = document.getElementById('appUpgradeBtn');
     const ddUpgrade  = document.getElementById('ddUpgradeRow');
 
+    // Flag the guest state on <body> so the sidebar footer lays the credit
+    // pill out beside the theme toggle rather than in its own divided section.
+    const wasGuest = document.body.classList.contains('app-guest');
+    document.body.classList.toggle('app-guest', !user);
+    // Guest state decides where the theme toggle lives (status row vs. dock),
+    // so re-run the placement whenever it flips.
+    if (wasGuest !== !user) window.placeAppControls?.();
+
     if (user) {
       if (guestBtns)  guestBtns.style.display  = 'none';
       if (accountBtn) accountBtn.style.display = 'inline-flex';
@@ -2327,23 +3026,50 @@
       if (icon) {
         if (user.photoURL) {
           icon.style.background = 'transparent';
-          icon.innerHTML = '<img src="' + user.photoURL + '" alt="">';
+          const avatar = document.createElement('img');
+          avatar.src = user.photoURL;
+          avatar.alt = '';
+          icon.replaceChildren(avatar);
         } else {
-          icon.style.background = 'rgba(255,255,255,0.25)';
+          icon.style.background = 'var(--orange)';
           icon.textContent = initials;
         }
       }
       const nameEl = document.getElementById('appAccountName');
-      if (nameEl) nameEl.textContent = (user.displayName || user.email || '').split(' ')[0];
+      if (nameEl) nameEl.textContent = user.displayName || user.email || '';
+      const planBadge = document.getElementById('appAccountPlanBadge');
+      if (planBadge) {
+        const isPaid = planTier(plan) === 'paid';
+        planBadge.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
+        planBadge.classList.toggle('paid', isPaid);
+      }
+      const settingsBtn = document.getElementById('sidebarSettingsBtn');
+      if (settingsBtn) settingsBtn.style.display = '';
 
       const ddName  = document.getElementById('ddName');
       const ddEmail = document.getElementById('ddEmail');
       const ddPlan  = document.getElementById('ddPlan');
+      const ddAvatar = document.getElementById('ddAvatar');
+      if (ddAvatar) {
+        ddAvatar.replaceChildren();
+        if (user.photoURL) {
+          const image = document.createElement('img');
+          image.src = user.photoURL;
+          image.alt = '';
+          ddAvatar.appendChild(image);
+        } else ddAvatar.textContent = initials;
+      }
+      const ddTier = document.getElementById('ddTierBadge');
+      if (ddTier) {
+        const isPaid = planTier(plan) === 'paid';
+        ddTier.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
+        ddTier.classList.toggle('paid', isPaid);
+      }
       if (ddName)  ddName.textContent  = user.displayName || '—';
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
-        const cfg = plan !== 'free'
+        const cfg = planTier(plan) === 'paid'
           ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
           : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
@@ -2369,23 +3095,52 @@
 
       // Upgrade button shown for free users only — one paid plan now, so
       // anyone already paying has nothing further to upgrade to.
-      if (plan === 'free') {
+      if (planTier(plan) === 'free') {
         if (upgradeBtn) upgradeBtn.style.display = '';
         if (ddUpgrade)  ddUpgrade.style.display  = '';
       } else {
         if (upgradeBtn) upgradeBtn.style.display = 'none';
         if (ddUpgrade)  ddUpgrade.style.display  = 'none';
       }
+      // Restore the logged-in behaviours in case this account just signed in
+      // after being a guest (the guest branch below repurposes both).
+      const usageEl = document.getElementById('headerUsage');
+      if (usageEl) usageEl.onclick = () => window.openUsageInfo?.();
+      const emptyElIn = document.getElementById('sidebarHistoryEmpty');
+      if (emptyElIn) emptyElIn.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Ask Knox something and your questions will appear here.';
+      const mEmptyElIn = document.getElementById('mobileHistoryEmpty');
+      if (mEmptyElIn) mEmptyElIn.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Ask Knox something and your questions will appear here.';
       // Refresh usage pill
-      updateUsageIndicator();
+      return updateUsageIndicator();
     } else {
       if (guestBtns)  guestBtns.style.display  = 'inline-flex';
       if (accountBtn) accountBtn.style.display = 'none';
+      const settingsBtn = document.getElementById('sidebarSettingsBtn');
+      if (settingsBtn) settingsBtn.style.display = 'none';
       if (upgradeBtn) upgradeBtn.style.display = 'none';
-      const usage = document.getElementById('headerUsage');
-      if (usage) usage.style.display = 'none';
       const streak = document.getElementById('streakPill');
       if (streak) streak.style.display = 'none';
+      // Guests DO get a credits pill — it shows their remaining free question
+      // and nudges sign-up when it's used. (Previously it was hidden, so
+      // guests had no credit indicator at all.)
+      const usage = document.getElementById('headerUsage');
+      const text  = document.getElementById('headerUsageText');
+      if (usage && text) {
+        const left = Math.max(0, 1 - (window._getGuestCount?.() || 0));
+        usage.style.display = 'inline-flex';
+        usage.classList.toggle('danger', left === 0);
+        usage.classList.remove('unlimited');
+        text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
+        // For guests the pill opens sign-up rather than the usage breakdown.
+        usage.onclick = () => window.openAuthModal?.('signup');
+      }
+      // History belongs to signed-in accounts — guests don't get saved
+      // history, so the empty state points them to sign in instead of
+      // implying their questions will be saved.
+      const emptyEl = document.getElementById('sidebarHistoryEmpty');
+      if (emptyEl) emptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.';
+      const mEmptyEl = document.getElementById('mobileHistoryEmpty');
+      if (mEmptyEl) mEmptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.';
     }
   }
   window.updatePlanUI = updatePlanUI;
@@ -2422,8 +3177,23 @@
       const isFree = planTier(window.userPlan) === 'free';
       upgradeCard.style.display = isFree ? 'block' : 'none';
     }
+    if (upgradeCard && !window.currentUser) upgradeCard.style.display = 'none';
     if (!usage || !text) return;
-    if (!window.currentUser) { usage.style.display = 'none'; return; }
+    // Guests get a credits pill too: shows their one free question and turns
+    // into a sign-up nudge once used. (This function runs on several events,
+    // so the guest case MUST live here — otherwise a later call re-hid the
+    // pill that updatePlanUI had shown.)
+    if (!window.currentUser) {
+      const left = Math.max(0, 1 - (window._getGuestCount?.() || 0));
+      usage.style.display = 'inline-flex';
+      usage.classList.toggle('danger', left === 0);
+      usage.classList.remove('unlimited');
+      text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
+      usage.onclick = () => window.openAuthModal?.('signup');
+      return;
+    }
+    usage.onclick = () => window.openUsageInfo?.();
+    const uid = window.currentUser.uid;
 
     const tier = planTier(window.userPlan);
     const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
@@ -2452,7 +3222,11 @@
       // write its own balance (which a direct client-side write would risk).
       const token = await window.currentUser.getIdToken();
       const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      // A failed lookup must not fall through to the "10 left" default below
+      // and show a free user a balance they don't have — keep the last value.
+      if (!res.ok) return;
       const data = await res.json();
+      if (window.currentUser?.uid !== uid) return;
       const u = data.usage || {};
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
@@ -2571,6 +3345,11 @@
   // ── Sidebar collapse toggle — remembers state across visits ────────────────
   function toggleAppSidebar() {
     const collapsed = document.body.classList.toggle('app-sidebar-collapsed');
+    const button = document.querySelector('.sidebar-collapse-btn');
+    if (button) {
+      button.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+      button.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    }
     try { localStorage.setItem('knoxAppSidebarCollapsed', collapsed ? '1' : '0'); } catch(e) {}
   }
   window.toggleAppSidebar = toggleAppSidebar;
@@ -2578,6 +3357,8 @@
     try {
       if (localStorage.getItem('knoxAppSidebarCollapsed') === '1') {
         document.body.classList.add('app-sidebar-collapsed');
+        const button = document.querySelector('.sidebar-collapse-btn');
+        if (button) { button.setAttribute('aria-label', 'Expand sidebar'); button.title = 'Expand sidebar'; }
       }
     } catch(e) {}
   })();
@@ -2592,7 +3373,41 @@
 
   // ── Auth state ──────────────────────────────────────────────
   let _firstAuth = true;
+  let authLoadVersion = 0;
+  let resolvedAuthUid;
   onAuthStateChanged(auth, async (user) => {
+    const loadVersion = ++authLoadVersion;
+    if (document.body.classList.contains('app-auth-pending') || resolvedAuthUid !== (user?.uid || null)) {
+      window.showAppLoading();
+    }
+    try {
+    if (resolvedAuthUid !== (user?.uid || null)) {
+      window._askController?.abort();
+      window._askController = null;
+      window._appAskBusy = false;
+      const send = document.getElementById('appSendBtn');
+      if (send) send.disabled = false;
+      window.appStartNewChat?.();
+      const draft = document.getElementById('appChatInput');
+      if (draft && resolvedAuthUid !== undefined) { draft.value = ''; draft.style.height = 'auto'; }
+      window._fbPayloads = {};
+      window.hasBillingAccount = false;
+      document.getElementById('settingsContent')?.replaceChildren();
+      window.closeAppSettings?.();
+      window.closeAuthModal?.();
+      document.querySelectorAll('.modal-backdrop:not(#authModal):not(#appSettingsModal)').forEach(el => el.remove());
+      window._appViewVersion++;
+      historyRequestVersion++;
+      historyCursor = null;
+      historyHasMore = true;
+      historyLoading = false;
+      window._conversation = [];
+      window._currentConversationId = null;
+      window._learnSessionId = null;
+      for (const id of ['sidebarHistoryList', 'mobileHistoryList']) {
+        document.getElementById(id)?.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+      }
+    }
     window.currentUser = user || null;
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
@@ -2606,13 +3421,17 @@
       const gc = document.getElementById('guestCta'); if (gc) gc.style.display = 'none';
 
       await fetchPlan(user.uid);
-      loadSidebarHistory();
+      if (loadVersion !== authLoadVersion || window.currentUser?.uid !== user.uid) return;
+      await Promise.all([
+        loadSidebarHistory(),
+        loadStreak(user.uid),
+      ]);
+      if (loadVersion !== authLoadVersion || window.currentUser?.uid !== user.uid) return;
       // Track activity for the admin dashboard's DAU/WAU.
       // Uses setDoc with merge so it doesn't clobber other user fields.
       // firestore.rules permits writing lastActiveAt/firstSeenAt because
       // they're not in the server-only field list.
       trackActivity(user.uid).catch(() => {});
-      loadStreak(user.uid).catch(() => {});
       if (_firstAuth) {
         _firstAuth = false;
         const params = new URLSearchParams(window.location.search);
@@ -2628,6 +3447,19 @@
       window.userPlan = 'free';
       window._conversation = [];
       updatePlanUI();
+      renderStreak(0, false);
+    }
+    } catch (e) {
+      if (loadVersion !== authLoadVersion) return;
+      console.error('Knox could not finish loading the account', e);
+      document.body.classList.add('app-loading-slow');
+      const status = document.getElementById('appLoadingStatus');
+      if (status) status.textContent = 'We could not load your study space. Please try again.';
+      return;
+    }
+    if (loadVersion === authLoadVersion) {
+      resolvedAuthUid = user?.uid || null;
+      window.finishAppLoading();
     }
   });
 
@@ -2718,6 +3550,7 @@
     if (!uid) { renderStreak(0, false); return; }
     try {
       const snap = await getDoc(doc(db, 'users', uid));
+      if (window.currentUser?.uid !== uid) return;
       const data = snap.exists() ? snap.data() : {};
       const today = localDayKey();
       const lastDay = data.streakLastDay || null;
@@ -2725,7 +3558,7 @@
       // If they last studied before yesterday, the streak is broken.
       if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
       renderStreak(count, lastDay === today);
-    } catch (e) { renderStreak(0, false); }
+    } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
 
@@ -2734,18 +3567,26 @@
     const num   = document.getElementById('streakCount');
     const flame = document.getElementById('streakFlame');
     if (!pill || !num) return;
+    const badge = document.getElementById('ddStreakBadge');
+    if (badge) {
+      badge.style.display = window.currentUser && count > 0 ? '' : 'none';
+      if (count > 0) badge.textContent = `🔥 ${count}-day streak`;
+    }
     if (!window.currentUser || count < 1) { pill.style.display = 'none'; return; }
     num.textContent = count;
     pill.style.display = 'flex';
-    // Active (flickering) flame only if they've studied today; otherwise a
-    // dimmer "keep it alive" state.
+    // No filter on the flame emoji — the old grayscale+opacity filter was
+    // what made it look distorted/washed out. The pill's own dimmed style
+    // (below) signals the "keep it alive" state instead, leaving the emoji
+    // rendering clean and normal.
+    if (flame) flame.style.filter = '';
     if (studiedToday) {
       pill.classList.add('active');
-      if (flame) flame.style.filter = '';
+      pill.classList.remove('dim');
       pill.title = `${count}-day streak — you studied today! 🔥`;
     } else {
       pill.classList.remove('active');
-      if (flame) flame.style.filter = 'grayscale(0.5) opacity(0.8)';
+      pill.classList.add('dim');
       pill.title = `${count}-day streak — study today to keep it going!`;
     }
   }
@@ -2775,7 +3616,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'streakToast';
-      toast.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#FF6B00,#FF9500);color:white;font-weight:900;font-size:14px;padding:12px 22px;border-radius:999px;box-shadow:0 8px 24px rgba(255,107,0,0.4);z-index:5000;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;font-family:inherit;';
+      toast.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#FF6B00,#FF9500);color:white;font-weight:900;font-size:14px;line-height:1.35;padding:12px 22px;border-radius:16px;box-shadow:0 8px 24px rgba(255,107,0,0.4);z-index:5000;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;font-family:inherit;max-width:min(420px,calc(100vw - 32px));text-align:center;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -2817,37 +3658,96 @@
   // ── Sidebar history — now grouped into real conversations, not flat
   //    disconnected questions. Each conversation is a parent doc with a
   //    messages subcollection, so clicking one replays the whole thread. ──
+  const HISTORY_PAGE_SIZE = 20;
+  let historyRequestVersion = 0;
+  let historyCursor = null;
+  let historyHasMore = true;
+  let historyLoading = false;
+  const historyDeletions = new Set();
+  const deletedHistory = new Set();
+
   async function loadSidebarHistory() {
     if (!window.currentUser) return;
+    historyRequestVersion++;
+    historyCursor = null;
+    historyHasMore = true;
+    historyLoading = false;
+    for (const id of ['sidebarHistoryList', 'mobileHistoryList']) {
+      const list = document.getElementById(id);
+      if (!list) continue;
+      list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+      list.scrollTop = 0;
+    }
+    await loadMoreSidebarHistory();
+  }
+  window.loadSidebarHistory = loadSidebarHistory;
+
+  async function loadMoreSidebarHistory() {
+    if (!window.currentUser || historyLoading || !historyHasMore) return;
+    const uid = window.currentUser.uid;
+    const requestVersion = historyRequestVersion;
+    const cursor = historyCursor;
+    let loaded = false;
+    historyLoading = true;
     const sbList  = document.getElementById('sidebarHistoryList');
     const sbEmpty = document.getElementById('sidebarHistoryEmpty');
     const mbList  = document.getElementById('mobileHistoryList');
     const mbEmpty = document.getElementById('mobileHistoryEmpty');
 
     try {
-      const q = query(
-        collection(db, 'users', window.currentUser.uid, 'conversations'),
-        orderBy('updatedAt', 'desc'),
-        limit(20)
-      );
+      const base = collection(db, 'users', uid, 'conversations');
+      const q = cursor
+        ? query(base, orderBy('updatedAt', 'desc'), startAfter(cursor), limit(HISTORY_PAGE_SIZE))
+        : query(base, orderBy('updatedAt', 'desc'), limit(HISTORY_PAGE_SIZE));
       const snaps = await getDocs(q);
-      renderHistoryInto(sbList, sbEmpty, snaps);
-      renderHistoryInto(mbList, mbEmpty, snaps);
+      if (window.currentUser?.uid !== uid || requestVersion !== historyRequestVersion) return;
+      renderHistoryInto(sbList, sbEmpty, snaps, !!cursor);
+      renderHistoryInto(mbList, mbEmpty, snaps, !!cursor);
+      if (snaps.docs.length) historyCursor = snaps.docs[snaps.docs.length - 1];
+      historyHasMore = snaps.docs.length === HISTORY_PAGE_SIZE;
+      loaded = true;
     } catch (e) { /* sidebar is non-critical */ }
+    finally {
+      if (requestVersion === historyRequestVersion) {
+        historyLoading = false;
+        // On very tall screens, one page may fit without creating a scrollbar.
+        // Fill the visible list until the next page can be reached by scrolling.
+        const visibleList = [sbList, mbList].find(list => list?.clientHeight > 0);
+        if (loaded && historyHasMore && visibleList && visibleList.scrollHeight <= visibleList.clientHeight) {
+          loadMoreSidebarHistory();
+        }
+      }
+    }
   }
-  window.loadSidebarHistory = loadSidebarHistory;
+  for (const id of ['sidebarHistoryList', 'mobileHistoryList']) {
+    document.getElementById(id)?.addEventListener('scroll', event => {
+      const list = event.currentTarget;
+      if (list.scrollTop + list.clientHeight >= list.scrollHeight - 120) loadMoreSidebarHistory();
+    }, { passive: true });
+  }
+  window.syncActiveHistoryRows = function() {
+    document.querySelectorAll('.sidebar-history-item[data-conversation-id]').forEach(row => {
+      const active = row.dataset.conversationId === window._currentConversationId;
+      row.classList.toggle('is-current', active);
+      if (active) row.setAttribute('aria-current', 'page');
+      else row.removeAttribute('aria-current');
+    });
+  };
 
-  function renderHistoryInto(list, empty, snaps) {
+  function renderHistoryInto(list, empty, snaps, append = false) {
     if (!list) return;
-    list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
-    if (snaps.empty) {
+    if (!append) list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+    if (snaps.empty && !append) {
       if (empty) empty.style.display = '';
       return;
     }
     if (empty) empty.style.display = 'none';
-    snaps.forEach(s => {
+    const existing = new Set(Array.from(list.querySelectorAll('.sidebar-history-item[data-conversation-id]'), el => el.dataset.conversationId));
+    snaps.docs.forEach(s => {
+      if (deletedHistory.has(window.currentUser?.uid + '/' + s.id)) return;
+      if (existing.has(s.id)) return;
       const d     = s.data();
-      const qText = (d.title || 'Untitled').substring(0, 36);
+      const qText = String(d.title || 'Untitled').substring(0, 200);
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
@@ -2855,10 +3755,14 @@
       row.className = 'sidebar-history-item';
       row.setAttribute('role', 'button');
       row.setAttribute('tabindex', '0');
+      row.dataset.conversationId = convId;
+      row.title = qText;
       // icon
       const icon = document.createElement('span');
       icon.className   = 'shi-icon';
-      icon.textContent = '💬';
+      icon.innerHTML = d.type === 'learn'
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-4 9 4-9 4-9-4Z"/><path d="M7 10v5c3 3 7 3 10 0v-5"/><path d="M21 8v7"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.8-3A7.5 7.5 0 1 1 20 11.5Z"/></svg>';
       icon.setAttribute('aria-hidden', 'true');
       row.appendChild(icon);
       // text — textContent prevents XSS
@@ -2873,11 +3777,44 @@
       del.setAttribute('aria-label', 'Delete this conversation');
       del.onclick = async (e) => {
         e.stopPropagation();
+        const uid = window.currentUser?.uid;
+        const key = uid + '/' + convId;
+        if (!uid || historyDeletions.has(key)) return;
+        historyDeletions.add(key);
         del.disabled = true;
+        row.setAttribute('aria-busy', 'true');
         try {
           await deleteConversation(convId);
-          loadSidebarHistory();
-        } catch (err) { del.disabled = false; }
+          deletedHistory.add(key);
+          if (window.currentUser?.uid !== uid) return;
+          // Smoothly collapse each matching row (fade + slide + height to 0)
+          // then remove it, instead of a hard instant disappear. Falls back
+          // to instant removal if transitions aren't supported.
+          const rows = Array.from(document.querySelectorAll('.sidebar-history-item'))
+            .filter(item => item.dataset.conversationId === convId);
+          rows.forEach(item => {
+            item.style.height = item.offsetHeight + 'px';   // lock current height
+            void item.offsetHeight;                          // force reflow
+            item.classList.add('shi-removing');
+            item.style.height = '0px';
+            item.addEventListener('transitionend', function done(ev) {
+              if (ev.propertyName === 'height') { item.removeEventListener('transitionend', done); item.remove(); }
+            });
+            // Safety net if transitionend never fires.
+            setTimeout(() => item.remove(), 400);
+          });
+          for (const [listId, emptyId] of [['sidebarHistoryList', 'sidebarHistoryEmpty'], ['mobileHistoryList', 'mobileHistoryEmpty']]) {
+            const list = document.getElementById(listId);
+            const empty = document.getElementById(emptyId);
+            if (empty) empty.style.display = list?.querySelector('.sidebar-history-item:not(.shi-removing)') ? 'none' : '';
+          }
+        } catch (err) {
+          if (window.currentUser?.uid === uid) showStreakToast('Could not delete this chat. Please try again.');
+        } finally {
+          historyDeletions.delete(key);
+          del.disabled = false;
+          row.removeAttribute('aria-busy');
+        }
       };
       row.appendChild(del);
       // Use full row text as accessible label
@@ -2889,6 +3826,7 @@
       };
       row.onclick = activate;
       row.onkeydown = (e) => {
+        if (e.target !== row) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           activate(e);
@@ -2896,43 +3834,69 @@
       };
       list.appendChild(row);
     });
+    window.syncActiveHistoryRows();
   }
 
   // ── Save a Q&A exchange into the current conversation thread.
   //    First message of a fresh chat creates the conversation doc; every
   //    later message in the same session appends to its messages
   //    subcollection and bumps updatedAt so it sorts to the top. ──
-  async function saveHistory(question, answer) {
-    if (!window.currentUser) return;
+  async function saveHistory(question, answer, context = {}) {
+    const uid = context.uid || window.currentUser?.uid;
+    if (!uid || window.currentUser?.uid !== uid) return false;
+    const originalId = Object.hasOwn(context, 'conversationId') ? context.conversationId : window._currentConversationId;
+    if (originalId && deletedHistory.has(uid + '/' + originalId)) return false;
     try {
       const now = Date.now();
-      const isLearn = !!window._learnModeActive;
-      if (!window._currentConversationId) {
-        const title = (isLearn ? '🎓 ' : '') + String(question || 'Untitled').substring(0, 58);
-        const convRef = await addDoc(collection(db, 'users', window.currentUser.uid, 'conversations'), {
-          title:     title.substring(0, 60),
-          type:      isLearn ? 'learn' : 'chat',
-          createdAt: now,
-          updatedAt: now,
+      const isLearn = context.learnMode ?? !!window._learnModeActive;
+      context.savedConversationId ||= originalId || doc(collection(db, 'users', uid, 'conversations')).id;
+      context.messageId ||= crypto.randomUUID();
+      const conversationId = context.savedConversationId;
+      const convRef = doc(db, 'users', uid, 'conversations', conversationId);
+      const messageRef = doc(collection(convRef, 'messages'), context.messageId);
+      const message = {
+        question: String(question || ''),
+        answer: String(answer || ''),
+        ...(['gpt-5.6-luna', 'gpt-6-luna'].includes(context.model) ? { model: context.model } : {}),
+        ts:       now,
+      };
+      if (message.question.length > 8000 || message.answer.length > 100000) throw new Error('History exceeds storage limits. Copy this answer to keep it.');
+      await runTransaction(db, async tx => {
+        const [parent, existingMessage] = await Promise.all([tx.get(convRef), tx.get(messageRef)]);
+        if (window.currentUser?.uid !== uid || deletedHistory.has(uid + '/' + conversationId)) throw new Error('Account or conversation changed.');
+        if (parent.exists() && parent.data().deleting) throw new Error('Conversation is being deleted.');
+        if (originalId && !parent.exists()) throw new Error('Conversation was deleted.');
+        if (existingMessage.exists()) return;
+        if (!parent.exists()) tx.set(convRef, {
+          title: ((isLearn ? '🎓 ' : '') + String(question || 'Untitled')).substring(0, 60),
+          type: isLearn ? 'learn' : 'chat',
+          ...(isLearn && context.sessionId ? { learnSessionId: context.sessionId } : {}),
+          createdAt: now, updatedAt: now,
         });
-        window._currentConversationId = convRef.id;
-      } else {
-        try {
-          await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId), {
-            updatedAt: now,
-          });
-        } catch (e) { /* if the parent got deleted mid-session, just keep going */ }
-      }
-      await addDoc(
-        collection(db, 'users', window.currentUser.uid, 'conversations', window._currentConversationId, 'messages'),
-        {
-          question: String(question || '').substring(0, 1000),
-          answer:   String(answer   || '').substring(0, 5000),
-          ts:       now,
-        }
-      );
+        else tx.update(convRef, { updatedAt: now });
+        tx.set(messageRef, message);
+      });
+      if (window.currentUser?.uid === uid && (context.viewVersion === undefined || context.viewVersion === window._appViewVersion)) window._currentConversationId = conversationId;
       loadSidebarHistory();
-    } catch (e) { /* silent */ }
+      return true;
+    } catch (e) {
+      console.warn('History save failed:', e.message);
+      if (window.currentUser?.uid === uid && !deletedHistory.has(uid + '/' + (context.savedConversationId || originalId))) {
+        const notice = document.createElement('div');
+        notice.setAttribute('role', 'status');
+        notice.textContent = 'This answer is not saved to history. Keep this page open or copy the answer. ';
+        const retry = document.createElement('button');
+        retry.textContent = 'Retry saving';
+        retry.onclick = async () => {
+          retry.disabled = true;
+          notice.remove();
+          await saveHistory(question, answer, context);
+        };
+        notice.appendChild(retry);
+        document.getElementById('chatThread')?.appendChild(notice);
+      }
+      return false;
+    }
   }
   window.saveHistory = saveHistory;
 
@@ -2941,30 +3905,55 @@
   //    question re-typed into the box. ──
   window.openConversation = async function(conversationId) {
     if (!window.currentUser) return;
+    window.closeCalc?.();
+    const viewVersion = ++window._appViewVersion;
+    const uid = window.currentUser.uid;
     try {
-      const convRef = doc(db, 'users', window.currentUser.uid, 'conversations', conversationId);
+      const convRef = doc(db, 'users', uid, 'conversations', conversationId);
       const q = query(
         collection(convRef, 'messages'),
         orderBy('ts', 'asc')
       );
       const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
+      if (window._appViewVersion !== viewVersion || window.currentUser?.uid !== uid) return;
 
       const thread = document.getElementById('chatThread');
       if (!thread) return;
       thread.innerHTML = '';
       window._conversation = [];
       window._currentConversationId = conversationId;
+      window.syncActiveHistoryRows();
 
       // Restore Learn mode if this was a guided-teaching session — otherwise
       // continuing the conversation would silently fall back to normal
       // direct-answer behavior, which would feel like a broken promise.
       window._learnModeActive = convSnap.exists() && convSnap.data().type === 'learn';
+      // If a legacy Learn conversation is missing its saved learnSessionId,
+      // generate one AND persist it back so the "free follow-ups" credit
+      // rule can actually apply. Without the write, every reopened chat
+      // silently started a brand-new server session on each turn, so the
+      // very first message after reopen was charged as new (user perceived
+      // it as continuing).
+      if (window._learnModeActive) {
+        const existingSid = convSnap.data().learnSessionId;
+        if (existingSid) {
+          window._learnSessionId = existingSid;
+        } else {
+          window._learnSessionId = crypto.randomUUID();
+          try {
+            await updateDoc(convRef, { learnSessionId: window._learnSessionId });
+          } catch (_) { /* non-critical: session id lives in memory for this tab */ }
+          if (window._appViewVersion !== viewVersion || window.currentUser?.uid !== uid) return;
+        }
+      } else {
+        window._learnSessionId = null;
+      }
       document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
       const lb = document.getElementById('learnModeBar');
       if (window._learnModeActive) {
         const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
         if (learnNav) learnNav.classList.add('sidebar-nav-active');
-        if (lb) lb.style.display = 'flex';
+        window.showLearnBar();
       } else {
         if (lb) lb.style.display = 'none';
         const chatNav = document.querySelector('.sidebar-quicknav-link[data-nav="chat"]');
@@ -2996,8 +3985,9 @@
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
             '<div class="msg-knox-content">' +
-              '<div class="msg-knox-label">Knox</div>' +
-              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '') + '</div>' +
+              '<div class="msg-knox-label">Knox' + (window.currentUser?.email?.toLowerCase().trim() === 'sion22comp@gmail.com' && ['gpt-5.6-luna', 'gpt-6-luna'].includes(d.model)
+                ? '<span class="knox-model-reply"> · ' + (d.model === 'gpt-6-luna' ? '6 Knox' : '5.6 Knox') + '</span>' : '') + '</div>' +
+              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive ? 'learn' : 'answer') + '</div>' +
               buildMessageActionsHtml(historyFbId, false) +
             '</div>' +
           '</div>';
@@ -3017,13 +4007,25 @@
   //    subcollections, so the messages have to be removed explicitly
   //    before the parent conversation doc itself. ──
   async function deleteConversation(conversationId) {
-    if (!window.currentUser) return;
-    const messagesRef = collection(db, 'users', window.currentUser.uid, 'conversations', conversationId, 'messages');
-    const snaps = await getDocs(messagesRef);
-    await Promise.all(snaps.docs.map(d => deleteDoc(d.ref)));
-    await deleteDoc(doc(db, 'users', window.currentUser.uid, 'conversations', conversationId));
-    if (window._currentConversationId === conversationId) {
-      window._currentConversationId = null;
+    const uid = window.currentUser?.uid;
+    if (!uid) throw new Error('Sign in to delete a conversation.');
+    const parent = doc(db, 'users', uid, 'conversations', conversationId);
+    // Block new message writes in every tab before draining children.
+    await updateDoc(parent, { deleting: true });
+    deletedHistory.add(uid + '/' + conversationId);
+    const messagesRef = collection(parent, 'messages');
+    // Bounded batches avoid hundreds of simultaneous requests. Normal threads
+    // and their parent are removed atomically; larger ones drain in chunks.
+    while (true) {
+      const snaps = await getDocs(query(messagesRef, limit(400)));
+      const batch = writeBatch(db);
+      snaps.docs.forEach(message => batch.delete(message.ref));
+      if (snaps.docs.length < 400) batch.delete(parent);
+      await batch.commit();
+      if (snaps.docs.length < 400) break;
+    }
+    if (window.currentUser?.uid === uid && window._currentConversationId === conversationId) {
+      window.appStartNewChat();
     }
   }
   window.deleteConversation = deleteConversation;
@@ -3268,30 +4270,9 @@
   window.sendWelcomeEmailCall = sendWelcomeEmailCall;
 
   // ── Payments ────────────────────────────────────────────────
-  window.goToPricing = function() { window.location.href = '/#pricing'; };
+  window.goToPricing = function() { window.location.href = '/about#pricing'; };
 
-  function showPaymentSuccessModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal-backdrop';
-    modal.innerHTML =
-      '<div class="auth-card">' +
-        '<div class="auth-header" style="background:var(--green);border-color:var(--green-dark);">' +
-          '<img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'">' +
-          '<h2>You\u2019re in!</h2>' +
-          '<p>Your upgraded plan is now active.</p>' +
-        '</div>' +
-        '<div class="auth-body">' +
-          '<div style="background:var(--green-light);border:2px solid #B9F6CA;border-radius:16px;padding:16px 18px;margin-bottom:20px;box-shadow:0 3px 0 #B9F6CA;">' +
-            '<p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;">A confirmation email is on its way. Manage your subscription anytime from your account menu.</p>' +
-          '</div>' +
-          '<button class="auth-submit" id="paySuccessClose">Start using Knox</button>' +
-          '<p style="text-align:center;font-size:12px;color:var(--text-light);margin-top:12px;font-weight:700;">Didn\u2019t get an email? Check spam or email <a href="mailto:support@knoxknowsapp.com" style="color:var(--orange);">support@knoxknowsapp.com</a></p>' +
-        '</div>' +
-      '</div>';
-    modal.onclick = e => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
-    modal.querySelector('#paySuccessClose').onclick = () => modal.remove();
-  }
+  function showPaymentSuccessModal() { window.showKnoxBillingStatus(); }
   window.showPaymentSuccessModal = showPaymentSuccessModal;
 
   function showWelcomeModal(name) {
@@ -3330,8 +4311,9 @@
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
-    const planLabel = plan !== 'free' ? 'Knox Plus' : 'Free';
-    const badgeClass = plan !== 'free' ? 'super' : 'free';
+    const isPaid = planTier(plan) === 'paid';
+    const planLabel = isPaid ? 'Knox Plus' : 'Free';
+    const badgeClass = isPaid ? 'super' : 'free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
 
@@ -3358,13 +4340,17 @@
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
 
-    if (plan !== 'free') {
+    // A Stripe customer record is created as soon as someone opens checkout,
+    // so free users can have one too: give them billing access AND keep the
+    // upgrade button.
+    if (isPaid || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
       billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:white;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
       billBtn.textContent = 'Manage Billing';
       billBtn.onclick = function() { openBillingPortal(this); };
       el.appendChild(row('Billing', billBtn));
-    } else {
+    }
+    if (!isPaid) {
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
@@ -3440,21 +4426,87 @@ function escHtml(s) {
 // Apply **bold** markdown — safe because we escape FIRST then transform.
 // The escape neutralizes any HTML in the source, and we only insert <strong>.
 function formatInline(text) {
-  return escHtml(text)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*\*/g, '');
+  return String(text).split(/(`[^`\n]+`)/g).map((part, index) => index % 2
+    ? '<code>' + escHtml(part.slice(1, -1)) + '</code>'
+    : escHtml(part).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')).join('');
+}
+
+// Give numbered steps the same visual hierarchy regardless of whether a
+// particular model decides to wrap its short label in Markdown bold.
+function formatNumberedStep(text) {
+  const step = String(text);
+  const match = /^([^:*`\n]{2,55}):\s*(.*)$/.exec(step);
+  if (!match || match[1].includes('**')) return formatInline(step);
+  return '<strong>' + formatInline(match[1]) + ':</strong>' + (match[2] ? ' ' + formatInline(match[2]) : '');
 }
 
 function showChatThread() {
   const ws = $('welcomeScreen'); if (ws) ws.style.display = 'none';
   const t  = $('chatThread');    if (t)  t.classList.remove('hidden');
 }
+
+// One set of account/theme controls: sidebar on desktop, compact header on mobile.
+function placeAppControls() {
+  const controls = document.querySelector('.header-right');
+  const destination = window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
+  if (controls && destination && controls.parentElement !== destination) {
+    destination.appendChild(controls);
+    window.closeUserDropdown?.();
+  }
+  if (controls) {
+    const dock = controls.querySelector('.account-dock');
+    const status = controls.querySelector('.account-status-row');
+    const theme = $('darkModeToggle');
+    const settings = $('sidebarSettingsBtn');
+    // Desktop members: theme toggle lives in the account dock (beside the
+    // profile button). Desktop guests: no dock is shown, so keep the toggle
+    // in the status row on the same line as the credit pill. Mobile: status row.
+    const isGuest = document.body.classList.contains('app-guest');
+    const themeDestination = (window.innerWidth > 900 && !isGuest) ? dock : status;
+    if (theme && themeDestination && theme.parentElement !== themeDestination) themeDestination.appendChild(theme);
+    if (settings && status && settings.parentElement !== status) status.appendChild(settings);
+  }
+}
+window.placeAppControls = placeAppControls;
+placeAppControls();
+window.addEventListener('resize', placeAppControls);
+// Share the exact same Knox illustrations in the phone drawer.
+document.querySelectorAll('[data-mobile-nav]').forEach(button => {
+  const source = document.querySelector(`[data-nav="${button.dataset.mobileNav}"] .sq-icon`);
+  const placeholder = button.querySelector('.sq-icon');
+  if (source && placeholder) placeholder.replaceWith(source.cloneNode(true));
+});
+
 function scrollChat() {
   const t = $('chatThread');
   if (t) setTimeout(() => { t.scrollTop = t.scrollHeight; }, 50);
 }
 
+// Learn Mode banner: dismissible for good. hideLearnBar() hides it and
+// remembers the choice; showLearnBar() only shows it if the user hasn't
+// dismissed it before. You stay in Learn Mode either way — the banner is
+// just the reminder, and "Ask Knox" in the sidebar always exits.
+window.hideLearnBar = function() {
+  const lb = document.getElementById('learnModeBar');
+  if (lb) lb.style.display = 'none';
+  try { localStorage.setItem('knoxLearnBarHidden', '1'); } catch (e) {}
+};
+window.showLearnBar = function() {
+  let hidden = false;
+  try { hidden = localStorage.getItem('knoxLearnBarHidden') === '1'; } catch (e) {}
+  const lb = document.getElementById('learnModeBar');
+  if (lb) lb.style.display = hidden ? 'none' : 'flex';
+};
+
 window.appStartNewChat = function() {
+  window._appViewVersion++;
+  // Close the calculator if it's open — otherwise clicking Ask Knox while
+  // the calculator is up left the calc modal covering the (reset) chat,
+  // which looked like the app was bugged. openLearnMode already did this;
+  // Ask Knox was the one path that forgot to.
+  if (document.getElementById('calcModal')?.classList.contains('open')) {
+    window.closeCalc();
+  }
   const t  = $('chatThread');
   if (t)   { t.innerHTML = ''; t.classList.add('hidden'); }
   const ws = $('welcomeScreen'); if (ws) ws.style.display = '';
@@ -3462,7 +4514,9 @@ window.appStartNewChat = function() {
   if (window.appClearImage) window.appClearImage();
   window._conversation = [];
   window._currentConversationId = null;
+  window.syncActiveHistoryRows?.();
   window._learnModeActive = false;
+  window._learnSessionId = null;
   const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
   resetWelcomeCopy();
   // Clear every nav tab's active state, then highlight "Ask Knox" as the
@@ -3479,6 +4533,7 @@ window.appStartNewChat = function() {
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
 window.openLearnMode = function() {
+  window._appViewVersion++;
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
   }
@@ -3489,8 +4544,10 @@ window.openLearnMode = function() {
   if (window.appClearImage) window.appClearImage();
   window._conversation = [];
   window._currentConversationId = null;
+  window.syncActiveHistoryRows?.();
   window._learnModeActive = true;
-  const lb = $('learnModeBar'); if (lb) lb.style.display = 'flex';
+  window._learnSessionId = crypto.randomUUID();
+  window.showLearnBar();
 
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
@@ -3513,7 +4570,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '🦊 Hey, I\'m Knox';
+  if (badge) badge.innerHTML = '<span class="hw-hide">🦊 Hey, I\'m Knox</span><span class="hw-only">🎃 Happy Halloween — I\'m Knox</span>';
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);
@@ -3640,7 +4697,26 @@ document.addEventListener('keydown', (e) => {
 // ── Account dropdown ─────────────────────────────────────────
 window.toggleUserDropdown = function() {
   const dd = $('appAccountDropdown');
-  if (dd) dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+  if (!dd) return;
+  if (dd.style.display === 'block') { dd.style.display = 'none'; return; }
+  dd.style.display = 'block';
+  if (window.innerWidth > 900) {
+    // Pop UP from the profile button, aligned to its left edge — like
+    // Claude's account menu sitting just above the profile pill — rather
+    // than flying out to the right. Falls back to below the button only if
+    // there isn't room above.
+    const anchor = $('appAccountBtn').getBoundingClientRect();
+    dd.style.right = 'auto';
+    // Nudge ~10px left of the button's edge so it sits cleanly over the
+    // profile rather than flush to it.
+    dd.style.left = Math.max(10, Math.min(anchor.left - 10, window.innerWidth - dd.offsetWidth - 12)) + 'px';
+    const above = anchor.top - dd.offsetHeight - 8;
+    dd.style.top = (above >= 12 ? above : Math.min(anchor.bottom + 8, window.innerHeight - dd.offsetHeight - 12)) + 'px';
+  } else {
+    dd.style.left = '';
+    dd.style.right = '';
+    dd.style.top = '';
+  }
 };
 window.closeUserDropdown = function() {
   const dd = $('appAccountDropdown'); if (dd) dd.style.display = 'none';
@@ -3671,30 +4747,69 @@ window.closeMobileHistory = function() {
 // dropped image goes through the exact same validation and preview path
 // as one picked with the upload button — same size cap, same error
 // message, same attached-pill UI.
-function handleImageFile(file) {
+let imageSelectionVersion = 0;
+async function fitImageForUpload(file) {
+  if (file.size <= 2_900_000) return file;
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = objectUrl;
+    });
+    // Most phone photos are larger than Vercel's safe JSON body size once
+    // base64-encoded. Resize only those photos; leave smaller originals intact.
+    for (const maxEdge of [2600, 2200, 1800]) {
+      const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.9, 0.82, 0.72]) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+        if (blob && blob.size <= 2_900_000) {
+          const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+          return new File([blob], name, { type: 'image/jpeg' });
+        }
+      }
+    }
+    return null;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function handleImageFile(file) {
   if (!file) return;
+  const selectionVersion = ++imageSelectionVersion;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
     return;
   }
-  if (file.size > 5 * 1024 * 1024) {
-    alert('Image too large — please use an image under 5MB.');
+  let uploadFile;
+  try { uploadFile = await fitImageForUpload(file); }
+  catch (error) { console.error('Could not prepare photo:', error); }
+  if (selectionVersion !== imageSelectionVersion) return;
+  if (!uploadFile) {
+    alert('Could not prepare this photo. Try a closer crop of the question or a different image.');
     return;
   }
   const reader = new FileReader();
   reader.onload = (ev) => {
+    if (selectionVersion !== imageSelectionVersion) return;
     const dataUrl = String(ev.target.result);
     const base64  = dataUrl.split(',')[1];
-    window._appImage = { data: base64, type: file.type, name: file.name, dataUrl };
+    window._appImage = { data: base64, type: uploadFile.type, name: uploadFile.name, dataUrl };
     const pill  = $('appImagePill');
     const thumb = $('appImagePillThumb');
     const name  = $('appImagePillName');
     if (thumb) thumb.src = dataUrl;
-    if (name)  name.textContent  = file.name;
+    if (name)  name.textContent  = uploadFile.name;
     if (pill)  pill.style.display = 'inline-flex';
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(uploadFile);
 }
 window.handleImageFile = handleImageFile;
 
@@ -3768,6 +4883,9 @@ if (_fi) {
 })();
 
 window.appClearImage = function() {
+  // Invalidate a photo that is still being resized or read. Otherwise it
+  // can reappear after the student removes it or sends a different message.
+  imageSelectionVersion++;
   window._appImage = null;
   const pill = $('appImagePill');
   if (pill) pill.style.display = 'none';
@@ -3781,6 +4899,9 @@ if (_ci) {
     this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
   _ci.addEventListener('keydown', function(e) {
+    // Enter while an IME is composing (Chinese, Japanese, Korean keyboards)
+    // confirms the character — it must not send a half-typed question.
+    if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       window.appHandleAsk();
@@ -4075,9 +5196,11 @@ function insertTextAtCursor(el, text) {
 // nothing appears in the box at all. This pulls readable text out of the
 // HTML flavor instead, as a last resort.
 function extractTextFromHtml(html) {
-  const tmp = document.createElement('div');
+  // A template parses clipboard HTML inertly: pasted image event handlers
+  // must never execute while we extract plain text.
+  const tmp = document.createElement('template');
   tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
+  return tmp.content.textContent || '';
 }
 
 // A visually laid-out fraction/equation (numerator, a bar, a denominator,
@@ -4143,6 +5266,7 @@ if (_ci) {
 
 // ── Ask Knox ─────────────────────────────────────────────────
 window.appHandleAsk = async function() {
+  if (window._appAskBusy) return;
   const input = $('appChatInput');
   const q = (input?.value || '').trim();
   if (!q && !window._appImage) return;
@@ -4154,6 +5278,31 @@ window.appHandleAsk = async function() {
       const gc = $('guestCta'); if (gc) gc.style.display = 'flex';
       return;
     }
+  }
+
+  window._appAskBusy = true;
+  const requestController = new AbortController();
+  window._askController = requestController;
+  const requestTimeout = setTimeout(() => requestController.abort(), 65000);
+  const requestUser = window.currentUser;
+  const requestUid = requestUser?.uid || null;
+  const requestView = window._appViewVersion;
+  const requestConversationId = window._currentConversationId;
+  const requestLearnMode = !!window._learnModeActive;
+  const requestLearnSessionId = window._learnSessionId;
+  const requestHistory = [];
+  let historyChars = 0;
+  // Walk newest→oldest, keep everything that still fits.
+  // Previously `break` on any oversize condition — including a single
+  // message over 24k chars — silently dropped ALL older context after
+  // hitting one long paste. `continue` instead so a single long message
+  // is skipped but earlier smaller messages still make it into the
+  // request, and Knox keeps its conversation memory.
+  for (const m of window._conversation.slice(-30).reverse()) {
+    if (m.content.length > 24000) continue;
+    if (historyChars + m.content.length > 120000) break;
+    requestHistory.unshift({ role: m.role, content: m.content });
+    historyChars += m.content.length;
   }
 
   const sendBtn = $('appSendBtn');
@@ -4204,10 +5353,24 @@ window.appHandleAsk = async function() {
 
   const image = window._appImage;
   window.appClearImage();
+  const clearedImageVersion = imageSelectionVersion;
+  function restoreFailedDraft() {
+    if (window._appViewVersion !== requestView || (window.currentUser?.uid || null) !== requestUid) return;
+    if (input && !input.value) {
+      input.value = q;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (image && !window._appImage && imageSelectionVersion === clearedImageVersion) {
+      window._appImage = image;
+      $('appImagePillThumb').src = image.dataUrl;
+      $('appImagePillName').textContent = image.name || 'Image attached';
+      $('appImagePill').style.display = 'flex';
+    }
+  }
 
   let idToken = '';
-  if (window.currentUser) {
-    try { idToken = await window.currentUser.getIdToken(); } catch (e) { /* fall through */ }
+  if (requestUser) {
+    try { idToken = await requestUser.getIdToken(); } catch (e) { /* fall through */ }
   }
 
   // History sent to API — send a generous window so Knox remembers the
@@ -4215,42 +5378,41 @@ window.appHandleAsk = async function() {
   // very large context window, so this is nowhere near a real limit; the
   // old slice(-10) was overly conservative and made Knox forget things
   // referenced from earlier in the same chat.
-  const history = window._conversation.slice(-30).map(m => ({
-    role:    m.role,
-    content: m.content,
-  }));
+  const history = requestHistory;
 
   try {
+    if (requestUser && !idToken) throw new Error('Please sign in again before sending your question.');
     const headers = { 'Content-Type': 'application/json' };
     if (idToken) headers['Authorization'] = 'Bearer ' + idToken;
-
-    // TESTING ONLY (admin account) — URL params force a specific model so
-    // you can compare answers. The server re-checks the admin email itself,
-    // so these flags do nothing for anyone else even if they guess the URL.
-    //   ?testluna=1      → force Luna for TEXT questions
-    //   ?testlunaphoto=1 → force Luna for PHOTO questions (vision test)
-    const params = new URLSearchParams(location.search);
-    const wantLunaTest      = params.get('testluna') === '1';
-    const wantLunaPhotoTest = params.get('testlunaphoto') === '1';
-    let testModelFlag;
-    if (wantLunaPhotoTest && image) testModelFlag = 'lunaphoto';
-    else if (wantLunaTest)          testModelFlag = 'luna';
 
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers,
+      signal: requestController.signal,
       body: JSON.stringify({
         question:  q,
         image:     image?.data,
         imageType: image?.type,
         history,
-        learnMode: !!window._learnModeActive,
-        testModel: testModelFlag,
+        learnMode: requestLearnMode,
+        learnSessionId: requestLearnSessionId,
       }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({ error: 'Knox could not complete this request. Please try again.' }));
+    const sameView = window._appViewVersion === requestView && (window.currentUser?.uid || null) === requestUid;
+    if (!sameView) {
+      if (res.ok && requestUid && window.currentUser?.uid === requestUid && window.saveHistory) {
+        await window.saveHistory(q || '[image]', data.answer || '', {
+          uid: requestUid, conversationId: requestConversationId,
+          learnMode: requestLearnMode, sessionId: requestLearnSessionId,
+          viewVersion: requestView, model: data.model,
+        });
+      }
+      return;
+    }
 
     if (!res.ok) {
+      restoreFailedDraft();
       // Rich rate-limit handling — show upgrade card on quota errors
       if (data.limitReached) {
         replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
@@ -4268,7 +5430,7 @@ window.appHandleAsk = async function() {
     }
 
     // Successful answer — increment guest count
-    if (!window.currentUser) window._incGuestCount();
+    if (!window.currentUser && !data.isCasual) window._incGuestCount();
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
@@ -4277,14 +5439,13 @@ window.appHandleAsk = async function() {
     }
 
     const answer = data.answer || '';
-    const html   = renderAnswerHtml(answer) + renderVideoCard(data.video);
+    const html   = renderAnswerHtml(answer, requestLearnMode ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: q || '[image]', answer };
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
-    const bodyHtml = '<div>' + html + '</div>' + window.buildMessageActionsHtml(fbId, !!window.currentUser);
-    replaceThinking(thinkId, bodyHtml);
+    replaceThinking(thinkId, html, window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
     // Track conversation
     window._conversation.push({ role: 'user',      content: q || '[image]' });
@@ -4292,19 +5453,30 @@ window.appHandleAsk = async function() {
     if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
 
     // Save history + refresh usage indicator
-    if (window.saveHistory && window.currentUser) {
-      window.saveHistory(q || '[image]', answer);
+    if (window.saveHistory && requestUid) {
+      await window.saveHistory(q || '[image]', answer, {
+        uid: requestUid, conversationId: requestConversationId,
+        learnMode: requestLearnMode, sessionId: requestLearnSessionId,
+        viewVersion: requestView, model: data.model,
+      });
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
 
   } catch (e) {
-    replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 Network error. Check your connection and try again.</p>');
+    restoreFailedDraft();
+    const message = requestUser && !idToken ? 'Please sign in again before sending your question.' : 'Knox could not finish this request. Your draft is available below; check your connection and try again.';
+    replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">' + escHtml(message) + '</p>');
   } finally {
-    if (sendBtn) sendBtn.disabled = false;
+    clearTimeout(requestTimeout);
+    if (window._askController === requestController) {
+      window._askController = null;
+      window._appAskBusy = false;
+      if (sendBtn) sendBtn.disabled = false;
+    }
   }
 };
 
-function replaceThinking(thinkId, html) {
+function replaceThinking(thinkId, html, actionsHtml = '', modelLabel = '') {
   const thinking = document.getElementById(thinkId);
   if (!thinking) return;
   const row = document.createElement('div');
@@ -4313,8 +5485,9 @@ function replaceThinking(thinkId, html) {
     '<div class="msg-knox">' +
       '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
       '<div class="msg-knox-content">' +
-        '<div class="msg-knox-label">Knox</div>' +
+        '<div class="msg-knox-label">Knox' + (modelLabel ? '<span class="knox-model-reply"> · ' + modelLabel + '</span>' : '') + '</div>' +
         '<div class="msg-knox-bubble">' + html + '</div>' +
+        actionsHtml +
       '</div>' +
     '</div>';
   thinking.replaceWith(row);
@@ -4350,203 +5523,68 @@ function renderLimitCard(data, isSignedIn) {
 // Check My Work mode keeps its labels below since those (Verdict, Where it
 // went wrong, The fix...) are functionally meaningful, not padding — they
 // mark genuinely different parts of checking someone's work.
-function renderAnswerHtml(text) {
+function renderAnswerHtml(text, kind = 'answer') {
   if (!text) return '';
-
-  // Pull fenced code blocks out BEFORE any line-trimming touches them — the
-  // existing renderer trims every line, which would silently strip all
-  // indentation from code. Each block becomes a plain-token placeholder,
-  // gets rendered through the untouched original pipeline like normal text,
-  // then swapped back in as a real monospace block with whitespace intact.
-  const codeBlocks = [];
-  const withPlaceholders = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
-    const idx = codeBlocks.length;
-    codeBlocks.push({ lang: (lang || '').trim(), code: code.replace(/\n$/, '') });
-    return `\n\nKNOXCODEBLOCK_${idx}_ENDBLOCK\n\n`;
-  });
-
-  let html = renderAnswerHtmlInner(withPlaceholders);
-
-  // Swap each placeholder back in as a real code block, stripping the <p>
-  // wrapper the inner renderer put around it since it treated the token
-  // like a normal line of text.
-  codeBlocks.forEach((block, idx) => {
-    const token = `KNOXCODEBLOCK_${idx}_ENDBLOCK`;
-    const codeHtml =
-      '<div class="knox-code-block">' +
-      (block.lang ? '<div class="knox-code-lang">' + escHtml(block.lang) + '</div>' : '') +
-      '<pre><code>' + escHtml(block.code) + '</code></pre>' +
-      '</div>';
-    const wrappedPattern = new RegExp('<p[^>]*>\\s*' + token + '\\s*</p>', 'g');
-    html = html.replace(wrappedPattern, codeHtml).replace(token, codeHtml);
-  });
-
-  return html;
-}
-
-function renderAnswerHtmlInner(text) {
-  if (!text) return '';
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-  const SECTIONS = {
-    // Check My Work sections — kept as labeled cards on purpose
-    'Verdict':           ['#7C3AED', '⚖️'],   // purple — the check-mode signature color
-    'What you got right':['#58CC02', '✅'],   // green — positive reinforcement
-    'Where it went wrong':['#FF4B4B', '🔍'],  // red — the error location
-    'The fix':           ['#1CB0F6', '🔧'],   // blue — how to correct it
-    'Confirm':           ['#58CC02', '✅'],   // green — affirm correct work
+  const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
+  let html = '', paragraphs = [], list = '', inItem = false;
+  const flush = () => {
+    if (paragraphs.length) html += '<p>' + paragraphs.map(formatInline).join('<br>') + '</p>';
+    paragraphs = [];
   };
-  const sectionKeys = Object.keys(SECTIONS);
-  function isSectionLine(line) {
-    return sectionKeys.some(k => line === k || line === k + ':' || line.startsWith(k + ':'));
-  }
-  function matchSection(line) {
-    for (const k of sectionKeys) {
-      if (line === k || line === k + ':' || line.startsWith(k + ':')) return k;
+  const closeList = () => {
+    flush();
+    if (inItem) html += '</li>';
+    if (list) html += '</' + list + '>';
+    list = ''; inItem = false;
+  };
+  const answerBox = result => '<div class="knox-final-answer"><span class="knox-final-answer-label">Answer</span><span>' + formatInline(result) + '</span></div>';
+  let firstAnswer = '';
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) { flush(); continue; }
+    // Process fences directly; no string placeholders that can collide with prose.
+    const fence = /^(~{3,}|`{3,})([^ ]*)\s*$/.exec(line);
+    if (fence) {
+      closeList();
+      const code = [];
+      while (++i < lines.length && !lines[i].trim().startsWith(fence[1])) code.push(lines[i]);
+      html += '<div class="knox-code-block">' +
+        (fence[2] ? '<div class="knox-code-lang">' + escHtml(fence[2]) + '</div>' : '') +
+        '<pre><code>' + escHtml(code.join('\n')) + '</code></pre></div>';
+      continue;
     }
-    return null;
-  }
-
-  let html = '';
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    const key  = matchSection(line);
-    if (key) {
-      const [color, icon] = SECTIONS[key];
-      const inlineContent = line.includes(':') ? line.slice(line.indexOf(':') + 1).trim() : '';
-      html += '<div class="knox-section-card" style="border-left:4px solid ' + color + ';">';
-      html += '<div class="knox-section-label" style="color:' + color + ';">' + icon + ' ' + escHtml(key) + '</div>';
-      if (inlineContent) {
-        html += '<p style="margin:0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(inlineContent) + '</p>';
-      }
-      i++;
-      while (i < lines.length && !isSectionLine(lines[i])) {
-        const next = lines[i];
-        if (/^\d+[\.)]\s*/.test(next) || /^\d+$/.test(next.trim())) {
-          // Numbered list — ONE continuous <ol> so numbering never resets.
-          // Bullets / lettered lines that follow a number nest INSIDE that item.
-          html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
-          while (i < lines.length && !isSectionLine(lines[i])) {
-            const sl = lines[i];
-            let itemText = null;
-            if (/^\d+[\.)]\s*/.test(sl)) {
-              itemText = formatInline(sl.replace(/^\d+[\.)]\s*/, ''));
-              i++;
-            } else if (/^\d+$/.test(sl.trim()) && i + 1 < lines.length && !isSectionLine(lines[i + 1])) {
-              itemText = formatInline(lines[i + 1]);
-              i += 2;
-            } else {
-              break; // not a numbered item — stop the ordered list
-            }
-            // Absorb plain explanation lines that fall between numbered steps
-            // into THIS item, so they don't break the <ol> and restart
-            // numbering at 1 (same fix as the top-level list below).
-            let explain = '';
-            while (
-              i < lines.length && !isSectionLine(lines[i]) &&
-              !/^\d+[\.)]\s*/.test(lines[i]) && !/^\d+$/.test(lines[i].trim()) &&
-              !/^[•\-\*✓✔]\s/.test(lines[i]) && !/^[a-z][\.)]\s/.test(lines[i])
-            ) {
-              explain += '<div style="font-size:13.5px;font-weight:500;line-height:1.55;margin-top:4px;">' + formatInline(lines[i]) + '</div>';
-              i++;
-            }
-            // gather any sub-lines (bullets or lettered) that belong under this item
-            let sub = explain;
-            while (i < lines.length && !isSectionLine(lines[i]) &&
-                   (/^[•\-\*✓✔]\s/.test(lines[i]) || /^[a-z][\.)]\s/.test(lines[i]))) {
-              const subItems = [];
-              const isLettered = /^[a-z][\.)]\s/.test(lines[i]);
-              while (i < lines.length && !isSectionLine(lines[i]) &&
-                     ((isLettered && /^[a-z][\.)]\s/.test(lines[i])) ||
-                      (!isLettered && /^[•\-\*✓✔]\s/.test(lines[i])))) {
-                const clean = lines[i].replace(/^[•\-\*✓✔]\s*/, '').replace(/^[a-z][\.)]\s*/, '');
-                subItems.push('<li style="font-size:13.5px;font-weight:500;line-height:1.55;">' + formatInline(clean) + '</li>');
-                i++;
-              }
-              const tag = isLettered ? 'ol type="a"' : 'ul';
-              const closeTag = isLettered ? 'ol' : 'ul';
-              sub += '<' + tag + ' style="margin:5px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">' + subItems.join('') + '</' + closeTag + '>';
-            }
-            html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + itemText + sub + '</li>';
-          }
-          html += '</ol>';
-        } else if (/^[a-z][\.)]\s/.test(next)) {
-          // Lettered sub-steps with no parent number → indented list
-          html += '<ol type="a" style="margin:4px 0 8px 0;padding-left:24px;display:flex;flex-direction:column;gap:5px;">';
-          while (i < lines.length && /^[a-z][\.)]\s/.test(lines[i])) {
-            html += '<li style="font-size:13.5px;font-weight:600;line-height:1.55;">' + formatInline(lines[i].replace(/^[a-z][\.)]\s*/, '')) + '</li>';
-            i++;
-          }
-          html += '</ol>';
-        } else if (/^[•\-\*✓✔]\s/.test(next)) {
-          html += '<ul style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;">';
-          while (i < lines.length && /^[•\-\*✓✔]\s/.test(lines[i])) {
-            html += '<li style="font-size:14px;font-weight:600;line-height:1.6;">' + formatInline(lines[i].replace(/^[•\-\*✓✔]\s*/, '')) + '</li>';
-            i++;
-          }
-          html += '</ul>';
-        } else {
-          html += '<p style="margin:6px 0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(next) + '</p>';
-          i++;
-        }
-      }
-      html += '</div>';
-    } else if (/^\d+[\.)]\s*/.test(line)) {
-      // Top-level numbered list. Explanation lines that appear BETWEEN
-      // numbered steps (e.g. "a = 3", "(−5)² = 25") get folded into the
-      // current step instead of breaking the list. Previously any
-      // non-numbered line closed the <ol>, so the next "1." opened a fresh
-      // <ol> that restarted numbering at 1 — which is why every step showed
-      // "1." A single continuous <ol> keeps 1, 2, 3, 4… intact.
-      html += '<ol style="margin:8px 0;padding-left:22px;display:flex;flex-direction:column;gap:7px;">';
-      while (i < lines.length && /^\d+[\.)]\s*/.test(lines[i])) {
-        let itemText = formatInline(lines[i].replace(/^\d+[\.)]\s*/, ''));
-        i++;
-        // Absorb following non-list lines as part of THIS item, until we hit
-        // the next numbered step, a bullet, a section header, or run out.
-        let extra = '';
-        while (
-          i < lines.length &&
-          !/^\d+[\.)]\s*/.test(lines[i]) &&
-          !/^[•\-\*✓✔]\s/.test(lines[i]) &&
-          !/^[a-z][\.)]\s/.test(lines[i]) &&
-          !isSectionLine(lines[i])
-        ) {
-          extra += '<div style="font-size:14.5px;font-weight:500;line-height:1.6;margin-top:4px;">' + formatInline(lines[i]) + '</div>';
-          i++;
-        }
-        // Absorb bullet/lettered sub-lists that belong under this step.
-        while (i < lines.length && (/^[•\-\*✓✔]\s/.test(lines[i]) || /^[a-z][\.)]\s/.test(lines[i])) && !isSectionLine(lines[i])) {
-          const isLettered = /^[a-z][\.)]\s/.test(lines[i]);
-          const subItems = [];
-          while (
-            i < lines.length && !isSectionLine(lines[i]) &&
-            ((isLettered && /^[a-z][\.)]\s/.test(lines[i])) || (!isLettered && /^[•\-\*✓✔]\s/.test(lines[i])))
-          ) {
-            const clean = lines[i].replace(/^[•\-\*✓✔]\s*/, '').replace(/^[a-z][\.)]\s*/, '');
-            subItems.push('<li style="font-size:13.5px;font-weight:500;line-height:1.55;">' + formatInline(clean) + '</li>');
-            i++;
-          }
-          const tag = isLettered ? 'ol type="a"' : 'ul';
-          const closeTag = isLettered ? 'ol' : 'ul';
-          extra += '<' + tag + ' style="margin:5px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">' + subItems.join('') + '</' + closeTag + '>';
-        }
-        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + itemText + extra + '</li>';
-      }
-      html += '</ol>';
-    } else if (/^[•\-\*✓✔]\s/.test(line)) {
-      html += '<ul style="margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;">';
-      while (i < lines.length && /^[•\-\*✓✔]\s/.test(lines[i])) {
-        html += '<li style="font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(lines[i].replace(/^[•\-\*✓✔]\s*/, '')) + '</li>';
-        i++;
-      }
-      html += '</ul>';
-    } else {
-      html += '<p style="margin:5px 0;font-size:15px;font-weight:500;line-height:1.65;">' + formatInline(line) + '</p>';
-      i++;
+    const result = /^Answer:\s*(.{1,1200})$/i.exec(line);
+    if (result && kind !== 'learn') {
+      closeList();
+      if (!html && i === 0 && lines.length > 1) firstAnswer = result[1];
+      else html += answerBox(result[1]);
+      continue;
     }
+    const heading = /^#{1,6}\s+(.+)$/.exec(line);
+    if (heading) { closeList(); html += '<h3>' + formatInline(heading[1]) + '</h3>'; continue; }
+    const section = /^(Verdict|What you got right|Where it went wrong|The fix|Confirm):\s*(.*)$/.exec(line);
+    if (section) {
+      closeList();
+      html += '<div class="knox-section-card"><h3>' + escHtml(section[1]) + '</h3><p>' + formatInline(section[2]) + '</p></div>';
+      continue;
+    }
+    const numbered = /^(\d{1,4})[.)]\s+(.+)$/.exec(line);
+    const bullet = /^[•*✓✔-]\s+(.+)$/.exec(line);
+    if (numbered || bullet) {
+      flush();
+      const tag = numbered ? 'ol' : 'ul';
+      if (list !== tag) { closeList(); html += '<' + tag + '>'; list = tag; }
+      if (inItem) html += '</li>';
+      html += '<li' + (numbered ? ' value="' + Number(numbered[1]) + '"' : '') + '>' + (numbered ? formatNumberedStep(numbered[2]) : formatInline(bullet[1]));
+      inItem = true;
+      continue;
+    }
+    paragraphs.push(line);
   }
-  return html;
+  closeList();
+  if (firstAnswer) html += answerBox(firstAnswer);
+  return (kind === 'learn' ? '<div class="knox-response-heading learn"><span aria-hidden="true">◆</span>Study hint</div>' : '') +
+    '<div class="knox-response-body">' + html + '</div>';
 }
 
 // ── Render a video suggestion card (visual-learner topics) ─────
@@ -4581,6 +5619,7 @@ document.addEventListener('keydown', (e) => {
     window.closeAppSettings && window.closeAppSettings();
     window.closeCalc && window.closeCalc();
     window.closeMobileHistory && window.closeMobileHistory();
+    window.closeUsageInfo && window.closeUsageInfo();
   }
 });
 
@@ -4614,7 +5653,12 @@ window.openCalc = function() {
   if (navBtn) navBtn.classList.add('sidebar-nav-active');
 };
 window.closeCalc = function() {
-  const m = $('calcModal'); if (m) m.classList.remove('open');
+  const m = $('calcModal');
+  // Only act when the calculator is actually open. Escape calls this on every
+  // press; without this guard it re-showed the welcome screen on top of an
+  // active chat whenever someone pressed Escape mid-conversation.
+  if (!m || !m.classList.contains('open')) return;
+  m.classList.remove('open');
 
   // Restore whichever view was showing before the calculator opened
   const ws = $('welcomeScreen'), ct = $('chatThread'), io = $('inputOuter');
@@ -4633,7 +5677,7 @@ window.closeCalc = function() {
   if (window._learnModeActive) {
     const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
     if (learnNav) learnNav.classList.add('sidebar-nav-active');
-    const lbClose = $('learnModeBar'); if (lbClose) lbClose.style.display = 'flex';
+    window.showLearnBar();
   } else {
     const chatNav = document.querySelector('.sidebar-quicknav-link[data-nav="chat"]');
     if (chatNav) chatNav.classList.add('sidebar-nav-active');
@@ -4711,9 +5755,35 @@ window.calcFn = function(fn) {
   calcUpdateDisplay();
 };
 
+// Turns what a student types into valid math before it's evaluated:
+//   50%      → 50/100        (percent, not the JS remainder operator)
+//   2π, 2(3), (2)(3), 3sin(… → implied multiplication gets an explicit *
+//   -3²      → -(3**2)       (JS rejects a bare unary minus before **)
+// Multi-character tokens are swapped for single placeholder characters first
+// so digits inside names like Math.log10 are never mistaken for numbers.
+function normalizeCalcExpr(expr) {
+  const TOKENS = [['Math.log10(', '\u0001'], ['Math.log(', '\u0002'], ['Math.sqrt(', '\u0003'],
+                  ['__sin(', '\u0004'], ['__cos(', '\u0005'], ['__tan(', '\u0006'],
+                  ['Math.PI', '\u000E'], ['Math.E', '\u000F']];
+  let s = window.knoxPercentExpression(expr);
+  for (const [token, mark] of TOKENS) s = s.split(token).join(mark);
+  const isNum     = c => (c >= '0' && c <= '9') || c === '.';
+  const endsValue = c => isNum(c) || c === ')' || c === '\u000E' || c === '\u000F';
+  const startsValue = c => isNum(c) || c === '(' || (c >= '\u0001' && c <= '\u0006') || c === '\u000E' || c === '\u000F';
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const a = s[i - 1], b = s[i];
+    if (i > 0 && endsValue(a) && startsValue(b) && !(isNum(a) && isNum(b))) out += '*';
+    out += b;
+  }
+  out = out.replace(/(^|[(*/+\-])-(\d+(?:\.\d+)?)\*\*(\d+(?:\.\d+)?)/g, '$1-($2**$3)');
+  for (const [token, mark] of TOKENS) out = out.split(mark).join(token);
+  return out;
+}
+
 function resolveExpr(expr) {
   const D2R = Math.PI / 180;
-  return expr
+  return normalizeCalcExpr(expr)
     .replace(/×/g, '*').replace(/÷/g, '/')
     .replace(/__sin\(/g, window._calcUseDeg ? '(function(x){return Math.sin(x*' + D2R + ');})(' : 'Math.sin(')
     .replace(/__cos\(/g, window._calcUseDeg ? '(function(x){return Math.cos(x*' + D2R + ');})(' : 'Math.cos(')
@@ -4772,6 +5842,7 @@ window.calcEquals = function() {
     if ($('calcDisplay')) $('calcDisplay').textContent = fmt;
   } catch (e) {
     window._calcExpr = 'Error';
+    window._calcOpenParens = 0;
     if ($('calcDisplay')) $('calcDisplay').textContent = 'Error';
   }
 };
@@ -4788,7 +5859,7 @@ function calcUpdateMem() {
 
 window.calcInsert = function() {
   const result = $('calcDisplay')?.textContent;
-  if (!result || result === '0' || result === 'Error') return;
+  if (!result || result === 'Error') return;
   const ta = $('appChatInput');
   if (ta) {
     ta.value = ta.value ? ta.value + ' ' + result : result;
@@ -4798,6 +5869,19 @@ window.calcInsert = function() {
   }
   window.closeCalc();
 };
+
+// A saved question selected from the landing page opens as an editable draft.
+const savedQuestion = new URLSearchParams(location.search).get('ask');
+if (savedQuestion) {
+  const draft = $('appChatInput');
+  if (draft) {
+    draft.value = savedQuestion.slice(0, 8000);
+    draft.focus();
+  }
+  const url = new URL(location.href);
+  url.searchParams.delete('ask');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+}
 
 </script>
 </body>
