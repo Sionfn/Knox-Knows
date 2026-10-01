@@ -682,6 +682,10 @@
     #sidebarHistoryList::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background 0.15s; }
     #sidebarHistoryList:hover::-webkit-scrollbar-thumb { background: var(--border); }
     #sidebarHistoryEmpty {
+      /* The list inherits nowrap from .sidebar-collapsible; the empty-state
+         sentence must wrap or it runs off the sidebar edge. */
+      white-space: normal;
+      overflow-wrap: anywhere;
       padding: 24px 10px;
       text-align: center;
       font-size: 12px; font-weight: 700;
@@ -2168,7 +2172,7 @@ html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-svg {
 }
 /* Second pumpkin, mirrored to the right edge, same size/baseline. */
 html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-right {
-  left: auto; right: 20px;
+  left: auto; right: 20px; transform: scaleX(-1);
 }
 @media (max-width: 768px) {
   html.knox-halloween[data-theme="dark"] #welcomeScreen > .hw-pumpkin-svg { display: none; }
@@ -2516,19 +2520,17 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
                 <g class="hw-face" fill="#FFD66B"><path d="M28 46 L42 46 L35 58 Z"/><path d="M58 46 L72 46 L65 58 Z"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 73 Q50 79 73 73 L68 82 63 75 58 82 54 75 50 82 46 75 42 82 37 75 32 82 Z"/></g>
               </g>
             </svg>
-            <!-- Second pumpkin (right side) — different face: round eyes and a
-                 wide oval grin, curlier stem, slightly deeper orange. -->
+            <!-- Second pumpkin: an exact mirror of the first, so the pair sits
+                 symmetrically on the same baseline. -->
             <svg class="hw-pumpkin-svg hw-pumpkin-right" viewBox="-40 -10 180 150" aria-hidden="true" focusable="false">
-              <g class="hw-pumpkin">
+              <g class="hw-pumpkin" >
                 <ellipse cx="50" cy="62" rx="90" ry="70" fill="url(#hwPumpkinGlow)"/>
-                <path d="M50 22c1-9-3-16-12-19l-4 6c7 2 9 7 8 15q4-1 8-2" fill="#6B8E23"/>
-                <ellipse cx="30" cy="62" rx="26" ry="36" fill="#D2560A"/>
-                <ellipse cx="70" cy="62" rx="26" ry="36" fill="#D2560A"/>
-                <ellipse cx="50" cy="62" rx="24" ry="38" fill="#F26A12"/>
-                <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#B84606" stroke-width="2" fill="none" opacity=".55"/>
-                <g class="hw-face" fill="#FFD66B">
-                  <circle cx="34" cy="50" r="7"/><circle cx="66" cy="50" r="7"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 70 Q50 100 73 70 Q50 82 27 70 Z"/>
-                </g>
+                <path d="M47 22c-2-9 0-16 9-21l6 5c-7 3-9 8-8 16" fill="#6B8E23"/>
+                <ellipse cx="30" cy="62" rx="26" ry="36" fill="#E8620C"/>
+                <ellipse cx="70" cy="62" rx="26" ry="36" fill="#E8620C"/>
+                <ellipse cx="50" cy="62" rx="24" ry="38" fill="#FF7A1A"/>
+                <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#C94F06" stroke-width="2" fill="none" opacity=".6"/>
+                <g class="hw-face" fill="#FFD66B"><path d="M28 46 L42 46 L35 58 Z"/><path d="M58 46 L72 46 L65 58 Z"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 73 Q50 79 73 73 L68 82 63 75 58 82 54 75 50 82 46 75 42 82 37 75 32 82 Z"/></g>
               </g>
             </svg>
             <div class="halloween-hint" role="note">
@@ -3228,6 +3230,16 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       const data = await res.json();
       if (window.currentUser?.uid !== uid) return;
       const u = data.usage || {};
+      // The plan can finish loading while this request is in flight. If the
+      // server says this is a paid account, show the Plus pill — never the
+      // abuse-only safety ceiling as if it were a question count.
+      if (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false) {
+        usage.style.display = 'inline-flex';
+        usage.classList.remove('danger');
+        usage.classList.add('unlimited');
+        text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus';
+        return;
+      }
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
       const now = Date.now();
       const lastRegenAt = now - ((oneDayMs()) - (u.resetInMs || 0)); // derive the real anchor from resetInMs
