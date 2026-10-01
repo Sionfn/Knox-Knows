@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "stripe": "^14.21.0",
-    "firebase-admin": "^14.5.0"
+    "firebase-admin": "^13.10.0"
   },
   "devDependencies": {
     "vercel": "^61.1.0"
