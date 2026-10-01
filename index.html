@@ -2591,6 +2591,30 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
       <p style="font-size:17px;font-weight:600;color:var(--text-light);">Free forever. Upgrade when you want more.</p>
     </div>
 
+    <!-- Halloween promo for the existing 7-day Knox Plus Monthly trial
+         (trial_period_days in api/create-checkout-session.js). Shown only
+         through October 31, then it hides itself. -->
+    <div id="halloweenTrialPromo" style="display:none;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 auto 28px;padding:18px 22px;border-radius:18px;background:linear-gradient(135deg,#2A1A3A,#3B2148);border:3px solid var(--orange);box-shadow:0 5px 0 #A34700;color:#fff;">
+      <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 320px;">
+        <span aria-hidden="true" style="font-size:34px;line-height:1;">🎃</span>
+        <div>
+          <p style="font-size:18px;font-weight:900;line-height:1.25;">Halloween special: 1 week of Knox Plus, free</p>
+          <p style="font-size:13px;font-weight:700;color:#E9D8FF;margin-top:4px;line-height:1.45;">Try unlimited Knox Plus free for 7 days on the Monthly plan. Then $9.99/month — cancel anytime before the week ends and you won’t be charged. New subscribers only.</p>
+        </div>
+      </div>
+      <button onclick="setBilling('monthly');handlePurchase('Plus')" style="flex-shrink:0;padding:12px 20px;border-radius:14px;border:none;background:var(--orange);color:#fff;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 #CC5500;white-space:nowrap;">Start my free week 👻</button>
+    </div>
+    <script>
+      (function () {
+        // Visible until the end of October 31 in the visitor's own time zone.
+        var now = new Date();
+        if (now < new Date(2026, 10, 1)) {
+          var promo = document.getElementById('halloweenTrialPromo');
+          if (promo) promo.style.display = 'flex';
+        }
+      })();
+    </script>
+
     <!-- Billing toggle + guarantee -->
     <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;">
       <div style="display:inline-flex;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 var(--border);">
