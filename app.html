@@ -3759,7 +3759,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       if (deletedHistory.has(window.currentUser?.uid + '/' + s.id)) return;
       if (existing.has(s.id)) return;
       const d     = s.data();
-      const qText = String(d.title || 'Untitled').substring(0, 200);
+      const qText = String((d.title === '[image]' ? '📷 Photo' : d.title) || 'Untitled').substring(0, 200);
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
@@ -3978,7 +3978,8 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         const userRow = document.createElement('div');
         userRow.className = 'msg-wrap';
         const span = document.createElement('span');
-        span.textContent = d.question || '';
+        // Photos aren't stored in history; older saves used a bare "[image]" placeholder.
+        span.textContent = (d.question === '[image]' ? '📷 Photo' : d.question) || '';
         const userInner = document.createElement('div');
         userInner.className = 'msg-user-bubble';
         userInner.appendChild(span);
@@ -5414,7 +5415,7 @@ window.appHandleAsk = async function() {
     const sameView = window._appViewVersion === requestView && (window.currentUser?.uid || null) === requestUid;
     if (!sameView) {
       if (res.ok && requestUid && window.currentUser?.uid === requestUid && window.saveHistory) {
-        await window.saveHistory(q || '[image]', data.answer || '', {
+        await window.saveHistory(q || '📷 Photo', data.answer || '', {
           uid: requestUid, conversationId: requestConversationId,
           learnMode: requestLearnMode, sessionId: requestLearnSessionId,
           viewVersion: requestView, model: data.model,
@@ -5453,20 +5454,20 @@ window.appHandleAsk = async function() {
     const answer = data.answer || '';
     const html   = renderAnswerHtml(answer, requestLearnMode ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q || '[image]', answer };
+    window._fbPayloads[fbId] = { question: q || '📷 Photo', answer };
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
     replaceThinking(thinkId, html, window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
     // Track conversation
-    window._conversation.push({ role: 'user',      content: q || '[image]' });
+    window._conversation.push({ role: 'user',      content: q || '📷 Photo' });
     window._conversation.push({ role: 'assistant', content: answer });
     if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
 
     // Save history + refresh usage indicator
     if (window.saveHistory && requestUid) {
-      await window.saveHistory(q || '[image]', answer, {
+      await window.saveHistory(q || '📷 Photo', answer, {
         uid: requestUid, conversationId: requestConversationId,
         learnMode: requestLearnMode, sessionId: requestLearnSessionId,
         viewVersion: requestView, model: data.model,
