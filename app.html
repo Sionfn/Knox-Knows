@@ -1019,6 +1019,14 @@
       html { background: var(--orange); }
       body { background: var(--cream); }
     }
+    /* Home-screen app: iOS fills the status-bar strip by blending the top
+       edge of the page into its own white (light) or black (dark) backdrop,
+       so an orange top edge shows as a frosted fade. With the phone menu
+       open its white/dark top gives a clean solid strip, so give the main
+       screen the same: a thin band in the surface colour above the header. */
+    @media (display-mode: standalone) and (max-width: 900px) {
+      body { border-top: 10px solid var(--surface); }
+    }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
