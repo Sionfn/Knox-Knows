@@ -1022,8 +1022,15 @@
        leaving a blank band at the bottom. Pin the body to the full window
        instead, and keep the header pinned at the top so iOS treats it as
        the top bar when colouring the status-bar area. */
+    /* iOS home-screen bug: with viewport-fit=cover the window reports the
+       screen height minus the status bar (e.g. 793 of 852), so a 100%-tall
+       app stops short and leaves a blank band at the bottom. --app-height
+       is set from the real screen size by the script near the top of body. */
     @media (display-mode: standalone) {
-      body { position: fixed; inset: 0; height: auto; max-height: none; }
+      body {
+        position: fixed; top: 0; left: 0; right: 0; bottom: auto;
+        height: var(--app-height, 100%); max-height: none;
+      }
       #appHeader { position: sticky; top: 0; }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
@@ -2303,6 +2310,22 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       <button id="appLoadingRetry" type="button" onclick="location.reload()">Try again</button>
     </div>
   </div>
+  <script>
+    // Home-screen app: size the page to the real screen (see --app-height CSS).
+    (function () {
+      const standalone = window.navigator.standalone === true ||
+        (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+      if (!standalone) return;
+      function fit() {
+        const portrait = innerHeight >= innerWidth;
+        const full = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+        document.documentElement.style.setProperty('--app-height', Math.max(innerHeight, full) + 'px');
+      }
+      fit();
+      addEventListener('resize', fit);
+      addEventListener('orientationchange', () => setTimeout(fit, 300));
+    })();
+  </script>
   <script>
     // Runs before Firebase modules are downloaded, including on slow links.
     // Keep the retry visible if the auth SDK or network never becomes ready.
