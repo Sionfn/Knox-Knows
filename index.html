@@ -435,6 +435,8 @@ html.knox-halloween[data-theme="dark"] #home > .hw-pumpkin-right {
 }
 
 /* Landing-specific Halloween (dark only) */
+/* Page background matches the hero so Safari's top colour matches too. */
+html.knox-halloween[data-theme="dark"] { background: var(--cream); }
 html.knox-halloween[data-theme="dark"] #home {
   background-color: var(--cream) !important;
   background-image:
@@ -760,6 +762,13 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     #lnGuestBtns .ln-signup { background:var(--orange); border-color:#CC5500; color:#fff; box-shadow:0 3px 0 #CC5500; }
 
     /* ── HEADER ──────────────────────────────────────────────── */
+    /* Like the app on the mobile website: Safari colours its top from a
+       sticky/fixed header, so on phones in the browser the header scrolls
+       normally and Safari's top follows the page background instead.
+       Desktop and the installed app keep the sticky header. */
+    @media (max-width: 900px) and (display-mode: browser) {
+      #main-header { position: relative !important; }
+    }
     #main-header {
       background:var(--orange);
       position:sticky; top:0; z-index:200;
