@@ -6005,55 +6005,5 @@ if (savedQuestion) {
 }
 
 </script>
-<!-- TEMPORARY layout diagnostics for the iOS home-screen app. Hidden unless
-     the disclaimer under the chat box is pressed and held. Remove once the
-     iOS safe-area issue is resolved. -->
-<script>
-(function () {
-  const target = document.querySelector('.input-disclaimer');
-  if (!target) return;
-  // Long-press (iOS swallows rapid taps as zoom/selection, so no triple-tap).
-  target.style.webkitUserSelect = 'none';
-  target.style.userSelect = 'none';
-  target.style.webkitTouchCallout = 'none';
-  let holdTimer;
-  const cancel = () => clearTimeout(holdTimer);
-  const start = () => { cancel(); holdTimer = setTimeout(show, 900); };
-  target.addEventListener('touchstart', start, { passive: true });
-  target.addEventListener('mousedown', start);
-  ['touchend', 'touchmove', 'touchcancel', 'mouseup', 'mouseleave'].forEach(e => target.addEventListener(e, cancel, { passive: true }));
-  function show() {
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;' +
-      'padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);';
-    document.body.appendChild(probe);
-    const cs = getComputedStyle(probe);
-    const body = document.body.getBoundingClientRect();
-    const input = document.getElementById('inputArea')?.getBoundingClientRect();
-    const header = document.getElementById('appHeader')?.getBoundingClientRect();
-    const rows = {
-      standalone: matchMedia('(display-mode: standalone)').matches + ' / navigator: ' + (navigator.standalone === true),
-      'inset top / bottom': cs.paddingTop + ' / ' + cs.paddingBottom,
-      'window inner': innerWidth + ' x ' + innerHeight,
-      'screen': screen.width + ' x ' + screen.height,
-      'visualViewport': window.visualViewport ? Math.round(visualViewport.width) + ' x ' + Math.round(visualViewport.height) : 'n/a',
-      'html client height': document.documentElement.clientHeight,
-      'body top / bottom': Math.round(body.top) + ' / ' + Math.round(body.bottom),
-      'header top / bottom': header ? Math.round(header.top) + ' / ' + Math.round(header.bottom) : 'n/a',
-      'input area bottom': input ? Math.round(input.bottom) : 'n/a',
-      'viewport meta': document.querySelector('meta[name=viewport]')?.content,
-      'iOS': (navigator.userAgent.match(/OS (\d+[_\d]*)/) || [, '?'])[1].replace(/_/g, '.'),
-    };
-    probe.remove();
-    const box = document.createElement('div');
-    box.style.cssText = 'position:fixed;left:12px;right:12px;top:40%;z-index:20000;background:#111;color:#fff;' +
-      'font:12px/1.5 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:12px;border:2px solid #FF6B00;';
-    box.innerHTML = '<b>Knox layout check</b> (tap to close)<br>' +
-      Object.entries(rows).map(([k, v]) => k + ': ' + String(v).replace(/</g, '&lt;')).join('<br>');
-    box.onclick = () => box.remove();
-    document.body.appendChild(box);
-  }
-})();
-</script>
 </body>
 </html>
