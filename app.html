@@ -44,7 +44,7 @@
     })();
   </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
   <meta name="theme-color" content="#FF6B00">
@@ -54,13 +54,14 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=3">
   <!-- iOS "Add to Home Screen" — iOS doesn't reliably read manifest icons,
        needs this explicit link. status-bar-style
-       "black-translucent" lets the orange header run up behind the iOS
-       status bar (the "default" style left a blurry system strip there).
-       The header and phone drawer pad themselves by safe-area-inset-top
-       so nothing sits under the notch or Dynamic Island. -->
+       "default" with no viewport-fit=cover: iOS 18 home-screen apps ignored
+       black-translucent and reported a window one status bar short, which
+       left a blank band at the bottom. With the default style iOS reserves
+       the status bar and sizes the app to fit; the orange root background
+       (see the max-width: 900px rule) tints that strip to match the header. -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Knox Knows">
   <!-- Android/Chrome "Add to Home Screen" standalone mode -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -1017,14 +1018,6 @@
     @media (max-width: 900px) {
       html { background: var(--orange); }
       body { background: var(--cream); }
-    }
-    /* Home-screen app: 100dvh can come up one status-bar short there,
-       leaving a blank band at the bottom. Pin the body to the full window
-       instead, and keep the header pinned at the top so iOS treats it as
-       the top bar when colouring the status-bar area. */
-    @media (display-mode: standalone) {
-      body { position: fixed; inset: 0; height: auto; max-height: none; }
-      #appHeader { position: sticky; top: 0; }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
