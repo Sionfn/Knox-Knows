@@ -61,7 +61,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Knox">
+  <meta name="apple-mobile-web-app-title" content="Knox Knows">
   <!-- Android/Chrome "Add to Home Screen" standalone mode -->
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1017,6 +1017,14 @@
     @media (max-width: 900px) {
       html { background: var(--orange); }
       body { background: var(--cream); }
+    }
+    /* Home-screen app: 100dvh can come up one status-bar short there,
+       leaving a blank band at the bottom. Pin the body to the full window
+       instead, and keep the header pinned at the top so iOS treats it as
+       the top bar when colouring the status-bar area. */
+    @media (display-mode: standalone) {
+      body { position: fixed; inset: 0; height: auto; max-height: none; }
+      #appHeader { position: sticky; top: 0; }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 

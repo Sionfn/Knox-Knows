@@ -1,6 +1,6 @@
 {
   "name": "Knox Knows",
-  "short_name": "Knox",
+  "short_name": "Knox Knows",
   "description": "Your AI homework helper — ask anything, snap a photo, get real answers.",
   "start_url": "/app?source=pwa",
   "id": "/app",
