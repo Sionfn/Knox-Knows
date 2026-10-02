@@ -6021,8 +6021,21 @@ if (openTarget === 'calculator' || openTarget === 'learn') {
   const url = new URL(location.href);
   url.searchParams.delete('open');
   history.replaceState(history.state, '', url.pathname + url.search + url.hash);
-  if (openTarget === 'calculator') window.openCalc?.();
-  else window.openLearnMode?.();
+  // Wait for sign-in to settle: the auth handler starts a fresh chat, which
+  // would otherwise close the calculator / leave Learn straight away.
+  const openNow = () => setTimeout(() => {
+    if (openTarget === 'calculator') window.openCalc?.();
+    else window.openLearnMode?.();
+  }, 50);
+  if (!document.body.classList.contains('app-auth-pending')) openNow();
+  else {
+    const watcher = new MutationObserver(() => {
+      if (document.body.classList.contains('app-auth-pending')) return;
+      watcher.disconnect();
+      openNow();
+    });
+    watcher.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
 }
 
 </script>
