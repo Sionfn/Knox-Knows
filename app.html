@@ -2580,7 +2580,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
               <button type="button" class="hh-btn" onclick="window.knoxHalloweenDarkMode()">🌙 Turn on dark mode</button>
               <button type="button" class="hh-x" aria-label="Hide Halloween tip" title="Hide" onclick="window.knoxHideHalloweenHint()">×</button>
             </div>
-            <div class="welcome-badge"><span class="hw-hide">🦊 Hey, I'm Knox</span><span class="hw-only">🎃 Happy Halloween — I'm Knox</span></div>
+            <div class="welcome-badge"><span class="hw-hide">🦊 Your AI homework companion</span><span class="hw-only">🎃 Spooky-season study buddy</span></div>
             <h1 class="welcome-title">What are we<br><span class="welcome-accent">tackling today?</span></h1>
             <p class="welcome-sub">Pick a topic below to get started — or type your own question in the box.</p>
 
@@ -4641,7 +4641,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '<span class="hw-hide">🦊 Hey, I\'m Knox</span><span class="hw-only">🎃 Happy Halloween — I\'m Knox</span>';
+  if (badge) badge.innerHTML = '<span class="hw-hide">🦊 Your AI homework companion</span><span class="hw-only">🎃 Spooky-season study buddy</span>';
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);
