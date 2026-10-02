@@ -44,7 +44,7 @@
     })();
   </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
   <meta name="theme-color" content="#FF6B00">
@@ -53,14 +53,14 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=3">
   <!-- iOS "Add to Home Screen" — iOS doesn't reliably read manifest icons,
-       needs this explicit link. status-bar-style "default" (not
-       black-translucent) keeps a normal opaque status bar area above the
-       app instead of overlaying content edge-to-edge, so there's no risk
-       of the header/logo getting hidden behind the notch or dynamic
-       island — no extra safe-area-inset-top math needed anywhere. -->
+       needs this explicit link. status-bar-style
+       "black-translucent" lets the orange header run up behind the iOS
+       status bar (the "default" style left a blurry system strip there).
+       The header and phone drawer pad themselves by safe-area-inset-top
+       so nothing sits under the notch or Dynamic Island. -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Knox">
   <!-- Android/Chrome "Add to Home Screen" standalone mode -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -1001,6 +1001,15 @@
       color: var(--text-light) !important;
       box-shadow: 0 2px 0 var(--border) !important;
     }
+    /* Saved-to-home-screen app: the header extends behind the status bar
+       (viewport-fit=cover + black-translucent), padded past the notch.
+       env() is 0 in a normal browser tab, so nothing changes there. */
+    #appHeader {
+      padding-top: env(safe-area-inset-top) !important;
+      height: calc(64px + env(safe-area-inset-top)) !important;
+      box-sizing: border-box;
+    }
+    #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
