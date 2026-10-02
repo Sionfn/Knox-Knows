@@ -434,6 +434,8 @@ html.knox-halloween[data-theme="dark"] #home > .hw-pumpkin-right {
   .halloween-sky *, .halloween-sky, .hw-face { animation: none !important; }
 }
 
+/* Dark green "Unlimited" is unreadable on the dark comparison table. */
+html[data-theme="dark"] .plan-unlimited { color: var(--green) !important; }
 /* Landing-specific Halloween (dark only) */
 /* Page background matches the hero so Safari's top colour matches too. */
 html.knox-halloween[data-theme="dark"] { background: var(--cream); }
@@ -1643,6 +1645,10 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     .footer-col-title { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:0.08em; color:#666; margin-bottom:14px; }
     .footer-link { display:block; font-size:14px; font-weight:600; color:#aaa; text-decoration:none; margin-bottom:10px; transition:color 0.15s; }
     .footer-link:hover { color:white; }
+    /* Phones: give the stacked footer links a finger-sized tap area. */
+    @media (max-width: 640px) {
+      footer a[style*="display:block"] { padding: 6px 0; margin-bottom: 4px !important; }
+    }
     .footer-social-row { display:flex; gap:10px; margin-top:14px; }
     .footer-social-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s; }
     .footer-social-icon:hover { opacity:0.75; }
@@ -2789,7 +2795,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
         </div>
         <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">No card needed</div>
         <div style="flex:1;min-height:20px;"></div>
-        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
+        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:#fff;color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
       </div>
 
       <!-- KNOX PLUS card -->
@@ -2805,7 +2811,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
         <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$79.99/yr — save $39.89</div>
         <div id="proSubline" style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">Cancel anytime</div>
         <div style="flex:1;min-height:8px;"></div>
-        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:var(--surface);color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
+        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:#fff;color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
       </div>
 
     </div>
@@ -2826,12 +2832,12 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
         <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day*</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
+        <div class="plan-unlimited" style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
       </div>
       <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Photo upload</div>
         <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">2 credits each</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
+        <div class="plan-unlimited" style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
       </div>
 
       <!-- Shared feature rows below the differentiators -->

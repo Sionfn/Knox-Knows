@@ -5707,6 +5707,10 @@ function renderAnswerHtml(text, kind = 'answer') {
       inItem = true;
       continue;
     }
+    // Text after a blank line that isn't indented ends the list (a closing
+    // note or check), instead of being swallowed into the last step. Indented
+    // or directly-following lines still continue the step.
+    if (list && i > 0 && !lines[i - 1].trim() && !/^\s/.test(lines[i])) closeList();
     paragraphs.push(line);
   }
   closeList();
