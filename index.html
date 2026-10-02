@@ -752,7 +752,8 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
       display:flex; align-items:center; justify-content:center;
       background:var(--orange); color:#fff; font-size:14px; font-weight:900;
     }
-    #lnAccountIcon img { width:100%; height:100%; object-fit:cover; }
+    #lnAccountIcon img { width:100% !important; height:100% !important; object-fit:cover; border:0 !important; border-radius:0 !important; margin:0 !important; display:block; }
+    #lnAccountIcon:has(img) { background:transparent; }
     #mobileNav .ln-identity { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
     #lnAccountName { font-size:13px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #lnAccountBadge {
@@ -855,8 +856,10 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     #appFab:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 #CC5500, 0 16px 34px rgba(255,107,0,0.4); }
     #appFab:active { transform: translateY(3px);  box-shadow: 0 2px 0 #CC5500, 0 6px 16px rgba(255,107,0,0.3); }
     #appFab svg { width: 17px; height: 17px; }
-    @media (max-width:600px) {
-      #appFab { right: 16px; bottom: 16px; padding: 13px 18px; font-size: 14px; }
+    /* Phones: the floating button covered page text, and the menu already
+       has Ask Knox at the top, so it's hidden there. */
+    @media (max-width:640px) {
+      #appFab { display: none !important; }
     }
 
     /* Mobile header */
@@ -2369,16 +2372,16 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 
     <div class="ln-section">On this page</div>
     <div class="ln-body">
-      <a class="ln-link" href="#how-it-works" onclick="smoothScroll('how-it-works',event);closeMobileNav();">
+      <a class="ln-link" href="#how-it-works" onclick="closeMobileNav();smoothScroll('how-it-works',event);">
         <span class="ln-icon ln-how" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg></span><span>How it works</span>
       </a>
-      <a class="ln-link" href="#subjects" onclick="smoothScroll('subjects',event);closeMobileNav();">
+      <a class="ln-link" href="#subjects" onclick="closeMobileNav();smoothScroll('subjects',event);">
         <span class="ln-icon ln-subj" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/></svg></span><span>Subjects</span>
       </a>
-      <a class="ln-link" href="#pricing" onclick="smoothScroll('pricing',event);closeMobileNav();">
+      <a class="ln-link" href="#pricing" onclick="closeMobileNav();smoothScroll('pricing',event);">
         <span class="ln-icon ln-price" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="8" cy="8" r="1.5"/></svg></span><span>Pricing</span>
       </a>
-      <a class="ln-link" href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();">
+      <a class="ln-link" href="#faq" onclick="closeMobileNav();smoothScroll('faq',event);">
         <span class="ln-icon ln-faq" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17h.01"/></svg></span><span>FAQ</span>
       </a>
     </div>
@@ -3970,18 +3973,37 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     const badge = document.getElementById('lnAccountBadge');
     if (badge) { badge.textContent = paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid); }
   }
+  // iOS Safari ignores overflow:hidden on body, so pin the page in place
+  // while the phone menu is open and restore the scroll spot on close.
+  let mobileNavScrollY = null;
+  function lockPageScroll() {
+    if (mobileNavScrollY !== null) return;
+    mobileNavScrollY = window.scrollY;
+    const b = document.body.style;
+    b.position = 'fixed'; b.top = -mobileNavScrollY + 'px'; b.left = '0'; b.right = '0'; b.width = '100%';
+    b.overflow = 'hidden';
+  }
+  function unlockPageScroll() {
+    if (mobileNavScrollY === null) return;
+    const y = mobileNavScrollY;
+    mobileNavScrollY = null;
+    const b = document.body.style;
+    b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.width = ''; b.overflow = '';
+    window.scrollTo({ top: y, behavior: 'instant' });
+  }
   function toggleMobileNav() {
     const nav = document.getElementById('mobileNav');
     if (!nav) return;
     const isOpen = nav.style.display === 'flex';
-    if (!isOpen) syncMobileNavAccount();
-    nav.style.display = isOpen ? 'none' : 'flex';
-    document.body.style.overflow = isOpen ? '' : 'hidden';
+    if (isOpen) { closeMobileNav(); return; }
+    syncMobileNavAccount();
+    nav.style.display = 'flex';
+    lockPageScroll();
   }
   function closeMobileNav() {
     const nav = document.getElementById('mobileNav');
     if (nav) nav.style.display = 'none';
-    document.body.style.overflow = '';
+    unlockPageScroll();
   }
 
   // ── Live clock timers ─────────────────────────────────────────────────────
