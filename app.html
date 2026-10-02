@@ -47,21 +47,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
-  <meta name="theme-color" content="#FFF8F0">
-  <script>
-    // Safari tints the status bar from theme-color: keep it on the page
-    // background (cream in light mode, dark in dark mode), not orange.
-    (function () {
-      function sync() {
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (!meta || !document.body) return;
-        const bg = getComputedStyle(document.documentElement).getPropertyValue('--cream').trim();
-        if (bg) meta.setAttribute('content', bg);
-      }
-      new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
-      document.addEventListener('DOMContentLoaded', sync);
-    })();
-  </script>
+  <meta name="theme-color" content="#FF6B00">
   <link rel="manifest" href="/manifest.json">
   <!-- Standard favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3">

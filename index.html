@@ -84,21 +84,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#FFF8F0">
-  <script>
-    // Safari tints the status bar from theme-color: keep it on the page
-    // background (cream in light mode, dark in dark mode), not orange.
-    (function () {
-      function sync() {
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (!meta || !document.body) return;
-        const bg = getComputedStyle(document.documentElement).getPropertyValue('--cream').trim();
-        if (bg) meta.setAttribute('content', bg);
-      }
-      new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
-      document.addEventListener('DOMContentLoaded', sync);
-    })();
-  </script>
+  <meta name="theme-color" content="#FF6B00">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Knox Knows">
@@ -690,13 +676,6 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
-    /* Mobile Safari tints its own top and address bar from a sticky/fixed
-       header, so on phones in the browser the header scrolls normally and
-       Safari's top matches the page background (theme-color follows the
-       light/dark --cream). Desktop and the installed app keep it sticky. */
-    @media (max-width: 900px) and (display-mode: browser) {
-      #main-header { position: relative !important; }
-    }
     #main-header {
       background:var(--orange);
       position:sticky; top:0; z-index:200;
