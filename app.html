@@ -2020,7 +2020,7 @@
       .welcome-title { font-size: 24px; }
       .welcome-sub { font-size: 14px; margin-bottom: 20px; }
       #chatThread { padding: 12px 12px 8px; }
-      #inputArea { padding: 10px 12px 12px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+      #inputArea { padding: 10px 12px 12px; padding-bottom: max(10px, calc(env(safe-area-inset-bottom) - 20px)); } /* last line is passive text, so it only needs to clear the home bar itself */
       /* Pin input area to avoid iOS Safari address bar covering it */
       .input-box { font-size: 16px; /* prevents iOS zoom on input focus */ }
       .input-box textarea, .input-box input { font-size: 16px !important; }
