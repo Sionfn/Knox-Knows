@@ -939,28 +939,69 @@
       animation: slideRight 0.25s ease;
     }
     @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(0); } }
-    #mobileHistoryDrawer .drawer-header {
-      padding: 14px 16px;
-      background: var(--orange);
-      color: white;
-      border-bottom: 3px solid var(--orange-dark);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    #mobileHistoryDrawer .drawer-header h3 {
-      font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em;
-    }
-    #mobileHistoryDrawer .drawer-close {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      border-radius: 10px;
-      width: 38px; height: 38px;
-      color: white;
-      font-size: 18px; font-weight: 900;
-    }
+    /* Drawer reuses the desktop sidebar classes; these only adapt them. */
+    #mobileHistoryDrawer .sidebar-top { height: 68px; }
+    #mobileHistoryDrawer .drawer-close { width: 34px; height: 34px; }
+    #mobileHistoryDrawer .sidebar-quicknav-link { font-size: 14px; padding: 10px 12px; }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="chat"]:hover,
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="chat"].sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="calculator"]:hover,
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="calculator"].sidebar-nav-active { background: var(--blue-light); color: var(--blue); }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="learn"]:hover,
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="learn"].sidebar-nav-active { background: var(--purple-light); color: var(--purple); }
     #mobileHistoryDrawer .drawer-body {
-      flex: 1; overflow-y: auto; padding: 8px;
-      background: var(--cream);
+      flex: 1; overflow-y: auto; padding: 4px 9px 8px;
+      background: var(--surface);
+      overscroll-behavior: contain;
     }
+    #mobileHistoryDrawer .drawer-footer {
+      flex-shrink: 0;
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    #drawerAccountBtn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: 14px;
+      background: var(--cream); color: var(--text);
+      font-family: inherit; text-align: left; cursor: pointer;
+      box-shadow: 0 2px 0 var(--border);
+    }
+    #drawerAccountIcon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: 50%; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--orange); color: #fff;
+      font-size: 14px; font-weight: 900;
+    }
+    #drawerAccountIcon img { width: 100%; height: 100%; object-fit: cover; }
+    .drawer-identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+    #drawerAccountName { font-size: 13px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #drawerAccountBadge {
+      align-self: flex-start; padding: 1px 7px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface);
+      font-size: 10px; font-weight: 900; color: var(--text-light); white-space: nowrap;
+    }
+    #drawerAccountBadge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+    .drawer-account-gear { color: var(--text-light); flex-shrink: 0; }
+    #drawerGuestBtns { display: none; gap: 8px; }
+    #drawerGuestBtns button {
+      flex: 1; padding: 11px 8px; border-radius: 12px;
+      border: 2px solid var(--border); background: var(--cream); color: var(--text);
+      font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer;
+      box-shadow: 0 2px 0 var(--border);
+    }
+    /* Calculator memory and delete keys are inline-styled white; in dark mode
+       give them the same dark surface as the other keys. */
+    html[data-theme="dark"] #calcModal button[onclick^="calcMem"],
+    html[data-theme="dark"] #calcModal button[onclick="calcDel()"] {
+      background: var(--surface) !important;
+      border-color: var(--border) !important;
+      color: var(--text-light) !important;
+      box-shadow: 0 2px 0 var(--border) !important;
+    }
+    #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
     #chatAndInput {
@@ -2746,34 +2787,38 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   </div><!-- end mainColumn -->
   </div><!-- end appShell -->
 
-  <!-- MOBILE HISTORY DRAWER -->
+  <!-- MOBILE DRAWER — the phone version of the desktop sidebar: same logo
+       row, sticker quick nav, "Recent chats" list, extension card and a
+       profile row at the bottom. -->
   <div id="mobileHistoryDrawer" onclick="if(event.target===this)closeMobileHistory()">
     <div class="drawer-panel">
-      <div class="drawer-header">
-        <h3>🦊 Knox Knows</h3>
-        <button class="drawer-close" onclick="closeMobileHistory()" aria-label="Close">✕</button>
+      <div class="sidebar-top">
+        <a href="/about" class="sidebar-logo-link" title="About Knox Knows">
+          <img src="/knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
+          <span class="sidebar-logo-text">Knox Knows</span>
+        </a>
+        <button class="sidebar-collapse-btn drawer-close" onclick="closeMobileHistory()" aria-label="Close menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
       </div>
 
-      <!-- Nav tabs — the mobile equivalent of the desktop sidebar's quicknav.
-           The whole sidebar (and every one of these) was display:none below
-           900px, so Calculator/Learn/Ask Knox were completely unreachable
-           on mobile — this was the actual bug, not a visual one. -->
-      <div style="padding:10px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <!-- Icons are copied from the desktop quick nav at load (data-mobile-nav). -->
+      <div class="sidebar-quicknav">
         <button class="sidebar-quicknav-link" data-mobile-nav="chat" onclick="window.appStartNewChat();closeMobileHistory();">
-          <span class="sq-icon" aria-hidden="true"></span> Ask Knox
+          <span class="sq-icon" aria-hidden="true"></span><span>Ask Knox</span>
         </button>
         <button class="sidebar-quicknav-link" data-mobile-nav="calculator" onclick="window.openCalc();closeMobileHistory();">
-          <span class="sq-icon" aria-hidden="true"></span> Calculator
+          <span class="sq-icon" aria-hidden="true"></span><span>Calculator</span>
         </button>
         <button class="sidebar-quicknav-link" data-mobile-nav="learn" onclick="window.openLearnMode();closeMobileHistory();">
-          <span class="sq-icon" aria-hidden="true"></span> Learn
-        </button>
-        <button onclick="window.openAppSettings();closeMobileHistory();" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:800;color:var(--text);background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;width:100%;">
-          <span style="font-size:17px;">⚙️</span> Account &amp; Plan
+          <span class="sq-icon" aria-hidden="true"></span><span>Learn</span>
         </button>
       </div>
 
-      <div style="padding:14px 14px 6px;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-light);flex-shrink:0;">📚 History</div>
+      <div class="sidebar-section-header">
+        <span>Recent chats</span>
+        <button class="sidebar-new-btn" onclick="window.appStartNewChat();closeMobileHistory();" aria-label="New chat">+ New chat</button>
+      </div>
       <div class="drawer-body" id="mobileHistoryList">
         <div id="mobileHistoryEmpty" style="padding:24px 10px;text-align:center;font-size:13px;font-weight:700;color:var(--text-light);line-height:1.6;">
           <div style="font-size:32px;margin-bottom:8px;">🦊</div>
@@ -2785,6 +2830,19 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
         <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
       </a>
+
+      <!-- Profile row, filled from the header account button when opened. -->
+      <div class="drawer-footer">
+        <button id="drawerAccountBtn" onclick="window.openAppSettings();closeMobileHistory();" aria-label="Account and plan">
+          <span id="drawerAccountIcon">?</span>
+          <span class="drawer-identity"><span id="drawerAccountName">Your account</span><span id="drawerAccountBadge">Free plan</span></span>
+          <svg class="drawer-account-gear" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+        </button>
+        <div id="drawerGuestBtns">
+          <button onclick="closeMobileHistory();window.openAuthModal?.();">Log in</button>
+          <button class="drawer-signup" onclick="closeMobileHistory();window.openAuthModal?.('signup');">Sign up</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4747,7 +4805,27 @@ document.addEventListener('click', (e) => {
 
 // ── Mobile history drawer ────────────────────────────────────
 window.openMobileHistory = function() {
-  const d = $('mobileHistoryDrawer'); if (d) d.classList.add('open');
+  const d = $('mobileHistoryDrawer'); if (!d) return;
+  // Mirror the desktop sidebar's active mode into the drawer.
+  d.querySelectorAll('[data-mobile-nav]').forEach(btn => {
+    const twin = document.querySelector(`#rightSidebar [data-nav="${btn.dataset.mobileNav}"]`);
+    btn.classList.toggle('sidebar-nav-active', !!twin?.classList.contains('sidebar-nav-active'));
+  });
+  // Profile row comes from the header account button, which updatePlanUI keeps current.
+  const signedIn = !!window.currentUser;
+  const accountBtn = $('drawerAccountBtn'), guestBtns = $('drawerGuestBtns');
+  if (accountBtn) accountBtn.style.display = signedIn ? 'flex' : 'none';
+  if (guestBtns) guestBtns.style.display = signedIn ? 'none' : 'flex';
+  if (signedIn) {
+    const icon = $('appAccountIcon'), badge = $('appAccountPlanBadge');
+    $('drawerAccountIcon').innerHTML = icon ? icon.innerHTML : '?';
+    $('drawerAccountName').textContent = ($('appAccountName')?.textContent || '').trim()
+      || window.currentUser.displayName || window.currentUser.email || 'Your account';
+    const drawerBadge = $('drawerAccountBadge');
+    drawerBadge.textContent = (badge?.textContent || '').trim() || 'Free plan';
+    drawerBadge.classList.toggle('paid', !!badge?.classList.contains('paid'));
+  }
+  d.classList.add('open');
   document.body.style.overflow = 'hidden';
 };
 window.closeMobileHistory = function() {
