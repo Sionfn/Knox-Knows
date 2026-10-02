@@ -1015,9 +1015,18 @@
        background, then blurs it into the header. On phones make that root
        orange so the strip matches the header; body keeps the cream app
        background, so nothing else changes. */
+    #statusBarTint { display: none; }
     @media (max-width: 900px) {
       html { background: var(--orange); }
       body { background: var(--cream); }
+      /* iOS colours the status bar solidly from a fixed element at the very
+         top (the open phone menu proves it), but frosts sampled content
+         otherwise. A thin fixed orange strip over the orange header gives
+         it a solid colour to use. */
+      #statusBarTint {
+        display: block; position: fixed; top: 0; left: 0; right: 0;
+        height: 2px; background: var(--orange); z-index: 99; pointer-events: none;
+      }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
@@ -2277,6 +2286,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 <script src="/calc-percent.js"></script>
 </head>
 <body class="app-auth-pending">
+<div id="statusBarTint" aria-hidden="true"></div>
 
 <noscript>
   <style>#appLoading { display: none !important; }</style>
