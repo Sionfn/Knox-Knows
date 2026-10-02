@@ -1025,22 +1025,25 @@
       box-sizing: border-box;
     }
     #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
-    /* iOS colours the status-bar strip solidly from the top edge of a
-       fixed, full-width element (the open phone menu's backdrop shows it),
-       but blurs non-fixed content. Pin the header on phones so the strip is
-       solid, and in the installed app give the header a top edge in the page
-       background colour so the strip matches cream (light) or dark (dark)
-       rather than orange. */
+    /* iOS colours the status-bar strip from the background-color of a
+       fixed element at the top of the page (the open phone menu's backdrop
+       showed it), and blurs non-fixed content. On phones: pin the header,
+       paint its orange as a background-image so iOS doesn't read it as the
+       strip colour, and put a fixed full-screen backdrop in the page
+       background behind everything. The strip then matches cream (light)
+       or dark (dark). */
+    #statusBackdrop { display: none; }
     @media (max-width: 900px) {
-      #appHeader { position: fixed; top: 0; left: 0; right: 0; }
-      #mainColumn { padding-top: calc(64px + env(safe-area-inset-top)); }
-    }
-    @media (display-mode: standalone) and (max-width: 900px) {
-      html #appHeader {
-        border-top: 10px solid var(--cream);
-        height: calc(74px + env(safe-area-inset-top)) !important;
+      #appHeader {
+        position: fixed; top: 0; left: 0; right: 0;
+        background-color: transparent;
+        background-image: linear-gradient(var(--orange), var(--orange));
       }
-      #mainColumn { padding-top: calc(74px + env(safe-area-inset-top)); }
+      #mainColumn { padding-top: calc(64px + env(safe-area-inset-top)); }
+      #statusBackdrop {
+        display: block; position: fixed; inset: 0; z-index: -1;
+        background: var(--cream); pointer-events: none;
+      }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
@@ -2300,6 +2303,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 <script src="/calc-percent.js"></script>
 </head>
 <body class="app-auth-pending">
+<div id="statusBackdrop" aria-hidden="true"></div>
 
 <noscript>
   <style>#appLoading { display: none !important; }</style>
