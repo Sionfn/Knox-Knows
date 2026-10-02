@@ -1012,12 +1012,18 @@
     }
     #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
     /* Installed home-screen app only: iOS paints the status-bar strip
-       solidly from a fixed element at the top and blurs non-fixed content,
-       so pin the header there. Not applied in the browser, where Safari
-       would tint its own bars orange from a pinned header. */
+       solidly from a fixed element at the top and blurs non-fixed content.
+       Pinning the header itself stopped it taking taps (it sits inside the
+       app's overflow:hidden layout), so the header stays in normal flow and
+       a fixed orange block that taps pass through sits behind it. Not used
+       in the browser, where Safari would tint its own bars orange. */
+    #statusTint { display: none; }
     @media (display-mode: standalone) and (max-width: 900px) {
-      #appHeader { position: fixed; top: 0; left: 0; right: 0; }
-      #mainColumn { padding-top: calc(64px + env(safe-area-inset-top)); }
+      #statusTint {
+        display: block; position: fixed; top: 0; left: 0; right: 0;
+        height: 64px; background: var(--orange); z-index: 100; pointer-events: none;
+      }
+      #appHeader { position: relative; z-index: 101; }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
@@ -2277,6 +2283,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 <script src="/calc-percent.js"></script>
 </head>
 <body class="app-auth-pending">
+<div id="statusTint" aria-hidden="true"></div>
 
 <noscript>
   <style>#appLoading { display: none !important; }</style>
