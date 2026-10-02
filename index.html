@@ -690,6 +690,13 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     }
 
     /* ── HEADER ──────────────────────────────────────────────── */
+    /* Mobile Safari tints its own top and address bar from a sticky/fixed
+       header, so on phones in the browser the header scrolls normally and
+       Safari's top matches the page background (theme-color follows the
+       light/dark --cream). Desktop and the installed app keep it sticky. */
+    @media (max-width: 900px) and (display-mode: browser) {
+      #main-header { position: relative !important; }
+    }
     #main-header {
       background:var(--orange);
       position:sticky; top:0; z-index:200;
