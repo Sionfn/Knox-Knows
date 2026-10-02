@@ -1025,25 +1025,19 @@
       box-sizing: border-box;
     }
     #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
-    /* iOS colours the status-bar strip from the background-color of a
-       fixed element at the top of the page (the open phone menu's backdrop
-       showed it), and blurs non-fixed content. On phones: pin the header,
-       paint its orange as a background-image so iOS doesn't read it as the
-       strip colour, and put a fixed full-screen backdrop in the page
-       background behind everything. The strip then matches cream (light)
-       or dark (dark). */
-    #statusBackdrop { display: none; }
+    /* iOS colours the status-bar strip from the background of the fixed
+       element at the top of the page: with the phone menu open it used the
+       fixed backdrop, not the white menu panel inside it. So on phones the
+       orange header sits inside a fixed wrapper painted in the page
+       background, and the strip matches cream (light) or dark (dark) with
+       the orange header directly below it. */
+    #appHeaderBar { display: contents; }
     @media (max-width: 900px) {
-      #appHeader {
-        position: fixed; top: 0; left: 0; right: 0;
-        background-color: transparent;
-        background-image: linear-gradient(var(--orange), var(--orange));
+      #appHeaderBar {
+        display: block; position: fixed; top: 0; left: 0; right: 0;
+        z-index: 100; background: var(--cream);
       }
       #mainColumn { padding-top: calc(64px + env(safe-area-inset-top)); }
-      #statusBackdrop {
-        display: block; position: fixed; inset: 0; z-index: -1;
-        background: var(--cream); pointer-events: none;
-      }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
@@ -2303,7 +2297,6 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 <script src="/calc-percent.js"></script>
 </head>
 <body class="app-auth-pending">
-<div id="statusBackdrop" aria-hidden="true"></div>
 
 <noscript>
   <style>#appLoading { display: none !important; }</style>
@@ -2429,6 +2422,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     <div class="drop-sub">Knox will read it like any uploaded homework photo</div>
   </div>
 
+  <div id="appHeaderBar">
   <header id="appHeader">
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
       <button id="mobileHistoryBtn" onclick="openMobileHistory()" aria-label="Open history">
@@ -2470,6 +2464,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       </div>
     </div>
   </header>
+  </div>
 
   <!-- ACCOUNT DROPDOWN -->
   <div id="appAccountDropdown">
