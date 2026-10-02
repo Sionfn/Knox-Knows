@@ -675,6 +675,90 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
       .header-login { padding:9px 12px; font-size:13px; }
     }
 
+
+    /* ── PHONE MENU — matches the app's phone drawer ───────────────── */
+    #mobileNav { position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,0.45); }
+    #mobileNav .ln-panel {
+      position:absolute; top:0; left:0; bottom:0; width:85%; max-width:300px;
+      background:var(--surface); display:flex; flex-direction:column; overflow:hidden;
+      box-shadow:8px 0 32px rgba(0,0,0,0.15); animation:lnSlide .25s ease;
+    }
+    @keyframes lnSlide { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+    #mobileNav .ln-top {
+      display:flex; align-items:center; justify-content:space-between; height:68px; padding:0 16px;
+      border-bottom:1px solid var(--border); flex-shrink:0;
+    }
+    #mobileNav .ln-logo { display:flex; align-items:center; gap:9px; text-decoration:none; min-width:0; }
+    #mobileNav .ln-logo img { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--orange); box-shadow:0 2px 0 #CC5500; flex-shrink:0; }
+    #mobileNav .ln-logo span { font-size:16px; font-weight:900; color:var(--text); white-space:nowrap; }
+    #mobileNav .ln-close {
+      width:34px; height:34px; border-radius:9px; flex-shrink:0; cursor:pointer;
+      background:var(--orange-cream); border:1px solid var(--orange-light); color:var(--orange);
+      display:flex; align-items:center; justify-content:center;
+    }
+    #mobileNav .ln-nav { padding:14px 10px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    #mobileNav .ln-section {
+      padding:15px 15px 8px; font-size:11px; font-weight:900; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--text-light); flex-shrink:0;
+    }
+    #mobileNav .ln-body { flex:1; overflow-y:auto; padding:0 10px 8px; display:flex; flex-direction:column; gap:3px; overscroll-behavior:contain; }
+    #mobileNav .ln-link {
+      display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+      font-size:14px; font-weight:800; color:var(--text-light); text-decoration:none;
+      transition:background .15s, color .15s;
+    }
+    #mobileNav .ln-link.ln-active, #mobileNav .ln-link:hover { background:var(--orange-cream); color:var(--orange); }
+    #mobileNav .ln-icon {
+      flex:0 0 32px; width:32px; height:32px; border-radius:11px; border:1.5px solid;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #mobileNav .ln-icon svg { width:20px; height:20px; }
+    #mobileNav .ln-ask   { color:var(--orange); background:var(--orange-light); box-shadow:0 3px 0 #CC5500; }
+    #mobileNav .ln-how   { color:var(--blue);   background:var(--blue-light);   box-shadow:0 3px 0 var(--blue-dark); }
+    #mobileNav .ln-subj  { color:var(--green);  background:var(--green-light);  box-shadow:0 3px 0 var(--green-dark); }
+    #mobileNav .ln-price { color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
+    #mobileNav .ln-faq   { color:var(--orange); background:var(--orange-cream); box-shadow:0 3px 0 #CC5500; }
+    #mobileNav .ln-ext {
+      display:flex; align-items:center; gap:10px; margin:8px; padding:10px 12px; border-radius:14px;
+      background:var(--blue-light); border:2px solid var(--blue); box-shadow:0 3px 0 var(--blue-dark);
+      text-decoration:none; flex-shrink:0;
+    }
+    #mobileNav .ln-ext img { width:36px; height:36px; border-radius:10px; object-fit:cover; border:2px solid var(--orange); flex-shrink:0; }
+    #mobileNav .ln-ext-copy { display:flex; flex-direction:column; min-width:0; flex:1; }
+    #mobileNav .ln-ext-copy strong { font-size:13px; font-weight:900; color:var(--text); }
+    #mobileNav .ln-ext-copy span { font-size:12px; font-weight:800; color:var(--blue); }
+    #mobileNav .ln-ext-arrow { color:var(--blue); font-weight:900; font-size:18px; }
+    #mobileNav .ln-footer {
+      flex-shrink:0; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+      border-top:1px solid var(--border);
+    }
+    #lnAccountBtn {
+      display:flex; align-items:center; gap:10px; width:100%; padding:8px 10px;
+      border:1px solid var(--border); border-radius:14px; background:var(--cream); color:var(--text);
+      font-family:inherit; text-align:left; cursor:pointer; box-shadow:0 2px 0 var(--border);
+    }
+    #lnAccountIcon {
+      width:36px; height:36px; flex-shrink:0; border-radius:50%; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      background:var(--orange); color:#fff; font-size:14px; font-weight:900;
+    }
+    #lnAccountIcon img { width:100%; height:100%; object-fit:cover; }
+    #mobileNav .ln-identity { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+    #lnAccountName { font-size:13px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #lnAccountBadge {
+      align-self:flex-start; padding:1px 7px; border-radius:6px; border:1px solid var(--border);
+      background:var(--surface); font-size:10px; font-weight:900; color:var(--text-light); white-space:nowrap;
+    }
+    #lnAccountBadge.paid { color:var(--orange); border-color:var(--orange-light); background:var(--orange-cream); }
+    #mobileNav .ln-gear { color:var(--text-light); display:flex; flex-shrink:0; }
+    #lnGuestBtns { display:flex; gap:8px; }
+    #lnGuestBtns button {
+      flex:1; padding:11px 8px; border-radius:12px; border:2px solid var(--border);
+      background:var(--cream); color:var(--text); font-size:14px; font-weight:900;
+      font-family:inherit; cursor:pointer; box-shadow:0 2px 0 var(--border);
+    }
+    #lnGuestBtns .ln-signup { background:var(--orange); border-color:#CC5500; color:#fff; box-shadow:0 3px 0 #CC5500; }
+
     /* ── HEADER ──────────────────────────────────────────────── */
     #main-header {
       background:var(--orange);
@@ -2236,34 +2320,58 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 </header>
 
 <!-- ── MOBILE NAV DRAWER ── -->
-<div id="mobileNav" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,0.5);" onclick="closeMobileNav()">
-  <div style="position:absolute;top:0;left:0;width:280px;height:100%;background:var(--surface);box-shadow:8px 0 32px rgba(0,0,0,0.15);display:flex;flex-direction:column;" onclick="event.stopPropagation()">
-    <div style="background:var(--orange);padding:calc(20px + env(safe-area-inset-top)) 20px 16px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <img src="./knox-logo-square.jpg" alt="Knox" style="width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,0.4);object-fit:cover;" onerror="this.style.display='none'">
-        <span style="font-size:18px;font-weight:900;color:white;">Knox Knows</span>
-      </div>
-      <button onclick="closeMobileNav()" style="background:rgba(255,255,255,0.2);border:none;cursor:pointer;color:white;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<!-- Phone menu — same design as the app's phone drawer: logo row, sticker
+     nav, extension card, and a profile row (or Log in / Sign up) at the bottom. -->
+<div id="mobileNav" style="display:none;" onclick="closeMobileNav()">
+  <div class="ln-panel" onclick="event.stopPropagation()">
+    <div class="ln-top">
+      <a href="/about" class="ln-logo" onclick="closeMobileNav()">
+        <img src="./knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
+        <span>Knox Knows</span>
+      </a>
+      <button class="ln-close" onclick="closeMobileNav()" aria-label="Close menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
       </button>
     </div>
-    <div style="flex:1;padding:16px 0;overflow-y:auto;">
-      <a href="/app" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:900;color:var(--orange);text-decoration:none;border-bottom:1px solid var(--border);"><span style="font-size:20px;">🦊</span> Open Knox</a>
-      <a href="#how-it-works" onclick="smoothScroll('how-it-works',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
-        <span style="font-size:20px;">📖</span> How it Works
-      </a>
-      <a href="#subjects" onclick="smoothScroll('subjects',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
-        <span style="font-size:20px;">📚</span> Subjects
-      </a>
-      <a href="#pricing" onclick="smoothScroll('pricing',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
-        <span style="font-size:20px;">💰</span> Pricing
-      </a>
-      <a href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();" style="display:flex;align-items:center;gap:12px;padding:14px 20px;font-size:16px;font-weight:800;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='#FFF8F0'" onmouseout="this.style.background=''">
-        <span style="font-size:20px;">❓</span> FAQ
+
+    <div class="ln-nav">
+      <a class="ln-link ln-active" href="/app">
+        <span class="ln-icon ln-ask" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 13v3a3 3 0 0 1-3 3H8l-4 3V8a3 3 0 0 1 3-3h5"/><path d="m18 2 1.4 3.6L23 7l-3.6 1.4L18 12l-1.4-3.6L13 7l3.6-1.4L18 2Z"/><path d="M8 13h4"/></svg></span><span>Ask Knox</span>
       </a>
     </div>
-    <div style="padding:16px 20px;border-top:2px solid var(--border);">
-      <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);" style="width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;">Sign Up Free</button>
+
+    <div class="ln-section">On this page</div>
+    <div class="ln-body">
+      <a class="ln-link" href="#how-it-works" onclick="smoothScroll('how-it-works',event);closeMobileNav();">
+        <span class="ln-icon ln-how" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg></span><span>How it works</span>
+      </a>
+      <a class="ln-link" href="#subjects" onclick="smoothScroll('subjects',event);closeMobileNav();">
+        <span class="ln-icon ln-subj" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/></svg></span><span>Subjects</span>
+      </a>
+      <a class="ln-link" href="#pricing" onclick="smoothScroll('pricing',event);closeMobileNav();">
+        <span class="ln-icon ln-price" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="8" cy="8" r="1.5"/></svg></span><span>Pricing</span>
+      </a>
+      <a class="ln-link" href="#faq" onclick="smoothScroll('faq',event);closeMobileNav();">
+        <span class="ln-icon ln-faq" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17h.01"/></svg></span><span>FAQ</span>
+      </a>
+    </div>
+
+    <a class="ln-ext" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
+      <img src="./knox-logo-square.jpg" alt="" loading="lazy">
+      <span class="ln-ext-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
+      <span class="ln-ext-arrow" aria-hidden="true">↗</span>
+    </a>
+
+    <div class="ln-footer">
+      <button id="lnAccountBtn" onclick="closeMobileNav();window.openSettings&&window.openSettings();" aria-label="Account and plan">
+        <span id="lnAccountIcon">?</span>
+        <span class="ln-identity"><span id="lnAccountName">Your account</span><span id="lnAccountBadge">Free plan</span></span>
+        <span class="ln-gear"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>
+      </button>
+      <div id="lnGuestBtns">
+        <button onclick="closeMobileNav();setTimeout(function(){openLoginModal('signin');},200);">Log in</button>
+        <button class="ln-signup" onclick="closeMobileNav();setTimeout(function(){openLoginModal('signup');},200);">Sign up</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3818,10 +3926,28 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     else if (document.getElementById('signinForm')?.style.display !== 'none') { e.preventDefault(); window.handleEmailSignIn?.(); }
   });
 
+  // Fill the phone menu's profile row (or Log in / Sign up) from the header account.
+  function syncMobileNavAccount() {
+    const user = window.currentUser;
+    const acct = document.getElementById('lnAccountBtn');
+    const guest = document.getElementById('lnGuestBtns');
+    if (acct) acct.style.display = user ? 'flex' : 'none';
+    if (guest) guest.style.display = user ? 'none' : 'flex';
+    if (!user) return;
+    const headerIcon = document.getElementById('accountIcon');
+    const icon = document.getElementById('lnAccountIcon');
+    if (icon) icon.innerHTML = headerIcon && headerIcon.innerHTML.trim() ? headerIcon.innerHTML : (user.displayName || user.email || '?').trim().charAt(0).toUpperCase();
+    const name = document.getElementById('lnAccountName');
+    if (name) name.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'Your account');
+    const paid = ['super', 'max', 'plus'].includes(window.userPlan);
+    const badge = document.getElementById('lnAccountBadge');
+    if (badge) { badge.textContent = paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid); }
+  }
   function toggleMobileNav() {
     const nav = document.getElementById('mobileNav');
     if (!nav) return;
     const isOpen = nav.style.display === 'flex';
+    if (!isOpen) syncMobileNavAccount();
     nav.style.display = isOpen ? 'none' : 'flex';
     document.body.style.overflow = isOpen ? '' : 'hidden';
   }
