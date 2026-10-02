@@ -6004,6 +6004,16 @@ if (savedQuestion) {
   history.replaceState(history.state, '', url.pathname + url.search + url.hash);
 }
 
+// Landing-page menu links: /app?open=calculator or /app?open=learn.
+const openTarget = new URLSearchParams(location.search).get('open');
+if (openTarget === 'calculator' || openTarget === 'learn') {
+  const url = new URL(location.href);
+  url.searchParams.delete('open');
+  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  if (openTarget === 'calculator') window.openCalc?.();
+  else window.openLearnMode?.();
+}
+
 </script>
 </body>
 </html>
