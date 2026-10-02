@@ -2281,7 +2281,14 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   <script>
     // Runs before Firebase modules are downloaded, including on slow links.
     // Keep the retry visible if the auth SDK or network never becomes ready.
+    // Every loading screen stays up for at least this long, so a fast load
+    // (e.g. a guest with no saved session) doesn't flash it on and off.
+    const MIN_LOADING_MS = 1000;
     window.showAppLoading = function() {
+      clearTimeout(window._appLoadingFinishTimer);
+      if (!document.body.classList.contains('app-auth-pending') || !window._appLoadingShownAt) {
+        window._appLoadingShownAt = performance.now();
+      }
       document.body.classList.add('app-auth-pending');
       document.body.classList.remove('app-loading-slow');
       clearTimeout(window._appLoadingTimer);
@@ -2293,8 +2300,13 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       }, 12000);
     };
     window.finishAppLoading = function() {
-      clearTimeout(window._appLoadingTimer);
-      document.body.classList.remove('app-auth-pending', 'app-loading-slow');
+      clearTimeout(window._appLoadingFinishTimer);
+      const wait = Math.max(0, MIN_LOADING_MS - (performance.now() - (window._appLoadingShownAt || 0)));
+      window._appLoadingFinishTimer = setTimeout(() => {
+        clearTimeout(window._appLoadingTimer);
+        window._appLoadingShownAt = 0;
+        document.body.classList.remove('app-auth-pending', 'app-loading-slow');
+      }, wait);
     };
     window.showAppLoading();
   </script>

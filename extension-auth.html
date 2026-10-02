@@ -60,9 +60,14 @@
       document.body.classList.add('extension-loading-slow');
       document.getElementById('extensionLoadingStatus').textContent = 'Still connecting. Check your internet and try again.';
     }, 12000);
+    // Stay up at least 1 second so a fast load doesn't flash on and off.
+    const extensionLoadingShownAt = performance.now();
     window.finishExtensionLoading = function() {
-      clearTimeout(window._extensionLoadingTimer);
-      document.body.classList.remove('extension-loading', 'extension-loading-slow');
+      const wait = Math.max(0, 1000 - (performance.now() - extensionLoadingShownAt));
+      setTimeout(() => {
+        clearTimeout(window._extensionLoadingTimer);
+        document.body.classList.remove('extension-loading', 'extension-loading-slow');
+      }, wait);
     };
   </script>
   <div class="card" id="signinCard">

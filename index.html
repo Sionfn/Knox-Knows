@@ -2148,7 +2148,12 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
   </div>
 </div>
 <script>
+  // Every loading screen stays up for at least this long, so a fast load
+  // doesn't flash it on and off.
+  const MIN_LOADING_MS = 1000;
   window.showLandingLoading = function() {
+    clearTimeout(window._landingLoadingFinishTimer);
+    if (!window._landingLoadingShownAt) window._landingLoadingShownAt = performance.now();
     document.body.classList.add('landing-loading');
     document.body.classList.remove('landing-loading-slow');
     clearTimeout(window._landingLoadingTimer);
@@ -2160,8 +2165,13 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     }, 12000);
   };
   window.finishLandingLoading = function() {
-    clearTimeout(window._landingLoadingTimer);
-    document.body.classList.remove('landing-loading', 'landing-loading-slow');
+    clearTimeout(window._landingLoadingFinishTimer);
+    const wait = Math.max(0, MIN_LOADING_MS - (performance.now() - (window._landingLoadingShownAt || 0)));
+    window._landingLoadingFinishTimer = setTimeout(() => {
+      clearTimeout(window._landingLoadingTimer);
+      window._landingLoadingShownAt = 0;
+      document.body.classList.remove('landing-loading', 'landing-loading-slow');
+    }, wait);
   };
   window.showLandingLoading();
 </script>
