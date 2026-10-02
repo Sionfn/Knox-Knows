@@ -6013,18 +6013,23 @@ if (savedQuestion) {
 
 </script>
 <!-- TEMPORARY layout diagnostics for the iOS home-screen app. Hidden unless
-     the disclaimer under the chat box is tapped three times. Remove once the
+     the disclaimer under the chat box is pressed and held. Remove once the
      iOS safe-area issue is resolved. -->
 <script>
 (function () {
   const target = document.querySelector('.input-disclaimer');
   if (!target) return;
-  let taps = 0, timer;
-  target.addEventListener('click', () => {
-    taps++; clearTimeout(timer);
-    timer = setTimeout(() => { taps = 0; }, 800);
-    if (taps < 3) return;
-    taps = 0;
+  // Long-press (iOS swallows rapid taps as zoom/selection, so no triple-tap).
+  target.style.webkitUserSelect = 'none';
+  target.style.userSelect = 'none';
+  target.style.webkitTouchCallout = 'none';
+  let holdTimer;
+  const cancel = () => clearTimeout(holdTimer);
+  const start = () => { cancel(); holdTimer = setTimeout(show, 900); };
+  target.addEventListener('touchstart', start, { passive: true });
+  target.addEventListener('mousedown', start);
+  ['touchend', 'touchmove', 'touchcancel', 'mouseup', 'mouseleave'].forEach(e => target.addEventListener(e, cancel, { passive: true }));
+  function show() {
     const probe = document.createElement('div');
     probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;' +
       'padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);';
@@ -6054,7 +6059,7 @@ if (savedQuestion) {
       Object.entries(rows).map(([k, v]) => k + ': ' + String(v).replace(/</g, '&lt;')).join('<br>');
     box.onclick = () => box.remove();
     document.body.appendChild(box);
-  });
+  }
 })();
 </script>
 </body>
