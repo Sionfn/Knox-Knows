@@ -47,7 +47,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
-  <meta name="theme-color" content="#FF6B00">
+  <meta name="theme-color" content="#FFF8F0">
+  <script>
+    // Safari tints the status bar from theme-color: keep it on the page
+    // background (cream in light mode, dark in dark mode), not orange.
+    (function () {
+      function sync() {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta || !document.body) return;
+        const bg = getComputedStyle(document.documentElement).getPropertyValue('--cream').trim();
+        if (bg) meta.setAttribute('content', bg);
+      }
+      new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+      document.addEventListener('DOMContentLoaded', sync);
+    })();
+  </script>
   <link rel="manifest" href="/manifest.json">
   <!-- Standard favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3">
@@ -1011,21 +1025,22 @@
       box-sizing: border-box;
     }
     #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
-    /* iOS paints the strip behind the clock/battery with the root (canvas)
-       background, then blurs it into the header. On phones make that root
-       orange so the strip matches the header; body keeps the cream app
-       background, so nothing else changes. */
-    @media (max-width: 900px) {
-      html { background: var(--orange); }
-      body { background: var(--cream); }
-    }
-    /* iOS colours the status-bar strip solidly from a fixed, full-width
-       element at the top (the open phone menu's backdrop shows it), but
-       blurs non-fixed content into its own backdrop. Pin the orange header
-       on phones so the strip above it comes out solid orange. */
+    /* iOS colours the status-bar strip solidly from the top edge of a
+       fixed, full-width element (the open phone menu's backdrop shows it),
+       but blurs non-fixed content. Pin the header on phones so the strip is
+       solid, and in the installed app give the header a top edge in the page
+       background colour so the strip matches cream (light) or dark (dark)
+       rather than orange. */
     @media (max-width: 900px) {
       #appHeader { position: fixed; top: 0; left: 0; right: 0; }
       #mainColumn { padding-top: calc(64px + env(safe-area-inset-top)); }
+    }
+    @media (display-mode: standalone) and (max-width: 900px) {
+      html #appHeader {
+        border-top: 10px solid var(--cream);
+        height: calc(74px + env(safe-area-inset-top)) !important;
+      }
+      #mainColumn { padding-top: calc(74px + env(safe-area-inset-top)); }
     }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 

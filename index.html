@@ -84,7 +84,21 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#FF6B00">
+  <meta name="theme-color" content="#FFF8F0">
+  <script>
+    // Safari tints the status bar from theme-color: keep it on the page
+    // background (cream in light mode, dark in dark mode), not orange.
+    (function () {
+      function sync() {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta || !document.body) return;
+        const bg = getComputedStyle(document.documentElement).getPropertyValue('--cream').trim();
+        if (bg) meta.setAttribute('content', bg);
+      }
+      new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+      document.addEventListener('DOMContentLoaded', sync);
+    })();
+  </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Knox Knows">
@@ -461,12 +475,6 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 }
 
     * { margin:0; padding:0; box-sizing:border-box; }
-    /* Saved-to-home-screen: iOS paints the strip behind the clock/battery
-       with the root background; make it match the orange header. The body
-       keeps its own background, so the page itself doesn't change. */
-    @media (display-mode: standalone) {
-      html { background: var(--orange); }
-    }
     html {
       overflow-x:hidden;
       overscroll-behavior-x:none;
