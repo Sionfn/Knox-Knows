@@ -1010,6 +1010,14 @@
       box-sizing: border-box;
     }
     #mobileHistoryDrawer .drawer-panel { padding-top: env(safe-area-inset-top); }
+    /* iOS paints the strip behind the clock/battery with the root (canvas)
+       background, then blurs it into the header. On phones make that root
+       orange so the strip matches the header; body keeps the cream app
+       background, so nothing else changes. */
+    @media (max-width: 900px) {
+      html { background: var(--orange); }
+      body { background: var(--cream); }
+    }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */

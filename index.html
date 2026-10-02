@@ -461,6 +461,12 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 }
 
     * { margin:0; padding:0; box-sizing:border-box; }
+    /* Saved-to-home-screen: iOS paints the strip behind the clock/battery
+       with the root background; make it match the orange header. The body
+       keeps its own background, so the page itself doesn't change. */
+    @media (display-mode: standalone) {
+      html { background: var(--orange); }
+    }
     html {
       overflow-x:hidden;
       overscroll-behavior-x:none;
