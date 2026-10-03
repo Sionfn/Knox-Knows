@@ -1258,6 +1258,10 @@
       letter-spacing: .07em; text-transform: uppercase;
     }
     html[data-theme="dark"] .knox-response-heading.learn { color: var(--purple-on-tint); }
+    .knox-response-heading.learn.good  { color: var(--green-dark); }
+    .knox-response-heading.learn.retry { color: var(--orange-dark); }
+    html[data-theme="dark"] .knox-response-heading.learn.good  { color: var(--green); }
+    html[data-theme="dark"] .knox-response-heading.learn.retry { color: var(--orange); }
     .knox-final-answer {
       display: flex;
       align-items: baseline;
@@ -5667,6 +5671,26 @@ function renderLimitCard(data, isSignedIn) {
 // Check My Work mode keeps its labels below since those (Verdict, Where it
 // went wrong, The fix...) are functionally meaningful, not padding — they
 // mark genuinely different parts of checking someone's work.
+// Learn replies get a heading that matches what Knox is doing in that
+// message (the Learn prompt has Knox open with "Yes, that's right" or
+// "Not quite" when checking an answer).
+function learnHeadingHtml(text) {
+  const t = String(text || '').trim();
+  const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
+  let cls = '', icon = '◆', label = 'Study hint';
+  if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) {
+    cls = ' retry'; icon = '↺'; label = 'Not quite';
+  } else if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great|nice|perfect|well done|you got it|good job|awesome)/.test(opening)) {
+    cls = ' good'; icon = '✓'; label = 'Nice work';
+  } else if (/^(i read|i can see|i see |looks like|this worksheet|your worksheet|from your photo|from the photo|the worksheet|this photo)/.test(opening)) {
+    icon = '◆'; label = "Let's start";
+  } else if (/^(here's how|here is how|let's work through|let me show|worked example)/.test(opening) ||
+             (t.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length >= 2) {
+    icon = '◆'; label = 'Worked example';
+  }
+  return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + '</div>';
+}
+
 function renderAnswerHtml(text, kind = 'answer') {
   if (!text) return '';
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
@@ -5731,7 +5755,7 @@ function renderAnswerHtml(text, kind = 'answer') {
   }
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
-  return (kind === 'learn' ? '<div class="knox-response-heading learn"><span aria-hidden="true">◆</span>Study hint</div>' : '') +
+  return (kind === 'learn' ? learnHeadingHtml(text) : '') +
     '<div class="knox-response-body">' + html + '</div>';
 }
 
