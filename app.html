@@ -5481,6 +5481,12 @@ window.appHandleAsk = async function() {
 
   const image = window._appImage;
   window.appClearImage();
+  // Learn follow-ups re-attach the session's homework photo (not shown again)
+  // so Knox can keep checking answers against it. Signed-in only: Learn
+  // follow-ups are free for them, but a guest photo would use their quota.
+  const learnPhoto = window._learnPhoto;
+  const sendImage = image || (requestLearnMode && requestUser && learnPhoto &&
+    learnPhoto.sessionId === requestLearnSessionId ? learnPhoto : null);
   const clearedImageVersion = imageSelectionVersion;
   function restoreFailedDraft() {
     if (window._appViewVersion !== requestView || (window.currentUser?.uid || null) !== requestUid) return;
@@ -5519,8 +5525,8 @@ window.appHandleAsk = async function() {
       signal: requestController.signal,
       body: JSON.stringify({
         question:  q,
-        image:     image?.data,
-        imageType: image?.type,
+        image:     sendImage?.data,
+        imageType: sendImage?.type,
         history,
         learnMode: requestLearnMode,
         learnSessionId: requestLearnSessionId,
@@ -5544,6 +5550,11 @@ window.appHandleAsk = async function() {
       // Rich rate-limit handling — show upgrade card on quota errors
       if (data.limitReached) {
         replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
+      } else if (data.learnSessionExpired) {
+        // Give a one-tap way into a fresh Learn chat (its first reply uses a credit, as the message says).
+        replaceThinking(thinkId,
+          '<p style="font-weight:800;">🎓 ' + escHtml(data.error || 'This Learn session has ended.') + '</p>' +
+          '<button type="button" class="learn-restart-btn" onclick="window.openLearnMode()" style="margin-top:10px;padding:10px 16px;border-radius:12px;border:2px solid var(--purple);background:var(--purple-light);color:var(--purple);font-weight:900;font-family:inherit;cursor:pointer;">Start a new Learn chat</button>');
       } else {
         const errMsg = data.error || 'Something went wrong. Try again.';
         // Luna test path includes a `debug` field with the real OpenAI
@@ -5559,6 +5570,11 @@ window.appHandleAsk = async function() {
 
     // Successful answer — increment guest count
     if (!window.currentUser && !data.isCasual) window._incGuestCount();
+
+    // Remember this Learn session's newest photo for later follow-ups.
+    if (requestLearnMode && image && requestLearnSessionId && requestLearnSessionId === window._learnSessionId) {
+      window._learnPhoto = { sessionId: requestLearnSessionId, data: image.data, type: image.type };
+    }
 
     // Advance the study streak (logged-in users only). Fires on any
     // successful question — asking Knox = studying today.
