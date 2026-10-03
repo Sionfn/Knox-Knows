@@ -359,6 +359,8 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /Never solve the whole photo/);
   assert.match(system, /Learn mode \(this overrides the response types above\)/);
   assert.match(system, /Not quite/);
+  assert.match(system, /After a first wrong answer, do not reveal the correct answer/);
+  assert.match(system, /Never reveal or hint at answers to problems the student has not attempted yet/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
   const userText = requests[0].messages.at(-1).content.find(part => part.type === 'text').text;
   assert.match(userText, /instead of solving it/);
