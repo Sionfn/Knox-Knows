@@ -344,6 +344,25 @@ test('Text, photo and Learn use GPT-6 Luna; exact small talk is local', async ()
   assert.ok(requests.every(request => request.temperature === undefined));
 });
 
+test('Learn mode photos get teaching instructions, not the solve-everything rule', async () => {
+  const { db } = memoryDb();
+  const requests = [];
+  const handler = await load('api/ask.js', {
+    db, adminEmail: 'owner@example.com',
+    fetch: async (_, options) => {
+      requests.push(JSON.parse(options.body));
+      return { ok: true, json: async () => ({ choices: [{ message: { content: 'What do you notice first?' }, finish_reason: 'stop' }] }) };
+    },
+  });
+  await handler(askRequest({ question: '', image: 'aGVsbG8=', imageType: 'image/jpeg', learnMode: true }), response());
+  const system = requests[0].messages[0].content;
+  assert.match(system, /Photos in Learn mode: never solve the photo/);
+  assert.match(system, /Dedicated Learn mode/);
+  assert.doesNotMatch(system, /solve every problem in the photo/);
+  const userText = requests[0].messages.at(-1).content.find(part => part.type === 'text').text;
+  assert.match(userText, /instead of solving it/);
+});
+
 test('Old owner comparison flags cannot override GPT-6 Luna', async () => {
   const { db } = memoryDb();
   const handler = await load('api/ask.js', { db, adminEmail: 'owner@example.com', fetch: askFetch() });
