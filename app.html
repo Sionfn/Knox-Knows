@@ -3072,6 +3072,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
+      window.userComped = !!(snap.exists() && snap.data().comped === true);
     } catch (e) {
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = 'free';
@@ -3503,6 +3504,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       if (draft && resolvedAuthUid !== undefined) { draft.value = ''; draft.style.height = 'auto'; }
       window._fbPayloads = {};
       window.hasBillingAccount = false;
+      window.userComped = false;
       document.getElementById('settingsContent')?.replaceChildren();
       window.closeAppSettings?.();
       window.closeAuthModal?.();
@@ -4455,7 +4457,13 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the
     // upgrade button.
-    if (isPaid || window.hasBillingAccount) {
+    if (isPaid && window.userComped && !window.hasBillingAccount) {
+      // Comped Plus has no Stripe billing to manage.
+      const comp = document.createElement('span');
+      comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
+      comp.textContent = '🎁 Free Plus from Knox Knows';
+      el.appendChild(row('Billing', comp));
+    } else if (isPaid || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
       billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
       billBtn.textContent = 'Manage Billing';

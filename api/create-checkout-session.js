@@ -115,7 +115,9 @@ export default async function handler(req, res) {
           const ref = db.collection('users').doc(verifiedUid);
           const latest = await tx.get(ref);
           if (latest.data()?.stripeSubscription === subscriptionId) {
-            tx.set(ref, { stripeSubscription: null, plan: 'free', planStatus: 'cancelled' }, { merge: true });
+            // Comped users keep their free Plus.
+            const comped = latest.data()?.comped === true;
+            tx.set(ref, { stripeSubscription: null, plan: comped ? 'super' : 'free', planStatus: comped ? 'comped' : 'cancelled' }, { merge: true });
           }
         });
       }

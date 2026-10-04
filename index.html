@@ -3421,10 +3421,12 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
         const plan = data.plan || "free";
         window.userPlan = plan;
         window.hasBillingAccount = !!data.stripeCustomerId;
+        window.userComped = data.comped === true;
         userPlan = plan;
       } else {
         window.userPlan = "free";
         window.hasBillingAccount = false;
+        window.userComped = false;
         userPlan = "free";
       }
     } catch (err) {
@@ -3470,6 +3472,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     } else {
       window.userPlan = "free";
       window.hasBillingAccount = false;
+      window.userComped = false;
       userPlan = "free";
       window.dispatchEvent(new CustomEvent('knoxAuthChange', { detail: { loggedIn: false } }));
       if (window.updateLoginUI) window.updateLoginUI();
@@ -4485,7 +4488,8 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
 
     const isPaid = ['super', 'max', 'plus'].includes(plan);
-    const canManageBilling = isPaid || window.hasBillingAccount;
+    // Comped Plus has no Stripe billing to manage.
+    const canManageBilling = window.hasBillingAccount || (isPaid && !window.userComped);
     const color  = planColors[plan] || '#FF6B00';
 
     modal.innerHTML = `
@@ -5562,7 +5566,12 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the
     // upgrade button.
-    if (_isPaidPlan || window.hasBillingAccount) {
+    if (_isPaidPlan && window.userComped && !window.hasBillingAccount) {
+      const comp = document.createElement('span');
+      comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
+      comp.textContent = '🎁 Free Plus from Knox Knows';
+      el.appendChild(row('Billing', comp));
+    } else if (_isPaidPlan || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
       billBtn.className   = 'settings-billing-btn';
       billBtn.textContent = 'Manage billing';

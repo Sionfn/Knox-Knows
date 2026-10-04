@@ -44,7 +44,7 @@ function memoryDb() {
   return { db, store, setFail: value => { failTransactions = value; } };
 }
 
-async function load(file, { db, fetch, stripe, adminEmail, adminUid, token = { uid: 'u1', email: 'owner@example.com', email_verified: true } } = {}) {
+async function load(file, { db, fetch, stripe, adminEmail, adminUid, auth = {}, token = { uid: 'u1', email: 'owner@example.com', email_verified: true } } = {}) {
   const context = createContext({
     process: { env: { FIREBASE_PROJECT_ID: 'test', FIREBASE_CLIENT_EMAIL: 'test@example.com', OPENAI_API_KEY: 'test', STRIPE_SECRET_KEY: 'test', STRIPE_WEBHOOK_SECRET: 'test', ADMIN_EMAIL: adminEmail, ADMIN_UID: adminUid } },
     console: { ...console, error() {}, warn() {}, log() {} },
@@ -55,7 +55,7 @@ async function load(file, { db, fetch, stripe, adminEmail, adminUid, token = { u
     const exports = specifier === 'firebase-admin/app'
       ? { cert: () => ({}), getApps: () => [true], initializeApp() {} }
       : specifier === 'firebase-admin/auth'
-        ? { getAuth: () => ({ verifyIdToken: async () => token }) }
+        ? { getAuth: () => ({ verifyIdToken: async () => token, ...auth }) }
         : specifier === 'firebase-admin/firestore'
           ? { getFirestore: () => db, FieldValue: { increment: amount => amount, delete: () => null } }
           : specifier === 'crypto' || specifier === 'node:crypto'
@@ -445,4 +445,41 @@ test('Account usage initializes the bank through a transaction', async () => {
   assert.equal(res.code, 200);
   assert.equal(res.body.usage.remaining, 10);
   assert.equal(store.get('users/u1/usage/bank').balance, 10);
+});
+
+test('Comped Plus: admin grants and revokes free Plus; paid Plus survives a revoke', async () => {
+  const { db, store } = memoryDb();
+  const accounts = { 'friend@example.com': { uid: 'f1', email: 'friend@example.com' }, 'payer@example.com': { uid: 'p1', email: 'payer@example.com' } };
+  const auth = { getUserByEmail: async email => { if (!accounts[email]) { const e = new Error('nope'); e.code = 'auth/user-not-found'; throw e; } return accounts[email]; } };
+  const handler = await load('api/admin-comp.js', { db, adminUid: 'u1', auth });
+  const post = async body => { const res = response(); await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body }, res); return res; };
+
+  const missing = await post({ action: 'grant', email: 'nobody@example.com' });
+  assert.equal(missing.code, 404);
+
+  const granted = await post({ action: 'grant', email: 'Friend@Example.com', note: 'beta tester' });
+  assert.equal(granted.code, 200);
+  assert.equal(store.get('users/f1').plan, 'super');
+  assert.equal(store.get('users/f1').comped, true);
+  assert.equal(store.get('users/f1').compedNote, 'beta tester');
+
+  const revoked = await post({ action: 'revoke', uid: 'f1' });
+  assert.equal(revoked.body.result, 'revoked');
+  assert.equal(store.get('users/f1').plan, 'free');
+  assert.equal(store.get('users/f1').comped, false);
+
+  store.set('users/p1', { plan: 'super', planStatus: 'active', stripeSubscription: 'sub_1' });
+  await post({ action: 'grant', email: 'payer@example.com' });
+  const kept = await post({ action: 'revoke', uid: 'p1' });
+  assert.equal(kept.body.result, 'kept-paid');
+  assert.equal(store.get('users/p1').plan, 'super');
+  assert.equal(store.get('users/p1').planStatus, 'active');
+});
+
+test('Comped Plus endpoint rejects anyone but the verified admin', async () => {
+  for (const token of [{ uid: 'u1', email: 'owner@example.com', email_verified: false }, { uid: 'u2', email: 'owner@example.com', email_verified: true }]) {
+    const handler = await load('api/admin-comp.js', { db: memoryDb().db, adminUid: 'u1', token });
+    const res = response(); await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { action: 'grant', email: 'a@b.co' } }, res);
+    assert.equal(res.code, 403);
+  }
 });

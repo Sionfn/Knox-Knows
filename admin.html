@@ -469,6 +469,36 @@
       .score-ring { width: 120px; height: 120px; }
       .score-ring-pct { font-size: 24px; }
     }
+    /* ─── COMPED PLUS ───────────────────────────────────── */
+    .comp-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+    .comp-form input {
+      flex: 1 1 200px; min-width: 0; padding: 11px 14px; border-radius: 12px;
+      border: 2px solid var(--border); font: inherit; font-weight: 700; color: var(--text); background: white;
+    }
+    .comp-form input:focus { outline: none; border-color: var(--orange); }
+    .comp-btn {
+      padding: 11px 18px; border-radius: 12px; border: none; cursor: pointer;
+      background: var(--orange); color: white; font: inherit; font-weight: 900;
+      box-shadow: 0 3px 0 var(--orange-dark); white-space: nowrap;
+    }
+    .comp-btn:disabled { opacity: .6; cursor: default; }
+    .comp-msg { margin-top: 10px; font-size: 13px; font-weight: 800; min-height: 18px; }
+    .comp-msg.ok { color: var(--green-dark); }
+    .comp-msg.err { color: var(--red); }
+    .comp-list { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .comp-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border: 2px solid var(--border); border-radius: 12px; background: var(--gray);
+    }
+    .comp-who { flex: 1; min-width: 0; }
+    .comp-who strong { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comp-who span { display: block; font-size: 12px; font-weight: 700; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .comp-tag { font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 6px; background: var(--green-light); color: var(--green-dark); white-space: nowrap; }
+    .comp-remove {
+      padding: 7px 12px; border-radius: 10px; border: 2px solid var(--border); background: white;
+      color: var(--red); font: inherit; font-size: 13px; font-weight: 900; cursor: pointer; white-space: nowrap;
+    }
+    .comp-empty { margin-top: 16px; font-size: 13px; font-weight: 700; color: var(--text-light); }
   </style>
 <link rel="stylesheet" href="/logo-theme.css">
 </head>
@@ -515,6 +545,7 @@
 <main style="display:none;" id="adminMain">
   <div id="errorBanner" style="display:none;" class="error-banner"></div>
   <div id="dashboard"></div>
+  <div id="compPanel"></div>
 </main>
 
 <script type="module">
@@ -539,6 +570,7 @@
   // Wait for auth state
   onAuthStateChanged(auth, async (user) => {
     document.getElementById('dashboard').replaceChildren();
+    document.getElementById('compPanel').replaceChildren();
     document.getElementById('authGate').style.display = 'flex';
     document.getElementById('adminHeader').style.display = 'none';
     document.getElementById('adminMain').style.display = 'none';
@@ -652,7 +684,117 @@
       'Updated ' + new Date(data.generatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     renderDashboard(data);
+    if (!document.getElementById('compForm')) renderCompPanel();
+    loadComped();
   };
+
+  // ─── Comped Plus manager ───
+  async function compFetch(method, body) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Please sign in again.');
+    const token = await user.getIdToken();
+    const res = await fetch('/api/admin-comp', {
+      method,
+      headers: Object.assign({ 'Authorization': 'Bearer ' + token }, body ? { 'Content-Type': 'application/json' } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+
+  function compMessage(text, ok) {
+    const el = document.getElementById('compMsg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'comp-msg ' + (ok ? 'ok' : 'err');
+  }
+
+  function renderCompPanel() {
+    const panel = document.getElementById('compPanel');
+    panel.innerHTML = `
+      <h2 class="section-title">Comped Plus</h2>
+      <div class="card card-lg">
+        <div class="metric-label">Give someone free Knox Plus</div>
+        <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
+          They need a Knox account first. Comped Plus works everywhere Plus does and is never charged.
+          If they also pay for Plus, removing the comp keeps the Plus they pay for.
+        </p>
+        <form class="comp-form" id="compForm" autocomplete="off">
+          <input id="compEmail" type="email" placeholder="their@email.com" required maxlength="254">
+          <input id="compNote" type="text" placeholder="Note (optional), e.g. beta tester" maxlength="200">
+          <button class="comp-btn" id="compSubmit" type="submit">Give free Plus</button>
+        </form>
+        <div class="comp-msg" id="compMsg"></div>
+        <div class="comp-list" id="compList"><div class="comp-empty">Loading…</div></div>
+      </div>`;
+
+    document.getElementById('compForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('compSubmit');
+      const email = document.getElementById('compEmail').value.trim();
+      const note = document.getElementById('compNote').value.trim();
+      if (!email) return;
+      btn.disabled = true;
+      compMessage('', true);
+      try {
+        const r = await compFetch('POST', { action: 'grant', email, note });
+        compMessage(r.already ? `${r.email} already has Comped Plus.` : `Gave free Knox Plus to ${r.email}.`, true);
+        document.getElementById('compEmail').value = '';
+        document.getElementById('compNote').value = '';
+        await loadComped();
+      } catch (err) {
+        compMessage(err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('compList').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.comp-remove');
+      if (!btn) return;
+      const who = btn.dataset.label || 'this user';
+      if (!confirm(`Remove free Knox Plus from ${who}?`)) return;
+      btn.disabled = true;
+      try {
+        const r = await compFetch('POST', { action: 'revoke', uid: btn.dataset.uid });
+        compMessage(r.result === 'kept-paid'
+          ? `Removed the comp from ${who}. They keep Plus because they pay for it.`
+          : `Removed free Knox Plus from ${who}.`, true);
+        await loadComped();
+      } catch (err) {
+        compMessage(err.message, false);
+        btn.disabled = false;
+      }
+    });
+  }
+
+  async function loadComped() {
+    const list = document.getElementById('compList');
+    if (!list) return;
+    try {
+      const { comped } = await compFetch('GET');
+      if (!comped.length) {
+        list.innerHTML = '<div class="comp-empty">Nobody has Comped Plus yet.</div>';
+        return;
+      }
+      list.innerHTML = comped.map(c => {
+        const label = c.email || c.name || c.uid;
+        const since = c.compedAt ? new Date(c.compedAt).toLocaleDateString() : '—';
+        return `
+          <div class="comp-row">
+            <div class="comp-who">
+              <strong>${escHtml(c.name || c.email || c.uid)}</strong>
+              <span>${escHtml(c.name ? (c.email || '') : '')}${c.name && c.email ? ' · ' : ''}since ${escHtml(since)}${c.note ? ' · ' + escHtml(c.note) : ''}</span>
+            </div>
+            ${c.alsoPaying ? '<span class="comp-tag">Also paying</span>' : ''}
+            <button class="comp-remove" type="button" data-uid="${escHtml(c.uid)}" data-label="${escHtml(label)}">Remove</button>
+          </div>`;
+      }).join('');
+    } catch (err) {
+      list.innerHTML = '<div class="comp-empty">Could not load Comped Plus users: ' + escHtml(err.message) + '</div>';
+    }
+  }
 
   function fmt(n) {
     if (n == null) return '—';
@@ -784,6 +926,7 @@
           <div style="margin-top:14px;">
             ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
             ${planBar('Knox Plus', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
+            ${planBar('Comped Plus', users.byPlan.comped || 0, users.total, 'blue')}
           </div>
         </div>
       </div>

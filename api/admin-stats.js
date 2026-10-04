@@ -112,7 +112,7 @@ async function getUserStats() {
   const todayStart = startOfDay();
   const weekStart  = startOfDay(7);
 
-  let total = 0, free = 0, superCount = 0, max = 0;
+  let total = 0, free = 0, superCount = 0, max = 0, comped = 0;
   let newToday = 0, newThisWeek = 0;
   let activeToday = 0, activeThisWeek = 0;
   const dailySignups = {}; // YYYY-MM-DD -> count
@@ -122,7 +122,10 @@ async function getUserStats() {
     total++;
 
     const plan = u.plan || "free";
-    if      (plan === "max")   max++;
+    // Comped Plus users without their own live subscription aren't paying.
+    const compedOnly = u.comped === true && !(u.stripeSubscription && ["active", "trialing", "past_due"].includes(u.planStatus));
+    if      (compedOnly)       comped++;
+    else if (plan === "max")   max++;
     else if (plan === "super" || plan === "plus") superCount++;
     else                       free++;
 
@@ -165,7 +168,7 @@ async function getUserStats() {
 
   return {
     total,
-    byPlan: { free, super: superCount, max },
+    byPlan: { free, super: superCount, max, comped },
     paying,
     conversionPct:  +conversion.toFixed(1),
     newToday,

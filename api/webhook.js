@@ -366,7 +366,9 @@ export default async function handler(req, res) {
           const paused = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
-            tx.set(ref, { plan: 'free', planStatus: 'unpaid' }, { merge: true });
+            // Comped users keep their free Plus when a paid subscription stops.
+            const comped = snap.data().comped === true;
+            tx.set(ref, comped ? { planStatus: 'comped' } : { plan: 'free', planStatus: 'unpaid' }, { merge: true });
             return true;
           });
           if (paused) console.log(`⚠ Subscription unpaid: uid=${uid} — Plus paused until payment`);
@@ -393,7 +395,13 @@ export default async function handler(req, res) {
           const cancelled = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
-            tx.set(ref, { plan: 'free', planStatus: 'cancelled', cancelledAt: new Date().toISOString(), stripeSubscription: null }, { merge: true });
+            // Comped users keep their free Plus when a paid subscription ends.
+            const comped = snap.data().comped === true;
+            tx.set(ref, {
+              plan: comped ? 'super' : 'free',
+              planStatus: comped ? 'comped' : 'cancelled',
+              cancelledAt: new Date().toISOString(), stripeSubscription: null,
+            }, { merge: true });
             return true;
           });
           if (cancelled) {
