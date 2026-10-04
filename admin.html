@@ -346,6 +346,7 @@
     .tag-plan-free   { background: var(--gray);          color: var(--text-light); border: 1.5px solid var(--border); }
     .tag-plan-super  { background: var(--green-light);   color: var(--green-dark); }
     .tag-plan-max    { background: var(--orange-light);  color: var(--orange); }
+    .tag-plan-plus   { background: var(--green-light);   color: var(--green-dark); }
 
     .empty-state {
       text-align: center;
@@ -469,6 +470,13 @@
       .score-ring { width: 120px; height: 120px; }
       .score-ring-pct { font-size: 24px; }
     }
+    @media (max-width: 480px) {
+      /* The status pill and both buttons don't fit beside the title; give them their own row. */
+      header { flex-wrap: wrap; gap: 10px; }
+      .h-right { width: 100%; gap: 6px; }
+      .h-status { margin-right: auto; padding: 6px 10px; font-size: 10px; }
+      .h-btn { padding: 8px 10px; font-size: 12px; white-space: nowrap; }
+    }
     /* ─── COMPED PLUS ───────────────────────────────────── */
     /* Its heading is the panel's first child, which .section-title:first-child zeroes. */
     #compPanel { margin-top: 40px; }
@@ -501,6 +509,27 @@
       color: var(--red); font: inherit; font-size: 13px; font-weight: 900; cursor: pointer; white-space: nowrap;
     }
     .comp-empty { margin-top: 16px; font-size: 13px; font-weight: 700; color: var(--text-light); }
+
+    /* ─── FREE TRIALS ───────────────────────────────────── */
+    .trial-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .trial-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .trial-tab {
+      padding: 6px 12px; border-radius: 999px; border: 2px solid var(--border); background: white;
+      color: var(--text-light); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer;
+    }
+    .trial-tab.on { border-color: var(--orange); background: var(--orange); color: white; }
+    .trial-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .trial-who { flex: 1 1 220px; min-width: 0; }
+    .trial-who strong { display: block; font-size: 14px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .trial-who span { display: block; font-size: 12px; font-weight: 700; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .trial-dates { flex: 0 1 auto; font-size: 12px; font-weight: 700; color: var(--text-light); line-height: 1.5; text-align: right; }
+    .trial-dates b { color: var(--text); font-weight: 900; }
+    .tag-trialing   { background: var(--blue-light);   color: var(--blue-dark); }
+    .tag-cancelling { background: var(--orange-light); color: var(--orange-dark); }
+    .tag-converted  { background: var(--green-light);  color: var(--green-dark); }
+    .tag-failed     { background: var(--red-light);    color: var(--red); }
+    .tag-cancelled  { background: var(--gray);         color: var(--text-light); border: 1.5px solid var(--border); }
+    @media (max-width: 600px) { .trial-dates { text-align: left; flex-basis: 100%; } }
   </style>
 <link rel="stylesheet" href="/logo-theme.css">
 </head>
@@ -649,7 +678,9 @@
         document.getElementById('gateMsg').textContent =
           'This account does not have admin access.';
         document.getElementById('gateBtn').style.display = 'none';
+        if (document.getElementById('gateSignOut')) return;
         const out = document.createElement('button');
+        out.id = 'gateSignOut';
         out.className = 'gate-btn';
         out.style.background = '#9CA3AF';
         out.style.boxShadow  = '0 4px 0 #6B7280';
@@ -674,6 +705,9 @@
       errBan.style.display = 'block';
       errBan.textContent = '❗ ' + (err.message || 'Failed to load stats');
       dash.innerHTML = '';
+      // The Comped Plus manager has its own endpoint, so keep it usable.
+      if (!document.getElementById('compForm')) renderCompPanel();
+      loadComped();
       return;
     }
 
@@ -880,6 +914,44 @@
         </div>`;
     }
 
+    // ─── FREE TRIALS ───
+    const trials = revenue && !revenue.error ? revenue.trials : null;
+    lastTrials = trials ? trials.list : [];
+    const trialsHtml = trials ? `
+      <h2 class="section-title">Free trials</h2>
+      <div class="grid grid-4">
+        <div class="metric-card blue">
+          <div class="metric-label">In trial now</div>
+          <div class="metric-value">${fmt(trials.active)}</div>
+          <div class="metric-sub">${fmt(trials.cancelling)} already cancelled</div>
+        </div>
+        <div class="metric-card orange">
+          <div class="metric-label">Started this week</div>
+          <div class="metric-value">${fmt(trials.startedThisWeek)}</div>
+          <div class="metric-sub">${fmt(trials.startedThisMonth)} in the last 30 days</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-label">Trial → paid</div>
+          <div class="metric-value">${trials.conversionPct == null ? '—' : fmtPct(trials.conversionPct)}</div>
+          <div class="metric-sub">${fmt(trials.converted)} of ${fmt(trials.finished)} finished trials paid</div>
+        </div>
+        <div class="metric-card purple">
+          <div class="metric-label">All-time trials</div>
+          <div class="metric-value">${fmt(trials.list.length)}</div>
+          <div class="metric-sub">Every Plus trial started</div>
+        </div>
+      </div>
+      <div class="card-lg card" style="margin-top:16px;">
+        <div class="trial-head">
+          <div class="metric-label" style="margin:0;">Trial sign-ups</div>
+          <div class="trial-tabs" id="trialTabs">
+            ${TRIAL_FILTERS.map(([key, label]) => `<button type="button" class="trial-tab${key === trialFilter ? ' on' : ''}" data-filter="${key}">${label} · ${fmt(lastTrials.filter(TRIAL_MATCH[key]).length)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="data-list" id="trialList" style="margin-top:14px;">${trialListHtml()}</div>
+      </div>
+    ` : '';
+
     // ─── USERS ───
     const maxSignup = Math.max(1, ...users.signupSeries.map(d => d.count));
     const usersHtml = `
@@ -903,7 +975,7 @@
         <div class="metric-card purple">
           <div class="metric-label">Conversion</div>
           <div class="metric-value">${fmtPct(users.conversionPct)}</div>
-          <div class="metric-sub">${fmt(users.paying)} paying users</div>
+          <div class="metric-sub">${fmt(users.paying)} paying users (trials not counted)</div>
         </div>
       </div>
 
@@ -918,7 +990,8 @@
           </div>
           <div class="spark-x-labels">
             ${users.signupSeries.map((d, i) => {
-              const day = new Date(d.date).getDate();
+              // d.date is a UTC day; getDate() would show the day before west of UTC.
+              const day = new Date(d.date).getUTCDate();
               return `<div class="spark-x-label">${(i % 2 === 0) ? day : ''}</div>`;
             }).join('')}
           </div>
@@ -927,7 +1000,8 @@
           <div class="metric-label">Plan distribution</div>
           <div style="margin-top:14px;">
             ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
-            ${planBar('Knox Plus', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
+            ${planBar('Knox Plus (paying)', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
+            ${planBar('Free trial', users.byPlan.trial || 0, users.total, 'purple')}
             ${planBar('Comped Plus', users.byPlan.comped || 0, users.total, 'blue')}
           </div>
         </div>
@@ -983,8 +1057,8 @@
           <div style="margin-top:14px;">
             ${modeBar('Free',      feedback.byPlan.free, 'orange')}
             ${modeBar('Knox Plus', {
-              up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.max?.up   || 0),
-              down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.max?.down || 0),
+              up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.max?.up   || 0) + (feedback.byPlan.plus?.up   || 0),
+              down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.max?.down || 0) + (feedback.byPlan.plus?.down || 0),
             }, 'green')}
           </div>
         </div>
@@ -1056,7 +1130,70 @@
       </div>
     `;
 
-    dash.innerHTML = revenueHtml + usersHtml + feedbackHtml + usageHtml;
+    dash.innerHTML = revenueHtml + trialsHtml + usersHtml + feedbackHtml + usageHtml;
+
+    const tabs = document.getElementById('trialTabs');
+    if (tabs) tabs.addEventListener('click', e => {
+      const btn = e.target.closest('.trial-tab');
+      if (!btn) return;
+      trialFilter = btn.dataset.filter;
+      tabs.querySelectorAll('.trial-tab').forEach(b => b.classList.toggle('on', b === btn));
+      document.getElementById('trialList').innerHTML = trialListHtml();
+    });
+  }
+
+  // ─── Free trial list ───
+  let lastTrials = [];
+  let trialFilter = 'all';
+  const TRIAL_FILTERS = [['all', 'All'], ['active', 'In trial'], ['paid', 'Paid'], ['lost', 'Didn\'t pay']];
+  const TRIAL_MATCH = {
+    all:    () => true,
+    active: t => t.outcome === 'trialing' || t.outcome === 'cancelling',
+    paid:   t => t.outcome === 'converted' || t.outcome === 'paid_then_cancelled',
+    lost:   t => t.outcome === 'cancelled' || t.outcome === 'payment_failed',
+  };
+  const TRIAL_OUTCOME = {
+    trialing:            ['In trial',             'tag-trialing'],
+    cancelling:          ['Cancelled · in trial', 'tag-cancelling'],
+    converted:           ['Paying',               'tag-converted'],
+    paid_then_cancelled: ['Paid, then cancelled', 'tag-cancelled'],
+    cancelled:           ['Cancelled in trial',   'tag-cancelled'],
+    payment_failed:      ['Payment failed',       'tag-failed'],
+  };
+
+  function fmtDateTime(ms) {
+    return new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function fmtDate(ms) {
+    return new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function trialListHtml() {
+    const rows = lastTrials.filter(TRIAL_MATCH[trialFilter]);
+    if (!rows.length) {
+      return `<div class="empty-state"><span class="empty-state-emoji">🎟️</span>${lastTrials.length ? 'No trials in this group.' : 'Nobody has started a free trial yet.'}</div>`;
+    }
+    const now = Date.now();
+    return rows.map(t => {
+      const [label, cls] = TRIAL_OUTCOME[t.outcome] || [t.outcome, 'tag-cancelled'];
+      const inTrial = t.outcome === 'trialing' || t.outcome === 'cancelling';
+      const daysLeft = t.trialEnd ? Math.max(0, Math.ceil((t.trialEnd - now) / 86400000)) : null;
+      const endLine = !t.trialEnd ? ''
+        : inTrial ? `${t.outcome === 'cancelling' ? 'Ends' : 'Charges'} <b>${escHtml(fmtDate(t.trialEnd))}</b> (${daysLeft === 0 ? 'today' : daysLeft + (daysLeft === 1 ? ' day' : ' days') + ' left'})`
+        : `Trial ended ${escHtml(fmtDate(t.trialEnd))}`;
+      return `
+        <div class="data-row trial-row">
+          <div class="trial-who">
+            <strong>${escHtml(t.name || t.email || 'Unknown customer')}</strong>
+            <span>${escHtml(t.name ? (t.email || '') : (t.uid ? 'Knox ID ' + t.uid : t.id))}</span>
+          </div>
+          <span class="tag ${cls}">${escHtml(label)}</span>
+          <div class="trial-dates">
+            Started <b>${escHtml(fmtDateTime(t.trialStart))}</b> · ${escHtml(relTime(t.trialStart))}<br>
+            ${endLine}
+          </div>
+        </div>`;
+    }).join('');
   }
 
   // ─── Render helpers ───

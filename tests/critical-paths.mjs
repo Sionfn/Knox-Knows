@@ -483,3 +483,69 @@ test('Comped Plus endpoint rejects anyone but the verified admin', async () => {
     assert.equal(res.code, 403);
   }
 });
+
+test('Admin stats list free trials with their outcome and keep trials out of paying users', async () => {
+  const docs = list => ({ size: list.length, docs: list, forEach: fn => list.forEach(fn) });
+  const userDocs = {
+    t1: { plan: 'super', planStatus: 'trialing', stripeSubscription: 'sub_t1' },
+    p1: { plan: 'super', planStatus: 'active', stripeSubscription: 'sub_p1' },
+    f1: { plan: 'free' },
+  };
+  const statsDoc = { async get() { return { exists: false }; }, collection: () => ({ async get() { return docs([]); } }) };
+  const db = {
+    collection: name => name === 'users'
+      ? { async get() { return docs(Object.entries(userDocs).map(([id, d]) => ({ id, data: () => d }))); } }
+      : name === 'feedback'
+        ? { orderBy: () => ({ limit: () => ({ async get() { return docs([]); } }) }) }
+        : { doc: () => statsDoc },
+  };
+  const day = 86400, now = Math.floor(Date.now() / 1000);
+  const sub = (id, status, extra = {}) => ({
+    id, status, metadata: { uid: id }, items: { data: [] },
+    customer: { email: `${id}@example.com`, name: null, metadata: {} },
+    trial_start: now - 3 * day, trial_end: now + 4 * day, ...extra,
+  });
+  const subs = [
+    sub('trialing', 'trialing'),
+    sub('cancelling', 'trialing', { cancel_at_period_end: true }),
+    sub('paid', 'active', { trial_start: now - 20 * day, trial_end: now - 13 * day }),
+    sub('quit', 'canceled', { trial_start: now - 20 * day, trial_end: now - 13 * day, canceled_at: now - 15 * day, ended_at: now - 13 * day }),
+    sub('nocard', 'past_due', { trial_start: now - 20 * day, trial_end: now - 13 * day, customer: 'cus_x', metadata: { uid: 'u9' } }),
+    { ...sub('notrial', 'active'), trial_start: null, trial_end: null },
+  ];
+  const stripe = { subscriptions: { list: async params => { assert.equal(JSON.stringify(params.expand), '["data.customer"]'); return { data: subs, has_more: false }; } } };
+  const auth = {
+    listUsers: async () => ({ users: [{ uid: 'f1', metadata: { creationTime: new Date().toUTCString() } }] }),
+    getUsers: async ids => ({ users: ids.map(({ uid }) => ({ uid, email: `${uid}@knox.test` })) }),
+  };
+  const handler = await load('api/admin-stats.js', { db, stripe, auth, adminUid: 'u1' });
+  const res = response(); await handler({ method: 'GET', headers: { authorization: 'Bearer test' } }, res);
+  assert.equal(res.code, 200);
+
+  assert.equal(res.body.revenue.error, undefined, JSON.stringify(res.body.revenue));
+  const { users, revenue: { trials } } = res.body;
+  assert.equal(users.byPlan.trial, 1);
+  assert.equal(users.paying, 1);
+  assert.equal(users.newToday, 1); // from the Auth account creation time
+
+  const outcome = Object.fromEntries(trials.list.map(t => [t.id, t.outcome]));
+  assert.deepEqual(outcome, { trialing: 'trialing', cancelling: 'cancelling', paid: 'converted', quit: 'cancelled', nocard: 'payment_failed' });
+  assert.equal(trials.list.find(t => t.id === 'nocard').email, 'u9@knox.test');
+  assert.equal(trials.active, 2);
+  assert.equal(trials.cancelling, 1);
+  assert.equal(trials.finished, 3);
+  assert.equal(trials.converted, 1);
+  assert.equal(trials.conversionPct, 33.3);
+  assert.equal(trials.startedThisWeek, 2);
+});
+
+test('Admin stats still load when Stripe is unreachable', async () => {
+  const docs = { size: 0, docs: [], forEach() {} };
+  const empty = { async get() { return docs; } };
+  const db = { collection: name => name === 'feedback' ? { orderBy: () => ({ limit: () => empty }) } : name === 'users' ? empty : { doc: () => ({ async get() { return { exists: false }; }, collection: () => empty }) } };
+  const stripe = { subscriptions: { list: async () => { throw new Error('Stripe down'); } } };
+  const handler = await load('api/admin-stats.js', { db, stripe, adminUid: 'u1' });
+  const res = response(); await handler({ method: 'GET', headers: { authorization: 'Bearer test' } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.revenue.error, 'Could not reach Stripe');
+});

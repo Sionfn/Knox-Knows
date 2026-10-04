@@ -3,6 +3,7 @@
 // Aggregates everything important for the brand:
 //   • User growth (totals, new today/week, by plan)
 //   • Revenue (MRR estimate, paying customer count, conversion rate)
+//   • Free trials (who, when it started/ends, and whether it converted)
 //   • Feedback (👍/👎 ratio, by mode, by plan, worst-rated answers)
 //   • Usage (questions asked, by mode, recent activity)
 //   • Retention signals (DAU, WAU)
@@ -88,7 +89,12 @@ export default async function handler(req, res) {
       getUserStats(),
       getFeedbackStats(),
       getUsageStats(),
-      getRevenueStats(),
+      getRevenueStats().catch(err => {
+        // Stripe being down or misconfigured shouldn't take the whole
+        // dashboard (and the Comped Plus manager under it) down with it.
+        console.error("Admin revenue stats error:", err);
+        return { error: "Could not reach Stripe", mrr: 0, activeSubscriptions: 0 };
+      }),
     ]);
 
     return res.status(200).json({
@@ -108,11 +114,14 @@ export default async function handler(req, res) {
 // USER STATS
 // ────────────────────────────────────────────────────────────
 async function getUserStats() {
-  const usersSnap = await db.collection("users").get();
+  const [usersSnap, accountCreated] = await Promise.all([
+    db.collection("users").get(),
+    getAccountCreationTimes(),
+  ]);
   const todayStart = startOfDay();
   const weekStart  = startOfDay(7);
 
-  let total = 0, free = 0, superCount = 0, max = 0, comped = 0;
+  let total = 0, free = 0, superCount = 0, max = 0, comped = 0, trial = 0;
   let newToday = 0, newThisWeek = 0;
   let activeToday = 0, activeThisWeek = 0;
   const dailySignups = {}; // YYYY-MM-DD -> count
@@ -125,18 +134,21 @@ async function getUserStats() {
     // Comped Plus users without their own live subscription aren't paying.
     const compedOnly = u.comped === true && !(u.stripeSubscription && ["active", "trialing", "past_due"].includes(u.planStatus));
     if      (compedOnly)       comped++;
+    // On a free trial: they have Plus but haven't paid anything yet.
+    else if (u.planStatus === "trialing" && u.stripeSubscription) trial++;
     else if (plan === "max")   max++;
     else if (plan === "super" || plan === "plus") superCount++;
     else                       free++;
 
-    // Created — Firebase Auth provides `createdAt` on the user record,
-    // but we don't mirror it to Firestore in the current flow. We DO
-    // mirror `planActivatedAt` for paid users. For all users, look at
-    // whichever timestamp exists (welcomeSentAt is set on first sign-in).
+    // Created — the Firebase Auth account's creation time is the real
+    // signup date. Fall back to the earliest Firestore timestamps for any
+    // account Auth couldn't list. (planActivatedAt is when they paid,
+    // which can be months after signing up, so it's the last resort.)
     const createdMs =
+      accountCreated.get(doc.id)                     ||
       (u.welcomeSentAt   && toMs(u.welcomeSentAt))   ||
-      (u.planActivatedAt && toMs(u.planActivatedAt)) ||
       (u.firstSeenAt     && toMs(u.firstSeenAt))     ||
+      (u.planActivatedAt && toMs(u.planActivatedAt)) ||
       0;
     if (createdMs >= todayStart) newToday++;
     if (createdMs >= weekStart)  newThisWeek++;
@@ -155,10 +167,7 @@ async function getUserStats() {
   // Build a 14-day signup chart (oldest first)
   const signupSeries = [];
   for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = new Date(startOfDay(i)).toISOString().slice(0, 10);
     signupSeries.push({ date: key, count: dailySignups[key] || 0 });
   }
 
@@ -168,7 +177,7 @@ async function getUserStats() {
 
   return {
     total,
-    byPlan: { free, super: superCount, max, comped },
+    byPlan: { free, super: superCount, max, comped, trial },
     paying,
     conversionPct:  +conversion.toFixed(1),
     newToday,
@@ -193,7 +202,7 @@ async function getFeedbackStats() {
   let up = 0, down = 0;
   let upToday = 0, downToday = 0;
   let upWeek = 0, downWeek = 0;
-  const byPlan = { free:   { up: 0, down: 0 }, super: { up: 0, down: 0 }, max:  { up: 0, down: 0 } };
+  const byPlan = { free:   { up: 0, down: 0 }, super: { up: 0, down: 0 }, max:  { up: 0, down: 0 }, plus: { up: 0, down: 0 } };
   const worstAnswers = []; // collect all down-votes, then take top N by recency
   const recentFeedback = [];
 
@@ -268,9 +277,7 @@ async function getUsageStats() {
   // Last 7 days' totals for a quick trend — same collection, just older docs.
   const trendDays = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    trendDays.push(d.toISOString().slice(0, 10));
+    trendDays.push(new Date(startOfDay(i)).toISOString().slice(0, 10));
   }
   const trendSnaps = await Promise.all(trendDays.map(date => db.collection("stats").doc(date).get()));
   const questionsThisWeek = trendSnaps.reduce((sum, s) => sum + (s.exists ? (s.data().questions || 0) : 0), 0);
@@ -325,15 +332,20 @@ async function getRevenueStats() {
     "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super_yearly",
   };
 
+  const trials = [];
+
   let startingAfter = undefined;
   while (true) {
     const page = await stripe.subscriptions.list({
       status: "all",
       limit:  100,
+      expand: ["data.customer"],
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
     for (const sub of page.data) {
+      if (sub.trial_start) trials.push(trialRow(sub));
+
       if (sub.status === "active")    activeCount++;
       if (sub.status === "trialing")  trialingCount++;
       if (sub.status === "past_due")  pastDueCount++;
@@ -360,6 +372,7 @@ async function getRevenueStats() {
   }
 
   return {
+    trials: await summarizeTrials(trials),
     mrr: +(mrrCents / 100).toFixed(2),
     mrrCents,
     activeSubscriptions: activeCount,
@@ -369,7 +382,100 @@ async function getRevenueStats() {
   };
 }
 
+// ────────────────────────────────────────────────────────────
+// FREE TRIALS — every subscription that started with a trial
+// ────────────────────────────────────────────────────────────
+// Where a trial stands today:
+//   trialing   — in the trial, will be charged when it ends
+//   cancelling — in the trial, but cancelled; ends without a charge
+//   converted  — trial ended and they're paying
+//   payment_failed — trial ended but the first charge didn't go through
+//   cancelled  — cancelled during the trial (never paid)
+//   paid_then_cancelled — paid after the trial, cancelled later
+function trialOutcome(sub) {
+  if (sub.status === "trialing") {
+    return sub.cancel_at_period_end || sub.cancel_at ? "cancelling" : "trialing";
+  }
+  if (sub.status === "active") return "converted";
+  if (sub.status === "canceled") {
+    const endedMs = (sub.ended_at || sub.canceled_at || 0) * 1000;
+    // An hour's grace: a cancel-at-trial-end lands exactly on trial_end.
+    return endedMs && endedMs <= sub.trial_end * 1000 + 60 * 60 * 1000 ? "cancelled" : "paid_then_cancelled";
+  }
+  return "payment_failed"; // past_due, unpaid, paused, incomplete_expired
+}
+
+function trialRow(sub) {
+  const customer = sub.customer && typeof sub.customer === "object" ? sub.customer : null;
+  return {
+    id:         sub.id,
+    uid:        sub.metadata?.uid || customer?.metadata?.uid || null,
+    email:      customer?.email || null,
+    name:       customer?.name || null,
+    trialStart: sub.trial_start * 1000,
+    trialEnd:   sub.trial_end ? sub.trial_end * 1000 : null,
+    outcome:    trialOutcome(sub),
+  };
+}
+
+async function summarizeTrials(rows) {
+  // Fill in emails Stripe doesn't have from the linked Knox account.
+  const missing = [...new Set(rows.filter(r => !r.email && r.uid).map(r => r.uid))];
+  const accounts = new Map();
+  try {
+    for (let i = 0; i < missing.length; i += 100) {
+      const batch = await adminAuth.getUsers(missing.slice(i, i + 100).map(uid => ({ uid })));
+      batch.users.forEach(u => accounts.set(u.uid, u));
+    }
+  } catch (err) {
+    console.error("Admin trial account lookup error:", err);
+  }
+  for (const r of rows) {
+    const account = r.uid && accounts.get(r.uid);
+    if (account) {
+      r.email = r.email || account.email || null;
+      r.name  = r.name  || account.displayName || null;
+    }
+  }
+
+  const now = Date.now();
+  const active    = rows.filter(r => r.outcome === "trialing" || r.outcome === "cancelling");
+  const finished  = rows.filter(r => r.outcome !== "trialing" && r.outcome !== "cancelling");
+  const converted = finished.filter(r => r.outcome === "converted" || r.outcome === "paid_then_cancelled");
+  rows.sort((a, b) => b.trialStart - a.trialStart);
+
+  return {
+    active:        active.length,
+    cancelling:    active.filter(r => r.outcome === "cancelling").length,
+    startedThisWeek:  rows.filter(r => r.trialStart >= now - WEEK_MS).length,
+    startedThisMonth: rows.filter(r => r.trialStart >= now - 30 * DAY_MS).length,
+    finished:      finished.length,
+    converted:     converted.length,
+    conversionPct: finished.length ? +((converted.length / finished.length) * 100).toFixed(1) : null,
+    list:          rows.slice(0, 200),
+  };
+}
+
 // ── Helpers ────────────────────────────────────────────────
+// uid → Firebase Auth account creation time (ms). Empty if Auth can't be listed.
+async function getAccountCreationTimes() {
+  const created = new Map();
+  try {
+    let pageToken;
+    do {
+      const page = await adminAuth.listUsers(1000, pageToken);
+      page.users.forEach(u => {
+        const ms = Date.parse(u.metadata?.creationTime || "");
+        if (ms) created.set(u.uid, ms);
+      });
+      pageToken = page.pageToken;
+    } while (pageToken);
+  } catch (err) {
+    console.error("Admin account list error:", err);
+  }
+  return created;
+}
+
 function toMs(maybeTs) {
   // Firestore Timestamps, JS dates, and ms numbers all welcome
   if (!maybeTs) return 0;
