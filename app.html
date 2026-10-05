@@ -48,6 +48,17 @@
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
   <meta name="theme-color" content="#FF6B00">
+  <script>
+    // Inside the Knox Knows iPhone/Android app (Capacitor). The app hides
+    // purchase paths (store rules) and uses native Google/Apple sign-in.
+    (function () {
+      var cap = window.Capacitor;
+      window.knoxNativeApp = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+      if (!window.knoxNativeApp) return;
+      document.documentElement.classList.add('native-app');
+      if (cap.getPlatform && cap.getPlatform() === 'ios') document.documentElement.classList.add('native-ios');
+    })();
+  </script>
   <link rel="manifest" href="/manifest.json">
   <!-- Standard favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3">
@@ -1025,6 +1036,12 @@
       }
       #appHeader { position: relative; z-index: 101; }
     }
+    /* Native app: no purchase paths (App Store / Play rules); Apple sign-in
+       only on iOS; Microsoft's popup sign-in doesn't work in the app. */
+    html.native-app [onclick*="goToPricing"],
+    html.native-app #sidebarUpgradeCard { display: none !important; }
+    html.native-app #authMicrosoftBtn { display: none !important; }
+    html:not(.native-ios) #authAppleBtn { display: none !important; }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
@@ -2947,11 +2964,15 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 
       <div class="auth-divider" id="authSocialDivider">or continue with</div>
       <div id="authSocialButtons">
+        <button class="auth-social" id="authAppleBtn" onclick="appHandleAppleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.75c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.86-.76-1.47.02-2.83.86-3.59 2.17-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.51zM14.18 6.3c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.96-.49 2.56-1.23z"/></svg>
+          Continue with Apple
+        </button>
         <button class="auth-social" onclick="appHandleGoogleLogin()">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
         </button>
-        <button class="auth-social" onclick="appHandleMicrosoftLogin()">
+        <button class="auth-social" id="authMicrosoftBtn" onclick="appHandleMicrosoftLogin()">
           <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
           Continue with Microsoft
         </button>
@@ -3021,7 +3042,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import {
     getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
-    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    signInWithCredential, getAdditionalUserInfo, signInWithEmailAndPassword, createUserWithEmailAndPassword,
     sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import {
@@ -4265,8 +4286,54 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   window.showAuthSuccess = showAuthSuccess;
   window.clearAuthMsgs   = clearAuthMsgs;
 
+  // In the native app, Google blocks web sign-in popups, so sign in with the
+  // native iOS/Android account sheet and hand the credential to Firebase here.
+  const nativeAuth = window.knoxNativeApp ? window.Capacitor?.Plugins?.FirebaseAuthentication : null;
+  const nativeCancelled = e => /cancel/i.test(String(e?.message || e?.code || ''));
+  // "Incorrect email or password" would be misleading after Google/Apple.
+  const nativeAuthError = (e, provider) => e?.code === 'auth/invalid-credential'
+    ? provider + ' sign-in failed. Please try again.'
+    : (authErrorMessage(e) || provider + ' sign-in failed. Please try again.');
+  async function finishNativeSignIn(credential, displayName) {
+    const result = await signInWithCredential(auth, credential);
+    // Apple only shares the name on the very first sign-in.
+    if (displayName && !result.user.displayName) {
+      try { await updateProfile(result.user, { displayName }); } catch (e) {}
+    }
+    window.currentUser = result.user;
+    const isNew = getAdditionalUserInfo(result)?.isNewUser;
+    closeAuthModal();
+    if (isNew) {
+      sendWelcomeEmailCall(result.user);
+      showWelcomeModal(result.user.displayName);
+    }
+  }
+
+  window.appHandleAppleLogin = async function() {
+    clearAuthMsgs();
+    if (!nativeAuth) return;
+    try {
+      const r = await nativeAuth.signInWithApple();
+      const credential = new OAuthProvider('apple.com').credential({ idToken: r.credential?.idToken, rawNonce: r.credential?.nonce });
+      await finishNativeSignIn(credential, r.user?.displayName);
+    } catch (e) {
+      if (nativeCancelled(e)) return;
+      showAuthError(nativeAuthError(e, 'Apple'));
+    }
+  };
+
   window.appHandleGoogleLogin = async function() {
     clearAuthMsgs();
+    if (nativeAuth) {
+      try {
+        const r = await nativeAuth.signInWithGoogle();
+        await finishNativeSignIn(GoogleAuthProvider.credential(r.credential?.idToken, r.credential?.accessToken));
+      } catch (e) {
+        if (nativeCancelled(e)) return;
+        showAuthError(nativeAuthError(e, 'Google'));
+      }
+      return;
+    }
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
       window.currentUser = result.user;
@@ -4384,7 +4451,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   window.sendWelcomeEmailCall = sendWelcomeEmailCall;
 
   // ── Payments ────────────────────────────────────────────────
-  window.goToPricing = function() { window.location.href = '/about#pricing'; };
+  window.goToPricing = function() { if (window.knoxNativeApp) return; window.location.href = '/about#pricing'; };
 
   function showPaymentSuccessModal() { window.showKnoxBillingStatus(); }
   window.showPaymentSuccessModal = showPaymentSuccessModal;
@@ -4463,14 +4530,14 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
       comp.textContent = '🎁 Free Plus from Knox Knows';
       el.appendChild(row('Billing', comp));
-    } else if (isPaid || window.hasBillingAccount) {
+    } else if ((isPaid || window.hasBillingAccount) && !window.knoxNativeApp) {
       const billBtn = document.createElement('button');
       billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
       billBtn.textContent = 'Manage Billing';
       billBtn.onclick = function() { openBillingPortal(this); };
       el.appendChild(row('Billing', billBtn));
     }
-    if (!isPaid) {
+    if (!isPaid && !window.knoxNativeApp) {
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
@@ -6061,6 +6128,12 @@ if (savedQuestion) {
   const url = new URL(location.href);
   url.searchParams.delete('ask');
   history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+}
+
+// In the native app the logo stays in the app instead of opening the
+// marketing page (it has pricing and checkout).
+if (window.knoxNativeApp) {
+  document.querySelectorAll('a[href="/about"]').forEach(a => { a.href = '/app'; a.removeAttribute('title'); });
 }
 
 // Landing-page menu links: /app?open=calculator or /app?open=learn.

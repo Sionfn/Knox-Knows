@@ -1,0 +1,19 @@
+{
+  "name": "knox-knows-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Knox Knows iPhone (and later Android) app — a Capacitor shell around knoxknowsapp.com",
+  "scripts": {
+    "sync": "cap sync",
+    "ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor-firebase/authentication": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  }
+}

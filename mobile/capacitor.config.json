@@ -1,0 +1,35 @@
+{
+  "appId": "com.knoxknowsapp.app",
+  "appName": "Knox Knows",
+  "webDir": "www",
+  "server": {
+    "url": "https://www.knoxknowsapp.com/app",
+    "cleartext": false,
+    "allowNavigation": [
+      "knoxknowsapp.com",
+      "www.knoxknowsapp.com",
+      "knox-knows.firebaseapp.com",
+      "accounts.google.com",
+      "*.stripe.com"
+    ]
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#FF6B00",
+    "limitsNavigationsToAppBoundDomains": false
+  },
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": [
+        "google.com",
+        "apple.com"
+      ]
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#FF6B00"
+    }
+  }
+}
