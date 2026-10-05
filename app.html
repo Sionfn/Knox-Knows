@@ -2302,6 +2302,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 <link rel="stylesheet" href="/logo-theme.css">
 <script src="/payment-status.js" defer></script>
 <script src="/modal-click-guard.js" defer></script>
+<script src="/password-field.js" defer></script>
 <script src="/calc-percent.js"></script>
 </head>
 <body class="app-auth-pending">
@@ -2948,6 +2949,10 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <div class="auth-field">
           <label for="authSignupPw">Password</label>
           <input type="password" id="authSignupPw" placeholder="Min 6 characters" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label for="authSignupPw2">Confirm password</label>
+          <input type="password" id="authSignupPw2" placeholder="Type it again" autocomplete="new-password">
         </div>
         <button class="auth-submit" id="authSignupBtn" onclick="appHandleEmailSignup()">Create free account</button>
       </div>
@@ -4392,8 +4397,10 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     const name  = document.getElementById('authSignupName')?.value?.trim();
     const email = document.getElementById('authSignupEmail')?.value?.trim();
     const pw    = document.getElementById('authSignupPw')?.value;
-    if (!name || !email || !pw) { showAuthError('Please fill in all fields.'); return; }
+    const pw2   = document.getElementById('authSignupPw2')?.value;
+    if (!name || !email || !pw || !pw2) { showAuthError('Please fill in all fields.'); return; }
     if (pw.length < 6)          { showAuthError('Password must be at least 6 characters.'); return; }
+    if (pw !== pw2)             { showAuthError("Passwords don't match. Check them and try again."); return; }
 
     const btn = document.getElementById('authSignupBtn');
     if (btn) { btn.disabled = true; btn.textContent = 'Creating account...'; }

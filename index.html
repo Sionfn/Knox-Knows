@@ -2245,6 +2245,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 <link rel="stylesheet" href="/logo-theme.css">
 <script src="/payment-status.js" defer></script>
 <script src="/modal-click-guard.js" defer></script>
+<script src="/password-field.js" defer></script>
 <script src="/calc-percent.js"></script>
 </head>
 <body class="landing-loading">
@@ -3213,6 +3214,10 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
           <label for="signupPassword">Password</label>
           <input class="login-input" id="signupPassword" type="password" placeholder="Min 6 characters" autocomplete="new-password">
         </div>
+        <div class="login-field">
+          <label for="signupPassword2">Confirm password</label>
+          <input class="login-input" id="signupPassword2" type="password" placeholder="Type it again" autocomplete="new-password">
+        </div>
         <button class="login-submit" onclick="handleEmailSignUp()">Create free account</button>
       </div>
 
@@ -3615,8 +3620,10 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     const name  = document.getElementById('signupName')?.value?.trim();
     const email = document.getElementById('signupEmail')?.value?.trim();
     const pw    = document.getElementById('signupPassword')?.value;
-    if (!name || !email || !pw) { window.showLoginError?.('Please fill in all fields.'); return; }
+    const pw2   = document.getElementById('signupPassword2')?.value;
+    if (!name || !email || !pw || !pw2) { window.showLoginError?.('Please fill in all fields.'); return; }
     if (pw.length < 6) { window.showLoginError?.('Password must be at least 6 characters.'); return; }
+    if (pw !== pw2) { window.showLoginError?.("Passwords don't match. Check them and try again."); return; }
     try {
       const result = await createUserWithEmailAndPassword(auth, email, pw);
       await updateProfile(result.user, { displayName: name });
