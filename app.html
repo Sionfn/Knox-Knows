@@ -1069,7 +1069,9 @@
     #welcomeScreen {
       flex: 1;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      /* "safe": if the content is taller than the space (short laptop
+         screens), start it at the top so nothing is cut off unreachably. */
+      align-items: center; justify-content: safe center;
       padding: 40px 24px 32px;
       text-align: center;
       /* On mobile the 4 cards + heading genuinely don't fit, so scrolling
@@ -1077,6 +1079,9 @@
          content always fits, so we lock it (overflow:hidden) so it can't
          drift/scroll at all — that's the "it moves with my mouse" complaint. */
       overflow-y: auto;
+      /* The decorative circles hang past the edges on purpose — never let
+         them add a sideways scrollbar. */
+      overflow-x: hidden;
       overscroll-behavior: contain;
       background: var(--cream);
       position: relative;
@@ -1097,13 +1102,14 @@
       z-index: 0;
       pointer-events: none;
     }
+    /* Same look as a 220px circle hanging 60px past the bottom-left corner,
+       but drawn inside the box so it never makes the area scrollable. */
     #welcomeScreen::after {
       content: '';
       position: absolute;
-      bottom: -60px; left: -60px;
-      width: 220px; height: 220px;
-      border-radius: 50%;
-      background: var(--blue-light);
+      bottom: 0; left: 0;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle 110px at 50px 110px, var(--blue-light) 99.5%, transparent 100%);
       opacity: 0.5;
       z-index: 0;
       pointer-events: none;
@@ -2119,6 +2125,21 @@
 .knox-response-body code { font-family: monospace; }
 .knox-response-body .knox-final-answer { margin: 18px 0 24px; }
 .knox-final-answer strong { color: inherit; }
+
+/* ═══ SHORT LAPTOP SCREENS ═══════════════════════════════
+   Windows laptops at 125–150% display scaling leave the page only ~550px
+   of height. Tighten the welcome screen so the heading and all four topic
+   cards fit without scrolling, like they do on taller screens. */
+@media (min-width: 769px) and (max-height: 760px) {
+  #welcomeScreen { padding: 18px 24px 16px; }
+  html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint { margin-bottom: 10px; padding-top: 4px; padding-bottom: 4px; }
+  .welcome-badge { padding: 5px 14px; font-size: 13px; margin-bottom: 10px; }
+  .welcome-title { font-size: clamp(26px, 3.2vw, 32px); margin-bottom: 8px; }
+  .welcome-sub { font-size: 15px; line-height: 1.45; margin-bottom: 16px; }
+  .suggestion-grid { gap: 10px; }
+  .suggestion-chip { padding: 11px 14px; }
+  .chip-circle { width: 44px; height: 44px; font-size: 22px; }
+}
 
 /* ═══ HALLOWEEN (shared with the landing page — keep both copies in sync) ═══
    Seasonal theme only shows in DARK mode. In light mode the site stays in its
