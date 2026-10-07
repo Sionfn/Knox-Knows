@@ -2141,6 +2141,26 @@
   .chip-circle { width: 44px; height: 44px; font-size: 22px; }
 }
 
+/* Short laptop screens: the sidebar's fixed parts (logo bar, menu, promo
+   cards, account area) left the Recent chats list almost no room — about
+   one chat at ~550px tall. Slim them down so several chats show. */
+@media (min-width: 901px) and (max-height: 760px) {
+  .sidebar-top { height: 58px; }
+  .sidebar-quicknav { padding: 8px 10px 7px; gap: 1px; }
+  .sidebar-quicknav-link { padding-top: 5px; padding-bottom: 5px; }
+  .sidebar-quicknav-link .sq-icon { flex-basis: 28px; width: 28px; height: 28px; border-radius: 9px; }
+  .sq-icon svg { width: 18px; height: 18px; }
+  .sidebar-section-header { padding: 10px 15px 6px; }
+  .sidebar-history-item { padding-top: 6px; padding-bottom: 6px; }
+  .sidebar-extension-card { margin: 4px 8px 6px; padding: 7px 9px; gap: 8px; }
+  .sidebar-extension-card img { width: 26px; height: 26px; border-radius: 8px; }
+  .sidebar-footer { padding: 8px; }
+}
+/* Very short screens: the Chrome extension promo gives its space to chats. */
+@media (min-width: 901px) and (max-height: 640px) {
+  .sidebar-extension-card { display: none; }
+}
+
 /* ═══ HALLOWEEN (shared with the landing page — keep both copies in sync) ═══
    Seasonal theme only shows in DARK mode. In light mode the site stays in its
    normal Knox look and shows a small hint pointing people to dark mode.
