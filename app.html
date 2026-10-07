@@ -2156,6 +2156,17 @@
   .sidebar-extension-card img { width: 26px; height: 26px; border-radius: 8px; }
   .sidebar-footer { padding: 8px; }
 }
+/* Desktop: keep the chat box about the same share of the width it has on a
+   wide MacBook screen (~65%), so on narrower Windows laptops it doesn't
+   stretch edge to edge. Wide screens still cap at 900px as before. */
+@media (min-width: 901px) {
+  #inputArea { max-width: min(900px, 72%); }
+}
+/* Short screens: slimmer bottom bar so the chat area keeps its room. */
+@media (min-width: 901px) and (max-height: 760px) {
+  #inputArea { padding-top: 10px; padding-bottom: 10px; }
+  .input-disclaimer { padding-bottom: 7px; font-size: 11px; }
+}
 /* Very short screens: the Chrome extension promo gives its space to chats. */
 @media (min-width: 901px) and (max-height: 640px) {
   .sidebar-extension-card { display: none; }
