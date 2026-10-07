@@ -458,6 +458,12 @@ html.knox-halloween[data-theme="dark"] .hero-mascot { filter: drop-shadow(0 0 34
    inline image, so that pulled the whole hero column up 4px. Keep the original
    baseline so the logo, badge and headline sit exactly where they used to. */
 #home img.hero-mascot { vertical-align: baseline; }
+/* Short laptops that hit desktop-fit.js's minimum scale: close up spacing
+   (never the logo or text size) so "Try Knox free" stays on the first
+   screen, like on a MacBook. */
+html.knox-fit-short #home { padding-top: 44px !important; }
+html.knox-fit-short #home .hero-badge { margin-bottom: 16px !important; }
+html.knox-fit-short #home h1 + p + div { margin-top: 24px !important; }
 }
 html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 .cta-bats { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
