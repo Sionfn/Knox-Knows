@@ -44,6 +44,7 @@
     })();
   </script>
   <meta charset="UTF-8">
+<script src="/desktop-fit.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Knox Knows — AI Homework Helper</title>
   <meta name="description" content="Knox Knows — ask any homework question and get a step-by-step answer from Knox the fox.">
@@ -196,8 +197,8 @@
       /* On iOS, 100vh includes the address bar — use dvh (dynamic viewport
          height) so the layout shrinks/grows with browser chrome.
          Falls back to 100% on browsers that don't support dvh. */
-      height: 100dvh;
-      max-height: 100dvh;
+      height: calc(100dvh / var(--kz, 1));
+      max-height: calc(100dvh / var(--kz, 1));
       /* Block document-level scrolling — only #chatThread should scroll.
          This is what stops the page from jiggling when keyboard opens. */
       overflow: hidden;
@@ -1126,7 +1127,7 @@
       margin-bottom: 18px;
     }
     .welcome-title {
-      font-size: clamp(26px, 4vw, 40px);
+      font-size: clamp(26px, calc(4vw / var(--kz, 1)), 40px);
       font-weight: 900;
       color: var(--text);
       line-height: 1.05;
@@ -1476,7 +1477,7 @@
       /* Chunky Knox sticker ledge + soft drop for depth. */
       box-shadow: 0 6px 0 var(--orange-dark), 0 24px 60px rgba(0,0,0,0.35);
       text-align: center;
-      max-height: 85vh;
+      max-height: calc(85vh / var(--kz, 1));
       overflow-y: auto;
     }
     .usage-info-close {
@@ -1747,8 +1748,8 @@
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
-      max-height: 90vh;
-      max-height: 90dvh;  /* iOS Safari — accounts for address bar */
+      max-height: calc(90vh / var(--kz, 1));
+      max-height: calc(90dvh / var(--kz, 1));  /* iOS Safari — accounts for address bar */
       overflow-y: auto;
     }
     .auth-header {
@@ -1924,8 +1925,8 @@
       overflow: hidden;
       box-shadow: 0 24px 64px rgba(0,0,0,0.18);
       animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
-      max-height: 90vh;
-      max-height: 90dvh;  /* iOS Safari — accounts for address bar */
+      max-height: calc(90vh / var(--kz, 1));
+      max-height: calc(90dvh / var(--kz, 1));  /* iOS Safari — accounts for address bar */
       overflow-y: auto;
     }
     .settings-header {
@@ -1974,9 +1975,9 @@
       background: var(--surface);
       border-radius: 24px;
       width: 380px;
-      max-width: 95vw;
-      max-height: 90vh;
-      max-height: 90dvh;
+      max-width: calc(95vw / var(--kz, 1));
+      max-height: calc(90vh / var(--kz, 1));
+      max-height: calc(90dvh / var(--kz, 1));
       overflow-y: auto;
       overflow-x: hidden;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
@@ -2021,7 +2022,7 @@
       .suggestion-grid { grid-template-columns: 1fr; }
       #chatThread { padding: 16px 16px 12px; }
       #inputArea { padding: 12px 14px 14px; }
-      #appAccountDropdown { right: 14px; top: 68px; min-width: 240px; max-width: calc(100vw - 28px); }
+      #appAccountDropdown { right: 14px; top: 68px; min-width: 240px; max-width: calc(100vw / var(--kz, 1) - 28px); }
       /* Compact credit pill on mobile (still visible, just smaller) */
       #headerUsage {
         display: inline-flex !important;
@@ -2059,7 +2060,7 @@
       .input-box { font-size: 16px; /* prevents iOS zoom on input focus */ }
       .input-box textarea, .input-box input { font-size: 16px !important; }
       /* Modal heights respect dynamic viewport on iOS */
-      .auth-card, .settings-card { max-height: 92vh; max-height: 92dvh; }
+      .auth-card, .settings-card { max-height: calc(92vh / var(--kz, 1)); max-height: calc(92dvh / var(--kz, 1)); }
       /* Make modal padding even tighter on tiny phones */
       .auth-body, .settings-body { padding: 22px 20px; }
       .auth-header, .settings-header { padding: 18px 20px; }
@@ -2125,52 +2126,6 @@
 .knox-response-body code { font-family: monospace; }
 .knox-response-body .knox-final-answer { margin: 18px 0 24px; }
 .knox-final-answer strong { color: inherit; }
-
-/* ═══ SHORT LAPTOP SCREENS ═══════════════════════════════
-   Windows laptops at 125–150% display scaling leave the page only ~550px
-   of height. Tighten the welcome screen so the heading and all four topic
-   cards fit without scrolling, like they do on taller screens. */
-@media (min-width: 769px) and (max-height: 760px) {
-  #welcomeScreen { padding: 18px 24px 16px; }
-  html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint { margin-bottom: 10px; padding-top: 4px; padding-bottom: 4px; }
-  .welcome-badge { padding: 5px 14px; font-size: 13px; margin-bottom: 10px; }
-  .welcome-title { font-size: clamp(26px, 3.2vw, 32px); margin-bottom: 8px; }
-  .welcome-sub { font-size: 15px; line-height: 1.45; margin-bottom: 16px; }
-  .suggestion-grid { gap: 10px; }
-  .suggestion-chip { padding: 11px 14px; }
-  .chip-circle { width: 44px; height: 44px; font-size: 22px; }
-}
-
-/* Short laptop screens: the sidebar's fixed parts (logo bar, menu, promo
-   cards, account area) left the Recent chats list almost no room — about
-   one chat at ~550px tall. Slim them down so several chats show. */
-@media (min-width: 901px) and (max-height: 760px) {
-  .sidebar-top { height: 58px; }
-  .sidebar-quicknav { padding: 8px 10px 7px; gap: 1px; }
-  .sidebar-quicknav-link { padding-top: 5px; padding-bottom: 5px; }
-  .sidebar-quicknav-link .sq-icon { flex-basis: 28px; width: 28px; height: 28px; border-radius: 9px; }
-  .sq-icon svg { width: 18px; height: 18px; }
-  .sidebar-section-header { padding: 10px 15px 6px; }
-  .sidebar-history-item { padding-top: 6px; padding-bottom: 6px; }
-  .sidebar-extension-card { margin: 4px 8px 6px; padding: 7px 9px; gap: 8px; }
-  .sidebar-extension-card img { width: 26px; height: 26px; border-radius: 8px; }
-  .sidebar-footer { padding: 8px; }
-}
-/* Desktop: keep the chat box about the same share of the width it has on a
-   wide MacBook screen (~65%), so on narrower Windows laptops it doesn't
-   stretch edge to edge. Wide screens still cap at 900px as before. */
-@media (min-width: 901px) {
-  #inputArea { max-width: min(900px, 72%); }
-}
-/* Short screens: slimmer bottom bar so the chat area keeps its room. */
-@media (min-width: 901px) and (max-height: 760px) {
-  #inputArea { padding-top: 10px; padding-bottom: 10px; }
-  .input-disclaimer { padding-bottom: 7px; font-size: 11px; }
-}
-/* Very short screens: the Chrome extension promo gives its space to chats. */
-@media (min-width: 901px) and (max-height: 640px) {
-  .sidebar-extension-card { display: none; }
-}
 
 /* ═══ HALLOWEEN (shared with the landing page — keep both copies in sync) ═══
    Seasonal theme only shows in DARK mode. In light mode the site stays in its
@@ -3808,7 +3763,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'streakToast';
-      toast.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#FF6B00,#FF9500);color:white;font-weight:900;font-size:14px;line-height:1.35;padding:12px 22px;border-radius:16px;box-shadow:0 8px 24px rgba(255,107,0,0.4);z-index:5000;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;font-family:inherit;max-width:min(420px,calc(100vw - 32px));text-align:center;';
+      toast.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#FF6B00,#FF9500);color:white;font-weight:900;font-size:14px;line-height:1.35;padding:12px 22px;border-radius:16px;box-shadow:0 8px 24px rgba(255,107,0,0.4);z-index:5000;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;font-family:inherit;max-width:min(420px,calc(100vw / var(--kz, 1) - 32px));text-align:center;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -4953,12 +4908,16 @@ window.toggleUserDropdown = function() {
     // than flying out to the right. Falls back to below the button only if
     // there isn't room above.
     const anchor = $('appAccountBtn').getBoundingClientRect();
+    // On short laptops the page is scaled (desktop-fit.js): measure in
+    // screen pixels, then convert back to page pixels for style.left/top.
+    const z = window.knoxZoom || 1;
+    const ddW = dd.offsetWidth * z, ddH = dd.offsetHeight * z;
     dd.style.right = 'auto';
     // Nudge ~10px left of the button's edge so it sits cleanly over the
     // profile rather than flush to it.
-    dd.style.left = Math.max(10, Math.min(anchor.left - 10, window.innerWidth - dd.offsetWidth - 12)) + 'px';
-    const above = anchor.top - dd.offsetHeight - 8;
-    dd.style.top = (above >= 12 ? above : Math.min(anchor.bottom + 8, window.innerHeight - dd.offsetHeight - 12)) + 'px';
+    dd.style.left = Math.max(10, Math.min(anchor.left - 10, window.innerWidth - ddW - 12)) / z + 'px';
+    const above = anchor.top - ddH - 8;
+    dd.style.top = (above >= 12 ? above : Math.min(anchor.bottom + 8, window.innerHeight - ddH - 12)) / z + 'px';
   } else {
     dd.style.left = '';
     dd.style.right = '';
