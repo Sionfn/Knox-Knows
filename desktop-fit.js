@@ -17,7 +17,10 @@
 // window.knoxZoom.
 (function () {
   var REF_HEIGHT = 800; // a MacBook Air browser window height, in CSS px
-  var MIN_ZOOM = 0.72;
+  // Never shrink below this, so text stays comfortably readable on every
+  // device. If a screen is shorter than this floor can fit, the page scrolls
+  // naturally rather than cramming — better than tiny text.
+  var MIN_ZOOM = 0.8;
   var root = document.documentElement;
   function fit() {
     var z = 1;
