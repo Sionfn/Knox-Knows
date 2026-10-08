@@ -458,6 +458,8 @@ html.knox-halloween[data-theme="dark"] .hero-mascot { filter: drop-shadow(0 0 34
    inline image, so that pulled the whole hero column up 4px. Keep the original
    baseline so the logo, badge and headline sit exactly where they used to. */
 #home img.hero-mascot { vertical-align: baseline; }
+/* While the theme flips, pause transitions so everything switches in one frame. */
+html.knox-theme-switching *, html.knox-theme-switching *::before, html.knox-theme-switching *::after { transition: none !important; }
 /* Short laptops that hit desktop-fit.js's minimum scale: close up spacing
    (never the logo or text size) so "Try Knox free" stays on the first
    screen, like on a MacBook. */
@@ -2866,8 +2868,13 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
       </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
         <div style="font-size:15px;font-weight:700;color:var(--text);">Priority support</div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-light);font-size:16px;font-weight:900;line-height:1;">—</span></div>
+        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
+        <div style="font-size:15px;font-weight:700;color:var(--text);">Early access to new features</div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-light);font-size:16px;font-weight:900;line-height:1;">—</span></div>
         <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
       </div>
@@ -3546,15 +3553,21 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
     if (sun)  sun.style.display  = isDark ? '' : 'none';
   }
   window.toggleDarkMode = function() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    // Pause color transitions while the theme flips (see .knox-theme-switching)
+    // so the whole page changes in the same frame — no half-switched flicker.
+    const root = document.documentElement;
+    root.classList.add('knox-theme-switching');
+    const isDark = root.getAttribute('data-theme') === 'dark';
     if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
+      root.removeAttribute('data-theme');
       try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
     } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      root.setAttribute('data-theme', 'dark');
       try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
     }
     syncDarkModeIcon();
+    void root.offsetHeight; // apply the new colors now, before transitions return
+    setTimeout(() => root.classList.remove('knox-theme-switching'), 60); // a timer, not rAF: still clears if the tab is in the background
   };
   syncDarkModeIcon();
 

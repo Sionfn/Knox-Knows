@@ -613,3 +613,98 @@ test('Admin stats still load when Stripe is unreachable', async () => {
   assert.equal(res.code, 200);
   assert.equal(res.body.revenue.error, 'Could not reach Stripe');
 });
+// ── Make with Knox (AI flashcards) ─────────────────────────────────────────
+function aiFetch(content, { ok = true } = {}) {
+  const calls = [];
+  const fetch = async (url, options) => {
+    calls.push(JSON.parse(options.body));
+    return ok ? { ok: true, json: async () => ({ choices: [{ message: { content: typeof content === 'string' ? content : JSON.stringify(content) }, finish_reason: 'stop' }] }) }
+              : { ok: false, text: async () => 'provider error' };
+  };
+  return { fetch, calls };
+}
+const deckReq = (body = { request: "I'm a sophomore learning Newton's laws", count: 10 }) => ({ method: 'POST', headers: { authorization: 'Bearer test' }, body });
+
+test('Make with Knox: Plus member gets a clean, de-duplicated deck', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' });
+  const ai = aiFetch({ title: "Newton's Laws", cards: [
+    { front: 'What is inertia?', back: 'An object keeps doing what it is doing unless a force acts on it.' },
+    { front: 'What is inertia?', back: 'duplicate' },
+    { front: '', back: 'missing front' },
+    { front: "State Newton's 2nd law", back: 'F = m × a' },
+    { front: 'Action and reaction?', back: 'Every force has an equal and opposite force.' },
+  ] });
+  const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler(deckReq(), res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.title, "Newton's Laws");
+  assert.equal(JSON.stringify(res.body.cards.map(c => c.front)), JSON.stringify(['What is inertia?', "State Newton's 2nd law", 'Action and reaction?']));
+  assert.match(ai.calls[0].messages[0].content, /Write exactly 10 flashcards/);
+  assert.match(ai.calls[0].messages[1].content, /<student_request>/);
+  assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1);
+});
+
+test('Make with Knox: Plus-only for now — free and signed-in-without-Plus get 403, no AI call, no credits spent', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'free' });
+  store.set('users/u1/usage/bank', { balance: 10, lastRegenAt: Date.now() });
+  const ai = aiFetch({ title: 'x', cards: [] });
+  const res = response();
+  await (await load('api/generate-flashcards.js', { db, fetch: ai.fetch }))(deckReq(), res);
+  assert.equal(res.code, 403);
+  assert.equal(ai.calls.length, 0);
+  assert.equal(store.get('users/u1/usage/bank').balance, 10);
+});
+
+test('Make with Knox: free users spend 3 questions and get up to 10 cards', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'free' });
+  store.set('users/u1/usage/bank', { balance: 10, lastRegenAt: Date.now() });
+  const ai = aiFetch({ title: 'Cells', cards: [{ front: 'a', back: 'b' }, { front: 'c', back: 'd' }, { front: 'e', back: 'f' }] });
+  const res = response();
+  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq({ request: 'cell biology', count: 20 }), res);
+  assert.equal(res.code, 200);
+  assert.equal(store.get('users/u1/usage/bank').balance, 7);
+  assert.equal(res.body.creditsLeft, 7);
+  assert.match(ai.calls[0].messages[0].content, /Write exactly 10 flashcards/, 'free decks are capped at 10 cards');
+  assert.equal(store.get('users/u1/usage/flashcardsAI'), undefined, 'free users do not touch the Plus cap');
+});
+
+test('Make with Knox: not enough questions stops before the AI is called', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'free' });
+  store.set('users/u1/usage/bank', { balance: 2, lastRegenAt: Date.now() });
+  const ai = aiFetch({ title: 'x', cards: [] });
+  const res = response();
+  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq(), res);
+  assert.equal(res.code, 402);
+  assert.equal(res.body.upgrade, true);
+  assert.equal(ai.calls.length, 0);
+  assert.equal(store.get('users/u1/usage/bank').balance, 2);
+});
+
+test('Make with Knox: Plus cap, and failed generations give credits back', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' });
+  const day = new Date().toISOString().slice(0, 10);
+  store.set('users/u1/usage/flashcardsAI', { day, count: 40 });
+  const capped = response();
+  await (await load('api/generate-flashcards.js', { db, fetch: aiFetch({ title: 'x', cards: [] }).fetch }))(deckReq(), capped);
+  assert.equal(capped.code, 429);
+
+  store.set('users/u1/usage/flashcardsAI', { day, count: 3 });
+  const refused = response();
+  await (await load('api/generate-flashcards.js', { db, fetch: aiFetch({ error: 'Knox can only make study decks.' }).fetch }))(deckReq({ request: 'write me a poem about pizza' }), refused);
+  assert.equal(refused.code, 422);
+  assert.equal(store.get('users/u1/usage/flashcardsAI').count, 3, 'refused request is not counted');
+
+  const free = memoryDb();
+  free.store.set('users/u1', { plan: 'free' });
+  free.store.set('users/u1/usage/bank', { balance: 9, lastRegenAt: Date.now() });
+  const down = response();
+  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db: free.db, fetch: aiFetch('', { ok: false }).fetch }))(deckReq(), down);
+  assert.equal(down.code, 502);
+  assert.equal(free.store.get('users/u1/usage/bank').balance, 9, 'AI outage refunds the 3 questions');
+});

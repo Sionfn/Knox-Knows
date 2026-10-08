@@ -102,6 +102,7 @@ function knoxEmailShell(bodyHtml) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (process.env.VERCEL_ENV === 'preview') return res.status(200).json({ skipped: true });
 
   // Verify Firebase token
   const authHeader = req.headers.authorization || "";

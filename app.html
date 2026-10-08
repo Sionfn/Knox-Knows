@@ -43,6 +43,25 @@
       };
     })();
   </script>
+  <script>
+    // Refreshing inside a section (?open=learn | calculator | flashcards): keep
+    // the main area hidden until that section has opened, so Ask Knox doesn't
+    // flash on screen first. The timer is only a safety net.
+    (function() {
+      try {
+        var v = new URLSearchParams(location.search).get('open');
+        if (v === 'learn' || v === 'calculator' || v === 'flashcards') {
+          var root = document.documentElement;
+          root.classList.add('knox-restoring');
+          setTimeout(function() { root.classList.remove('knox-restoring'); }, 5000);
+        }
+      } catch (e) { /* cosmetic only */ }
+    })();
+  </script>
+  <style>
+    html.knox-restoring #chatAndInput { visibility: hidden; }
+    html.knox-restoring .sidebar-quicknav-link.sidebar-nav-active { background: transparent; color: var(--text-light); }
+  </style>
   <meta charset="UTF-8">
 <script src="/desktop-fit.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1971,6 +1990,18 @@
       background: var(--cream);
     }
     .calc-modal.open { display: flex; }
+    /* Calculator backdrop: the same soft Knox circles as the Ask Knox welcome
+       screen (orange top-right, blue bottom-left), in light and dark mode. */
+    .calc-modal { position: relative; }
+    .calc-modal > .calc-card { position: relative; z-index: 1; }
+    .calc-decor { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .calc-decor::before { content: ''; position: absolute; top: -80px; right: -80px; width: 280px; height: 280px; border-radius: 50%; background: var(--orange-light); opacity: .6; }
+    .calc-decor::after { content: ''; position: absolute; bottom: 0; left: 0; width: 160px; height: 160px; background: radial-gradient(circle 110px at 50px 110px, var(--blue-light) 99.5%, transparent 100%); opacity: .5; }
+    @media (max-width: 768px) { .calc-decor { display: none; } }
+    /* While the theme flips, pause transitions so everything switches in one
+       frame — elements with transition:all otherwise fade between themes at
+       different speeds and the page briefly looks half dark / half light. */
+    html.knox-theme-switching *, html.knox-theme-switching *::before, html.knox-theme-switching *::after { transition: none !important; }
     .calc-card {
       background: var(--surface);
       border-radius: 24px;
@@ -2392,11 +2423,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <button class="sidebar-quicknav-link sidebar-nav-active" data-nav="chat" onclick="appStartNewChat()" title="Ask Knox anything — the normal chat">
           <span class="sq-icon sq-ask" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 13v3a3 3 0 0 1-3 3H8l-4 3V8a3 3 0 0 1 3-3h5"/><path d="m18 2 1.4 3.6L23 7l-3.6 1.4L18 12l-1.4-3.6L13 7l3.6-1.4L18 2Z"/><path d="M8 13h4"/></svg></span><span class="sidebar-collapsible">Ask Knox</span>
         </button>
-        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator">
-          <span class="sq-icon sq-calc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg></span><span class="sidebar-collapsible">Calculator</span>
-        </button>
         <button class="sidebar-quicknav-link" data-nav="learn" onclick="openLearnMode()" title="Learn — Knox guides you instead of just answering">
           <span class="sq-icon sq-learn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg></span><span class="sidebar-collapsible">Learn</span>
+        </button>
+        <button class="sidebar-quicknav-link" data-nav="calculator" onclick="openCalc()" title="Calculator">
+          <span class="sq-icon sq-calc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg></span><span class="sidebar-collapsible">Calculator</span>
         </button>
       </div>
 
@@ -2874,11 +2905,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <button class="sidebar-quicknav-link" data-mobile-nav="chat" onclick="window.appStartNewChat();closeMobileHistory();">
           <span class="sq-icon" aria-hidden="true"></span><span>Ask Knox</span>
         </button>
-        <button class="sidebar-quicknav-link" data-mobile-nav="calculator" onclick="window.openCalc();closeMobileHistory();">
-          <span class="sq-icon" aria-hidden="true"></span><span>Calculator</span>
-        </button>
         <button class="sidebar-quicknav-link" data-mobile-nav="learn" onclick="window.openLearnMode();closeMobileHistory();">
           <span class="sq-icon" aria-hidden="true"></span><span>Learn</span>
+        </button>
+        <button class="sidebar-quicknav-link" data-mobile-nav="calculator" onclick="window.openCalc();closeMobileHistory();">
+          <span class="sq-icon" aria-hidden="true"></span><span>Calculator</span>
         </button>
       </div>
 
@@ -3138,6 +3169,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   window.pollForPlanUpdate = pollForPlanUpdate;
 
   function updatePlanUI() {
+    window.dispatchEvent(new Event('knox-plan-changed'));
     const plan       = window.userPlan;
     const user       = window.currentUser;
     const accountBtn = document.getElementById('appAccountBtn');
@@ -3556,6 +3588,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       }
     }
     window.currentUser = user || null;
+    window.dispatchEvent(new Event('knox-auth-changed'));
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
       // free...") has its own fixed div (#guestCta) that used to only get
@@ -3606,6 +3639,9 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     }
     if (loadVersion === authLoadVersion) {
       resolvedAuthUid = user?.uid || null;
+      // Refreshed inside a section? Open it now, while the loading screen still
+      // covers the page, so it appears already in place — just like Ask Knox.
+      window.knoxRestoreSection?.();
       window.finishAppLoading();
     }
   });
@@ -4793,15 +4829,22 @@ function syncDarkModeIcon() {
   if (sun)  sun.style.display  = isDark ? '' : 'none';
 }
 window.toggleDarkMode = function() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  // Pause color transitions while the theme flips (see .knox-theme-switching),
+  // so every element changes in the same frame instead of fading at
+  // different speeds and briefly looking half dark / half light.
+  const root = document.documentElement;
+  root.classList.add('knox-theme-switching');
+  const isDark = root.getAttribute('data-theme') === 'dark';
   if (isDark) {
-    document.documentElement.removeAttribute('data-theme');
+    root.removeAttribute('data-theme');
     try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
   } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    root.setAttribute('data-theme', 'dark');
     try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
   }
   syncDarkModeIcon();
+  void root.offsetHeight; // apply the new colors now, before transitions return
+  setTimeout(() => root.classList.remove('knox-theme-switching'), 60); // a timer, not rAF: still clears if the tab is in the background
 };
 syncDarkModeIcon();
 
@@ -6155,29 +6198,66 @@ if (window.knoxNativeApp) {
   document.querySelectorAll('a[href="/about"]').forEach(a => { a.href = '/app'; a.removeAttribute('title'); });
 }
 
-// Landing-page menu links: /app?open=calculator or /app?open=learn.
+// Open a section from the address: /app?open=learn | calculator | flashcards
+// (used by the landing-page menu, and by a refresh — see the sync below).
+// It opens once sign-in has finished (the sign-in step starts a fresh chat,
+// which would otherwise close it again) but before the loading screen lifts,
+// so the section is already showing when the page appears.
 const openTarget = new URLSearchParams(location.search).get('open');
-if (openTarget === 'calculator' || openTarget === 'learn') {
-  const url = new URL(location.href);
-  url.searchParams.delete('open');
-  history.replaceState(history.state, '', url.pathname + url.search + url.hash);
-  // Wait for sign-in to settle: the auth handler starts a fresh chat, which
-  // would otherwise close the calculator / leave Learn straight away.
-  const openNow = () => setTimeout(() => {
+if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards') {
+  let restored = false;
+  window.knoxRestoreSection = function() {
+    if (restored) return;
+    restored = true;
     if (openTarget === 'calculator') window.openCalc?.();
-    else window.openLearnMode?.();
-  }, 50);
-  if (!document.body.classList.contains('app-auth-pending')) openNow();
-  else {
-    const watcher = new MutationObserver(() => {
-      if (document.body.classList.contains('app-auth-pending')) return;
-      watcher.disconnect();
-      openNow();
-    });
-    watcher.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  }
+    else if (openTarget === 'learn') window.openLearnMode?.();
+    else if (window.openFlashcards) window.openFlashcards();
+    else window.__knoxOpenFlashcardsWhenReady = true; // flashcards.js picks this up when it loads
+    document.documentElement.classList.remove('knox-restoring');
+  };
+  // Sign-in already finished before this ran: open right away.
+  if (!document.body.classList.contains('app-auth-pending')) window.knoxRestoreSection();
 }
 
+// Keep the address in step with the open section (?open=learn, calculator or
+// flashcards; nothing for Ask Knox), so refreshing reopens the same section
+// instead of always falling back to Ask Knox. replaceState, so switching
+// sections doesn't pile up Back-button entries.
+(function syncSectionToUrl() {
+  const nav = document.querySelector('.sidebar-body .sidebar-quicknav');
+  const calc = $('calcModal');
+  const current = () => {
+    if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
+    if (calc?.classList.contains('open')) return 'calculator';
+    return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
+  };
+  const sync = () => {
+    if (document.body.classList.contains('app-auth-pending')) return; // still restoring the page
+    const view = current();
+    const url = new URL(location.href);
+    if ((url.searchParams.get('open') || '') === view) return;
+    if (view) url.searchParams.set('open', view); else url.searchParams.delete('open');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  };
+  const watch = new MutationObserver(sync);
+  watch.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  if (nav) watch.observe(nav, { attributes: true, subtree: true, attributeFilter: ['class'] });
+  if (calc) watch.observe(calc, { attributes: true, attributeFilter: ['class'] });
+})();
+
+</script>
+<link rel="stylesheet" href="/flashcards.css">
+<script type="module" src="/flashcards.js"></script>
+<script>
+// Calculator backdrop layer (the circles are drawn by .calc-decor in CSS).
+(function () {
+  var calc = document.getElementById('calcModal');
+  if (!calc || calc.querySelector('.calc-decor')) return;
+  var decor = document.createElement('div');
+  decor.className = 'calc-decor';
+  decor.setAttribute('aria-hidden', 'true');
+  calc.insertBefore(decor, calc.firstChild);
+})();
 </script>
 </body>
 </html>

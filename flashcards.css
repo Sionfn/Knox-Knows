@@ -1,0 +1,214 @@
+/* ═══ FLASHCARDS (private preview) ═══════════════════════════════════════
+   Built from the same pieces as the Ask Knox welcome screen: sticker
+   cards with a colored border + darker "ledge", Nunito 900 headings,
+   uppercase labels and chunky orange buttons. Colors come from the app's
+   theme variables, so light, dark and Halloween modes all just work. */
+/* The panel holds a fixed backdrop (.fc-decor) and a scrolling layer
+   (.fc-scroll) on top, so the art stays put while decks scroll. */
+#flashcardsPanel { flex:1; min-height:0; position:relative; overflow:hidden; color:var(--text); background:var(--cream); }
+.fc-scroll { position:relative; z-index:1; height:100%; overflow:auto; overscroll-behavior:contain; display:flex; flex-direction:column; padding:clamp(18px,3vw,40px) clamp(16px,3vw,40px) 48px; }
+.fc-decor { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+#flashcardsPanel[hidden] { display:none; }
+body.knox-flashcards #chatAndInput > :not(#flashcardsPanel) { display:none !important; }
+/* Column flex so a short screen can center itself vertically: auto margins
+   split the spare height, and collapse to 0 when content is taller (so it
+   still scrolls from the top). */
+#flashcardsPanel:not([hidden]) { display:block; }
+.fc-wrap { width:100%; max-width:960px; margin:0 auto; }
+.fc-wrap.center { margin:auto; }
+
+/* ── Header (same recipe as the welcome screen) ── */
+.fc-head { text-align:center; margin:0 auto 28px; }
+.fc-badges { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-bottom:18px; }
+/* Badge / title / subtitle use exactly the Ask Knox welcome screen's sizes. */
+.fc-badge { display:inline-flex; align-items:center; gap:6px; background:var(--orange-light); border:2px solid var(--orange); border-radius:999px; padding:7px 18px; font-size:14px; font-weight:800; color:var(--orange); }
+.fc-title { font-size:clamp(26px,4vw,40px); font-weight:900; line-height:1.05; letter-spacing:-.02em; margin:0 0 12px; color:var(--text); overflow-wrap:anywhere; }
+.fc-title .accent { color:var(--orange); }
+.fc-sub { font-size:16px; font-weight:700; color:var(--text-light); line-height:1.55; max-width:480px; margin:0 auto; }
+.fc-note { font-size:12.5px; font-weight:700; color:var(--text-light); text-align:center; margin:18px auto 0; max-width:520px; line-height:1.5; }
+
+/* ── Buttons: Knox sticker buttons ── */
+#flashcardsPanel button { font-family:inherit; cursor:pointer; }
+.fc-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:10px 18px; border-radius:14px; border:2px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:900; box-shadow:0 3px 0 var(--border); transition:transform .12s, box-shadow .12s, background .12s; }
+.fc-btn:hover { transform:translateY(-2px); box-shadow:0 5px 0 var(--border); }
+.fc-btn:active { transform:translateY(2px); box-shadow:0 1px 0 var(--border); }
+.fc-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+.fc-btn.primary { background:var(--orange); border-color:var(--orange-dark); color:#fff; box-shadow:0 4px 0 var(--orange-dark); text-transform:uppercase; letter-spacing:.03em; }
+.fc-btn.primary:hover { box-shadow:0 6px 0 var(--orange-dark); }
+.fc-btn.primary:active { box-shadow:0 1px 0 var(--orange-dark); }
+/* Knox-blue twin of the main orange button (used for + Create deck) */
+.fc-btn.primary.blue { background:var(--blue); border-color:var(--blue-dark); box-shadow:0 4px 0 var(--blue-dark); }
+.fc-btn.primary.blue:hover { box-shadow:0 6px 0 var(--blue-dark); }
+.fc-btn.primary.blue:active { box-shadow:0 1px 0 var(--blue-dark); }
+.fc-btn.ghost { background:transparent; box-shadow:none; border-color:transparent; color:var(--text-light); min-height:36px; padding:6px 10px; }
+.fc-btn.ghost:hover { color:var(--orange); background:var(--orange-cream); transform:none; box-shadow:none; }
+.fc-btn.danger:hover { color:var(--red); border-color:var(--red); box-shadow:0 5px 0 var(--red); }
+.fc-btn.small { min-height:36px; padding:7px 12px; font-size:12.5px; border-radius:11px; }
+.fc-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; }
+#flashcardsPanel :focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+/* Headings get focus only so screen readers announce the new screen — no ring. */
+#flashcardsPanel .fc-title:focus { outline:none; }
+
+/* ── Search ── */
+.fc-search-wrap { position:relative; max-width:440px; margin:22px auto 22px; }
+.fc-search-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--text-light); pointer-events:none; }
+#flashcardsPanel .fc-search { width:100%; padding:12px 14px 12px 42px; border:2px solid var(--border); border-radius:14px; background:var(--surface); color:var(--text); font:inherit; font-size:15px; font-weight:700; box-shadow:0 2px 0 var(--border); outline:none; }
+#flashcardsPanel .fc-search:focus { border-color:var(--orange); box-shadow:0 2px 0 var(--orange-light); }
+
+/* ── Deck cards: same sticker as the topic chips ── */
+.fc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),320px)); justify-content:center; gap:16px; }
+.fc-deck { --chip:var(--orange); --chip-ledge:var(--orange-dark); --chip-tint:var(--orange-light);
+  background:var(--surface); border:2px solid var(--chip); border-radius:20px; box-shadow:0 4px 0 var(--chip-ledge); padding:18px; display:flex; flex-direction:column; gap:14px; min-width:0; }
+.fc-deck[data-flavor="green"]  { --chip:var(--green);  --chip-ledge:var(--green-dark);  --chip-tint:var(--green-light); }
+.fc-deck[data-flavor="blue"]   { --chip:var(--blue);   --chip-ledge:var(--blue-dark);   --chip-tint:var(--blue-light); }
+.fc-deck[data-flavor="purple"] { --chip:var(--purple); --chip-ledge:var(--purple-dark); --chip-tint:var(--purple-light); }
+.fc-deck-top { display:flex; align-items:center; gap:14px; min-width:0; }
+.fc-deck-icon { width:52px; height:52px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:25px; background:var(--chip-tint); border:3px solid var(--chip); box-shadow:0 3px 0 var(--chip); }
+.fc-deck-name { font-size:16px; font-weight:900; line-height:1.25; text-transform:uppercase; letter-spacing:.02em; margin:0 0 6px; overflow-wrap:anywhere; color:var(--text); }
+.fc-pills { display:flex; flex-wrap:wrap; gap:6px; }
+.fc-pill { font-size:11.5px; font-weight:900; padding:3px 9px; border-radius:999px; background:var(--cream); border:1.5px solid var(--border); color:var(--text-light); }
+.fc-pill.due { background:var(--orange-cream); border-color:var(--orange-light); color:var(--orange); }
+.fc-pill.done { background:var(--green-light); border-color:var(--green); color:var(--green-dark); }
+.fc-deck-actions { display:flex; gap:8px; }
+.fc-deck-actions .fc-btn { flex:1; }
+.fc-deck-more { display:flex; justify-content:flex-end; gap:2px; margin-top:-6px; }
+
+/* ── Empty state ── */
+.fc-empty { text-align:center; padding:34px 20px; border:2px dashed var(--border); border-radius:24px; background:var(--surface); }
+.fc-empty img { width:76px; height:76px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); box-shadow:0 4px 0 var(--orange-dark); margin-bottom:12px; }
+.fc-empty h2 { font-size:20px; font-weight:900; margin:0 0 6px; }
+
+/* ── Editor ── */
+.fc-topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.fc-field-label { display:block; font-size:12px; font-weight:900; color:var(--text-light); text-transform:uppercase; letter-spacing:.06em; margin:0 0 6px; }
+#flashcardsPanel .fc-input, #flashcardsPanel .fc-textarea { width:100%; min-width:0; padding:12px 14px; border:2px solid var(--border); border-radius:14px; background:var(--surface); color:var(--text); font:inherit; font-size:15px; font-weight:600; box-shadow:0 2px 0 var(--border); outline:none; transition:border-color .15s, box-shadow .15s; }
+#flashcardsPanel .fc-input:focus, #flashcardsPanel .fc-textarea:focus { border-color:var(--orange); box-shadow:0 2px 0 var(--orange-light); }
+#flashcardsPanel .fc-textarea { resize:vertical; min-height:92px; line-height:1.5; }
+.fc-deck-title-field { max-width:560px; margin:0 auto 20px; }
+.fc-row { background:var(--surface); border:2px solid var(--border); border-radius:20px; box-shadow:0 4px 0 var(--border); padding:16px; margin-bottom:14px; }
+.fc-row-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.fc-num { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border-radius:10px; background:var(--orange); color:#fff; font-size:13px; font-weight:900; box-shadow:0 2px 0 var(--orange-dark); }
+.fc-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.fc-bulk { margin-top:18px; background:var(--surface); border:2px dashed var(--border); border-radius:18px; padding:14px 16px; }
+.fc-bulk summary { cursor:pointer; font-weight:900; color:var(--text); }
+.fc-bulk summary::marker { color:var(--orange); }
+.fc-bulk p { font-size:13px; font-weight:700; color:var(--text-light); line-height:1.5; margin:10px 0; }
+/* Save lives in two places, both in normal flow (nothing floats over the
+   cards): a small Save in the top bar, and Cancel / Save deck at the end. */
+.fc-topbar-right { display:flex; align-items:center; gap:8px; }
+.fc-add-row { display:flex; justify-content:center; margin:4px 0 2px; }
+.fc-savebar { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:22px; padding-top:20px; border-top:2px solid var(--border); }
+
+/* ── Study ── */
+.fc-progress { max-width:640px; margin:0 auto 18px; }
+.fc-progress-text { display:flex; justify-content:space-between; font-size:12.5px; font-weight:900; color:var(--text-light); margin-bottom:7px; text-transform:uppercase; letter-spacing:.05em; }
+.fc-bar { height:12px; border-radius:999px; background:var(--surface); border:2px solid var(--border); overflow:hidden; }
+.fc-bar > span { display:block; height:100%; background:var(--green); border-radius:999px; box-shadow:inset 0 -3px 0 rgba(0,0,0,.12); transition:width .35s ease; }
+.fc-stage { max-width:640px; margin:0 auto; perspective:1400px; }
+.fc-card { display:block; width:100%; padding:0; border:0; background:transparent; color:inherit; text-align:center; }
+.fc-card-inner { display:grid; transform-style:preserve-3d; transition:transform .5s cubic-bezier(.2,.8,.2,1); }
+.fc-card.is-flipped .fc-card-inner { transform:rotateY(180deg); }
+.fc-face { grid-area:1 / 1; backface-visibility:hidden; -webkit-backface-visibility:hidden; min-height:260px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:30px 26px; border-radius:26px; background:var(--surface); border:3px solid var(--blue); box-shadow:0 6px 0 var(--blue-dark); }
+.fc-face.back { transform:rotateY(180deg); border-color:var(--green); box-shadow:0 6px 0 var(--green-dark); }
+.fc-face-label { font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; padding:4px 12px; border-radius:999px; background:var(--blue-light); color:var(--blue-dark); }
+.fc-face.back .fc-face-label { background:var(--green-light); color:var(--green-dark); }
+html[data-theme="dark"] .fc-face-label { color:var(--blue); }
+html[data-theme="dark"] .fc-face.back .fc-face-label { color:var(--green); }
+.fc-face-text { font-size:clamp(20px,3vw,28px); font-weight:800; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text); margin:0; }
+.fc-face-hint { font-size:12.5px; font-weight:800; color:var(--text-light); }
+.fc-card:hover .fc-face { filter:brightness(1.02); }
+.fc-controls { max-width:640px; margin:20px auto 0; }
+.fc-grades { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.fc-grade { --g:var(--red); --gd:var(--red); flex-direction:column; gap:2px; min-height:62px; border-color:var(--g); box-shadow:0 4px 0 var(--gd); }
+.fc-grade:hover { box-shadow:0 6px 0 var(--gd); }
+.fc-grade small { font-size:11px; font-weight:800; color:var(--text-light); }
+.fc-grade .k { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:5px; font-size:11px; background:var(--cream); border:1.5px solid var(--border); margin-right:4px; }
+.fc-grade.again { --g:var(--red); --gd:#C23434; color:var(--red); }
+.fc-grade.good  { --g:var(--green); --gd:var(--green-dark); color:var(--green-dark); }
+.fc-grade.easy  { --g:var(--blue); --gd:var(--blue-dark); color:var(--blue-dark); }
+html[data-theme="dark"] .fc-grade.good { color:var(--green); }
+html[data-theme="dark"] .fc-grade.easy { color:var(--blue); }
+.fc-reveal { width:100%; min-height:54px; font-size:15px; }
+.fc-tip { text-align:center; font-size:12.5px; font-weight:700; color:var(--text-light); margin-top:14px; line-height:1.5; }
+
+/* ── Session complete ── */
+.fc-done { max-width:560px; margin:0 auto; text-align:center; }
+.fc-done img { width:96px; height:96px; border-radius:50%; object-fit:cover; border:4px solid var(--orange); box-shadow:0 5px 0 var(--orange-dark); margin-bottom:14px; }
+.fc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:22px 0; }
+.fc-stat { background:var(--surface); border:2px solid var(--border); border-radius:18px; box-shadow:0 4px 0 var(--border); padding:14px 8px; }
+.fc-stat b { display:block; font-size:28px; font-weight:900; line-height:1.1; }
+.fc-stat span { font-size:11.5px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; color:var(--text-light); }
+.fc-stat.green b { color:var(--green); } .fc-stat.red b { color:var(--red); } .fc-stat.orange b { color:var(--orange); }
+
+/* ── Toast messages ── */
+.fc-toast { position:absolute; top:14px; left:50%; z-index:3; transform:translate(-50%,-8px); width:max-content; max-width:min(520px, calc(100% - 32px)); padding:11px 16px; border-radius:14px; background:var(--surface); border:2px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark), 0 10px 26px rgba(0,0,0,.18); color:var(--text); font-size:14px; font-weight:800; text-align:center; opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; }
+.fc-toast.show { opacity:1; transform:translate(-50%,0); pointer-events:auto; cursor:pointer; }
+.fc-toast.ok { border-color:var(--green); box-shadow:0 3px 0 var(--green-dark); }
+
+/* ── Sidebar entry (green, like History in the extension) ── */
+.fc-nav .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); box-shadow:0 3px 0 var(--green-dark); }
+.sidebar-quicknav-link.fc-nav:hover, .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green-dark); background:var(--green-light); }
+html[data-theme="dark"] .sidebar-quicknav-link.fc-nav:hover, html[data-theme="dark"] .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green); }
+
+@media (max-width:640px) {
+  .fc-fields { grid-template-columns:1fr; }
+  .fc-face { min-height:220px; padding:24px 18px; }
+  .fc-stat b { font-size:24px; }
+}
+@media (prefers-reduced-motion:reduce) { .fc-card-inner, .fc-bar > span, .fc-btn { transition:none !important; } }
+
+/* ── New card slides in where you are ── */
+.fc-row-new { animation:fcRowIn .3s ease-out; }
+@keyframes fcRowIn { from { opacity:0; transform:translateY(10px); } }
+
+/* ── Knox-style confirm dialog ── */
+.fc-modal { position:fixed; inset:0; z-index:9000; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(16,12,20,.55); animation:fcFade .15s ease-out; }
+.fc-modal-card { width:100%; max-width:400px; text-align:center; background:var(--surface); color:var(--text); border:2px solid var(--border); border-radius:24px; box-shadow:0 6px 0 var(--border), 0 24px 60px rgba(0,0,0,.3); padding:26px 22px 22px; animation:fcPop .2s cubic-bezier(.2,.9,.3,1.2); font-family:inherit; }
+.fc-modal-card img { width:64px; height:64px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); box-shadow:0 4px 0 var(--orange-dark); margin-bottom:12px; }
+.fc-modal-card h2 { font-size:21px; font-weight:900; margin:0 0 8px; }
+.fc-modal-card p { font-size:14.5px; font-weight:700; color:var(--text-light); line-height:1.5; margin:0 0 20px; }
+.fc-modal-actions { display:flex; gap:10px; }
+.fc-modal-actions .fc-btn { flex:1; font-family:inherit; cursor:pointer; }
+.fc-btn.danger-solid { background:var(--red); border-color:#C23434; color:#fff; box-shadow:0 4px 0 #C23434; }
+.fc-btn.danger-solid:hover { box-shadow:0 6px 0 #C23434; }
+@keyframes fcFade { from { opacity:0; } }
+@keyframes fcPop { from { opacity:0; transform:translateY(12px) scale(.97); } }
+@media (prefers-reduced-motion:reduce) { .fc-row-new, .fc-modal, .fc-modal-card { animation:none; } }
+
+/* ── Backdrop: the Ask Knox welcome screen's soft Knox circles ─────────────
+   Orange top-right, blue bottom-left — in light and dark mode. */
+.fc-decor::before { content:''; position:absolute; top:-80px; right:-80px; width:280px; height:280px; border-radius:50%; background:var(--orange-light); opacity:.6; }
+.fc-decor::after { content:''; position:absolute; bottom:0; left:0; width:160px; height:160px; background:radial-gradient(circle 110px at 50px 110px, var(--blue-light) 99.5%, transparent 100%); opacity:.5; }
+@media (max-width:768px) { .fc-decor::before, .fc-decor::after { display:none; } }
+/* Phones: same tighter title/subtitle as the welcome screen. */
+@media (max-width:480px) { .fc-title { font-size:24px; } .fc-sub { font-size:14px; } .fc-head { margin-bottom:20px; } }
+
+/* ── Make with Knox ── */
+.fc-make { max-width:640px; margin:0 auto; background:var(--surface); border:2px solid var(--border); border-radius:24px; box-shadow:0 4px 0 var(--border); padding:22px; }
+.fc-examples { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 4px; }
+.fc-make-opts { display:flex; flex-wrap:wrap; gap:18px 28px; margin-top:18px; }
+.fc-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.fc-chip { border:2px solid var(--border); background:var(--surface); color:var(--text); border-radius:999px; padding:7px 13px; font-family:inherit; font-size:13px; font-weight:800; cursor:pointer; box-shadow:0 2px 0 var(--border); transition:transform .12s; }
+.fc-chip:hover { transform:translateY(-1px); border-color:var(--orange-light); }
+.fc-chip.on { border-color:var(--orange); background:var(--orange-light); color:var(--orange); box-shadow:0 2px 0 var(--orange-dark); }
+.fc-examples .fc-chip { font-weight:700; color:var(--text-light); }
+.fc-upsell { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:18px; padding:12px 14px; border:2px solid var(--yellow, #FFD900); border-radius:16px; background:var(--orange-cream); font-weight:800; font-size:14px; }
+.fc-upsell span { flex:1; min-width:180px; }
+.fc-loading { text-align:center; padding:20px 0; }
+.fc-loading img { width:88px; height:88px; border-radius:50%; object-fit:cover; border:4px solid var(--orange); box-shadow:0 5px 0 var(--orange-dark); animation:fcBob 1s ease-in-out infinite; }
+.fc-loading h2 { font-size:22px; font-weight:900; margin:18px 0 6px; }
+.fc-dots { margin-top:14px; }
+.fc-dots span { display:inline-block; width:9px; height:9px; margin:0 3px; border-radius:50%; background:var(--orange); animation:fcBlink 1.2s infinite; }
+.fc-dots span:nth-child(2) { animation-delay:.2s; } .fc-dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes fcBob { 50% { transform:translateY(-8px); } }
+@keyframes fcBlink { 0%,100% { opacity:.25; } 50% { opacity:1; } }
+@media (prefers-reduced-motion:reduce) { .fc-loading img, .fc-dots span { animation:none; } }
+
+.fc-plus-tag { font-size:10.5px; font-weight:900; color:var(--yellow-dark, #CC9900); margin-left:4px; }
+.fc-cost { text-align:center; font-size:12.5px; font-weight:700; color:var(--text-light); margin:12px 0 0; }
+
+/* "Beta" tag on the Flashcards tab */
+.fc-beta { margin-left:auto; font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:999px; padding:2px 7px; line-height:1.2; }
+html[data-theme="dark"] .fc-beta { color:var(--green); }
+
+.sidebar-quicknav-link.fc-nav.fc-locked { display:none !important; }

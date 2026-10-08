@@ -16,6 +16,7 @@
   ],
   "functions": {
     "api/ask.js":                     { "maxDuration": 60 },
+    "api/generate-flashcards.js":     { "maxDuration": 60 },
     "api/create-checkout-session.js": { "maxDuration": 30 },
     "api/customer-portal.js":         { "maxDuration": 15 },
     "api/webhook.js":                 { "maxDuration": 15 },

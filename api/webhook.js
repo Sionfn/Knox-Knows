@@ -330,6 +330,7 @@ async function resolveEmail(subscription) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
+  if (process.env.VERCEL_ENV === 'preview') return res.status(403).end();
 
   const sig     = req.headers["stripe-signature"];
   const rawBody = await getRawBody(req);
