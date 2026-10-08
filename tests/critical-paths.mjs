@@ -458,6 +458,17 @@ test('An immediate cancellation still gets the cancelled email', async () => {
   assert.match(h.emails[0].subject, /has been cancelled/);
 });
 
+test('Failed payment is recorded with the newer Stripe invoice format', async () => {
+  const pastDue = { id: 'sub_1', customer: 'cus_1', status: 'past_due', items: PLUS_PRICE, metadata: { uid: 'u1' } };
+  const h = cancelHarness({ current: pastDue });
+  h.store.set('users/u1', { plan: 'super', planStatus: 'active', stripeCustomerId: 'cus_1', stripeSubscription: 'sub_1' });
+  const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, fetch: h.fetch });
+  // No top-level `subscription` field — it lives under parent.subscription_details.
+  const invoice = { id: 'in_1', parent: { type: 'subscription_details', subscription_details: { subscription: 'sub_1' } } };
+  await h.send(handler, { id: 'evt_fail', type: 'invoice.payment_failed', data: { object: invoice } });
+  assert.equal(h.store.get('users/u1').planStatus, 'past_due');
+});
+
 test('Delayed checkout cannot replace a newer subscription', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'super', stripeCustomerId: 'cus_1', stripeSubscription: 'sub_new' });

@@ -264,6 +264,15 @@ async function finishEvent(claim, success) {
   });
 }
 
+// Newer Stripe API versions (2025-03-31 "basil" onward, including this
+// account's "dahlia") moved an invoice's subscription id from
+// `invoice.subscription` to `invoice.parent.subscription_details.subscription`.
+// Read both so renewal / failed-payment events work on any API version.
+function invoiceSubscriptionId(invoice) {
+  const sub = invoice?.subscription ?? invoice?.parent?.subscription_details?.subscription;
+  return typeof sub === 'string' ? sub : sub?.id || null;
+}
+
 async function currentSubscription(subscription) {
   return stripe.subscriptions.retrieve(subscription.id);
 }
@@ -386,8 +395,9 @@ export default async function handler(req, res) {
         const invoice = event.data.object;
         if (invoice.billing_reason === "subscription_create") break; // already handled above
 
-        if (!invoice.subscription) break;
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const subscriptionId = invoiceSubscriptionId(invoice);
+        if (!subscriptionId) break;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const uid          = await resolveUid(subscription);
         if (uid && await applyActiveSubscription(uid, subscription)) {
           const plan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
@@ -504,9 +514,10 @@ export default async function handler(req, res) {
       // customer.subscription.deleted fires (after final retry fails).
       case "invoice.payment_failed": {
         const invoice = event.data.object;
-        if (!invoice.subscription) break;
+        const subscriptionId = invoiceSubscriptionId(invoice);
+        if (!subscriptionId) break;
 
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const uid          = await resolveUid(subscription);
 
         if (uid) {
