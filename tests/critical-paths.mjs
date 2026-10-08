@@ -44,9 +44,9 @@ function memoryDb() {
   return { db, store, setFail: value => { failTransactions = value; } };
 }
 
-async function load(file, { db, fetch, stripe, adminEmail, adminUid, auth = {}, token = { uid: 'u1', email: 'owner@example.com', email_verified: true } } = {}) {
+async function load(file, { db, fetch, stripe, adminEmail, adminUid, env = {}, auth = {}, token = { uid: 'u1', email: 'owner@example.com', email_verified: true } } = {}) {
   const context = createContext({
-    process: { env: { FIREBASE_PROJECT_ID: 'test', FIREBASE_CLIENT_EMAIL: 'test@example.com', OPENAI_API_KEY: 'test', STRIPE_SECRET_KEY: 'test', STRIPE_WEBHOOK_SECRET: 'test', ADMIN_EMAIL: adminEmail, ADMIN_UID: adminUid } },
+    process: { env: { FIREBASE_PROJECT_ID: 'test', FIREBASE_CLIENT_EMAIL: 'test@example.com', OPENAI_API_KEY: 'test', STRIPE_SECRET_KEY: 'test', STRIPE_WEBHOOK_SECRET: 'test', ADMIN_EMAIL: adminEmail, ADMIN_UID: adminUid, ...env } },
     console: { ...console, error() {}, warn() {}, log() {} },
     fetch, setInterval() {}, AbortSignal, Date, URLSearchParams, Buffer,
   });
@@ -403,6 +403,59 @@ test('Stale Stripe update cannot restore a cancelled subscription', async () => 
   await handler(webhookRequest(currentEvent), updated);
   assert.equal(updated.code, 200);
   assert.equal(store.get('users/u1').plan, 'free');
+});
+
+function cancelHarness(subscription) {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super', planStatus: 'trialing', stripeCustomerId: 'cus_1', stripeSubscription: 'sub_1' });
+  const emails = [];
+  const fetch = async (url, options) => { emails.push(JSON.parse(options.body)); return { ok: true, text: async () => '' }; };
+  let currentEvent;
+  const stripe = {
+    webhooks: { constructEvent: () => currentEvent },
+    subscriptions: { retrieve: async () => subscription.current },
+    customers: { retrieve: async () => ({ email: 'student@example.com', metadata: { uid: 'u1' } }) },
+  };
+  return { db, store, emails, stripe, fetch, send: async (handler, event) => { currentEvent = event; const res = response(); await handler(webhookRequest(event), res); return res; } };
+}
+const PLUS_PRICE = { data: [{ price: { id: 'price_1UBcoACqlxC7aoKRR3DFKNhJ' } }] };
+
+test('Cancelling a trial sends one confirmation, and no second email when it ends', async () => {
+  const trial = { id: 'sub_1', customer: 'cus_1', status: 'trialing', items: PLUS_PRICE, metadata: { uid: 'u1' }, cancel_at: 1792800000, cancel_at_period_end: false };
+  const sub = { current: trial };
+  const h = cancelHarness(sub);
+  const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, fetch: h.fetch, env: { RESEND_API_KEY: 'test' } });
+  const cancel = { type: 'customer.subscription.updated', data: { object: trial, previous_attributes: { cancel_at: null } } };
+  assert.equal((await h.send(handler, { id: 'evt_cancel', ...cancel })).code, 200);
+  assert.equal(h.emails.length, 1);
+  assert.match(h.emails[0].subject, /trial is cancelled/);
+  assert.match(h.emails[0].text, /won't be charged/);
+  assert.equal(h.store.get('users/u1').plan, 'super', 'they keep Plus until the trial ends');
+  // A second notification for the same cancellation must not email again.
+  await h.send(handler, { id: 'evt_cancel_again', ...cancel });
+  assert.equal(h.emails.length, 1);
+  // The trial ends: downgrade, but no duplicate "cancelled" email.
+  sub.current = { ...trial, status: 'canceled' };
+  await h.send(handler, { id: 'evt_end', type: 'customer.subscription.deleted', data: { object: sub.current } });
+  assert.equal(h.store.get('users/u1').plan, 'free');
+  assert.equal(h.emails.length, 1);
+});
+
+test('Renewals and plan changes do not send a cancellation email', async () => {
+  const active = { id: 'sub_1', customer: 'cus_1', status: 'active', items: PLUS_PRICE, metadata: { uid: 'u1' }, cancel_at: null, cancel_at_period_end: false };
+  const h = cancelHarness({ current: active });
+  const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, fetch: h.fetch, env: { RESEND_API_KEY: 'test' } });
+  await h.send(handler, { id: 'evt_renew', type: 'customer.subscription.updated', data: { object: active, previous_attributes: { status: 'trialing' } } });
+  assert.equal(h.emails.length, 0);
+});
+
+test('An immediate cancellation still gets the cancelled email', async () => {
+  const ended = { id: 'sub_1', customer: 'cus_1', status: 'canceled', items: PLUS_PRICE, metadata: { uid: 'u1' } };
+  const h = cancelHarness({ current: ended });
+  const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, fetch: h.fetch, env: { RESEND_API_KEY: 'test' } });
+  await h.send(handler, { id: 'evt_now', type: 'customer.subscription.deleted', data: { object: ended } });
+  assert.equal(h.emails.length, 1);
+  assert.match(h.emails[0].subject, /has been cancelled/);
 });
 
 test('Delayed checkout cannot replace a newer subscription', async () => {

@@ -194,6 +194,50 @@ Knox Knows`;
   await sendEmail(email, `Your ${p.name} subscription has been cancelled`, textBody, htmlBody, "Refund");
 }
 
+// ── Cancellation confirmed (scheduled) email ────────────────────────────────
+// Cancelling in the billing portal usually doesn't end the subscription right
+// away: Stripe marks it to cancel at the end of the trial/billing period, so
+// `customer.subscription.deleted` (and its email) only arrives on that later
+// date. Without this, someone who cancels hears nothing until then.
+function formatEndDate(unixSeconds) {
+  if (!unixSeconds) return null;
+  return new Date(unixSeconds * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+async function sendCancelScheduledEmail(email, plan, { trial, endsAt }) {
+  const p = PLAN_NAMES[plan] || { name: "Knox Plus" };
+  const end = formatEndDate(endsAt);
+  const what = trial ? `free trial of ${p.name}` : `${p.name} subscription`;
+  const charge = trial ? "You won't be charged." : "You won't be charged again.";
+  const keep = end ? `You can keep using ${p.name} until ${end}. After that` : "When it ends";
+
+  const textBody = `Hey,
+
+You've cancelled your ${what}. ${charge}
+
+${keep}, you'll be back on the free plan with 5 free questions a day (save up to 20), so you can keep using Knox anytime.
+
+Changed your mind? Open the account menu on knoxknowsapp.com and choose Manage Billing to keep your plan.
+
+If something about Knox didn't work for you, just reply to this email — I read every message personally.
+
+— Sion
+Knox Knows`;
+
+  const htmlBody = knoxEmailShell(`
+    <p style="margin:0 0 16px;">Hey,</p>
+    <p style="margin:0 0 16px;">You've cancelled your <strong>${what}</strong>. ${charge}</p>
+    <p style="margin:0 0 16px;">${keep}, you'll be back on the free plan with 5 free questions a day (save up to 20), so you can keep using Knox anytime.</p>
+    <p style="margin:0 0 16px;">Changed your mind? Open the account menu on <a href="https://knoxknowsapp.com" style="color:#FF6B00;font-weight:600;">knoxknowsapp.com</a> and choose <strong>Manage Billing</strong> to keep your plan.</p>
+    <p style="margin:0 0 16px;">If something about Knox didn't work for you, just reply to this email — I read every message personally.</p>
+    <p style="margin:0 0 2px;">— Sion</p>
+    <p style="margin:0;color:#6B7280;font-size:14px;">Knox Knows</p>
+  `);
+
+  const subject = trial ? `Your ${p.name} trial is cancelled` : `Your ${p.name} subscription is cancelled`;
+  await sendEmail(email, subject, textBody, htmlBody, "Cancel scheduled");
+}
+const isCancelScheduled = s => !!s && (s.cancel_at_period_end === true || !!s.cancel_at);
+
 // ── Idempotency check ──────────────────────────────────────────────────────
 // Stripe occasionally retries webhooks. Without idempotency we'd send
 // duplicate emails and run duplicate Firestore writes. Returns true if we've
@@ -377,6 +421,34 @@ export default async function handler(req, res) {
         if (uid && await applyActiveSubscription(uid, subscription)) {
           const plan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
           console.log(`✓ Plan updated: uid=${uid} plan=${plan} status=${subscription.status}`);
+
+          // Cancellation just scheduled (or undone) in the billing portal.
+          // Compare against this event's previous values so ordinary renewals
+          // and plan changes never trigger it, and only email if it's still
+          // scheduled now (they may have undone it a moment later).
+          const prev = event.data.previous_attributes || {};
+          const changed = 'cancel_at_period_end' in prev || 'cancel_at' in prev;
+          const wasScheduled = isCancelScheduled({ ...event.data.object, ...prev });
+          const ref = db.collection('users').doc(uid);
+          if (changed && !wasScheduled && isCancelScheduled(subscription)) {
+            // One confirmation per subscription, even if Stripe retries.
+            const first = await db.runTransaction(async tx => {
+              const snap = await tx.get(ref);
+              if (snap.exists && snap.data().cancelNoticeFor === subscription.id) return false;
+              tx.set(ref, { cancelNoticeFor: subscription.id, cancelScheduledAt: new Date().toISOString() }, { merge: true });
+              return true;
+            });
+            if (first) {
+              await sendCancelScheduledEmail(await resolveEmail(subscription), plan, {
+                trial: subscription.status === 'trialing',
+                endsAt: subscription.cancel_at || subscription.trial_end || subscription.items?.data?.[0]?.current_period_end || subscription.current_period_end,
+              });
+            }
+          } else if (changed && wasScheduled && !isCancelScheduled(subscription)) {
+            // They kept their plan — a future cancellation should email again.
+            await ref.set({ cancelNoticeFor: null }, { merge: true });
+            console.log(`✓ Cancellation undone: uid=${uid}`);
+          }
         }
         break;
       }
@@ -401,12 +473,16 @@ export default async function handler(req, res) {
               plan: comped ? 'super' : 'free',
               planStatus: comped ? 'comped' : 'cancelled',
               cancelledAt: new Date().toISOString(), stripeSubscription: null,
+              cancelNoticeFor: null,
             }, { merge: true });
-            return true;
+            // Already told them when they cancelled (with the end date)?
+            return { noticed: snap.data().cancelNoticeFor === subscription.id };
           });
           if (cancelled) {
             console.log(`✓ Plan cancelled: uid=${uid}`);
-            await sendRefundEmail(email, plan);
+            // Immediate cancels, refunds and failed payments still get this
+            // email; a cancellation already confirmed earlier doesn't get a second.
+            if (!cancelled.noticed) await sendRefundEmail(email, plan);
           }
         }
         break;
