@@ -217,5 +217,7 @@ html[data-theme="dark"] .sidebar-quicknav-link.fc-nav:hover, html[data-theme="da
 /* "Beta" tag on the Flashcards tab */
 .fc-beta { margin-left:auto; font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--green-dark); background:var(--green-light); border:1.5px solid var(--green); border-radius:999px; padding:2px 7px; line-height:1.2; }
 html[data-theme="dark"] .fc-beta { color:var(--green); }
+/* Collapsed sidebar: drop the tag entirely so the icon centers like the others. */
+body.app-sidebar-collapsed .fc-beta { display:none; }
 
 .sidebar-quicknav-link.fc-nav.fc-locked { display:none !important; }
