@@ -159,7 +159,7 @@ function renderEditor(){
     <div class="fc-savebar">${btn('Cancel','back')}${btn('Save deck','save',{cls:'primary'})}</div>`);
 }
 
-function start(id,due){const deck=decks.find(d=>d.id===id);const queue=studyQueue(deck.cards,due);if(!queue.length){home();message('You’re all caught up! Use Practice all to review ahead.','ok');return;}session={id,queue,flipped:false,reviewed:0,again:0,total:queue.length};study();}
+function start(id,due){const deck=decks.find(d=>d.id===id);const queue=studyQueue(deck.cards,due);if(!queue.length){home();message('You’re all caught up! Use Practice all to review ahead.','ok');return;}session={id,queue,flipped:false,reviewed:0,again:0,total:queue.length,retry:new Set()};study();}
 function controls(){
   const s=session;
   return s.flipped
@@ -176,16 +176,16 @@ function study(){
       <div class="fc-toolbar">${btn('Back to decks','back',{cls:'primary'})}${btn('Practice again','practice',{attrs:`data-id="${esc(d.id)}"`})}</div></div>`,true);
     return;
   }
-  const c=d.cards[s.queue[0]];
+  const c=d.cards[s.queue[0]],retry=s.retry.has(s.queue[0]);
   const pct=Math.round(s.reviewed/(s.reviewed+s.queue.length)*100);
   frame(null,`<div class="fc-topbar fc-study-top">${btn('← Finish','back',{cls:'ghost'})}<span class="fc-pill">${esc(d.title)}</span></div>
     <div class="fc-progress"><div class="fc-progress-text"><span>${s.reviewed} reviewed</span><span>${s.queue.length} to go</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
     <div class="fc-stage"><button type="button" class="fc-card${s.flipped?' is-flipped':''}" data-action="flip" aria-label="${s.flipped?'Show question':'Reveal answer'}"><div class="fc-card-inner">
-      <div class="fc-face front"><span class="fc-face-label">Question</span><p class="fc-face-text">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
+      <div class="fc-face front"><span class="fc-face-label${retry?' retry':''}">${retry?'↻ Try again':'Question'}</span><p class="fc-face-text">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
       <div class="fc-face back"><span class="fc-face-label">Answer</span><p class="fc-face-text">${esc(c.back)}</p><span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
     </div></button></div>
     <div class="fc-controls" id="fcControls">${controls()}</div>
-    <p class="fc-tip">Again brings the card back later this session. Good and Easy schedule it for another day.</p>`,true);
+    <p class="fc-tip">Again brings the card back in a few cards. Good and Easy schedule it for another day.</p>`,true);
 }
 // Flip in place so the card animates instead of being redrawn.
 function flip(){
@@ -259,7 +259,7 @@ panel.addEventListener('click',async e=>{
  if(action==='sample'){const d=validateDeck({title:'Study smarter · Starter deck',cards:[{front:'What is active recall?',back:'Trying to pull an answer out of your memory before checking it.'},{front:'What is spaced repetition?',back:'Reviewing across several sessions, with longer gaps as you remember better.'},{front:'What makes a useful flashcard?',back:'One clear question, one focused answer, and enough context to avoid confusion.'}]});if(save([...decks,{...d,id:crypto.randomUUID()}])){home();message('Sample deck added — try Review due.','ok');}}
  if(action==='due'||action==='practice')start(id,action==='due');
  if(action==='flip'&&session)flip();
- if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.push(index);s.again++;}s.reviewed++;s.flipped=false;study();}
+ if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;study();}
  if(action==='import'){const input=document.createElement('input');input.type='file';input.accept='.json,application/json';const owner=identity;input.onchange=async()=>{try{const f=input.files[0];if(!f)return;if(f.size>2000000)throw Error('Choose a JSON backup smaller than 2 MB.');const raw=JSON.parse(await f.text());if(owner!==key())return;if(raw.version!==1||!Array.isArray(raw.decks)||raw.decks.length>100)throw Error('Choose a Knox flashcard export (up to 100 decks).');const incoming=raw.decks.map(d=>({...validateDeck(d),id:crypto.randomUUID()}));if(save([...decks,...incoming])){home();message('Imported as new decks. Study schedules start fresh.','ok');}}catch(err){message(err.message);}};input.click();}
  }catch(err){message(err.message);}
 });

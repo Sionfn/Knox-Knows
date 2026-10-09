@@ -118,6 +118,9 @@ body.knox-flashcards #chatAndInput > :not(#flashcardsPanel) { display:none !impo
 .fc-face.back .fc-face-label { background:var(--green-light); color:var(--green-dark); }
 html[data-theme="dark"] .fc-face-label { color:var(--blue); }
 html[data-theme="dark"] .fc-face.back .fc-face-label { color:var(--green); }
+/* A card you marked Again, back for another try. */
+.fc-face-label.retry { background:var(--orange-light); color:var(--orange-dark); }
+html[data-theme="dark"] .fc-face-label.retry { color:var(--orange); }
 .fc-face-text { font-size:clamp(20px,3vw,28px); font-weight:800; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--text); margin:0; }
 .fc-face-hint { font-size:12.5px; font-weight:800; color:var(--text-light); }
 .fc-card:hover .fc-face { filter:brightness(1.02); }
