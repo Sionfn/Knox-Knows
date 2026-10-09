@@ -105,6 +105,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
+      --nav-hl:        14%; /* sidebar tab highlight strength — same for every tab */
       --orange:        #FF6B00;
       --orange-dark:   #CC5500;
       --orange-light:  #FFE0C2;
@@ -158,6 +159,7 @@
        before first paint and avoid a light-mode flash for anyone who's
        chosen dark. */
     html[data-theme="dark"] {
+      --nav-hl:        22%;
       /* Accents — deliberately unchanged from light mode. */
       --orange:        #FF6B00;
       --orange-dark:   #CC5500;
@@ -644,13 +646,14 @@
       width: 100%; border: 0; background: transparent; cursor: pointer; font-family: inherit; text-align: left;
     }
     /* Each quick-nav item hovers/highlights in ITS OWN icon color, not a
-       blanket orange — Ask = orange, Calculator = blue, Learn = purple. */
+       blanket orange — Ask = orange, Calculator = blue, Learn = purple. Every tab
+       uses the same strength of its color (--nav-hl), so none looks louder. */
     .sidebar-quicknav-link[data-nav="chat"]:hover,
-    .sidebar-quicknav-link[data-nav="chat"].sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
+    .sidebar-quicknav-link[data-nav="chat"].sidebar-nav-active { background: color-mix(in srgb, var(--orange) var(--nav-hl), transparent); color: var(--orange); }
     .sidebar-quicknav-link[data-nav="calculator"]:hover,
-    .sidebar-quicknav-link[data-nav="calculator"].sidebar-nav-active { background: var(--blue-light); color: var(--blue); }
+    .sidebar-quicknav-link[data-nav="calculator"].sidebar-nav-active { background: color-mix(in srgb, var(--blue) var(--nav-hl), transparent); color: var(--blue); }
     .sidebar-quicknav-link[data-nav="learn"]:hover,
-    .sidebar-quicknav-link[data-nav="learn"].sidebar-nav-active { background: var(--purple-light); color: var(--purple); }
+    .sidebar-quicknav-link[data-nav="learn"].sidebar-nav-active { background: color-mix(in srgb, var(--purple) var(--nav-hl), transparent); color: var(--purple); }
     /* Sticker icon tiles — chunkier bottom shadow (0 3px 0) in each color's
        darker shade, matching the Duolingo-style depth Knox uses everywhere
        else. currentColor made the shadow the exact same tone as the icon,
@@ -976,11 +979,11 @@
     #mobileHistoryDrawer .drawer-close { width: 34px; height: 34px; }
     #mobileHistoryDrawer .sidebar-quicknav-link { font-size: 14px; padding: 10px 12px; }
     #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="chat"]:hover,
-    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="chat"].sidebar-nav-active { background: var(--orange-cream); color: var(--orange); }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="chat"].sidebar-nav-active { background: color-mix(in srgb, var(--orange) var(--nav-hl), transparent); color: var(--orange); }
     #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="calculator"]:hover,
-    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="calculator"].sidebar-nav-active { background: var(--blue-light); color: var(--blue); }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="calculator"].sidebar-nav-active { background: color-mix(in srgb, var(--blue) var(--nav-hl), transparent); color: var(--blue); }
     #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="learn"]:hover,
-    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="learn"].sidebar-nav-active { background: var(--purple-light); color: var(--purple); }
+    #mobileHistoryDrawer .sidebar-quicknav-link[data-mobile-nav="learn"].sidebar-nav-active { background: color-mix(in srgb, var(--purple) var(--nav-hl), transparent); color: var(--purple); }
     #mobileHistoryDrawer .drawer-body {
       flex: 1; overflow-y: auto; padding: 4px 9px 8px;
       background: var(--surface);

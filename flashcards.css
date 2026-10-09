@@ -154,7 +154,7 @@ html[data-theme="dark"] .fc-grade.easy { color:var(--blue); }
 
 /* ── Sidebar entry (green, like History in the extension) ── */
 .fc-nav .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); box-shadow:0 3px 0 var(--green-dark); }
-.sidebar-quicknav-link.fc-nav:hover, .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green-dark); background:var(--green-light); }
+.sidebar-quicknav-link.fc-nav:hover, .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green-dark); background:color-mix(in srgb, var(--green) var(--nav-hl), transparent); }
 html[data-theme="dark"] .sidebar-quicknav-link.fc-nav:hover, html[data-theme="dark"] .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green); }
 
 @media (max-width:640px) {
