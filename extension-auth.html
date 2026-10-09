@@ -101,7 +101,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-             signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+             signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -139,6 +139,20 @@
       $("emailSection").style.display = "";
       $("useEmailToggle").style.display = "none";
     };
+
+    // New accounts made here get the same welcome email as the website and app.
+    // Fire-and-forget: the server sends it at most once per account.
+    async function welcomeIfNew(res) {
+      if (!getAdditionalUserInfo(res)?.isNewUser) return;
+      try {
+        const token = await res.user.getIdToken();
+        fetch("/api/send-welcome-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({ name: res.user.displayName || "" }),
+        }).catch(() => {});
+      } catch (e) { /* non-critical */ }
+    }
 
     async function handoff(user) {
       const idToken = await user.getIdToken();
@@ -191,6 +205,7 @@
       $("googleBtn").disabled = true;
       try {
         const res = await signInWithPopup(auth, new GoogleAuthProvider());
+        welcomeIfNew(res);
         await handoff(res.user);
       } catch (e) {
         // Only bring the email/password form back if the user actually
@@ -218,6 +233,7 @@
       try {
         const fn = isSignup ? createUserWithEmailAndPassword : signInWithEmailAndPassword;
         const res = await fn(auth, email, pw);
+        welcomeIfNew(res);
         await handoff(res.user);
       } catch (e) { $("err").textContent = friendly(e); }
     };
