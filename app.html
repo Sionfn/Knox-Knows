@@ -342,6 +342,9 @@
       transition: background 0.15s;
     }
     #headerUsage:hover { background: rgba(255,255,255,0.24); }
+    /* Only the collapsed desktop sidebar shows these (see its rules below);
+       hidden everywhere else, including the phone and tablet header. */
+    #headerUsageShort, .guest-avatar-btn { display: none; }
     #headerUsage .usage-dot {
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
@@ -1004,7 +1007,6 @@
       /* Collapsed sidebar, signed in: keep the questions-left pill (just the
          number, or "Plus") above the profile picture, and give the picture
          the same 34px size as the full sidebar. */
-      #headerUsageShort { display: none; }
       body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row { display: flex !important; flex-direction: column; align-items: center; width: 100%; }
       body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row #streakPill { display: none !important; }
       body.app-sidebar-collapsed #sidebarControlsSlot #headerUsage { width: 46px; flex: 0 0 auto; height: 30px; gap: 4px; padding: 0 5px; }
@@ -1013,7 +1015,6 @@
       #sidebarControlsSlot #appAccountIcon { flex-shrink: 0; }
       /* Guests, small sidebar: same layout as members — the credits pill (● 1)
          on top, and where members have their picture, one sign-up button. */
-      .guest-avatar-btn { display: none; }
       body.app-sidebar-collapsed.app-guest #sidebarControlsSlot .account-status-row { display: flex !important; flex-direction: column !important; align-items: center; width: 100%; }
       body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns .header-login-btn { display: none; }
       body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns { justify-content: center; }
