@@ -3413,10 +3413,12 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       // History belongs to signed-in accounts — guests don't get saved
       // history, so the empty state points them to sign in instead of
       // implying their questions will be saved.
+      // Show it too: after a sign-out it's still hidden from when the
+      // account's chats were listed, which left the list blank.
       const emptyEl = document.getElementById('sidebarHistoryEmpty');
-      if (emptyEl) emptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.';
+      if (emptyEl) { emptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.'; emptyEl.style.display = ''; }
       const mEmptyEl = document.getElementById('mobileHistoryEmpty');
-      if (mEmptyEl) mEmptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.';
+      if (mEmptyEl) { mEmptyEl.innerHTML = '<div style="font-size:28px;margin-bottom:6px;">🦊</div>Sign in to save your chat history.'; mEmptyEl.style.display = ''; }
     }
   }
   window.updatePlanUI = updatePlanUI;
