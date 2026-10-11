@@ -336,12 +336,15 @@ test('Text, photo and Learn use GPT-6 Luna; exact small talk is local', async ()
   assert.equal(text.body.model, 'gpt-6-luna');
   assert.equal(photo.body.model, 'gpt-6-luna');
   assert.equal(casual.body.isCasual, true);
-  assert.equal(requests.length, 3);
+  // The small-talk check (gpt-4.1-mini) runs on short non-Learn text; the
+  // answers themselves are the three GPT-6 Luna calls.
+  const answers = requests.filter(request => request.model !== 'gpt-4.1-mini');
+  assert.equal(answers.length, 3);
   assert.equal(learn.body.model, 'gpt-6-luna');
-  assert.equal(requests[1].max_completion_tokens, 12000);
-  assert.match(requests[1].messages[0].content, /solve every problem in the photo/);
-  assert.doesNotMatch(requests[1].messages[0].content, /ask where to start/);
-  assert.ok(requests.every(request => request.temperature === undefined));
+  assert.equal(answers[1].max_completion_tokens, 12000);
+  assert.match(answers[1].messages[0].content, /solve every problem in the photo/);
+  assert.doesNotMatch(answers[1].messages[0].content, /ask where to start/);
+  assert.ok(answers.every(request => request.temperature === undefined));
 });
 
 test('Learn mode photos get teaching instructions, not the solve-everything rule', async () => {
@@ -707,4 +710,49 @@ test('Make with Knox: Plus cap, and failed generations give credits back', async
   await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db: free.db, fetch: aiFetch('', { ok: false }).fetch }))(deckReq(), down);
   assert.equal(down.code, 502);
   assert.equal(free.store.get('users/u1/usage/bank').balance, 9, 'AI outage refunds the 3 questions');
+});
+
+// ── Small talk is free (classifier restored from before the Oct 1 release) ──
+function chatFetch(verdict, { classifierFails = false } = {}) {
+  const calls = [];
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    calls.push(body);
+    if (body.model === 'gpt-4.1-mini') {
+      if (classifierFails) return { ok: false, text: async () => 'down' };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: verdict } }] }) };
+    }
+    return { ok: true, json: async () => ({ choices: [{ message: { content: 'Haha same. Long day?' }, finish_reason: 'stop' }] }) };
+  };
+  return { fetch, calls };
+}
+
+test('Small talk ("how are you", venting) is free for free users', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1/usage/bank', { balance: 7, lastRegenAt: Date.now() });
+  const ai = chatFetch('CASUAL');
+  const handler = await load('api/ask.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler(askRequest({ question: 'how are you doing today lol', history: [] }), res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.isCasual, true);
+  assert.equal(store.get('users/u1/usage/bank').balance, 7, 'no credit spent on small talk');
+  const reply = ai.calls.find(call => call.model !== 'gpt-4.1-mini');
+  assert.match(reply.messages[0].content, /You're Knox/);
+  assert.match(reply.messages[0].content, /988/, 'the crisis safety guidance is in the chat prompt');
+  assert.match(reply.messages[0].content, /be honest: you're an AI/);
+  assert.equal(reply.max_completion_tokens, 1500);
+});
+
+test('Real questions still cost a credit, even when phrased casually; classifier errors charge', async () => {
+  for (const [verdict, opts] of [['SUBSTANTIVE', {}], ['CASUAL', { classifierFails: true }]]) {
+    const { db, store } = memoryDb();
+    store.set('users/u1/usage/bank', { balance: 7, lastRegenAt: Date.now() });
+    const handler = await load('api/ask.js', { db, fetch: chatFetch(verdict, opts).fetch });
+    const res = response();
+    await handler(askRequest({ question: 'yo can u help me with 2x + 3 = 11', history: [] }), res);
+    assert.equal(res.code, 200);
+    assert.equal(res.body.isCasual, false);
+    assert.equal(store.get('users/u1/usage/bank').balance, 6);
+  }
 });

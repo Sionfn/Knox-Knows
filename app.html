@@ -4084,23 +4084,38 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   function renderHistoryInto(list, empty, snaps, append = false) {
     if (!list) return;
     const keepScroll = list.scrollTop; // a refresh shouldn't jump the list back to the top
-    if (!append) list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
+    // A refresh (after every answer) reuses the rows already on screen and
+    // only adds, re-titles or reorders what changed. Rebuilding every row
+    // made the list flash: the current chat's highlight faded back in and
+    // the row under the mouse lost its hover for a moment.
+    const prior = new Map(Array.from(list.querySelectorAll('.sidebar-history-item[data-conversation-id]'), el => [el.dataset.conversationId, el]));
+    const kept = new Set();
+    if (!append) list.querySelectorAll('.sidebar-history-item:not([data-conversation-id])').forEach(el => el.remove());
     if (snaps.empty && !append) {
+      prior.forEach(el => el.remove());
       if (empty) empty.style.display = '';
       return;
     }
     if (empty) empty.style.display = 'none';
-    const existing = new Set(Array.from(list.querySelectorAll('.sidebar-history-item[data-conversation-id]'), el => el.dataset.conversationId));
     snaps.docs.forEach(s => {
       if (deletedHistory.has(window.currentUser?.uid + '/' + s.id)) return;
-      if (existing.has(s.id)) return;
+      const old = prior.get(s.id);
+      if (append && old) return;
       const d     = s.data();
+      const rowKey = String(d.title) + '|' + (d.type || 'chat');
+      if (old && old.dataset.rowKey === rowKey && !old.classList.contains('shi-removing')) {
+        list.appendChild(old); // same chat, same title: just move it into place
+        kept.add(s.id);
+        return;
+      }
+      if (old) old.remove();
       const qText = String((d.title === '[image]' ? '📷 Photo' : d.title) || 'Untitled').substring(0, 200);
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
       const row = document.createElement('div');
-      row.className = 'sidebar-history-item';
+      row.className = 'sidebar-history-item' + (convId === window._currentConversationId ? ' is-current' : '');
+      row.dataset.rowKey = rowKey;
       row.setAttribute('role', 'button');
       row.setAttribute('tabindex', '0');
       row.dataset.conversationId = convId;
@@ -4181,7 +4196,9 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         }
       };
       list.appendChild(row);
+      kept.add(convId);
     });
+    if (!append) prior.forEach((el, id) => { if (!kept.has(id)) el.remove(); });
     if (!append) list.scrollTop = keepScroll;
     window.syncActiveHistoryRows();
   }
