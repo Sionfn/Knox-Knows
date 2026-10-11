@@ -1917,7 +1917,7 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    .auth-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
+    .auth-submit:hover  { filter: brightness(1.07); box-shadow: 0 5px 0 var(--orange-dark); } /* no lift: moving under the pointer flickers at the edge */
     .auth-submit:active { transform: translateY(2px);  box-shadow: none; }
     .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
     .auth-forgot {
