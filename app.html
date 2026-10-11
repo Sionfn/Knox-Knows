@@ -4357,7 +4357,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
               '<div class="msg-knox-label">Knox' + (window.currentUser?.email?.toLowerCase().trim() === 'sion22comp@gmail.com' && ['gpt-5.6-luna', 'gpt-6-luna'].includes(d.model)
                 ? '<span class="knox-model-reply"> · ' + (d.model === 'gpt-6-luna' ? '6 Knox' : '5.6 Knox') + '</span>' : '') + '</div>' +
               '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive && d.model !== 'knox-chat' ? 'learn' : 'answer') + '</div>' +
-              buildMessageActionsHtml(historyFbId, false) +
+              (d.model === 'knox-chat' ? '' : buildMessageActionsHtml(historyFbId, false)) +
             '</div>' +
           '</div>';
         thread.appendChild(knoxRow);
@@ -5935,7 +5935,8 @@ window.appHandleAsk = async function() {
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
-    replaceThinking(thinkId, html, window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
+    // Small talk is a one-line chat reply: no copy / "Was this helpful?" bar under it.
+    replaceThinking(thinkId, html, data.isCasual ? '' : window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
     // Track conversation
     window._conversation.push({ role: 'user',      content: q || '📷 Photo' });
