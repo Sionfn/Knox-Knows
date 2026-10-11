@@ -1011,6 +1011,18 @@
       body.app-sidebar-collapsed #headerUsageShort { display: inline; font-size: 11px; font-weight: 900; line-height: 1; }
       body.app-sidebar-collapsed #sidebarControlsSlot #appAccountBtn { width: 46px; flex: 0 0 52px; height: 52px; padding: 5px; } /* column here: flex-basis is the height */
       #sidebarControlsSlot #appAccountIcon { flex-shrink: 0; }
+      /* Guests, small sidebar: same layout as members — the credits pill (● 1)
+         on top, and where members have their picture, one sign-up button. */
+      .guest-avatar-btn { display: none; }
+      body.app-sidebar-collapsed.app-guest #sidebarControlsSlot .account-status-row { display: flex !important; flex-direction: column !important; align-items: center; width: 100%; }
+      body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns .header-login-btn { display: none; }
+      body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns { justify-content: center; }
+      body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns .guest-avatar-btn {
+        display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 46px; height: 36px; padding: 0; /* same as the pill above, and keeps the footer height */
+        border: 0; border-radius: 14px; background: var(--orange); color: #fff; cursor: pointer;
+        box-shadow: 0 3px 0 var(--orange-dark); transition: filter .15s;
+      }
+      body.app-sidebar-collapsed.app-guest #sidebarControlsSlot #appGuestBtns .guest-avatar-btn:hover { filter: brightness(1.07); }
       body.app-sidebar-collapsed .sidebar-quicknav { padding-left: 8px; padding-right: 8px; }
       body.app-sidebar-collapsed .sidebar-quicknav-link { padding-left: 0; padding-right: 0; }
       .sidebar-quicknav-link, .sidebar-section-header { white-space: nowrap; }
@@ -2633,6 +2645,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       <div id="appGuestBtns">
         <button class="header-login-btn" onclick="openAuthModal()">Login</button>
         <button class="header-login-btn header-signup-btn" onclick="openAuthModal('signup')">Sign up</button>
+        <button class="guest-avatar-btn" onclick="openAuthModal('signup')" aria-label="Sign up or log in" title="Sign up or log in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-3.9 3.1-7 7-7 1.6 0 3 .5 4.2 1.4"/><path d="M19 15v6M16 18h6"/></svg></button>
       </div>
     </div>
   </header>
@@ -3429,6 +3442,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         usage.classList.toggle('danger', left === 0);
         usage.classList.remove('unlimited');
         text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
+        setUsageShort(String(left));
         // For guests the pill opens sign-up rather than the usage breakdown.
         usage.onclick = () => window.openAuthModal?.('signup');
       }
@@ -3489,6 +3503,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       usage.classList.toggle('danger', left === 0);
       usage.classList.remove('unlimited');
       text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
+      setUsageShort(String(left));
       usage.onclick = () => window.openAuthModal?.('signup');
       return;
     }
