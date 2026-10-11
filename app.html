@@ -3903,12 +3903,9 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     historyCursor = null;
     historyHasMore = true;
     historyLoading = false;
-    for (const id of ['sidebarHistoryList', 'mobileHistoryList']) {
-      const list = document.getElementById(id);
-      if (!list) continue;
-      list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
-      list.scrollTop = 0;
-    }
+    // Keep the current rows on screen until the fresh page arrives:
+    // renderHistoryInto swaps them in one step, so refreshing after every
+    // answer doesn't blank the list (and make the cards below jump).
     await loadMoreSidebarHistory();
   }
   window.loadSidebarHistory = loadSidebarHistory;
@@ -3976,6 +3973,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 
   function renderHistoryInto(list, empty, snaps, append = false) {
     if (!list) return;
+    const keepScroll = list.scrollTop; // a refresh shouldn't jump the list back to the top
     if (!append) list.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
     if (snaps.empty && !append) {
       if (empty) empty.style.display = '';
@@ -4074,6 +4072,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       };
       list.appendChild(row);
     });
+    if (!append) list.scrollTop = keepScroll;
     window.syncActiveHistoryRows();
   }
 
