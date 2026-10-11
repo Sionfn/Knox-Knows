@@ -717,17 +717,18 @@
       background: var(--surface);
       overscroll-behavior: contain;
       scrollbar-gutter: stable;
-      /* Firefox: keep the reserved gutter but hide the visible track/thumb
-         so it doesn't read as a vertical line down the sidebar (especially
-         in dark mode where the thumb color contrasted with the surface). */
-      scrollbar-width: none;
     }
-    /* WebKit: the gutter is still reserved by `overflow-y: scroll`, but the
-       scrollbar itself is transparent until you actually hover the list —
-       so no permanent line, no wobble. */
-    #sidebarHistoryList::-webkit-scrollbar { width: 4px; }
-    #sidebarHistoryList::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; transition: background 0.15s; }
-    #sidebarHistoryList:hover::-webkit-scrollbar-thumb { background: var(--border); }
+    /* Knox-style scroll bar: a rounded orange pill on a soft track, so it's
+       clear the chat list scrolls. The gutter is always reserved (above), so
+       showing it never shifts the rows. */
+    #sidebarHistoryList::-webkit-scrollbar { width: 10px; }
+    #sidebarHistoryList::-webkit-scrollbar-track { background: color-mix(in srgb, var(--border) 45%, transparent); border-radius: 999px; margin: 6px 0; border: 3px solid var(--surface); }
+    #sidebarHistoryList::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--orange) 70%, var(--surface)); border-radius: 999px; border: 2px solid var(--surface); }
+    #sidebarHistoryList::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+    /* Firefox has no ::-webkit-scrollbar: a thin bar in the same colors. */
+    @supports not selector(::-webkit-scrollbar) {
+      #sidebarHistoryList { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--orange) 70%, var(--surface)) transparent; }
+    }
     #sidebarHistoryEmpty {
       /* The list inherits nowrap from .sidebar-collapsible; the empty-state
          sentence must wrap or it runs off the sidebar edge. */
@@ -848,6 +849,27 @@
     .sidebar-extension-copy span { font-size: 11px; font-weight: 800; color: var(--blue); }
     .sidebar-extension-arrow { margin-left: auto; color: var(--blue); font-size: 17px; font-weight: 900; }
     #mobileHistoryDrawer .sidebar-extension-card { margin: 8px; }
+    /* "Show all chats": once there are chats, a toggle under the list hides the
+       promo cards (Discord, Chrome, Plus) so recent chats get the whole sidebar. */
+    .sidebar-history-toggle {
+      display: none; align-items: center; justify-content: center; gap: 6px;
+      margin: 4px 10px 6px; padding: 7px 10px; flex-shrink: 0;
+      border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface);
+      color: var(--text-light); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer;
+      box-shadow: 0 2px 0 var(--border); transition: color .15s, border-color .15s, transform .15s;
+    }
+    .sidebar-history-toggle:hover, .sidebar-history-toggle:focus-visible { color: var(--orange); border-color: var(--orange); outline: none; transform: translateY(-1px); }
+    .sidebar-body:has(#sidebarHistoryList .sidebar-history-item) .sidebar-history-toggle { display: flex; }
+    body.app-sidebar-collapsed .sidebar-history-toggle { display: none !important; }
+    /* The Plus upgrade card stays — only the Discord and Chrome cards make room. */
+    body.knox-history-expanded .sidebar-body > .sidebar-extension-card { display: none !important; }
+    /* Discord / ambassadors card — same shape as the extension card, in Discord blurple. */
+    .sidebar-extension-card.sidebar-discord-card { --discord: #5865F2; border-color: var(--discord); background: color-mix(in srgb, var(--discord) 12%, var(--surface)); margin-bottom: 6px; }
+    .sidebar-discord-card:hover, .sidebar-discord-card:focus-visible { box-shadow: 0 3px 0 var(--discord); }
+    .sidebar-discord-card .discord-icon { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--discord); color: #fff; box-shadow: 0 2px 0 #3C45A5; }
+    .sidebar-discord-card .sidebar-extension-copy span, .sidebar-discord-card .sidebar-extension-arrow { color: var(--discord); }
+    html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-copy span, html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-arrow { color: #8C95FF; }
+    #mobileHistoryDrawer .sidebar-discord-card { margin-bottom: 0; }
     .sidebar-control-label { display: none; }
     .account-status-row, .account-dock { display: contents; }
     #sidebarSettingsBtn, #appAccountPlanBadge { display: none; }
@@ -2456,6 +2478,12 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
           Ask Knox something and your questions will appear here.
         </div>
       </div>
+      <button type="button" class="sidebar-history-toggle sidebar-collapsible" id="sidebarHistoryToggle" aria-expanded="false" onclick="toggleHistoryExpanded()">Show all chats <span aria-hidden="true">↓</span></button>
+      <a class="sidebar-extension-card sidebar-collapsible sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Become a Knox Ambassador — join the Knox Knows Discord">
+        <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
+        <span class="sidebar-extension-copy"><strong>Become a Knox Ambassador</strong><span>Join our Discord</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+      </a>
       <a class="sidebar-extension-card sidebar-collapsible" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
         <img src="/knox-logo-square.jpg" alt="" loading="lazy">
         <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
@@ -2938,6 +2966,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
           Your past questions will show up here.
         </div>
       </div>
+      <a class="sidebar-extension-card sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Become a Knox Ambassador — join the Knox Knows Discord">
+        <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
+        <span class="sidebar-extension-copy"><strong>Become a Knox Ambassador</strong><span>Join our Discord</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+      </a>
       <a class="sidebar-extension-card" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
         <img src="/knox-logo-square.jpg" alt="" loading="lazy">
         <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
@@ -3879,6 +3912,15 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     await loadMoreSidebarHistory();
   }
   window.loadSidebarHistory = loadSidebarHistory;
+  window.toggleHistoryExpanded = function() {
+    const on = document.body.classList.toggle('knox-history-expanded');
+    const btn = document.getElementById('sidebarHistoryToggle');
+    if (btn) {
+      btn.setAttribute('aria-expanded', String(on));
+      btn.innerHTML = on ? 'Show less <span aria-hidden="true">↑</span>' : 'Show all chats <span aria-hidden="true">↓</span>';
+    }
+    if (on) loadMoreSidebarHistory(); // the taller list may have room for the next page
+  };
 
   async function loadMoreSidebarHistory() {
     if (!window.currentUser || historyLoading || !historyHasMore) return;
