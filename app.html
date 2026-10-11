@@ -843,6 +843,11 @@
       box-shadow: 0 3px 0 var(--blue);
       outline: none;
     }
+    /* Hovering lifts the card 2px. This strip keeps the hover area under the
+       pointer while it's lifted, so resting the mouse on the bottom edge
+       doesn't flicker on/off over and over. */
+    .sidebar-extension-card { position: relative; }
+    .sidebar-extension-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 6px; }
     .sidebar-extension-card img { width: 34px; height: 34px; border: 2px solid var(--orange); border-radius: 10px; flex-shrink: 0; }
     .sidebar-extension-copy { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
     .sidebar-extension-copy strong { font-size: 12px; line-height: 1.2; }
