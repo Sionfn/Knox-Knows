@@ -862,7 +862,7 @@
     .sidebar-body:has(#sidebarHistoryList .sidebar-history-item) .sidebar-history-toggle { display: flex; }
     body.app-sidebar-collapsed .sidebar-history-toggle { display: none !important; }
     /* The Plus upgrade card stays — only the Discord and Chrome cards make room. */
-    body.knox-history-expanded .sidebar-body > .sidebar-extension-card { display: none !important; }
+    body.knox-history-expanded .sidebar-promo-rotator { display: none !important; }
     /* Discord / ambassadors card — same shape as the extension card, in Discord blurple. */
     .sidebar-extension-card.sidebar-discord-card { --discord: #5865F2; border-color: var(--discord); background: color-mix(in srgb, var(--discord) 12%, var(--surface)); margin-bottom: 6px; }
     .sidebar-discord-card:hover, .sidebar-discord-card:focus-visible { box-shadow: 0 3px 0 var(--discord); }
@@ -880,12 +880,23 @@
       .sidebar-history-item { padding-top: 7px; padding-bottom: 7px; }
       /* The three bottom cards (Discord, Chrome, Plus) share one size and one
          10px rhythm: same height, width, corners and sticker shadow. */
-      .sidebar-body > .sidebar-extension-card,
+      .sidebar-promo-rotator > .sidebar-extension-card,
       #sidebarUpgradeCard { box-sizing: border-box; height: 60px; margin: 0 10px 10px; padding: 0 11px; border-width: 1.5px; border-radius: 13px; }
-      .sidebar-body > .sidebar-extension-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 55%, transparent); }
-      .sidebar-body > .sidebar-discord-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--discord) 55%, transparent); }
-      .sidebar-body > .sidebar-extension-card:hover, .sidebar-body > .sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 var(--blue); }
-      .sidebar-body > .sidebar-discord-card:hover, .sidebar-body > .sidebar-discord-card:focus-visible { box-shadow: 0 5px 0 var(--discord); }
+      .sidebar-promo-rotator > .sidebar-extension-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 55%, transparent); }
+      .sidebar-promo-rotator > .sidebar-discord-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--discord) 55%, transparent); }
+      .sidebar-promo-rotator > .sidebar-extension-card:hover, .sidebar-promo-rotator > .sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 var(--blue); }
+      .sidebar-promo-rotator > .sidebar-discord-card:hover, .sidebar-promo-rotator > .sidebar-discord-card:focus-visible { box-shadow: 0 5px 0 var(--discord); }
+      /* One slot, two cards stacked; the active one slides up into place. */
+      .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 0 10px 7px; }
+      .sidebar-promo-rotator > .sidebar-extension-card { position: absolute; top: 0; left: 0; right: 0; margin: 0; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .15s; }
+      .sidebar-promo-rotator > .sidebar-extension-card.is-active { opacity: 1; transform: none; pointer-events: auto; }
+      .sidebar-promo-rotator > .sidebar-extension-card.is-active:hover { transform: translateY(-2px); }
+      .sidebar-promo-rotator > .sidebar-extension-card.is-leaving { opacity: 0; transform: translateY(-12px); }
+      .promo-dots { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 5px; }
+      .promo-dots button { width: 6px; height: 6px; padding: 0; border: 0; border-radius: 999px; background: var(--border); cursor: pointer; transition: width .3s, background .3s; }
+      .promo-dots button.is-active { width: 18px; background: var(--text-light); }
+      body.app-sidebar-collapsed .sidebar-promo-rotator { display: none; }
+      @media (prefers-reduced-motion: reduce) { .sidebar-promo-rotator > .sidebar-extension-card { transition: none; } }
       #sidebarUpgradeCard[style*="display: block"] { display: flex !important; }
       /* Plus card: the same card as Discord and Chrome, in Knox orange. */
       #sidebarUpgradeCard { width: calc(100% - 20px); font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: var(--orange); background: color-mix(in srgb, var(--orange) 12%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--orange) 55%, transparent); }
@@ -2489,16 +2500,54 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         </div>
       </div>
       <button type="button" class="sidebar-history-toggle sidebar-collapsible" id="sidebarHistoryToggle" aria-expanded="false" onclick="toggleHistoryExpanded()">Show all chats <span aria-hidden="true">↓</span></button>
-      <a class="sidebar-extension-card sidebar-collapsible sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Become a Knox Ambassador — join the Knox Knows Discord">
-        <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
-        <span class="sidebar-extension-copy"><strong>Become a Knox Ambassador</strong><span>Join our Discord</span></span>
-        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
-      </a>
-      <a class="sidebar-extension-card sidebar-collapsible" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
-        <img src="/knox-logo-square.jpg" alt="" loading="lazy">
-        <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
-        <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
-      </a>
+      <!-- Discord and Chrome share one slot and take turns (see the script below). -->
+      <div class="sidebar-promo-rotator sidebar-collapsible" id="sidebarPromoRotator" aria-roledescription="carousel" aria-label="Knox Knows links">
+        <a class="sidebar-extension-card sidebar-discord-card is-active" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Become a Knox Ambassador — join the Knox Knows Discord">
+          <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
+          <span class="sidebar-extension-copy"><strong>Become a Knox Ambassador</strong><span>Join our Discord</span></span>
+          <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="sidebar-extension-card" tabindex="-1" aria-hidden="true" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
+          <img src="/knox-logo-square.jpg" alt="" loading="lazy">
+          <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
+          <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
+        </a>
+        <div class="promo-dots"><button type="button" class="is-active" aria-label="Show the Discord card" aria-current="true"></button><button type="button" aria-label="Show the Chrome extension card" aria-current="false"></button></div>
+      </div>
+      <script>
+        // Rotate the promo cards every 6s with a slide-and-fade. Pauses while
+        // hovered or focused, while the tab is hidden, and for reduced motion.
+        (function() {
+          var rot = document.getElementById('sidebarPromoRotator');
+          if (!rot) return;
+          var cards = Array.prototype.slice.call(rot.querySelectorAll('.sidebar-extension-card'));
+          var dots = Array.prototype.slice.call(rot.querySelectorAll('.promo-dots button'));
+          var i = 0, timer = null;
+          function show(n) {
+            if (n === i) return;
+            var old = cards[i];
+            old.classList.remove('is-active'); old.classList.add('is-leaving');
+            setTimeout(function() { old.classList.remove('is-leaving'); }, 500);
+            i = n;
+            cards[i].classList.add('is-active');
+            cards.forEach(function(c, k) { c.tabIndex = k === i ? 0 : -1; c.setAttribute('aria-hidden', k === i ? 'false' : 'true'); });
+            dots.forEach(function(d, k) { d.classList.toggle('is-active', k === i); d.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+          }
+          function stop() { clearInterval(timer); timer = null; }
+          function start() {
+            stop();
+            if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            timer = setInterval(function() { if (!document.hidden) show((i + 1) % cards.length); }, 6000);
+          }
+          dots.forEach(function(d, k) { d.addEventListener('click', function() { show(k); start(); }); });
+          rot.addEventListener('mouseenter', stop);
+          rot.addEventListener('mouseleave', start);
+          rot.addEventListener('focusin', stop);
+          rot.addEventListener('focusout', start);
+          rot.knoxShow = show;
+          start();
+        })();
+      </script>
 
       </div><!-- end sidebar-body -->
 
