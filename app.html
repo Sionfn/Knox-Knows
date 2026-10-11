@@ -4224,7 +4224,8 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       const message = {
         question: String(question || ''),
         answer: String(answer || ''),
-        ...(['gpt-5.6-luna', 'gpt-6-luna'].includes(context.model) ? { model: context.model } : {}),
+        // 'knox-chat' marks small talk, so a reopened Learn chat doesn't label it as a lesson step.
+        ...(['gpt-5.6-luna', 'gpt-6-luna', 'knox-chat'].includes(context.model) ? { model: context.model } : {}),
         ts:       now,
       };
       if (message.question.length > 8000 || message.answer.length > 100000) throw new Error('History exceeds storage limits. Copy this answer to keep it.');
@@ -4355,7 +4356,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
             '<div class="msg-knox-content">' +
               '<div class="msg-knox-label">Knox' + (window.currentUser?.email?.toLowerCase().trim() === 'sion22comp@gmail.com' && ['gpt-5.6-luna', 'gpt-6-luna'].includes(d.model)
                 ? '<span class="knox-model-reply"> · ' + (d.model === 'gpt-6-luna' ? '6 Knox' : '5.6 Knox') + '</span>' : '') + '</div>' +
-              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive ? 'learn' : 'answer') + '</div>' +
+              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive && d.model !== 'knox-chat' ? 'learn' : 'answer') + '</div>' +
               buildMessageActionsHtml(historyFbId, false) +
             '</div>' +
           '</div>';
@@ -5790,6 +5791,7 @@ window.appHandleAsk = async function() {
 
   // Thinking row
   const thinkId  = 'think_' + Date.now();
+  const askStartedAt = Date.now();
   const thinkRow = document.createElement('div');
   thinkRow.className = 'msg-wrap';
   thinkRow.id        = thinkId;
@@ -5864,7 +5866,7 @@ window.appHandleAsk = async function() {
         await window.saveHistory(q || '📷 Photo', data.answer || '', {
           uid: requestUid, conversationId: requestConversationId,
           learnMode: requestLearnMode, sessionId: requestLearnSessionId,
-          viewVersion: requestView, model: data.model,
+          viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
         });
       }
       return;
@@ -5907,8 +5909,27 @@ window.appHandleAsk = async function() {
       window.updateStreak(window.currentUser.uid).catch(() => {});
     }
 
+    // Small talk ("thanks", "hi") can come back almost instantly, which reads
+    // as robotic — give it a short, natural thinking beat first.
+    if (data.isCasual) {
+      const wait = 850 + Math.random() * 350 - (Date.now() - askStartedAt);
+      if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+      // Switched chats (or accounts) during the pause: save it, don't show it here.
+      if (window._appViewVersion !== requestView || (window.currentUser?.uid || null) !== requestUid) {
+        if (requestUid && window.currentUser?.uid === requestUid && window.saveHistory) {
+          await window.saveHistory(q || '📷 Photo', data.answer || '', {
+            uid: requestUid, conversationId: requestConversationId,
+            learnMode: requestLearnMode, sessionId: requestLearnSessionId,
+            viewVersion: requestView, model: 'knox-chat',
+          });
+        }
+        return;
+      }
+    }
+
     const answer = data.answer || '';
-    const html   = renderAnswerHtml(answer, requestLearnMode ? 'learn' : 'answer');
+    // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
+    const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: q || '📷 Photo', answer };
 
@@ -5926,7 +5947,7 @@ window.appHandleAsk = async function() {
       await window.saveHistory(q || '📷 Photo', answer, {
         uid: requestUid, conversationId: requestConversationId,
         learnMode: requestLearnMode, sessionId: requestLearnSessionId,
-        viewVersion: requestView, model: data.model,
+        viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
       });
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
