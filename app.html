@@ -992,6 +992,11 @@
       body.app-sidebar-collapsed #sidebarControlsSlot .account-status-row,
       body.app-sidebar-collapsed #sidebarControlsSlot #darkModeToggle { display: none !important; }
       body.app-sidebar-collapsed #sidebarControlsSlot .account-dock { border-top: 0; padding-top: 0; }
+      /* Collapsing is instant, so these must not animate size or padding
+         (they had transition: all) — otherwise the avatar and pills slide
+         into place a beat after the rest of the sidebar. Colors only. */
+      #sidebarControlsSlot #appAccountBtn, #sidebarControlsSlot #streakPill,
+      #sidebarControlsSlot #headerUsage, #sidebarSettingsBtn { transition: background-color .15s, border-color .15s, color .15s; }
       body.app-sidebar-collapsed .sidebar-quicknav { padding-left: 8px; padding-right: 8px; }
       body.app-sidebar-collapsed .sidebar-quicknav-link { padding-left: 0; padding-right: 0; }
       .sidebar-quicknav-link, .sidebar-section-header { white-space: nowrap; }
