@@ -840,13 +840,8 @@ export default async function handler(req, res) {
   // casual small talk vs a real question, which controls model cost and
   // whether it counts against usage — not which "mode" runs.
   let casual = !image && /^(?:hi|hello|hey|thanks|thank you|thx|ty|bye|goodbye|good morning)[!.\s]*$/i.test(trimmedQuestion);
-  // Exact small-talk matches never need a paid provider call or user history.
-  if (casual) {
-    const answer = /^(thanks|thank you|thx|ty)/i.test(trimmedQuestion)
-      ? 'You’re welcome! What would you like to work on next?'
-      : /^(bye|goodbye)/i.test(trimmedQuestion) ? 'See you next time!' : 'Hey! What can I help you understand today?';
-    return res.status(200).json({ answer, video: null, plan, isCasual: true });
-  }
+  // Obvious greetings/thanks skip the classifier, but still get a real reply
+  // from Knox (the chat model) instead of a fixed canned line — free either way.
   // Any other short message: let the classifier decide whether it's small
   // talk ("how are you", venting, jokes). Small talk is free for everyone;
   // anything with a real question or task still counts. In Learn mode only
@@ -865,7 +860,7 @@ export default async function handler(req, res) {
       opensLearnChat = !Array.isArray(history) || history.length === 0;
     }
   }
-  if (!image && trimmedQuestion.length <= 400 && (!learnMode || opensLearnChat)) {
+  if (!casual && !image && trimmedQuestion.length <= 400 && (!learnMode || opensLearnChat)) {
     casual = await isCasualMessage(trimmedQuestion, history);
   }
 
@@ -984,7 +979,11 @@ export default async function handler(req, res) {
     isLearnFollowUp = false;
   }
 
-  const recentHistory = history.slice(-40);
+  // Small talk is free, so it only gets a short, trimmed slice of the chat —
+  // enough to remember what was just said, not a free ride for a huge context.
+  const recentHistory = casual
+    ? history.slice(-6).map(msg => ({ ...msg, content: typeof msg.content === 'string' ? msg.content.slice(0, 500) : msg.content }))
+    : history.slice(-40);
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
       messages.push({ role: msg.role, content: msg.content });

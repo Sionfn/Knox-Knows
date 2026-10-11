@@ -153,11 +153,21 @@ test('Changing billing expires the old open checkout before creating a new one',
   assert.equal(mock.sessions.get('cs_2').params.subscription_data.trial_period_days, undefined);
 });
 
-test('Small talk with large history never calls the provider', async () => {
+test('Small talk gets a real (free) AI reply with only a short, trimmed history', async () => {
   const { db, store } = memoryDb();
-  const handler = await load('api/ask.js', { db, fetch: () => { throw Error('must not call provider'); } });
-  const res = response(); await handler(askRequest({ question: 'hi', history: [{ role: 'user', content: 'x'.repeat(20000) }] }), res);
-  assert.equal(res.code, 200); assert.equal(res.body.isCasual, true); assert.equal(store.size, 0);
+  const calls = [];
+  const handler = await load('api/ask.js', { db, fetch: async (_, options) => {
+    calls.push(JSON.parse(options.body));
+    return { ok: true, json: async () => ({ choices: [{ message: { content: 'Anytime! What are we working on?' }, finish_reason: 'stop' }] }) };
+  } });
+  const history = Array.from({ length: 20 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: 'x'.repeat(5000) }));
+  const res = response(); await handler(askRequest({ question: 'thanks!', history }), res);
+  assert.equal(res.code, 200); assert.equal(res.body.isCasual, true);
+  assert.equal(res.body.answer, 'Anytime! What are we working on?', 'a real reply, not a canned line');
+  assert.equal(calls.length, 1, 'obvious greetings skip the classifier');
+  const sent = calls[0].messages.slice(1, -1);
+  assert.equal(sent.length, 6); assert.ok(sent.every(m => m.content.length <= 500));
+  assert.equal(store.size, 0, 'no credit used');
 });
 
 test('Cancelled subscribers can start a new checkout after an older completed checkout', async () => {
@@ -315,7 +325,7 @@ test('Legacy model flags never disclose provider errors', async () => {
   assert.equal(res.body.debug, undefined);
 });
 
-test('Text, photo and Learn use GPT-6 Luna; exact small talk is local', async () => {
+test('Text, photo, small talk and Learn all use GPT-6 Luna', async () => {
   const { db } = memoryDb();
   const requests = [];
   const handler = await load('api/ask.js', {
@@ -339,10 +349,12 @@ test('Text, photo and Learn use GPT-6 Luna; exact small talk is local', async ()
   // The small-talk check (gpt-4.1-mini) runs on short non-Learn text; the
   // answers themselves are the three GPT-6 Luna calls.
   const answers = requests.filter(request => request.model !== 'gpt-4.1-mini');
-  assert.equal(answers.length, 3);
+  assert.equal(answers.length, 4);
+  assert.equal(casual.body.model, 'gpt-6-luna');
   assert.equal(learn.body.model, 'gpt-6-luna');
   assert.equal(answers[1].max_completion_tokens, 12000);
   assert.match(answers[1].messages[0].content, /solve every problem in the photo/);
+  assert.match(answers[2].messages[0].content, /You're Knox/);
   assert.doesNotMatch(answers[1].messages[0].content, /ask where to start/);
   assert.ok(answers.every(request => request.temperature === undefined));
 });
