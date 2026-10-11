@@ -745,7 +745,7 @@
        Sticker treatment (darker border + drop-shadow ledge) so it reads as
        a raised card matching Knox Plus pricing cards on the landing page. */
     .sidebar-upgrade-card {
-      margin: 10px; padding: 14px;
+      margin: 10px 10px 16px; padding: 14px;
       background: var(--orange);
       border: 3px solid var(--orange-dark);
       border-radius: 14px;
@@ -853,7 +853,7 @@
        promo cards (Discord, Chrome, Plus) so recent chats get the whole sidebar. */
     .sidebar-history-toggle {
       display: none; align-items: center; justify-content: center; gap: 6px;
-      margin: 4px 10px 6px; padding: 7px 10px; flex-shrink: 0;
+      margin: 4px 10px 9px; padding: 7px 10px; flex-shrink: 0;
       border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface);
       color: var(--text-light); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer;
       box-shadow: 0 2px 0 var(--border); transition: color .15s, border-color .15s, transform .15s;
@@ -878,10 +878,20 @@
       #sidebarHistoryList { min-height: 0; }
       .sidebar-quicknav-link { padding-top: 8px; padding-bottom: 8px; }
       .sidebar-history-item { padding-top: 7px; padding-bottom: 7px; }
+      /* The three bottom cards (Discord, Chrome, Plus) share one size and one
+         10px rhythm: same height, width, corners and sticker shadow. */
+      .sidebar-body > .sidebar-extension-card,
+      #sidebarUpgradeCard { box-sizing: border-box; height: 60px; margin: 0 10px 10px; padding: 0 11px; border-width: 1.5px; border-radius: 13px; }
+      .sidebar-body > .sidebar-extension-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 55%, transparent); }
+      .sidebar-body > .sidebar-discord-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--discord) 55%, transparent); }
+      .sidebar-body > .sidebar-extension-card:hover, .sidebar-body > .sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 var(--blue); }
+      .sidebar-body > .sidebar-discord-card:hover, .sidebar-body > .sidebar-discord-card:focus-visible { box-shadow: 0 5px 0 var(--discord); }
       #sidebarUpgradeCard[style*="display: block"] { display: flex !important; }
-      #sidebarUpgradeCard { align-items: center; gap: 8px; margin: 5px 8px; padding: 8px; }
-      #sidebarUpgradeCard p { margin: 0; font-size: 11px; line-height: 1.2; }
-      #sidebarUpgradeCard button { width: auto; flex-shrink: 0; padding: 7px; font-size: 11px; }
+      /* Plus card: the same card as Discord and Chrome, in Knox orange. */
+      #sidebarUpgradeCard { width: calc(100% - 20px); font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: var(--orange); background: color-mix(in srgb, var(--orange) 12%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--orange) 55%, transparent); }
+      #sidebarUpgradeCard:hover, #sidebarUpgradeCard:focus-visible { box-shadow: 0 5px 0 var(--orange); }
+      #sidebarUpgradeCard .plus-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--orange); font-size: 17px; box-shadow: 0 2px 0 var(--orange-dark); }
+      #sidebarUpgradeCard .sidebar-extension-copy span, #sidebarUpgradeCard .sidebar-extension-arrow { color: var(--orange); }
       #sidebarControlsSlot .header-right { flex-direction: column; align-items: stretch; gap: 8px; }
       #sidebarControlsSlot .account-status-row { display: flex; align-items: stretch; gap: 5px; min-width: 0; }
       #sidebarControlsSlot .account-dock { display: flex; align-items: center; gap: 5px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--border); }
@@ -2493,10 +2503,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       </div><!-- end sidebar-body -->
 
       <!-- Account tools stay at the bottom of the desktop sidebar. -->
-      <div class="sidebar-upgrade-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;">
-        <p>⚡ Go unlimited with Knox Plus</p>
-        <button onclick="goToPricing()">Upgrade</button>
-      </div>
+      <button type="button" class="sidebar-extension-card sidebar-plus-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;" onclick="goToPricing()" aria-label="Go unlimited — upgrade to Knox Plus">
+        <span class="plus-icon" aria-hidden="true">⚡</span>
+        <span class="sidebar-extension-copy"><strong>Go unlimited</strong><span>Upgrade to Knox Plus</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">→</span>
+      </button>
       <div id="sidebarControlsSlot" class="sidebar-footer"></div>
 
     </aside>
