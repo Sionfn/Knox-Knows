@@ -836,18 +836,16 @@
       color: var(--text);
       text-decoration: none;
       flex-shrink: 0;
-      transition: transform .15s, box-shadow .15s;
+      transition: box-shadow .15s, filter .15s;
     }
+    /* Hover never moves the card: anything that shifts under the pointer
+       flickers on/off when the mouse rests on its edge. A stronger shadow and
+       a slight brighten show the hover instead. */
     .sidebar-extension-card:hover, .sidebar-extension-card:focus-visible {
-      transform: translateY(-2px);
       box-shadow: 0 3px 0 var(--blue);
+      filter: brightness(1.07);
       outline: none;
     }
-    /* Hovering lifts the card 2px. This strip keeps the hover area under the
-       pointer while it's lifted, so resting the mouse on the bottom edge
-       doesn't flicker on/off over and over. */
-    .sidebar-extension-card { position: relative; }
-    .sidebar-extension-card::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 6px; }
     .sidebar-extension-card img { width: 34px; height: 34px; border: 2px solid var(--orange); border-radius: 10px; flex-shrink: 0; }
     .sidebar-extension-copy { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
     .sidebar-extension-copy strong { font-size: 12px; line-height: 1.2; }
@@ -895,7 +893,6 @@
       .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 0 10px 7px; }
       .sidebar-promo-rotator > .sidebar-extension-card { position: absolute; top: 0; left: 0; right: 0; margin: 0; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .15s; }
       .sidebar-promo-rotator > .sidebar-extension-card.is-active { opacity: 1; transform: none; pointer-events: auto; }
-      .sidebar-promo-rotator > .sidebar-extension-card.is-active:hover { transform: translateY(-2px); }
       .sidebar-promo-rotator > .sidebar-extension-card.is-leaving { opacity: 0; transform: translateY(-12px); }
       .promo-dots { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 5px; }
       .promo-dots button { width: 6px; height: 6px; padding: 0; border: 0; border-radius: 999px; background: var(--border); cursor: pointer; transition: width .3s, background .3s; }
