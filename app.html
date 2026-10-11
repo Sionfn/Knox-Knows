@@ -1529,7 +1529,8 @@
 
     /* LIMIT REACHED UPSELL CARD */
     .limit-card {
-      background: linear-gradient(135deg, var(--orange-cream), #FFEED9);
+      /* Both ends follow the theme (a fixed light cream washed out in dark mode). */
+      background: linear-gradient(135deg, var(--orange-cream), color-mix(in srgb, var(--orange) 12%, var(--surface)));
       border: 2px solid var(--orange-light);
       border-radius: 18px;
       padding: 20px 22px;
@@ -1561,7 +1562,7 @@
       transition: all 0.15s;
       font-family: inherit;
     }
-    .limit-card-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
+    .limit-card-btn:hover { filter: brightness(1.07); box-shadow: 0 5px 0 var(--orange-dark); }
 
     /* USAGE INFO PANEL — opens when the header question-counter is tapped */
     .usage-info-overlay {

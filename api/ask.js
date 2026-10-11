@@ -839,7 +839,7 @@ export default async function handler(req, res) {
   // to respond (see KNOX_PROMPT). The only routing decision left here is
   // casual small talk vs a real question, which controls model cost and
   // whether it counts against usage — not which "mode" runs.
-  let casual = !learnMode && !image && /^(?:hi|hello|hey|thanks|thank you|thx|ty|bye|goodbye|good morning)[!.\s]*$/i.test(trimmedQuestion);
+  let casual = !image && /^(?:hi|hello|hey|thanks|thank you|thx|ty|bye|goodbye|good morning)[!.\s]*$/i.test(trimmedQuestion);
   // Exact small-talk matches never need a paid provider call or user history.
   if (casual) {
     const answer = /^(thanks|thank you|thx|ty)/i.test(trimmedQuestion)
@@ -849,8 +849,23 @@ export default async function handler(req, res) {
   }
   // Any other short message: let the classifier decide whether it's small
   // talk ("how are you", venting, jokes). Small talk is free for everyone;
-  // anything with a real question or task still counts.
-  if (!learnMode && !image && trimmedQuestion.length <= 400) {
+  // anything with a real question or task still counts. In Learn mode only
+  // the opening message is checked — that's the one that would cost a
+  // credit; mid-lesson replies ("ok", "idk") are part of the lesson (and
+  // already free), so they must stay on the Learn prompt.
+  // "Opening" = this Learn chat hasn't started a lesson yet (no server-side
+  // Learn session), so "hi" then "how are you?" before the real question
+  // are both free. Guests have no sessions: an empty history means opening.
+  let opensLearnChat = false;
+  if (learnMode) {
+    if (uid && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(learnSessionId || '')) {
+      try { opensLearnChat = !(await db.collection('users').doc(uid).collection('learnSessions').doc(learnSessionId).get()).exists; }
+      catch { opensLearnChat = false; } // can't tell: treat it as a lesson message (normal charging)
+    } else {
+      opensLearnChat = !Array.isArray(history) || history.length === 0;
+    }
+  }
+  if (!image && trimmedQuestion.length <= 400 && (!learnMode || opensLearnChat)) {
     casual = await isCasualMessage(trimmedQuestion, history);
   }
 

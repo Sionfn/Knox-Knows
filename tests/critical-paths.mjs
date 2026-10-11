@@ -756,3 +756,42 @@ test('Real questions still cost a credit, even when phrased casually; classifier
     assert.equal(store.get('users/u1/usage/bank').balance, 6);
   }
 });
+
+test('Learn mode: small talk before the lesson starts is free; the real question starts it', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1/usage/bank', { balance: 7, lastRegenAt: Date.now() });
+  const sessionId = crypto.randomUUID();
+  const casualAi = chatFetch('CASUAL');
+  const chat = await load('api/ask.js', { db, fetch: casualAi.fetch });
+  const hello = response();
+  await chat(askRequest({ question: 'hey knox how are you', history: [], learnMode: true, learnSessionId: sessionId }), hello);
+  assert.equal(hello.body.isCasual, true);
+  const again = response();
+  await chat(askRequest({ question: 'kinda tired today ngl', history: [{ role: 'user', content: 'hey knox how are you' }, { role: 'assistant', content: 'Hey!' }], learnMode: true, learnSessionId: sessionId }), again);
+  assert.equal(again.body.isCasual, true, 'still before the lesson: free');
+  assert.equal(store.get('users/u1/usage/bank').balance, 7);
+  assert.equal(store.get(`users/u1/learnSessions/${sessionId}`), undefined, 'small talk does not start a lesson');
+
+  const lesson = await load('api/ask.js', { db, fetch: chatFetch('SUBSTANTIVE').fetch });
+  const start = response();
+  await lesson(askRequest({ question: 'Help me understand fractions', history: [], learnMode: true, learnSessionId: sessionId }), start);
+  assert.equal(start.body.isCasual, false);
+  assert.equal(store.get('users/u1/usage/bank').balance, 6, 'the real opening question costs one credit');
+  assert.ok(store.get(`users/u1/learnSessions/${sessionId}`), 'and starts the lesson');
+});
+
+test('Learn mode: mid-lesson replies like "ok" stay in the lesson (no small-talk check) and are free', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1/usage/bank', { balance: 7, lastRegenAt: Date.now() });
+  const sessionId = crypto.randomUUID();
+  store.set(`users/u1/learnSessions/${sessionId}`, { createdAt: Date.now(), turns: 1 });
+  const ai = chatFetch('CASUAL');
+  const handler = await load('api/ask.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler(askRequest({ question: 'ok', history: [{ role: 'user', content: 'Help me with fractions' }, { role: 'assistant', content: 'What is 1/2 + 1/4?' }], learnMode: true, learnSessionId: sessionId }), res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.isCasual, false);
+  assert.ok(!ai.calls.some(call => call.model === 'gpt-4.1-mini'), 'no small-talk check mid-lesson');
+  assert.match(ai.calls[0].messages[0].content, /Learn|hint|guide/i);
+  assert.equal(store.get('users/u1/usage/bank').balance, 7, 'follow-ups stay free');
+});
