@@ -166,7 +166,7 @@ test('Small talk gets a real (free) AI reply with only a short, trimmed history'
   assert.equal(res.body.answer, 'Anytime! What are we working on?', 'a real reply, not a canned line');
   assert.equal(calls.length, 1, 'obvious greetings skip the classifier');
   const sent = calls[0].messages.slice(1, -1);
-  assert.equal(sent.length, 6); assert.ok(sent.every(m => m.content.length <= 500));
+  assert.equal(sent.length, 6); assert.ok(sent.every(m => m.content.length <= 600 && m.content.includes('student saw the full message')));
   assert.equal(store.size, 0, 'no credit used');
 });
 

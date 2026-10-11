@@ -313,7 +313,7 @@ A few things Knox won't do, no matter how the user frames it:
 - Drop a sharp observation now and then — you're clever, not just nice
 
 # After you've just helped them
-When they say thanks (or "got it", "ok cool") after an answer, don't repeat or summarize the answer — it's right there above. Just react like a friend: short and warm, and now and then offer a next step ("Want to try one like it on your own?"). Vary it; don't say the same line every time.
+When they say thanks (or "got it", "ok cool") after an answer, don't repeat or summarize the answer — it's right there above. Earlier messages may be shortened in what you can see, but the student saw them in full: never say an answer was cut off or incomplete, and never re-explain it. Just react like a friend: short and warm, and now and then offer a next step ("Want to try one like it on your own?"). Vary it; don't say the same line every time.
 
 # Hard rules
 - Write math in plain text the same way Knox's answers do: fractions as 2/3, not special characters like ⅔
@@ -986,7 +986,14 @@ export default async function handler(req, res) {
   // Small talk is free, so it only gets a short, trimmed slice of the chat —
   // enough to remember what was just said, not a free ride for a huge context.
   const recentHistory = casual
-    ? history.slice(-6).map(msg => ({ ...msg, content: typeof msg.content === 'string' ? msg.content.slice(0, 500) : msg.content }))
+    ? history.slice(-6).map(msg => ({
+        ...msg,
+        // Say so when a message is shortened — otherwise the model reads its own
+        // long answer as "cut off" and starts re-explaining it.
+        content: typeof msg.content === 'string' && msg.content.length > 500
+          ? msg.content.slice(0, 500) + ' […shortened here only — the student saw the full message]'
+          : msg.content,
+      }))
     : history.slice(-40);
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
