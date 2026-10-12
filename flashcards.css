@@ -230,3 +230,14 @@ body.app-sidebar-collapsed .fc-beta { display:none; }
 .fc-doc-chip { display:inline-flex; align-items:center; gap:8px; max-width:100%; padding:6px 8px 6px 12px; border-radius:12px; background:var(--orange-cream); border:2px solid var(--orange-light); color:var(--orange); font-weight:800; font-size:13px; }
 .fc-doc-chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .fc-doc-x { background:none; border:0; color:var(--orange); font-weight:900; font-size:15px; cursor:pointer; padding:0 4px; }
+
+/* Make with Knox / Import / Export: "← Decks" sits top-left above the card. */
+.fc-make-top { max-width:640px; margin:0 auto 12px; }
+/* Import & Export: the supported file types */
+.fc-format { display:flex; gap:12px; align-items:flex-start; text-align:left; width:100%; padding:12px 14px; margin-top:10px; border:2px solid var(--border); border-radius:16px; background:var(--surface); color:var(--text); font:inherit; box-shadow:0 3px 0 var(--border); }
+.fc-format-icon { font-size:22px; line-height:1.2; flex-shrink:0; }
+.fc-format b { font-size:15px; font-weight:900; }
+.fc-format-types { font-size:12px; font-weight:800; color:var(--orange); }
+.fc-format p { margin:3px 0 0; font-size:13px; font-weight:700; color:var(--text-light); line-height:1.45; }
+.fc-format-btn { cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.fc-format-btn:hover, .fc-format-btn:focus-visible { border-color:var(--orange); box-shadow:0 3px 0 var(--orange); outline:none; }

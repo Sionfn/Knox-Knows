@@ -14,3 +14,15 @@ test('review grades schedule distinct intervals and preserve text',()=>{
 test('due selection excludes future reviews and practice includes all cards once',()=>{
  const cards=[{due:0},{due:10},{due:1000}];assert.deepEqual(studyQueue(cards,true,100,()=>.99),[0,1]);assert.deepEqual(studyQueue(cards,false,100,()=>.99),[0,1,2]);
 });
+
+test('spreadsheet import reads CSV (with quotes), tabs and Quizlet-style lists; skips a header row', async () => {
+  const { parseTable, toCsv } = await import('../flashcards-core.js');
+  const csv = parseTable('Question,Answer\n"What is 2, plus 2?",4\n"He said ""hi""",greeting\n\nH2O,water\n');
+  assert.equal(JSON.stringify(csv), JSON.stringify([{ front: 'What is 2, plus 2?', back: '4' }, { front: 'He said "hi"', back: 'greeting' }, { front: 'H2O', back: 'water' }]));
+  const tsv = parseTable('mitosis\tcell division\r\nosmosis\twater moving across a membrane\r\n');
+  assert.equal(tsv.length, 2); assert.equal(tsv[1].back, 'water moving across a membrane');
+  assert.throws(() => parseTable('just one column\nno answers here'), /couldn’t find any cards/);
+  const out = toCsv([{ title: 'Bio', cards: [{ front: 'Q, with comma', back: 'A "quoted"' }] }]);
+  assert.equal(out, 'Front,Back\r\n"Q, with comma","A ""quoted"""');
+  assert.equal(JSON.stringify(parseTable(out)), JSON.stringify([{ front: 'Q, with comma', back: 'A "quoted"' }]), 'export → import round-trips');
+});

@@ -25,3 +25,44 @@ export function studyQueue(cards, dueOnly=true, now=Date.now(), random=Math.rand
   for(let i=q.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   return q;
 }
+// Spreadsheet / list import (.csv, .tsv, .txt): one card per row, question
+// then answer. Tabs win if present (Google Sheets, Excel and Quizlet copy or
+// export with tabs); otherwise comma-separated with "quoted, values".
+export function parseTable(text) {
+  const rows = [];
+  const src = String(text || '').replace(/^﻿/, '');
+  if (src.includes('\t')) {
+    for (const line of src.split(/\r?\n/)) if (line.trim()) rows.push(line.split('\t'));
+  } else {
+    let row = [], cell = '', quoted = false;
+    for (let i = 0; i < src.length; i++) {
+      const ch = src[i];
+      if (quoted) {
+        if (ch === '"' && src[i + 1] === '"') { cell += '"'; i++; }
+        else if (ch === '"') quoted = false;
+        else cell += ch;
+      } else if (ch === '"' && !cell.trim()) { quoted = true; cell = ''; }
+      else if (ch === ',') { row.push(cell); cell = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && src[i + 1] === '\n') i++;
+        row.push(cell); if (row.some(c => c.trim())) rows.push(row); row = []; cell = '';
+      } else cell += ch;
+    }
+    row.push(cell); if (row.some(c => c.trim())) rows.push(row);
+  }
+  const header = /^(front|question|term|word|prompt|q)$/i;
+  if (rows.length && header.test((rows[0][0] || '').trim())) rows.shift();
+  const cards = rows
+    .map(r => ({ front: (r[0] || '').trim(), back: r.slice(1).join(', ').trim() }))
+    .filter(c => c.front && c.back);
+  if (!cards.length) throw Error('Knox couldn’t find any cards. Put the question in the first column and the answer in the second.');
+  if (cards.length > 300) throw Error('That file has more than 300 cards. Split it into smaller decks.');
+  return cards;
+}
+// Spreadsheet export: two columns (Front, Back) that Sheets, Excel and Quizlet open.
+export function toCsv(decks) {
+  const q = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const lines = ['Front,Back' + (decks.length > 1 ? ',Deck' : '')];
+  for (const d of decks) for (const c of d.cards) lines.push([q(c.front), q(c.back), ...(decks.length > 1 ? [q(d.title)] : [])].join(','));
+  return lines.join('\r\n');
+}
