@@ -1062,3 +1062,33 @@ test('Make with Knox pictures every card from its Wikipedia article: Commons fil
   assert.ok(down.body.cards.every(c => !c.image));
 });
 
+
+test('Card pictures skip animal pictures for a human card and prefer files that match the card', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' });
+  const deck = { title: 'Legs', cards: [
+    { front: 'Which two bones are in the lower leg?', back: 'The tibia and the fibula.', image: 'Leg' },
+    { front: 'What are the bones of the leg?', back: 'Femur, patella, tibia and fibula.', image: 'Human leg' },
+    { front: 'How many legs does an insect have?', back: 'Six.', image: 'Leg' },
+  ] };
+  const file = (title, src) => ({ title, imagerepository: 'shared', imageinfo: [{ width: 600, thumburl: src, extmetadata: {} }] });
+  const articles = {
+    Leg: { main: 'InsectLeg.svg', files: [file('File:InsectLeg.svg', 'https://upload.wikimedia.org/insect.png'), file('File:Mammoth leg.png', 'https://upload.wikimedia.org/mammoth.png'), file('File:Human tibia and fibula.png', 'https://upload.wikimedia.org/tibia-leg.png')] },
+    'Human leg': { main: 'Gray1240.png', files: [file('File:Gray1240.png', 'https://upload.wikimedia.org/gray.png'), file('File:Blausen 0608 LegBones.png', 'https://upload.wikimedia.org/legbones.png'), file('File:Human tibia.stl', 'https://upload.wikimedia.org/model.png')] },
+  };
+  const fetch = async url => {
+    const u = String(url);
+    if (u.includes('en.wikipedia.org')) {
+      const title = decodeURIComponent(u.split('titles=')[1]); const a = articles[title];
+      if (u.includes('prop=pageimages')) return { ok: true, json: async () => ({ query: { pages: { 1: { title, pageimage: a.main } } } }) };
+      return { ok: true, json: async () => ({ query: { pages: Object.fromEntries(a.files.map((f, i) => [i, f])) } }) };
+    }
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(deck) }, finish_reason: 'stop' }] }) };
+  };
+  const res = response();
+  await (await load('api/generate-flashcards.js', { db, fetch }))(deckReq({ request: 'legs', count: 10 }), res);
+  const [lower, bones, insect] = res.body.cards;
+  assert.equal(lower.image, 'https://upload.wikimedia.org/tibia-leg.png', 'no insect or mammoth for a human card');
+  assert.equal(bones.image, 'https://upload.wikimedia.org/legbones.png', 'the file named like the card wins');
+  assert.equal(insect.image, 'https://upload.wikimedia.org/insect.png', 'an insect card can still show the insect');
+});
