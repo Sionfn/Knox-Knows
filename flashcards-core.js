@@ -98,3 +98,25 @@ export function parseList(text) {
   if (cards.length > 300) throw Error('That file has more than 300 cards. Split it into smaller decks.');
   return cards;
 }
+// Pasted cards (Import's paste box, the editor's paste box): one card per
+// line, split at a Tab (Quizlet, Sheets, Excel), " - " or ": ".
+export function parsePasted(text) {
+  const lines = String(text || '').replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
+  if (!lines.length) throw Error('Paste some cards first: one per line, question then answer.');
+  const cards = lines.map((line, i) => {
+    const tab = line.indexOf('\t');
+    if (tab > 0) return { front: line.slice(0, tab).trim(), back: line.slice(tab + 1).replace(/\t/g, ' ').trim() };
+    const clean = line.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '').trim();
+    const m = clean.match(/^(.{1,200}?)\s+[-–—=]\s+(.+)$/) || clean.match(/^([^:]{1,120}):\s+(.+)$/);
+    if (!m) throw Error(`Line ${i + 1} needs a question and an answer — separate them with a Tab, “ - ” or “: ”.`);
+    return { front: m[1].trim(), back: m[2].trim() };
+  }).filter(c => c.front && c.back);
+  if (!cards.length) throw Error('Knox couldn’t find any cards. Put the question first, then the answer.');
+  if (cards.length > 300) throw Error('That’s more than 300 cards. Split it into smaller decks.');
+  return cards;
+}
+// Tab-separated text Quizlet can import (Create → Import → paste).
+export function toQuizlet(decks) {
+  const one = s => String(s).replace(/\s*[\r\n\t]+\s*/g, ' ').trim();
+  return decks.flatMap(d => d.cards.map(c => one(c.front) + '\t' + one(c.back))).join('\n');
+}

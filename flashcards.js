@@ -1,4 +1,4 @@
-import {validateDeck,parseLines,schedule,studyQueue,parseTable,rowsToCards,parseList,toCsv,cleanImage} from './flashcards-core.js';
+import {validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toQuizlet,cleanImage} from './flashcards-core.js';
 const panel=document.createElement('section'); panel.id='flashcardsPanel'; panel.hidden=true;
 panel.setAttribute('aria-label','Flashcards'); document.querySelector('#chatAndInput').append(panel);
 // Backdrop layer (stays put; draws the Knox circles in CSS) + scrolling
@@ -28,7 +28,7 @@ const flavorOf=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))
 let pendingMessage='';
 
 function load(){ identity=key(); session=null; editing=null; dirty=false; try{const raw=JSON.parse(localStorage.getItem(identity)||'[]'); if(!Array.isArray(raw))throw Error(); decks=raw.filter(d=>{try{validateDeck(d);return typeof d.id==='string';}catch{return false;}});}catch{decks=[];pendingMessage='Saved decks could not be read. Import a backup to recover them.';} }
-function save(next){try{localStorage.setItem(identity,JSON.stringify(next));decks=next;return true;}catch{message('Your browser could not save. Export your decks before closing this page.');return false;}}
+function save(next){try{localStorage.setItem(identity,JSON.stringify(next));decks=next;return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
 // Messages show as a toast pinned to the top of the panel.
 // Success messages fade after a few seconds, errors stay a little longer;
 // clicking the message dismisses it right away.
@@ -47,6 +47,10 @@ function frame(head,body,center=false){
 
 // ── Make with Knox (AI-written decks) ───────────────────────────────────────
 const makeOpts={request:'',count:10,style:'qa',upgrade:false,files:[],reading:false};
+// Setting: let Knox add pictures to new decks automatically (remembered on this device).
+const PICS_KEY='knox.flashcards.autoPictures';
+const autoPictures=()=>{try{return localStorage.getItem(PICS_KEY)!=='off';}catch{return true;}};
+const setAutoPictures=on=>{try{localStorage.setItem(PICS_KEY,on?'on':'off');}catch{}};
 const EXAMPLES=[
   ['🍎','Sophomore · Newton’s laws','I’m a sophomore in physics learning Newton’s three laws of motion'],
   ['🧬','AP Bio · cell respiration','AP Biology: cellular respiration — glycolysis, Krebs cycle and the electron transport chain'],
@@ -58,7 +62,7 @@ const EVERYONE=true; // launched Nov 1: Flashcards (and Make with Knox) are free
 const canSee=()=>EVERYONE||isPlus();
 const chip=(label,action,on,attrs='')=>`<button type="button" class="fc-chip${on?' on':''}" data-action="${action}" ${attrs}>${label}</button>`;
 function makeView(){
-  session=null;editing=null;dirty=false;
+  generationVersion++;session=null;editing=null;dirty=false;importNote=null;
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
@@ -74,6 +78,7 @@ function makeView(){
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
+      <label class="fc-switch"><input type="checkbox" id="fcAutoPics"${autoPictures()?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>Add pictures automatically</b><small>Knox adds a free picture to cards where one helps (a body part, a place, an artwork). You can always add or change pictures yourself.</small></span></label>
       <div class="fc-toolbar" style="margin-top:20px">${btn('✨ Make my deck','make-go',{cls:'primary'})}</div>
       <p class="fc-cost">Free for everyone · up to 20 cards per deck.</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
@@ -89,10 +94,10 @@ async function makeDeck(){
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
   const owner=key(), version=++generationVersion;
   const texts=makeOpts.files.filter(f=>f.kind==='text'),photos=makeOpts.files.filter(f=>f.kind==='photo');
-  const options={request,count:makeOpts.count,style:makeOpts.style,
+  const options={request,count:makeOpts.count,style:makeOpts.style,pictures:autoPictures(),
     ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_LIMIT)}}:{}),
     ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
-  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">This usually takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div></div>`,true);
+  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes a few seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{
     const token=await user.getIdToken();
@@ -107,12 +112,18 @@ async function makeDeck(){
   message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!`,'ok');
 }
 
+const way=(action,flavor,icon,title,text)=>`<button type="button" class="fc-way" data-action="${action}" data-flavor="${flavor}"><span class="fc-way-icon" aria-hidden="true">${icon}</span><b>${title}</b><span>${text}</span></button>`;
 function home(query=''){
   generationVersion++;
-  session=null; editing=null; dirty=false;
+  session=null; editing=null; dirty=false; importNote=null;
   frame({badge:badge('🗂️ Knox Flashcards','🎃 Spooky study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
-   `<div class="fc-toolbar">${btn('✨ Make with Knox','make',{cls:'primary'})}${btn('+ Create deck','create',{cls:'primary blue'})}${btn('Try a sample','sample')}${btn('Import','import')}${btn('Export all','export-all',{attrs:decks.length?'':'disabled'})}</div>
+   `<div class="fc-ways${decks.length?' has-decks':''}">
+      ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
+      ${way('create','blue','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
+      ${way('import','green','📥','Import cards','Already have cards? Bring them in from Quizlet, Anki, Excel, Google Sheets or a Knox backup.')}
+    </div>
+    <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:22px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
     <p class="fc-note">Your decks are saved in this browser${window.currentUser?' for your account':''}. Use Export to back them up or move them to another device.</p>`,true);
@@ -126,7 +137,7 @@ function renderDecks(query){
     grid.style.display='block';
     grid.innerHTML=decks.length
       ?`<div class="fc-empty"><h2>No matching decks</h2><p class="fc-sub">Try a different word, or clear the search.</p></div>`
-      :`<div class="fc-empty"><img src="${FOX}" alt=""><h2>Your next “I know this!” starts here.</h2><p class="fc-sub">Make your own deck, or try the sample to see how studying works.</p></div>`;
+      :`<div class="fc-empty"><img src="${FOX}" alt=""><h2>Your next “I know this!” starts here.</h2><p class="fc-sub">Pick a way to make your first deck above, or try the sample to see how studying works.</p></div>`;
     return;
   }
   grid.style.display='';
@@ -141,7 +152,7 @@ function renderDecks(query){
     </article>`;}).join('');
 }
 
-function editor(deck){editing=deck?structuredClone(deck):{id:crypto.randomUUID(),title:'',cards:[{front:'',back:''}]};dirty=false;renderEditor();}
+function editor(deck){generationVersion++;importNote=null;editing=deck?structuredClone(deck):{id:crypto.randomUUID(),title:'',cards:[{front:'',back:''}]};dirty=false;renderEditor();}
 // One card row. Only the first card shows example text — repeating it on every
 // blank card made new cards look like copies of card 1.
 function cardRow(c,i){
@@ -246,13 +257,13 @@ function renderEditor(){
    `<div class="fc-topbar">${btn('← Decks','back',{cls:'ghost'})}<div class="fc-topbar-right"><span class="fc-pill" id="fcCount">${n} card${n===1?'':'s'}</span>${btn('Save','save',{cls:'primary small'})}</div></div>
     <div class="fc-deck-title-field"><label class="fc-field-label" for="fcTitle">Deck title</label><input class="fc-input" id="fcTitle" maxlength="100" value="${esc(editing.title)}" placeholder="Biology · Cell structures"></div>
     <div id="fcRows">${editing.cards.map(cardRow).join('')}</div>
-    <input type="file" id="fcPicInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+    <input type="file" id="fcPicInput" accept="image/*" hidden>
     <div class="fc-add-row">${btn('+ Add card','add')}</div>
-    <details class="fc-bulk"><summary>Paste cards from notes or a spreadsheet</summary><p>One card per line: the question, then a <b>Tab</b>, then the answer. Copying two columns from Google Sheets or Excel works. This adds cards to the deck — it doesn't write answers for you.</p><label class="fc-field-label" for="fcBulk">Tab-separated cards</label><textarea class="fc-textarea" id="fcBulk" placeholder="Question [Tab] Answer"></textarea><div style="margin-top:10px">${btn('Add pasted cards','bulk',{cls:'small'})}</div></details>
+    <details class="fc-bulk"><summary>Paste a list of cards</summary><p>One card per line: the question, then the answer, separated by a <b>Tab</b>, “ - ” or “: ”. Copying two columns from Google Sheets or Excel works. This adds cards to the deck — it doesn't write answers for you.</p><label class="fc-field-label" for="fcBulk">Your cards</label><textarea class="fc-textarea" id="fcBulk" placeholder="Mitosis - cell division&#10;Osmosis - water moving across a membrane"></textarea><div style="margin-top:10px">${btn('Add pasted cards','bulk',{cls:'small'})}</div></details>
     <div class="fc-savebar">${btn('Cancel','back')}${btn('Save deck','save',{cls:'primary'})}</div>`);
 }
 
-function start(id,due){const deck=decks.find(d=>d.id===id);const queue=studyQueue(deck.cards,due);if(!queue.length){home();message('You’re all caught up! Use Practice all to review ahead.','ok');return;}session={id,queue,flipped:false,reviewed:0,again:0,total:queue.length,retry:new Set()};study();}
+function start(id,due){generationVersion++;const deck=decks.find(d=>d.id===id);const queue=studyQueue(deck.cards,due);if(!queue.length){home();message('You’re all caught up! Use Practice all to review ahead.','ok');return;}session={id,queue,flipped:false,reviewed:0,again:0,total:queue.length,retry:new Set()};study();}
 function controls(){
   const s=session;
   return s.flipped
@@ -318,37 +329,48 @@ function knoxConfirm({title,body,ok='OK',cancel='Cancel',danger=false}){
 }
 const confirmLeave=()=>knoxConfirm({title:'Leave without saving?',body:'Your deck has changes that aren’t saved yet. If you leave now, they’ll be lost.',ok:'Leave',cancel:'Keep editing',danger:true});
 
-// Import: one screen that lists every file Knox can take.
-// Files Make with Knox can read (doc-extract.js), and everything Import takes.
+// Import: cards you already have (files or pasted). Notes and photos are
+// Make with Knox's job — Import says so and offers to hand them over.
+// Files Make with Knox can read (doc-extract.js).
 const MAKE_ACCEPT='.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.txt,.md,text/plain,image/*,.heic,.heif';
-const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'+MAKE_ACCEPT;
+const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.txt,text/plain,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const MAX_PHOTOS=5,MAX_MAKE_FILES=8,DOC_LIMIT=30000;
+let importNote=null; // {files} — notes or photos dropped on Import
 function importView(){
-  session=null;editing=null;dirty=false;
+  generationVersion++;session=null;editing=null;dirty=false;
   const row=(icon,title,types,text)=>`<div class="fc-format"><span class="fc-format-icon" aria-hidden="true">${icon}</span><div><b>${title}</b> <span class="fc-format-types">${types}</span><p>${text}</p></div></div>`;
-  frame({badge:'<span class="fc-badge">📥 Import</span>',title:'Bring your <span class="accent">cards in.</span>',sub:'Choose a file. Nothing is saved until you look it over.'},
+  const note=importNote?.files?.length?`<div class="fc-import-note" role="status"><p>📝 <b>${esc(importNote.files.length===1?importNote.files[0].name:importNote.files.length+' files')}</b> ${importNote.files.length===1?'looks':'look'} like notes or photos, not finished cards. Import brings in cards you already have — Make with Knox turns notes into cards.</p><div class="fc-toolbar">${btn('✨ Make cards from '+(importNote.files.length===1?'it':'them'),'import-to-make',{cls:'primary small'})}${btn('Never mind','import-note-x',{cls:'ghost small'})}</div></div>`:'';
+  frame({badge:'<span class="fc-badge">📥 Import</span>',title:'Bring your <span class="accent">cards in.</span>',sub:'Already made cards somewhere else? Bring them here. Nothing is saved until you look it over.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
     <div class="fc-make">
-      <span class="fc-field-label">Files that work</span>
+      ${note}
+      <button type="button" class="fc-dropzone" data-action="import-pick"><span class="fc-dropzone-icon" aria-hidden="true">📥</span><b>Drag a file here</b><span>or click to choose</span></button>
+      <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" hidden>
+      <span class="fc-field-label" style="margin-top:20px;display:block">Files that work</span>
+      ${row('📊','Spreadsheet','.xlsx · .csv · .tsv','Excel or Google Sheets (File → Download → .csv): the question in the first column, the answer in the second.')}
+      ${row('📋','Quizlet or Anki','.txt','Quizlet: open a set → ⋯ → Export, then paste below or save it as a .txt file. Anki: File → Export → “Notes in Plain Text”.')}
       ${row('🗂️','Knox backup','.json','A file you saved with Export — your decks come back exactly as they were.')}
-      ${row('📊','Spreadsheet or card list','.xlsx · .csv · .tsv · .txt','One card per row: the question in the first column, the answer in the second. Works with Excel, Google Sheets, Quizlet and Anki text exports — or a list like “term - definition”.')}
-      ${row('📄','Notes, study guides & slides','.pdf · .docx · .pptx · .txt · .md','Knox reads them and writes the cards for you with Make with Knox.')}
-      ${row('📸','Photos','.jpg · .png · .heic · .webp','Pictures of your notes, a textbook page, a worksheet or the board — up to 5 at once.')}
-      <button type="button" class="fc-dropzone" data-action="import-pick"><span class="fc-dropzone-icon" aria-hidden="true">📥</span><b>Drag files here</b><span>or click to choose</span></button>
-      <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" multiple hidden>
+      <label class="fc-field-label" for="fcPaste" style="margin-top:20px;display:block">Or paste your cards</label>
+      <textarea class="fc-textarea" id="fcPaste" rows="5" placeholder="mitochondria	powerhouse of the cell&#10;osmosis - water moving across a membrane&#10;atom: the smallest unit of an element"></textarea>
+      <p class="fc-doc-hint">One card per line — question, then answer, separated by a Tab (how Quizlet copies), “ - ” or “: ”.</p>
+      <div class="fc-toolbar" style="margin-top:12px">${btn('Use these cards','import-paste',{cls:'primary blue small'})}</div>
     </div>`,true);
 }
 const forMake=f=>window.knoxIsPhoto?.(f)||window.knoxIsDocument?.(f);
 const openCards=(cards,name,kind)=>{
+  generationVersion++;importNote=null;
   editing={id:crypto.randomUUID(),title:name.replace(/\.[^.]+$/,'').slice(0,100)||'Imported deck',cards};
   renderEditor();dirty=true;message(`Found ${cards.length} card${cards.length===1?'':'s'}${kind?' in your '+kind:''}. Look them over, then Save.`,'ok');
 };
-// Several files at once (dropped or chosen): notes and photos all go to Make with Knox.
+// Notes/photos on Import: explain, and let the student hand them to Make with Knox.
+const notesOnImport=files=>{importNote={files};importView();};
 async function importFiles(list){
   const files=[...(list||[])].filter(Boolean);
-  if(files.length>1&&files.every(f=>forMake(f)&&!/\.(txt|md)$/i.test(f.name))){makeView();await takeFiles(files);return;}
-  if(files.length>1)message('Import one spreadsheet or backup at a time — Knox used the first file.');
-  await importFile(files[0]);
+  if(!files.length)return;
+  const cardFiles=files.filter(f=>!forMake(f)||/\.(txt|md|csv|tsv|json)$/i.test(f.name));
+  if(!cardFiles.length){notesOnImport(files);return;}
+  if(files.length>1)message('Import one file at a time — Knox used '+cardFiles[0].name+'.');
+  await importFile(cardFiles[0]);
 }
 async function importFile(f){
   if(!f)return;
@@ -361,31 +383,29 @@ async function importFile(f){
     if(owner!==key())return;
     openCards(rowsToCards(rows),f.name,'spreadsheet');return;
   }
-  if(/\.(txt|md|markdown)$/.test(name)){
-    if(f.size>2000000)throw Error('Choose a file smaller than 2 MB.');
-    const cards=parseList(await f.text());
-    if(owner!==key())return;
-    if(cards){openCards(cards,f.name,'list');return;}
-    makeView();await takeFiles([f]);return; // notes, not a card list
-  }
-  if(forMake(f)&&!/\.(csv|tsv|json)$/.test(name)){makeView();await takeFiles([f]);return;}
+  if(forMake(f)&&!/\.(txt|md|markdown|csv|tsv|json)$/.test(name)){notesOnImport([f]);return;}
   if(f.size>2000000)throw Error('Choose a file smaller than 2 MB.');
   const text=await f.text();
   if(owner!==key())return;
+  if(/\.(txt|md|markdown)$/.test(name)){
+    const cards=parseList(text);
+    if(cards){openCards(cards,f.name,'list');return;}
+    notesOnImport([f]);return; // notes, not a card list
+  }
   if(name.endsWith('.json')||f.type==='application/json'){
     let raw;try{raw=JSON.parse(text);}catch{throw Error('That .json file isn’t a Knox backup.');}
     if(raw.version!==1||!Array.isArray(raw.decks)||raw.decks.length>100)throw Error('Choose a Knox flashcard export (up to 100 decks).');
     const incoming=raw.decks.map(d=>({...validateDeck(d),id:crypto.randomUUID()}));
-    if(save([...decks,...incoming])){home();message('Imported as new decks. Study schedules start fresh.','ok');}
+    if(save([...decks,...incoming])){home();message(`Imported ${incoming.length} deck${incoming.length===1?'':'s'}. Study schedules start fresh.`,'ok');}
     return;
   }
   if(/\.(csv|tsv)$/.test(name)||/^text\//.test(f.type)){openCards(parseTable(text),f.name);return;}
-  throw Error('Knox can import spreadsheets (.xlsx, .csv), card lists (.txt), Knox backups (.json), PDF, Word, PowerPoint and photos.');
+  throw Error('Import takes spreadsheets (.xlsx, .csv), Quizlet or Anki lists (.txt) and Knox backups (.json).');
 }
 // Export: a Knox backup (moves decks between devices) or a spreadsheet.
 let exportTarget=null;
 function exportView(target){
-  exportTarget=target;
+  exportTarget=target;generationVersion++;
   session=null;editing=null;dirty=false;
   const what=target.length===1?`“${esc(target[0].title)}”`:`all ${target.length} decks`;
   frame({badge:'<span class="fc-badge">📤 Export</span>',title:'Take your <span class="accent">cards with you.</span>',sub:`Save ${what} as a file.`},
@@ -393,7 +413,8 @@ function exportView(target){
     <div class="fc-make">
       <span class="fc-field-label">Choose a format</span>
       <button type="button" class="fc-format fc-format-btn" data-action="export-json"><span class="fc-format-icon" aria-hidden="true">🗂️</span><div><b>Knox backup</b> <span class="fc-format-types">.json</span><p>Best for moving decks to another device or browser. Import it back into Knox anytime.</p></div></button>
-      <button type="button" class="fc-format fc-format-btn" data-action="export-csv"><span class="fc-format-icon" aria-hidden="true">📊</span><div><b>Spreadsheet</b> <span class="fc-format-types">.csv</span><p>Opens in Google Sheets, Excel and Quizlet. Study progress isn’t included.</p></div></button>
+      <button type="button" class="fc-format fc-format-btn" data-action="export-csv"><span class="fc-format-icon" aria-hidden="true">📊</span><div><b>Spreadsheet</b> <span class="fc-format-types">.csv</span><p>Opens in Google Sheets and Excel. Study progress isn’t included.</p></div></button>
+      <button type="button" class="fc-format fc-format-btn" data-action="export-quizlet"><span class="fc-format-icon" aria-hidden="true">📋</span><div><b>Copy for Quizlet</b> <span class="fc-format-types">copy &amp; paste</span><p>Copies your cards. In Quizlet, choose Create → Import and paste them in.</p></div></button>
     </div>`,true);
 }
 function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -440,33 +461,48 @@ async function takeFiles(list){
     }
   }finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}
 }
-// Shrink a picked photo so decks stay small in browser storage (~100 KB each).
+// Shrink a picked photo so decks stay small in browser storage (~60 KB each;
+// a browser keeps about 5 MB for all of a student's decks).
 async function shrinkPicture(file){
-  if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type))throw Error('Choose a JPEG, PNG, WEBP or GIF picture.');
+  if(!window.knoxIsPhoto?.(file)&&!/^image\//.test(file.type))throw Error('Choose a picture (JPEG, PNG, WEBP, GIF or HEIC).');
   const url=URL.createObjectURL(file);
   try{
-    const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});
-    for(const edge of [640,480,360]){
+    const img=new Image();
+    try{await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});}
+    catch{throw Error(/\.hei[cf]$/i.test(file.name)?'This browser can’t open iPhone HEIC photos. Take a screenshot of it, or try Safari.':'Knox couldn’t open that picture. Try a JPEG or PNG.');}
+    for(const edge of [560,420,320]){
       const k=Math.min(1,edge/Math.max(img.naturalWidth,img.naturalHeight));
       const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*k));canvas.height=Math.max(1,Math.round(img.naturalHeight*k));
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      for(const q of [0.8,0.68,0.55]){const data=canvas.toDataURL('image/jpeg',q);if(data.length<=140000)return data;}
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      for(const q of [0.78,0.66,0.55]){const data=canvas.toDataURL('image/jpeg',q);if(data.length<=90000)return data;}
     }
     throw Error('That picture is too detailed to store. Try a simpler or cropped picture.');
   }finally{URL.revokeObjectURL(url);}
 }
 panel.addEventListener('keydown',e=>{if(e.target.id==='fcPicSearch'&&e.key==='Enter'){e.preventDefault();searchPictures(e.target.value);}if(e.target.id==='fcPicSearch'&&e.key==='Escape'){picker=null;renderRows();}});
-panel.addEventListener('change',e=>{if(e.target.id==='fcPicInput'){const f=e.target.files[0],i=+e.target.dataset.index;e.target.value='';if(!f||!editing?.cards[i])return;
-    shrinkPicture(f).then(data=>{if(!editing?.cards[i])return;editing.cards[i].image=data;delete editing.cards[i].imageCredit;dirty=true;picker=null;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));return;}
+function useOwnPicture(f,i){
+  const deck=editing;if(!f||!deck?.cards[i])return;
+  shrinkPicture(f).then(data=>{if(editing!==deck||!deck.cards[i])return;deck.cards[i].image=data;delete deck.cards[i].imageCredit;dirty=true;picker=null;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));
+}
+panel.addEventListener('change',e=>{if(e.target.id==='fcPicInput'){const f=e.target.files[0],i=+e.target.dataset.index;e.target.value='';useOwnPicture(f,i);return;}
+  if(e.target.id==='fcAutoPics'){setAutoPictures(e.target.checked);return;}
   if(e.target.id==='fcDocInput'){const fs=[...e.target.files];e.target.value='';takeFiles(fs);}
   if(e.target.id==='fcImportInput'){const fs=[...e.target.files];e.target.value='';importFiles(fs).catch(err=>message(err.message||'Knox couldn’t import that file.'));}});
 // Files dropped anywhere while Flashcards is open: Make with Knox adds them
 // as notes; any other screen imports them (never while editing a deck).
 window.flashcardsTakeDrop=files=>{
   if(panel.hidden)return false;
-  if(panel.querySelector('#fcMakeReq')){takeFiles(files);return true;}
-  if(editing){message('To use a file, save this deck, then choose Import on your Decks page.');return true;}
-  importFiles(files).catch(err=>message(err.message||'Knox couldn’t import that file.'));
+  const list=[...files];
+  if(panel.querySelector('#fcMakeReq')){takeFiles(list);return true;}
+  if(panel.querySelector('.fc-loading')){message('Knox is still writing your cards — one moment.');return true;}
+  // In the editor, a photo dropped while the picture picker is open goes on that card.
+  if(editing){
+    if(picker&&list.length===1&&window.knoxIsPhoto?.(list[0])){useOwnPicture(list[0],picker.index);return true;}
+    message(picker?'Drop one picture to put it on this card.':'To add a picture, click Image on a card. To bring in more cards, save this deck and choose Import.');return true;
+  }
+  if(session){message('Finish this study session first, then drop your file on Decks.');return true;}
+  if(!panel.querySelector('#fcImportInput'))importView();
+  importFiles(list).catch(err=>message(err.message||'Knox couldn’t import that file.'));
   return true;
 };
 window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
@@ -494,13 +530,18 @@ panel.addEventListener('click',async e=>{
  if(action==='pic-close'){picker=null;renderRows();}
  if(action==='pic-pick'&&picker){const r=picker.results[+b.dataset.k],c=editing.cards[picker.index];if(r&&c){c.image=r.thumb;c.imageCredit=r.credit.slice(0,200);dirty=true;}picker=null;renderRows();}
  if(action==='remove'){picker=null;editing.cards.splice(+b.dataset.index,1);if(!editing.cards.length)editing.cards.push({front:'',back:''});dirty=true;renderRows();}
- if(action==='bulk'){const cards=parseLines(panel.querySelector('#fcBulk').value);const existing=editing.cards.filter(c=>c.front.trim()||c.back.trim());validateDeck({title:editing.title||'Draft',cards:[...existing,...cards]});editing.cards=[...existing,...cards];dirty=true;renderEditor();message(`Added ${cards.length} card${cards.length===1?'':'s'}.`,'ok');}
+ if(action==='bulk'){const cards=parsePasted(panel.querySelector('#fcBulk').value);const existing=editing.cards.filter(c=>c.front.trim()||c.back.trim());validateDeck({title:editing.title||'Draft',cards:[...existing,...cards]});editing.cards=[...existing,...cards];dirty=true;renderEditor();message(`Added ${cards.length} card${cards.length===1?'':'s'}.`,'ok');}
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
  if(action==='export')exportView(decks.filter(d=>d.id===id));
  if(action==='export-all')exportView(decks);
  if(action==='export-json'&&exportTarget){exportData(exportTarget);message('Saved a Knox backup (.json).','ok');}
  if(action==='export-csv'&&exportTarget){exportCsv(exportTarget);message('Saved a spreadsheet (.csv).','ok');}
+ if(action==='export-quizlet'&&exportTarget){try{await navigator.clipboard.writeText(toQuizlet(exportTarget));message('Copied! In Quizlet, choose Create → Import, then paste.','ok');}catch{message('Your browser blocked copying. Use the Spreadsheet option instead.');}}
+ if(action==='import-paste'){const cards=parsePasted(panel.querySelector('#fcPaste')?.value);openCards(cards,'Pasted cards');}
+ if(action==='import-to-make'&&importNote){const files=importNote.files;importNote=null;makeView();await takeFiles(files);}
+ if(action==='import-note-x'){importNote=null;importView();}
+ if(action==='make-cancel'){generationVersion++;makeView();message('Stopped. Your request is still here.','ok');}
  if(action==='import-pick')panel.querySelector('#fcImportInput')?.click();
  if(action==='sample'){const d=validateDeck({title:'Study smarter · Starter deck',cards:[{front:'What is active recall?',back:'Trying to pull an answer out of your memory before checking it.'},{front:'What is spaced repetition?',back:'Reviewing across several sessions, with longer gaps as you remember better.'},{front:'What makes a useful flashcard?',back:'One clear question, one focused answer, and enough context to avoid confusion.'}]});if(save([...decks,{...d,id:crypto.randomUUID()}])){home();message('Sample deck added — try Review due.','ok');}}
  if(action==='due'||action==='practice')start(id,action==='due');

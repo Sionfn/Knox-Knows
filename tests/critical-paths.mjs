@@ -1024,6 +1024,20 @@ test('Make with Knox builds a deck from a PDF/Word file, with or without a reque
   assert.equal(bad.code, 400);
 });
 
+test('Make with Knox skips pictures when the student turns them off', async () => {
+  const { db } = memoryDb();
+  const calls = [];
+  const ai = aiFetch({ title: 'Body', cards: [{ front: 'Which organ pumps blood?', back: 'The heart.', image: 'Heart' }, { front: 'b', back: 'c' }, { front: 'd', back: 'e' }] });
+  const fetch = async (url, opts) => { calls.push(String(url)); return ai.fetch(url, opts); };
+  const handler = await load('api/generate-flashcards.js', { db, fetch });
+  const res = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'the heart', pictures: false } }, res);
+  assert.equal(res.code, 200);
+  assert.ok(!calls.some(u => u.includes('wiki')), 'no picture lookups');
+  assert.ok(!res.body.cards.some(c => 'image' in c || 'imageTitle' in c));
+  assert.doesNotMatch(ai.calls[0].messages[0].content, /Pictures:/);
+});
+
 test('Make with Knox reads photos of notes and rejects bad photos', async () => {
   const { db } = memoryDb();
   const ai = aiFetch({ title: 'Notes', cards: [{ front: 'What is osmosis?', back: 'Water moving across a membrane.' }, { front: 'What is diffusion?', back: 'Spreading from high to low concentration.' }, { front: 'What is a solute?', back: 'What dissolves.' }] });

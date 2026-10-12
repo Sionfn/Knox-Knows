@@ -52,3 +52,12 @@ test('card lists in .txt: tabs, "term - definition" and "term: definition"; note
   assert.deepEqual(rowsToCards([['Term', 'Definition'], ['H2O', 'water', ''], ['', ''], ['NaCl', 'salt', 'table salt']]),
     [{ front: 'H2O', back: 'water' }, { front: 'NaCl', back: 'salt, table salt' }]);
 });
+
+test('pasted cards accept Tab, " - " and ": " and name the bad line; Quizlet copy is one card per line', async () => {
+  const { parsePasted, toQuizlet } = await import('../flashcards-core.js');
+  assert.deepEqual(parsePasted('mitochondria\tpowerhouse of the cell\r\n\n2. osmosis - water across a membrane\natom: smallest unit'),
+    [{ front: 'mitochondria', back: 'powerhouse of the cell' }, { front: 'osmosis', back: 'water across a membrane' }, { front: 'atom', back: 'smallest unit' }]);
+  assert.throws(() => parsePasted('good - card\nno separator here'), /Line 2/);
+  assert.throws(() => parsePasted('  '), /Paste some cards/);
+  assert.equal(toQuizlet([{ cards: [{ front: 'Q\none', back: 'A\tB' }, { front: 'x', back: 'y' }] }]), 'Q one\tA B\nx\ty');
+});
