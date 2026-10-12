@@ -2616,8 +2616,8 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
        image-upload JS below. -->
   <div id="appDropOverlay">
     <div class="drop-icon">🦊📸</div>
-    <div class="drop-title">Drop your photo, PDF, Word or PowerPoint here</div>
-    <div class="drop-sub">Knox will read it and help with your homework</div>
+    <div class="drop-title" id="dropTitle">Drop your photo, PDF, Word or PowerPoint here</div>
+    <div class="drop-sub" id="dropSub">Knox will read it and help with your homework</div>
   </div>
 
   <header id="appHeader">
@@ -3018,7 +3018,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
               aria-label="Ask Knox a question"></textarea>
 
             <div class="input-tools">
-              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" style="display:none;">
+              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx,text/plain,.txt,.md" style="display:none;">
               <button class="input-icon-btn calc-btn" onclick="openCalc()" title="Calculator" aria-label="Open calculator">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg>
               </button>
@@ -5378,6 +5378,10 @@ if (_fi) {
     if (!hasFiles(e)) return;
     e.preventDefault();
     depth++;
+    const t = document.getElementById('dropTitle');
+    const fc = document.body.classList.contains('knox-flashcards'), sub = document.getElementById('dropSub');
+    if (t) t.textContent = fc ? 'Drop your file here' : 'Drop your photo, PDF, Word or PowerPoint here';
+    if (sub) sub.textContent = fc ? 'Notes, photos, slides or a spreadsheet — Knox turns it into flashcards' : 'Knox will read it and help with your homework';
     overlay.classList.add('active');
   });
   dropZone.addEventListener('dragover', (e) => {
@@ -5395,8 +5399,8 @@ if (_fi) {
     depth = 0;
     overlay.classList.remove('active');
     const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    // Flashcards "Make with Knox" open: a dropped document goes to the deck.
-    if (file && window.knoxIsDocument?.(file) && window.flashcardsTakeDocument?.(file)) return;
+    // Flashcards open: dropped files go to the deck (Make with Knox or Import).
+    if (file && window.flashcardsTakeDrop?.(e.dataTransfer.files)) return;
     handleAttachment(file);
   });
 

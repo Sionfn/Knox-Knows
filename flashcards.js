@@ -1,4 +1,4 @@
-import {validateDeck,parseLines,schedule,studyQueue,parseTable,toCsv,cleanImage} from './flashcards-core.js';
+import {validateDeck,parseLines,schedule,studyQueue,parseTable,rowsToCards,parseList,toCsv,cleanImage} from './flashcards-core.js';
 const panel=document.createElement('section'); panel.id='flashcardsPanel'; panel.hidden=true;
 panel.setAttribute('aria-label','Flashcards'); document.querySelector('#chatAndInput').append(panel);
 // Backdrop layer (stays put; draws the Knox circles in CSS) + scrolling
@@ -46,7 +46,7 @@ function frame(head,body,center=false){
 }
 
 // ── Make with Knox (AI-written decks) ───────────────────────────────────────
-const makeOpts={request:'',count:10,style:'qa',upgrade:false,doc:null,reading:false};
+const makeOpts={request:'',count:10,style:'qa',upgrade:false,files:[],reading:false};
 const EXAMPLES=[
   ['🍎','Sophomore · Newton’s laws','I’m a sophomore in physics learning Newton’s three laws of motion'],
   ['🧬','AP Bio · cell respiration','AP Biology: cellular respiration — glycolysis, Krebs cycle and the electron transport chain'],
@@ -65,10 +65,10 @@ function makeView(){
     <div class="fc-make">
       <label class="fc-field-label" for="fcMakeReq">What are you studying?</label>
       <textarea class="fc-textarea" id="fcMakeReq" rows="4" maxlength="4000" placeholder="I’m a sophomore in physics learning Newton’s laws of motion">${esc(makeOpts.request)}</textarea>
-      <div class="fc-doc-row">${makeOpts.doc
-        ?`<span class="fc-doc-chip">📄 <span>${esc(makeOpts.doc.name)}${makeOpts.doc.truncated?' · first part':''}</span><button type="button" class="fc-doc-x" data-action="doc-clear" aria-label="Remove file">✕</button></span>`
-        :btn(makeOpts.reading?'Reading file…':'📄 Use a PDF, Word or PowerPoint','doc-pick',{cls:'small'})}
-        <input type="file" id="fcDocInput" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" hidden></div>
+      <div class="fc-doc-row">${makeOpts.files.map((f,i)=>`<span class="fc-doc-chip">${f.kind==='photo'?'🖼️':'📄'} <span>${esc(f.name)}${f.truncated?' · first part':''}</span><button type="button" class="fc-doc-x" data-action="doc-clear" data-index="${i}" aria-label="Remove ${esc(f.name)}">✕</button></span>`).join('')}
+        ${makeOpts.reading?btn('Reading file…','doc-pick',{cls:'small',attrs:'disabled'}):makeOpts.files.length<MAX_MAKE_FILES?btn(makeOpts.files.length?'+ Add another':'📎 Add your notes, slides or photos','doc-pick',{cls:'small'}):''}
+        <input type="file" id="fcDocInput" accept="${MAKE_ACCEPT}" multiple hidden></div>
+      <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${MAX_PHOTOS}) — or drag them here.</p>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
@@ -84,11 +84,14 @@ async function makeDeck(){
   const request=(panel.querySelector('#fcMakeReq')?.value||'').trim();
   makeOpts.request=request;makeOpts.upgrade=false;
   if(makeOpts.reading){message('Still reading your file — one moment.');return;}
-  if(request.length<3&&!makeOpts.doc){message('Tell Knox what you’re studying, or add a PDF, Word or PowerPoint file.');panel.querySelector('#fcMakeReq')?.focus();return;}
+  if(request.length<3&&!makeOpts.files.length){message('Tell Knox what you’re studying, or add your notes, slides or photos.');panel.querySelector('#fcMakeReq')?.focus();return;}
   const user=window.currentUser;
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
   const owner=key(), version=++generationVersion;
-  const options={request,count:makeOpts.count,style:makeOpts.style,...(makeOpts.doc?{document:{name:makeOpts.doc.name,text:makeOpts.doc.text}}:{})};
+  const texts=makeOpts.files.filter(f=>f.kind==='text'),photos=makeOpts.files.filter(f=>f.kind==='photo');
+  const options={request,count:makeOpts.count,style:makeOpts.style,
+    ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_LIMIT)}}:{}),
+    ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
   frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">This usually takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div></div>`,true);
   let data={},ok=false;
   try{
@@ -100,8 +103,8 @@ async function makeDeck(){
   if(version!==generationVersion||owner!==key())return;
   if(!ok||!Array.isArray(data.cards)){makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
   editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c)}))};
-  renderEditor();dirty=true;makeOpts.request='';makeOpts.doc=null;
-  message(`Knox made ${editing.cards.length} cards. Read them over, change anything you like, then save!`,'ok');
+  renderEditor();dirty=true;makeOpts.request='';makeOpts.files=[];
+  message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!`,'ok');
 }
 
 function home(query=''){
@@ -316,7 +319,10 @@ function knoxConfirm({title,body,ok='OK',cancel='Cancel',danger=false}){
 const confirmLeave=()=>knoxConfirm({title:'Leave without saving?',body:'Your deck has changes that aren’t saved yet. If you leave now, they’ll be lost.',ok:'Leave',cancel:'Keep editing',danger:true});
 
 // Import: one screen that lists every file Knox can take.
-const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.txt,text/plain,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx';
+// Files Make with Knox can read (doc-extract.js), and everything Import takes.
+const MAKE_ACCEPT='.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.txt,.md,text/plain,image/*,.heic,.heif';
+const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,'+MAKE_ACCEPT;
+const MAX_PHOTOS=5,MAX_MAKE_FILES=8,DOC_LIMIT=30000;
 function importView(){
   session=null;editing=null;dirty=false;
   const row=(icon,title,types,text)=>`<div class="fc-format"><span class="fc-format-icon" aria-hidden="true">${icon}</span><div><b>${title}</b> <span class="fc-format-types">${types}</span><p>${text}</p></div></div>`;
@@ -325,16 +331,44 @@ function importView(){
     <div class="fc-make">
       <span class="fc-field-label">Files that work</span>
       ${row('🗂️','Knox backup','.json','A file you saved with Export — your decks come back exactly as they were.')}
-      ${row('📊','Spreadsheet or list','.csv · .tsv · .txt','One card per row: the question in the first column, the answer in the second. Works with Google Sheets, Excel and Quizlet exports.')}
-      ${row('📄','PDF, Word or PowerPoint','.pdf · .docx · .pptx','Your notes, study guides or class slides — Knox reads them and writes the cards for you with Make with Knox.')}
-      <div class="fc-toolbar" style="margin-top:18px">${btn('Choose a file','import-pick',{cls:'primary blue'})}</div>
-      <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" hidden>
+      ${row('📊','Spreadsheet or card list','.xlsx · .csv · .tsv · .txt','One card per row: the question in the first column, the answer in the second. Works with Excel, Google Sheets, Quizlet and Anki text exports — or a list like “term - definition”.')}
+      ${row('📄','Notes, study guides & slides','.pdf · .docx · .pptx · .txt · .md','Knox reads them and writes the cards for you with Make with Knox.')}
+      ${row('📸','Photos','.jpg · .png · .heic · .webp','Pictures of your notes, a textbook page, a worksheet or the board — up to 5 at once.')}
+      <button type="button" class="fc-dropzone" data-action="import-pick"><span class="fc-dropzone-icon" aria-hidden="true">📥</span><b>Drag files here</b><span>or click to choose</span></button>
+      <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" multiple hidden>
     </div>`,true);
+}
+const forMake=f=>window.knoxIsPhoto?.(f)||window.knoxIsDocument?.(f);
+const openCards=(cards,name,kind)=>{
+  editing={id:crypto.randomUUID(),title:name.replace(/\.[^.]+$/,'').slice(0,100)||'Imported deck',cards};
+  renderEditor();dirty=true;message(`Found ${cards.length} card${cards.length===1?'':'s'}${kind?' in your '+kind:''}. Look them over, then Save.`,'ok');
+};
+// Several files at once (dropped or chosen): notes and photos all go to Make with Knox.
+async function importFiles(list){
+  const files=[...(list||[])].filter(Boolean);
+  if(files.length>1&&files.every(f=>forMake(f)&&!/\.(txt|md)$/i.test(f.name))){makeView();await takeFiles(files);return;}
+  if(files.length>1)message('Import one spreadsheet or backup at a time — Knox used the first file.');
+  await importFile(files[0]);
 }
 async function importFile(f){
   if(!f)return;
   const owner=identity,name=f.name.toLowerCase();
-  if(window.knoxIsDocument?.(f)){makeView();takeDocument(f);return;}
+  if(/\.apkg$/.test(name))throw Error('For an Anki deck, use File → Export → “Notes in Plain Text” in Anki, then import that .txt file.');
+  if(/\.xls$/.test(name))throw Error('That’s an old Excel file. Save it as .xlsx or .csv, then import it.');
+  if(/\.(doc|ppt)$/.test(name))throw Error(`Old .${name.split('.').pop()} files aren’t supported — save it as .${name.endsWith('.doc')?'docx':'pptx'} or PDF and try again.`);
+  if(/\.xlsx$/.test(name)||f.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+    const rows=await window.knoxReadSpreadsheet(f);
+    if(owner!==key())return;
+    openCards(rowsToCards(rows),f.name,'spreadsheet');return;
+  }
+  if(/\.(txt|md|markdown)$/.test(name)){
+    if(f.size>2000000)throw Error('Choose a file smaller than 2 MB.');
+    const cards=parseList(await f.text());
+    if(owner!==key())return;
+    if(cards){openCards(cards,f.name,'list');return;}
+    makeView();await takeFiles([f]);return; // notes, not a card list
+  }
+  if(forMake(f)&&!/\.(csv|tsv|json)$/.test(name)){makeView();await takeFiles([f]);return;}
   if(f.size>2000000)throw Error('Choose a file smaller than 2 MB.');
   const text=await f.text();
   if(owner!==key())return;
@@ -345,13 +379,8 @@ async function importFile(f){
     if(save([...decks,...incoming])){home();message('Imported as new decks. Study schedules start fresh.','ok');}
     return;
   }
-  if(/\.(csv|tsv|txt)$/.test(name)||/^text\//.test(f.type)){
-    const cards=parseTable(text);
-    editing={id:crypto.randomUUID(),title:f.name.replace(/\.[^.]+$/,'').slice(0,100)||'Imported deck',cards};
-    renderEditor();dirty=true;message(`Found ${cards.length} card${cards.length===1?'':'s'}. Look them over, then Save.`,'ok');
-    return;
-  }
-  throw Error('Knox can import .json backups, .csv/.tsv/.txt lists, and PDF, Word or PowerPoint files.');
+  if(/\.(csv|tsv)$/.test(name)||/^text\//.test(f.type)){openCards(parseTable(text),f.name);return;}
+  throw Error('Knox can import spreadsheets (.xlsx, .csv), card lists (.txt), Knox backups (.json), PDF, Word, PowerPoint and photos.');
 }
 // Export: a Knox backup (moves decks between devices) or a spreadsheet.
 let exportTarget=null;
@@ -383,19 +412,33 @@ syncAccess();window.addEventListener('knox-plan-changed',syncAccess);
 // Leaving Flashcards from the sidebar: ask first if a deck has unsaved edits,
 // then replay the click so the sidebar does what was asked.
 document.addEventListener('click',async e=>{if(!document.body.classList.contains('knox-flashcards'))return;const nav=e.target.closest('.sidebar-quicknav-link:not(.fc-nav),.sidebar-new-btn,.sidebar-history-item');if(!nav)return;if(!dirty){close();return;}e.preventDefault();e.stopImmediatePropagation();if(await confirmLeave()){close();nav.click();}},true);
-// PDF/Word for Make with Knox (read in the browser by doc-extract.js).
-async function takeDocument(file){
-  if(!file)return;
-  makeOpts.request=(panel.querySelector('#fcMakeReq')?.value||makeOpts.request||'');
-  makeOpts.reading=true;makeOpts.doc=null;makeView();
+// Notes for Make with Knox, read in the browser by doc-extract.js: PDF, Word,
+// PowerPoint and text files become text; photos (and scanned PDFs) are shrunk
+// JPEGs that Knox looks at directly.
+async function takeFiles(list){
+  const files=[...(list||[])].filter(Boolean);
+  if(!files.length)return;
+  makeOpts.request=(panel.querySelector('#fcMakeReq')?.value??makeOpts.request??'');
+  makeOpts.reading=true;makeView();
   const owner=key();
+  const addPhoto=(p,name)=>{
+    if(makeOpts.files.filter(f=>f.kind==='photo').length>=MAX_PHOTOS)throw Error(`Knox can use up to ${MAX_PHOTOS} photos per deck.`);
+    makeOpts.files.push({kind:'photo',name:name||p.name,type:p.type,data:p.data});
+  };
   try{
-    const doc=await window.knoxReadDocument(file);
-    if(owner!==key())return;
-    if(doc.kind!=='text')throw new Error('That PDF is scanned (just pictures of pages), so Knox can’t read its text for cards. Try a PDF with selectable text, a Word doc or a PowerPoint.');
-    makeOpts.doc={name:doc.name,text:doc.text,truncated:doc.truncated};
-  }catch(err){message(err.message||'Knox couldn’t read that file.');}
-  finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}
+    for(const file of files){
+      if(makeOpts.files.length>=MAX_MAKE_FILES){message(`That’s plenty for one deck — up to ${MAX_MAKE_FILES} files.`);break;}
+      try{
+        if(window.knoxIsPhoto?.(file)&&!window.knoxIsDocument?.(file)){const p=await window.knoxShrinkPhoto(file);if(owner!==key())return;addPhoto(p);continue;}
+        const doc=await window.knoxReadDocument(file);
+        if(owner!==key())return;
+        if(doc.kind==='image'){addPhoto(await window.knoxShrinkPhoto(doc.file),doc.name+' (page 1)');continue;} // scanned PDF
+        const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_LIMIT-used-doc.name.length-8;
+        if(room<500)throw Error(`That’s a lot of reading for one deck — make this one, then another with ${doc.name}.`);
+        makeOpts.files.push({kind:'text',name:doc.name,text:doc.text.slice(0,room),truncated:doc.truncated||doc.text.length>room});
+      }catch(err){message(err.message||'Knox couldn’t read that file.');}
+    }
+  }finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}
 }
 // Shrink a picked photo so decks stay small in browser storage (~100 KB each).
 async function shrinkPicture(file){
@@ -415,11 +458,18 @@ async function shrinkPicture(file){
 panel.addEventListener('keydown',e=>{if(e.target.id==='fcPicSearch'&&e.key==='Enter'){e.preventDefault();searchPictures(e.target.value);}if(e.target.id==='fcPicSearch'&&e.key==='Escape'){picker=null;renderRows();}});
 panel.addEventListener('change',e=>{if(e.target.id==='fcPicInput'){const f=e.target.files[0],i=+e.target.dataset.index;e.target.value='';if(!f||!editing?.cards[i])return;
     shrinkPicture(f).then(data=>{if(!editing?.cards[i])return;editing.cards[i].image=data;delete editing.cards[i].imageCredit;dirty=true;picker=null;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));return;}
-  if(e.target.id==='fcDocInput'){takeDocument(e.target.files[0]);e.target.value='';}
-  if(e.target.id==='fcImportInput'){const f=e.target.files[0];e.target.value='';importFile(f).catch(err=>message(err.message||'Knox couldn’t import that file.'));}});
-// A document dropped anywhere while Make with Knox is open goes to the deck.
-window.flashcardsTakeDocument=file=>{if(panel.hidden||!panel.querySelector('#fcMakeReq'))return false;takeDocument(file);return true;};
-window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false,doc:null,reading:false});load();if(!panel.hidden)home();});
+  if(e.target.id==='fcDocInput'){const fs=[...e.target.files];e.target.value='';takeFiles(fs);}
+  if(e.target.id==='fcImportInput'){const fs=[...e.target.files];e.target.value='';importFiles(fs).catch(err=>message(err.message||'Knox couldn’t import that file.'));}});
+// Files dropped anywhere while Flashcards is open: Make with Knox adds them
+// as notes; any other screen imports them (never while editing a deck).
+window.flashcardsTakeDrop=files=>{
+  if(panel.hidden)return false;
+  if(panel.querySelector('#fcMakeReq')){takeFiles(files);return true;}
+  if(editing){message('To use a file, save this deck, then choose Import on your Decks page.');return true;}
+  importFiles(files).catch(err=>message(err.message||'Knox couldn’t import that file.'));
+  return true;
+};
+window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;}});
 panel.addEventListener('click',async e=>{
@@ -429,7 +479,7 @@ panel.addEventListener('click',async e=>{
  if(action==='create')editor();
  if(action==='make')makeView();
  if(action==='doc-pick')panel.querySelector('#fcDocInput')?.click();
- if(action==='doc-clear'){makeOpts.doc=null;makeView();}
+ if(action==='doc-clear'){makeOpts.request=panel.querySelector('#fcMakeReq')?.value??makeOpts.request;makeOpts.files.splice(+b.dataset.index,1);makeView();}
  if(action==='make-go'){b.disabled=true;try{await makeDeck();}finally{b.disabled=false;}}
  if(action==='make-example'){makeOpts.request=b.dataset.text;const t=panel.querySelector('#fcMakeReq');t.value=b.dataset.text;t.focus();}
  if(action==='make-count'||action==='make-style'){if(action==='make-count')makeOpts.count=+b.dataset.count;else makeOpts.style=b.dataset.style;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}

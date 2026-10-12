@@ -60,10 +60,15 @@ export function parseTable(text) {
     }
     row.push(cell); if (row.some(c => c.trim())) rows.push(row);
   }
-  const header = /^(front|question|term|word|prompt|q)$/i;
-  if (rows.length && header.test((rows[0][0] || '').trim())) rows.shift();
+  return rowsToCards(rows);
+}
+// Rows from a spreadsheet (CSV, Excel): question in column 1, answer after.
+export function rowsToCards(rows) {
+  rows = rows.filter(r => Array.isArray(r) && r.some(c => String(c ?? '').trim()));
+  const header = /^(front|question|questions|term|terms|word|words|prompt|q|vocab|vocabulary)$/i;
+  if (rows.length && header.test(String(rows[0][0] ?? '').trim())) rows.shift();
   const cards = rows
-    .map(r => ({ front: (r[0] || '').trim(), back: r.slice(1).join(', ').trim() }))
+    .map(r => ({ front: String(r[0] ?? '').trim(), back: r.slice(1).map(c => String(c ?? '').trim()).filter(Boolean).join(', ') }))
     .filter(c => c.front && c.back);
   if (!cards.length) throw Error('Knox couldn’t find any cards. Put the question in the first column and the answer in the second.');
   if (cards.length > 300) throw Error('That file has more than 300 cards. Split it into smaller decks.');
@@ -75,4 +80,21 @@ export function toCsv(decks) {
   const lines = ['Front,Back' + (decks.length > 1 ? ',Deck' : '')];
   for (const d of decks) for (const c of d.cards) lines.push([q(c.front), q(c.back), ...(decks.length > 1 ? [q(d.title)] : [])].join(','));
   return lines.join('\r\n');
+}
+
+// A plain .txt/.md file: a card list if most lines look like one
+// ("term<Tab>definition", "term - definition", "term: definition"),
+// otherwise null — it's notes, for Make with Knox to turn into cards.
+export function parseList(text) {
+  const src = String(text || '').replace(/^\uFEFF/, '');
+  if (src.includes('\t')) return parseTable(src);
+  const lines = src.split(/\r?\n/).map(l => l.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '').trim()).filter(Boolean);
+  const cards = [];
+  for (const line of lines) {
+    const m = line.match(/^(.{1,200}?)\s+[-–—=]\s+(.+)$/) || line.match(/^([^:]{1,120}):\s+(.+)$/);
+    if (m) cards.push({ front: m[1].trim(), back: m[2].trim() });
+  }
+  if (lines.length < 2 || cards.length < Math.max(2, lines.length * 0.6)) return null;
+  if (cards.length > 300) throw Error('That file has more than 300 cards. Split it into smaller decks.');
+  return cards;
 }

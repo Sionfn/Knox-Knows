@@ -41,3 +41,14 @@ test('card pictures: only Wikimedia or small inline images survive import', asyn
   assert.equal(deck.cards[2].image, undefined);
   assert.equal(deck.cards[3].image, undefined);
 });
+
+test('card lists in .txt: tabs, "term - definition" and "term: definition"; notes return null', async () => {
+  const { parseList, rowsToCards } = await import('../flashcards-core.js');
+  assert.deepEqual(parseList('1. Mitosis - cell division\n2. Osmosis – water crossing a membrane\n- Atom: smallest unit of an element'),
+    [{ front: 'Mitosis', back: 'cell division' }, { front: 'Osmosis', back: 'water crossing a membrane' }, { front: 'Atom', back: 'smallest unit of an element' }]);
+  assert.equal(parseList('A\tB\nC\tD').length, 2);
+  assert.equal(parseList('The French Revolution began in 1789.\nIt ended the monarchy.\nNapoleon rose to power after.'), null);
+  assert.equal(parseList('just one line'), null);
+  assert.deepEqual(rowsToCards([['Term', 'Definition'], ['H2O', 'water', ''], ['', ''], ['NaCl', 'salt', 'table salt']]),
+    [{ front: 'H2O', back: 'water' }, { front: 'NaCl', back: 'salt, table salt' }]);
+});

@@ -1024,6 +1024,24 @@ test('Make with Knox builds a deck from a PDF/Word file, with or without a reque
   assert.equal(bad.code, 400);
 });
 
+test('Make with Knox reads photos of notes and rejects bad photos', async () => {
+  const { db } = memoryDb();
+  const ai = aiFetch({ title: 'Notes', cards: [{ front: 'What is osmosis?', back: 'Water moving across a membrane.' }, { front: 'What is diffusion?', back: 'Spreading from high to low concentration.' }, { front: 'What is a solute?', back: 'What dissolves.' }] });
+  const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: '', count: 10, images: [{ type: 'image/jpeg', data: 'QUJD' }, { type: 'image/jpeg', data: 'REVG' }] } }, res);
+  assert.equal(res.code, 200);
+  const user = ai.calls[0].messages[1].content;
+  assert.ok(Array.isArray(user), 'photos are sent as image parts');
+  assert.match(user[0].text, /Make flashcards from this file[\s\S]*2 photos/);
+  assert.deepEqual(user.slice(1).map(p => p.image_url.url), ['data:image/jpeg;base64,QUJD', 'data:image/jpeg;base64,REVG']);
+  for (const images of [Array(6).fill({ type: 'image/jpeg', data: 'QUJD' }), [{ type: 'image/svg+xml', data: 'QUJD' }], [{ type: 'image/jpeg', data: 'not base64!' }], [{ type: 'image/jpeg', data: 'A'.repeat(1_500_001) }], 'nope']) {
+    const bad = response();
+    await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'cells', images } }, bad);
+    assert.equal(bad.code, 400, JSON.stringify(images).slice(0, 40));
+  }
+});
+
 test('Make with Knox adds free Wikimedia pictures (with credit) only where Knox suggests one; failures just skip pictures', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'super' });

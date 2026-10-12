@@ -1,4 +1,5 @@
-// doc-extract.js — read PDF, Word (.docx) and PowerPoint (.pptx) files in the browser.
+// doc-extract.js — read PDF, Word (.docx), PowerPoint (.pptx) and text files in the browser,
+// plus Excel (.xlsx) rows and photos for Flashcards.
 //
 // Used by Ask Knox, Learn and Flashcards. Only the extracted text is sent to
 // Knox (not the file), so uploads stay small and fast. The readers load from
@@ -28,6 +29,7 @@
     if (PDF_TYPES.includes(file?.type) || name.endsWith('.pdf')) return 'pdf';
     if (DOCX_TYPES.includes(file?.type) || name.endsWith('.docx')) return 'docx';
     if (PPTX_TYPES.includes(file?.type) || name.endsWith('.pptx')) return 'pptx';
+    if (/\.(txt|md|markdown)$/.test(name) || file?.type === 'text/plain' || file?.type === 'text/markdown') return 'txt';
     if (name.endsWith('.doc')) return 'doc';
     if (name.endsWith('.ppt')) return 'ppt';
     return null;
@@ -173,6 +175,79 @@
     return finish(file.name, parts.join('\n\n'), Math.min(slides.length, MAX_PAGES), slides.length > MAX_PAGES);
   }
 
+  // Excel (.xlsx): the first sheet's rows as arrays of cell text.
+  window.knoxReadSpreadsheet = async function (file) {
+    if (file.size > MAX_FILE_BYTES) throw new Error('That file is over 20 MB. Try a smaller file.');
+    let JSZip;
+    try { JSZip = await loadScript(JSZIP_URL, 'JSZip'); }
+    catch { throw new Error("Knox couldn't load its file reader. Check your connection and try again."); }
+    let zip;
+    try { zip = await JSZip.loadAsync(await file.arrayBuffer()); }
+    catch { throw new Error("Knox couldn't open that Excel file. Try saving it again as .xlsx or .csv."); }
+    const parse = xml => new DOMParser().parseFromString(xml, 'application/xml');
+    const shared = zip.file('xl/sharedStrings.xml')
+      ? [...parse(await zip.file('xl/sharedStrings.xml').async('string')).getElementsByTagName('si')]
+          .map(si => [...si.getElementsByTagName('t')].map(t => t.textContent).join(''))
+      : [];
+    const sheetPath = Object.keys(zip.files).filter(p => /^xl\/worksheets\/sheet\d+\.xml$/.test(p))
+      .sort((a, b) => Number(a.match(/(\d+)\.xml$/)[1]) - Number(b.match(/(\d+)\.xml$/)[1]))[0];
+    if (!sheetPath) throw new Error('That Excel file has no sheets Knox can read.');
+    const col = ref => [...String(ref || '').replace(/\d+/g, '')].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+    const rows = [];
+    for (const row of parse(await zip.file(sheetPath).async('string')).getElementsByTagName('row')) {
+      const cells = [];
+      for (const c of row.getElementsByTagName('c')) {
+        const type = c.getAttribute('t');
+        const v = c.getElementsByTagName('v')[0]?.textContent ?? '';
+        const text = type === 's' ? shared[Number(v)] ?? ''
+          : type === 'inlineStr' ? [...c.getElementsByTagName('t')].map(t => t.textContent).join('')
+          : type === 'b' ? (v === '1' ? 'TRUE' : 'FALSE') : v;
+        const i = col(c.getAttribute('r'));
+        cells[i >= 0 ? i : cells.length] = text;
+      }
+      rows.push(Array.from(cells, c => c ?? ''));
+    }
+    return rows;
+  };
+
+  // Photos (notes, textbook pages, slides): shrink to a JPEG small enough to
+  // send. iPhone HEIC photos work where the browser can open them (Safari).
+  const PHOTO_EXT = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i;
+  window.knoxIsPhoto = file => /^image\//.test(file?.type || '') || PHOTO_EXT.test(file?.name || '');
+  window.knoxShrinkPhoto = async function (file, maxEdge = 1600, maxChars = 1_400_000) {
+    if (file.size > MAX_FILE_BYTES) throw new Error('That photo is over 20 MB. Try a smaller one.');
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      try { await new Promise((ok, bad) => { img.onload = ok; img.onerror = bad; img.src = url; }); }
+      catch {
+        throw new Error(/\.hei[cf]$/i.test(file.name)
+          ? "This browser can't open iPhone HEIC photos. Take a screenshot of it, or set your camera to “Most Compatible”."
+          : "Knox couldn't open that picture. Try a JPEG or PNG.");
+      }
+      for (const edge of [maxEdge, 1200, 900]) {
+        const k = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * k));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * k));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); // transparent PNGs → white, not black
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        for (const q of [0.85, 0.72]) {
+          const data = canvas.toDataURL('image/jpeg', q).split(',')[1];
+          if (data.length <= maxChars) return { name: niceName(file.name), type: 'image/jpeg', data };
+        }
+      }
+      throw new Error('That photo is too large. Try cropping it.');
+    } finally { URL.revokeObjectURL(url); }
+  };
+
+  async function readTxt(file) {
+    const text = await file.text();
+    if (!tidy(text)) throw new Error('That file looks empty.');
+    return finish(file.name, text, null, false);
+  }
+
   window.knoxReadDocument = async function (file) {
     const kind = kindOf(file);
     if (kind === 'doc') throw new Error('Old .doc files aren’t supported — save it as .docx or PDF and try again.');
@@ -180,7 +255,7 @@
     if (!kind) throw new Error('Knox can read photos, PDFs, Word (.docx) and PowerPoint (.pptx) files.');
     if (file.size > MAX_FILE_BYTES) throw new Error('That file is over 20 MB. Try a smaller file or just the pages you need.');
     try {
-      const doc = kind === 'pdf' ? await readPdf(file) : kind === 'pptx' ? await readPptx(file) : await readDocx(file);
+      const doc = kind === 'pdf' ? await readPdf(file) : kind === 'pptx' ? await readPptx(file) : kind === 'txt' ? await readTxt(file) : await readDocx(file);
       doc.name = niceName(doc.name);
       return doc;
     } catch (err) {
