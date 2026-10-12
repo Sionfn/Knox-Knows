@@ -85,6 +85,33 @@ function makeView(){
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
 }
+// "Try a sample deck": Knox writes a brand-new deck on a random school topic —
+// random size, card style and pictures on or off — and saves it right away.
+const SAMPLE_TOPICS=['Middle school science: the planets of the solar system','High school biology: parts of the cell and what they do','U.S. history: the American Revolution','World geography: capital cities of Europe','Spanish 1: common everyday verbs','Chemistry: the first 20 elements of the periodic table','Art history: famous paintings and who painted them','Human anatomy: the major bones of the body','Earth science: rocks, minerals and the rock cycle','Physics: Newton’s three laws of motion','Literature: Shakespeare’s most famous plays','Music: instruments of the orchestra','Ancient Egypt: pharaohs, pyramids and daily life','Biology: how animals are classified','Geometry: shapes, angles and area formulas','Economics: supply, demand and markets','Computer science: basic programming ideas','Earth science: weather and climate','World history: key events of World War II','Greek mythology: the Olympian gods','Human body: the major organs and what they do','History of science: famous inventors and their inventions','Marine biology: animals of the ocean','Earth science: volcanoes and earthquakes','U.S. government: the three branches and checks and balances','French 1: greetings and everyday phrases','Paleontology: famous dinosaurs','Space exploration: famous missions and astronauts','Health: nutrition and the food groups','Ecology: ecosystems and food chains','World landmarks: famous buildings and where they are','Algebra 1: key vocabulary and rules'];
+const pick=list=>list[Math.floor(Math.random()*list.length)];
+async function sampleDeck(){
+  const user=window.currentUser;
+  if(!user?.getIdToken){message('Sign in to try a sample deck.');window.openAuthModal?.();return;}
+  const owner=key(),version=++generationVersion;
+  const options={request:pick(SAMPLE_TOPICS),count:pick([10,15,20]),style:pick(['qa','term']),pictures:Math.random()<0.5};
+  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is picking a surprise deck…</h2><p class="fc-sub">A random topic, ${options.count} cards${options.pictures?', with pictures':''}. This takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','back',{cls:'ghost small'})}</div></div>`,true);
+  let data={},ok=false;
+  try{
+    const token=await user.getIdToken();
+    if(version!==generationVersion||owner!==key())return;
+    const r=await fetch('/api/generate-flashcards',{method:'POST',signal:AbortSignal.timeout(60000),headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(options)});
+    data=await r.json().catch(()=>({}));ok=r.ok;
+  }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
+  if(version!==generationVersion||owner!==key())return;
+  if(!ok||!Array.isArray(data.cards)){home();message(data.error||'Knox couldn’t make a sample deck. Please try again.');return;}
+  let deck;
+  try{
+    const cards=data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c),...(typeof c.imageTopic==='string'&&c.imageTopic.trim()?{imageTopic:c.imageTopic.trim().slice(0,120)}:{})}));
+    const valid=validateDeck({title:data.title||'Sample deck',cards});
+    deck={id:crypto.randomUUID(),title:valid.title,cards:valid.cards.map((c,i)=>({...c,...(cards[i].imageTopic?{imageTopic:cards[i].imageTopic}:{})}))};
+  }catch{home();message('Knox couldn’t make a sample deck. Please try again.');return;}
+  if(save([...decks,deck])){home();message(`Sample deck added: ${deck.title} · ${deck.cards.length} cards. Try Review due!`,'ok');}
+}
 async function makeDeck(){
   const request=(panel.querySelector('#fcMakeReq')?.value||'').trim();
   makeOpts.request=request;makeOpts.upgrade=false;
@@ -562,7 +589,7 @@ panel.addEventListener('click',async e=>{
  if(action==='import-note-x'){importNote=null;importView();}
  if(action==='make-cancel'){generationVersion++;makeView();message('Stopped. Your request is still here.','ok');}
  if(action==='import-pick')panel.querySelector('#fcImportInput')?.click();
- if(action==='sample'){const d=validateDeck({title:'Study smarter · Starter deck',cards:[{front:'What is active recall?',back:'Trying to pull an answer out of your memory before checking it.'},{front:'What is spaced repetition?',back:'Reviewing across several sessions, with longer gaps as you remember better.'},{front:'What makes a useful flashcard?',back:'One clear question, one focused answer, and enough context to avoid confusion.'}]});if(save([...decks,{...d,id:crypto.randomUUID()}])){home();message('Sample deck added — try Review due.','ok');}}
+ if(action==='sample'){b.disabled=true;try{await sampleDeck();}finally{b.disabled=false;}}
  if(action==='due'||action==='practice')start(id,action==='due');
  if(action==='flip'&&session)flip();
  if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;study();}
