@@ -946,3 +946,17 @@ test('Obvious schoolwork skips the small-talk check (no extra AI call); the chec
   assert.ok(check.max_completion_tokens >= 300);
   assert.equal(chat.body.isCasual, true);
 });
+
+test('Ask Knox solves a bare math expression instead of tying it to earlier small talk (not in Learn)', async () => {
+  const { db } = memoryDb();
+  const ai = chatFetch('CASUAL');
+  const handler = await load('api/ask.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler(askRequest({ question: '2x4', history: [{ role: 'user', content: 'ugh im so tired today' }, { role: 'assistant', content: 'Rough night?' }] }), res);
+  assert.equal(res.body.isCasual, false);
+  const prompt = ai.calls.find(call => !isSmallTalkCheck(call)).messages[0].content;
+  assert.match(prompt, /Bare math:.*2x4.*multiply.*Never read it as part of earlier small talk/s);
+  const learn = response();
+  await handler(askRequest({ question: '2x4', history: [], learnMode: true }), learn);
+  assert.doesNotMatch(ai.calls.at(-1).messages[0].content, /Bare math:/, 'Learn replies like "8" stay part of the lesson');
+});
