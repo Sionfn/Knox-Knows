@@ -3905,8 +3905,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       let count = data.streakCount || 0;
       // If they last studied before yesterday, the streak is broken.
       if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
-      renderStreak(count, lastDay === today);
-      return { count, studiedToday: lastDay === today };
+      // A saved day ahead of today's local date (e.g. from a different
+      // timezone or the old UTC days) means today is already counted.
+      const studiedToday = !!lastDay && lastDay >= today;
+      renderStreak(count, studiedToday);
+      return { count, studiedToday };
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
@@ -3989,7 +3992,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       const lastDay = data.streakLastDay || null;
       let count = data.streakCount || 0;
       if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
-      const studiedToday = lastDay === today;
+      const studiedToday = !!lastDay && lastDay >= today; // a day ahead of today = already counted
 
       // Next milestone
       const next = STREAK_MILESTONES.find(m => m > count);
