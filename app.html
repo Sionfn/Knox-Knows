@@ -1489,7 +1489,10 @@
       width: 10px; height: 10px;
       border-radius: 50%;
       animation: bounce 1.2s infinite;
+      will-change: transform, opacity; /* animate on the GPU: keeps bouncing even if the page is busy */
     }
+    /* Shown under the dots if a reply is slow (see the ask timers). */
+    .thinking-note { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
     .thinking-dot:nth-child(1) { background: var(--orange); }
     .thinking-dot:nth-child(2) { background: var(--blue); animation-delay: 0.2s; }
     .thinking-dot:nth-child(3) { background: var(--green); animation-delay: 0.4s; }
@@ -5812,6 +5815,17 @@ window.appHandleAsk = async function() {
   const requestController = new AbortController();
   window._askController = requestController;
   const requestTimeout = setTimeout(() => requestController.abort(), 65000);
+  const thinkIdFor = 'think_' + Date.now();
+  // If a reply is slow, say so under the thinking dots instead of leaving
+  // them bouncing with no sign anything is happening.
+  const slowNotes = [[10000, 'Still thinking…'], [25000, 'Taking longer than usual — hang tight.']].map(([ms, text]) =>
+    setTimeout(() => {
+      const row = document.querySelector('#' + thinkIdFor + ' .thinking-row');
+      if (!row) return;
+      let note = row.parentElement.querySelector('.thinking-note');
+      if (!note) { note = document.createElement('div'); note.className = 'thinking-note'; note.setAttribute('role', 'status'); row.after(note); }
+      note.textContent = text;
+    }, ms));
   const requestUser = window.currentUser;
   const requestUid = requestUser?.uid || null;
   const requestView = window._appViewVersion;
@@ -5872,7 +5886,7 @@ window.appHandleAsk = async function() {
   $('chatThread').appendChild(userRow);
 
   // Thinking row
-  const thinkId  = 'think_' + Date.now();
+  const thinkId  = thinkIdFor;
   const askStartedAt = Date.now();
   const thinkRow = document.createElement('div');
   thinkRow.className = 'msg-wrap';
@@ -6059,6 +6073,7 @@ window.appHandleAsk = async function() {
     replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">' + escHtml(message) + '</p>');
   } finally {
     clearTimeout(requestTimeout);
+    slowNotes.forEach(clearTimeout);
     if (window._askController === requestController) {
       window._askController = null;
       window._appAskBusy = false;

@@ -372,7 +372,7 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
         // the one-word verdict (it doesn't accept temperature).
         max_completion_tokens: 600,
       }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(5000), // slow check → treat as a real question rather than keep the student waiting
     });
     if (!response.ok) { console.error("Casual classifier HTTP", response.status); return false; }
     const data = await response.json();
@@ -1152,7 +1152,9 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(image ? 50000 : 25000),
+      // Small talk is a one-liner: give up sooner so a slow moment never
+      // leaves the thinking dots hanging (the student gets a 'try again').
+      signal: AbortSignal.timeout(image || doc ? 50000 : casual ? 15000 : 25000),
     });
 
     if (!response.ok) {
