@@ -1755,6 +1755,13 @@
       font-size: 16px; font-weight: 900; line-height: 1;
       padding: 0 4px;
     }
+    /* PDF / Word attachments: a file icon in place of the photo thumbnail. */
+    #appDocPillIcon { display: none; width: 32px; height: 32px; border-radius: 8px; align-items: center; justify-content: center; font-size: 18px; background: var(--surface); }
+    #appImagePill.is-doc #appDocPillIcon { display: flex; }
+    #appImagePill.is-doc #appImagePillThumb { display: none; }
+    #appImagePill.is-reading { opacity: .75; }
+    .msg-user-doc { display: flex; align-items: center; gap: 8px; margin-top: 6px; padding: 7px 10px; border-radius: 10px; background: rgba(255,255,255,.18); font-size: 13px; font-weight: 800; max-width: 100%; }
+    .msg-user-doc span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* DRAG-AND-DROP OVERLAY — shown over the whole page while a file is
        being dragged anywhere over the app. position:fixed so it covers
@@ -2606,8 +2613,8 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
        image-upload JS below. -->
   <div id="appDropOverlay">
     <div class="drop-icon">🦊📸</div>
-    <div class="drop-title">Drop your photo here</div>
-    <div class="drop-sub">Knox will read it like any uploaded homework photo</div>
+    <div class="drop-title">Drop your photo, PDF, or Word doc here</div>
+    <div class="drop-sub">Knox will read it and help with your homework</div>
   </div>
 
   <header id="appHeader">
@@ -2996,8 +3003,9 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <div id="inputArea">
           <div id="appImagePill">
             <img id="appImagePillThumb" alt="">
+            <span id="appDocPillIcon" aria-hidden="true">📄</span>
             <span id="appImagePillName">Image attached</span>
-            <button onclick="appClearImage()" aria-label="Remove image">✕</button>
+            <button onclick="appClearImage()" aria-label="Remove attachment">✕</button>
           </div>
 
           <div class="input-box" id="inputBox">
@@ -3007,11 +3015,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
               aria-label="Ask Knox a question"></textarea>
 
             <div class="input-tools">
-              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
+              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" style="display:none;">
               <button class="input-icon-btn calc-btn" onclick="openCalc()" title="Calculator" aria-label="Open calculator">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg>
               </button>
-              <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload photo" aria-label="Upload photo">
+              <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload a photo, PDF, or Word doc" aria-label="Upload a photo, PDF, or Word doc">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
               </button>
               <button id="appSendBtn" onclick="appHandleAsk()" aria-label="Send">
@@ -5254,9 +5262,9 @@ async function fitImageForUpload(file) {
   }
 }
 
-async function handleImageFile(file) {
+async function handleImageFile(file, displayName, keepVersion) {
   if (!file) return;
-  const selectionVersion = ++imageSelectionVersion;
+  const selectionVersion = keepVersion || ++imageSelectionVersion;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
@@ -5275,23 +5283,65 @@ async function handleImageFile(file) {
     if (selectionVersion !== imageSelectionVersion) return;
     const dataUrl = String(ev.target.result);
     const base64  = dataUrl.split(',')[1];
-    window._appImage = { data: base64, type: uploadFile.type, name: uploadFile.name, dataUrl };
+    window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
+    window._appDoc = null;
     const pill  = $('appImagePill');
+    if (pill) pill.classList.remove('is-doc', 'is-reading');
     const thumb = $('appImagePillThumb');
     const name  = $('appImagePillName');
     if (thumb) thumb.src = dataUrl;
-    if (name)  name.textContent  = uploadFile.name;
+    if (name)  name.textContent  = displayName || uploadFile.name;
     if (pill)  pill.style.display = 'inline-flex';
   };
   reader.readAsDataURL(uploadFile);
 }
 window.handleImageFile = handleImageFile;
 
+// ── PDF / Word attachments ───────────────────────────────────
+// doc-extract.js reads the file in the browser; only its text goes to Knox.
+// A scanned PDF (pictures only) comes back as page 1 photo and uses the
+// normal photo path.
+async function handleDocFile(file) {
+  const selectionVersion = ++imageSelectionVersion;
+  const pill = $('appImagePill'), name = $('appImagePillName');
+  window._appImage = null;
+  window._appDoc = null;
+  if (pill) { pill.classList.add('is-doc', 'is-reading'); pill.style.display = 'inline-flex'; }
+  if (name) name.textContent = 'Reading ' + file.name + '…';
+  let doc;
+  try {
+    if (!window.knoxReadDocument) throw new Error("Knox's file reader is still loading. Try again in a moment.");
+    doc = await window.knoxReadDocument(file);
+  } catch (error) {
+    if (selectionVersion !== imageSelectionVersion) return;
+    window.appClearImage();
+    alert(error.message || "Knox couldn't read that file.");
+    return;
+  }
+  if (selectionVersion !== imageSelectionVersion) return;
+  if (doc.kind === 'image') {
+    if (pill) pill.classList.remove('is-doc', 'is-reading');
+    return handleImageFile(doc.file, doc.name + ' · page 1 (scanned)', selectionVersion);
+  }
+  window._appDoc = { name: doc.name, text: doc.text, truncated: doc.truncated };
+  if (pill) pill.classList.remove('is-reading');
+  if (name) name.textContent = doc.name + (doc.truncated ? ' · first part' : '');
+}
+window.handleDocFile = handleDocFile;
+
+// Photo button, drag-and-drop and paste all come through here.
+function handleAttachment(file) {
+  if (!file) return;
+  if (window.knoxIsDocument?.(file)) return handleDocFile(file);
+  return handleImageFile(file);
+}
+window.handleAttachment = handleAttachment;
+
 const _fi = $('appFileInput');
 if (_fi) {
   _fi.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    handleImageFile(file);
+    handleAttachment(file);
     e.target.value = '';
   });
 }
@@ -5342,7 +5392,9 @@ if (_fi) {
     depth = 0;
     overlay.classList.remove('active');
     const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    handleImageFile(file);
+    // Flashcards "Make with Knox" open: a dropped document goes to the deck.
+    if (file && window.knoxIsDocument?.(file) && window.flashcardsTakeDocument?.(file)) return;
+    handleAttachment(file);
   });
 
   // Belt-and-suspenders: dropZone is document.body, so this mostly can't
@@ -5361,8 +5413,9 @@ window.appClearImage = function() {
   // can reappear after the student removes it or sends a different message.
   imageSelectionVersion++;
   window._appImage = null;
+  window._appDoc = null;
   const pill = $('appImagePill');
-  if (pill) pill.style.display = 'none';
+  if (pill) { pill.style.display = 'none'; pill.classList.remove('is-doc', 'is-reading'); }
 };
 
 // ── Textarea auto-grow + enter to send ───────────────────────
@@ -5743,7 +5796,8 @@ window.appHandleAsk = async function() {
   if (window._appAskBusy) return;
   const input = $('appChatInput');
   const q = (input?.value || '').trim();
-  if (!q && !window._appImage) return;
+  if (!q && !window._appImage && !window._appDoc) return;
+  if ($('appImagePill')?.classList.contains('is-reading')) return; // still reading the file
 
   // Guest gate — 1 free question per day, tracked in localStorage
   if (!window.currentUser) {
@@ -5805,6 +5859,14 @@ window.appHandleAsk = async function() {
     img.alt       = 'Attached image';
     userInner.appendChild(img);
   }
+  if (window._appDoc) {
+    const chip = document.createElement('div');
+    chip.className = 'msg-user-doc';
+    const icon = document.createElement('span'); icon.textContent = '📄';
+    const label = document.createElement('span'); label.textContent = window._appDoc.name; // textContent → no XSS
+    chip.append(icon, label);
+    userInner.appendChild(chip);
+  }
   userBubble.appendChild(userInner);
   userRow.appendChild(userBubble);
   $('chatThread').appendChild(userRow);
@@ -5827,7 +5889,11 @@ window.appHandleAsk = async function() {
   scrollChat();
 
   const image = window._appImage;
+  const doc = window._appDoc;
   window.appClearImage();
+  // What this message is called in history and the sidebar.
+  const askLabel = q || (doc ? '📄 ' + doc.name : '📷 Photo');
+  const savedQuestion = (doc ? '📄 ' + doc.name + (q ? ' — ' + q : '') : askLabel).slice(0, 8000);
   // Learn follow-ups re-attach the session's homework photo (not shown again)
   // so Knox can keep checking answers against it. Signed-in only: Learn
   // follow-ups are free for them, but a guest photo would use their quota.
@@ -5840,6 +5906,12 @@ window.appHandleAsk = async function() {
     if (input && !input.value) {
       input.value = q;
       input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (doc && !window._appDoc && !window._appImage && imageSelectionVersion === clearedImageVersion) {
+      window._appDoc = doc;
+      $('appImagePill').classList.add('is-doc');
+      $('appImagePillName').textContent = doc.name + (doc.truncated ? ' · first part' : '');
+      $('appImagePill').style.display = 'flex';
     }
     if (image && !window._appImage && imageSelectionVersion === clearedImageVersion) {
       window._appImage = image;
@@ -5874,6 +5946,7 @@ window.appHandleAsk = async function() {
         question:  q,
         image:     sendImage?.data,
         imageType: sendImage?.type,
+        document:  doc ? { name: doc.name, text: doc.text } : undefined,
         history,
         learnMode: requestLearnMode,
         learnSessionId: requestLearnSessionId,
@@ -5885,7 +5958,7 @@ window.appHandleAsk = async function() {
     const sameView = window._appViewVersion === requestView && (window.currentUser?.uid || null) === requestUid;
     if (!sameView) {
       if (res.ok && requestUid && window.currentUser?.uid === requestUid && window.saveHistory) {
-        await window.saveHistory(q || '📷 Photo', data.answer || '', {
+        await window.saveHistory(savedQuestion, data.answer || '', {
           uid: requestUid, conversationId: requestConversationId,
           learnMode: requestLearnMode, sessionId: requestLearnSessionId,
           viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
@@ -5940,7 +6013,7 @@ window.appHandleAsk = async function() {
       // Switched chats (or accounts) during the pause: save it, don't show it here.
       if (window._appViewVersion !== requestView || (window.currentUser?.uid || null) !== requestUid) {
         if (requestUid && window.currentUser?.uid === requestUid && window.saveHistory) {
-          await window.saveHistory(q || '📷 Photo', data.answer || '', {
+          await window.saveHistory(savedQuestion, data.answer || '', {
             uid: requestUid, conversationId: requestConversationId,
             learnMode: requestLearnMode, sessionId: requestLearnSessionId,
             viewVersion: requestView, model: 'knox-chat',
@@ -5954,7 +6027,7 @@ window.appHandleAsk = async function() {
     // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: q || '📷 Photo', answer };
+    window._fbPayloads[fbId] = { question: askLabel, answer };
 
     // Copy is always shown (works for guests too); "Was this helpful?"
     // only for signed-in users, same as before.
@@ -5962,13 +6035,17 @@ window.appHandleAsk = async function() {
     replaceThinking(thinkId, html, data.isCasual ? '' : window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
     // Track conversation
-    window._conversation.push({ role: 'user',      content: q || '📷 Photo' });
+    // Keep the document's text in the conversation so follow-up questions
+    // ("now explain question 3") can still see it.
+    window._conversation.push({ role: 'user', content: doc
+      ? ('[Attached document: ' + doc.name + ']\n' + doc.text.slice(0, 20000) + (q ? '\n\n' + q : ''))
+      : askLabel });
     window._conversation.push({ role: 'assistant', content: answer });
     if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
 
     // Save history + refresh usage indicator
     if (window.saveHistory && requestUid) {
-      await window.saveHistory(q || '📷 Photo', answer, {
+      await window.saveHistory(savedQuestion, answer, {
         uid: requestUid, conversationId: requestConversationId,
         learnMode: requestLearnMode, sessionId: requestLearnSessionId,
         viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
@@ -6476,6 +6553,7 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
 
 </script>
 <link rel="stylesheet" href="/flashcards.css">
+<script src="/doc-extract.js"></script>
 <script type="module" src="/flashcards.js"></script>
 <script>
 // Calculator backdrop layer (the circles are drawn by .calc-decor in CSS).
