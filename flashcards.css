@@ -245,6 +245,30 @@ body.app-sidebar-collapsed .fc-beta { display:none; }
 /* Card pictures: on the answer side while studying, and in the editor. */
 .fc-card-img { max-width:100%; max-height:170px; object-fit:contain; border-radius:12px; background:#fff; margin-top:6px; }
 .fc-img-credit { font-size:10.5px; font-weight:700; color:var(--text-light); max-width:90%; text-align:center; line-height:1.3; }
-.fc-pic-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
-.fc-pic-thumb { width:56px; height:56px; object-fit:cover; border-radius:10px; border:2px solid var(--border); background:#fff; }
-.fc-pic-credit { font-size:12px; font-weight:700; color:var(--text-light); flex:1 1 160px; min-width:0; }
+
+/* Card editor: Quizlet-style image tile + Wikimedia picture picker */
+.fc-row-body { display:flex; gap:14px; align-items:flex-start; }
+.fc-row-body .fc-fields { flex:1; min-width:0; }
+.fc-img-tile { flex:0 0 84px; width:84px; height:84px; margin-top:22px; border:2px dashed var(--border); border-radius:14px; background:var(--surface); color:var(--text-light); font:inherit; font-size:12px; font-weight:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; position:relative; padding:0; transition:border-color .15s, color .15s; }
+.fc-img-tile span { font-size:22px; }
+button.fc-img-tile:hover, button.fc-img-tile:focus-visible { border-color:var(--orange); color:var(--orange); outline:none; }
+.fc-img-tile.has-pic { border-style:solid; cursor:default; }
+.fc-img-open { width:100%; height:100%; padding:0; border:0; border-radius:12px; overflow:hidden; background:#fff; cursor:pointer; }
+.fc-img-open img { width:100%; height:100%; object-fit:cover; display:block; }
+.fc-img-del { position:absolute; top:-8px; right:-8px; width:26px; height:26px; border-radius:50%; border:2px solid var(--border); background:var(--surface); font-size:12px; line-height:1; cursor:pointer; padding:0; }
+.fc-img-del:hover { border-color:var(--red); }
+.fc-pic-credit { margin:8px 0 0 98px; font-size:11.5px; font-weight:700; color:var(--text-light); }
+.fc-picker { margin-top:12px; padding:12px; border-radius:14px; border:2px solid var(--border); background:var(--cream); }
+html[data-theme="dark"] .fc-picker { background:color-mix(in srgb, var(--surface) 70%, #000); }
+.fc-picker-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.fc-picker-bar .fc-input { flex:1 1 220px; min-width:0; }
+.fc-picker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; margin-top:10px; }
+.fc-picker-item { aspect-ratio:1; padding:0; border:2px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; cursor:pointer; }
+.fc-picker-item:hover, .fc-picker-item:focus-visible { border-color:var(--orange); outline:none; }
+.fc-picker-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.fc-picker-note { margin:8px 2px 0; font-size:12px; font-weight:700; color:var(--text-light); }
+@media (max-width:640px) {
+  .fc-row-body { flex-direction:column; }
+  .fc-img-tile { margin-top:0; }
+  .fc-pic-credit { margin-left:0; }
+}

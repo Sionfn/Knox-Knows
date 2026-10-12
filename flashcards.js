@@ -142,15 +142,57 @@ function editor(deck){editing=deck?structuredClone(deck):{id:crypto.randomUUID()
 // One card row. Only the first card shows example text — repeating it on every
 // blank card made new cards look like copies of card 1.
 function cardRow(c,i){
-  const ex=i===0;
+  const ex=i===0, pic=cleanImage(c).image;
+  const tile=pic
+    ?`<div class="fc-img-tile has-pic" title="${esc(c.imageCredit||'Your picture')}"><button type="button" class="fc-img-open" data-action="pic-open" data-index="${i}" aria-label="Change the picture on card ${i+1}"><img src="${esc(c.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"></button><button type="button" class="fc-img-del" data-action="pic-remove" data-index="${i}" aria-label="Remove the picture from card ${i+1}">🗑</button></div>`
+    :`<button type="button" class="fc-img-tile" data-action="pic-open" data-index="${i}" aria-label="Add a picture to card ${i+1}"><span aria-hidden="true">🖼️</span>Image</button>`;
   return `<div class="fc-row">
       <div class="fc-row-head"><span class="fc-num">${i+1}</span>${btn('Remove','remove',{cls:'ghost small danger',attrs:`data-index="${i}" aria-label="Remove card ${i+1}"`})}</div>
+      <div class="fc-row-body">${tile}
       <div class="fc-fields"><div><label class="fc-field-label" for="fcFront${i}">Question / term</label><textarea class="fc-textarea" id="fcFront${i}" data-field="front" data-index="${i}" maxlength="2000"${ex?' placeholder="What is photosynthesis?"':''}>${esc(c.front)}</textarea></div>
-      <div><label class="fc-field-label" for="fcBack${i}">Answer / definition</label><textarea class="fc-textarea" id="fcBack${i}" data-field="back" data-index="${i}" maxlength="4000"${ex?' placeholder="How plants turn light, water and CO₂ into sugar and oxygen."':''}>${esc(c.back)}</textarea></div></div>
-      <div class="fc-pic-row">${cleanImage(c).image
-        ?`<img class="fc-pic-thumb" src="${esc(c.image)}" alt="Picture for card ${i+1}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><span class="fc-pic-credit">${c.imageCredit?esc(c.imageCredit):'Your picture'} · shows with the answer</span>${btn('Remove picture','pic-remove',{cls:'ghost small',attrs:`data-index="${i}"`})}`
-        :btn('+ Picture','pic-add',{cls:'ghost small',attrs:`data-index="${i}" aria-label="Add a picture to card ${i+1}"`})}</div>
+      <div><label class="fc-field-label" for="fcBack${i}">Answer / definition</label><textarea class="fc-textarea" id="fcBack${i}" data-field="back" data-index="${i}" maxlength="4000"${ex?' placeholder="How plants turn light, water and CO₂ into sugar and oxygen."':''}>${esc(c.back)}</textarea></div></div></div>
+      ${pic?`<p class="fc-pic-credit">${c.imageCredit?esc(c.imageCredit):'Your picture'} · shows with the answer</p>`:''}
+      ${picker&&picker.index===i?pickerHtml():''}
     </div>`;
+}
+// ── Picture picker (like Quizlet): search free Wikimedia Commons images for
+// what you typed, or upload your own. Every Commons file is freely licensed;
+// its creator and license are saved as the credit.
+let picker=null; // {index, query, results, loading, error}
+const pickerCache=new Map();
+function pickerHtml(){
+  const p=picker, res=p.results||[];
+  return `<div class="fc-picker" role="region" aria-label="Choose a picture">
+    <div class="fc-picker-bar"><input class="fc-input" id="fcPicSearch" type="search" placeholder="Search pictures…" value="${esc(p.query)}" aria-label="Search pictures">${btn('Search','pic-search',{cls:'small'})}${btn('Upload your own','pic-add',{cls:'small',attrs:`data-index="${p.index}"`})}${btn('Close','pic-close',{cls:'ghost small'})}</div>
+    ${p.loading?'<p class="fc-picker-note">Finding pictures…</p>'
+      :p.error?`<p class="fc-picker-note">${esc(p.error)}</p>`
+      :res.length?`<div class="fc-picker-grid">${res.map((r,k)=>`<button type="button" class="fc-picker-item" data-action="pic-pick" data-k="${k}" title="${esc(r.credit)}"><img src="${esc(r.thumb)}" alt="${esc(r.title)}" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div><p class="fc-picker-note">Free pictures from Wikimedia Commons — the creator is credited on your card.</p>`
+      :p.query?'<p class="fc-picker-note">No pictures found. Try a simpler word, or upload your own.</p>':'<p class="fc-picker-note">Type what you want a picture of.</p>'}
+  </div>`;
+}
+async function searchPictures(query){
+  const q=query.trim();
+  if(!picker)return;
+  picker.query=q;picker.error='';
+  if(!q){picker.results=[];renderRows();return;}
+  if(pickerCache.has(q)){picker.results=pickerCache.get(q);renderRows();return;}
+  picker.loading=true;renderRows();
+  const want=picker;
+  try{
+    const url='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=18&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime&iiurlwidth=480&gsrsearch='+encodeURIComponent(q+' filetype:bitmap|drawing');
+    const r=await fetch(url,{signal:AbortSignal.timeout(8000)});
+    const data=r.ok?await r.json():{};
+    const strip=t=>String(t||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+    const results=Object.values(data.query?.pages||{}).sort((a,b)=>a.index-b.index).map(p=>{
+      const ii=p.imageinfo?.[0]||{}, m=ii.extmetadata||{};
+      const credit=['Wikimedia Commons',strip(m.Artist?.value).slice(0,80),strip(m.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
+      return {thumb:ii.thumburl,title:strip(p.title).replace(/^File:/,'').replace(/\.[a-z]+$/i,''),credit};
+    }).filter(x=>cleanImage({image:x.thumb}).image).slice(0,12);
+    pickerCache.set(q,results);
+    if(picker!==want)return;
+    picker.results=results;
+  }catch{if(picker===want)picker.error='Couldn’t reach Wikimedia right now. Try again, or upload your own picture.';}
+  if(picker===want){picker.loading=false;renderRows();}
 }
 // Redraw just the card list (keeps your scroll position, unlike renderEditor).
 function renderRows(){
@@ -158,6 +200,7 @@ function renderRows(){
   const n=editing.cards.length;panel.querySelector('#fcCount').textContent=`${n} card${n===1?'':'s'}`;
 }
 function renderEditor(){
+  picker=null; // a fresh editor (or reload) starts with the picture picker closed
   const n=editing.cards.length;
   frame({badge:badge('✏️ Deck editor','🎃 Deck editor'),title:'Make it <span class="accent">memorable.</span>',
     sub:'One clear question per card, one focused answer. Short cards are easier to remember.'},
@@ -333,8 +376,9 @@ async function shrinkPicture(file){
     throw Error('That picture is too detailed to store. Try a simpler or cropped picture.');
   }finally{URL.revokeObjectURL(url);}
 }
+panel.addEventListener('keydown',e=>{if(e.target.id==='fcPicSearch'&&e.key==='Enter'){e.preventDefault();searchPictures(e.target.value);}if(e.target.id==='fcPicSearch'&&e.key==='Escape'){picker=null;renderRows();}});
 panel.addEventListener('change',e=>{if(e.target.id==='fcPicInput'){const f=e.target.files[0],i=+e.target.dataset.index;e.target.value='';if(!f||!editing?.cards[i])return;
-    shrinkPicture(f).then(data=>{if(!editing?.cards[i])return;editing.cards[i].image=data;delete editing.cards[i].imageCredit;dirty=true;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));return;}
+    shrinkPicture(f).then(data=>{if(!editing?.cards[i])return;editing.cards[i].image=data;delete editing.cards[i].imageCredit;dirty=true;picker=null;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));return;}
   if(e.target.id==='fcDocInput'){takeDocument(e.target.files[0]);e.target.value='';}
   if(e.target.id==='fcImportInput'){const f=e.target.files[0];e.target.value='';importFile(f).catch(err=>message(err.message||'Knox couldn’t import that file.'));}});
 // A document dropped anywhere while Make with Knox is open goes to the deck.
@@ -358,8 +402,12 @@ panel.addEventListener('click',async e=>{
  if(action==='edit')editor(decks.find(d=>d.id===id));
  if(action==='add'){if(editing.cards.length>=300)throw Error('Maximum 300 cards per deck.');editing.cards.push({front:'',back:''});dirty=true;const i=editing.cards.length-1;renderRows();const row=panel.querySelector('#fcRows').lastElementChild;row.classList.add('fc-row-new');row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});panel.querySelector(`#fcFront${i}`)?.focus({preventScroll:true});}
  if(action==='pic-add'){const input=panel.querySelector('#fcPicInput');input.dataset.index=b.dataset.index;input.click();}
- if(action==='pic-remove'){const c=editing.cards[+b.dataset.index];delete c.image;delete c.imageCredit;dirty=true;renderRows();}
- if(action==='remove'){editing.cards.splice(+b.dataset.index,1);if(!editing.cards.length)editing.cards.push({front:'',back:''});dirty=true;renderRows();}
+ if(action==='pic-remove'){const c=editing.cards[+b.dataset.index];delete c.image;delete c.imageCredit;dirty=true;if(picker?.index===+b.dataset.index)picker=null;renderRows();}
+ if(action==='pic-open'){const i=+b.dataset.index,c=editing.cards[i];picker={index:i,query:(c.front||c.back||'').trim().slice(0,80),results:[]};renderRows();panel.querySelector('#fcPicSearch')?.focus();if(picker.query)searchPictures(picker.query);}
+ if(action==='pic-search')searchPictures(panel.querySelector('#fcPicSearch')?.value||'');
+ if(action==='pic-close'){picker=null;renderRows();}
+ if(action==='pic-pick'&&picker){const r=picker.results[+b.dataset.k],c=editing.cards[picker.index];if(r&&c){c.image=r.thumb;c.imageCredit=r.credit.slice(0,200);dirty=true;}picker=null;renderRows();}
+ if(action==='remove'){picker=null;editing.cards.splice(+b.dataset.index,1);if(!editing.cards.length)editing.cards.push({front:'',back:''});dirty=true;renderRows();}
  if(action==='bulk'){const cards=parseLines(panel.querySelector('#fcBulk').value);const existing=editing.cards.filter(c=>c.front.trim()||c.back.trim());validateDeck({title:editing.title||'Draft',cards:[...existing,...cards]});editing.cards=[...existing,...cards];dirty=true;renderEditor();message(`Added ${cards.length} card${cards.length===1?'':'s'}.`,'ok');}
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
