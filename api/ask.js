@@ -753,16 +753,33 @@ async function reserveRequestBudget(key, limit) {
   });
 }
 
-// Only successful substantive answers count. UTC server dates cannot be
-// advanced by editing a browser clock, timezone or Firestore document.
-async function advanceStudyStreak(uid) {
+// Only successful substantive answers count. Streak days follow the
+// student's own calendar (the app sends its local YYYY-MM-DD) so a day starts
+// at their midnight, not 5pm in California. The server only accepts a date
+// within one day of real UTC time and never moves a streak backwards, so a
+// changed browser clock or timezone can't farm extra days.
+const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
+const utcDayKey = (offsetDays = 0) => new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
+function studyDay(clientDay) {
+  const utc = utcDayKey();
+  if (typeof clientDay === 'string' && DAY_KEY.test(clientDay)) {
+    const diff = (Date.parse(clientDay) - Date.parse(utc)) / 86400000;
+    if (Math.abs(diff) <= 1) return clientDay;
+  }
+  return utc;
+}
+async function advanceStudyStreak(uid, clientDay) {
   const ref = db.collection('users').doc(uid);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = studyDay(clientDay);
   await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() : {};
-    if (data.streakLastDay === today) return;
-    const gap = (Date.parse(today) - Date.parse(data.streakLastDay)) / 86400000;
+    const last = data.streakLastDay;
+    if (last === today) return;
+    // A last day beyond tomorrow (UTC) can't be real — treat it as no streak.
+    const lastValid = typeof last === 'string' && DAY_KEY.test(last) && last <= utcDayKey(1);
+    if (lastValid && last > today) return; // never move a streak backwards
+    const gap = lastValid ? (Date.parse(today) - Date.parse(last)) / 86400000 : NaN;
     const count = gap === 1 ? Math.min(10000, Math.max(0, Number(data.streakCount) || 0) + 1) : 1;
     tx.set(ref, { streakLastDay: today, streakCount: count }, { merge: true });
   });
@@ -836,7 +853,7 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  const { question = '', history = [], image, imageType, learnMode, learnSessionId } = req.body;
+  const { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay } = req.body;
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||
       !Array.isArray(history) || history.length > 40 ||
       history.some(msg => !msg || !['user', 'assistant'].includes(msg.role) || typeof msg.content !== 'string' || msg.content.length > 24000) ||
@@ -1156,7 +1173,7 @@ export default async function handler(req, res) {
     }
     if (uid && !casual) await recordDailyUsage(uid);
     if (uid && !casual) {
-      try { await advanceStudyStreak(uid); }
+      try { await advanceStudyStreak(uid, localDay); }
       catch (err) { console.error('Streak update failed:', err); }
     }
     return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage });

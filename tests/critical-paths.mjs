@@ -898,3 +898,27 @@ test('casual provider budget fails closed when storage is unavailable', async ()
   setFail(true);const res = response();await handler(askRequest({ question: 'hi' }), res);
   assert.equal(res.code, 503);assert.equal(calls, 0);
 });
+
+test("streak days follow the student's own date, but only within one day of real time", async () => {
+  const { db, store } = memoryDb();
+  const day = offset => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+  const handler = await load('api/ask.js', { db, fetch: askFetch() });
+  const ask = async localDay => { const res = response(); await handler(askRequest({ question: 'Solve 2x = 8', localDay }), res); assert.equal(res.code, 200); };
+
+  // California evening: the local day is behind UTC — still counts as the next day.
+  store.set('users/u1', { streakCount: 4, streakLastDay: day(-2) });
+  await ask(day(-1));
+  assert.deepEqual([store.get('users/u1').streakCount, store.get('users/u1').streakLastDay], [5, day(-1)]);
+
+  // A faked far-future date is ignored (real UTC day used): no double jump.
+  await ask(day(30));
+  assert.deepEqual([store.get('users/u1').streakCount, store.get('users/u1').streakLastDay], [6, day(0)]);
+
+  // Going backwards never changes the streak.
+  await ask(day(-1));
+  assert.deepEqual([store.get('users/u1').streakCount, store.get('users/u1').streakLastDay], [6, day(0)]);
+
+  // Same day again: no change.
+  await ask(day(0));
+  assert.equal(store.get('users/u1').streakCount, 6);
+});

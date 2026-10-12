@@ -3826,7 +3826,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   }
 
   // ── Study streak ─────────────────────────────────────────────
-  // A "streak" = consecutive server UTC days the student has
+  // A "streak" = consecutive calendar days (the student's local time) they have
   // used Knox for learning (asked a question in any mode). Stored on the
   // user doc as { streakCount, streakLastDay } so it follows them across
   // devices. The server updates it after a successful question; we then
@@ -3836,15 +3836,16 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 150, 200, 365];
 
   function localDayKey(d) {
-    // Match the authoritative server's UTC study day on every device.
+    // Local-time YYYY-MM-DD so the streak rolls over at the student's own
+    // midnight. The server accepts this day only within one day of real time.
     const dt = d ? new Date(d) : new Date();
-    return dt.toISOString().slice(0,10);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   }
 
   function daysBetween(aKey, bKey) {
     // Whole calendar days between two YYYY-MM-DD keys
-    const a = new Date(aKey + 'T00:00:00Z');
-    const b = new Date(bKey + 'T00:00:00Z');
+    const a = new Date(aKey + 'T00:00:00');
+    const b = new Date(bKey + 'T00:00:00');
     return Math.round((b - a) / (24 * 60 * 60 * 1000));
   }
 
@@ -5841,6 +5842,8 @@ window.appHandleAsk = async function() {
         history,
         learnMode: requestLearnMode,
         learnSessionId: requestLearnSessionId,
+        // The student's own calendar day, for the 🔥 streak (see api/ask.js).
+        localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
       }),
     });
     const data = await res.json().catch(() => ({ error: 'Knox could not complete this request. Please try again.' }));

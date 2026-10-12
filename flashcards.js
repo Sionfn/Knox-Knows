@@ -11,7 +11,11 @@ const toast=document.createElement('div'); toast.className='fc-toast'; toast.set
 let toastTimer=0;
 const hideToast=()=>{clearTimeout(toastTimer);toast.classList.remove('show');};
 toast.addEventListener('click',hideToast);
-panel.append(decor,view,toast);
+// Screen-reader-only announcements (e.g. the answer after a flip): read aloud,
+// never shown — the visible toast is for real messages only.
+const announcer=document.createElement('div'); announcer.className='fc-sr'; announcer.setAttribute('aria-live','polite');
+const announce=t=>{announcer.textContent='';setTimeout(()=>{announcer.textContent=t;},50);};
+panel.append(decor,view,toast,announcer);
 let decks=[], identity='', session=null, editing=null, dirty=false;
 let generationVersion=0;
 const key=()=>`knox.flashcards.v1.${window.currentUser?.uid || 'guest'}`;
@@ -71,9 +75,9 @@ function makeView(){
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
-      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span><b>Knox Plus</b> includes up to 40 AI decks per day, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
+      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Knox Plus</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
       <div class="fc-toolbar" style="margin-top:20px">${btn('← Decks','back',{cls:'ghost'})}${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} questions`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${plus?'⚡ Knox Plus — up to 40 AI decks per day, up to 20 cards each.':`Uses ${DECK_COST} of your daily questions · <b>Knox Plus</b> includes up to 40 AI decks per day.`} Manual decks have no daily limit.</p>
+      <p class="fc-cost">${plus?'⚡ Knox Plus — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily questions · <b>Knox Plus</b> makes unlimited decks.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -202,7 +206,7 @@ function flip(){
   card.setAttribute('aria-describedby',session.flipped?'fcAnswerText':'fcQuestionText');
   card.querySelector('.front').setAttribute('aria-hidden',String(session.flipped));
   card.querySelector('.back').setAttribute('aria-hidden',String(!session.flipped));
-  message(session.flipped?'Answer: '+decks.find(d=>d.id===session.id).cards[session.queue[0]].back:'Question shown');
+  announce(session.flipped?'Answer: '+decks.find(d=>d.id===session.id).cards[session.queue[0]].back:'Question shown');
   panel.querySelector('#fcControls').innerHTML=controls();
   panel.querySelector('#fcControls button')?.focus({preventScroll:true});
 }

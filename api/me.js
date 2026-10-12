@@ -134,8 +134,9 @@ export default async function handler(req, res) {
     let studiedToday = false;
     if (userData.streakLastDay) {
       const gap = daysBetween(userData.streakLastDay, todayKey());
-      if (gap > 1) streak = 0;            // broken
-      else if (gap === 0) studiedToday = true;
+      // Days are the student's local dates, up to a day off UTC either way.
+      if (gap > 2) streak = 0;            // broken
+      else if (gap <= 0) studiedToday = true;
     }
 
     return res.status(200).json({
