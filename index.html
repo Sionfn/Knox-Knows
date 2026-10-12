@@ -66,6 +66,7 @@
     function gtag(){ dataLayer.push(arguments); }
     window.gtag = gtag;
     window.loadAnalytics = function() {
+      if (navigator.doNotTrack === '1' || window.doNotTrack === '1' || navigator.globalPrivacyControl === true) return;
       if (window._gaLoaded) return;
       window._gaLoaded = true;
       var s = document.createElement('script');

@@ -95,40 +95,29 @@ function knoxEmailShell(bodyHtml) {
 // Switched from SendGrid to Resend: SendGrid's post-trial "free" plan sends 0
 // emails, while Resend is free for 3,000/month. Same from/reply-to identity.
 async function sendEmail(email, subject, textBody, htmlBody, label) {
-  if (!email) {
-    console.warn(`Skipping ${label} email — no recipient address`);
-    return;
+  // Build a durable outbox payload; enqueue atomically with the billing write.
+  return { from: `Sion at Knox Knows <${process.env.EMAIL_FROM || 'support@knoxknowsapp.com'}>`,
+    to: email ? [email] : [], reply_to: 'support@knoxknowsapp.com', subject, html: htmlBody, text: textBody };
+}
+
+async function deliverNotification(claim, eventId) {
+  const snap = await claim.ref.get();
+  const data = snap.exists ? snap.data() : {};
+  if (!data.notification || data.notificationSent) return;
+  if (!data.notification.to?.[0]) {
+    const email = await resolveEmail({ customer: data.notificationCustomer });
+    if (!email) throw new Error('Billing notification recipient unavailable; retry required');
+    data.notification.to = [email];
+    await claim.ref.set({ notification: data.notification }, { merge: true });
   }
-  if (!process.env.RESEND_API_KEY) {
-    console.error(`RESEND_API_KEY not set — cannot send ${label} email`);
-    return;
-  }
-  try {
-    const fromEmail = process.env.EMAIL_FROM || "support@knoxknowsapp.com";
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from:     `Sion at Knox Knows <${fromEmail}>`,
-        to:       [email],
-        reply_to: "support@knoxknowsapp.com",
-        subject,
-        html:     htmlBody,
-        text:     textBody,
-      }),
-    });
-    if (!r.ok) {
-      const errText = await r.text();
-      console.error(`Resend error (${label}):`, errText);
-    } else {
-      console.log(`✓ ${label} email sent to ${email}`);
-    }
-  } catch (err) {
-    console.warn(`${label} email failed:`, err.message);
-  }
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY missing; notification remains pending');
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST', signal: AbortSignal.timeout(10000),
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `knox-billing-${eventId}` },
+    body: JSON.stringify(data.notification),
+  });
+  if (!r.ok) throw new Error(`Billing notification failed (${r.status || 'provider error'})`);
+  await claim.ref.set({ notificationSent: true, notificationSentAt: new Date().toISOString() }, { merge: true });
 }
 
 // ── Purchase confirmation email ─────────────────────────────────────────────
@@ -159,7 +148,7 @@ Knox Knows`;
     <p style="margin:0;color:#6B7280;font-size:14px;">Knox Knows</p>
   `);
 
-  await sendEmail(email, `Your ${p.name} subscription is active`, textBody, htmlBody, "Purchase");
+  return sendEmail(email, `Your ${p.name} subscription is active`, textBody, htmlBody, "Purchase");
 }
 
 // ── Refund / cancellation email ─────────────────────────────────────────────
@@ -191,7 +180,7 @@ Knox Knows`;
     <p style="margin:0;color:#6B7280;font-size:14px;">Knox Knows</p>
   `);
 
-  await sendEmail(email, `Your ${p.name} subscription has been cancelled`, textBody, htmlBody, "Refund");
+  return sendEmail(email, `Your ${p.name} subscription has been cancelled`, textBody, htmlBody, "Refund");
 }
 
 // ── Cancellation confirmed (scheduled) email ────────────────────────────────
@@ -234,7 +223,7 @@ Knox Knows`;
   `);
 
   const subject = trial ? `Your ${p.name} trial is cancelled` : `Your ${p.name} subscription is cancelled`;
-  await sendEmail(email, subject, textBody, htmlBody, "Cancel scheduled");
+  return sendEmail(email, subject, textBody, htmlBody, "Cancel scheduled");
 }
 const isCancelScheduled = s => !!s && (s.cancel_at_period_end === true || !!s.cancel_at);
 
@@ -249,7 +238,7 @@ async function claimEvent(eventId) {
     const snap = await tx.get(ref);
     if (snap.exists && snap.data().status === 'done') return 'done';
     if (snap.exists && snap.data().status === 'processing' && Date.now() - snap.data().claimedAt < 120000) return 'processing';
-    tx.set(ref, { status: 'processing', claimedAt: Date.now(), claimId });
+    tx.set(ref, { status: 'processing', claimedAt: Date.now(), claimId }, { merge: true });
     return 'claimed';
   });
   return { state, ref, claimId };
@@ -260,7 +249,7 @@ async function finishEvent(claim, success) {
     const snap = await tx.get(claim.ref);
     if (!snap.exists || snap.data().claimId !== claim.claimId) return;
     if (success) tx.set(claim.ref, { status: 'done', processedAt: new Date().toISOString() }, { merge: true });
-    else tx.delete(claim.ref);
+    else tx.set(claim.ref, { status: 'failed', failedAt: new Date().toISOString() }, { merge: true });
   });
 }
 
@@ -303,6 +292,7 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
       stripeSubscription: subscription.id,
       ...(options.checkout ? { planActivatedAt: new Date().toISOString() } : { planRenewedAt: new Date().toISOString() }),
     }, { merge: true });
+    if (options.notification) tx.set(options.eventRef, { notification: options.notification, notificationCustomer: subscription.customer }, { merge: true });
     return true;
   });
 }
@@ -359,6 +349,13 @@ export default async function handler(req, res) {
 
   // ── Handle events ─────────────────────────────────────────────────────────
   try {
+    const saved = await claim.ref.get();
+    // A failed notification retries delivery only, never an old billing change.
+    if (saved.data()?.notification) {
+      await deliverNotification(claim, event.id);
+      await finishEvent(claim, true);
+      return res.status(200).json({ received: true });
+    }
     switch (event.type) {
 
       // Payment succeeded — activate plan
@@ -371,7 +368,10 @@ export default async function handler(req, res) {
         // Get the price ID from the subscription
         if (!session.subscription) break;
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        const activated = await applyActiveSubscription(uid, subscription, { checkout: true });
+        const purchasePlan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
+        const notification = ['active', 'trialing'].includes(subscription.status) && purchasePlan
+          ? await sendPurchaseEmail(verifiedEmail || await resolveEmail(subscription), purchasePlan) : null;
+        const activated = await applyActiveSubscription(uid, subscription, { checkout: true, notification, eventRef: claim.ref });
         if (!activated) {
           if (['active', 'trialing'].includes(subscription.status)) {
             await db.collection('billingReview').doc(session.id || event.id).set({
@@ -387,7 +387,6 @@ export default async function handler(req, res) {
 
         console.log(`✓ Plan activated: uid=${uid} plan=${plan}`);
         // Send purchase confirmation email
-        await sendPurchaseEmail(verifiedEmail, plan);
         break;
       }
 
@@ -411,22 +410,19 @@ export default async function handler(req, res) {
       case "customer.subscription.updated": {
         const subscription = await currentSubscription(event.data.object);
         const uid          = await resolveUid(subscription);
-        if (uid && subscription.status === 'unpaid') {
-          // Stripe can end failed-payment retries by marking a subscription
-          // "unpaid" instead of cancelling it (Billing → Subscriptions settings).
-          // No deletion event follows, so without this the account kept Plus
-          // with no payment. The subscription id is kept, so paying the open
-          // invoice (status → active) restores Plus through the normal path.
+        if (uid && ['unpaid', 'paused', 'incomplete', 'incomplete_expired', 'canceled'].includes(subscription.status)) {
+          // These states confer no paid access. past_due intentionally retains
+          // the existing retry grace period; active/trialing restore access.
           const ref = db.collection('users').doc(uid);
           const paused = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
             // Comped users keep their free Plus when a paid subscription stops.
             const comped = snap.data().comped === true;
-            tx.set(ref, comped ? { planStatus: 'comped' } : { plan: 'free', planStatus: 'unpaid' }, { merge: true });
+            tx.set(ref, comped ? { planStatus: 'comped' } : { plan: 'free', planStatus: subscription.status }, { merge: true });
             return true;
           });
-          if (paused) console.log(`⚠ Subscription unpaid: uid=${uid} — Plus paused until payment`);
+          if (paused) console.log(`⚠ Subscription ${subscription.status}: uid=${uid} — paid access removed`);
           break;
         }
         if (uid && await applyActiveSubscription(uid, subscription)) {
@@ -442,19 +438,18 @@ export default async function handler(req, res) {
           const wasScheduled = isCancelScheduled({ ...event.data.object, ...prev });
           const ref = db.collection('users').doc(uid);
           if (changed && !wasScheduled && isCancelScheduled(subscription)) {
+            const notification = await sendCancelScheduledEmail(await resolveEmail(subscription), plan, {
+              trial: subscription.status === 'trialing',
+              endsAt: subscription.cancel_at || subscription.trial_end || subscription.items?.data?.[0]?.current_period_end || subscription.current_period_end,
+            });
             // One confirmation per subscription, even if Stripe retries.
-            const first = await db.runTransaction(async tx => {
+            await db.runTransaction(async tx => {
               const snap = await tx.get(ref);
               if (snap.exists && snap.data().cancelNoticeFor === subscription.id) return false;
               tx.set(ref, { cancelNoticeFor: subscription.id, cancelScheduledAt: new Date().toISOString() }, { merge: true });
+              tx.set(claim.ref, { notification, notificationCustomer: subscription.customer }, { merge: true });
               return true;
             });
-            if (first) {
-              await sendCancelScheduledEmail(await resolveEmail(subscription), plan, {
-                trial: subscription.status === 'trialing',
-                endsAt: subscription.cancel_at || subscription.trial_end || subscription.items?.data?.[0]?.current_period_end || subscription.current_period_end,
-              });
-            }
           } else if (changed && wasScheduled && !isCancelScheduled(subscription)) {
             // They kept their plan — a future cancellation should email again.
             await ref.set({ cancelNoticeFor: null }, { merge: true });
@@ -475,11 +470,15 @@ export default async function handler(req, res) {
 
         if (uid) {
           const ref = db.collection('users').doc(uid);
+          const notification = await sendRefundEmail(email, plan);
           const cancelled = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
             // Comped users keep their free Plus when a paid subscription ends.
             const comped = snap.data().comped === true;
+            if (snap.data().cancelNoticeFor !== subscription.id) {
+              tx.set(claim.ref, { notification, notificationCustomer: subscription.customer }, { merge: true });
+            }
             tx.set(ref, {
               plan: comped ? 'super' : 'free',
               planStatus: comped ? 'comped' : 'cancelled',
@@ -493,7 +492,6 @@ export default async function handler(req, res) {
             console.log(`✓ Plan cancelled: uid=${uid}`);
             // Immediate cancels, refunds and failed payments still get this
             // email; a cancellation already confirmed earlier doesn't get a second.
-            if (!cancelled.noticed) await sendRefundEmail(email, plan);
           }
         }
         break;
@@ -539,6 +537,7 @@ export default async function handler(req, res) {
         // Ignore other events
         break;
     }
+    await deliverNotification(claim, event.id);
   } catch (err) {
     console.error("Webhook handler error:", err.message);
     try { await finishEvent(claim, false); } catch (releaseError) { console.error('Webhook release failed:', releaseError); }

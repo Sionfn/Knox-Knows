@@ -20,6 +20,11 @@ test('failed deletion propagates for retry without resetting active chat',async(
  const c={window:{currentUser:{uid:'u1'},_currentConversationId:'c1',appStartNewChat(){throw Error('must not reset');}},db:{},doc:()=>'',collection:()=>'',query:x=>x,limit:()=>400,getDocs:async()=>({docs:[]}),writeBatch:()=>({delete(){},commit:async()=>{throw Error('offline');}})};
  c.updateDoc=async()=>{};c.deletedHistory=new Set();
  runInNewContext(deletion,c);await assert.rejects(c.deleteConversation('c1'),/offline/);
+ assert.equal(c.deletedHistory.size,0,'unfinished deletion remains visible for retry');
+ c.writeBatch=()=>({delete(){},commit:async()=>{}});
+ c.window.appStartNewChat=()=>{};
+ await c.deleteConversation('c1');
+ assert.equal(c.deletedHistory.has('u1/c1'),true,'hide only after cleanup succeeds');
 });
 test('legal navigation defaults to landing and restores previous landing entry',()=>{
  for(const file of ['privacy.html','terms.html','refund.html','updates.html']){

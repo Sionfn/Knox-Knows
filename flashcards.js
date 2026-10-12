@@ -13,6 +13,7 @@ const hideToast=()=>{clearTimeout(toastTimer);toast.classList.remove('show');};
 toast.addEventListener('click',hideToast);
 panel.append(decor,view,toast);
 let decks=[], identity='', session=null, editing=null, dirty=false;
+let generationVersion=0;
 const key=()=>`knox.flashcards.v1.${window.currentUser?.uid || 'guest'}`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Deck stickers cycle through the same four colors as the topic chips.
@@ -70,9 +71,9 @@ function makeView(){
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
-      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Knox Plus</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
+      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span><b>Knox Plus</b> includes up to 40 AI decks per day, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
       <div class="fc-toolbar" style="margin-top:20px">${btn('← Decks','back',{cls:'ghost'})}${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} questions`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${plus?'⚡ Knox Plus — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily questions · <b>Knox Plus</b> makes unlimited decks.`}</p>
+      <p class="fc-cost">${plus?'⚡ Knox Plus — up to 40 AI decks per day, up to 20 cards each.':`Uses ${DECK_COST} of your daily questions · <b>Knox Plus</b> includes up to 40 AI decks per day.`} Manual decks have no daily limit.</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -83,13 +84,17 @@ async function makeDeck(){
   if(request.length<3){message('Tell Knox what you’re studying — the topic, and your grade or class if you like.');panel.querySelector('#fcMakeReq')?.focus();return;}
   const user=window.currentUser;
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
+  const owner=key(), version=++generationVersion;
+  const options={request,count:makeOpts.count,style:makeOpts.style};
   frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">This usually takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div></div>`,true);
   let data={},ok=false;
   try{
-    const r=await fetch('/api/generate-flashcards',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+await user.getIdToken()},body:JSON.stringify({request,count:makeOpts.count,style:makeOpts.style})});
+    const token=await user.getIdToken();
+    if(version!==generationVersion||owner!==key())return;
+    const r=await fetch('/api/generate-flashcards',{method:'POST',signal:AbortSignal.timeout(60000),headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(options)});
     data=await r.json().catch(()=>({}));ok=r.ok;
   }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
-  if(identity!==key()){load();home();return;}            // signed out / switched account meanwhile
+  if(version!==generationVersion||owner!==key())return;
   if(!ok||!Array.isArray(data.cards)){makeOpts.upgrade=!!data.upgrade;makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
   editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back}))};
   renderEditor();dirty=true;makeOpts.request='';
@@ -99,6 +104,7 @@ async function makeDeck(){
 }
 
 function home(query=''){
+  generationVersion++;
   session=null; editing=null; dirty=false;
   frame({badge:badge('🗂️ Knox Flashcards','🎃 Spooky study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
@@ -180,9 +186,9 @@ function study(){
   const pct=Math.round(s.reviewed/(s.reviewed+s.queue.length)*100);
   frame(null,`<div class="fc-topbar fc-study-top">${btn('← Finish','back',{cls:'ghost'})}<span class="fc-pill">${esc(d.title)}</span></div>
     <div class="fc-progress"><div class="fc-progress-text"><span>${s.reviewed} reviewed</span><span>${s.queue.length} to go</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
-    <div class="fc-stage"><button type="button" class="fc-card${s.flipped?' is-flipped':''}" data-action="flip" aria-label="${s.flipped?'Show question':'Reveal answer'}"><div class="fc-card-inner">
-      <div class="fc-face front"><span class="fc-face-label${retry?' retry':''}">${retry?'↻ Try again':'Question'}</span><p class="fc-face-text">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
-      <div class="fc-face back"><span class="fc-face-label">Answer</span><p class="fc-face-text">${esc(c.back)}</p><span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
+    <div class="fc-stage"><button type="button" class="fc-card${s.flipped?' is-flipped':''}" data-action="flip" aria-label="${s.flipped?'Show question':'Reveal answer'}" aria-describedby="${s.flipped?'fcAnswerText':'fcQuestionText'}"><div class="fc-card-inner">
+      <div class="fc-face front" aria-hidden="${s.flipped}"><span class="fc-face-label${retry?' retry':''}">${retry?'↻ Try again':'Question'}</span><p class="fc-face-text" id="fcQuestionText">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
+      <div class="fc-face back" aria-hidden="${!s.flipped}"><span class="fc-face-label">Answer</span><p class="fc-face-text" id="fcAnswerText">${esc(c.back)}</p><span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
     </div></button></div>
     <div class="fc-controls" id="fcControls">${controls()}</div>
     <p class="fc-tip">Again brings the card back in a few cards. Good and Easy schedule it for another day.</p>`,true);
@@ -193,7 +199,12 @@ function flip(){
   const card=panel.querySelector('.fc-card');
   card.classList.toggle('is-flipped',session.flipped);
   card.setAttribute('aria-label',session.flipped?'Show question':'Reveal answer');
+  card.setAttribute('aria-describedby',session.flipped?'fcAnswerText':'fcQuestionText');
+  card.querySelector('.front').setAttribute('aria-hidden',String(session.flipped));
+  card.querySelector('.back').setAttribute('aria-hidden',String(!session.flipped));
+  message(session.flipped?'Answer: '+decks.find(d=>d.id===session.id).cards[session.queue[0]].back:'Question shown');
   panel.querySelector('#fcControls').innerHTML=controls();
+  panel.querySelector('#fcControls button')?.focus({preventScroll:true});
 }
 
 // Knox-style confirm dialog (the browser's built-in dialog can't be styled).
@@ -224,7 +235,7 @@ function exportData(data){const blob=new Blob([JSON.stringify({version:1,decks:d
 async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
-function close(){document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
+function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.title='Flashcards';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span><span class="fc-beta sidebar-collapsible">Beta</span>';b.addEventListener('click',open);nav.append(b);});
 // Plus-only during beta (see EVERYONE): the tab stays hidden until the plan is known to be Plus,
@@ -234,7 +245,7 @@ syncAccess();window.addEventListener('knox-plan-changed',syncAccess);
 // Leaving Flashcards from the sidebar: ask first if a deck has unsaved edits,
 // then replay the click so the sidebar does what was asked.
 document.addEventListener('click',async e=>{if(!document.body.classList.contains('knox-flashcards'))return;const nav=e.target.closest('.sidebar-quicknav-link:not(.fc-nav),.sidebar-new-btn,.sidebar-history-item');if(!nav)return;if(!dirty){close();return;}e.preventDefault();e.stopImmediatePropagation();if(await confirmLeave()){close();nav.click();}},true);
-window.addEventListener('knox-auth-changed',()=>{load();if(!panel.hidden)home();});
+window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;}});
 panel.addEventListener('click',async e=>{
@@ -243,7 +254,7 @@ panel.addEventListener('click',async e=>{
  try{
  if(action==='create')editor();
  if(action==='make')makeView();
- if(action==='make-go'){b.disabled=true;await makeDeck();}
+ if(action==='make-go'){b.disabled=true;try{await makeDeck();}finally{b.disabled=false;}}
  if(action==='make-example'){makeOpts.request=b.dataset.text;const t=panel.querySelector('#fcMakeReq');t.value=b.dataset.text;t.focus();}
  if(action==='make-count'||action==='make-style'){if(action==='make-count')makeOpts.count=+b.dataset.count;else makeOpts.style=b.dataset.style;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}
  if(action==='upgrade')window.goToPricing?.();

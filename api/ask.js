@@ -737,6 +737,37 @@ function cleanLatexAnswer(text) {
   }).join('');
 }
 
+// Shared across cold starts. This is a request budget, not student credits:
+// even free conversation and classification must have a durable abuse ceiling.
+async function reserveRequestBudget(key, limit) {
+  const ref = db.collection('requestBudgets').doc(key);
+  const now = Date.now();
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const old = snap.exists ? snap.data() : {};
+    const active = Number.isFinite(old.startedAt) && now - old.startedAt < 3600000;
+    const count = active ? (old.count || 0) : 0;
+    if (count >= limit) return false;
+    tx.set(ref, { startedAt: active ? old.startedAt : now, count: count + 1 });
+    return true;
+  });
+}
+
+// Only successful substantive answers count. UTC server dates cannot be
+// advanced by editing a browser clock, timezone or Firestore document.
+async function advanceStudyStreak(uid) {
+  const ref = db.collection('users').doc(uid);
+  const today = new Date().toISOString().slice(0, 10);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : {};
+    if (data.streakLastDay === today) return;
+    const gap = (Date.parse(today) - Date.parse(data.streakLastDay)) / 86400000;
+    const count = gap === 1 ? Math.min(10000, Math.max(0, Number(data.streakCount) || 0) + 1) : 1;
+    tx.set(ref, { streakLastDay: today, streakCount: count }, { merge: true });
+  });
+}
+
 export default async function handler(req, res) {
   // Handle CORS preflight
   // localhost is only allowed in non-production environments
@@ -838,6 +869,15 @@ export default async function handler(req, res) {
   // 8000 chars — a student pasting a long problem would get an answer to a
   // truncated, possibly garbled version of their question with no warning.)
   const trimmedQuestion = (question || '').trim();
+  try {
+    const budgetKey = uid ? 'u_' + crypto.createHash('sha256').update(uid).digest('hex') : 'g_' + ipHash;
+    if (!await reserveRequestBudget(budgetKey, ipLimit)) {
+      return res.status(429).json({ error: 'Too many requests. Please try again in an hour. Free conversation does not use question credits, but request limits still apply.', limitReached: true });
+    }
+  } catch (err) {
+    console.error('Request budget unavailable:', err);
+    return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' });
+  }
 
   // No mode selector anymore — Knox reads the message itself and decides how
   // to respond (see KNOX_PROMPT). The only routing decision left here is
@@ -1115,6 +1155,10 @@ export default async function handler(req, res) {
       } catch (err) { console.error('Learn session creation failed:', err); }
     }
     if (uid && !casual) await recordDailyUsage(uid);
+    if (uid && !casual) {
+      try { await advanceStudyStreak(uid); }
+      catch (err) { console.error('Streak update failed:', err); }
+    }
     return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage });
 
   } catch (err) {

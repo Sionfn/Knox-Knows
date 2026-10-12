@@ -6,6 +6,7 @@ settings:
 
 overrides:
   gaxios>uuid: 11.1.1
+  uuid@<11.1.1: 11.1.1
   tar@^7: ^7.5.21
   js-yaml@^4: ^4.3.2
   smol-toml@^1: ^1.7.1
@@ -2167,11 +2168,6 @@ packages:
     resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-    hasBin: true
-
   vercel@61.1.0:
     resolution: {integrity: sha512-YDcjzOgyxNGT5ebES1V8y66fJT+z28E4ZJ+cZurBA+cpAfLfYh8KnN7WThDi+GsEDIcyOd6mqLHXz36vhEVjhg==}
     engines: {node: '>= 20'}
@@ -3795,7 +3791,7 @@ snapshots:
       proto3-json-serializer: 2.0.2
       protobufjs: 7.6.6
       retry-request: 7.0.2
-      uuid: 9.0.1
+      uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -4450,7 +4446,7 @@ snapshots:
       https-proxy-agent: 5.0.1
       node-fetch: 2.7.0
       stream-events: 1.0.5
-      uuid: 9.0.1
+      uuid: 11.1.1
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -4527,9 +4523,6 @@ snapshots:
     optional: true
 
   uuid@14.0.1: {}
-
-  uuid@9.0.1:
-    optional: true
 
   vercel@61.1.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3):
     dependencies:

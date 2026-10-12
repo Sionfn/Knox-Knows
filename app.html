@@ -3541,7 +3541,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       // at the source, and also keeps the client from ever being able to
       // write its own balance (which a direct client-side write would risk).
       const token = await window.currentUser.getIdToken();
-      const res = await fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } });
+      const res = await fetch('/api/me', { signal: AbortSignal.timeout(15000), headers: { 'Authorization': 'Bearer ' + token } });
       // A failed lookup must not fall through to the "10 left" default below
       // and show a free user a balance they don't have — keep the last value.
       if (!res.ok) return;
@@ -3826,26 +3826,25 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   }
 
   // ── Study streak ─────────────────────────────────────────────
-  // A "streak" = consecutive calendar days (local time) the student has
+  // A "streak" = consecutive server UTC days the student has
   // used Knox for learning (asked a question in any mode). Stored on the
   // user doc as { streakCount, streakLastDay } so it follows them across
-  // devices. We update it client-side after a successful question, then
+  // devices. The server updates it after a successful question; we then
   // render the 🔥 pill in the header.
   //
   // Milestones (3, 7, 14, 30, 50, 100 days) trigger a celebration toast.
   const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 150, 200, 365];
 
   function localDayKey(d) {
-    // Local-time YYYY-MM-DD so the streak rolls over at the user's midnight,
-    // not UTC — matters for "did I study today" feeling right.
+    // Match the authoritative server's UTC study day on every device.
     const dt = d ? new Date(d) : new Date();
-    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    return dt.toISOString().slice(0,10);
   }
 
   function daysBetween(aKey, bKey) {
     // Whole calendar days between two YYYY-MM-DD keys
-    const a = new Date(aKey + 'T00:00:00');
-    const b = new Date(bKey + 'T00:00:00');
+    const a = new Date(aKey + 'T00:00:00Z');
+    const b = new Date(bKey + 'T00:00:00Z');
     return Math.round((b - a) / (24 * 60 * 60 * 1000));
   }
 
@@ -3853,36 +3852,10 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
   // if this is a new day, resets if a day was missed, then re-renders.
   async function updateStreak(uid) {
     if (!uid) return;
-    try {
-      const userRef = doc(db, 'users', uid);
-      const snap = await getDoc(userRef);
-      const data = snap.exists() ? snap.data() : {};
-      const today = localDayKey();
-      const lastDay = data.streakLastDay || null;
-      let count = data.streakCount || 0;
-
-      if (lastDay === today) {
-        // Already counted today — nothing to advance, just make sure pill shows
-        renderStreak(count, true);
-        return;
-      }
-
-      let milestone = null;
-      if (!lastDay) {
-        count = 1; // first ever study day
-      } else {
-        const gap = daysBetween(lastDay, today);
-        if (gap === 1)      count = count + 1;  // consecutive day → advance
-        else if (gap > 1)   count = 1;          // missed a day → reset to 1
-        else                count = count || 1; // clock weirdness → keep
-      }
-
-      if (STREAK_MILESTONES.includes(count)) milestone = count;
-
-      await setDoc(userRef, { streakCount: count, streakLastDay: today }, { merge: true });
-      renderStreak(count, true);
-      if (milestone) celebrateStreak(milestone);
-    } catch (e) { /* non-critical */ }
+    // The successful answer already advanced it in a server transaction.
+    const previous = Number(document.getElementById('streakCount')?.textContent) || 0;
+    const result = await loadStreak(uid);
+    if (window.currentUser?.uid === uid && result?.studiedToday && result.count > previous && STREAK_MILESTONES.includes(result.count)) celebrateStreak(result.count);
   }
   window.updateStreak = updateStreak;
 
@@ -3900,6 +3873,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       // If they last studied before yesterday, the streak is broken.
       if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
       renderStreak(count, lastDay === today);
+      return { count, studiedToday: lastDay === today };
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
@@ -4103,7 +4077,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       const old = prior.get(s.id);
       if (append && old) return;
       const d     = s.data();
-      const rowKey = String(d.title) + '|' + (d.type || 'chat');
+      const rowKey = String(d.title) + '|' + (d.type || 'chat') + '|' + !!d.deleting;
       if (old && old.dataset.rowKey === rowKey && !old.classList.contains('shi-removing')) {
         list.appendChild(old); // same chat, same title: just move it into place
         kept.add(s.id);
@@ -4132,13 +4106,13 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       // text — textContent prevents XSS
       const text = document.createElement('span');
       text.className   = 'shi-text';
-      text.textContent = qText;
+      text.textContent = d.deleting ? qText + ' — deletion unfinished; retry ×' : qText;
       row.appendChild(text);
       // delete
       const del = document.createElement('button');
       del.className   = 'shi-delete';
       del.textContent = '×';
-      del.setAttribute('aria-label', 'Delete this conversation');
+      del.setAttribute('aria-label', d.deleting ? 'Retry deleting this conversation' : 'Delete this conversation');
       del.onclick = async (e) => {
         e.stopPropagation();
         const uid = window.currentUser?.uid;
@@ -4173,7 +4147,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
             if (empty) empty.style.display = list?.querySelector('.sidebar-history-item:not(.shi-removing)') ? 'none' : '';
           }
         } catch (err) {
-          if (window.currentUser?.uid === uid) showStreakToast('Could not delete this chat. Please try again.');
+          if (window.currentUser?.uid === uid) {
+            text.textContent = qText + ' — deletion unfinished; retry ×';
+            del.setAttribute('aria-label', 'Retry deleting this conversation');
+            showStreakToast('Deletion did not finish. Use × to retry. This chat cannot save new messages until deletion finishes.');
+          }
         } finally {
           historyDeletions.delete(key);
           del.disabled = false;
@@ -4381,7 +4359,6 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     const parent = doc(db, 'users', uid, 'conversations', conversationId);
     // Block new message writes in every tab before draining children.
     await updateDoc(parent, { deleting: true });
-    deletedHistory.add(uid + '/' + conversationId);
     const messagesRef = collection(parent, 'messages');
     // Bounded batches avoid hundreds of simultaneous requests. Normal threads
     // and their parent are removed atomically; larger ones drain in chunks.
@@ -4393,6 +4370,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       await batch.commit();
       if (snaps.docs.length < 400) break;
     }
+    deletedHistory.add(uid + '/' + conversationId);
     if (window.currentUser?.uid === uid && window._currentConversationId === conversationId) {
       window.appStartNewChat();
     }
@@ -4817,14 +4795,18 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
 
   async function openBillingPortal(btn) {
     if (!window.currentUser) return;
+    const user = window.currentUser;
     if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
     try {
-      const token = await window.currentUser.getIdToken();
+      const token = await user.getIdToken();
+      if (window.currentUser?.uid !== user.uid) return;
       const res = await fetch('/api/customer-portal', {
         method:  'POST',
+        signal: AbortSignal.timeout(15000),
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       });
       const data = await res.json();
+      if (window.currentUser?.uid !== user.uid) return;
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -4834,6 +4816,8 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     } catch (e) {
       if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
       alert('Could not open billing portal.');
+    } finally {
+      if (btn) { btn.textContent = 'Manage Billing'; btn.disabled = false; }
     }
   }
   window.openBillingPortal = openBillingPortal;

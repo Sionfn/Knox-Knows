@@ -167,7 +167,7 @@ test('Small talk gets a real (free) AI reply with only a short, trimmed history'
   assert.equal(calls.length, 1, 'obvious greetings skip the classifier');
   const sent = calls[0].messages.slice(1, -1);
   assert.equal(sent.length, 6); assert.ok(sent.every(m => m.content.length <= 600 && m.content.includes('student saw the full message')));
-  assert.equal(store.size, 0, 'no credit used');
+  assert.ok([...store.keys()].every(key => key.startsWith('requestBudgets/')), 'request budget only; no student credit used');
 });
 
 test('Cancelled subscribers can start a new checkout after an older completed checkout', async () => {
@@ -407,7 +407,7 @@ test('Stale Stripe update cannot restore a cancelled subscription', async () => 
     subscriptions: { retrieve: async () => subscription },
     customers: { retrieve: async () => ({ email: 'owner@example.com', metadata: { uid: 'u1' } }) },
   };
-  const handler = await load('api/webhook.js', { db, stripe });
+  const handler = await load('api/webhook.js', { db, stripe, env: { RESEND_API_KEY: 'test' }, fetch: async () => ({ ok: true }) });
   currentEvent = { id: 'evt_delete', type: 'customer.subscription.deleted', data: { object: subscription } };
   const deleted = response();
   await handler(webhookRequest(currentEvent), deleted);
@@ -806,4 +806,95 @@ test('Learn mode: mid-lesson replies like "ok" stay in the lesson (no small-talk
   assert.ok(!ai.calls.some(call => call.model === 'gpt-4.1-mini'), 'no small-talk check mid-lesson');
   assert.match(ai.calls[0].messages[0].content, /Learn|hint|guide/i);
   assert.equal(store.get('users/u1/usage/bank').balance, 7, 'follow-ups stay free');
+});
+
+test('guest casual budget survives cold starts and blocks before provider calls', async () => {
+  const { db, store } = memoryDb(); let calls = 0;
+  for (let n = 0; n < 5; n++) {
+    const handler = await load('api/ask.js', { db, fetch: async () => { calls++; return { ok: true, json: async () => ({ choices: [{ message: { content: 'Hi!' }, finish_reason: 'stop' }] }) }; } });
+    const req = askRequest({ question: 'hi' }); delete req.headers.authorization;
+    const res = response(); await handler(req, res);
+    assert.equal(res.code, n < 3 ? 200 : 429);
+  }
+  assert.equal(calls, 3);
+  assert.ok([...store.keys()].every(k => k.startsWith('requestBudgets/')));
+});
+
+test('signed-in request budget is atomic across instances and never spends chat credits', async () => {
+  const { db, store } = memoryDb();
+  const key = 'requestBudgets/u_' + crypto.createHash('sha256').update('u1').digest('hex');
+  store.set(key, { startedAt: Date.now(), count: 59 });
+  let calls = 0;
+  const fetch = async () => { calls++; return { ok: true, json: async () => ({ choices: [{ message: { content: 'Hi!' }, finish_reason: 'stop' }] }) }; };
+  const handlers = await Promise.all([load('api/ask.js', { db, fetch }), load('api/ask.js', { db, fetch })]);
+  const results = await Promise.all(handlers.map(async handler => { const res = response(); await handler(askRequest({ question: 'hi' }), res); return res.code; }));
+  assert.deepEqual(results.sort(), [200, 429]); assert.equal(calls, 1);
+  assert.equal(store.has('users/u1/usage/bank'), false);
+});
+
+test('successful learning advances streak once per UTC day; future legacy dates reset safely', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { streakCount: 4, streakLastDay: new Date(Date.now() - 86400000).toISOString().slice(0, 10) });
+  const handler = await load('api/ask.js', { db, fetch: askFetch() });
+  for (let i = 0; i < 2; i++) { const res = response(); await handler(askRequest({ question: 'Solve 2x = 8' }), res); assert.equal(res.code, 200); }
+  assert.equal(store.get('users/u1').streakCount, 5);
+  store.set('users/u1', { streakCount: 999, streakLastDay: '2099-01-01' });
+  const res = response(); await handler(askRequest({ question: 'Solve 2x = 8' }), res);
+  assert.equal(store.get('users/u1').streakCount, 1);
+});
+
+test('paused and non-entitled Stripe states revoke paid access but preserve comped access', async () => {
+  for (const status of ['paused', 'unpaid', 'incomplete', 'incomplete_expired', 'canceled']) {
+    for (const comped of [false, true]) {
+      const sub = { current: { id: 'sub_1', customer: 'cus_1', status, items: PLUS_PRICE, metadata: { uid: 'u1' } } };
+      const h = cancelHarness(sub);
+      h.store.set('users/u1', { ...h.store.get('users/u1'), comped });
+      const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe });
+      const res = await h.send(handler, { id: 'evt_status', type: 'customer.subscription.updated', data: { object: sub.current } });
+      assert.equal(res.code, 200);
+      assert.equal(h.store.get('users/u1').plan, comped ? 'super' : 'free');
+      assert.equal(h.store.get('users/u1').planStatus, comped ? 'comped' : status);
+    }
+  }
+});
+
+test('billing email failure retries a durable notification without replaying billing changes', async () => {
+  for (const type of ['customer.subscription.updated', 'customer.subscription.deleted', 'checkout.session.completed']) {
+    const sub = { current: { id: 'sub_1', customer: 'cus_1', status: 'active', cancel_at_period_end: true, items: PLUS_PRICE, metadata: { uid: 'u1' } } };
+    const h = cancelHarness(sub); let attempts = 0; const keys = [];
+    const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, env: { RESEND_API_KEY: 'test' }, fetch: async (_, options) => { keys.push(options.headers['Idempotency-Key']); attempts++; return { ok: attempts > 1, status: 503 }; } });
+    const object = type === 'checkout.session.completed' ? { id: 'cs_one', subscription: 'sub_1', metadata: { uid: 'u1', email: 'test@example.com' } } : sub.current;
+    const event = { id: 'evt_email', type, data: { object, previous_attributes: { cancel_at_period_end: false } } };
+    assert.equal((await h.send(handler, event)).code, 500);
+    assert.equal(h.store.get('webhookEvents/evt_email').status, 'failed');
+    assert.ok(h.store.get('webhookEvents/evt_email').notification);
+    // Simulate a later billing event: retry must not overwrite that new state.
+    h.store.set('users/u1', { plan: 'free', planStatus: 'newer-state' });
+    assert.equal((await h.send(handler, event)).code, 200);
+    assert.equal(h.store.get('users/u1').planStatus, 'newer-state');
+    assert.equal((await h.send(handler, event)).code, 200);
+    assert.equal(attempts, 2); assert.equal(keys[0], keys[1]);
+    assert.equal(h.store.get('webhookEvents/evt_email').notificationSent, true);
+  }
+});
+
+test('recipient lookup outage does not delay access revocation and is retried', async () => {
+  const sub = { current: { id: 'sub_1', customer: 'cus_1', status: 'canceled', items: PLUS_PRICE, metadata: { uid: 'u1' } } };
+  const h = cancelHarness(sub); let unavailable = true;
+  h.stripe.customers.retrieve = async () => { if (unavailable) throw Error('offline'); return { email: 'student@example.com' }; };
+  const handler = await load('api/webhook.js', { db: h.db, stripe: h.stripe, fetch: h.fetch, env: { RESEND_API_KEY: 'test' } });
+  const event = { id: 'evt_recipient', type: 'customer.subscription.deleted', data: { object: sub.current } };
+  assert.equal((await h.send(handler, event)).code, 500);
+  assert.equal(h.store.get('users/u1').plan, 'free');
+  assert.ok(h.store.get('webhookEvents/evt_recipient').notification);
+  unavailable = false;
+  assert.equal((await h.send(handler, event)).code, 200);
+  assert.equal(h.emails.length, 1);
+});
+
+test('casual provider budget fails closed when storage is unavailable', async () => {
+  const { db, setFail } = memoryDb(); let calls = 0;
+  const handler = await load('api/ask.js', { db, fetch: async () => { calls++; } });
+  setFail(true);const res = response();await handler(askRequest({ question: 'hi' }), res);
+  assert.equal(res.code, 503);assert.equal(calls, 0);
 });

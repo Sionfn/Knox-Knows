@@ -7,56 +7,24 @@ service cloud.firestore {
 
     // Billing and usage are written only by the server's Admin SDK.
     function clientUserFields() {
-      return ['lastActiveAt', 'firstSeenAt', 'streakCount', 'streakLastDay'];
+      return ['lastActiveAt', 'firstSeenAt'];
     }
 
-    // ── Streak + activity checks ───────────────────────────────────────────
-    // The app writes { streakCount, streakLastDay: 'YYYY-MM-DD' } after a
-    // question, and { lastActiveAt, firstSeenAt } as server timestamps.
-    // These checks make sure a streak can only grow by one per day.
-    function isDayKey(s) {
-      return s is string && s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
-    }
-    function dayTime(s) {
-      return timestamp.date(int(s.split('-')[0]), int(s.split('-')[1]), int(s.split('-')[2]));
-    }
-    // Within two days of now, so any time zone's "today" fits.
-    function nearNow(s) {
-      return dayTime(s) > request.time - duration.value(2, 'd')
-          && dayTime(s) < request.time + duration.value(2, 'd');
-    }
+    // Streaks are server-only, advanced after a successful learning answer.
+    // Clients may write activity timestamps but not dates/counts for streaks.
     function validActivity(d, old, changed) {
       return (!changed.hasAny(['lastActiveAt']) || d.lastActiveAt == request.time)
           && (!changed.hasAny(['firstSeenAt']) || (!('firstSeenAt' in old) && d.firstSeenAt == request.time));
-    }
-    function validStreak(d, old, changed) {
-      return !changed.hasAny(['streakCount', 'streakLastDay'])
-          || (d.streakCount is int && d.streakCount >= 0 && d.streakCount <= 10000
-              && isDayKey(d.streakLastDay) && nearNow(d.streakLastDay)
-              && (
-                // Start (or restart) a streak.
-                d.streakCount == 1
-                // A new day: grow by exactly one.
-                || ('streakLastDay' in old && d.streakLastDay > old.streakLastDay
-                    && d.streakCount == old.get('streakCount', 0) + 1)
-                // Same count, re-dated forward — or back from a future date
-                // (a device whose clock was ahead).
-                || ('streakLastDay' in old && d.streakCount == old.get('streakCount', 0)
-                    && (d.streakLastDay >= old.streakLastDay
-                        || dayTime(old.streakLastDay) > request.time + duration.value(1, 'd')))
-              ));
     }
 
     match /users/{userId} {
       allow read: if owner(userId);
       allow create: if owner(userId)
                     && request.resource.data.keys().hasOnly(clientUserFields())
-                    && validActivity(request.resource.data, {}, request.resource.data.keys())
-                    && validStreak(request.resource.data, {}, request.resource.data.keys());
+                    && validActivity(request.resource.data, {}, request.resource.data.keys());
       allow update: if owner(userId)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(clientUserFields())
-                    && validActivity(request.resource.data, resource.data, request.resource.data.diff(resource.data).affectedKeys())
-                    && validStreak(request.resource.data, resource.data, request.resource.data.diff(resource.data).affectedKeys());
+                    && validActivity(request.resource.data, resource.data, request.resource.data.diff(resource.data).affectedKeys());
       allow delete: if false;
 
       match /usage/{day} {
