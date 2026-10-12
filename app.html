@@ -3439,12 +3439,13 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       const usage = document.getElementById('headerUsage');
       const text  = document.getElementById('headerUsageText');
       if (usage && text) {
-        const left = Math.max(0, 1 - (window._getGuestCount?.() || 0));
+        const left = window._guestCanAsk === false ? 0 : Math.max(0, 1 - (window._getGuestCount?.() || 0));
         usage.style.display = 'inline-flex';
         usage.classList.toggle('danger', left === 0);
         usage.classList.remove('unlimited');
         text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
         setUsageShort(String(left));
+        if (left > 0) window.checkGuestServer?.(); // the server has the final say
         // For guests the pill opens sign-up rather than the usage breakdown.
         usage.onclick = () => window.openAuthModal?.('signup');
       }
@@ -3500,12 +3501,13 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     // so the guest case MUST live here — otherwise a later call re-hid the
     // pill that updatePlanUI had shown.)
     if (!window.currentUser) {
-      const left = Math.max(0, 1 - (window._getGuestCount?.() || 0));
+      const left = window._guestCanAsk === false ? 0 : Math.max(0, 1 - (window._getGuestCount?.() || 0));
       usage.style.display = 'inline-flex';
       usage.classList.toggle('danger', left === 0);
       usage.classList.remove('unlimited');
       text.textContent = left > 0 ? '1 free question' : 'Sign up for more';
       setUsageShort(String(left));
+      if (left > 0) window.checkGuestServer?.(); // the server has the final say
       usage.onclick = () => window.openAuthModal?.('signup');
       return;
     }
@@ -3584,6 +3586,34 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     const el = document.getElementById('headerUsageShort');
     if (el) el.textContent = v;
   }
+
+  // Guests: the browser's own count can't see the server's per-connection
+  // limits (shared networks, earlier visits), so ask the server whether this
+  // visitor can really ask now and never show "1 free question" otherwise.
+  window._guestCanAsk = null; // null = not checked yet
+  let guestCheck = null;
+  window.markGuestBlocked = function() {
+    window._guestCanAsk = false;
+    if (window.currentUser) return;
+    const usage = document.getElementById('headerUsage');
+    const text  = document.getElementById('headerUsageText');
+    if (usage) usage.classList.add('danger');
+    if (text) text.textContent = 'Sign up for more';
+    setUsageShort('0');
+  };
+  window.checkGuestServer = function() {
+    if (window.currentUser || guestCheck) return guestCheck;
+    guestCheck = fetch('/api/me', { signal: AbortSignal.timeout(8000) })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || window.currentUser) return;
+        window._guestCanAsk = d.canAsk !== false;
+        if (!window._guestCanAsk) window.markGuestBlocked();
+      })
+      .catch(() => {})
+      .finally(() => setTimeout(() => { guestCheck = null; }, 60000));
+    return guestCheck;
+  };
 
   // ── Usage info panel — opens when the header pill is tapped/clicked.
   // Explains the whole system in plain language (not just a bare countdown),
@@ -5713,7 +5743,7 @@ window.appHandleAsk = async function() {
   // Guest gate — 1 free question per day, tracked in localStorage
   if (!window.currentUser) {
     const used = window._getGuestCount();
-    if (used >= 1) {
+    if (used >= 1 || window._guestCanAsk === false) {
       const gc = $('guestCta'); if (gc) gc.style.display = 'flex';
       return;
     }
@@ -5863,6 +5893,7 @@ window.appHandleAsk = async function() {
       restoreFailedDraft();
       // Rich rate-limit handling — show upgrade card on quota errors
       if (data.limitReached) {
+        if (!window.currentUser) window.markGuestBlocked?.(); // keep the pill honest
         replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
       } else if (data.learnSessionExpired) {
         // Give a one-tap way into a fresh Learn chat (its first reply uses a credit, as the message says).

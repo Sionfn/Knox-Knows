@@ -972,3 +972,22 @@ test('Learn mode guides even simple arithmetic instead of answering it', async (
   assert.match(prompt, /Final check before every Learn reply.*\n?.*ask a guiding question instead.$/s, 'the reminder is the last thing in the Learn instructions');
   assert.doesNotMatch(prompt, /Bare math:/);
 });
+
+test('/api/me tells a signed-out visitor whether the server will let them ask', async () => {
+  const { db, store } = memoryDb();
+  const handler = await load('api/me.js', { db });
+  const ask = async ip => { const res = response(); await handler({ method: 'GET', headers: { 'x-forwarded-for': ip } }, res); return res; };
+  let res = await ask('198.51.100.20');
+  assert.equal(res.code, 200); assert.equal(res.body.guest, true); assert.equal(res.body.canAsk, true);
+  assert.deepEqual(Object.keys(res.body).sort(), ['canAsk', 'guest'], 'no personal data for guests');
+  const hash = crypto.createHash('sha256').update('198.51.100.20').digest('hex');
+  store.set(`requestBudgets/g_${hash}`, { startedAt: Date.now(), count: 3 });
+  res = await ask('198.51.100.20');
+  assert.equal(res.body.canAsk, false, 'hourly guest limit reached');
+  store.set(`requestBudgets/g_${hash}`, { startedAt: Date.now() - 2 * 3600000, count: 3 });
+  store.set(`guestUsage/${hash}/log/question`, { log: [Date.now(), Date.now(), Date.now()] });
+  res = await ask('198.51.100.20');
+  assert.equal(res.body.canAsk, false, 'daily guest questions used');
+  res = await ask('203.0.113.50');
+  assert.equal(res.body.canAsk, true, 'another connection is unaffected');
+});

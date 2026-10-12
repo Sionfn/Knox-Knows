@@ -6,6 +6,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import crypto from "crypto";
 
 if (!getApps().length) {
   initializeApp({
@@ -32,6 +33,31 @@ const FREE_STARTING_BALANCE = 10;
 const PLUS_LIMIT            = 500;              // effectively unlimited; abuse-only ceiling
 const PLUS_WINDOW_MS        = 3 * 60 * 60 * 1000; // 3 hours
 const oneDayMs = () => 24 * 60 * 60 * 1000;
+
+// Guests: must match api/ask.js (GUEST_QUESTION_LIMIT per day in
+// guestUsage/<ip hash>/log/question, GUEST_HARD_LIMIT requests per hour in
+// requestBudgets/g_<ip hash>) so the free-question pill never promises a
+// question the server would refuse.
+const GUEST_QUESTION_LIMIT = 3;
+const GUEST_HOURLY_LIMIT   = 3;
+const HOUR_MS              = 60 * 60 * 1000;
+function guestIpHash(req) {
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.headers["x-real-ip"] || req.socket?.remoteAddress || "unknown";
+  return crypto.createHash("sha256").update(String(ip)).digest("hex");
+}
+async function guestStatus(req) {
+  const ipHash = guestIpHash(req);
+  const now = Date.now();
+  const [questions, budget] = await Promise.all([
+    db.collection("guestUsage").doc(ipHash).collection("log").doc("question").get(),
+    db.collection("requestBudgets").doc("g_" + ipHash).get(),
+  ]);
+  const usedToday = (questions.exists ? questions.data().log || [] : []).filter(ts => now - ts < oneDayMs()).length;
+  const b = budget.exists ? budget.data() : {};
+  const hourActive = Number.isFinite(b.startedAt) && now - b.startedAt < HOUR_MS;
+  const usedThisHour = hourActive ? (b.count || 0) : 0;
+  return { guest: true, canAsk: usedToday < GUEST_QUESTION_LIMIT && usedThisHour < GUEST_HOURLY_LIMIT };
+}
 
 function planTier(plan) {
   // Paid allowlist — anything not explicitly a paid plan is free, so a
@@ -62,6 +88,12 @@ export default async function handler(req, res) {
 
   // ── Verify token ──
   const authHeader = req.headers.authorization || "";
+  // Signed out: report only whether this visitor can ask right now (no
+  // personal data), so the guest pill matches what the server will allow.
+  if (!authHeader) {
+    try { return res.status(200).json(await guestStatus(req)); }
+    catch (e) { return res.status(503).json({ error: "Usage service is temporarily unavailable." }); }
+  }
   if (!authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Unauthorized" });
   }

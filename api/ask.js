@@ -902,7 +902,9 @@ export default async function handler(req, res) {
   try {
     const budgetKey = uid ? 'u_' + crypto.createHash('sha256').update(uid).digest('hex') : 'g_' + ipHash;
     if (!await reserveRequestBudget(budgetKey, ipLimit)) {
-      return res.status(429).json({ error: 'Too many requests. Please try again in an hour. Free conversation does not use question credits, but request limits still apply.', limitReached: true });
+      return res.status(429).json({ error: uid
+        ? 'Too many requests. Please try again in an hour. Free conversation does not use question credits, but request limits still apply.'
+        : "You've used your free guest messages for now. Sign up free for 10 questions to start, then 5 more each day — no card needed.", limitReached: true });
     }
   } catch (err) {
     console.error('Request budget unavailable:', err);
