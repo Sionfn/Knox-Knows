@@ -85,7 +85,7 @@ export default async function handler(req, res) {
   // at the same 30,000 characters as Ask Knox.
   if (doc != null && (typeof doc !== "object" || typeof doc.text !== "string" || typeof doc.name !== "string" ||
       !doc.text.trim() || doc.text.length > 30000 || doc.name.length > 200)) {
-    return res.status(400).json({ error: "That file could not be read. Try a smaller PDF or Word file." });
+    return res.status(400).json({ error: "That file could not be read. Try a smaller PDF, Word or PowerPoint file." });
   }
   const request = (typeof body.request === "string" ? body.request.trim() : "") || (doc ? "Make flashcards from this file." : "");
   let   count   = ALLOWED_COUNTS.includes(Number(body.count)) ? Number(body.count) : 10;

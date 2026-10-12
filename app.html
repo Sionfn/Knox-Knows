@@ -2616,7 +2616,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
        image-upload JS below. -->
   <div id="appDropOverlay">
     <div class="drop-icon">🦊📸</div>
-    <div class="drop-title">Drop your photo, PDF, or Word doc here</div>
+    <div class="drop-title">Drop your photo, PDF, Word or PowerPoint here</div>
     <div class="drop-sub">Knox will read it and help with your homework</div>
   </div>
 
@@ -3018,11 +3018,11 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
               aria-label="Ask Knox a question"></textarea>
 
             <div class="input-tools">
-              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" style="display:none;">
+              <input type="file" id="appFileInput" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" style="display:none;">
               <button class="input-icon-btn calc-btn" onclick="openCalc()" title="Calculator" aria-label="Open calculator">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg>
               </button>
-              <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload a photo, PDF, or Word doc" aria-label="Upload a photo, PDF, or Word doc">
+              <button class="input-icon-btn" onclick="document.getElementById('appFileInput').click()" title="Upload a photo, PDF, Word or PowerPoint" aria-label="Upload a photo, PDF, Word or PowerPoint file">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
               </button>
               <button id="appSendBtn" onclick="appHandleAsk()" aria-label="Send">

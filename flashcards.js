@@ -73,8 +73,8 @@ function makeView(){
       <textarea class="fc-textarea" id="fcMakeReq" rows="4" maxlength="4000" placeholder="I’m a sophomore in physics learning Newton’s laws of motion">${esc(makeOpts.request)}</textarea>
       <div class="fc-doc-row">${makeOpts.doc
         ?`<span class="fc-doc-chip">📄 <span>${esc(makeOpts.doc.name)}${makeOpts.doc.truncated?' · first part':''}</span><button type="button" class="fc-doc-x" data-action="doc-clear" aria-label="Remove file">✕</button></span>`
-        :btn(makeOpts.reading?'Reading file…':'📄 Use a PDF or Word doc','doc-pick',{cls:'small'})}
-        <input type="file" id="fcDocInput" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" hidden></div>
+        :btn(makeOpts.reading?'Reading file…':'📄 Use a PDF, Word or PowerPoint','doc-pick',{cls:'small'})}
+        <input type="file" id="fcDocInput" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" hidden></div>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
@@ -91,7 +91,7 @@ async function makeDeck(){
   const request=(panel.querySelector('#fcMakeReq')?.value||'').trim();
   makeOpts.request=request;makeOpts.upgrade=false;
   if(makeOpts.reading){message('Still reading your file — one moment.');return;}
-  if(request.length<3&&!makeOpts.doc){message('Tell Knox what you’re studying, or add a PDF or Word doc.');panel.querySelector('#fcMakeReq')?.focus();return;}
+  if(request.length<3&&!makeOpts.doc){message('Tell Knox what you’re studying, or add a PDF, Word or PowerPoint file.');panel.querySelector('#fcMakeReq')?.focus();return;}
   const user=window.currentUser;
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
   const owner=key(), version=++generationVersion;
@@ -242,7 +242,7 @@ function knoxConfirm({title,body,ok='OK',cancel='Cancel',danger=false}){
 const confirmLeave=()=>knoxConfirm({title:'Leave without saving?',body:'Your deck has changes that aren’t saved yet. If you leave now, they’ll be lost.',ok:'Leave',cancel:'Keep editing',danger:true});
 
 // Import: one screen that lists every file Knox can take.
-const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.txt,text/plain,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.txt,text/plain,.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx';
 function importView(){
   session=null;editing=null;dirty=false;
   const row=(icon,title,types,text)=>`<div class="fc-format"><span class="fc-format-icon" aria-hidden="true">${icon}</span><div><b>${title}</b> <span class="fc-format-types">${types}</span><p>${text}</p></div></div>`;
@@ -252,7 +252,7 @@ function importView(){
       <span class="fc-field-label">Files that work</span>
       ${row('🗂️','Knox backup','.json','A file you saved with Export — your decks come back exactly as they were.')}
       ${row('📊','Spreadsheet or list','.csv · .tsv · .txt','One card per row: the question in the first column, the answer in the second. Works with Google Sheets, Excel and Quizlet exports.')}
-      ${row('📄','PDF or Word doc','.pdf · .docx','Knox reads it and writes the cards for you with Make with Knox.')}
+      ${row('📄','PDF, Word or PowerPoint','.pdf · .docx · .pptx','Your notes, study guides or class slides — Knox reads them and writes the cards for you with Make with Knox.')}
       <div class="fc-toolbar" style="margin-top:18px">${btn('Choose a file','import-pick',{cls:'primary blue'})}</div>
       <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" hidden>
     </div>`,true);
@@ -277,7 +277,7 @@ async function importFile(f){
     renderEditor();dirty=true;message(`Found ${cards.length} card${cards.length===1?'':'s'}. Look them over, then Save.`,'ok');
     return;
   }
-  throw Error('Knox can import .json backups, .csv/.tsv/.txt lists, and PDF or Word files.');
+  throw Error('Knox can import .json backups, .csv/.tsv/.txt lists, and PDF, Word or PowerPoint files.');
 }
 // Export: a Knox backup (moves decks between devices) or a spreadsheet.
 let exportTarget=null;
@@ -318,7 +318,7 @@ async function takeDocument(file){
   try{
     const doc=await window.knoxReadDocument(file);
     if(owner!==key())return;
-    if(doc.kind!=='text')throw new Error('That PDF is scanned (just pictures of pages), so Knox can’t read its text for cards. Try a PDF with selectable text or a Word doc.');
+    if(doc.kind!=='text')throw new Error('That PDF is scanned (just pictures of pages), so Knox can’t read its text for cards. Try a PDF with selectable text, a Word doc or a PowerPoint.');
     makeOpts.doc={name:doc.name,text:doc.text,truncated:doc.truncated};
   }catch(err){message(err.message||'Knox couldn’t read that file.');}
   finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}

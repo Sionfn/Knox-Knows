@@ -1,4 +1,4 @@
-// doc-extract.js — read PDF and Word (.docx) files in the browser.
+// doc-extract.js — read PDF, Word (.docx) and PowerPoint (.pptx) files in the browser.
 //
 // Used by Ask Knox, Learn and Flashcards. Only the extracted text is sent to
 // Knox (not the file), so uploads stay small and fast. The readers load from
@@ -12,6 +12,7 @@
   const PDFJS_URL  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
   const WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
   const MAMMOTH_URL = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';
+  const JSZIP_URL   = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
 
   const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
   const MAX_PAGES      = 60;               // PDF pages read
@@ -20,12 +21,15 @@
 
   const PDF_TYPES  = ['application/pdf'];
   const DOCX_TYPES = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const PPTX_TYPES = ['application/vnd.openxmlformats-officedocument.presentationml.presentation'];
 
   const kindOf = file => {
     const name = (file?.name || '').toLowerCase();
     if (PDF_TYPES.includes(file?.type) || name.endsWith('.pdf')) return 'pdf';
     if (DOCX_TYPES.includes(file?.type) || name.endsWith('.docx')) return 'docx';
+    if (PPTX_TYPES.includes(file?.type) || name.endsWith('.pptx')) return 'pptx';
     if (name.endsWith('.doc')) return 'doc';
+    if (name.endsWith('.ppt')) return 'ppt';
     return null;
   };
   window.knoxIsDocument = file => !!kindOf(file);
@@ -37,6 +41,18 @@
       return lib;
     }).catch(err => { pdfjsPromise = null; throw err; });
     return pdfjsPromise;
+  }
+  const scripts = {};
+  function loadScript(url, globalName) {
+    if (window[globalName]) return Promise.resolve(window[globalName]);
+    scripts[url] ||= new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = () => window[globalName] ? resolve(window[globalName]) : reject(new Error('reader unavailable'));
+      s.onerror = () => { delete scripts[url]; reject(new Error('reader unavailable')); };
+      document.head.appendChild(s);
+    });
+    return scripts[url];
   }
   let mammothPromise = null;
   function loadMammoth() {
@@ -126,13 +142,45 @@
     return finish(file.name, result.value, null, false);
   }
 
+  // A .pptx is a zip of slide XML files: read each slide's text (and its
+  // speaker notes) in slide order.
+  async function readPptx(file) {
+    const JSZip = await loadScript(JSZIP_URL, 'JSZip');
+    let zip;
+    try { zip = await JSZip.loadAsync(await file.arrayBuffer()); }
+    catch { throw new Error("Knox couldn't open that PowerPoint. Try saving it again as .pptx or PDF."); }
+    const num = path => Number(path.match(/(\d+)\.xml$/)?.[1] || 0);
+    const slides = Object.keys(zip.files).filter(p => /^ppt\/slides\/slide\d+\.xml$/.test(p)).sort((a, b) => num(a) - num(b));
+    if (!slides.length) throw new Error('That PowerPoint has no slides Knox can read.');
+    const textOf = xml => {
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      return [...doc.getElementsByTagName('a:p')]
+        .map(p => [...p.getElementsByTagName('a:t')].map(t => t.textContent).join(''))
+        .filter(line => line.trim()).join('\n');
+    };
+    const parts = [];
+    let length = 0;
+    for (const path of slides.slice(0, MAX_PAGES)) {
+      if (length >= TEXT_LIMIT) break;
+      const text = textOf(await zip.file(path).async('string'));
+      const notesPath = `ppt/notesSlides/notesSlide${num(path)}.xml`;
+      const notes = zip.file(notesPath) ? textOf(await zip.file(notesPath).async('string')).replace(/^\d+$/m, '').trim() : '';
+      const block = `— Slide ${num(path)} —\n${text}${notes ? '\nNotes: ' + notes : ''}`;
+      parts.push(block);
+      length += block.length;
+    }
+    if (!parts.join('').replace(/— Slide \d+ —|\s/g, '')) throw new Error("That PowerPoint's slides are only pictures. Try exporting it as a PDF, or upload a photo of a slide.");
+    return finish(file.name, parts.join('\n\n'), Math.min(slides.length, MAX_PAGES), slides.length > MAX_PAGES);
+  }
+
   window.knoxReadDocument = async function (file) {
     const kind = kindOf(file);
     if (kind === 'doc') throw new Error('Old .doc files aren’t supported — save it as .docx or PDF and try again.');
-    if (!kind) throw new Error('Knox can read photos, PDFs, and Word (.docx) files.');
+    if (kind === 'ppt') throw new Error('Old .ppt files aren’t supported — save it as .pptx or PDF and try again.');
+    if (!kind) throw new Error('Knox can read photos, PDFs, Word (.docx) and PowerPoint (.pptx) files.');
     if (file.size > MAX_FILE_BYTES) throw new Error('That file is over 20 MB. Try a smaller file or just the pages you need.');
     try {
-      const doc = kind === 'pdf' ? await readPdf(file) : await readDocx(file);
+      const doc = kind === 'pdf' ? await readPdf(file) : kind === 'pptx' ? await readPptx(file) : await readDocx(file);
       doc.name = niceName(doc.name);
       return doc;
     } catch (err) {
