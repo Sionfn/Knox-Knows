@@ -84,7 +84,7 @@ function response() {
 function askFetch({ failAnswer = false } = {}) {
   return async (url, options) => {
     const body = JSON.parse(options.body);
-    const classifier = body.model === 'gpt-4.1-mini';
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
     if (!classifier && failAnswer) return { ok: false, text: async () => 'provider error' };
     return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'The answer is 42.' }, finish_reason: 'stop' }] }) };
   };
@@ -346,9 +346,10 @@ test('Text, photo, small talk and Learn all use GPT-6 Luna', async () => {
   assert.equal(text.body.model, 'gpt-6-luna');
   assert.equal(photo.body.model, 'gpt-6-luna');
   assert.equal(casual.body.isCasual, true);
-  // The small-talk check (gpt-4.1-mini) runs on short non-Learn text; the
+  // The small-talk check runs only on messages that could be small talk; the
   // answers themselves are the three GPT-6 Luna calls.
-  const answers = requests.filter(request => request.model !== 'gpt-4.1-mini');
+  const isCheck = request => /Classify the LATEST user message/.test(request.messages?.[0]?.content || '');
+  const answers = requests.filter(request => !isCheck(request));
   assert.equal(answers.length, 4);
   assert.equal(casual.body.model, 'gpt-6-luna');
   assert.equal(learn.body.model, 'gpt-6-luna');
@@ -725,12 +726,13 @@ test('Make with Knox: Plus cap, and failed generations give credits back', async
 });
 
 // ── Small talk is free (classifier restored from before the Oct 1 release) ──
+const isSmallTalkCheck = call => /Classify the LATEST user message/.test(call.messages?.[0]?.content || '');
 function chatFetch(verdict, { classifierFails = false } = {}) {
   const calls = [];
   const fetch = async (url, options) => {
     const body = JSON.parse(options.body);
     calls.push(body);
-    if (body.model === 'gpt-4.1-mini') {
+    if (/Classify the LATEST user message/.test(body.messages?.[0]?.content || '')) {
       if (classifierFails) return { ok: false, text: async () => 'down' };
       return { ok: true, json: async () => ({ choices: [{ message: { content: verdict } }] }) };
     }
@@ -749,7 +751,7 @@ test('Small talk ("how are you", venting) is free for free users', async () => {
   assert.equal(res.code, 200);
   assert.equal(res.body.isCasual, true);
   assert.equal(store.get('users/u1/usage/bank').balance, 7, 'no credit spent on small talk');
-  const reply = ai.calls.find(call => call.model !== 'gpt-4.1-mini');
+  const reply = ai.calls.find(call => !/Classify the LATEST user message/.test(call.messages?.[0]?.content || ''));
   assert.match(reply.messages[0].content, /You're Knox/);
   assert.match(reply.messages[0].content, /988/, 'the crisis safety guidance is in the chat prompt');
   assert.match(reply.messages[0].content, /be honest: you're an AI/);
@@ -803,7 +805,7 @@ test('Learn mode: mid-lesson replies like "ok" stay in the lesson (no small-talk
   await handler(askRequest({ question: 'ok', history: [{ role: 'user', content: 'Help me with fractions' }, { role: 'assistant', content: 'What is 1/2 + 1/4?' }], learnMode: true, learnSessionId: sessionId }), res);
   assert.equal(res.code, 200);
   assert.equal(res.body.isCasual, false);
-  assert.ok(!ai.calls.some(call => call.model === 'gpt-4.1-mini'), 'no small-talk check mid-lesson');
+  assert.ok(!ai.calls.some(call => /Classify the LATEST user message/.test(call.messages?.[0]?.content || '')), 'no small-talk check mid-lesson');
   assert.match(ai.calls[0].messages[0].content, /Learn|hint|guide/i);
   assert.equal(store.get('users/u1/usage/bank').balance, 7, 'follow-ups stay free');
 });
@@ -921,4 +923,26 @@ test("streak days follow the student's own date, but only within one day of real
   // Same day again: no change.
   await ask(day(0));
   assert.equal(store.get('users/u1').streakCount, 6);
+});
+
+test('Obvious schoolwork skips the small-talk check (no extra AI call); the check runs on Luna', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1/usage/bank', { balance: 7, lastRegenAt: Date.now() });
+  const ai = chatFetch('CASUAL');
+  const handler = await load('api/ask.js', { db, fetch: ai.fetch });
+  for (const question of ['yo can u help me solve 2x + 3 = 11', 'explain photosynthesis', 'what is the capital of france', 'why did the roman empire fall']) {
+    ai.calls.length = 0;
+    const res = response(); await handler(askRequest({ question, history: [] }), res);
+    assert.equal(res.body.isCasual, false, question);
+    assert.ok(!ai.calls.some(isSmallTalkCheck), `no check for: ${question}`);
+  }
+  assert.equal(store.get('users/u1/usage/bank').balance, 3, 'each one is a real question');
+  ai.calls.length = 0;
+  const chat = response(); await handler(askRequest({ question: 'ugh im so tired today', history: [] }), chat);
+  const check = ai.calls.find(isSmallTalkCheck);
+  assert.ok(check, 'possible small talk is still checked');
+  assert.equal(check.model, 'gpt-6-luna');
+  assert.equal(check.temperature, undefined);
+  assert.ok(check.max_completion_tokens >= 300);
+  assert.equal(chat.body.isCasual, true);
 });

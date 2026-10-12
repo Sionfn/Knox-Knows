@@ -327,7 +327,15 @@ When they say thanks (or "got it", "ok cool") after an answer, don't repeat or s
 You're Knox. Real, warm, quick. You see people, you actually like them, and you don't fake it.`;
 
 // ── Casual vs. substantive classifier ───────────────────────────────────────
-// Cheap, fast check (gpt-4.1-mini) that decides whether the latest message is
+// Messages that are plainly schoolwork skip the classifier entirely (no extra
+// AI call, no added wait): numbers or math symbols, study words, or anything
+// long. Only messages that could be small talk get checked.
+const OBVIOUSLY_SUBSTANTIVE = /[0-9=+×÷^√∫<>%]|\b(solve|explain|calculate|define|definition|derivative|integral|equation|formula|essay|paragraph|summar(?:y|ize|ise)|translate|homework|worksheet|assignment|quiz|problem|chapter|theorem|proof|graph|simplify|factor|evaluate|compare|analy[sz]e|describe|difference between|meaning of|what (?:is|are|was|were) (?:a|an|the)|how (?:do|does|did|can) (?:i|we)|how does|why (?:do|does|did|is|was|were) (?!you\b))\b/i;
+function looksLikeSchoolwork(question) {
+  return question.length > 150 || OBVIOUSLY_SUBSTANTIVE.test(question);
+}
+
+// Fast check on Knox's own model (GPT-6 Luna) that decides whether the latest message is
 // small talk (free, no usage charge, warm chat voice) or an actual question/
 // task (charged, full KNOX_PROMPT). Fails toward SUBSTANTIVE on any error or
 // uncertainty — a student should never silently lose a real answer because
@@ -343,7 +351,7 @@ async function isCasualMessage(question, history = []) {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
+        model: CASUAL_MODEL,
         messages: [
           {
             role: "system",
@@ -354,14 +362,17 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
           },
           { role: "user", content: `Recent conversation:\n${recentContext}\n\nLatest message: "${question}"` },
         ],
-        max_tokens: 5,
-        temperature: 0,
+        // Luna is a reasoning model: the budget covers its brief thinking plus
+        // the one-word verdict (it doesn't accept temperature).
+        max_completion_tokens: 600,
       }),
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) { console.error("Casual classifier HTTP", response.status); return false; }
     const data = await response.json();
-    return (data.choices?.[0]?.message?.content || "").trim().toUpperCase().startsWith("CASUAL");
+    // Tolerate formatting like "**CASUAL**" or "Casual." — but never a mixed answer.
+    const verdict = (data.choices?.[0]?.message?.content || "").toUpperCase();
+    return verdict.includes("CASUAL") && !verdict.includes("SUBSTANTIVE");
   } catch (err) {
     console.error("Casual classifier error:", err.message);
     return false; // fail toward substantive
@@ -921,7 +932,7 @@ export default async function handler(req, res) {
       opensLearnChat = !Array.isArray(history) || history.length === 0;
     }
   }
-  if (!casual && !image && trimmedQuestion.length <= 400 && (!learnMode || opensLearnChat)) {
+  if (!casual && !image && !looksLikeSchoolwork(trimmedQuestion) && (!learnMode || opensLearnChat)) {
     casual = await isCasualMessage(trimmedQuestion, history);
   }
 
