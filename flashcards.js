@@ -1,4 +1,4 @@
-import {validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toQuizlet,cleanImage} from './flashcards-core.js';
+import {validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toTabText,cleanImage} from './flashcards-core.js';
 const panel=document.createElement('section'); panel.id='flashcardsPanel'; panel.hidden=true;
 panel.setAttribute('aria-label','Flashcards'); document.querySelector('#chatAndInput').append(panel);
 // Backdrop layer (stays put; draws the Knox circles in CSS) + scrolling
@@ -121,7 +121,7 @@ function home(query=''){
    `<div class="fc-ways${decks.length?' has-decks':''}">
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
       ${way('create','blue','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
-      ${way('import','green','📥','Import cards','Already have cards? Bring them in from Quizlet, Anki, Excel, Google Sheets or a Knox backup.')}
+      ${way('import','green','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
     <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
@@ -169,7 +169,7 @@ function cardRow(c,i){
       ${picker&&picker.index===i?pickerHtml():''}
     </div>`;
 }
-// ── Picture picker (like Quizlet): search free Wikimedia Commons images for
+// ── Picture picker: search free Wikimedia Commons images for
 // what you typed, or upload your own. Every Commons file is freely licensed;
 // its creator and license are saved as the credit.
 let picker=null; // {index, query, results, loading, error}
@@ -355,11 +355,11 @@ function importView(){
       <input type="file" id="fcImportInput" accept="${IMPORT_ACCEPT}" hidden>
       <span class="fc-field-label" style="margin-top:20px;display:block">Files that work</span>
       ${row('📊','Spreadsheet','.xlsx · .csv · .tsv','Excel or Google Sheets (File → Download → .csv): the question in the first column, the answer in the second.')}
-      ${row('📋','Quizlet or Anki','.txt','Quizlet: open a set → ⋯ → Export, then paste below or save it as a .txt file. Anki: File → Export → “Notes in Plain Text”.')}
+      ${row('📋','Another study app','.txt','Export your cards as plain text from the app you used, then paste them below or choose the .txt file.')}
       ${row('🗂️','Knox backup','.json','A file you saved with Export — your decks come back exactly as they were.')}
       <label class="fc-field-label" for="fcPaste" style="margin-top:20px;display:block">Or paste your cards</label>
       <textarea class="fc-textarea" id="fcPaste" rows="5" placeholder="mitochondria	powerhouse of the cell&#10;osmosis - water moving across a membrane&#10;atom: the smallest unit of an element"></textarea>
-      <p class="fc-doc-hint">One card per line — question, then answer, separated by a Tab (how Quizlet copies), “ - ” or “: ”.</p>
+      <p class="fc-doc-hint">One card per line — question, then answer, separated by a Tab, “ - ” or “: ”.</p>
       <div class="fc-toolbar" style="margin-top:12px">${btn('Use these cards','import-paste',{cls:'primary blue small'})}</div>
     </div>`,true);
 }
@@ -407,7 +407,7 @@ async function importFile(f){
     return;
   }
   if(/\.(csv|tsv)$/.test(name)||/^text\//.test(f.type)){openCards(parseTable(text),f.name);return;}
-  throw Error('Import takes spreadsheets (.xlsx, .csv), Quizlet or Anki lists (.txt) and Knox backups (.json).');
+  throw Error('Import takes spreadsheets (.xlsx, .csv), card lists (.txt) and Knox backups (.json).');
 }
 // Export: a Knox backup (moves decks between devices) or a spreadsheet.
 let exportTarget=null;
@@ -421,7 +421,7 @@ function exportView(target){
       <span class="fc-field-label">Choose a format</span>
       <button type="button" class="fc-format fc-format-btn" data-action="export-json"><span class="fc-format-icon" aria-hidden="true">🗂️</span><div><b>Knox backup</b> <span class="fc-format-types">.json</span><p>Best for moving decks to another device or browser. Import it back into Knox anytime.</p></div></button>
       <button type="button" class="fc-format fc-format-btn" data-action="export-csv"><span class="fc-format-icon" aria-hidden="true">📊</span><div><b>Spreadsheet</b> <span class="fc-format-types">.csv</span><p>Opens in Google Sheets and Excel. Study progress isn’t included.</p></div></button>
-      <button type="button" class="fc-format fc-format-btn" data-action="export-quizlet"><span class="fc-format-icon" aria-hidden="true">📋</span><div><b>Copy for Quizlet</b> <span class="fc-format-types">copy &amp; paste</span><p>Copies your cards. In Quizlet, choose Create → Import and paste them in.</p></div></button>
+      <button type="button" class="fc-format fc-format-btn" data-action="export-text"><span class="fc-format-icon" aria-hidden="true">📋</span><div><b>Copy as text</b> <span class="fc-format-types">copy &amp; paste</span><p>Copies your cards, one per line — paste them into a doc, a spreadsheet or another study app.</p></div></button>
     </div>`,true);
 }
 function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -544,7 +544,7 @@ panel.addEventListener('click',async e=>{
  if(action==='export-all')exportView(decks);
  if(action==='export-json'&&exportTarget){exportData(exportTarget);message('Saved a Knox backup (.json).','ok');}
  if(action==='export-csv'&&exportTarget){exportCsv(exportTarget);message('Saved a spreadsheet (.csv).','ok');}
- if(action==='export-quizlet'&&exportTarget){try{await navigator.clipboard.writeText(toQuizlet(exportTarget));message('Copied! In Quizlet, choose Create → Import, then paste.','ok');}catch{message('Your browser blocked copying. Use the Spreadsheet option instead.');}}
+ if(action==='export-text'&&exportTarget){try{await navigator.clipboard.writeText(toTabText(exportTarget));message(`Copied ${exportTarget.reduce((n,d)=>n+d.cards.length,0)} cards — paste them anywhere.`,'ok');}catch{message('Your browser blocked copying. Use the Spreadsheet option instead.');}}
  if(action==='import-paste'){const cards=parsePasted(panel.querySelector('#fcPaste')?.value);openCards(cards,'Pasted cards');}
  if(action==='import-to-make'&&importNote){const files=importNote.files;importNote=null;makeView();await takeFiles(files);}
  if(action==='import-note-x'){importNote=null;importView();}

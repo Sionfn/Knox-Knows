@@ -15,7 +15,7 @@ test('due selection excludes future reviews and practice includes all cards once
  const cards=[{due:0},{due:10},{due:1000}];assert.deepEqual(studyQueue(cards,true,100,()=>.99),[0,1]);assert.deepEqual(studyQueue(cards,false,100,()=>.99),[0,1,2]);
 });
 
-test('spreadsheet import reads CSV (with quotes), tabs and Quizlet-style lists; skips a header row', async () => {
+test('spreadsheet import reads CSV (with quotes), tabs and study-app lists; skips a header row', async () => {
   const { parseTable, toCsv } = await import('../flashcards-core.js');
   const csv = parseTable('Question,Answer\n"What is 2, plus 2?",4\n"He said ""hi""",greeting\n\nH2O,water\n');
   assert.equal(JSON.stringify(csv), JSON.stringify([{ front: 'What is 2, plus 2?', back: '4' }, { front: 'He said "hi"', back: 'greeting' }, { front: 'H2O', back: 'water' }]));
@@ -53,11 +53,11 @@ test('card lists in .txt: tabs, "term - definition" and "term: definition"; note
     [{ front: 'H2O', back: 'water' }, { front: 'NaCl', back: 'salt, table salt' }]);
 });
 
-test('pasted cards accept Tab, " - " and ": " and name the bad line; Quizlet copy is one card per line', async () => {
-  const { parsePasted, toQuizlet } = await import('../flashcards-core.js');
+test('pasted cards accept Tab, " - " and ": " and name the bad line; copied text is one card per line', async () => {
+  const { parsePasted, toTabText } = await import('../flashcards-core.js');
   assert.deepEqual(parsePasted('mitochondria\tpowerhouse of the cell\r\n\n2. osmosis - water across a membrane\natom: smallest unit'),
     [{ front: 'mitochondria', back: 'powerhouse of the cell' }, { front: 'osmosis', back: 'water across a membrane' }, { front: 'atom', back: 'smallest unit' }]);
   assert.throws(() => parsePasted('good - card\nno separator here'), /Line 2/);
   assert.throws(() => parsePasted('  '), /Paste some cards/);
-  assert.equal(toQuizlet([{ cards: [{ front: 'Q\none', back: 'A\tB' }, { front: 'x', back: 'y' }] }]), 'Q one\tA B\nx\ty');
+  assert.equal(toTabText([{ cards: [{ front: 'Q\none', back: 'A\tB' }, { front: 'x', back: 'y' }] }]), 'Q one\tA B\nx\ty');
 });

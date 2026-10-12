@@ -36,7 +36,7 @@ export function studyQueue(cards, dueOnly=true, now=Date.now(), random=Math.rand
   return q;
 }
 // Spreadsheet / list import (.csv, .tsv, .txt): one card per row, question
-// then answer. Tabs win if present (Google Sheets, Excel and Quizlet copy or
+// then answer. Tabs win if present (Google Sheets, Excel and most study apps copy or
 // export with tabs); otherwise comma-separated with "quoted, values".
 export function parseTable(text) {
   const rows = [];
@@ -74,7 +74,7 @@ export function rowsToCards(rows) {
   if (cards.length > 300) throw Error('That file has more than 300 cards. Split it into smaller decks.');
   return cards;
 }
-// Spreadsheet export: two columns (Front, Back) that Sheets, Excel and Quizlet open.
+// Spreadsheet export: two columns (Front, Back) that Sheets and Excel open.
 export function toCsv(decks) {
   const q = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
   const lines = ['Front,Back' + (decks.length > 1 ? ',Deck' : '')];
@@ -99,7 +99,7 @@ export function parseList(text) {
   return cards;
 }
 // Pasted cards (Import's paste box, the editor's paste box): one card per
-// line, split at a Tab (Quizlet, Sheets, Excel), " - " or ": ".
+// line, split at a Tab (Sheets, Excel, study apps), " - " or ": ".
 export function parsePasted(text) {
   const lines = String(text || '').replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim());
   if (!lines.length) throw Error('Paste some cards first: one per line, question then answer.');
@@ -115,8 +115,8 @@ export function parsePasted(text) {
   if (cards.length > 300) throw Error('That’s more than 300 cards. Split it into smaller decks.');
   return cards;
 }
-// Tab-separated text Quizlet can import (Create → Import → paste).
-export function toQuizlet(decks) {
+// Plain text to copy: one card per line, question Tab answer.
+export function toTabText(decks) {
   const one = s => String(s).replace(/\s*[\r\n\t]+\s*/g, ' ').trim();
   return decks.flatMap(d => d.cards.map(c => one(c.front) + '\t' + one(c.back))).join('\n');
 }
