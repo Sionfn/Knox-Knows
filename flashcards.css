@@ -224,3 +224,100 @@ body.app-sidebar-collapsed .fc-beta { display:none; }
 
 /* Read by screen readers, invisible on screen. */
 .fc-sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+/* Make with Knox: attach a PDF or Word doc */
+.fc-doc-row { margin:10px 0 2px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.fc-doc-chip { display:inline-flex; align-items:center; gap:8px; max-width:100%; padding:6px 8px 6px 12px; border-radius:12px; background:var(--orange-cream); border:2px solid var(--orange-light); color:var(--orange); font-weight:800; font-size:13px; }
+.fc-doc-chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fc-doc-x { background:none; border:0; color:var(--orange); font-weight:900; font-size:15px; cursor:pointer; padding:0 4px; }
+
+/* Make with Knox / Import / Export: "← Decks" sits top-left above the card. */
+.fc-make-top { max-width:640px; margin:0 auto 12px; }
+/* Import & Export: the supported file types */
+.fc-format { display:flex; gap:12px; align-items:flex-start; text-align:left; width:100%; padding:12px 14px; margin-top:10px; border:2px solid var(--border); border-radius:16px; background:var(--surface); color:var(--text); font:inherit; box-shadow:0 3px 0 var(--border); }
+.fc-format-icon { font-size:22px; line-height:1.2; flex-shrink:0; }
+.fc-format b { font-size:15px; font-weight:900; }
+.fc-format-types { font-size:12px; font-weight:800; color:var(--orange); }
+.fc-format p { margin:3px 0 0; font-size:13px; font-weight:700; color:var(--text-light); line-height:1.45; }
+.fc-format-btn { cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.fc-format-btn:hover, .fc-format-btn:focus-visible { border-color:var(--orange); box-shadow:0 3px 0 var(--orange); outline:none; }
+
+/* Card pictures: on the answer side while studying, and in the editor. */
+.fc-card-img { max-width:100%; max-height:170px; object-fit:contain; border-radius:12px; background:#fff; margin-top:6px; }
+.fc-img-credit { font-size:10.5px; font-weight:700; color:var(--text-light); max-width:90%; text-align:center; line-height:1.3; }
+
+/* Card editor: picture tile + Wikimedia picture picker */
+.fc-row-body { display:flex; gap:14px; align-items:flex-start; }
+.fc-row-body .fc-fields { flex:1; min-width:0; }
+.fc-img-tile { flex:0 0 84px; width:84px; height:84px; margin-top:22px; border:2px dashed var(--border); border-radius:14px; background:var(--surface); color:var(--text-light); font:inherit; font-size:12px; font-weight:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; position:relative; padding:0; transition:border-color .15s, color .15s; }
+.fc-img-tile span { font-size:22px; }
+button.fc-img-tile:hover, button.fc-img-tile:focus-visible { border-color:var(--orange); color:var(--orange); outline:none; }
+.fc-img-tile.has-pic { border-style:solid; cursor:default; }
+.fc-img-open { width:100%; height:100%; padding:0; border:0; border-radius:12px; overflow:hidden; background:#fff; cursor:pointer; }
+.fc-img-open img { width:100%; height:100%; object-fit:cover; display:block; }
+.fc-img-del { position:absolute; top:-8px; right:-8px; width:26px; height:26px; border-radius:50%; border:2px solid var(--border); background:var(--surface); font-size:12px; line-height:1; cursor:pointer; padding:0; }
+.fc-img-del:hover { border-color:var(--red); }
+.fc-pic-credit { margin:8px 0 0 98px; font-size:11.5px; font-weight:700; color:var(--text-light); }
+.fc-picker { margin-top:12px; padding:12px; border-radius:14px; border:2px solid var(--border); background:var(--cream); }
+html[data-theme="dark"] .fc-picker { background:color-mix(in srgb, var(--surface) 70%, #000); }
+.fc-picker-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.fc-picker-bar .fc-input { flex:1 1 220px; min-width:0; }
+.fc-picker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:8px; margin-top:10px; }
+.fc-picker-item { aspect-ratio:1; padding:0; border:2px solid var(--border); border-radius:10px; overflow:hidden; background:#fff; cursor:pointer; }
+.fc-picker-item:hover, .fc-picker-item:focus-visible { border-color:var(--orange); outline:none; }
+.fc-picker-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.fc-picker-note { margin:8px 2px 0; font-size:12px; font-weight:700; color:var(--text-light); }
+@media (max-width:640px) {
+  .fc-row-body { flex-direction:column; }
+  .fc-img-tile { margin-top:0; }
+  .fc-pic-credit { margin-left:0; }
+}
+/* Make with Knox: file hint · Import: drop zone */
+.fc-doc-hint { margin:6px 0 0; font-size:12.5px; font-weight:700; color:var(--text-light); }
+.fc-dropzone { display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; margin-top:18px; padding:26px 16px; border:3px dashed var(--blue); border-radius:20px; background:var(--blue-light); color:var(--blue-dark); font:inherit; cursor:pointer; transition:transform .12s, background .12s; }
+.fc-dropzone:hover { transform:translateY(-1px); }
+.fc-dropzone b { font-size:17px; font-weight:900; }
+.fc-dropzone span:last-child { font-size:13px; font-weight:700; opacity:.8; }
+.fc-dropzone-icon { font-size:30px; line-height:1; }
+html[data-theme="dark"] .fc-dropzone { background:transparent; color:var(--blue); }
+/* Home: the three ways to make a deck */
+.fc-ways { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; max-width:860px; margin:0 auto; }
+.fc-way { --chip:var(--orange); --chip-ledge:var(--orange-dark); --chip-tint:var(--orange-light);
+  display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; padding:16px 16px 18px; border-radius:20px; border:3px solid var(--chip); background:var(--surface); color:var(--text); font:inherit; cursor:pointer; box-shadow:0 5px 0 var(--chip-ledge); transition:transform .12s, box-shadow .12s; }
+.fc-way[data-flavor="green"] { --chip:var(--green); --chip-ledge:var(--green-dark); --chip-tint:var(--green-light); }
+.fc-way[data-flavor="blue"]  { --chip:var(--blue);  --chip-ledge:var(--blue-dark);  --chip-tint:var(--blue-light); }
+.fc-way:hover  { transform:translateY(-2px); box-shadow:0 7px 0 var(--chip-ledge); }
+.fc-way:active { transform:translateY(3px);  box-shadow:0 2px 0 var(--chip-ledge); }
+.fc-way-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:21px; background:var(--chip-tint); border:3px solid var(--chip); margin-bottom:4px; }
+.fc-way b { font-size:16px; font-weight:900; }
+.fc-way > span:last-child { font-size:13px; font-weight:700; color:var(--text-light); line-height:1.45; }
+.fc-toolbar-quiet { margin-top:12px; gap:4px; }
+@media (max-width:720px) { .fc-ways { grid-template-columns:1fr; } .fc-way { flex-direction:row; flex-wrap:wrap; align-items:center; column-gap:12px; } .fc-way-icon { margin:0; } .fc-way > span:last-child { flex-basis:100%; } }
+
+/* Make with Knox: "Add pictures automatically" switch */
+.fc-switch { display:flex; gap:12px; align-items:flex-start; margin-top:18px; padding:12px 14px; border:2px solid var(--border); border-radius:16px; cursor:pointer; text-align:left; }
+.fc-switch input { position:absolute; opacity:0; width:1px; height:1px; }
+.fc-switch-track { flex-shrink:0; width:42px; height:24px; margin-top:1px; border-radius:999px; background:var(--border); position:relative; transition:background .15s; }
+.fc-switch-track::after { content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .15s; }
+.fc-switch input:checked + .fc-switch-track { background:var(--orange); }
+.fc-switch input:checked + .fc-switch-track::after { transform:translateX(18px); }
+.fc-switch input:focus-visible + .fc-switch-track { outline:3px solid var(--blue); outline-offset:2px; }
+.fc-switch b { display:block; font-size:14px; font-weight:900; color:var(--text); }
+.fc-switch small { display:block; font-size:12.5px; font-weight:700; color:var(--text-light); line-height:1.45; margin-top:2px; }
+
+/* Import: notes or photos dropped here */
+.fc-import-note { margin-bottom:16px; padding:14px 16px; border-radius:16px; background:var(--orange-cream); border:2px solid var(--orange-light); text-align:left; }
+.fc-import-note p { margin:0 0 10px; font-size:14px; font-weight:700; color:var(--text); line-height:1.45; }
+.fc-import-note .fc-toolbar { justify-content:flex-start; }
+/* Phones with decks already: compact ways, so the decks aren't pushed off-screen */
+@media (max-width:720px) {
+  .fc-ways.has-decks { grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; }
+  .fc-ways.has-decks .fc-way { flex-direction:column; align-items:center; text-align:center; padding:12px 6px 14px; gap:6px; }
+  .fc-ways.has-decks .fc-way b { font-size:13px; line-height:1.2; }
+  .fc-ways.has-decks .fc-way > span:last-child { display:none; }
+}
+/* Home with no decks yet: one compact row, so the whole page fits on screen */
+.fc-empty-start { display:flex; align-items:center; justify-content:center; gap:16px; text-align:left; padding:16px 20px; max-width:640px; margin:0 auto; }
+.fc-empty-start img { width:56px; height:56px; margin:0; flex-shrink:0; }
+.fc-empty-start h2 { font-size:17px; }
+.fc-empty-start .fc-sub { font-size:14px; margin:0; max-width:none; }

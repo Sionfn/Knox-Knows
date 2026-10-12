@@ -674,33 +674,6 @@ test('Make with Knox: Plus-only for now — free and signed-in-without-Plus get 
   assert.equal(store.get('users/u1/usage/bank').balance, 10);
 });
 
-test('Make with Knox: free users spend 3 questions and get up to 10 cards', async () => {
-  const { db, store } = memoryDb();
-  store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 10, lastRegenAt: Date.now() });
-  const ai = aiFetch({ title: 'Cells', cards: [{ front: 'a', back: 'b' }, { front: 'c', back: 'd' }, { front: 'e', back: 'f' }] });
-  const res = response();
-  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq({ request: 'cell biology', count: 20 }), res);
-  assert.equal(res.code, 200);
-  assert.equal(store.get('users/u1/usage/bank').balance, 7);
-  assert.equal(res.body.creditsLeft, 7);
-  assert.match(ai.calls[0].messages[0].content, /Write exactly 10 flashcards/, 'free decks are capped at 10 cards');
-  assert.equal(store.get('users/u1/usage/flashcardsAI'), undefined, 'free users do not touch the Plus cap');
-});
-
-test('Make with Knox: not enough questions stops before the AI is called', async () => {
-  const { db, store } = memoryDb();
-  store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 2, lastRegenAt: Date.now() });
-  const ai = aiFetch({ title: 'x', cards: [] });
-  const res = response();
-  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq(), res);
-  assert.equal(res.code, 402);
-  assert.equal(res.body.upgrade, true);
-  assert.equal(ai.calls.length, 0);
-  assert.equal(store.get('users/u1/usage/bank').balance, 2);
-});
-
 test('Make with Knox: Plus cap, and failed generations give credits back', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'super' });
@@ -716,13 +689,10 @@ test('Make with Knox: Plus cap, and failed generations give credits back', async
   assert.equal(refused.code, 422);
   assert.equal(store.get('users/u1/usage/flashcardsAI').count, 3, 'refused request is not counted');
 
-  const free = memoryDb();
-  free.store.set('users/u1', { plan: 'free' });
-  free.store.set('users/u1/usage/bank', { balance: 9, lastRegenAt: Date.now() });
   const down = response();
-  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db: free.db, fetch: aiFetch('', { ok: false }).fetch }))(deckReq(), down);
+  await (await load('api/generate-flashcards.js', { db, fetch: aiFetch('', { ok: false }).fetch }))(deckReq(), down);
   assert.equal(down.code, 502);
-  assert.equal(free.store.get('users/u1/usage/bank').balance, 9, 'AI outage refunds the 3 questions');
+  assert.equal(store.get('users/u1/usage/flashcardsAI').count, 3, 'an AI outage does not count toward the daily limit');
 });
 
 // ── Small talk is free (classifier restored from before the Oct 1 release) ──
@@ -991,3 +961,104 @@ test('/api/me tells a signed-out visitor whether the server will let them ask', 
   res = await ask('203.0.113.50');
   assert.equal(res.body.canAsk, true, 'another connection is unaffected');
 });
+
+test('Make with Knox builds a deck from a PDF/Word file, with or without a request', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' });
+  const ai = aiFetch({ title: 'Cells', cards: [{ front: 'What is a cell?', back: 'The basic unit of life.' }, { front: 'What does DNA store?', back: 'Genetic information.' }, { front: 'What is mitosis?', back: 'Cell division.' }] });
+  const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: '', count: 10, document: { name: 'bio notes.docx', text: 'Cells are the basic unit of life. DNA stores genetic information.' } } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.cards.length, 3);
+  const user = ai.calls[0].messages[1].content;
+  assert.match(user, /Make flashcards from this file/);
+  assert.match(user, /<document name="bio notes.docx">\nCells are the basic unit of life/);
+  const bad = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'cells', document: { name: 'x.pdf', text: 'y'.repeat(30001) } } }, bad);
+  assert.equal(bad.code, 400);
+});
+
+
+test('Make with Knox skips pictures when the student turns them off', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' }); // Flashcards is Plus-only for now
+  const calls = [];
+  const ai = aiFetch({ title: 'Body', cards: [{ front: 'Which organ pumps blood?', back: 'The heart.', image: 'Heart' }, { front: 'b', back: 'c' }, { front: 'd', back: 'e' }] });
+  const fetch = async (url, opts) => { calls.push(String(url)); return ai.fetch(url, opts); };
+  const handler = await load('api/generate-flashcards.js', { db, fetch });
+  const res = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'the heart', pictures: false } }, res);
+  assert.equal(res.code, 200);
+  assert.ok(!calls.some(u => u.includes('wiki')), 'no picture lookups');
+  assert.ok(!res.body.cards.some(c => 'image' in c || 'imageTitle' in c));
+  assert.doesNotMatch(ai.calls[0].messages[0].content, /Pictures:/);
+});
+
+
+test('Make with Knox reads photos of notes and rejects bad photos', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' }); // Flashcards is Plus-only for now
+  const ai = aiFetch({ title: 'Notes', cards: [{ front: 'What is osmosis?', back: 'Water moving across a membrane.' }, { front: 'What is diffusion?', back: 'Spreading from high to low concentration.' }, { front: 'What is a solute?', back: 'What dissolves.' }] });
+  const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: '', count: 10, images: [{ type: 'image/jpeg', data: 'QUJD' }, { type: 'image/jpeg', data: 'REVG' }] } }, res);
+  assert.equal(res.code, 200);
+  const user = ai.calls[0].messages[1].content;
+  assert.ok(Array.isArray(user), 'photos are sent as image parts');
+  assert.match(user[0].text, /Make flashcards from this file[\s\S]*2 photos/);
+  assert.deepEqual(user.slice(1).map(p => p.image_url.url), ['data:image/jpeg;base64,QUJD', 'data:image/jpeg;base64,REVG']);
+  for (const images of [Array(6).fill({ type: 'image/jpeg', data: 'QUJD' }), [{ type: 'image/svg+xml', data: 'QUJD' }], [{ type: 'image/jpeg', data: 'not base64!' }], [{ type: 'image/jpeg', data: 'A'.repeat(1_500_001) }], 'nope']) {
+    const bad = response();
+    await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'cells', images } }, bad);
+    assert.equal(bad.code, 400, JSON.stringify(images).slice(0, 40));
+  }
+});
+
+
+test('Make with Knox pictures every card from its Wikipedia article: Commons files only, credited, no repeats, no icons; failures just skip pictures', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' }); // Flashcards is Plus-only for now
+  const deck = { title: 'Bones', cards: [
+    { front: 'What is an osteon?', back: 'The unit of compact bone.', image: 'Osteon' },
+    { front: 'What are the three types of bone?', back: 'Long, short and flat.', image: 'Bone' },
+    { front: 'What are the bone cells called?', back: 'Osteocytes, osteoblasts and osteoclasts.', image: 'Bone' },
+    { front: 'What is 2 + 2?', back: '4' },
+  ] };
+  const file = (title, src, extra = {}) => ({ title, imagerepository: 'shared', imageinfo: [{ width: 600, thumburl: src, extmetadata: { Artist: { value: '<a href="x">Jerm</a>' }, LicenseShortName: { value: 'CC BY 4.0' } } }], ...extra });
+  const articles = {
+    Osteon: { main: 'Compact_bone.jpg', files: [file('File:Commons-logo.svg', 'https://upload.wikimedia.org/logo.png'), file('File:Compact bone.jpg', 'https://upload.wikimedia.org/osteon.jpg')] },
+    Bone: { main: 'Long_bone.jpg', files: [file('File:Fair use cover.jpg', 'https://upload.wikimedia.org/local.jpg', { imagerepository: 'local' }), file('File:Bone cells.jpg', 'https://upload.wikimedia.org/cells.jpg'), file('File:Long bone.jpg', 'https://upload.wikimedia.org/long.jpg')] },
+  };
+  const calls = [];
+  const fetch = async (url, options) => {
+    const u = String(url); calls.push(u);
+    if (u.includes('en.wikipedia.org')) {
+      const title = decodeURIComponent(u.split('titles=')[1]);
+      const a = articles[title];
+      if (u.includes('prop=pageimages')) return { ok: true, json: async () => ({ query: { pages: { 1: { title, pageimage: a.main } } } }) };
+      return { ok: true, json: async () => ({ query: { pages: Object.fromEntries(a.files.map((f, i) => [i, f])) } }) };
+    }
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(deck) }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/generate-flashcards.js', { db, fetch });
+  const res = response();
+  await handler(deckReq({ request: 'bones', count: 10 }), res);
+  assert.equal(res.code, 200);
+  const [osteon, types, cells, math] = res.body.cards;
+  assert.equal(osteon.image, 'https://upload.wikimedia.org/osteon.jpg', 'skips logos and icons');
+  assert.equal(osteon.imageCredit, 'Wikimedia Commons · Jerm · CC BY 4.0');
+  assert.equal(osteon.imageTopic, 'Osteon');
+  assert.equal(types.image, 'https://upload.wikimedia.org/long.jpg', "the article's main picture first");
+  assert.equal(cells.image, 'https://upload.wikimedia.org/cells.jpg', 'a different picture for the next card on the same article');
+  assert.ok(!res.body.cards.some(c => c.image === 'https://upload.wikimedia.org/local.jpg'), 'never non-Commons (possibly non-free) files');
+  assert.equal(math.image, undefined);
+  assert.ok(res.body.cards.every(c => !('imageTitle' in c)));
+
+  const down = response();
+  const broken = await load('api/generate-flashcards.js', { db, fetch: async url => String(url).includes('wiki') ? { ok: false } : fetch(url) });
+  await broken(deckReq({ request: 'bones', count: 10 }), down);
+  assert.equal(down.code, 200, 'Wikipedia down: the deck still works');
+  assert.ok(down.body.cards.every(c => !c.image));
+});
+
