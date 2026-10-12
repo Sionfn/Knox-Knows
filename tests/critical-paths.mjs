@@ -969,5 +969,6 @@ test('Learn mode guides even simple arithmetic instead of answering it', async (
   await handler(askRequest({ question: '2 x 4', history: [{ role: 'user', content: 'hey' }, { role: 'assistant', content: "Hey! What's up?" }], learnMode: true }), res);
   const prompt = ai.calls.find(call => !isSmallTalkCheck(call)).messages[0].content;
   assert.match(prompt, /even very simple ones like 2 x 4.*never the answer or an Answer: line in your first reply/s);
+  assert.match(prompt, /Final check before every Learn reply.*\n?.*ask a guiding question instead.$/s, 'the reminder is the last thing in the Learn instructions');
   assert.doesNotMatch(prompt, /Bare math:/);
 });
