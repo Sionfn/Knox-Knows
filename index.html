@@ -19,42 +19,20 @@
     // carries over between the marketing site and /app).
     (function() {
       try {
-        if (localStorage.getItem('knoxTheme') === 'dark') {
+        // Three looks: light (default), dark, and seasonal (fall) — seasonal
+        // is built on dark, plus the .knox-seasonal class (see seasonal.css).
+        var t = localStorage.getItem('knoxTheme');
+        if (t === 'dark' || t === 'seasonal') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
+        if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
       } catch (e) { /* localStorage unavailable — default to light */ }
-    })();
-  </script>
-  <script>
-    // Halloween season: adds .knox-halloween to <html> (Sep 20 → Nov 1).
-    // The theme itself only shows in dark mode — light mode just gets a
-    // small "turn on dark mode" hint. ?halloween=on / off forces it.
-    (function() {
-      try {
-        var d = new Date(), m = d.getMonth(), day = d.getDate();
-        var on = (m === 8 && day >= 20) || m === 9 || (m === 10 && day <= 1);
-        var q = new URLSearchParams(location.search).get('halloween');
-        if (q === 'on') on = true;
-        if (q === 'off') on = false;
-        var root = document.documentElement;
-        if (on) root.classList.add('knox-halloween');
-        if (localStorage.getItem('knoxHalloweenHint') === 'hidden') root.classList.add('knox-hh-hidden');
-      } catch (e) { /* decorative only */ }
-      // Hint button: use the page's real toggle when it's ready, otherwise
-      // flip the theme directly (same attribute + storage key it uses).
-      window.knoxHalloweenDarkMode = function() {
-        if (typeof window.toggleDarkMode === 'function') return window.toggleDarkMode();
-        document.documentElement.setAttribute('data-theme', 'dark');
-        try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) {}
-      };
-      window.knoxHideHalloweenHint = function() {
-        document.documentElement.classList.add('knox-hh-hidden');
-        try { localStorage.setItem('knoxHalloweenHint', 'hidden'); } catch (e) {}
-      };
     })();
   </script>
   <meta charset="UTF-8">
 <script src="/desktop-fit.js"></script>
+<link rel="stylesheet" href="/seasonal.css">
+<script src="/theme.js" defer></script>
   <!-- Google Analytics — only loads after the user accepts the cookie banner.
        This makes the banner a genuine consent gate (GDPR-compatible) rather
        than just a notice. The banner JS at the bottom of the page calls
@@ -101,12 +79,12 @@
   <meta property="og:description" content="Knox Knows is your personal AI tutor app. Get instant homework answers, guided learning, and subject chat — free to start at knoxknowsapp.com/app">
   <meta property="og:url" content="https://knoxknowsapp.com/about">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://knoxknowsapp.com/knox-link-preview.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Knox the fox studying on a laptop under a full moon — Knox Knows: Stop Guessing. Start Knowing.">
+  <meta property="og:image" content="https://knoxknowsapp.com/KnoxKnox.png">
+  <meta property="og:image:width" content="1983">
+  <meta property="og:image:height" content="793">
+  <meta property="og:image:alt" content="Knox Knows — AI study companion">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://knoxknowsapp.com/knox-link-preview.jpg">
+  <meta name="twitter:image" content="https://knoxknowsapp.com/KnoxKnox.png">
   <meta name="twitter:title" content="Knox Knows — Stop Guessing. Start Knowing.">
   <meta name="twitter:description" content="Knox Knows is your personal AI tutor app. Get instant homework answers, guided learning, and subject chat — free to start at knoxknowsapp.com/app">
   <meta name="twitter:site" content="@KnoxKnowsApp">
@@ -302,159 +280,8 @@
       color-scheme: dark;
     }
 
-/* ═══ HALLOWEEN (shared with the landing page — keep both copies in sync) ═══
-   Seasonal theme only shows in DARK mode. In light mode the site stays in its
-   normal Knox look and shows a small hint pointing people to dark mode.
-   The .knox-halloween class is added in <head> during the season
-   (Sep 20 → Nov 1). Force it with ?halloween=on / ?halloween=off.        */
-.halloween-sky, .halloween-hint, .hw-only { display: none; }
-
-/* Light mode: the little "turn on dark mode" hint */
-html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint {
-  display: inline-flex; align-items: center; gap: 10px;
-  max-width: 100%;
-  margin: 0 auto 18px;
-  padding: 6px 6px 6px 14px;
-  background: var(--surface);
-  border: 2px solid var(--orange);
-  border-radius: 999px;
-  box-shadow: 0 3px 0 var(--orange-light);
-  font-family: inherit; font-size: 13px; font-weight: 800;
-  color: var(--text);
-  text-align: left;
-  position: relative; z-index: 2;
-}
-.halloween-hint .hh-emoji { font-size: 16px; line-height: 1; }
-.halloween-hint .hh-text { line-height: 1.3; }
-.halloween-hint .hh-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  /* Knox orange sticker button — matches the app's hint. */
-  background: var(--orange); color: #fff;
-  border: none; border-radius: 999px;
-  padding: 8px 15px;
-  font-family: inherit; font-size: 12.5px; font-weight: 900;
-  box-shadow: 0 3px 0 #CC5500;
-  cursor: pointer; white-space: nowrap;
-  transition: transform .15s, box-shadow .15s;
-}
-.halloween-hint .hh-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 0 #CC5500; }
-.halloween-hint .hh-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
-.halloween-hint .hh-x {
-  width: 26px; height: 26px; flex-shrink: 0;
-  border: none; border-radius: 50%;
-  background: transparent; color: var(--text-light);
-  font-size: 17px; font-weight: 900; line-height: 1; cursor: pointer;
-}
-.halloween-hint .hh-x:hover { background: var(--gray); color: var(--text); }
-@media (max-width: 520px) {
-  html.knox-halloween:not([data-theme="dark"]):not(.knox-hh-hidden) .halloween-hint { border-radius: 18px; flex-wrap: wrap; padding: 8px 8px 8px 12px; row-gap: 8px; }
-  .halloween-hint .hh-text { flex: 1 1 160px; }
-}
-
-/* Dark mode: night palette (same neutrals ladder as regular dark, tinted
-   toward midnight purple so it feels spooky but still reads as Knox). */
-html.knox-halloween[data-theme="dark"] {
-  --cream:        #120E17;
-  --cream-warm:   #1A1421;
-  --gray:         #1C1623;
-  --surface:      #261E2E;
-  --border:       #3E3249;
-  --text:         #F5EEF7;
-  --text-light:   #B6A8BD;
-  --text-body:    #CFC3D6;
-  --orange-cream: #2A1D1A;
-  --orange-light: #5A3012;
-  --purple-light: #3A1C52;
-  --shadow:       0 4px 0 rgba(0,0,0,.45);
-  color-scheme: dark;
-}
-html.knox-halloween[data-theme="dark"] .halloween-sky {
-  display: block;
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  z-index: 0; pointer-events: none;
-}
-html.knox-halloween[data-theme="dark"] .hw-only { display: inline; }
-html.knox-halloween[data-theme="dark"] .hw-hide { display: none; }
-
-/* motion — gentle, and fully off for reduced-motion users */
-.halloween-sky .hw-bat { transform-box: fill-box; transform-origin: center; --bat-eye: #FFB347; }
-.halloween-sky .hw-bat.b1 { animation: hwDrift1 17s ease-in-out infinite, hwBlink 6.5s steps(1) infinite; }
-.halloween-sky .hw-bat.b2 { animation: hwDrift2 18s ease-in-out infinite, hwBlink 7.5s steps(1) infinite -2s; }
-.halloween-sky .hw-bat.b3 { animation: hwDrift3 16s ease-in-out infinite, hwBlink 5.5s steps(1) infinite -4s; }
-.halloween-sky .hw-bat.b4 { animation: hwDrift4 19s ease-in-out infinite, hwBlink 8s steps(1) infinite -1s; }
-.halloween-sky .hw-bat.b5 { display: none; animation: hwDrift2 17.5s ease-in-out infinite, hwBlink 7s steps(1) infinite -3s; }
-.halloween-sky .hw-bat use { transform-box: fill-box; transform-origin: center; animation: hwFlap 1.6s ease-in-out infinite alternate; }
-.halloween-sky .hw-bat.b2 use { animation-duration: 1.4s; }
-.halloween-sky .hw-bat.b3 use { animation-duration: 1.8s; }
-@keyframes hwBlink { 0%, 86% { --bat-eye: #FFB347; } 88%, 96% { --bat-eye: transparent; } 98%, 100% { --bat-eye: #FFB347; } }
-.halloween-sky .hw-spider { animation: hwDangle 6s ease-in-out infinite; }
-.halloween-sky .hw-tw { animation: hwTwinkle 3.2s ease-in-out infinite; }
-.halloween-sky .hw-tw.d2 { animation-delay: -.8s; } .halloween-sky .hw-tw.d3 { animation-delay: -1.6s; } .halloween-sky .hw-tw.d4 { animation-delay: -2.4s; }
-.hw-face { animation: hwFlicker 2.8s ease-in-out infinite; }
-@keyframes hwDrift1 {
-  0%,100% { transform: translate(0,0) rotate(-2deg); }
-  25%     { transform: translate(7px,-4px) rotate(2deg); }
-  50%     { transform: translate(3px,5px) rotate(-1deg); }
-  75%     { transform: translate(-6px,-2px) rotate(3deg); }
-}
-@keyframes hwDrift2 {
-  0%,100% { transform: translate(0,0) rotate(2deg); }
-  33%     { transform: translate(-8px,3px) rotate(-3deg); }
-  66%     { transform: translate(5px,6px) rotate(1deg); }
-}
-@keyframes hwDrift3 {
-  0%,100% { transform: translate(0,0) rotate(1deg); }
-  30%     { transform: translate(6px,4px) rotate(-2deg); }
-  60%     { transform: translate(-4px,-5px) rotate(3deg); }
-  85%     { transform: translate(2px,-2px) rotate(-1deg); }
-}
-@keyframes hwDrift4 {
-  0%,100% { transform: translate(0,0) rotate(-1deg); }
-  40%     { transform: translate(-5px,-6px) rotate(2deg); }
-  70%     { transform: translate(7px,2px) rotate(-2deg); }
-}
-@keyframes hwFlap { from { transform: scaleY(1); } to { transform: scaleY(.78); } }
-@keyframes hwDangle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
-@keyframes hwTwinkle { 0%,100% { opacity: .9; } 50% { opacity: .25; } }
-@keyframes hwFlicker { 0%,100% { opacity: 1; } 42% { opacity: .78; } 47% { opacity: 1; } 71% { opacity: .85; } }
-
-/* Pumpkin lives in its own small SVG pinned to the corner, so it never gets
-   cropped by the full-screen sky on wide/short screens. */
-.hw-pumpkin-svg { display: none; }
-html.knox-halloween[data-theme="dark"] #home > .hw-pumpkin-svg {
-  display: block; position: absolute; z-index: 0; pointer-events: none;
-  left: 20px; bottom: 8px; width: 150px; height: auto;
-}
-html.knox-halloween[data-theme="dark"] #home > .hw-pumpkin-right {
-  left: auto; right: 20px;
-}
-@media (max-width: 768px) {
-  html.knox-halloween[data-theme="dark"] #home > .hw-pumpkin-svg { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .halloween-sky *, .halloween-sky, .hw-face { animation: none !important; }
-}
-
 /* Dark green "Unlimited" is unreadable on the dark comparison table. */
 html[data-theme="dark"] .plan-unlimited { color: var(--green) !important; }
-/* Landing-specific Halloween (dark only) */
-/* Page background matches the hero so Safari's top colour matches too. */
-html.knox-halloween[data-theme="dark"],
-html.knox-halloween[data-theme="dark"] body { background: var(--cream); }
-html.knox-halloween[data-theme="dark"] #home {
-  background-color: var(--cream) !important;
-  background-image:
-    radial-gradient(ellipse at 82% 12%, rgba(255,154,60,.10), transparent 45%),
-    radial-gradient(ellipse at 8% 95%, rgba(142,111,176,.16), transparent 45%);
-}
-html.knox-halloween[data-theme="dark"] #home > .hero-blob { display: none; }
-html.knox-halloween[data-theme="dark"] .hero-badge {
-  background: #2A1D1A !important;
-  box-shadow: 0 3px 0 #A34700, 0 0 26px rgba(255,107,0,.22);
-}
-html.knox-halloween[data-theme="dark"] .hero-accent { text-shadow: 0 0 34px rgba(255,107,0,.35); }
-html.knox-halloween[data-theme="dark"] .hero-mascot { filter: drop-shadow(0 0 34px rgba(255,140,40,.45)) !important; }
 /* logo-theme.css gives every logo vertical-align:middle; the hero mascot is an
    inline image, so that pulled the whole hero column up 4px. Keep the original
    baseline so the logo, badge and headline sit exactly where they used to. */
@@ -468,13 +295,6 @@ html.knox-fit-short #home { padding-top: 22px !important; padding-bottom: 28px !
 html.knox-fit-short #home .hero-badge { margin-bottom: 12px !important; }
 html.knox-fit-short #home h1 + p { margin-top: 12px !important; }
 html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
-}
-html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
-.cta-bats { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-@media (max-width: 768px) {
-  html.knox-halloween[data-theme="dark"] #home > .halloween-sky .hw-bat.b5 { display: inline; }
-  html.knox-halloween[data-theme="dark"] #home > .halloween-sky .hw-pumpkin,
-  html.knox-halloween[data-theme="dark"] #home > .halloween-sky .hw-spider { display: none; }
 }
 
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -2322,8 +2142,8 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
   </div>
 
   <div class="header-nav">
-    <!-- Dark-mode toggle and "Open Knox" removed from the top bar. Dark mode
-         still lives in the app (and the Halloween hint's button); getting
+    <!-- Dark-mode toggle and "Open Knox" removed from the top bar. The theme
+         (light, dark or fall) is picked in the app and carries over; getting
          back to the app is now the floating button (see #appFab below). -->
     <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡<span id="proBadgeLabel"> Knox Plus</span></button>
 
@@ -2433,116 +2253,9 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 <section id="home" style="background:var(--surface);padding:72px 24px 64px;text-align:center;position:relative;overflow:hidden;">
   <div class="hero-blob" style="position:absolute;top:-100px;left:-80px;width:400px;height:400px;border-radius:50%;background:var(--orange-light);opacity:0.35;pointer-events:none;"></div>
   <div class="hero-blob" style="position:absolute;bottom:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:var(--blue-light);opacity:0.35;pointer-events:none;"></div>
-  <svg class="halloween-sky" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-    <defs>
-      <radialGradient id="hwMoonGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0" stop-color="#FFD9A0" stop-opacity=".55"/>
-        <stop offset=".45" stop-color="#FF9A3C" stop-opacity=".16"/>
-        <stop offset="1" stop-color="#FF9A3C" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="hwMoon" cx="40%" cy="38%" r="65%">
-        <stop offset="0" stop-color="#FFF1D6"/>
-        <stop offset="1" stop-color="#FFC56B"/>
-      </radialGradient>
-      <radialGradient id="hwPumpkinGlow" cx="50%" cy="55%" r="50%">
-        <stop offset="0" stop-color="#FF8A1F" stop-opacity=".45"/>
-        <stop offset="1" stop-color="#FF8A1F" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="hwFog" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#8E6FB0" stop-opacity="0"/>
-        <stop offset="1" stop-color="#8E6FB0" stop-opacity=".16"/>
-      </linearGradient>
-      <symbol id="hwBat" viewBox="0 0 100 52">
-        <path d="M50 20 44 10 41 22C29 15 16 12 3 18c7 4 9 8 7 12 0 4-3 7-6 9 12-3 21-1 26 6 3-7 9-9 14-6 2 6 4 10 6 13 2-3 4-7 6-13 5-3 11-1 14 6 5-7 14-9 26-6-3-2-6-5-6-9-2-4 0-8 7-12-13-6-26-3-38 4L56 10 50 20Z"/>
-        <circle cx="46" cy="27" r="1.6" fill="var(--bat-eye,#FFB347)"/>
-        <circle cx="54" cy="27" r="1.6" fill="var(--bat-eye,#FFB347)"/>
-      </symbol>
-    </defs>
-  
-    <!-- moon -->
-    <g class="hw-moon">
-      <circle cx="845" cy="120" r="150" fill="url(#hwMoonGlow)"/>
-      <circle cx="845" cy="120" r="62" fill="url(#hwMoon)"/>
-      <g fill="#E9A64F" opacity=".35">
-        <circle cx="825" cy="102" r="10"/><circle cx="866" cy="138" r="7"/><circle cx="846" cy="152" r="4.5"/><circle cx="870" cy="96" r="4"/>
-      </g>
-    </g>
-  
-    <!-- cobweb + spider -->
-    <g class="hw-web" fill="none" stroke="#CDB6E3" stroke-width="1.6" opacity=".38">
-      <path d="M0 0h190M0 0v190M0 0l160 160M0 0l178 70M0 0l70 178"/>
-      <path d="M34 0Q33 31 0 34M72 0Q66 64 0 72M114 0Q104 104 0 114M160 0Q147 147 0 160"/>
-    </g>
-    <g class="hw-spider">
-      <line x1="118" y1="-40" x2="118" y2="214" stroke="#CDB6E3" stroke-width="1.2" opacity=".5"/>
-      <g transform="translate(118 216)" fill="#CDB6E3" opacity=".75">
-        <ellipse rx="7" ry="8.5"/><circle cy="-10" r="4.5"/>
-        <path d="M-6-2-17-9M-6 2-18 1M-6 5-16 12M6-2 17-9M6 2 18 1M6 5 16 12" stroke="#CDB6E3" stroke-width="1.6" stroke-linecap="round"/>
-      </g>
-    </g>
-  
-    <!-- stars -->
-    <g class="hw-stars" fill="#FFD9A0">
-      <path class="hw-tw" d="m690 70 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z"/>
-      <path class="hw-tw d2" d="m935 268 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"/>
-      <path class="hw-tw d3" d="m250 330 2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6Z"/>
-      <path class="hw-tw d4" d="m730 300 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z"/>
-      <circle class="hw-tw d2" cx="600" cy="48" r="2"/><circle class="hw-tw" cx="655" cy="170" r="1.6"/>
-      <circle class="hw-tw d3" cx="320" cy="60" r="2"/><circle class="hw-tw d4" cx="962" cy="430" r="1.8"/>
-      <circle class="hw-tw" cx="40" cy="330" r="1.8"/><circle class="hw-tw d2" cx="420" cy="120" r="1.4"/>
-    </g>
-  
-    <!-- bats -->
-    <g fill="#3B2A4A" class="hw-bats">
-      <g class="hw-bat b1"><use href="#hwBat" x="700" y="190" width="96" height="50"/></g>
-      <g class="hw-bat b2"><use href="#hwBat" x="600" y="110" width="58" height="30"/></g>
-      <g class="hw-bat b3"><use href="#hwBat" x="170" y="250" width="74" height="38"/></g>
-      <g class="hw-bat b4"><use href="#hwBat" x="270" y="190" width="44" height="23"/></g>
-      <!-- Phone-only: sits inside the centre strip a narrow screen keeps, which
-           crops the left-side bats, so phones still show a bat on each side. -->
-      <g class="hw-bat b5"><use href="#hwBat" x="378" y="70" width="54" height="28"/></g>
-    </g>
-  
-    <!-- fog -->
-    <rect class="hw-fog" x="0" y="480" width="1000" height="220" fill="url(#hwFog)"/>
-  
-    
-  </svg>
-  <svg class="hw-pumpkin-svg" viewBox="-40 -10 180 150" aria-hidden="true" focusable="false">
-    <g class="hw-pumpkin" >
-      <ellipse cx="50" cy="62" rx="90" ry="70" fill="url(#hwPumpkinGlow)"/>
-      <path d="M47 22c-2-9 0-16 9-21l6 5c-7 3-9 8-8 16" fill="#6B8E23"/>
-      <ellipse cx="30" cy="62" rx="26" ry="36" fill="#E8620C"/>
-      <ellipse cx="70" cy="62" rx="26" ry="36" fill="#E8620C"/>
-      <ellipse cx="50" cy="62" rx="24" ry="38" fill="#FF7A1A"/>
-      <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#C94F06" stroke-width="2" fill="none" opacity=".6"/>
-      <g class="hw-face" fill="#FFD66B"><path d="M28 46 L42 46 L35 58 Z"/><path d="M58 46 L72 46 L65 58 Z"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 73 Q50 79 73 73 L68 82 63 75 58 82 54 75 50 82 46 75 42 82 37 75 32 82 Z"/></g>
-    </g>
-  </svg>
-  <!-- Second pumpkin (right side) — different face: round eyes + wide oval
-       grin, curlier stem, deeper orange. Matches the app. -->
-  <svg class="hw-pumpkin-svg hw-pumpkin-right" viewBox="-40 -10 180 150" aria-hidden="true" focusable="false">
-    <g class="hw-pumpkin">
-      <ellipse cx="50" cy="62" rx="90" ry="70" fill="url(#hwPumpkinGlow)"/>
-      <path d="M50 22c1-9-3-16-12-19l-4 6c7 2 9 7 8 15q4-1 8-2" fill="#6B8E23"/>
-      <ellipse cx="30" cy="62" rx="26" ry="36" fill="#D2560A"/>
-      <ellipse cx="70" cy="62" rx="26" ry="36" fill="#D2560A"/>
-      <ellipse cx="50" cy="62" rx="24" ry="38" fill="#F26A12"/>
-      <path d="M50 25c-6 10-8 22-8 37s2 27 8 37M50 25c6 10 8 22 8 37s-2 27-8 37" stroke="#B84606" stroke-width="2" fill="none" opacity=".55"/>
-      <g class="hw-face" fill="#FFD66B">
-        <circle cx="34" cy="50" r="7"/><circle cx="66" cy="50" r="7"/><path d="M50 60 L45 68 L55 68 Z"/><path d="M27 70 Q50 100 73 70 Q50 82 27 70 Z"/>
-      </g>
-    </g>
-  </svg>
 
   <div style="position:relative;z-index:1;max-width:900px;margin:0 auto;">
     <!-- Knox laptop character - official logo -->
-    <div class="halloween-hint" role="note">
-      <span class="hh-emoji" aria-hidden="true">🎃</span>
-      <span class="hh-text">Halloween mode is here — it lives in dark mode.</span>
-      <button type="button" class="hh-btn" onclick="window.knoxHalloweenDarkMode()">🌙 Turn on dark mode</button>
-      <button type="button" class="hh-x" aria-label="Hide Halloween tip" title="Hide" onclick="window.knoxHideHalloweenHint()">×</button>
-    </div>
 
     <div style="margin-bottom:8px;">
       <img class="hero-mascot" src="./knox-logo.jpg" alt="Knox the Fox" draggable="false" style="width:200px;height:200px;object-fit:cover;border-radius:50%;filter:drop-shadow(0 8px 20px rgba(255,107,0,0.25));" onerror="this.outerHTML='<div style=\'font-size:120px;\'>🦊</div>'">
@@ -2550,7 +2263,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 
     <!-- Knox wave badge -->
     <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      <span class="hw-hide">Your AI homework companion 🦊</span><span class="hw-only">🎃 Spooky-season study buddy</span>
+      <span class="season-hide">Your AI homework companion 🦊</span><span class="season-only">🍂 Cozy fall study buddy</span>
     </div>
 
     <h1 style="font-size:clamp(38px,calc(6.5vw / var(--kz, 1)),74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
@@ -2766,29 +2479,6 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
       <p style="font-size:17px;font-weight:600;color:var(--text-light);">Free forever. Upgrade when you want more.</p>
     </div>
 
-    <!-- Halloween promo for the existing 7-day Knox Plus Monthly trial
-         (trial_period_days in api/create-checkout-session.js). Shown only
-         through October 31, then it hides itself. -->
-    <div id="halloweenTrialPromo" style="display:none;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 auto 28px;padding:18px 22px;border-radius:18px;background:linear-gradient(135deg,#2A1A3A,#3B2148);border:3px solid var(--orange);box-shadow:0 5px 0 #A34700;color:#fff;">
-      <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 320px;">
-        <span aria-hidden="true" style="font-size:34px;line-height:1;">🎃</span>
-        <div>
-          <p style="font-size:18px;font-weight:900;line-height:1.25;">Halloween special: 1 week of Knox Plus, free</p>
-          <p style="font-size:13px;font-weight:700;color:#E9D8FF;margin-top:4px;line-height:1.45;">Try unlimited Knox Plus free for 7 days on the Monthly plan. Then $9.99/month — cancel anytime before the week ends and you won’t be charged. New subscribers only.</p>
-        </div>
-      </div>
-      <button onclick="setBilling('monthly');handlePurchase('Plus')" style="flex-shrink:0;padding:12px 20px;border-radius:14px;border:none;background:var(--orange);color:#fff;font-size:15px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 4px 0 #CC5500;white-space:nowrap;">Start my free week 👻</button>
-    </div>
-    <script>
-      (function () {
-        // Visible until the end of October 31 in the visitor's own time zone.
-        var now = new Date();
-        if (now < new Date(2026, 10, 1)) {
-          var promo = document.getElementById('halloweenTrialPromo');
-          if (promo) promo.style.display = 'flex';
-        }
-      })();
-    </script>
 
     <!-- Billing toggle + guarantee -->
     <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:36px;">
@@ -3108,14 +2798,6 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
 
 <!-- ===================== CTA BANNER ===================== -->
 <section style="background:var(--orange);padding:80px 24px;text-align:center;position:relative;overflow:hidden;">
-  <svg class="cta-bats" viewBox="0 0 1000 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-    <g fill="#1B1020" opacity=".55">
-      <use href="#hwBat" x="90" y="60" width="90" height="47"/>
-      <use href="#hwBat" x="200" y="140" width="52" height="27"/>
-      <use href="#hwBat" x="800" y="80" width="80" height="42"/>
-      <use href="#hwBat" x="880" y="230" width="46" height="24"/>
-    </g>
-  </svg>
   <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
   <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
     <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:4px solid rgba(255,255,255,0.4);margin:0 auto 16px;background:rgba(255,255,255,0.2);"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
@@ -3548,38 +3230,7 @@ html.knox-halloween[data-theme="dark"] .cta-bats { display: block; }
   }
   window.redirectToApp = redirectToApp;
 
-  // ── Dark mode toggle ─────────────────────────────────────────
-  // Mirrors app.html's implementation exactly, including the localStorage
-  // key ('knoxTheme'), so a theme choice made on either the marketing site
-  // or in the app carries over to the other. The actual theme for this
-  // page load is already set by the inline script in <head> (has to run
-  // before first paint) — this just handles the toggle button and keeps
-  // the sun/moon icon in sync, including once on load.
-  function syncDarkModeIcon() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const moon = document.getElementById('darkModeIconMoon');
-    const sun  = document.getElementById('darkModeIconSun');
-    if (moon) moon.style.display = isDark ? 'none' : '';
-    if (sun)  sun.style.display  = isDark ? '' : 'none';
-  }
-  window.toggleDarkMode = function() {
-    // Pause color transitions while the theme flips (see .knox-theme-switching)
-    // so the whole page changes in the same frame — no half-switched flicker.
-    const root = document.documentElement;
-    root.classList.add('knox-theme-switching');
-    const isDark = root.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      root.removeAttribute('data-theme');
-      try { localStorage.setItem('knoxTheme', 'light'); } catch (e) { /* best effort */ }
-    } else {
-      root.setAttribute('data-theme', 'dark');
-      try { localStorage.setItem('knoxTheme', 'dark'); } catch (e) { /* best effort */ }
-    }
-    syncDarkModeIcon();
-    void root.offsetHeight; // apply the new colors now, before transitions return
-    setTimeout(() => root.classList.remove('knox-theme-switching'), 60); // a timer, not rAF: still clears if the tab is in the background
-  };
-  syncDarkModeIcon();
+  // ── Appearance (Light / Dark / Fall) lives in theme.js ──────────────
 
   // ── Google Sign In ────────────────────────────────────────────────────────
   window.handleGoogleLogin = async function() {

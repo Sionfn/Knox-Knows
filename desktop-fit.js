@@ -33,7 +33,7 @@
     root.style.setProperty('--kz', String(z));
     // Any scaled (short) desktop window: let pages tighten spacing so the
     // primary call-to-action stays on screen, in light mode too (the light
-    // Halloween tip adds height). Spacing only — never logo/text size.
+    // the Fall-mode tip adds height). Spacing only — never logo/text size.
     root.classList.toggle('knox-fit-short', z < 1);
   }
   fit();

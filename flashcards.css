@@ -2,7 +2,7 @@
    Built from the same pieces as the Ask Knox welcome screen: sticker
    cards with a colored border + darker "ledge", Nunito 900 headings,
    uppercase labels and chunky orange buttons. Colors come from the app's
-   theme variables, so light, dark and Halloween modes all just work. */
+   theme variables, so light, dark and fall modes all just work. */
 /* The panel holds a fixed backdrop (.fc-decor) and a scrolling layer
    (.fc-scroll) on top, so the art stays put while decks scroll. */
 #flashcardsPanel { flex:1; min-height:0; position:relative; overflow:hidden; color:var(--text); background:var(--cream); }

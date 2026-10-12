@@ -34,7 +34,8 @@ function save(next){try{localStorage.setItem(identity,JSON.stringify(next));deck
 // clicking the message dismisses it right away.
 function message(t,kind=''){clearTimeout(toastTimer);if(!t){hideToast();return;}toast.textContent=t;toast.className='fc-toast show'+(kind?' '+kind:'');toastTimer=setTimeout(hideToast,kind==='ok'?3500:6500);}
 function btn(label,action,{cls='',attrs=''}={}){return `<button type="button" class="fc-btn ${cls}" data-action="${action}" ${attrs}>${label}</button>`;}
-const badge=(normal,spooky)=>`<span class="fc-badge"><span class="hw-hide">${normal}</span><span class="hw-only">${spooky}</span></span>`;
+// Badge text with a Fall-mode variant (seasonal.css shows one or the other).
+const badge=(normal,fall)=>`<span class="fc-badge"><span class="season-hide">${normal}</span><span class="season-only">${fall}</span></span>`;
 // center: sit in the middle of the screen when the content is short (like the
 // Ask Knox welcome screen); long content still starts at the top and scrolls.
 function frame(head,body,center=false){
@@ -143,7 +144,7 @@ const way=(action,flavor,icon,title,text)=>`<button type="button" class="fc-way"
 function home(query=''){
   generationVersion++;
   session=null; editing=null; dirty=false; importNote=null;
-  frame({badge:badge('🗂️ Knox Flashcards','🎃 Spooky study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
+  frame({badge:badge('🗂️ Knox Flashcards','🍂 Cozy fall study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
    `<div class="fc-ways${decks.length?' has-decks':''}">
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
@@ -298,7 +299,7 @@ function renderRows(){
 function renderEditor(){
   picker=null; // a fresh editor (or reload) starts with the picture picker closed
   const n=editing.cards.length;
-  frame({badge:badge('✏️ Deck editor','🎃 Deck editor'),title:'Make it <span class="accent">memorable.</span>',
+  frame({badge:badge('✏️ Deck editor','🍂 Deck editor'),title:'Make it <span class="accent">memorable.</span>',
     sub:'One clear question per card, one focused answer. Short cards are easier to remember.'},
    `<div class="fc-topbar">${btn('← Decks','back',{cls:'ghost'})}<div class="fc-topbar-right"><span class="fc-pill" id="fcCount">${n} card${n===1?'':'s'}</span>${btn('Save','save',{cls:'primary small'})}</div></div>
     <div class="fc-deck-title-field"><label class="fc-field-label" for="fcTitle">Deck title</label><input class="fc-input" id="fcTitle" maxlength="100" value="${esc(editing.title)}" placeholder="Biology · Cell structures"></div>
