@@ -53,18 +53,12 @@ const EXAMPLES=[
   ['🏛️','8th grade · the Constitution','8th grade civics: the U.S. Constitution, the three branches and checks and balances'],
   ['🫀','Nursing · the heart','College nursing student: anatomy of the heart and the path of blood flow'],
 ];
-// Plus (or comped) members make bigger decks for free; free users spend questions.
 const isPlus=()=>['super','max','plus'].includes(window.userPlan)||window.userComped===true;
-// Beta: only Plus members see Flashcards until the November launch. Set to true
-// (and FREE_ACCESS in api/generate-flashcards.js) to show it to everyone.
-const EVERYONE=false;
+const EVERYONE=true; // launched Nov 1: Flashcards (and Make with Knox) are free for everyone
 const canSee=()=>EVERYONE||isPlus();
-const DECK_COST=3, FREE_MAX=10;
 const chip=(label,action,on,attrs='')=>`<button type="button" class="fc-chip${on?' on':''}" data-action="${action}" ${attrs}>${label}</button>`;
 function makeView(){
   session=null;editing=null;dirty=false;
-  const plus=isPlus();
-  if(!plus&&makeOpts.count>FREE_MAX)makeOpts.count=FREE_MAX;
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
@@ -77,12 +71,11 @@ function makeView(){
         <input type="file" id="fcDocInput" accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pptx" hidden></div>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
-        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
+        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
-      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Knox Plus</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
-      <div class="fc-toolbar" style="margin-top:20px">${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} questions`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${plus?'⚡ Knox Plus — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily questions · <b>Knox Plus</b> makes unlimited decks.`}</p>
+      <div class="fc-toolbar" style="margin-top:20px">${btn('✨ Make my deck','make-go',{cls:'primary'})}</div>
+      <p class="fc-cost">Free for everyone · up to 20 cards per deck.</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -105,12 +98,10 @@ async function makeDeck(){
     data=await r.json().catch(()=>({}));ok=r.ok;
   }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
   if(version!==generationVersion||owner!==key())return;
-  if(!ok||!Array.isArray(data.cards)){makeOpts.upgrade=!!data.upgrade;makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
+  if(!ok||!Array.isArray(data.cards)){makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
   editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c)}))};
   renderEditor();dirty=true;makeOpts.request='';makeOpts.doc=null;
-  window.updateUsageIndicator?.(); // sidebar "questions left" reflects the spent credits
-  const left=typeof data.creditsLeft==='number'?` You have ${data.creditsLeft} question${data.creditsLeft===1?'':'s'} left today.`:'';
-  message(`Knox made ${editing.cards.length} cards. Read them over, change anything you like, then save!${left}`,'ok');
+  message(`Knox made ${editing.cards.length} cards. Read them over, change anything you like, then save!`,'ok');
 }
 
 function home(query=''){
@@ -306,7 +297,7 @@ if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=fa
 function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.title='Flashcards';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span><span class="fc-beta sidebar-collapsible">Beta</span>';b.addEventListener('click',open);nav.append(b);});
-// Plus-only during beta (see EVERYONE): the tab stays hidden until the plan is known to be Plus,
+// Visibility (see EVERYONE): if Flashcards is ever limited to Plus again, the tab stays hidden until the plan is known to be Plus,
 // and closes if the account changes to one without Plus (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}
 syncAccess();window.addEventListener('knox-plan-changed',syncAccess);

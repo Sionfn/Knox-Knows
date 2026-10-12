@@ -662,43 +662,23 @@ test('Make with Knox: Plus member gets a clean, de-duplicated deck', async () =>
   assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1);
 });
 
-test('Make with Knox: Plus-only for now — free and signed-in-without-Plus get 403, no AI call, no credits spent', async () => {
+test('Make with Knox is free for everyone: no credits, up to 20 cards, one hidden daily limit', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 10, lastRegenAt: Date.now() });
-  const ai = aiFetch({ title: 'x', cards: [] });
-  const res = response();
-  await (await load('api/generate-flashcards.js', { db, fetch: ai.fetch }))(deckReq(), res);
-  assert.equal(res.code, 403);
-  assert.equal(ai.calls.length, 0);
-  assert.equal(store.get('users/u1/usage/bank').balance, 10);
-});
-
-test('Make with Knox: free users spend 3 questions and get up to 10 cards', async () => {
-  const { db, store } = memoryDb();
-  store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 10, lastRegenAt: Date.now() });
+  store.set('users/u1/usage/bank', { balance: 1, lastRegenAt: Date.now() });
   const ai = aiFetch({ title: 'Cells', cards: [{ front: 'a', back: 'b' }, { front: 'c', back: 'd' }, { front: 'e', back: 'f' }] });
+  const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
   const res = response();
-  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq({ request: 'cell biology', count: 20 }), res);
-  assert.equal(res.code, 200);
-  assert.equal(store.get('users/u1/usage/bank').balance, 7);
-  assert.equal(res.body.creditsLeft, 7);
-  assert.match(ai.calls[0].messages[0].content, /Write exactly 10 flashcards/, 'free decks are capped at 10 cards');
-  assert.equal(store.get('users/u1/usage/flashcardsAI'), undefined, 'free users do not touch the Plus cap');
-});
-
-test('Make with Knox: not enough questions stops before the AI is called', async () => {
-  const { db, store } = memoryDb();
-  store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 2, lastRegenAt: Date.now() });
-  const ai = aiFetch({ title: 'x', cards: [] });
-  const res = response();
-  await (await load('api/generate-flashcards.js', { env: { FLASHCARDS_FREE_ACCESS: '1' }, db, fetch: ai.fetch }))(deckReq(), res);
-  assert.equal(res.code, 402);
-  assert.equal(res.body.upgrade, true);
-  assert.equal(ai.calls.length, 0);
-  assert.equal(store.get('users/u1/usage/bank').balance, 2);
+  await handler(deckReq({ request: 'cell biology', count: 20 }), res);
+  assert.equal(res.code, 200, 'a free account with 1 question left can still make a deck');
+  assert.match(ai.calls[0].messages[0].content, /Write exactly 20 flashcards/, 'free accounts can pick 20 cards');
+  assert.equal(store.get('users/u1/usage/bank').balance, 1, 'no questions spent');
+  assert.equal(res.body.creditsLeft, undefined);
+  assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1, 'counts toward the hidden daily limit');
+  store.set('users/u1/usage/flashcardsAI', { day: new Date().toISOString().slice(0, 10), count: 40 });
+  const capped = response();
+  await handler(deckReq({ request: 'cell biology', count: 10 }), capped);
+  assert.equal(capped.code, 429, 'the hidden daily limit applies to everyone');
 });
 
 test('Make with Knox: Plus cap, and failed generations give credits back', async () => {
