@@ -51,6 +51,14 @@
     return mammothPromise;
   }
 
+  // Some sites save downloads with web-encoded names ("Unit 7 %E2%80%93 Bones.pdf");
+  // show them as normal text ("Unit 7 – Bones.pdf").
+  const niceName = name => {
+    const raw = String(name || 'Document');
+    if (!/%[0-9A-Fa-f]{2}/.test(raw)) return raw;
+    try { return decodeURIComponent(raw); } catch { return raw; }
+  };
+
   const tidy = text => String(text || '')
     .replace(/\u0000/g, '')
     .replace(/[ \t]+\n/g, '\n')
@@ -124,7 +132,9 @@
     if (!kind) throw new Error('Knox can read photos, PDFs, and Word (.docx) files.');
     if (file.size > MAX_FILE_BYTES) throw new Error('That file is over 20 MB. Try a smaller file or just the pages you need.');
     try {
-      return kind === 'pdf' ? await readPdf(file) : await readDocx(file);
+      const doc = kind === 'pdf' ? await readPdf(file) : await readDocx(file);
+      doc.name = niceName(doc.name);
+      return doc;
     } catch (err) {
       if (err?.message && !/unavailable|Failed to fetch|import/i.test(err.message)) throw err;
       throw new Error("Knox couldn't load its file reader. Check your connection and try again.");
