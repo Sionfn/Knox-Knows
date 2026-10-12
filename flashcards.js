@@ -1,4 +1,4 @@
-import {validateDeck,parseLines,schedule,studyQueue,parseTable,toCsv} from './flashcards-core.js';
+import {validateDeck,parseLines,schedule,studyQueue,parseTable,toCsv,cleanImage} from './flashcards-core.js';
 const panel=document.createElement('section'); panel.id='flashcardsPanel'; panel.hidden=true;
 panel.setAttribute('aria-label','Flashcards'); document.querySelector('#chatAndInput').append(panel);
 // Backdrop layer (stays put; draws the Knox circles in CSS) + scrolling
@@ -106,7 +106,7 @@ async function makeDeck(){
   }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
   if(version!==generationVersion||owner!==key())return;
   if(!ok||!Array.isArray(data.cards)){makeOpts.upgrade=!!data.upgrade;makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
-  editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back}))};
+  editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c)}))};
   renderEditor();dirty=true;makeOpts.request='';makeOpts.doc=null;
   window.updateUsageIndicator?.(); // sidebar "questions left" reflects the spent credits
   const left=typeof data.creditsLeft==='number'?` You have ${data.creditsLeft} question${data.creditsLeft===1?'':'s'} left today.`:'';
@@ -156,6 +156,9 @@ function cardRow(c,i){
       <div class="fc-row-head"><span class="fc-num">${i+1}</span>${btn('Remove','remove',{cls:'ghost small danger',attrs:`data-index="${i}" aria-label="Remove card ${i+1}"`})}</div>
       <div class="fc-fields"><div><label class="fc-field-label" for="fcFront${i}">Question / term</label><textarea class="fc-textarea" id="fcFront${i}" data-field="front" data-index="${i}" maxlength="2000"${ex?' placeholder="What is photosynthesis?"':''}>${esc(c.front)}</textarea></div>
       <div><label class="fc-field-label" for="fcBack${i}">Answer / definition</label><textarea class="fc-textarea" id="fcBack${i}" data-field="back" data-index="${i}" maxlength="4000"${ex?' placeholder="How plants turn light, water and CO₂ into sugar and oxygen."':''}>${esc(c.back)}</textarea></div></div>
+      <div class="fc-pic-row">${cleanImage(c).image
+        ?`<img class="fc-pic-thumb" src="${esc(c.image)}" alt="Picture for card ${i+1}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'"><span class="fc-pic-credit">${c.imageCredit?esc(c.imageCredit):'Your picture'} · shows with the answer</span>${btn('Remove picture','pic-remove',{cls:'ghost small',attrs:`data-index="${i}"`})}`
+        :btn('+ Picture','pic-add',{cls:'ghost small',attrs:`data-index="${i}" aria-label="Add a picture to card ${i+1}"`})}</div>
     </div>`;
 }
 // Redraw just the card list (keeps your scroll position, unlike renderEditor).
@@ -170,6 +173,7 @@ function renderEditor(){
    `<div class="fc-topbar">${btn('← Decks','back',{cls:'ghost'})}<div class="fc-topbar-right"><span class="fc-pill" id="fcCount">${n} card${n===1?'':'s'}</span>${btn('Save','save',{cls:'primary small'})}</div></div>
     <div class="fc-deck-title-field"><label class="fc-field-label" for="fcTitle">Deck title</label><input class="fc-input" id="fcTitle" maxlength="100" value="${esc(editing.title)}" placeholder="Biology · Cell structures"></div>
     <div id="fcRows">${editing.cards.map(cardRow).join('')}</div>
+    <input type="file" id="fcPicInput" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
     <div class="fc-add-row">${btn('+ Add card','add')}</div>
     <details class="fc-bulk"><summary>Paste cards from notes or a spreadsheet</summary><p>One card per line: the question, then a <b>Tab</b>, then the answer. Copying two columns from Google Sheets or Excel works. This adds cards to the deck — it doesn't write answers for you.</p><label class="fc-field-label" for="fcBulk">Tab-separated cards</label><textarea class="fc-textarea" id="fcBulk" placeholder="Question [Tab] Answer"></textarea><div style="margin-top:10px">${btn('Add pasted cards','bulk',{cls:'small'})}</div></details>
     <div class="fc-savebar">${btn('Cancel','back')}${btn('Save deck','save',{cls:'primary'})}</div>`);
@@ -198,7 +202,7 @@ function study(){
     <div class="fc-progress"><div class="fc-progress-text"><span>${s.reviewed} reviewed</span><span>${s.queue.length} to go</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
     <div class="fc-stage"><button type="button" class="fc-card${s.flipped?' is-flipped':''}" data-action="flip" aria-label="${s.flipped?'Show question':'Reveal answer'}" aria-describedby="${s.flipped?'fcAnswerText':'fcQuestionText'}"><div class="fc-card-inner">
       <div class="fc-face front" aria-hidden="${s.flipped}"><span class="fc-face-label${retry?' retry':''}">${retry?'↻ Try again':'Question'}</span><p class="fc-face-text" id="fcQuestionText">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
-      <div class="fc-face back" aria-hidden="${!s.flipped}"><span class="fc-face-label">Answer</span><p class="fc-face-text" id="fcAnswerText">${esc(c.back)}</p><span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
+      <div class="fc-face back" aria-hidden="${!s.flipped}"><span class="fc-face-label">Answer</span><p class="fc-face-text" id="fcAnswerText">${esc(c.back)}</p>${cleanImage(c).image?`<img class="fc-card-img" src="${esc(c.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.nextElementSibling?.remove();this.remove()">${c.imageCredit?`<span class="fc-img-credit">${esc(c.imageCredit)}</span>`:''}`:''}<span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
     </div></button></div>
     <div class="fc-controls" id="fcControls">${controls()}</div>
     <p class="fc-tip">Again brings the card back in a few cards. Good and Easy schedule it for another day.</p>`,true);
@@ -323,7 +327,24 @@ async function takeDocument(file){
   }catch(err){message(err.message||'Knox couldn’t read that file.');}
   finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}
 }
-panel.addEventListener('change',e=>{if(e.target.id==='fcDocInput'){takeDocument(e.target.files[0]);e.target.value='';}
+// Shrink a picked photo so decks stay small in browser storage (~100 KB each).
+async function shrinkPicture(file){
+  if(!/^image\/(jpeg|png|webp|gif)$/.test(file.type))throw Error('Choose a JPEG, PNG, WEBP or GIF picture.');
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();await new Promise((ok,bad)=>{img.onload=ok;img.onerror=bad;img.src=url;});
+    for(const edge of [640,480,360]){
+      const k=Math.min(1,edge/Math.max(img.naturalWidth,img.naturalHeight));
+      const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*k));canvas.height=Math.max(1,Math.round(img.naturalHeight*k));
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      for(const q of [0.8,0.68,0.55]){const data=canvas.toDataURL('image/jpeg',q);if(data.length<=140000)return data;}
+    }
+    throw Error('That picture is too detailed to store. Try a simpler or cropped picture.');
+  }finally{URL.revokeObjectURL(url);}
+}
+panel.addEventListener('change',e=>{if(e.target.id==='fcPicInput'){const f=e.target.files[0],i=+e.target.dataset.index;e.target.value='';if(!f||!editing?.cards[i])return;
+    shrinkPicture(f).then(data=>{if(!editing?.cards[i])return;editing.cards[i].image=data;delete editing.cards[i].imageCredit;dirty=true;renderRows();}).catch(err=>message(err.message||'Knox couldn’t use that picture.'));return;}
+  if(e.target.id==='fcDocInput'){takeDocument(e.target.files[0]);e.target.value='';}
   if(e.target.id==='fcImportInput'){const f=e.target.files[0];e.target.value='';importFile(f).catch(err=>message(err.message||'Knox couldn’t import that file.'));}});
 // A document dropped anywhere while Make with Knox is open goes to the deck.
 window.flashcardsTakeDocument=file=>{if(panel.hidden||!panel.querySelector('#fcMakeReq'))return false;takeDocument(file);return true;};
@@ -345,6 +366,8 @@ panel.addEventListener('click',async e=>{
  if(action==='back'){if(!dirty||await knoxConfirm({title:'Discard your changes?',body:'You have edits that aren’t saved yet. If you go back now, they’ll be lost.',ok:'Discard',cancel:'Keep editing',danger:true}))home();}
  if(action==='edit')editor(decks.find(d=>d.id===id));
  if(action==='add'){if(editing.cards.length>=300)throw Error('Maximum 300 cards per deck.');editing.cards.push({front:'',back:''});dirty=true;const i=editing.cards.length-1;renderRows();const row=panel.querySelector('#fcRows').lastElementChild;row.classList.add('fc-row-new');row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});panel.querySelector(`#fcFront${i}`)?.focus({preventScroll:true});}
+ if(action==='pic-add'){const input=panel.querySelector('#fcPicInput');input.dataset.index=b.dataset.index;input.click();}
+ if(action==='pic-remove'){const c=editing.cards[+b.dataset.index];delete c.image;delete c.imageCredit;dirty=true;renderRows();}
  if(action==='remove'){editing.cards.splice(+b.dataset.index,1);if(!editing.cards.length)editing.cards.push({front:'',back:''});dirty=true;renderRows();}
  if(action==='bulk'){const cards=parseLines(panel.querySelector('#fcBulk').value);const existing=editing.cards.filter(c=>c.front.trim()||c.back.trim());validateDeck({title:editing.title||'Draft',cards:[...existing,...cards]});editing.cards=[...existing,...cards];dirty=true;renderEditor();message(`Added ${cards.length} card${cards.length===1?'':'s'}.`,'ok');}
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}

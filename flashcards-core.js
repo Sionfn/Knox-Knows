@@ -1,10 +1,20 @@
 export const DAY = 86400000;
+// Card pictures: freely licensed Wikimedia images (added by Make with Knox)
+// or the student's own photo, shrunk and stored inline. Anything else is dropped.
+const IMAGE_URL = /^https:\/\/(upload|thumb)\.wikimedia\.org\/[^\s"'<>]+$/;
+const IMAGE_DATA = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+export function cleanImage(card) {
+  const url = typeof card?.image === 'string' ? card.image : '';
+  if (!url || url.length > 200000 || !(IMAGE_URL.test(url) || IMAGE_DATA.test(url))) return {};
+  const credit = typeof card.imageCredit === 'string' ? card.imageCredit.trim().slice(0, 200) : '';
+  return credit ? { image: url, imageCredit: credit } : { image: url };
+}
 export function validateDeck(value) {
   if (!value || typeof value.title !== 'string' || !value.title.trim() || value.title.length > 100) throw Error('Use a deck title of 1–100 characters.');
   if (!Array.isArray(value.cards) || !value.cards.length || value.cards.length > 300) throw Error('A deck needs 1–300 cards.');
   return { title:value.title.trim(), cards:value.cards.map(c => {
     if (!c || typeof c.front !== 'string' || typeof c.back !== 'string' || !c.front.trim() || !c.back.trim() || c.front.length > 2000 || c.back.length > 4000) throw Error('Each card needs a question (up to 2,000 characters) and answer (up to 4,000).');
-    return {front:c.front.trim(),back:c.back.trim(),due:0,interval:0,reviews:0};
+    return {front:c.front.trim(),back:c.back.trim(),...cleanImage(c),due:0,interval:0,reviews:0};
   }) };
 }
 export function parseLines(text) {

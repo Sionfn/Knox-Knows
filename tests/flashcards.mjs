@@ -26,3 +26,18 @@ test('spreadsheet import reads CSV (with quotes), tabs and Quizlet-style lists; 
   assert.equal(out, 'Front,Back\r\n"Q, with comma","A ""quoted"""');
   assert.equal(JSON.stringify(parseTable(out)), JSON.stringify([{ front: 'Q, with comma', back: 'A "quoted"' }]), 'export → import round-trips');
 });
+
+test('card pictures: only Wikimedia or small inline images survive import', async () => {
+  const { validateDeck } = await import('../flashcards-core.js');
+  const deck = validateDeck({ title: 'x', cards: [
+    { front: 'a', back: 'b', image: 'https://upload.wikimedia.org/heart.png', imageCredit: 'Wikimedia Commons · Jerm' },
+    { front: 'c', back: 'd', image: 'data:image/jpeg;base64,AAAA' },
+    { front: 'e', back: 'f', image: 'https://evil.example/x.png' },
+    { front: 'g', back: 'h', image: 'javascript:alert(1)' },
+  ] });
+  assert.equal(deck.cards[0].image, 'https://upload.wikimedia.org/heart.png');
+  assert.equal(deck.cards[0].imageCredit, 'Wikimedia Commons · Jerm');
+  assert.equal(deck.cards[1].image, 'data:image/jpeg;base64,AAAA');
+  assert.equal(deck.cards[2].image, undefined);
+  assert.equal(deck.cards[3].image, undefined);
+});

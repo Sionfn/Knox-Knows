@@ -2,7 +2,7 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateDeck,parseLines,schedule,studyQueue} from '../flashcards-core.js';
+import {validateDeck,parseLines,schedule,studyQueue,parseTable,toCsv,cleanImage} from '../flashcards-core.js';
 const source=readFileSync(new URL('../flashcards.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/,'');
 
 function harness(){
@@ -14,7 +14,7 @@ function harness(){
   const controls={innerHTML:''};
   function element(){return {hidden:false,className:'',innerHTML:'',classList:{add(){},remove(){},toggle(){}},setAttribute(){},append(){},addEventListener(n,fn){handlers[n]=fn;},querySelector(s){return s==='#fcMakeReq'?topic:s==='.fc-card'?card:s==='#fcControls'?controls:null;},querySelectorAll(){return [];}};}
   const window={currentUser:{uid:'a',getIdToken:async()=> 'token-a'},userPlan:'super',addEventListener(n,fn){listeners[n]=fn;}};
-  const context=vm.createContext({window,document:{createElement:element,querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){},contains(){return false;}}}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch:()=>{requests++;return new Promise(r=>resolveFetch=r);},AbortSignal,validateDeck,parseLines,schedule,studyQueue,setTimeout:()=>0,clearTimeout(){},crypto:{randomUUID:()=> 'deck'},structuredClone,console,Blob,URL});
+  const context=vm.createContext({window,document:{createElement:element,querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){},contains(){return false;}}}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch:()=>{requests++;return new Promise(r=>resolveFetch=r);},AbortSignal,validateDeck,parseLines,schedule,studyQueue,parseTable,toCsv,cleanImage,setTimeout:()=>0,clearTimeout(){},crypto:{randomUUID:()=> 'deck'},structuredClone,console,Blob,URL});
   vm.runInContext(source+'\nwindow.testAPI={state:()=>({identity,editing,request:makeOpts.request}),makeDeck,close,home,flip,setupStudy:()=>{decks=[{id:"d",cards:[{front:"Question",back:"Secret answer"}]}];session={id:"d",queue:[0],flipped:false};}};',context);
   return {window,listeners,handlers,topic,front,back,api:window.testAPI,requests:()=>requests,resolve:()=>resolveFetch({ok:true,json:async()=>({title:'Private deck',cards:[{front:'Question',back:'Secret answer'}]})})};
 }

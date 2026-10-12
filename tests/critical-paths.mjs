@@ -1043,3 +1043,43 @@ test('Make with Knox builds a deck from a PDF/Word file, with or without a reque
   await handler({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { request: 'cells', document: { name: 'x.pdf', text: 'y'.repeat(30001) } } }, bad);
   assert.equal(bad.code, 400);
 });
+
+test('Make with Knox adds free Wikimedia pictures (with credit) only where Knox suggests one; failures just skip pictures', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super' });
+  const deck = { title: 'Body', cards: [
+    { front: 'Which organ pumps blood?', back: 'The heart.', image: 'Heart' },
+    { front: 'Powerhouse of the cell?', back: 'The mitochondrion.', image: 'Mitochondria' },
+    { front: 'What is 2 + 2?', back: '4' },
+  ] };
+  const calls = [];
+  const fetch = async (url, options) => {
+    calls.push(String(url));
+    if (String(url).includes('en.wikipedia.org')) return { ok: true, json: async () => ({ query: {
+      redirects: [{ from: 'Mitochondria', to: 'Mitochondrion' }],
+      pages: { 1: { title: 'Heart', pageimage: 'Heart_anterior_exterior_view.png', thumbnail: { source: 'https://upload.wikimedia.org/heart.png' } },
+               2: { title: 'Mitochondrion', pageimage: 'Animal_mitochondrion_diagram_en.svg', thumbnail: { source: 'https://upload.wikimedia.org/mito.png' } } } } }) };
+    if (String(url).includes('commons.wikimedia.org')) return { ok: true, json: async () => ({ query: {
+      normalized: [{ from: 'File:Heart_anterior_exterior_view.png', to: 'File:Heart anterior exterior view.png' }],
+      pages: { 9: { title: 'File:Heart anterior exterior view.png', imageinfo: [{ extmetadata: { Artist: { value: '<a href="x">Jerm</a>' }, LicenseShortName: { value: 'CC BY 2.5' } } }] } } } }) };
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(deck) }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/generate-flashcards.js', { db, fetch });
+  const res = response();
+  await handler(deckReq({ request: 'anatomy basics', count: 10 }), res);
+  assert.equal(res.code, 200);
+  const [heart, mito, math] = res.body.cards;
+  assert.equal(heart.image, 'https://upload.wikimedia.org/heart.png');
+  assert.equal(heart.imageCredit, 'Wikimedia Commons · Jerm · CC BY 2.5');
+  assert.equal(mito.image, 'https://upload.wikimedia.org/mito.png', 'follows Wikipedia redirects');
+  assert.equal(mito.imageCredit, 'Wikimedia Commons');
+  assert.equal(math.image, undefined);
+  assert.ok(res.body.cards.every(c => !('imageTitle' in c)));
+  assert.match(calls.find(u => u.includes('en.wikipedia.org')), /pilicense=free/, 'only freely licensed images');
+
+  const down = response();
+  const broken = await load('api/generate-flashcards.js', { db, fetch: async url => String(url).includes('wiki') ? { ok: false } : fetch(url) });
+  await broken(deckReq({ request: 'anatomy basics', count: 10 }), down);
+  assert.equal(down.code, 200, 'Wikipedia down: the deck still works');
+  assert.ok(down.body.cards.every(c => !c.image));
+});
