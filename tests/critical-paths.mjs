@@ -960,3 +960,14 @@ test('Ask Knox solves a bare math expression instead of tying it to earlier smal
   await handler(askRequest({ question: '2x4', history: [], learnMode: true }), learn);
   assert.doesNotMatch(ai.calls.at(-1).messages[0].content, /Bare math:/, 'Learn replies like "8" stay part of the lesson');
 });
+
+test('Learn mode guides even simple arithmetic instead of answering it', async () => {
+  const { db } = memoryDb();
+  const ai = chatFetch('CASUAL');
+  const handler = await load('api/ask.js', { db, fetch: ai.fetch });
+  const res = response();
+  await handler(askRequest({ question: '2 x 4', history: [{ role: 'user', content: 'hey' }, { role: 'assistant', content: "Hey! What's up?" }], learnMode: true }), res);
+  const prompt = ai.calls.find(call => !isSmallTalkCheck(call)).messages[0].content;
+  assert.match(prompt, /even very simple ones like 2 x 4.*never the answer or an Answer: line in your first reply/s);
+  assert.doesNotMatch(prompt, /Bare math:/);
+});
