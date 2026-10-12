@@ -199,6 +199,18 @@ const picCredit=m=>['Wikimedia Commons',stripHtml(m?.Artist?.value).slice(0,80),
 const fileName=t=>stripHtml(t).replace(/^File:/,'').replace(/\.[a-z]+$/i,'');
 const W='https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query&redirects=1';
 const C='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';
+// Rank an article's pictures for a card: main picture and files whose names
+// share the card's words first; animal pictures only if the card mentions them.
+const ANIMALS=/\b(insects?|bugs?|beetles?|ants?|bees?|spiders?|crabs?|lobsters?|shrimps?|mammoths?|elephants?|dinosaurs?|dogs?|cats?|horses?|cows?|cattle|pigs?|sheep|goats?|birds?|chickens?|ducks?|fish|sharks?|whales?|dolphins?|frogs?|toads?|snakes?|lizards?|turtles?|monkeys?|apes?|gorillas?|chimpanzees?|mice|mouse|rats?|rabbits?|bats?|deer|bears?|lions?|tigers?|wolf|wolves|octopus|squid|worms?|snails?|krill|fly|flies|hawks?|eagles?|owls?|bison|mantis|shrimp)\b/;
+const stem=w=>w.length>4?w.replace(/(ing|es|ed|s)$/,''):w;
+const FILLER=new Set('the and for with from that this what which who whom how why when where are was were did does has have had its into about than then their there these those your you can could would should will not but all any each other some such only also more most very just one two three four five six seven eight nine ten first second third part parts type types kind main called name known used use make made give gives between during after before over under view english version file'.split(' '));
+const nameWords=t=>[...new Set(String(t||'').replace(/^File:/,'').replace(/\.[a-z0-9]+$/i,'').replace(/([a-z])([A-Z])/g,'$1 $2').toLowerCase().split(/[^a-z]+/).filter(w=>w.length>2&&!FILLER.has(w)))];
+function rankPictures(list,card,typed){
+  const text=[typed,card?.front,card?.back,card?.imageTopic].join(' ').toLowerCase();
+  const words=new Set(nameWords(text).flatMap(w=>[w,stem(w)]));
+  return list.map((p,i)=>{const n=nameWords(p.file),a=n.join(' ').match(ANIMALS);return {p,i,skip:a&&!text.includes(a[1].replace(/s$/,'')),score:(p.main?1.5:0)+n.filter(w=>words.has(w)||words.has(stem(w))).length};})
+    .filter(x=>!x.skip).sort((a,b)=>b.score-a.score||a.i-b.i).map(x=>x.p);
+}
 async function articlePictures(title){
   const [lead,images]=await Promise.all([
     wikiJson(`${W}&prop=pageimages&piprop=name&titles=${encodeURIComponent(title)}`),
@@ -208,9 +220,9 @@ async function articlePictures(title){
   // Files come back A–Z: on a long article the main picture can be past the first 40.
   if(main!=='File:'&&!all.some(p=>p.title===main))all=[...Object.values((await wikiJson(`${W}&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=480&titles=${encodeURIComponent(main)}`)).query?.pages||{}),...all];
   return all
-    .filter(p=>p.imagerepository==='shared'&&!NOT_A_PICTURE.test(p.title)&&(p.imageinfo?.[0]?.width||0)>=150)
+    .filter(p=>p.imagerepository==='shared'&&!NOT_A_PICTURE.test(p.title)&&!/\.(stl|webm|ogv|mid)$/i.test(p.title)&&(p.imageinfo?.[0]?.width||0)>=150)
     .sort((a,b)=>(b.title===main)-(a.title===main))
-    .map(p=>({thumb:String(p.imageinfo[0].thumburl).replace(/\?.*$/,''),title:fileName(p.title),credit:picCredit(p.imageinfo[0].extmetadata)}));
+    .map(p=>({thumb:String(p.imageinfo[0].thumburl).replace(/\?.*$/,''),title:fileName(p.title),file:p.title,main:p.title===main,credit:picCredit(p.imageinfo[0].extmetadata)}));
 }
 async function findPictures(typed,card){
   const front=String(card?.front||''), isQuestion=/\?\s*$/.test(front)||/^(what|which|who|where|when|why|how|name|define|list|explain|describe)\b/i.test(front.trim());
@@ -223,7 +235,7 @@ async function findPictures(typed,card){
     const context=!typed&&isQuestion&&topicText!==shortPhrase(front)?picWords(front).filter(w=>!topicText.toLowerCase().includes(w)).slice(0,3).join(' '):'';
     titles=((await wikiJson(`${W}&list=search&srlimit=3&srnamespace=0&srsearch=${encodeURIComponent((topicText+' '+context).trim())}`)).query?.search||[]).map(r=>r.title);
   }
-  const fromArticles=(await Promise.all(titles.slice(0,2).map(t=>articlePictures(t).catch(()=>[])))).flat();
+  const fromArticles=rankPictures((await Promise.all(titles.slice(0,2).map(t=>articlePictures(t).catch(()=>[])))).flat(),card,typed);
   // Not enough from the articles: fill up with a Commons search.
   let fromCommons=[];
   if(fromArticles.length<8){
