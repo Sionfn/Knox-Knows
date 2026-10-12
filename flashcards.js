@@ -112,19 +112,29 @@ async function makeDeck(){
   message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!`,'ok');
 }
 
+const SAMPLE={title:'Study smarter · Starter deck',cards:[{front:'What is active recall?',back:'Trying to pull an answer out of your memory before checking it.'},{front:'What is spaced repetition?',back:'Reviewing across several sessions, with longer gaps as you remember better.'},{front:'What makes a useful flashcard?',back:'One clear question, one focused answer, and enough context to avoid confusion.'}]};
 const way=(action,flavor,icon,title,text)=>`<button type="button" class="fc-way" data-action="${action}" data-flavor="${flavor}"><span class="fc-way-icon" aria-hidden="true">${icon}</span><b>${title}</b><span>${text}</span></button>`;
 function home(query=''){
   generationVersion++;
   session=null; editing=null; dirty=false; importNote=null;
-  frame({badge:badge('🗂️ Knox Flashcards','🎃 Spooky study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
-    sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
-   `<div class="fc-ways${decks.length?' has-decks':''}">
+  // New here: a big welcome and the three ways to start. Back with decks: a
+  // smaller header, the ways as a slim row, today's reviews, then the decks.
+  const has=decks.length>0, hasSample=decks.some(d=>d.title===SAMPLE.title);
+  const dueBy=decks.map(d=>[d,d.cards.filter(c=>!c.due||c.due<=Date.now()).length]).filter(([,n])=>n),totalDue=dueBy.reduce((n,[,k])=>n+k,0);
+  const next=dueBy.sort((a,b)=>b[1]-a[1])[0]?.[0];
+  const today=!has?'':totalDue
+    ?`<div class="fc-today"><span class="fc-today-icon" aria-hidden="true">📅</span><div><b>${totalDue} card${totalDue===1?'':'s'} to review${dueBy.length>1?` across ${dueBy.length} decks`:''}</b><span>Start with ${esc(next.title)}</span></div>${btn('Review now','due',{cls:'primary small',attrs:`data-id="${esc(next.id)}"`})}</div>`
+    :`<div class="fc-today done"><span class="fc-today-icon" aria-hidden="true">✅</span><div><b>All caught up!</b><span>Knox will bring cards back when they’re due. Use Practice all to review ahead.</span></div></div>`;
+  frame({badge:badge('🗂️ Knox Flashcards','🎃 Spooky study session'),title:has?'Your <span class="accent">decks.</span>':'Practice makes<br><span class="accent">knowing.</span>',
+    sub:has?'':'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
+   `<div class="fc-ways${has?' has-decks':''}">
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
       ${way('create','blue','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
       ${way('import','green','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
-    <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
-    ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
+    <div class="fc-toolbar fc-toolbar-quiet">${hasSample?'':btn('Try a sample deck','sample',{cls:'ghost small'})}${has?btn('Export all','export-all',{cls:'ghost small'}):''}</div>
+    ${today}
+    ${decks.length>=5||query?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:has?'':'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
     <p class="fc-note">Your decks are saved in this browser${window.currentUser?' for your account':''}. Use Export to back them up or move them to another device.</p>`,true);
   renderDecks(query);
@@ -550,7 +560,7 @@ panel.addEventListener('click',async e=>{
  if(action==='import-note-x'){importNote=null;importView();}
  if(action==='make-cancel'){generationVersion++;makeView();message('Stopped. Your request is still here.','ok');}
  if(action==='import-pick')panel.querySelector('#fcImportInput')?.click();
- if(action==='sample'){const d=validateDeck({title:'Study smarter · Starter deck',cards:[{front:'What is active recall?',back:'Trying to pull an answer out of your memory before checking it.'},{front:'What is spaced repetition?',back:'Reviewing across several sessions, with longer gaps as you remember better.'},{front:'What makes a useful flashcard?',back:'One clear question, one focused answer, and enough context to avoid confusion.'}]});if(save([...decks,{...d,id:crypto.randomUUID()}])){home();message('Sample deck added — try Review due.','ok');}}
+ if(action==='sample'){if(decks.some(d=>d.title===SAMPLE.title)){home();message('You already have the sample deck.','ok');return;}const d=validateDeck(SAMPLE);if(save([...decks,{...d,id:crypto.randomUUID()}])){home();message('Sample deck added — try Review due.','ok');}}
  if(action==='due'||action==='practice')start(id,action==='due');
  if(action==='flip'&&session)flip();
  if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;study();}
