@@ -316,3 +316,8 @@ html[data-theme="dark"] .fc-dropzone { background:transparent; color:var(--blue)
   .fc-ways.has-decks .fc-way b { font-size:13px; line-height:1.2; }
   .fc-ways.has-decks .fc-way > span:last-child { display:none; }
 }
+/* Home with no decks yet: one compact row, so the whole page fits on screen */
+.fc-empty-start { display:flex; align-items:center; justify-content:center; gap:16px; text-align:left; padding:16px 20px; max-width:640px; margin:0 auto; }
+.fc-empty-start img { width:56px; height:56px; margin:0; flex-shrink:0; }
+.fc-empty-start h2 { font-size:17px; }
+.fc-empty-start .fc-sub { font-size:14px; margin:0; max-width:none; }

@@ -107,7 +107,7 @@ async function makeDeck(){
   }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
   if(version!==generationVersion||owner!==key())return;
   if(!ok||!Array.isArray(data.cards)){makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
-  editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c)}))};
+  editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c),...(typeof c.imageTopic==='string'&&c.imageTopic.trim()?{imageTopic:c.imageTopic.trim().slice(0,120)}:{})}))};
   renderEditor();dirty=true;makeOpts.request='';makeOpts.files=[];
   message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!`,'ok');
 }
@@ -124,7 +124,7 @@ function home(query=''){
       ${way('import','green','📥','Import cards','Already have cards? Bring them in from Quizlet, Anki, Excel, Google Sheets or a Knox backup.')}
     </div>
     <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
-    ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:22px"></div>'}
+    ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
     <p class="fc-note">Your decks are saved in this browser${window.currentUser?' for your account':''}. Use Export to back them up or move them to another device.</p>`,true);
   renderDecks(query);
@@ -137,7 +137,7 @@ function renderDecks(query){
     grid.style.display='block';
     grid.innerHTML=decks.length
       ?`<div class="fc-empty"><h2>No matching decks</h2><p class="fc-sub">Try a different word, or clear the search.</p></div>`
-      :`<div class="fc-empty"><img src="${FOX}" alt=""><h2>Your next “I know this!” starts here.</h2><p class="fc-sub">Pick a way to make your first deck above, or try the sample to see how studying works.</p></div>`;
+      :`<div class="fc-empty fc-empty-start"><img src="${FOX}" alt=""><div><h2>Your next “I know this!” starts here.</h2><p class="fc-sub">Pick a way to make your first deck above, or try the sample to see how studying works.</p></div></div>`;
     return;
   }
   grid.style.display='';
@@ -184,53 +184,60 @@ function pickerHtml(){
       :p.query?'<p class="fc-picker-note">No pictures found. Try a simpler word, or upload your own.</p>':'<p class="fc-picker-note">Type what you want a picture of.</p>'}
   </div>`;
 }
-// Understand the card instead of searching its exact words: drop filler
-// ("what is the…"), let Wikipedia's search find the topic article, show its
-// main (freely licensed) picture plus related Wikimedia Commons pictures.
-const PIC_STOP=new Set('a an the of is are was were be been to in on at for by with and or what which who whom whose where when why how does do did can could would should will name called define definition explain describe example examples main basic type types kind kinds part parts known as its it this that these those your you i my me we our their they from into about than then there here also not no yes true false most more less many much one two first second process function role purpose meaning term'.split(' '));
+// Understand the card instead of searching its exact words. The topic is what
+// the student typed, else the Wikipedia article Knox chose when it wrote the
+// card, else a guess from the card's key words. Pictures come from that
+// article first (its main picture, then its photos and diagrams — on-topic and
+// freely licensed on Commons), then a wider Wikimedia Commons search.
+const PIC_STOP=new Set('a an the of is are was were be been to in on at for by with and or what which who whom whose where when why how does do did can could would should will name called define definition explain describe example examples main basic type types kind kinds part parts known as its it this that these those your you i my me we our their they from into about than then there here also not no yes true false most more less many much one two three four five six seven eight nine ten first second third process function role purpose meaning term help helps use used make made give gives different between each other some'.split(' '));
 const picWords=t=>[...new Set(String(t||'').toLowerCase().replace(/[^\p{L}\p{N}\s'-]/gu,' ').split(/\s+/).filter(w=>w.length>2&&!PIC_STOP.has(w)))];
 const shortPhrase=t=>{const w=picWords(t);return w.length&&w.length<=3?w.join(' '):'';};
 const wikiJson=url=>fetch(url,{signal:AbortSignal.timeout(8000)}).then(r=>r.ok?r.json():{});
 const stripHtml=t=>String(t||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+const NOT_A_PICTURE=/logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
+const picCredit=m=>['Wikimedia Commons',stripHtml(m?.Artist?.value).slice(0,80),stripHtml(m?.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
+const fileName=t=>stripHtml(t).replace(/^File:/,'').replace(/\.[a-z]+$/i,'');
+const W='https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query&redirects=1';
+const C='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';
+async function articlePictures(title){
+  const [lead,images]=await Promise.all([
+    wikiJson(`${W}&prop=pageimages&piprop=name&titles=${encodeURIComponent(title)}`),
+    wikiJson(`${W}&generator=images&gimlimit=40&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=480&titles=${encodeURIComponent(title)}`)]);
+  const main='File:'+String(Object.values(lead.query?.pages||{})[0]?.pageimage||'').replace(/_/g,' ');
+  let all=Object.values(images.query?.pages||{});
+  // Files come back A–Z: on a long article the main picture can be past the first 40.
+  if(main!=='File:'&&!all.some(p=>p.title===main))all=[...Object.values((await wikiJson(`${W}&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=480&titles=${encodeURIComponent(main)}`)).query?.pages||{}),...all];
+  return all
+    .filter(p=>p.imagerepository==='shared'&&!NOT_A_PICTURE.test(p.title)&&(p.imageinfo?.[0]?.width||0)>=150)
+    .sort((a,b)=>(b.title===main)-(a.title===main))
+    .map(p=>({thumb:String(p.imageinfo[0].thumburl).replace(/\?.*$/,''),title:fileName(p.title),credit:picCredit(p.imageinfo[0].extmetadata)}));
+}
 async function findPictures(typed,card){
-  const W='https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query';
-  const C='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';
-  // What to look up: what the student typed; else a short term on the front
-  // ("Osteon"); else, for a question, its short answer ("The femur." → femur);
-  // else the key words from both sides.
-  const front=String(card?.front||''), isQuestion=/\?\s*$/.test(front)||/^(what|which|who|where|when|why|how|name|define|list)\b/i.test(front.trim());
-  const topicText=typed||(!isQuestion&&shortPhrase(front))||shortPhrase(card?.back)||shortPhrase(front)||[...picWords(front),...picWords(card?.back)].slice(0,10).join(' ');
+  const front=String(card?.front||''), isQuestion=/\?\s*$/.test(front)||/^(what|which|who|where|when|why|how|name|define|list|explain|describe)\b/i.test(front.trim());
+  const topicText=typed||card?.imageTopic||(!isQuestion&&shortPhrase(front))||shortPhrase(card?.back)||picWords(front).slice(0,4).join(' ')||picWords(card?.back).slice(0,4).join(' ');
   if(!topicText)return {label:'',results:[]};
-  // When the topic is a question's answer ("Mars"), add the question's key words
-  // so Wikipedia picks the planet, not Bruno Mars.
-  const context=!typed&&isQuestion&&topicText!==shortPhrase(front)?picWords(front).filter(w=>!topicText.toLowerCase().includes(w.toLowerCase())).slice(0,3).join(' '):'';
-  const found=await wikiJson(`${W}&list=search&srlimit=4&srnamespace=0&srsearch=${encodeURIComponent((topicText+' '+context).trim())}`);
-  const titles=(found.query?.search||[]).map(r=>r.title);
-  const commonsText=typed||(topicText.split(' ').length<=3?topicText:titles[0])||topicText;
-  const [leads,commons]=await Promise.all([
-    titles.length?wikiJson(`${W}&prop=pageimages&piprop=thumbnail%7Cname&pithumbsize=480&pilicense=free&redirects=1&titles=${encodeURIComponent(titles.join('|'))}`):{},
-    wikiJson(`${C}&generator=search&gsrnamespace=6&gsrlimit=16&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&gsrsearch=${encodeURIComponent(commonsText+' filetype:bitmap|drawing')}`),
-  ]);
-  // Lead pictures in Wikipedia's ranking order, then Commons results.
-  const order=new Map(titles.map((t,k)=>[t,k]));
-  for(const r of leads.query?.redirects||[])if(order.has(r.from))order.set(r.to,order.get(r.from));
-  const leadPages=Object.values(leads.query?.pages||{}).filter(p=>p.thumbnail?.source&&p.pageimage).sort((a,b)=>(order.get(a.title)??9)-(order.get(b.title)??9));
-  const credit=m=>['Wikimedia Commons',stripHtml(m?.Artist?.value).slice(0,80),stripHtml(m?.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
-  const credits=new Map();
-  if(leadPages.length){
-    const info=await wikiJson(`${C}&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(leadPages.map(p=>'File:'+p.pageimage).join('|'))}`).catch(()=>({}));
-    const alias=new Map((info.query?.normalized||[]).map(n=>[n.to,n.from]));
-    for(const pg of Object.values(info.query?.pages||{}))credits.set(alias.get(pg.title)||pg.title,credit(pg.imageinfo?.[0]?.extmetadata));
+  // Knox's chosen article is used as is; anything else goes through Wikipedia's search.
+  let titles=[];
+  if(!typed&&card?.imageTopic)titles=[card.imageTopic];
+  else{
+    const context=!typed&&isQuestion&&topicText!==shortPhrase(front)?picWords(front).filter(w=>!topicText.toLowerCase().includes(w)).slice(0,3).join(' '):'';
+    titles=((await wikiJson(`${W}&list=search&srlimit=3&srnamespace=0&srsearch=${encodeURIComponent((topicText+' '+context).trim())}`)).query?.search||[]).map(r=>r.title);
   }
-  const results=[...leadPages.map(p=>({thumb:p.thumbnail.source,title:p.title,credit:credits.get('File:'+p.pageimage)||'Wikimedia Commons'})),
-    ...Object.values(commons.query?.pages||{}).sort((a,b)=>a.index-b.index).map(p=>{const ii=p.imageinfo?.[0]||{};return {thumb:ii.thumburl,title:stripHtml(p.title).replace(/^File:/,'').replace(/\.[a-z]+$/i,''),credit:credit(ii.extmetadata)};})];
+  const fromArticles=(await Promise.all(titles.slice(0,2).map(t=>articlePictures(t).catch(()=>[])))).flat();
+  // Not enough from the articles: fill up with a Commons search.
+  let fromCommons=[];
+  if(fromArticles.length<8){
+    const q=typed||(topicText.split(' ').length<=3?topicText:titles[0])||topicText;
+    const commons=await wikiJson(`${C}&generator=search&gsrnamespace=6&gsrlimit=16&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&gsrsearch=${encodeURIComponent(q+' filetype:bitmap|drawing')}`).catch(()=>({}));
+    fromCommons=Object.values(commons.query?.pages||{}).filter(p=>!NOT_A_PICTURE.test(p.title)).sort((a,b)=>a.index-b.index).map(p=>{const ii=p.imageinfo?.[0]||{};return {thumb:String(ii.thumburl||'').replace(/\?.*$/,''),title:fileName(p.title),credit:picCredit(ii.extmetadata)};});
+  }
   const seen=new Set();
-  return {label:typed||titles[0]||topicText,results:results.filter(r=>cleanImage({image:r.thumb}).image&&!seen.has(r.thumb)&&seen.add(r.thumb)).slice(0,12)};
+  return {label:typed||titles[0]||topicText,results:[...fromArticles,...fromCommons].filter(r=>cleanImage({image:r.thumb}).image&&!seen.has(r.thumb)&&seen.add(r.thumb)).slice(0,12)};
 }
 async function searchPictures(typed){
   if(!picker)return;
   const card=editing?.cards[picker.index];
-  const key=typed?'t:'+typed.trim():'c:'+(card?.front||'')+'|'+(card?.back||'');
+  const key=typed?'t:'+typed.trim():'c:'+(card?.imageTopic||'')+'|'+(card?.front||'')+'|'+(card?.back||'');
   picker.error='';
   if(typed!==null&&!typed.trim()){picker.query='';picker.results=[];renderRows();return;}
   if(pickerCache.has(key)){Object.assign(picker,pickerCache.get(key));renderRows();return;}
@@ -507,7 +514,7 @@ window.flashcardsTakeDrop=files=>{
 };
 window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;}});
+panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;if(e.target.dataset.field==='front')delete c.imageTopic;}});
 panel.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const action=b.dataset.action,id=b.dataset.id;
  if(identity!==key()){load();home();return;}

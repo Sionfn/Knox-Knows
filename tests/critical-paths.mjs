@@ -1056,42 +1056,47 @@ test('Make with Knox reads photos of notes and rejects bad photos', async () => 
   }
 });
 
-test('Make with Knox adds free Wikimedia pictures (with credit) only where Knox suggests one; failures just skip pictures', async () => {
-  const { db, store } = memoryDb();
-  store.set('users/u1', { plan: 'super' });
-  const deck = { title: 'Body', cards: [
-    { front: 'Which organ pumps blood?', back: 'The heart.', image: 'Heart' },
-    { front: 'Powerhouse of the cell?', back: 'The mitochondrion.', image: 'Mitochondria' },
+test('Make with Knox pictures every card from its Wikipedia article: Commons files only, credited, no repeats, no icons; failures just skip pictures', async () => {
+  const { db } = memoryDb();
+  const deck = { title: 'Bones', cards: [
+    { front: 'What is an osteon?', back: 'The unit of compact bone.', image: 'Osteon' },
+    { front: 'What are the three types of bone?', back: 'Long, short and flat.', image: 'Bone' },
+    { front: 'What are the bone cells called?', back: 'Osteocytes, osteoblasts and osteoclasts.', image: 'Bone' },
     { front: 'What is 2 + 2?', back: '4' },
   ] };
+  const file = (title, src, extra = {}) => ({ title, imagerepository: 'shared', imageinfo: [{ width: 600, thumburl: src, extmetadata: { Artist: { value: '<a href="x">Jerm</a>' }, LicenseShortName: { value: 'CC BY 4.0' } } }], ...extra });
+  const articles = {
+    Osteon: { main: 'Compact_bone.jpg', files: [file('File:Commons-logo.svg', 'https://upload.wikimedia.org/logo.png'), file('File:Compact bone.jpg', 'https://upload.wikimedia.org/osteon.jpg')] },
+    Bone: { main: 'Long_bone.jpg', files: [file('File:Fair use cover.jpg', 'https://upload.wikimedia.org/local.jpg', { imagerepository: 'local' }), file('File:Bone cells.jpg', 'https://upload.wikimedia.org/cells.jpg'), file('File:Long bone.jpg', 'https://upload.wikimedia.org/long.jpg')] },
+  };
   const calls = [];
   const fetch = async (url, options) => {
-    calls.push(String(url));
-    if (String(url).includes('en.wikipedia.org')) return { ok: true, json: async () => ({ query: {
-      redirects: [{ from: 'Mitochondria', to: 'Mitochondrion' }],
-      pages: { 1: { title: 'Heart', pageimage: 'Heart_anterior_exterior_view.png', thumbnail: { source: 'https://upload.wikimedia.org/heart.png' } },
-               2: { title: 'Mitochondrion', pageimage: 'Animal_mitochondrion_diagram_en.svg', thumbnail: { source: 'https://upload.wikimedia.org/mito.png' } } } } }) };
-    if (String(url).includes('commons.wikimedia.org')) return { ok: true, json: async () => ({ query: {
-      normalized: [{ from: 'File:Heart_anterior_exterior_view.png', to: 'File:Heart anterior exterior view.png' }],
-      pages: { 9: { title: 'File:Heart anterior exterior view.png', imageinfo: [{ extmetadata: { Artist: { value: '<a href="x">Jerm</a>' }, LicenseShortName: { value: 'CC BY 2.5' } } }] } } } }) };
+    const u = String(url); calls.push(u);
+    if (u.includes('en.wikipedia.org')) {
+      const title = decodeURIComponent(u.split('titles=')[1]);
+      const a = articles[title];
+      if (u.includes('prop=pageimages')) return { ok: true, json: async () => ({ query: { pages: { 1: { title, pageimage: a.main } } } }) };
+      return { ok: true, json: async () => ({ query: { pages: Object.fromEntries(a.files.map((f, i) => [i, f])) } }) };
+    }
     return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(deck) }, finish_reason: 'stop' }] }) };
   };
   const handler = await load('api/generate-flashcards.js', { db, fetch });
   const res = response();
-  await handler(deckReq({ request: 'anatomy basics', count: 10 }), res);
+  await handler(deckReq({ request: 'bones', count: 10 }), res);
   assert.equal(res.code, 200);
-  const [heart, mito, math] = res.body.cards;
-  assert.equal(heart.image, 'https://upload.wikimedia.org/heart.png');
-  assert.equal(heart.imageCredit, 'Wikimedia Commons · Jerm · CC BY 2.5');
-  assert.equal(mito.image, 'https://upload.wikimedia.org/mito.png', 'follows Wikipedia redirects');
-  assert.equal(mito.imageCredit, 'Wikimedia Commons');
+  const [osteon, types, cells, math] = res.body.cards;
+  assert.equal(osteon.image, 'https://upload.wikimedia.org/osteon.jpg', 'skips logos and icons');
+  assert.equal(osteon.imageCredit, 'Wikimedia Commons · Jerm · CC BY 4.0');
+  assert.equal(osteon.imageTopic, 'Osteon');
+  assert.equal(types.image, 'https://upload.wikimedia.org/long.jpg', "the article's main picture first");
+  assert.equal(cells.image, 'https://upload.wikimedia.org/cells.jpg', 'a different picture for the next card on the same article');
+  assert.ok(!res.body.cards.some(c => c.image === 'https://upload.wikimedia.org/local.jpg'), 'never non-Commons (possibly non-free) files');
   assert.equal(math.image, undefined);
   assert.ok(res.body.cards.every(c => !('imageTitle' in c)));
-  assert.match(calls.find(u => u.includes('en.wikipedia.org')), /pilicense=free/, 'only freely licensed images');
 
   const down = response();
   const broken = await load('api/generate-flashcards.js', { db, fetch: async url => String(url).includes('wiki') ? { ok: false } : fetch(url) });
-  await broken(deckReq({ request: 'anatomy basics', count: 10 }), down);
+  await broken(deckReq({ request: 'bones', count: 10 }), down);
   assert.equal(down.code, 200, 'Wikipedia down: the deck still works');
   assert.ok(down.body.cards.every(c => !c.image));
 });
