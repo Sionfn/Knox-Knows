@@ -170,27 +170,63 @@ function pickerHtml(){
       :p.query?'<p class="fc-picker-note">No pictures found. Try a simpler word, or upload your own.</p>':'<p class="fc-picker-note">Type what you want a picture of.</p>'}
   </div>`;
 }
-async function searchPictures(query){
-  const q=query.trim();
+// Understand the card instead of searching its exact words: drop filler
+// ("what is the…"), let Wikipedia's search find the topic article, show its
+// main (freely licensed) picture plus related Wikimedia Commons pictures.
+const PIC_STOP=new Set('a an the of is are was were be been to in on at for by with and or what which who whom whose where when why how does do did can could would should will name called define definition explain describe example examples main basic type types kind kinds part parts known as its it this that these those your you i my me we our their they from into about than then there here also not no yes true false most more less many much one two first second process function role purpose meaning term'.split(' '));
+const picWords=t=>[...new Set(String(t||'').toLowerCase().replace(/[^\p{L}\p{N}\s'-]/gu,' ').split(/\s+/).filter(w=>w.length>2&&!PIC_STOP.has(w)))];
+const shortPhrase=t=>{const w=picWords(t);return w.length&&w.length<=3?w.join(' '):'';};
+const wikiJson=url=>fetch(url,{signal:AbortSignal.timeout(8000)}).then(r=>r.ok?r.json():{});
+const stripHtml=t=>String(t||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+async function findPictures(typed,card){
+  const W='https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query';
+  const C='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';
+  // What to look up: what the student typed; else a short term on the front
+  // ("Osteon"); else, for a question, its short answer ("The femur." → femur);
+  // else the key words from both sides.
+  const front=String(card?.front||''), isQuestion=/\?\s*$/.test(front)||/^(what|which|who|where|when|why|how|name|define|list)\b/i.test(front.trim());
+  const topicText=typed||(!isQuestion&&shortPhrase(front))||shortPhrase(card?.back)||shortPhrase(front)||[...picWords(front),...picWords(card?.back)].slice(0,10).join(' ');
+  if(!topicText)return {label:'',results:[]};
+  // When the topic is a question's answer ("Mars"), add the question's key words
+  // so Wikipedia picks the planet, not Bruno Mars.
+  const context=!typed&&isQuestion&&topicText!==shortPhrase(front)?picWords(front).filter(w=>!topicText.toLowerCase().includes(w.toLowerCase())).slice(0,3).join(' '):'';
+  const found=await wikiJson(`${W}&list=search&srlimit=4&srnamespace=0&srsearch=${encodeURIComponent((topicText+' '+context).trim())}`);
+  const titles=(found.query?.search||[]).map(r=>r.title);
+  const commonsText=typed||(topicText.split(' ').length<=3?topicText:titles[0])||topicText;
+  const [leads,commons]=await Promise.all([
+    titles.length?wikiJson(`${W}&prop=pageimages&piprop=thumbnail%7Cname&pithumbsize=480&pilicense=free&redirects=1&titles=${encodeURIComponent(titles.join('|'))}`):{},
+    wikiJson(`${C}&generator=search&gsrnamespace=6&gsrlimit=16&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=480&gsrsearch=${encodeURIComponent(commonsText+' filetype:bitmap|drawing')}`),
+  ]);
+  // Lead pictures in Wikipedia's ranking order, then Commons results.
+  const order=new Map(titles.map((t,k)=>[t,k]));
+  for(const r of leads.query?.redirects||[])if(order.has(r.from))order.set(r.to,order.get(r.from));
+  const leadPages=Object.values(leads.query?.pages||{}).filter(p=>p.thumbnail?.source&&p.pageimage).sort((a,b)=>(order.get(a.title)??9)-(order.get(b.title)??9));
+  const credit=m=>['Wikimedia Commons',stripHtml(m?.Artist?.value).slice(0,80),stripHtml(m?.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
+  const credits=new Map();
+  if(leadPages.length){
+    const info=await wikiJson(`${C}&prop=imageinfo&iiprop=extmetadata&titles=${encodeURIComponent(leadPages.map(p=>'File:'+p.pageimage).join('|'))}`).catch(()=>({}));
+    const alias=new Map((info.query?.normalized||[]).map(n=>[n.to,n.from]));
+    for(const pg of Object.values(info.query?.pages||{}))credits.set(alias.get(pg.title)||pg.title,credit(pg.imageinfo?.[0]?.extmetadata));
+  }
+  const results=[...leadPages.map(p=>({thumb:p.thumbnail.source,title:p.title,credit:credits.get('File:'+p.pageimage)||'Wikimedia Commons'})),
+    ...Object.values(commons.query?.pages||{}).sort((a,b)=>a.index-b.index).map(p=>{const ii=p.imageinfo?.[0]||{};return {thumb:ii.thumburl,title:stripHtml(p.title).replace(/^File:/,'').replace(/\.[a-z]+$/i,''),credit:credit(ii.extmetadata)};})];
+  const seen=new Set();
+  return {label:typed||titles[0]||topicText,results:results.filter(r=>cleanImage({image:r.thumb}).image&&!seen.has(r.thumb)&&seen.add(r.thumb)).slice(0,12)};
+}
+async function searchPictures(typed){
   if(!picker)return;
-  picker.query=q;picker.error='';
-  if(!q){picker.results=[];renderRows();return;}
-  if(pickerCache.has(q)){picker.results=pickerCache.get(q);renderRows();return;}
+  const card=editing?.cards[picker.index];
+  const key=typed?'t:'+typed.trim():'c:'+(card?.front||'')+'|'+(card?.back||'');
+  picker.error='';
+  if(typed!==null&&!typed.trim()){picker.query='';picker.results=[];renderRows();return;}
+  if(pickerCache.has(key)){Object.assign(picker,pickerCache.get(key));renderRows();return;}
   picker.loading=true;renderRows();
   const want=picker;
   try{
-    const url='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=18&prop=imageinfo&iiprop=url%7Cextmetadata%7Cmime&iiurlwidth=480&gsrsearch='+encodeURIComponent(q+' filetype:bitmap|drawing');
-    const r=await fetch(url,{signal:AbortSignal.timeout(8000)});
-    const data=r.ok?await r.json():{};
-    const strip=t=>String(t||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
-    const results=Object.values(data.query?.pages||{}).sort((a,b)=>a.index-b.index).map(p=>{
-      const ii=p.imageinfo?.[0]||{}, m=ii.extmetadata||{};
-      const credit=['Wikimedia Commons',strip(m.Artist?.value).slice(0,80),strip(m.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
-      return {thumb:ii.thumburl,title:strip(p.title).replace(/^File:/,'').replace(/\.[a-z]+$/i,''),credit};
-    }).filter(x=>cleanImage({image:x.thumb}).image).slice(0,12);
-    pickerCache.set(q,results);
+    const {label,results}=await findPictures(typed?typed.trim():'',card);
+    pickerCache.set(key,{query:label,results});
     if(picker!==want)return;
-    picker.results=results;
+    picker.query=label;picker.results=results;
   }catch{if(picker===want)picker.error='Couldn’t reach Wikimedia right now. Try again, or upload your own picture.';}
   if(picker===want){picker.loading=false;renderRows();}
 }
@@ -403,7 +439,7 @@ panel.addEventListener('click',async e=>{
  if(action==='add'){if(editing.cards.length>=300)throw Error('Maximum 300 cards per deck.');editing.cards.push({front:'',back:''});dirty=true;const i=editing.cards.length-1;renderRows();const row=panel.querySelector('#fcRows').lastElementChild;row.classList.add('fc-row-new');row.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});panel.querySelector(`#fcFront${i}`)?.focus({preventScroll:true});}
  if(action==='pic-add'){const input=panel.querySelector('#fcPicInput');input.dataset.index=b.dataset.index;input.click();}
  if(action==='pic-remove'){const c=editing.cards[+b.dataset.index];delete c.image;delete c.imageCredit;dirty=true;if(picker?.index===+b.dataset.index)picker=null;renderRows();}
- if(action==='pic-open'){const i=+b.dataset.index,c=editing.cards[i];picker={index:i,query:(c.front||c.back||'').trim().slice(0,80),results:[]};renderRows();panel.querySelector('#fcPicSearch')?.focus();if(picker.query)searchPictures(picker.query);}
+ if(action==='pic-open'){const i=+b.dataset.index,c=editing.cards[i];picker={index:i,query:'',results:[]};renderRows();panel.querySelector('#fcPicSearch')?.focus();if((c.front||c.back||'').trim())searchPictures(null);}
  if(action==='pic-search')searchPictures(panel.querySelector('#fcPicSearch')?.value||'');
  if(action==='pic-close'){picker=null;renderRows();}
  if(action==='pic-pick'&&picker){const r=picker.results[+b.dataset.k],c=editing.cards[picker.index];if(r&&c){c.image=r.thumb;c.imageCredit=r.credit.slice(0,200);dirty=true;}picker=null;renderRows();}
