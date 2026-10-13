@@ -3,7 +3,7 @@
 .ff-modal { position: fixed; inset: 0; z-index: 10040; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15,10,6,.55); backdrop-filter: blur(3px); }
 .ff-card { position: relative; width: min(560px, 100%); max-height: calc(100dvh / var(--kz, 1) - 32px); overflow: auto; overscroll-behavior: contain;
   background: var(--surface); color: var(--text); border: 3px solid var(--orange); border-radius: 26px; box-shadow: 0 7px 0 var(--orange-dark), 0 24px 60px rgba(0,0,0,.35); padding: 22px 22px 18px; font-family: inherit; }
-.ff-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); background: var(--cream-warm); color: var(--text-light); font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; }
+.ff-x { position: absolute; z-index: 5; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: var(--cream-warm); color: var(--text-light); font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; }
 .ff-x:hover { color: var(--text); }
 .ff-loading { padding: 48px 12px; text-align: center; font-weight: 800; color: var(--text-light); }
 
