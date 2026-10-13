@@ -1478,33 +1478,31 @@
     }
 
     /* FEEDBACK BAR */
+    /* The small row of icons right under an answer (Copy, 👍, 👎) — part of
+       the message, like ChatGPT/Claude, not a separate box. */
     .feedback-bar {
-      display: flex; align-items: center; gap: 10px;
-      margin-top: 12px;
-      padding: 10px 14px;
-      background: var(--cream);
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 3px 0 var(--border);
+      display: flex; align-items: center; gap: 2px;
+      margin-top: 6px; padding: 0 2px;
     }
-    .feedback-bar span { font-size: 12px; font-weight: 800; color: var(--text-light); }
     .fb-btn {
-      padding: 5px 12px;
-      border-radius: 10px;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      font-size: 14px;
-      box-shadow: 0 2px 0 var(--border);
-      transition: all 0.12s;
-    }
-    .fb-btn:hover { border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); transform: translateY(-1px); }
-    .fb-copy {
+      width: 32px; height: 32px;
       display: inline-flex; align-items: center; justify-content: center;
-      padding: 6px 9px; color: var(--text-light);
+      padding: 0; border: none; border-radius: 9px;
+      background: transparent; color: var(--text-light);
+      cursor: pointer;
+      transition: background .12s, color .12s, transform .12s;
     }
-    .fb-copy:hover { color: var(--orange); }
-    .fb-copy:disabled { opacity: 0.7; cursor: default; transform: none; }
-    .fb-divider { width: 1px; align-self: stretch; background: var(--border); margin: 0 2px; }
+    .fb-btn:hover { background: var(--gray); color: var(--text); }
+    .fb-btn:active { transform: scale(.92); }
+    .fb-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 1px; }
+    .fb-copy:disabled { cursor: default; color: var(--green); }
+    .fb-up.fb-on { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
+    .fb-down.fb-on { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }
+    .fb-up.fb-on svg, .fb-down.fb-on svg { fill: currentColor; fill-opacity: .25; }
+    .feedback-bar.fb-rated .fb-btn:not(.fb-copy):not(.fb-on) { opacity: .35; pointer-events: none; }
+    .fb-thanks { margin-left: 6px; font-size: 12px; font-weight: 800; color: var(--text-light); opacity: 0; transition: opacity .25s; }
+    .fb-thanks.show { opacity: 1; }
+    @media (hover: none) { .fb-btn { width: 36px; height: 36px; } }
 
     /* LIMIT REACHED UPSELL CARD */
     .limit-card {
@@ -4117,10 +4115,9 @@
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
             '<div class="msg-knox-content">' +
-              '<div class="msg-knox-label">Knox' + (window.currentUser?.email?.toLowerCase().trim() === 'sion22comp@gmail.com' && ['gpt-5.6-luna', 'gpt-6-luna'].includes(d.model)
-                ? '<span class="knox-model-reply"> · ' + (d.model === 'gpt-6-luna' ? '6 Knox' : '5.6 Knox') + '</span>' : '') + '</div>' +
+              '<div class="msg-knox-label">Knox</div>' +
               '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive && d.model !== 'knox-chat' ? 'learn' : 'answer') + '</div>' +
-              (d.model === 'knox-chat' ? '' : buildMessageActionsHtml(historyFbId, false)) +
+              (d.model === 'knox-chat' ? '' : buildMessageActionsHtml(historyFbId, !!window.currentUser)) +
             '</div>' +
           '</div>';
         thread.appendChild(knoxRow);
@@ -4187,19 +4184,17 @@
     const bar = btn?.closest('.feedback-bar');
     if (bar?.dataset.submitted) return;
     if (bar) bar.dataset.submitted = '1';
-    bar?.querySelectorAll('.fb-btn').forEach(b => { b.style.opacity = '0.4'; b.style.cursor = 'default'; });
-    if (btn) {
-      btn.style.opacity     = '1';
-      btn.style.borderColor = rating === 1 ? 'var(--green)' : 'var(--red)';
-      btn.style.background  = rating === 1 ? 'var(--green-light)' : '#FFE5E5';
-    }
+    bar?.classList.add('fb-rated');
+    btn?.classList.add('fb-on');
+    btn?.setAttribute('aria-pressed', 'true');
     const ok = await submitFeedback(rating, payload.question, payload.answer);
-    const label = bar?.querySelector('span');
+    const label = bar?.querySelector('.fb-thanks');
     if (label) {
-      label.textContent = ok
-        ? (rating === 1 ? 'Thanks! 🦊' : 'Thanks — helps Knox improve')
-        : 'Could not save';
+      label.textContent = ok ? (rating === 1 ? 'Thanks! 🦊' : 'Thanks — this helps Knox improve') : 'Couldn’t save that — try again later';
+      label.classList.add('show');
+      setTimeout(() => label.classList.remove('show'), 3500);
     }
+    if (!ok && bar) { delete bar.dataset.submitted; bar.classList.remove('fb-rated'); btn?.classList.remove('fb-on'); }
     // NOTE: deliberately NOT deleting window._fbPayloads[fbId] here — the
     // Copy button on this same message reads from that payload too, and
     // used to silently stop working the moment someone rated the answer,
@@ -4241,19 +4236,19 @@
     }
   };
 
-  // Builds the action row under a Knox answer: Copy is always shown (no
-  // account needed); the "Was this helpful?" thumbs only show when
-  // `showFeedback` is true (signed-in users, on a freshly answered
-  // message — not on messages replayed from saved history).
+  // The small row of icons right under a Knox answer (like ChatGPT/Claude):
+  // Copy for everyone; 👍/👎 for signed-in users — on new answers and on
+  // chats reopened from history alike.
+  const THUMB_UP_ICON   = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
+  const THUMB_DOWN_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>';
   function buildMessageActionsHtml(fbId, showFeedback) {
     let html = '<div class="feedback-bar">' +
       '<button class="fb-btn fb-copy" onclick="appCopyAnswer(\'' + fbId + '\', this)" aria-label="Copy answer" title="Copy">' + COPY_ICON + '</button>';
     if (showFeedback) {
       html +=
-        '<span class="fb-divider"></span>' +
-        '<span>Was this helpful?</span>' +
-        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Helpful">👍</button>' +
-        '<button class="fb-btn" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Not helpful">👎</button>';
+        '<button class="fb-btn fb-up" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Good answer" title="Good answer">' + THUMB_UP_ICON + '</button>' +
+        '<button class="fb-btn fb-down" onclick="appHandleFeedback(\'' + fbId + '\',-1,this)" aria-label="Bad answer" title="Bad answer">' + THUMB_DOWN_ICON + '</button>' +
+        '<span class="fb-thanks" aria-live="polite"></span>';
     }
     html += '</div>';
     return html;
@@ -5753,9 +5748,9 @@ window.appHandleAsk = async function() {
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: askLabel, answer };
 
-    // Copy is always shown (works for guests too); "Was this helpful?"
+    // Copy is always shown (works for guests too); the 👍/👎
     // only for signed-in users, same as before.
-    // Small talk is a one-line chat reply: no copy / "Was this helpful?" bar under it.
+    // Small talk is a one-line chat reply: no Copy / 👍 / 👎 icons under it.
     replaceThinking(thinkId, html, data.isCasual ? '' : window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
     // Track conversation
