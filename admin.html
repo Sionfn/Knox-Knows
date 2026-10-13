@@ -763,6 +763,22 @@
         </form>
         <div class="comp-msg" id="compMsg"></div>
         <div class="comp-list" id="compList"><div class="comp-empty">Loading…</div></div>
+      </div>
+      <h2 class="section-title">Gift codes</h2>
+      <div class="card card-lg">
+        <div class="metric-label">Make Knox Plus gift codes</div>
+        <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
+          For giveaways and contests. Each code works once and never expires — anyone enters it at knoxknowsapp.com/redeem.
+          It's time-limited Plus, not a subscription.
+        </p>
+        <form class="comp-form" id="giftForm" autocomplete="off">
+          <select id="giftLength" aria-label="Gift length"><option value="1m">1 month</option><option value="3m">3 months</option><option value="12m">12 months</option></select>
+          <input id="giftCount" type="number" min="1" max="50" value="1" aria-label="How many codes">
+          <input id="giftNote" type="text" placeholder="Note (optional), e.g. Discord giveaway" maxlength="200">
+          <button class="comp-btn" id="giftSubmit" type="submit">Make codes</button>
+        </form>
+        <div class="comp-msg" id="giftMsg"></div>
+        <textarea id="giftCodes" readonly rows="4" style="display:none;width:100%;margin-top:10px;font-family:monospace;font-size:14px;padding:10px;border-radius:10px;" aria-label="New gift codes"></textarea>
       </div>`;
 
     document.getElementById('compForm').addEventListener('submit', async (e) => {
@@ -784,6 +800,18 @@
       } finally {
         btn.disabled = false;
       }
+    });
+
+    document.getElementById('giftForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('giftSubmit'), msg = document.getElementById('giftMsg'), out = document.getElementById('giftCodes');
+      btn.disabled = true; msg.textContent = '';
+      try {
+        const r = await compFetch('POST', { action: 'gift-codes', gift: document.getElementById('giftLength').value, count: document.getElementById('giftCount').value, note: document.getElementById('giftNote').value.trim() });
+        out.value = r.codes.join('\n'); out.style.display = 'block'; out.select();
+        msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'} for ${r.label} of Knox Plus — copy them now.`; msg.className = 'comp-msg ok';
+      } catch (err) { msg.textContent = err.message; msg.className = 'comp-msg err'; }
+      finally { btn.disabled = false; }
     });
 
     document.getElementById('compList').addEventListener('click', async (e) => {

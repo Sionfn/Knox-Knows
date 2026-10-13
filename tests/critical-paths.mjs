@@ -1258,19 +1258,19 @@ test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gi
   assert.equal(store.get('users/u1').plusUntil, undefined, 'no Plus week for someone already on Plus');
   assert.equal(store.get('giftCodes/' + code).from, 'u1');
 
-  assert.equal((await call(mine, { redeem: code })).code, 400, "can't redeem your own gift");
+  assert.equal(store.get('giftCodes/' + code).source, 'flamefest');
+  const redeem = async (uid, value) => { const h = await load('api/redeem.js', { db, date, token: { uid } }); const r = response(); await h(ffReq('POST', { code: value }), r); return r; };
+  assert.equal((await redeem('u1', code)).code, 400, "can't redeem your own gift");
   store.set('users/u2', { plan: 'free' });
-  const friend = await load('api/flame-fest.js', { db, date, token: { uid: 'u2' } });
-  res = await call(friend, { redeem: code.toLowerCase() });
+  res = await redeem('u2', code.toLowerCase());
   assert.equal(res.code, 200);
   assert.equal(store.get('users/u2').plusUntil, now + 7 * 86400000);
   assert.equal(store.get('giftCodes/' + code).redeemedBy, 'u2');
-  assert.equal((await call(friend, { redeem: code })).code, 409, 'works once');
+  assert.equal((await redeem('u2', code)).code, 409, 'works once');
+  store.set('giftCodes/ABCDEFGH', { source: 'flamefest', from: 'u1', days: 7, redeemedBy: null });
+  assert.equal((await redeem('u2', 'ABCDEFGH')).code, 409, 'one Flame Fest gift per account');
   store.set('users/u3', { plan: 'super' });
-  const plusFriend = await load('api/flame-fest.js', { db, date, token: { uid: 'u3' } });
-  store.set('giftCodes/ABCDEFGH', { from: 'u1', days: 7, redeemedBy: null });
-  assert.equal((await call(plusFriend, { redeem: 'ABCDEFGH' })).code, 409, 'already on Plus');
-  assert.equal((await call(friend, { redeem: 'bad!' })).code, 400);
+  assert.equal((await redeem('u3', 'ABCDEFGH')).code, 409, 'already on Plus');
 });
 
 test('Flame Fest: a Flashcards review lights today’s flame and keeps the streak', async () => {
@@ -1281,4 +1281,89 @@ test('Flame Fest: a Flashcards review lights today’s flame and keeps the strea
   assert.equal(res.code, 200);
   assert.deepEqual(plain(res.body.days), ['2026-11-04', '2026-11-05']);
   assert.equal(store.get('users/u1').streakCount, 4);
+});
+
+
+test('Gift codes: redeem stacks Plus time, works once, refunds cancel it, Plus members keep it for later, guessing is limited', async () => {
+  const { db, store } = memoryDb();
+  const now = Date.now();
+  const redeemAs = async (uid, code) => { const h = await load('api/redeem.js', { db, token: { uid } }); const r = response(); await h(ffReq('POST', { code }), r); return r; };
+  store.set('giftCodes/ABCDEFGHJKLM', { days: 92, source: 'purchase', redeemedBy: null });
+  store.set('giftCodes/NPQRSTUVWXYZ', { days: 31, source: 'admin', redeemedBy: null });
+  store.set('users/u1', { plan: 'free' });
+  let res = await redeemAs('u1', 'knox-abcd-efgh-jklm');
+  assert.equal(res.code, 200);
+  const first = store.get('users/u1').plusUntil;
+  assert.ok(Math.abs(first - (now + 92 * 86400000)) < 5000);
+  res = await redeemAs('u1', 'NPQR STUV WXYZ');
+  assert.equal(store.get('users/u1').plusUntil, first + 31 * 86400000, 'a second gift stacks on the time left');
+  assert.equal((await redeemAs('u2', 'KNOX-ABCD-EFGH-JKLM')).code, 409, 'used once');
+
+  store.set('giftCodes/23456789ABCD', { days: 31, source: 'purchase', redeemedBy: null, disabled: true });
+  assert.equal((await redeemAs('u2', '23456789ABCD')).code, 410, 'refunded gift');
+  store.set('giftCodes/EFGHJKLMNPQR', { days: 31, source: 'purchase', redeemedBy: null });
+  store.set('users/u3', { plan: 'super' });
+  res = await redeemAs('u3', 'EFGHJKLMNPQR');
+  assert.equal(res.code, 409);
+  assert.match(res.body.error, /never expires/);
+  assert.equal(store.get('giftCodes/EFGHJKLMNPQR').redeemedBy, null, 'not used up');
+
+  assert.equal((await redeemAs('u4', 'nope')).code, 400);
+  for (let i = 0; i < 9; i++) await redeemAs('u4', 'ZZZZZZZZZZZZ'); // 10 tries used
+  assert.equal((await redeemAs('u4', 'EFGHJKLMNPQR')).code, 429, 'too many tries in an hour');
+});
+
+test('Gift purchase: one-time Stripe payment; the webhook makes one code, emails it, and a refund cancels an unused code', async () => {
+  const { db, store } = memoryDb();
+  const mock = checkoutStripe();
+  const checkout = await load('api/create-checkout-session.js', { db, stripe: mock.stripe });
+  let res = response(); await checkout(askRequest({ gift: '3m' }), res);
+  assert.equal(res.code, 200);
+  const params = [...mock.sessions.values()][0].params;
+  assert.equal(params.mode, 'payment');
+  assert.equal(params.line_items[0].price_data.unit_amount, 2499);
+  assert.equal(params.metadata.kind, 'gift');
+  res = response(); await checkout(askRequest({ gift: '5y' }), res);
+  assert.equal(res.code, 400);
+
+  const emails = [];
+  let currentEvent;
+  const stripe = { webhooks: { constructEvent: () => currentEvent } };
+  const webhook = await load('api/webhook.js', { db, stripe, env: { RESEND_API_KEY: 'test' }, fetch: async (url, o) => { emails.push(JSON.parse(o.body)); return { ok: true, text: async () => '' }; } });
+  const session = { id: 'cs_gift_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_1', metadata: { kind: 'gift', gift: '3m', uid: 'u1', email: 'buyer@example.com' } };
+  for (const id of ['evt_gift_1', 'evt_gift_1_retry']) {
+    currentEvent = { id, type: 'checkout.session.completed', data: { object: session } };
+    res = response(); await webhook(webhookRequest(currentEvent), res);
+    assert.equal(res.code, 200);
+  }
+  const codes = [...store.keys()].filter(k => k.startsWith('giftCodes/'));
+  assert.equal(codes.length, 1, 'one code even if Stripe sends the event twice');
+  const gift = store.get(codes[0]);
+  assert.deepEqual([gift.days, gift.source, gift.buyerUid], [92, 'purchase', 'u1']);
+  assert.equal(store.get('users/u1').giftsBought.length, 1);
+  assert.equal(emails.length, 1);
+  assert.match(emails[0].subject, /gift code/);
+  assert.match(emails[0].html, /KNOX-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}/);
+  assert.equal(plain(emails[0].to)[0], 'buyer@example.com');
+
+  currentEvent = { id: 'evt_refund', type: 'charge.refunded', data: { object: { id: 'ch_1', payment_intent: 'pi_1', metadata: {} } } };
+  res = response(); await webhook(webhookRequest(currentEvent), res);
+  assert.equal(res.code, 200);
+  assert.equal(store.get(codes[0]).disabled, true, 'refunded before use: the code stops working');
+});
+
+test('Admin can make gift codes; nobody else can', async () => {
+  const { db, store } = memoryDb();
+  const admin = await load('api/admin-comp.js', { db, adminUid: 'u1' });
+  let res = response(); await admin({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { action: 'gift-codes', gift: '1m', count: 3, note: 'Discord giveaway' } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.codes.length, 3);
+  assert.match(res.body.codes[0], /^KNOX-[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+  const docs = [...store.keys()].filter(k => k.startsWith('giftCodes/')).map(k => store.get(k));
+  assert.ok(docs.every(d => d.days === 31 && d.source === 'admin' && d.note === 'Discord giveaway'));
+  res = response(); await admin({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { action: 'gift-codes', gift: '1m', count: 99 } }, res);
+  assert.equal(res.code, 400);
+  const other = await load('api/admin-comp.js', { db, adminUid: 'someone-else' });
+  res = response(); await other({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { action: 'gift-codes', gift: '1m', count: 1 } }, res);
+  assert.equal(res.code, 403);
 });

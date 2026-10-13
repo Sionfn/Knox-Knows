@@ -10,7 +10,6 @@
 //   window.knoxFlameFest.studied() — a Flashcards review: light today's flame
 //   ?flamefest=demo               — a pretend month, for trying the screen
 //                                   before November (nothing is saved)
-//   ?gift=CODE                    — a friend's Flame Fest gift: a free Plus week
 // Also shows a one-time "Flame Fest is on" popup during the event.
 (function () {
   const START = '2026-11-01', END = '2026-11-30', CLAIM_UNTIL = '2026-12-07';
@@ -93,7 +92,7 @@
     let grid = '';
     for (const d of ['S', 'M', 'T', 'W', 'T', 'F', 'S']) grid += `<div class="ff-dow" aria-hidden="true">${d}</div>`;
     for (let n = 1; n <= 30; n++) grid += dayCell(n); // Nov 1, 2026 is a Sunday
-    const giftUrl = state.giftCode ? `${location.origin}/app?gift=${state.giftCode}` : '';
+    const giftUrl = state.giftCode ? `${location.origin}/redeem?code=${state.giftCode}` : '';
     const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Plus week to give</b><span>Send this link to a friend who doesn’t have Knox Plus — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.plusUntil > Date.now() ? `<div class="ff-note">⚡ Your free Knox Plus week runs until ${new Date(state.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
     const styles = state.flameStyles.length > 1 ? `<div class="ff-styles"><span>Your flame:</span>${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
@@ -243,36 +242,12 @@
       <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userPlan && ['super', 'max', 'plus'].includes(window.userPlan) ? ' — a Plus week to gift a friend' : ' — a free week of Knox Plus'}</li></ul>`,
       [{ label: window.currentUser ? 'Open my calendar' : 'Sign in to join', run: () => window.currentUser ? open() : window.openAuthModal?.() }, { label: 'Later' }]);
   }
-  // A friend's gift link: /app?gift=CODE (kept until the student is signed in).
-  async function redeemGift() {
-    let code = '';
-    try { code = sessionStorage.getItem('knoxGift') || ''; } catch (e) {}
-    if (!code) return;
-    if (!window.currentUser) {
-      popup(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="ffPopTitle">A friend sent you Knox Plus!</h2><p>Sign in or make a free account to claim your free week of Knox Plus.</p>`,
-        [{ label: 'Sign in to claim', run: () => window.openAuthModal?.() }, { label: 'Later' }]);
-      return;
-    }
-    try { sessionStorage.removeItem('knoxGift'); } catch (e) {}
-    try {
-      await api('POST', { redeem: code });
-      window.knoxRefreshPlan?.();
-      popup(`<div class="ff-pop-flame" aria-hidden="true">⚡</div><h2 id="ffPopTitle">Your free Plus week is on!</h2><p>Enjoy 7 days of Knox Plus — unlimited questions and everything else Plus has. 🎉</p>`, [{ label: 'Let’s go' }]);
-    } catch (e) {
-      popup(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="ffPopTitle">Couldn’t use that gift</h2><p>${esc(e.message)}</p>`, [{ label: 'OK' }]);
-    }
-  }
-  const giftParam = new URLSearchParams(location.search).get('gift');
-  if (giftParam) {
-    try { sessionStorage.setItem('knoxGift', giftParam); } catch (e) {}
-    const url = new URL(location.href); url.searchParams.delete('gift'); history.replaceState(null, '', url);
-  }
   let started = false;
   function whenReady() {
     if (started) return; started = true;
-    setTimeout(() => { redeemGift(); intro(); }, 1500);
+    setTimeout(intro, 1500);
   }
-  addEventListener('knox-auth-changed', () => { if (started) redeemGift(); else whenReady(); });
+  addEventListener('knox-auth-changed', whenReady);
   if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
 
   window.knoxFlameFest = { open, active, applyFlameStyle, close, studied };

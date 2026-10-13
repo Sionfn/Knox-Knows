@@ -8,6 +8,7 @@ import Stripe from "stripe";
 import crypto from 'crypto';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { GIFTS, newGiftCode, formatCode, giftEmail } from "./_gifts.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -363,6 +364,7 @@ export default async function handler(req, res) {
         const session       = event.data.object;
         const uid           = session.metadata?.uid;
         const verifiedEmail = session.metadata?.email || session.customer_email;
+        if (session.metadata?.kind === "gift") { await fulfillGift(session, claim); break; }
         if (!uid) break;
 
         // Get the price ID from the subscription
@@ -504,6 +506,11 @@ export default async function handler(req, res) {
       // refund WITHOUT cancelling, handle that case manually.
       case "charge.refunded": {
         const charge = event.data.object;
+        // A refunded gift: its code stops working (if nobody has used it yet).
+        if (charge.metadata?.kind === "gift" || charge.payment_intent) {
+          const cancelled = await cancelRefundedGift(charge.payment_intent?.id || charge.payment_intent);
+          if (cancelled) { console.log(`✓ Gift refunded: code ${cancelled} cancelled`); break; }
+        }
         console.log(`✓ Charge refunded: ${charge.id} (cancellation email handled by subscription.deleted)`);
         break;
       }
@@ -547,4 +554,54 @@ export default async function handler(req, res) {
   try { await finishEvent(claim, true); }
   catch (err) { console.error('Webhook completion failed:', err); return res.status(500).json({ error: 'Could not finish webhook' }); }
   res.status(200).json({ received: true });
+}
+
+// ── Gift codes (one-time payments; see api/_gifts.js) ──────────────────────
+// The code comes from the checkout id plus a server secret, so running this
+// twice for the same payment can never make two codes.
+async function fulfillGift(session, claim) {
+  const g = GIFTS[session.metadata?.gift];
+  if (!g || session.payment_status !== "paid") return;
+  const code = newGiftCode(`${session.id}:${process.env.STRIPE_WEBHOOK_SECRET || ""}`);
+  const giftRef = db.collection("giftCodes").doc(code);
+  const uid = session.metadata?.uid || null;
+  const email = session.metadata?.email || session.customer_details?.email || session.customer_email || null;
+  const paymentIntent = session.payment_intent?.id || session.payment_intent || null;
+  const created = await db.runTransaction(async tx => {
+    const [gift, user] = await Promise.all([tx.get(giftRef), uid ? tx.get(db.collection("users").doc(uid)) : null]);
+    if (gift.exists) return false;
+    const at = new Date().toISOString();
+    tx.set(giftRef, { days: g.days, gift: session.metadata.gift, source: "purchase", buyerUid: uid, buyerEmail: email,
+      sessionId: session.id, paymentIntent, createdAt: at, redeemedBy: null });
+    if (paymentIntent) tx.set(db.collection("giftPayments").doc(paymentIntent), { code });
+    if (uid) {
+      // So the buyer can always find their codes under "Redeem a code".
+      const bought = Array.isArray(user?.data()?.giftsBought) ? user.data().giftsBought : [];
+      tx.set(db.collection("users").doc(uid), { giftsBought: [...bought, { code: formatCode(code), label: g.label, boughtAt: at }].slice(-50) }, { merge: true });
+    }
+    return true;
+  });
+  if (!created || !email) return;
+  const { subject, text, html } = giftEmail({ code, label: g.label, appUrl: (process.env.APP_URL || "https://knoxknowsapp.com").replace(/\/$/, "") });
+  await claim.ref.set({ notification: await sendEmail(email, subject, text, html, "gift") }, { merge: true });
+  console.log(`✓ Gift code created for ${uid || email}: ${g.label}`);
+}
+
+async function cancelRefundedGift(paymentIntent) {
+  if (!paymentIntent) return null;
+  const link = await db.collection("giftPayments").doc(paymentIntent).get();
+  if (!link.exists) return null;
+  const code = link.data().code;
+  const giftRef = db.collection("giftCodes").doc(code);
+  return db.runTransaction(async tx => {
+    const gift = await tx.get(giftRef);
+    if (!gift.exists) return null;
+    if (gift.data().redeemedBy) {
+      // Already used: leave the Plus time alone, but flag it for a look.
+      tx.set(db.collection("billingReview").doc("gift-" + code), { code, paymentIntent, reason: "Refunded gift was already redeemed", createdAt: new Date().toISOString(), resolved: false });
+      return code;
+    }
+    tx.set(giftRef, { disabled: true, disabledReason: "refunded", disabledAt: new Date().toISOString() }, { merge: true });
+    return code;
+  });
 }

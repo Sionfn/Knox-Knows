@@ -12,7 +12,6 @@
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
 // POST { style: 'classic' | 'purple' | 'blue' | 'gold' } → pick an unlocked flame look
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
-// POST { redeem: '<gift code>' }                      → a friend's gift: a free week of Knox Plus
 //
 // Everything is checked and written here with the Admin SDK — the Firestore
 // rules don't let the browser touch these fields.
@@ -112,28 +111,6 @@ export default async function handler(req, res) {
       return res.status(200).json(status(snap.exists ? snap.data() : {}));
     }
 
-    // Redeem a friend's gift: a free week of Knox Plus (one gift per account).
-    if (body.redeem != null) {
-      const code = String(body.redeem).trim().toUpperCase();
-      if (!/^[A-Z0-9]{8}$/.test(code)) return res.status(400).json({ error: "That gift link isn't valid." });
-      const giftRef = db.collection("giftCodes").doc(code);
-      const out = await db.runTransaction(async tx => {
-        const [gift, snap] = await Promise.all([tx.get(giftRef), tx.get(userRef)]);
-        const data = snap.exists ? snap.data() : {};
-        if (!gift.exists) return { error: "That gift link isn't valid.", code: 404 };
-        const g = gift.data();
-        if (g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
-        if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this gift." : "Someone already used this gift.", code: 409 };
-        if (isPaid(data)) return { error: "You already have Knox Plus — pass this gift to a friend who doesn't.", code: 409 };
-        if (data.giftRedeemedAt) return { error: "You've already used a Knox Plus gift.", code: 409 };
-        const plusUntil = Math.max(Date.now(), Number(data.plusUntil) || 0) + (g.days || GIFT_DAYS) * DAY_MS;
-        tx.set(giftRef, { redeemedBy: uid, redeemedAt: new Date().toISOString() }, { merge: true });
-        tx.set(userRef, { plusUntil, giftRedeemedAt: new Date().toISOString() }, { merge: true });
-        return { data: { ...data, plusUntil } };
-      });
-      if (out.error) return res.status(out.code).json({ error: out.error });
-      return res.status(200).json({ ...status(out.data), redeemed: true });
-    }
 
     // Pick a flame look you've unlocked.
     if (body.style != null) {
@@ -167,8 +144,9 @@ export default async function handler(req, res) {
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
       if (g.gift) {
-        // A one-time link: /app?gift=CODE gives a friend a free Plus week.
-        tx.set(db.collection("giftCodes").doc(giftCode), { from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
+        // A one-time link: /redeem?code=CODE gives a friend a free Plus week
+        // (redeemed in api/redeem.js, like any Knox gift code).
+        tx.set(db.collection("giftCodes").doc(giftCode), { source: "flamefest", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
         update.flameFest.giftCode = giftCode;
       }
       if (g.shields) update.flameShields = now.shields + g.shields;

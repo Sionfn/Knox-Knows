@@ -8,6 +8,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from 'firebase-admin/firestore';
+import { GIFTS } from './_gifts.js';
 
 if (!getApps().length) {
   initializeApp({
@@ -77,6 +78,10 @@ export default async function handler(req, res) {
   if (!verifiedEmail || !verifiedUid) {
     return res.status(401).json({ error: "Unauthorized — token missing uid or email." });
   }
+
+  // Gift a Knox Plus code: a one-time payment, not a subscription. The webhook
+  // makes the code and emails it to the buyer (see api/_gifts.js).
+  if (req.body?.gift != null) return giftCheckout(res, req.body.gift, verifiedUid, verifiedEmail);
 
   // 2. Validate plan and billing from request body
   const { plan, billing = "monthly" } = req.body || {};
@@ -237,5 +242,37 @@ export default async function handler(req, res) {
       const snap = await tx.get(checkoutRef);
       if (snap.data()?.lockOwner === lockOwner) tx.set(checkoutRef, { leaseUntil: 0 }, { merge: true });
     }).catch(err => console.error('Checkout lock release failed:', err.message));
+  }
+}
+
+async function giftCheckout(res, gift, uid, email) {
+  const g = Object.hasOwn(GIFTS, gift) ? GIFTS[gift] : null;
+  if (!g) return res.status(400).json({ error: "Choose a gift: 1, 3 or 12 months." });
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { timeout: 10000, maxNetworkRetries: 1 });
+    const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: email,
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: g.cents,
+          product_data: {
+            name: `Knox Plus gift — ${g.label}`,
+            description: "A gift code for Knox Plus. Not a subscription — it never renews or charges the person you give it to.",
+          },
+        },
+      }],
+      success_url: `${baseUrl}/app?gift_purchase=success`,
+      cancel_url:  `${baseUrl}/app?buy_gift=1`,
+      metadata: { kind: "gift", gift, uid, email },
+      payment_intent_data: { metadata: { kind: "gift", gift, uid } },
+    }, { idempotencyKey: `knox-gift-${randomUUID()}` });
+    return res.status(200).json({ url: session.url });
+  } catch (err) {
+    console.error("Gift checkout error:", err.message);
+    return res.status(500).json({ error: "Could not open checkout. Please try again." });
   }
 }
