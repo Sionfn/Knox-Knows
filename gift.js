@@ -9,6 +9,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const OPTIONS = [
     { id: '1m', label: '1 month', price: '$9.99', note: 'A great stocking stuffer' },
+    { id: '3m', label: '3 months', price: '$29.99', note: 'A whole semester' },
     { id: '12m', label: '12 months', price: '$79.99', note: 'The full school year and summer' },
   ];
   async function api(path, method, body) {

@@ -1322,8 +1322,10 @@ test('Gift purchase: one-time Stripe payment; the webhook makes one code, emails
   const params = [...mock.sessions.values()][0].params;
   assert.equal(params.mode, 'payment');
   assert.equal(params.line_items[0].price_data.unit_amount, 7999);
+  res = response(); await checkout(askRequest({ gift: '3m' }), res);
+  assert.equal([...mock.sessions.values()][1].params.line_items[0].price_data.unit_amount, 2999, '3 months: \$29.99');
   assert.equal(params.metadata.kind, 'gift');
-  res = response(); await checkout(askRequest({ gift: '3m' }), res); // no 3-month gift
+  res = response(); await checkout(askRequest({ gift: '5y' }), res);
   assert.equal(res.code, 400);
 
   const emails = [];

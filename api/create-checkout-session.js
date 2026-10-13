@@ -247,7 +247,7 @@ export default async function handler(req, res) {
 
 async function giftCheckout(res, gift, uid, email) {
   const g = Object.hasOwn(GIFTS, gift) ? GIFTS[gift] : null;
-  if (!g) return res.status(400).json({ error: "Choose a gift: 1 month or 12 months." });
+  if (!g) return res.status(400).json({ error: "Choose a gift: 1, 3 or 12 months." });
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { timeout: 10000, maxNetworkRetries: 1 });
     const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');

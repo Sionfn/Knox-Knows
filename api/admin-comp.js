@@ -3,7 +3,7 @@
 //   GET  → list every user currently given free Knox Plus
 //   POST { action: 'grant',  email, note? } → give free Knox Plus
 //   POST { action: 'revoke', uid }          → take it back
-//   POST { action: 'gift-codes', gift: '1m'|'12m', count, note? }
+//   POST { action: 'gift-codes', gift: '1m'|'3m'|'12m', count, note? }
 //        → make Knox Plus gift codes (giveaways; see api/_gifts.js)
 //
 // A comped user is stored as plan 'super' (what the rest of the app treats
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     if (body.action === "gift-codes") {
       const g = Object.hasOwn(GIFTS, body.gift) ? GIFTS[body.gift] : null;
       const count = Math.floor(Number(body.count) || 1);
-      if (!g || count < 1 || count > 50) return res.status(400).json({ error: "Choose 1 or 12 months and 1–50 codes." });
+      if (!g || count < 1 || count > 50) return res.status(400).json({ error: "Choose 1, 3 or 12 months and 1–50 codes." });
       const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
       const codes = await createGiftCodes(db, { days: g.days, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
       return res.status(200).json({ codes: codes.map(formatCode), label: g.label });

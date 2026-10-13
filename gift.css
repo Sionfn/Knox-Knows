@@ -14,7 +14,7 @@
 .kg-bought-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--border); background: var(--cream-warm); }
 .kg-bought-row span { display: flex; flex-direction: column; min-width: 0; font-size: 13px; }
 .kg-bought-row code { font-size: 13px; font-weight: 800; color: var(--orange); overflow-wrap: anywhere; }
-.kg-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
+.kg-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
 .kg-option { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; border-radius: 16px; border: 2px solid var(--border);
   background: var(--cream-warm); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 3px 0 var(--border); }
 .kg-option b { font-size: 15px; font-weight: 900; }
