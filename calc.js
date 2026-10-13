@@ -33,11 +33,11 @@
   // ── Keys ────────────────────────────────────────────────────────────────
   // [label, action, style, aria]
   const BASIC = [
-    ['AC', 'clear', 'clear', 'Clear'], ['( )', 'paren', 'op', 'Brackets'], ['%', 'in:%', 'op', 'Percent'], ['÷', 'op:÷', 'op', 'Divide'],
+    ['AC', 'clear', 'clear', 'Clear'], ['⌫', 'del', 'del', 'Delete'], ['%', 'in:%', 'op', 'Percent'], ['÷', 'op:÷', 'op', 'Divide'],
     ['7', 'in:7', 'num'], ['8', 'in:8', 'num'], ['9', 'in:9', 'num'], ['×', 'op:×', 'op', 'Times'],
     ['4', 'in:4', 'num'], ['5', 'in:5', 'num'], ['6', 'in:6', 'num'], ['−', 'op:−', 'op', 'Minus'],
     ['1', 'in:1', 'num'], ['2', 'in:2', 'num'], ['3', 'in:3', 'num'], ['+', 'op:+', 'op', 'Plus'],
-    ['0', 'in:0', 'num'], ['.', 'in:.', 'num', 'Decimal point'], ['⌫', 'del', 'del', 'Delete'], ['=', 'equals', 'eq', 'Equals'],
+    ['( )', 'paren', 'num', 'Brackets'], ['0', 'in:0', 'num'], ['.', 'in:.', 'num', 'Decimal point'], ['=', 'equals', 'eq', 'Equals'],
   ];
   const sci = () => [
     ['2nd', 'second', st.second ? 'fn on' : 'fn', 'Second functions'],
@@ -137,7 +137,7 @@
       const frac = M.fraction(st.done.value);
       return `<div class="kc-expr">${pretty(st.done.expr)} =</div>
         <div class="kc-result kc-big" aria-live="polite">${esc(M.format(st.done.value))}</div>
-        ${frac ? `<div class="kc-frac">= ${esc(frac)}</div>` : '<div class="kc-frac"></div>'}`;
+        ${frac ? `<div class="kc-frac"><span>= ${esc(frac)}</span></div>` : '<div class="kc-frac"></div>'}`;
     }
     const text = expr();
     let preview = '';
@@ -149,13 +149,26 @@
     return `<div class="kc-expr kc-typing">${st.ans !== null ? `Ans = ${esc(M.format(st.ans))}` : '&nbsp;'}</div>
       <div class="kc-result" aria-live="polite">${text ? pretty(text) : '0'}<span class="kc-caret" aria-hidden="true"></span></div>${preview}`;
   }
+  // Knox's speech bubble on top of the calculator.
+  const CHEERS = ['Nice!', 'Got it!', 'Boom!', 'Easy!', 'There you go!', 'Nailed it!'];
+  function bubbleText() {
+    if (st.error) return 'Hmm… ' + st.error.charAt(0).toLowerCase() + st.error.slice(1) + '.';
+    if (st.done) {
+      const frac = M.fraction(st.done.value), cheer = CHEERS[st.history.length % CHEERS.length];
+      return frac ? `${cheer} That's ${frac}.` : `${cheer} That's ${M.format(st.done.value)}.`;
+    }
+    return st.tokens.length ? 'Keep going — I’m working it out…' : 'What are we solving?';
+  }
   function historyHtml() {
-    if (!st.history.length) return '<p class="kc-empty">Your answers show up here — tap one to use it again.</p><p class="kc-empty kc-tip">⌨️ You can type too: numbers, + − * / ^ ( ) % !, Enter for =, Backspace to delete.</p>';
+    if (!st.history.length) return '<p class="kc-empty">Your answers print here — tap one to use it again.</p><p class="kc-empty kc-tip">⌨️ Typing works too: numbers, + − * / ^ ( ) % !, Enter for =, Backspace to delete.</p>';
     return '<ol class="kc-hist">' + st.history.map((h, i) =>
       `<li><button type="button" class="kc-hist-item" data-h="${i}"><span class="kc-hist-expr">${pretty(h.expr)} =</span><b>${esc(h.result)}</b></button></li>`).join('') + '</ol>';
   }
   function render() {
     root.querySelector('.kc-screen-inner').innerHTML = screenHtml();
+    const bubble = root.querySelector('.kc-bubble');
+    bubble.textContent = bubbleText();
+    bubble.classList.toggle('kc-bubble-err', !!st.error);
     const sciBox = root.querySelector('.kc-sci');
     sciBox.hidden = st.mode !== 'sci';
     root.querySelector('.kc-card').classList.toggle('kc-is-sci', st.mode === 'sci');
@@ -179,19 +192,21 @@
 
   // ── Page ────────────────────────────────────────────────────────────────
   root.innerHTML = `
-    <header class="kc-head">
-      <span class="kc-badge">🧮 Knox Calculator</span>
-      <h1 class="kc-title" tabindex="-1">Crunch the <span class="accent">numbers.</span></h1>
-    </header>
+    <div class="kc-top"><button type="button" class="kc-back" data-k="back">← Back to chat</button></div>
     <div class="kc-layout">
-      <section class="kc-card" aria-label="Calculator">
+      <section class="kc-card" aria-label="Knox Calculator">
+        <div class="kc-brand">
+          <img class="kc-fox" src="/knox-logo-square.jpg" alt="" draggable="false">
+          <div class="kc-bubble" aria-live="polite"></div>
+          <h1 class="kc-title" tabindex="-1">KNOX <span>CALC</span></h1>
+          <div class="kc-solar" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="kc-screen"><div class="kc-screen-inner"></div></div>
         <div class="kc-cardbar">
-          <button type="button" class="kc-back" data-k="back">← Back to chat</button>
           <div class="kc-modes" role="group" aria-label="Calculator type">
             <button type="button" class="kc-mode" data-mode="basic">Basic</button><button type="button" class="kc-mode" data-mode="sci">Scientific</button>
           </div>
         </div>
-        <div class="kc-screen"><div class="kc-screen-inner"></div></div>
         <div class="kc-pads">
           <div class="kc-sci" hidden></div>
           <div class="kc-keys">${BASIC.map(key).join('')}</div>
@@ -203,7 +218,7 @@
         </div>
       </section>
       <aside class="kc-history" aria-label="History">
-        <div class="kc-history-top"><b>History</b><button type="button" class="kc-link" data-k="clear-history">Clear</button></div>
+        <div class="kc-history-top"><b>🧾 History</b><button type="button" class="kc-link" data-k="clear-history">Clear</button></div>
         <div class="kc-history-body"></div>
       </aside>
     </div>
