@@ -150,7 +150,7 @@
       <div class="kc-result" aria-live="polite">${text ? pretty(text) : '0'}<span class="kc-caret" aria-hidden="true"></span></div>${preview}`;
   }
   function historyHtml() {
-    if (!st.history.length) return '<p class="kc-empty">Your answers show up here. Tap one to use it again.</p>';
+    if (!st.history.length) return '<p class="kc-empty">Your answers show up here — tap one to use it again.</p><p class="kc-empty kc-tip">⌨️ You can type too: numbers, + − * / ^ ( ) % !, Enter for =, Backspace to delete.</p>';
     return '<ol class="kc-hist">' + st.history.map((h, i) =>
       `<li><button type="button" class="kc-hist-item" data-h="${i}"><span class="kc-hist-expr">${pretty(h.expr)} =</span><b>${esc(h.result)}</b></button></li>`).join('') + '</ol>';
   }
@@ -158,6 +158,7 @@
     root.querySelector('.kc-screen-inner').innerHTML = screenHtml();
     const sciBox = root.querySelector('.kc-sci');
     sciBox.hidden = st.mode !== 'sci';
+    root.querySelector('.kc-card').classList.toggle('kc-is-sci', st.mode === 'sci');
     if (st.mode === 'sci') sciBox.innerHTML = sci().map(key).join('');
     root.querySelectorAll('.kc-mode').forEach(b => { const on = b.dataset.mode === st.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     root.querySelector('.kc-history-body').innerHTML = historyHtml();
@@ -181,19 +182,20 @@
     <header class="kc-head">
       <span class="kc-badge">🧮 Knox Calculator</span>
       <h1 class="kc-title" tabindex="-1">Crunch the <span class="accent">numbers.</span></h1>
-      <p class="kc-sub">Tap or type — Knox shows the answer as you go.</p>
     </header>
-    <div class="kc-topbar">
-      <button type="button" class="kc-back" data-k="back">← Back to chat</button>
-      <div class="kc-modes" role="group" aria-label="Calculator type">
-        <button type="button" class="kc-mode" data-mode="basic">Basic</button><button type="button" class="kc-mode" data-mode="sci">Scientific</button>
-      </div>
-    </div>
     <div class="kc-layout">
       <section class="kc-card" aria-label="Calculator">
+        <div class="kc-cardbar">
+          <button type="button" class="kc-back" data-k="back">← Back to chat</button>
+          <div class="kc-modes" role="group" aria-label="Calculator type">
+            <button type="button" class="kc-mode" data-mode="basic">Basic</button><button type="button" class="kc-mode" data-mode="sci">Scientific</button>
+          </div>
+        </div>
         <div class="kc-screen"><div class="kc-screen-inner"></div></div>
-        <div class="kc-sci" hidden></div>
-        <div class="kc-keys">${BASIC.map(key).join('')}</div>
+        <div class="kc-pads">
+          <div class="kc-sci" hidden></div>
+          <div class="kc-keys">${BASIC.map(key).join('')}</div>
+        </div>
         <div class="kc-actions">
           <button type="button" class="kc-act" data-k="copy" disabled>📋 Copy</button>
           <button type="button" class="kc-act" data-k="send" disabled>➤ Send to Knox</button>
@@ -205,7 +207,6 @@
         <div class="kc-history-body"></div>
       </aside>
     </div>
-    <p class="kc-note">Keyboard works too: numbers, + − * / ^ ( ) % !, Enter for =, Backspace to delete.</p>
     <div class="kc-toast" role="status"></div>`;
 
   root.addEventListener('click', e => {

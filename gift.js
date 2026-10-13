@@ -51,7 +51,7 @@
     const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">${action === 'buy' ? 'Give Mega Knox' : 'Redeem your gift'}</h2>
       <p>${action === 'buy' ? 'Sign in first, so we can send your gift code to your email.' : 'Sign in or make a free account to add your Mega Knox gift.'}</p>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-signin>Sign in</button></div>`);
-    m.querySelector('[data-signin]').addEventListener('click', () => { close(); window.openAuthModal?.(); });
+    m.querySelector('[data-signin]').addEventListener('click', () => { close(); (window.openAuthModal || window.openLoginModal)?.('signin'); }); // app / landing page
   }
 
   // ── Redeem ──────────────────────────────────────────────────────────────

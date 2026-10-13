@@ -13,7 +13,9 @@
 // Also shows a one-time "Flame Fest is on" popup during the event.
 (function () {
   const START = '2026-11-01', END = '2026-11-30', CLAIM_UNTIL = '2026-12-07';
-  const demo = new URLSearchParams(location.search).get('flamefest') === 'demo';
+  // ?flamefest=demo turns the demo on for the rest of this visit (tab).
+  let demo = new URLSearchParams(location.search).get('flamefest') === 'demo';
+  try { if (demo) sessionStorage.setItem('knoxFlameDemo', '1'); else demo = sessionStorage.getItem('knoxFlameDemo') === '1'; } catch (e) {}
   const pad = n => String(n).padStart(2, '0');
   const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const today = () => demo ? '2026-11-18' : localDay();

@@ -2235,6 +2235,7 @@
   // Flame Fest (Nov 1 – Dec 7, 2026, local time): used by the sidebar cards.
   window.knoxFlameFestWindow = function() {
     if (/[?&]flamefest=demo\b/.test(location.search)) return true;
+    try { if (sessionStorage.getItem('knoxFlameDemo') === '1') return true; } catch (e) {}
     var d = new Date(), k = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
     return k >= 20261101 && k <= 20261207;
   };

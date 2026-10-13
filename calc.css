@@ -1,31 +1,36 @@
 /* calc.css — the Knox Calculator (calc.js), in the same Knox sticker style
    as Flashcards: badge + big title, chunky keys with colored ledges. Uses
    the theme variables, so Light, Dark and Fall all just work. */
-#calcModal { align-items: flex-start; padding: clamp(18px, 3vw, 36px) clamp(14px, 3vw, 36px) 40px; }
-#calcModal .kc-wrap { position: relative; z-index: 1; width: 100%; max-width: 860px; margin: auto; }
+/* Sized to fit one screen: the keys grow and shrink with the window height. */
+#calcModal { align-items: center; padding: clamp(12px, 2.4vh, 28px) clamp(14px, 3vw, 36px); --kc-key: clamp(40px, calc(6.2vh / var(--kz, 1)), 56px); }
+#calcModal .kc-wrap { position: relative; z-index: 1; width: 100%; max-width: 960px; margin: auto; }
 #calcModal button { font-family: inherit; cursor: pointer; }
 
 /* Header — same recipe as Flashcards / the welcome screen */
-.kc-head { text-align: center; margin: 0 auto 20px; }
-.kc-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--orange-light); border: 2px solid var(--orange); border-radius: 999px; padding: 7px 18px; font-size: 14px; font-weight: 800; color: var(--orange); margin-bottom: 14px; }
-.kc-title { font-size: clamp(26px, 4vw, 40px); font-weight: 900; line-height: 1.05; letter-spacing: -.02em; margin: 0 0 10px; color: var(--text); outline: none; }
+.kc-head { text-align: center; margin: 0 auto clamp(10px, 2vh, 18px); }
+.kc-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--orange-light); border: 2px solid var(--orange); border-radius: 999px; padding: 6px 16px; font-size: 13.5px; font-weight: 800; color: var(--orange); margin-bottom: 10px; }
+.kc-title { font-size: clamp(24px, 3.4vw, 34px); font-weight: 900; line-height: 1.05; letter-spacing: -.02em; margin: 0; color: var(--text); outline: none; }
 .kc-title .accent { color: var(--orange); }
 .kc-sub { font-size: 16px; font-weight: 700; color: var(--text-light); line-height: 1.55; margin: 0 auto; }
 
-/* Back + Basic/Scientific */
-.kc-topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: 760px; margin: 0 auto 12px; }
-.kc-back { border: 0; background: transparent; color: var(--text-light); font-size: 14px; font-weight: 900; padding: 8px 10px; border-radius: 10px; }
+/* Back + Basic/Scientific, inside the top of the card */
+.kc-cardbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.kc-back { border: 0; background: transparent; color: var(--text-light); font-size: 13.5px; font-weight: 900; padding: 7px 8px; border-radius: 10px; }
 .kc-back:hover { color: var(--orange); background: var(--orange-cream); }
-.kc-modes { display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface); border: 2px solid var(--border); box-shadow: 0 3px 0 var(--border); }
-.kc-mode { border: 0; border-radius: 10px; padding: 8px 16px; background: transparent; color: var(--text-light); font-size: 13.5px; font-weight: 900; }
+.kc-modes { display: inline-flex; gap: 3px; padding: 3px; border-radius: 13px; background: var(--cream-warm); border: 2px solid var(--border); }
+.kc-mode { border: 0; border-radius: 10px; padding: 6px 14px; background: transparent; color: var(--text-light); font-size: 13px; font-weight: 900; }
 .kc-mode.on { background: var(--orange); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
-/* Card + history side by side */
-.kc-layout { display: grid; grid-template-columns: minmax(0, 440px) 260px; gap: 18px; justify-content: center; align-items: start; }
-.kc-card { background: var(--surface); border: 3px solid var(--orange); border-radius: 26px; box-shadow: 0 6px 0 var(--orange-dark); padding: 14px; }
+/* Card + history side by side, the same height and lined up */
+.kc-layout { display: grid; grid-template-columns: auto 240px; gap: 18px; justify-content: center; align-items: stretch; }
+.kc-card { width: 400px; max-width: 100%; background: var(--surface); border: 3px solid var(--orange); border-radius: 26px; box-shadow: 0 6px 0 var(--orange-dark); padding: 12px 14px 14px; }
+/* Scientific: the function keys sit beside the number pad (wider, not taller) */
+.kc-card.kc-is-sci { width: 680px; }
+.kc-pads { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.kc-is-sci .kc-pads { grid-template-columns: 5fr 4fr; }
 
 /* Screen */
-.kc-screen { border-radius: 18px; background: var(--cream-warm); border: 2px solid var(--border); padding: 12px 16px 10px; margin-bottom: 12px; text-align: right; min-height: 118px; display: flex; flex-direction: column; justify-content: flex-end; }
+.kc-screen { border-radius: 18px; background: var(--cream-warm); border: 2px solid var(--border); padding: 10px 16px 8px; margin-bottom: 12px; text-align: right; height: clamp(96px, calc(13vh / var(--kz, 1)), 116px); display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
 .kc-expr { font-size: 13.5px; font-weight: 800; color: var(--text-light); min-height: 19px; overflow-wrap: anywhere; }
 .kc-result { font-size: clamp(30px, 6vw, 40px); font-weight: 900; color: var(--text); line-height: 1.15; overflow-wrap: anywhere; letter-spacing: -.01em; }
 .kc-result:not(.kc-big) { font-size: clamp(24px, 4.6vw, 32px); }
@@ -40,10 +45,10 @@
 html[data-theme="dark"] .kc-frac { color: var(--green); }
 
 /* Keys */
-.kc-sci { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin-bottom: 10px; }
+.kc-sci { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 8px; }
 .kc-sci[hidden] { display: none; }
 .kc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
-.kc-key { min-height: 56px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); color: var(--text);
+.kc-key { min-height: var(--kc-key); border-radius: 16px; border: 2px solid var(--border); background: var(--surface); color: var(--text);
   font-size: 22px; font-weight: 900; box-shadow: 0 4px 0 var(--border); transition: transform .08s, box-shadow .08s, background .12s; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 .kc-key:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--border); }
 .kc-key:active, .kc-key.kc-pressed { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); }
@@ -55,7 +60,7 @@ html[data-theme="dark"] .kc-frac { color: var(--green); }
 .kc-eq:active, .kc-eq.kc-pressed { box-shadow: 0 1px 0 var(--orange-dark); }
 .kc-clear { background: color-mix(in srgb, var(--red) 12%, var(--surface)); border-color: color-mix(in srgb, var(--red) 35%, transparent); color: var(--red); font-size: 18px; box-shadow: 0 4px 0 color-mix(in srgb, var(--red) 35%, transparent); }
 .kc-del { color: var(--text-light); font-size: 20px; }
-.kc-sci .kc-key { min-height: 44px; font-size: 15px; border-radius: 13px; box-shadow: 0 3px 0 var(--border); }
+.kc-sci .kc-key { min-height: 0; font-size: 15px; border-radius: 13px; box-shadow: 0 3px 0 var(--border); }
 .kc-fn { background: var(--blue-light); border-color: color-mix(in srgb, var(--blue) 35%, transparent); color: var(--blue-dark); box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 35%, transparent) !important; }
 html[data-theme="dark"] .kc-fn { color: var(--blue); }
 .kc-fn.kc-on { background: var(--blue); color: #fff; border-color: var(--blue-dark); }
@@ -72,12 +77,14 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
 .kc-act:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 
 /* History */
-.kc-history { background: var(--surface); border: 2px solid var(--border); border-radius: 22px; box-shadow: 0 4px 0 var(--border); padding: 14px; max-height: 560px; display: flex; flex-direction: column; }
+.kc-history { background: var(--surface); border: 2px solid var(--border); border-radius: 22px; box-shadow: 0 4px 0 var(--border); padding: 14px; display: flex; flex-direction: column;
+  height: 0; min-height: 100%; } /* exactly the card's height; the list scrolls inside */
 .kc-history-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .kc-history-top b { font-size: 12px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--text-light); }
 .kc-link { border: 0; background: transparent; color: var(--orange); font-size: 12.5px; font-weight: 900; padding: 4px 6px; border-radius: 8px; }
 .kc-link[hidden] { display: none; }
-.kc-history-body { overflow-y: auto; flex: 1; }
+.kc-history-body { overflow-y: auto; flex: 1; min-height: 0; }
+.kc-tip { margin-top: 12px; padding-top: 10px; border-top: 2px dashed var(--border); }
 .kc-empty { font-size: 13px; font-weight: 700; color: var(--text-light); line-height: 1.5; margin: 6px 0; }
 .kc-hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .kc-hist-item { width: 100%; text-align: right; border: 2px solid transparent; background: var(--cream-warm); border-radius: 12px; padding: 8px 10px; color: var(--text); display: flex; flex-direction: column; gap: 1px; }
@@ -85,16 +92,20 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
 .kc-hist-expr { font-size: 12px; font-weight: 700; color: var(--text-light); overflow-wrap: anywhere; }
 .kc-hist-item b { font-size: 17px; font-weight: 900; overflow-wrap: anywhere; }
 
-.kc-note { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--text-light); margin: 16px auto 0; }
 .kc-toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 12px); padding: 10px 18px; border-radius: 14px; background: var(--text); color: var(--surface); font-size: 14px; font-weight: 900; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 20; }
 .kc-toast.show { opacity: 1; transform: translate(-50%, 0); }
 
+/* Not enough room for the wide Scientific card + history: history goes below. */
+@media (max-width: 1180px) {
+  .kc-layout:has(.kc-is-sci) { grid-template-columns: auto; }
+  .kc-layout:has(.kc-is-sci) .kc-history { height: auto; min-height: 0; max-height: 220px; }
+}
 @media (max-width: 760px) {
+  #calcModal { align-items: flex-start; }
   .kc-layout { grid-template-columns: minmax(0, 1fr); }
-  .kc-history { max-height: 260px; }
-  .kc-note { display: none; }
-  .kc-head { margin-bottom: 12px; }
-  .kc-sub { font-size: 14px; }
+  .kc-card, .kc-card.kc-is-sci { width: 100%; }
+  .kc-is-sci .kc-pads { grid-template-columns: 1fr; }
+  .kc-history { height: auto; min-height: 0; max-height: 240px; }
 }
 @media (max-width: 420px) {
   .kc-card { padding: 10px; border-radius: 22px; }
