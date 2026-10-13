@@ -1373,6 +1373,33 @@
     .knox-response-heading.learn.retry { color: var(--orange-dark); }
     html[data-theme="dark"] .knox-response-heading.learn.good  { color: var(--green); }
     html[data-theme="dark"] .knox-response-heading.learn.retry { color: var(--orange); }
+    /* Learn extras: step dots, tap-to-answer, help chips, lesson recap */
+    .learn-progress { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+    .learn-progress i { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .learn-progress i.done { background: var(--green); }
+    .learn-progress i.now { background: var(--purple); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 25%, transparent); }
+    .learn-progress b { margin-left: 4px; font-size: 11px; color: var(--text-light); letter-spacing: 0; }
+    .learn-actions { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .learn-choices { display: flex; flex-wrap: wrap; gap: 8px; }
+    .learn-choice { padding: 10px 16px; border-radius: 14px; border: 2px solid var(--purple); background: var(--surface); color: var(--text);
+      font: inherit; font-size: 14.5px; font-weight: 800; cursor: pointer; box-shadow: 0 3px 0 var(--purple-dark); transition: transform .12s, box-shadow .12s, background .12s; }
+    .learn-choice:hover:not(:disabled) { transform: translateY(-1px); background: var(--purple-light); }
+    .learn-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--purple-dark); }
+    .learn-choice.picked { background: var(--purple); color: #fff; }
+    .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+    .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
+      background: var(--cream); color: var(--text-light); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: border-color .12s, color .12s; }
+    .learn-chip:hover:not(:disabled) { border-color: var(--purple); color: var(--text); }
+    .learn-chip.primary { background: var(--purple); border-color: var(--purple-dark); color: #fff; box-shadow: 0 2px 0 var(--purple-dark); }
+    .learn-actions button:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+    .learn-actions button.picked:disabled { opacity: 1; }
+    .learn-recap { padding: 14px 16px; border-radius: 16px; border: 2px solid var(--green); background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
+    .learn-recap-title { font-size: 13px; font-weight: 900; color: var(--green-dark); margin-bottom: 6px; }
+    html[data-theme="dark"] .learn-recap-title { color: var(--green); }
+    .learn-recap p { margin: 0 0 6px; font-size: 14.5px; line-height: 1.5; }
+    .learn-recap-watch { color: var(--text-light); font-size: 13.5px !important; }
+    .learn-recap-buttons { margin-top: 10px; }
+    @media (max-width: 600px) { .learn-actions { padding: 0 14px 14px; } .learn-choice { flex: 1 1 100%; text-align: left; } }
     .knox-final-answer {
       display: flex;
       align-items: baseline;
@@ -4111,7 +4138,7 @@
         const knoxRow = document.createElement('div');
         knoxRow.className = 'msg-wrap';
         const historyFbId = 'fb_' + Math.random().toString(36).slice(2, 8);
-        window._fbPayloads[historyFbId] = { question: d.question || '', answer: d.answer || '' };
+        window._fbPayloads[historyFbId] = { question: d.question || '', answer: window.knoxLearnClean?.(d.answer || '') ?? (d.answer || '') };
         knoxRow.innerHTML =
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
@@ -4127,6 +4154,7 @@
         window._conversation.push({ role: 'assistant', content: d.answer   || '' });
       });
       if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
+      window.settleLearnActions?.();
 
       window.showChatThread();
       window.scrollChat();
@@ -5507,6 +5535,8 @@ window.appHandleAsk = async function() {
   const q = (input?.value || '').trim();
   if (!q && !window._appImage && !window._appDoc) return;
   if ($('appImagePill')?.classList.contains('is-reading')) return; // still reading the file
+  // A new message is on its way: the last Learn reply's buttons go quiet.
+  document.querySelectorAll('#chatThread .learn-actions button').forEach(b => { b.disabled = true; });
 
   // Guest gate — 1 free question per day, tracked in localStorage
   if (!window.currentUser) {
@@ -5747,7 +5777,7 @@ window.appHandleAsk = async function() {
     // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: askLabel, answer };
+    window._fbPayloads[fbId] = { question: askLabel, answer: window.knoxLearnClean(answer) };
 
     // Copy is always shown (works for guests too); the 👍/👎
     // only for signed-in users, same as before.
@@ -5803,6 +5833,7 @@ function replaceThinking(thinkId, html, actionsHtml = '', modelLabel = '') {
       '</div>' +
     '</div>';
   thinking.replaceWith(row);
+  settleLearnActions();
   scrollChat();
 }
 
@@ -5838,13 +5869,90 @@ function renderLimitCard(data, isSignedIn) {
 // Learn replies get a heading that matches what Knox is doing in that
 // message (the Learn prompt has Knox open with "Yes, that's right" or
 // "Not quite" when checking an answer).
-function learnHeadingHtml(text) {
+// ── Learn extras ─────────────────────────────────────────────────────────
+// In Learn mode Knox can end a reply with short marker lines (see LEARN_PROMPT
+// in api/ask.js) that the app turns into buttons and cards:
+//   Choices: chlorophyll | melanin | carotene   → tap-to-answer buttons
+//   Progress: 2/4                                → step dots in the heading
+//   Recap: … / Watch out: … / Topic: …           → end-of-lesson card
+// The lines are hidden from the message itself (and from Copy).
+const LEARN_MARKER = /^\s*(choices|progress|recap|watch out|topic)\s*:\s*(.*)$/i;
+function parseLearnExtras(text) {
+  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '' };
+  const keep = [];
+  for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
+    const m = LEARN_MARKER.exec(line.replace(/\*\*/g, ''));
+    if (!m) { keep.push(line); continue; }
+    // The value comes from the real line, so **bold** inside it stays bold
+    // (only a bolded label like "**Recap:**" loses its stars).
+    const key = m[1].toLowerCase(), value = line.slice(line.indexOf(':') + 1).replace(/^\s*\*\*/, '').trim();
+    if (key === 'choices') out.choices = value.split('|').map(c => c.trim()).filter(Boolean).slice(0, 4);
+    else if (key === 'progress') { const p = /^(\d{1,2})\s*\/\s*(\d{1,2})/.exec(value); if (p && +p[2] >= 2 && +p[2] <= 12 && +p[1] >= 1) out.progress = { n: Math.min(+p[1], +p[2]), total: +p[2] }; }
+    else if (key === 'recap') out.recap = value;
+    else if (key === 'watch out') out.watch = value;
+    else if (key === 'topic') out.topic = value.slice(0, 80);
+  }
+  if (out.choices.length < 2) out.choices = [];
+  out.clean = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  return out;
+}
+window.knoxLearnClean = text => parseLearnExtras(text).clean;
+const LEARN_HELP = [
+  ['💡', 'Hint', 'Can I get a hint?'],
+  ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
+  ['📝', 'Show an example', 'Can you show me a similar example first?'],
+  ['🔄', 'Explain another way', 'Can you explain that a different way?'],
+];
+function learnExtrasHtml(x) {
+  const btn = (cls, attrs, inner) => '<button type="button" class="' + cls + '" ' + attrs + '>' + inner + '</button>';
+  if (x.recap) {
+    return '<div class="learn-actions"><div class="learn-recap">' +
+      '<div class="learn-recap-title">🎉 What you learned' + (x.topic ? ' · ' + escHtml(x.topic) : '') + '</div>' +
+      '<p>' + formatInline(x.recap) + '</p>' +
+      (x.watch ? '<p class="learn-recap-watch"><b>Watch out:</b> ' + formatInline(x.watch) + '</p>' : '') +
+      '<div class="learn-recap-buttons">' +
+        btn('learn-chip primary', 'data-learn-send="Give me 3 more practice questions like this — one at a time."', '🎯 Practice 3 more') +
+        btn('learn-chip', 'data-learn-flash="' + escHtml(((x.topic ? x.topic + '. ' : '') + x.recap).replace(/\*\*/g, '')) + '"', '📇 Make flashcards') +
+        btn('learn-chip', 'data-learn-new', '✨ New topic') +
+      '</div></div></div>';
+  }
+  return '<div class="learn-actions">' +
+    (x.choices.length ? '<div class="learn-choices" role="group" aria-label="Pick an answer">' +
+      x.choices.map(c => btn('learn-choice', 'data-learn-send="' + escHtml(c) + '"', formatInline(c))).join('') + '</div>' : '') +
+    '<div class="learn-help" role="group" aria-label="Need help?">' +
+      LEARN_HELP.map(([icon, label, say]) => btn('learn-chip', 'data-learn-send="' + escHtml(say) + '"', '<span aria-hidden="true">' + icon + '</span>' + label)).join('') +
+    '</div></div>';
+}
+// Only the newest Learn reply's buttons can be used; older ones go quiet.
+function settleLearnActions() {
+  const groups = [...document.querySelectorAll('#chatThread .learn-actions')];
+  groups.forEach((g, i) => g.querySelectorAll('button').forEach(b => { b.disabled = i !== groups.length - 1; }));
+}
+window.settleLearnActions = settleLearnActions;
+document.addEventListener('click', e => {
+  const b = e.target.closest('.learn-actions button');
+  if (!b || b.disabled) return;
+  if (b.hasAttribute('data-learn-new')) { window.openLearnMode?.(); return; }
+  if (b.hasAttribute('data-learn-flash')) {
+    const topic = b.getAttribute('data-learn-flash');
+    if (window.flashcardsMake) window.flashcardsMake('Flashcards for what I just learned: ' + topic);
+    else window.appSetQuestion?.('Make me flashcards about: ' + topic);
+    return;
+  }
+  if (window._appAskBusy) return;
+  b.classList.add('picked');
+  window.appSetQuestion?.(b.getAttribute('data-learn-send'));
+  window.appHandleAsk?.();
+});
+
+function learnHeadingHtml(text, progress, finished) {
   const t = String(text || '').trim();
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
   let cls = '', icon = '◆', label = 'Study hint';
-  if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) {
+  if (finished) { cls = ' good'; icon = '🎉'; label = 'Lesson complete'; }
+  else if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) {
     cls = ' retry'; icon = '↺'; label = 'Not quite';
-  } else if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great|nice|perfect|well done|you got it|good job|awesome)/.test(opening)) {
+  } else if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) {
     cls = ' good'; icon = '✓'; label = 'Nice work';
   } else if (/^(i read|i can see|i see |looks like|this worksheet|your worksheet|from your photo|from the photo|the worksheet|this photo)/.test(opening)) {
     icon = '◆'; label = "Let's start";
@@ -5854,11 +5962,16 @@ function learnHeadingHtml(text) {
   } else if (/\?\s*$/.test(t)) {
     icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
-  return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + '</div>';
+  const dots = progress ? '<span class="learn-progress" role="img" aria-label="Step ' + progress.n + ' of ' + progress.total + '">' +
+    Array.from({ length: progress.total }, (_, i) => '<i class="' + (i < progress.n - 1 ? 'done' : i === progress.n - 1 ? 'now' : '') + '"></i>').join('') +
+    '<b>' + progress.n + '/' + progress.total + '</b></span>' : '';
+  return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + dots + '</div>';
 }
 
 function renderAnswerHtml(text, kind = 'answer') {
   if (!text) return '';
+  const learnX = kind === 'learn' ? parseLearnExtras(text) : null;
+  if (learnX) text = learnX.clean || text;
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   let html = '', paragraphs = [], list = '', inItem = false;
   const flush = () => {
@@ -5921,8 +6034,9 @@ function renderAnswerHtml(text, kind = 'answer') {
   }
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
-  return (kind === 'learn' ? learnHeadingHtml(text) : '') +
-    '<div class="knox-response-body">' + html + '</div>';
+  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap) : '') +
+    '<div class="knox-response-body">' + html + '</div>' +
+    (kind === 'learn' ? learnExtrasHtml(learnX) : '');
 }
 
 // ── Render a video suggestion card (visual-learner topics) ─────

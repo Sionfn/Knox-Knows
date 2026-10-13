@@ -5,8 +5,8 @@ import { runInNewContext } from 'node:vm';
 
 const source = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
 const helpers = source.slice(source.indexOf('function escHtml('), source.indexOf('function showChatThread('));
-const renderer = source.slice(source.indexOf('function learnHeadingHtml('), source.indexOf('// ── Render a video suggestion card'));
-const context = {};
+const renderer = source.slice(source.indexOf('// ── Learn extras'), source.indexOf('// ── Render a video suggestion card'));
+const context = { window: {}, document: { addEventListener() {}, querySelectorAll: () => [] } };
 runInNewContext(`${helpers}\n${renderer}`, context);
 
 test('Worksheet answers, headings, decimals and inline code stay distinct', () => {
@@ -80,5 +80,34 @@ test('Learn replies get a heading that matches the message', () => {
   assert.equal(heading('Here’s how to do it:\n1. Find the Sun\n2. Count outward'), 'Worked example');
   assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Your turn', 'Knox asked: the student answers next');
   assert.equal(heading('Think about which planets are closest to the Sun first.'), 'Study hint');
+  assert.equal(heading('Great question! Do you know what the green pigment is called?'), 'Your turn', '"Great question" is not praise for an answer');
   assert.doesNotMatch(context.renderAnswerHtml('Yes', 'answer'), /knox-response-heading/);
+});
+
+test('Learn extras: choice buttons, step dots and help chips; the marker lines are hidden', () => {
+  const html = context.renderAnswerHtml('Leaves are green because of a pigment. Do you know its name?\nProgress: 1/3\nChoices: chlorophyll | melanin | carotene', 'learn');
+  assert.equal((html.match(/class="learn-choice"/g) || []).length, 3);
+  assert.match(html, /data-learn-send="chlorophyll"/);
+  assert.match(html, /aria-label="Step 1 of 3"/);
+  assert.match(html, /Your turn/, 'the label still sees the question at the end');
+  assert.match(html, /I’m stuck/);
+  assert.doesNotMatch(html, /Choices:|Progress:/, 'marker lines never show');
+  assert.equal(context.window.knoxLearnClean('Hi?\nChoices: a | b'), 'Hi?');
+  // A single option isn't a choice; a silly progress number is ignored.
+  const odd = context.renderAnswerHtml('What next?\nChoices: only one\nProgress: 9/99', 'learn');
+  assert.doesNotMatch(odd, /learn-choice"|learn-progress/);
+  // Ask Knox answers never get Learn buttons.
+  assert.doesNotMatch(context.renderAnswerHtml('Choices: a | b', 'answer'), /learn-actions/);
+});
+
+test('Learn recap: lesson-complete card with practice, flashcards and new-topic buttons', () => {
+  const html = context.renderAnswerHtml('Yes — that is exactly it!\nRecap: Trees stop making **chlorophyll** in fall, so yellow and orange pigments show.\nWatch out: The yellow was there all along.\nTopic: Why leaves change color', 'learn');
+  assert.match(html, /Lesson complete/);
+  assert.match(html, /What you learned · Why leaves change color/);
+  assert.match(html, /<strong>chlorophyll<\/strong>/);
+  assert.match(html, /Practice 3 more/);
+  assert.match(html, /data-learn-flash="Why leaves change color\. Trees stop making chlorophyll in fall/, 'no ** in the flashcards request');
+  assert.match(html, /data-learn-new/);
+  assert.doesNotMatch(html, /Recap:|Watch out: The|Topic:/);
+  assert.doesNotMatch(html, /I’m stuck/, 'no help chips once the lesson is done');
 });

@@ -393,6 +393,10 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /never write it for them/);
   assert.match(system, /"Just give me the answer": kindly ask for one try first/);
   assert.match(system, /must not contain the result or the full explanation/);
+  // The app's Learn buttons: choices, step progress and the end-of-lesson recap.
+  assert.match(system, /Choices: option \| option \| option/);
+  assert.match(system, /Progress: 2\/4/);
+  assert.match(system, /Recap: what they learned/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
   const userText = requests[0].messages.at(-1).content.find(part => part.type === 'text').text;
   assert.match(userText, /instead of solving it/);
