@@ -5,8 +5,8 @@
 // day as the 🔥 streak). Lighting enough flames in a week, or in the whole
 // month, unlocks a reward the student claims here.
 //
-// Free and Plus members get different prizes for the same goals (a Plus
-// member has no use for bonus questions or a free Plus week): see REWARDS.
+// Free and Mega Knox members get different prizes for the same goals (a Mega Knox
+// member has no use for bonus questions or a free Mega Knox week): see REWARDS.
 //
 // GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
@@ -50,12 +50,12 @@ const REWARDS = [
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
     plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" } },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
-    free: { gives: { plusDays: 7, style: "gold" }, label: "7 days of Knox Plus + 👑 Golden Flame" },
-    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Plus week to gift a friend + 👑 Golden Flame" } },
+    free: { gives: { plusDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
+    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Mega Knox week to gift a friend + 👑 Golden Flame" } },
 ];
 const STYLES = ["classic", "purple", "blue", "gold"];
 const GIFT_DAYS = 7;
-// Plus for prizes = a real Plus plan or comped (a Flame Fest Plus week still
+// Mega Knox for prizes = a real Mega Knox plan or comped (a Flame Fest Mega Knox week still
 // gets the free-member prizes).
 const isPaid = d => ["super", "max", "plus"].includes(d?.plan) || d?.comped === true;
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
       if (g.gift) {
-        // A one-time link: /redeem?code=CODE gives a friend a free Plus week
+        // A one-time link: /redeem?code=CODE gives a friend a free Mega Knox week
         // (redeemed in api/redeem.js, like any Knox gift code).
         tx.set(db.collection("giftCodes").doc(giftCode), { source: "flamefest", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
         update.flameFest.giftCode = giftCode;

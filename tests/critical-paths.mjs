@@ -1245,7 +1245,7 @@ test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gi
 
   let res = await call(mine);
   assert.equal(res.body.plus, true);
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Plus week to gift a friend + 👑 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Mega Knox week to gift a friend + 👑 Golden Flame');
   res = await call(mine, { claim: 'w1' });
   assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');

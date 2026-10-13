@@ -61,7 +61,7 @@ async function guestStatus(req) {
 
 function planTier(plan) {
   // Paid allowlist — anything not explicitly a paid plan is free, so a
-  // missing/blank plan can never accidentally unlock Plus limits.
+  // missing/blank plan can never accidentally unlock Mega Knox limits.
   return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
 }
 
@@ -109,7 +109,7 @@ export default async function handler(req, res) {
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() : {};
-    // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
+    // Flame Fest grand prize: a free week of Mega Knox (plusUntil, ms).
     const plan     = planTier(userData.plan || "free") === "free" && Number(userData.plusUntil) > Date.now() ? "plus" : (userData.plan || "free");
     const tier     = planTier(plan);
     const now      = Date.now();

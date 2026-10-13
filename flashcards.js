@@ -473,8 +473,8 @@ if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=fa
 function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.title='Flashcards';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span><span class="fc-beta sidebar-collapsible">Beta</span>';b.addEventListener('click',open);nav.append(b);});
-// Visibility (see EVERYONE): if Flashcards is ever limited to Plus again, the tab stays hidden until the plan is known to be Plus,
-// and closes if the account changes to one without Plus (e.g. sign-out).
+// Visibility (see EVERYONE): if Flashcards is ever limited to Mega Knox again, the tab stays hidden until the plan is known to be Mega Knox,
+// and closes if the account changes to one without Mega Knox (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}
 syncAccess();window.addEventListener('knox-plan-changed',syncAccess);
 // Leaving Flashcards from the sidebar: ask first if a deck has unsaved edits,

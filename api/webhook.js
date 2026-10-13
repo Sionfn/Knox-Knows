@@ -43,9 +43,9 @@ const PRICE_TO_PLAN = {
   "price_1Tb17FCqlxC7aoKRIE0BZaWg": "super",  // Super Yearly $59.99
   "price_1Tb17fCqlxC7aoKRgQ3uxxlK": "max",    // Max Monthly $14.99
   "price_1Tb17zCqlxC7aoKRNOYaO73B": "max",    // Max Yearly $119.99
-  // CURRENT prices (Sept 2026 reset — one plan: Knox Plus)
-  "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super",  // Knox Plus Monthly $9.99
-  "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super",  // Knox Plus Yearly  $79.99
+  // CURRENT prices (Sept 2026 reset — one plan: Mega Knox)
+  "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super",  // Mega Knox Monthly $9.99
+  "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super",  // Mega Knox Yearly  $79.99
 };
 
 export const config = { api: { bodyParser: false } };
@@ -60,12 +60,12 @@ async function getRawBody(req) {
 }
 
 // Human-readable plan details used in emails. Both legacy Stripe plan values
-// ('super' and 'max') map to the same Knox Plus display since we consolidated
+// ('super' and 'max') map to the same Mega Knox display since we consolidated
 // into one paid tier — existing subscribers keep their old price IDs but
 // see the unified brand name in every email going forward.
 const PLAN_NAMES = {
-  super: { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
-  max:   { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
+  super: { name: "Mega Knox", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
+  max:   { name: "Mega Knox", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
 };
 
 // ── Shared email shell ──────────────────────────────────────────────────────
@@ -194,7 +194,7 @@ function formatEndDate(unixSeconds) {
   return new Date(unixSeconds * 1000).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 async function sendCancelScheduledEmail(email, plan, { trial, endsAt }) {
-  const p = PLAN_NAMES[plan] || { name: "Knox Plus" };
+  const p = PLAN_NAMES[plan] || { name: "Mega Knox" };
   const end = formatEndDate(endsAt);
   const what = trial ? `free trial of ${p.name}` : `${p.name} subscription`;
   const charge = trial ? "You won't be charged." : "You won't be charged again.";
@@ -283,7 +283,7 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
     // this guard, `subscription.deleted` clears stripeSubscription to null,
     // then a straggler `subscription.updated` or `invoice.payment_succeeded`
     // passes the null-short-circuited guard above and writes planStatus:
-    // 'active' again — silently re-granting Plus after cancellation.
+    // 'active' again — silently re-granting Mega Knox after cancellation.
     // Only a fresh checkout (options.checkout) is allowed to re-activate,
     // and only after the subscription id has been cleared.
     if (!options.checkout && existing.planStatus === 'cancelled' && !existing.stripeSubscription) return false;
@@ -419,7 +419,7 @@ export default async function handler(req, res) {
           const paused = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
-            // Comped users keep their free Plus when a paid subscription stops.
+            // Comped users keep their free Mega Knox when a paid subscription stops.
             const comped = snap.data().comped === true;
             tx.set(ref, comped ? { planStatus: 'comped' } : { plan: 'free', planStatus: subscription.status }, { merge: true });
             return true;
@@ -476,7 +476,7 @@ export default async function handler(req, res) {
           const cancelled = await db.runTransaction(async tx => {
             const snap = await tx.get(ref);
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
-            // Comped users keep their free Plus when a paid subscription ends.
+            // Comped users keep their free Mega Knox when a paid subscription ends.
             const comped = snap.data().comped === true;
             if (snap.data().cancelNoticeFor !== subscription.id) {
               tx.set(claim.ref, { notification, notificationCustomer: subscription.customer }, { merge: true });
@@ -597,7 +597,7 @@ async function cancelRefundedGift(paymentIntent) {
     const gift = await tx.get(giftRef);
     if (!gift.exists) return null;
     if (gift.data().redeemedBy) {
-      // Already used: leave the Plus time alone, but flag it for a look.
+      // Already used: leave the Mega Knox time alone, but flag it for a look.
       tx.set(db.collection("billingReview").doc("gift-" + code), { code, paymentIntent, reason: "Refunded gift was already redeemed", createdAt: new Date().toISOString(), resolved: false });
       return code;
     }

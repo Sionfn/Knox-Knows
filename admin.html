@@ -705,7 +705,7 @@
       errBan.style.display = 'block';
       errBan.textContent = '❗ ' + (err.message || 'Failed to load stats');
       dash.innerHTML = '';
-      // The Comped Plus manager has its own endpoint, so keep it usable.
+      // The Comped Mega Knox manager has its own endpoint, so keep it usable.
       if (!document.getElementById('compForm')) renderCompPanel();
       loadComped();
       return;
@@ -724,7 +724,7 @@
     loadComped();
   };
 
-  // ─── Comped Plus manager ───
+  // ─── Comped Mega Knox manager ───
   async function compFetch(method, body) {
     const user = auth.currentUser;
     if (!user) throw new Error('Please sign in again.');
@@ -749,27 +749,27 @@
   function renderCompPanel() {
     const panel = document.getElementById('compPanel');
     panel.innerHTML = `
-      <h2 class="section-title">Comped Plus</h2>
+      <h2 class="section-title">Comped Mega Knox</h2>
       <div class="card card-lg">
-        <div class="metric-label">Give someone free Knox Plus</div>
+        <div class="metric-label">Give someone free Mega Knox</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
-          They need a Knox account first. Comped Plus works everywhere Plus does and is never charged.
-          If they also pay for Plus, removing the comp keeps the Plus they pay for.
+          They need a Knox account first. Comped Mega Knox works everywhere Mega Knox does and is never charged.
+          If they also pay for Mega Knox, removing the comp keeps the Mega Knox they pay for.
         </p>
         <form class="comp-form" id="compForm" autocomplete="off">
           <input id="compEmail" type="email" placeholder="their@email.com" required maxlength="254">
           <input id="compNote" type="text" placeholder="Note (optional), e.g. beta tester" maxlength="200">
-          <button class="comp-btn" id="compSubmit" type="submit">Give free Plus</button>
+          <button class="comp-btn" id="compSubmit" type="submit">Give free Mega Knox</button>
         </form>
         <div class="comp-msg" id="compMsg"></div>
         <div class="comp-list" id="compList"><div class="comp-empty">Loading…</div></div>
       </div>
       <h2 class="section-title">Gift codes</h2>
       <div class="card card-lg">
-        <div class="metric-label">Make Knox Plus gift codes</div>
+        <div class="metric-label">Make Mega Knox gift codes</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
           For giveaways and contests. Each code works once and never expires — anyone enters it at knoxknowsapp.com/redeem.
-          It's time-limited Plus, not a subscription.
+          It's time-limited Mega Knox, not a subscription.
         </p>
         <form class="comp-form" id="giftForm" autocomplete="off">
           <select id="giftLength" aria-label="Gift length"><option value="1m">1 month</option><option value="3m">3 months</option><option value="12m">12 months</option></select>
@@ -791,7 +791,7 @@
       compMessage('', true);
       try {
         const r = await compFetch('POST', { action: 'grant', email, note });
-        compMessage(r.already ? `${r.email} already has Comped Plus.` : `Gave free Knox Plus to ${r.email}.`, true);
+        compMessage(r.already ? `${r.email} already has Comped Mega Knox.` : `Gave free Mega Knox to ${r.email}.`, true);
         document.getElementById('compEmail').value = '';
         document.getElementById('compNote').value = '';
         await loadComped();
@@ -809,7 +809,7 @@
       try {
         const r = await compFetch('POST', { action: 'gift-codes', gift: document.getElementById('giftLength').value, count: document.getElementById('giftCount').value, note: document.getElementById('giftNote').value.trim() });
         out.value = r.codes.join('\n'); out.style.display = 'block'; out.select();
-        msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'} for ${r.label} of Knox Plus — copy them now.`; msg.className = 'comp-msg ok';
+        msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'} for ${r.label} of Mega Knox — copy them now.`; msg.className = 'comp-msg ok';
       } catch (err) { msg.textContent = err.message; msg.className = 'comp-msg err'; }
       finally { btn.disabled = false; }
     });
@@ -818,13 +818,13 @@
       const btn = e.target.closest('.comp-remove');
       if (!btn) return;
       const who = btn.dataset.label || 'this user';
-      if (!confirm(`Remove free Knox Plus from ${who}?`)) return;
+      if (!confirm(`Remove free Mega Knox from ${who}?`)) return;
       btn.disabled = true;
       try {
         const r = await compFetch('POST', { action: 'revoke', uid: btn.dataset.uid });
         compMessage(r.result === 'kept-paid'
-          ? `Removed the comp from ${who}. They keep Plus because they pay for it.`
-          : `Removed free Knox Plus from ${who}.`, true);
+          ? `Removed the comp from ${who}. They keep Mega Knox because they pay for it.`
+          : `Removed free Mega Knox from ${who}.`, true);
         await loadComped();
       } catch (err) {
         compMessage(err.message, false);
@@ -839,7 +839,7 @@
     try {
       const { comped } = await compFetch('GET');
       if (!comped.length) {
-        list.innerHTML = '<div class="comp-empty">Nobody has Comped Plus yet.</div>';
+        list.innerHTML = '<div class="comp-empty">Nobody has Comped Mega Knox yet.</div>';
         return;
       }
       list.innerHTML = comped.map(c => {
@@ -856,7 +856,7 @@
           </div>`;
       }).join('');
     } catch (err) {
-      list.innerHTML = '<div class="comp-empty">Could not load Comped Plus users: ' + escHtml(err.message) + '</div>';
+      list.innerHTML = '<div class="comp-empty">Could not load Comped Mega Knox users: ' + escHtml(err.message) + '</div>';
     }
   }
 
@@ -966,7 +966,7 @@
         <div class="metric-card purple">
           <div class="metric-label">All-time trials</div>
           <div class="metric-value">${fmt(trials.list.length)}</div>
-          <div class="metric-sub">Every Plus trial started</div>
+          <div class="metric-sub">Every Mega Knox trial started</div>
         </div>
       </div>
       <div class="card-lg card" style="margin-top:16px;">
@@ -1028,9 +1028,9 @@
           <div class="metric-label">Plan distribution</div>
           <div style="margin-top:14px;">
             ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
-            ${planBar('Knox Plus (paying)', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
+            ${planBar('Mega Knox (paying)', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
             ${planBar('Free trial', users.byPlan.trial || 0, users.total, 'purple')}
-            ${planBar('Comped Plus', users.byPlan.comped || 0, users.total, 'blue')}
+            ${planBar('Comped Mega Knox', users.byPlan.comped || 0, users.total, 'blue')}
           </div>
         </div>
       </div>
@@ -1084,7 +1084,7 @@
           <div class="metric-label">Satisfaction by plan</div>
           <div style="margin-top:14px;">
             ${modeBar('Free',      feedback.byPlan.free, 'orange')}
-            ${modeBar('Knox Plus', {
+            ${modeBar('Mega Knox', {
               up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.max?.up   || 0) + (feedback.byPlan.plus?.up   || 0),
               down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.max?.down || 0) + (feedback.byPlan.plus?.down || 0),
             }, 'green')}
@@ -1255,15 +1255,15 @@
   }
 
   function revPlanBars(byPlan) {
-    // Even though we now market one plan (Knox Plus), existing customers
+    // Even though we now market one plan (Mega Knox), existing customers
     // still pay via their original price IDs (super_monthly / super_yearly
     // for anyone who signed up when it was called Super, max_* for legacy
     // Max buyers). Merge by billing cadence rather than by legacy tier
     // name so the chart tells us what actually matters — monthly vs yearly
     // revenue split.
     const items = [
-      ['Plus Monthly', (byPlan.super_monthly || 0) + (byPlan.max_monthly || 0), 'orange'],
-      ['Plus Yearly',  (byPlan.super_yearly  || 0) + (byPlan.max_yearly  || 0), 'green'],
+      ['Mega Knox Monthly', (byPlan.super_monthly || 0) + (byPlan.max_monthly || 0), 'orange'],
+      ['Mega Knox Yearly', (byPlan.super_yearly  || 0) + (byPlan.max_yearly  || 0), 'green'],
     ];
     const total = items.reduce((s, [, n]) => s + n, 0) || 1;
     return items.map(([label, n, c]) => `

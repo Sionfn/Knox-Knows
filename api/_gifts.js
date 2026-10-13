@@ -1,9 +1,9 @@
-// api/_gifts.js — Knox Plus gift codes, shared by:
+// api/_gifts.js — Mega Knox gift codes, shared by:
 //   create-checkout-session.js (buy a gift), webhook.js (payment → code + email),
 //   admin-comp.js (make codes yourself) and redeem.js (use a code).
 // Files starting with "_" aren't deployed as their own Vercel functions.
 //
-// A gift is time-limited Plus with no subscription: redeeming adds its days
+// A gift is time-limited Mega Knox with no subscription: redeeming adds its days
 // to users/{uid}.plusUntil (stacking with any time left), and nothing ever
 // renews or charges the person who redeems it. Codes never expire.
 // Codes live in giftCodes/{code} (12 characters; Flame Fest friend links use 8).
@@ -34,7 +34,7 @@ export function normalizeCode(input) {
   return /^[A-Z0-9]{8}$|^[A-Z0-9]{12}$/.test(s) ? s : "";
 }
 
-// Make `count` fresh codes worth `days` of Plus (admin giveaways).
+// Make `count` fresh codes worth `days` of Mega Knox (admin giveaways).
 export async function createGiftCodes(db, { days, count = 1, source, ...extra }) {
   const codes = [];
   for (let i = 0; i < count; i++) {
@@ -56,10 +56,10 @@ export async function createGiftCodes(db, { days, count = 1, source, ...extra })
 export function giftEmail({ code, label, appUrl = "https://knoxknowsapp.com" }) {
   const pretty = formatCode(code);
   const link = `${appUrl}/redeem?code=${encodeURIComponent(pretty)}`;
-  const subject = `🎁 Your Knox Plus gift code (${label})`;
-  const text = `Thanks for giving Knox Plus!
+  const subject = `🎁 Your Mega Knox gift code (${label})`;
+  const text = `Thanks for giving Mega Knox!
 
-Gift: ${label} of Knox Plus
+Gift: ${label} of Mega Knox
 Code: ${pretty}
 
 To use it, open ${link} and sign in (or make a free account). The code works once and never expires. It's not a subscription — nothing renews and the person you give it to is never charged.
@@ -67,10 +67,10 @@ To use it, open ${link} and sign in (or make a free account). The code works onc
 Happy studying! 🦊
 — Sion at Knox Knows`;
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#18181B;">
-  <p style="font-size:16px;">Thanks for giving Knox Plus! Here's your gift card — forward this email or print it out.</p>
+  <p style="font-size:16px;">Thanks for giving Mega Knox! Here's your gift card — forward this email or print it out.</p>
   <div style="margin:22px 0;padding:26px 22px;border-radius:22px;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;text-align:center;box-shadow:0 6px 0 #CC5500;">
     <div style="font-size:40px;line-height:1;">🎁🦊</div>
-    <div style="font-size:24px;font-weight:900;margin:10px 0 2px;">${label} of Knox Plus</div>
+    <div style="font-size:24px;font-weight:900;margin:10px 0 2px;">${label} of Mega Knox</div>
     <div style="font-size:14px;font-weight:700;opacity:.9;">Unlimited homework help from Knox</div>
     <div style="margin:18px auto 6px;display:inline-block;padding:12px 18px;border-radius:14px;background:#fff;color:#18181B;font-family:'Courier New',monospace;font-size:20px;font-weight:900;letter-spacing:2px;">${pretty}</div>
   </div>

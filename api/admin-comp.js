@@ -1,14 +1,14 @@
-// /api/admin-comp.js — Knox Knows "Comped Plus" manager (admin only)
+// /api/admin-comp.js — Knox Knows "Comped Mega Knox" manager (admin only)
 //
-//   GET  → list every user currently given free Knox Plus
-//   POST { action: 'grant',  email, note? } → give free Knox Plus
+//   GET  → list every user currently given free Mega Knox
+//   POST { action: 'grant',  email, note? } → give free Mega Knox
 //   POST { action: 'revoke', uid }          → take it back
 //   POST { action: 'gift-codes', gift: '1m'|'3m'|'12m', count, note? }
-//        → make Knox Plus gift codes (giveaways; see api/_gifts.js)
+//        → make Mega Knox gift codes (giveaways; see api/_gifts.js)
 //
 // A comped user is stored as plan 'super' (what the rest of the app treats
-// as Knox Plus) plus comped: true. The webhook keeps Plus for comped users
-// if a paid subscription of theirs ends, and revoking never removes Plus
+// as Mega Knox) plus comped: true. The webhook keeps Mega Knox for comped users
+// if a paid subscription of theirs ends, and revoking never removes Mega Knox
 // that someone is actually paying for.
 //
 // Same lock as /api/admin-stats: the ADMIN_UID account with a verified email.
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Unknown action." });
   } catch (err) {
     console.error("Admin comp error:", err);
-    return res.status(500).json({ error: "Could not update Comped Plus. Please try again." });
+    return res.status(500).json({ error: "Could not update Comped Mega Knox. Please try again." });
   }
 }
 
@@ -126,7 +126,7 @@ async function grant(res, body, adminUid) {
     }, { merge: true });
     return false;
   });
-  console.log(`✓ Comped Plus ${already ? "already active" : "granted"}: uid=${account.uid}`);
+  console.log(`✓ Comped Mega Knox ${already ? "already active" : "granted"}: uid=${account.uid}`);
   return res.status(200).json({ ok: true, already, uid: account.uid, email: account.email });
 }
 
@@ -140,12 +140,12 @@ async function revoke(res, body) {
     if (!snap.exists || snap.data().comped !== true) return "not-comped";
     const d = snap.data();
     const update = { comped: false, compedRevokedAt: new Date().toISOString() };
-    // Someone who also pays keeps the Plus they're paying for.
+    // Someone who also pays keeps the Mega Knox they're paying for.
     if (!hasLiveSubscription(d)) Object.assign(update, { plan: "free", planStatus: "none" });
     tx.set(ref, update, { merge: true });
     return hasLiveSubscription(d) ? "kept-paid" : "revoked";
   });
-  if (result === "not-comped") return res.status(404).json({ error: "That user doesn't have Comped Plus." });
-  console.log(`✓ Comped Plus removed: uid=${uid} (${result})`);
+  if (result === "not-comped") return res.status(404).json({ error: "That user doesn't have Comped Mega Knox." });
+  console.log(`✓ Comped Mega Knox removed: uid=${uid} (${result})`);
   return res.status(200).json({ ok: true, result });
 }

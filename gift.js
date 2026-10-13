@@ -1,7 +1,7 @@
-// gift.js — Knox Plus gift codes in the app.
+// gift.js — Mega Knox gift codes in the app.
 //
 //   window.knoxGifts.openRedeem(code?) — "Redeem a code" (account menu, /redeem)
-//   window.knoxGifts.openBuy()         — "Give Knox Plus" (account menu, pricing)
+//   window.knoxGifts.openBuy()         — "Give Mega Knox" (account menu, pricing)
 // URL hooks: /redeem, ?code=…, ?gift=… (Flame Fest friend links),
 // ?buy_gift=1 (from the landing page) and ?gift_purchase=success (back from Stripe).
 // The server (api/redeem.js, api/create-checkout-session.js) does all checks.
@@ -48,8 +48,8 @@
   // Signed out: remember what they wanted, ask them to sign in, carry on after.
   function needSignIn(action, code) {
     try { sessionStorage.setItem('knoxGiftAction', JSON.stringify({ action, code: code || '' })); } catch (e) {}
-    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">${action === 'buy' ? 'Give Knox Plus' : 'Redeem your gift'}</h2>
-      <p>${action === 'buy' ? 'Sign in first, so we can send your gift code to your email.' : 'Sign in or make a free account to add your Knox Plus gift.'}</p>
+    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">${action === 'buy' ? 'Give Mega Knox' : 'Redeem your gift'}</h2>
+      <p>${action === 'buy' ? 'Sign in first, so we can send your gift code to your email.' : 'Sign in or make a free account to add your Mega Knox gift.'}</p>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-signin>Sign in</button></div>`);
     m.querySelector('[data-signin]').addEventListener('click', () => { close(); window.openAuthModal?.(); });
   }
@@ -58,11 +58,11 @@
   async function openRedeem(code = '') {
     if (!window.currentUser) return needSignIn('redeem', code);
     const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Redeem a code</h2>
-      <p>Got a Knox Plus gift card? Enter the code to add Plus to your account.</p>
+      <p>Got a Mega Knox gift card? Enter the code to add Mega Knox to your account.</p>
       <form class="kg-form" autocomplete="off"><input class="kg-input" id="kgCode" placeholder="KNOX-XXXX-XXXX-XXXX" value="${esc(code)}" aria-label="Gift code" autocapitalize="characters" spellcheck="false" maxlength="40"><button type="submit" class="ff-claim">Redeem</button></form>
       <div class="kg-msg" role="status"></div>
       <div class="kg-bought"></div>
-      <button type="button" class="ff-pop-later" data-buy>🎁 Want to give Knox Plus instead?</button>`);
+      <button type="button" class="ff-pop-later" data-buy>🎁 Want to give Mega Knox instead?</button>`);
     const input = m.querySelector('#kgCode'), msg = m.querySelector('.kg-msg');
     input.focus();
     m.querySelector('[data-buy]').addEventListener('click', openBuy);
@@ -74,8 +74,8 @@
         const r = await api('/api/redeem', 'POST', { code: input.value });
         window.knoxRefreshPlan?.();
         const until = new Date(r.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-        show(`<div class="ff-pop-flame" aria-hidden="true">⚡</div><h2 id="kgTitle">You’re on Knox Plus!</h2>
-          <p>Your gift added ${r.days} days of Plus — unlimited questions and everything else Plus has, through <b>${until}</b>. Nothing renews and you won’t be charged. 🎉</p>
+        show(`<div class="ff-pop-flame" aria-hidden="true">⚡</div><h2 id="kgTitle">You’re on Mega Knox!</h2>
+          <p>Your gift added ${r.days} days of Mega Knox — unlimited questions and everything else Mega Knox has, through <b>${until}</b>. Nothing renews and you won’t be charged. 🎉</p>
           <div class="ff-pop-actions"><button type="button" class="ff-claim" data-ok>Let’s go</button></div>`).querySelector('[data-ok]').addEventListener('click', close);
       } catch (err) { msg.className = 'kg-msg err'; msg.textContent = err.message; btn.disabled = false; }
     });
@@ -96,13 +96,13 @@
   // ── Buy a gift ──────────────────────────────────────────────────────────
   function openBuy() {
     if (!window.currentUser) return needSignIn('buy');
-    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Give Knox Plus</h2>
+    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Give Mega Knox</h2>
       <p>A gift card for unlimited homework help. You get a code by email to give or print — no subscription, it never renews.</p>
       <div class="kg-options" role="radiogroup" aria-label="Gift length">${OPTIONS.map((o, i) =>
         `<button type="button" class="kg-option${o.id === '12m' ? ' on' : ''}" role="radio" aria-checked="${o.id === '12m'}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('')}</div>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-checkout>Continue to payment</button></div>
       <div class="kg-msg" role="status"></div>
-      <p class="kg-fine">The code works once and never expires. Whoever redeems it gets Knox Plus for that long, then goes back to the free plan — they’re never charged.</p>`);
+      <p class="kg-fine">The code works once and never expires. Whoever redeems it gets Mega Knox for that long, then goes back to the free plan — they’re never charged.</p>`);
     let choice = '12m';
     m.querySelector('.kg-options').addEventListener('click', e => {
       const b = e.target.closest('[data-gift]'); if (!b) return;
