@@ -20,9 +20,9 @@
     (function() {
       try {
         // Three looks: light (default), dark, and seasonal (fall) — seasonal
-        // is built on dark, plus the .knox-seasonal class (see seasonal.css).
+        // is the light Knox look plus the .knox-seasonal class (see seasonal.css).
         var t = localStorage.getItem('knoxTheme');
-        if (t === 'dark' || t === 'seasonal') {
+        if (t === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
         if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
