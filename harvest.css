@@ -1,0 +1,51 @@
+/* Fall harvest: parchment, chestnut and cranberry. Shared by both pages. */
+html.knox-seasonal[data-theme="dark"] {
+ --cream:#FBF3E5; --cream-warm:#F4E6CF; --gray:#F1E2CB;
+ --surface:#FFF9EF; --border:#D7BE99; --text:#38291F;
+ --text-light:#78604B; --text-body:#594332;
+ --orange-cream:#FBE4C6; --orange-light:#F5C78C;
+ --purple-light:#F1DADD; --purple-on-tint:#8C3C4D;
+ --blue-light:#DDECEF; --blue-dark:#24647A; --blue-on-tint:#24647A;
+ --green-light:#E6EACD; --shadow:0 4px 0 #D7BE99; color-scheme:light;
+}
+.harvest-bough,.harvest-wheat,.harvest-sun { display:none; }
+html.knox-seasonal #welcomeScreen,html.knox-seasonal #home {
+ background-color:var(--cream)!important;
+ background-image:radial-gradient(ellipse at 85% 10%,#F3D5A580,transparent 48%),radial-gradient(ellipse at 5% 95%,#DDBA8540,transparent 48%); isolation:isolate;
+}
+html.knox-seasonal .harvest-bough { display:block; position:absolute!important; top:0; left:0; width:clamp(140px,22vw,330px); height:auto; pointer-events:none; z-index:0!important; opacity:.7; }
+html.knox-seasonal .harvest-wheat { display:block; position:absolute!important; right:28px; bottom:25px; width:95px; pointer-events:none; z-index:0!important; }
+html.knox-seasonal .harvest-sun { display:block; position:absolute; width:260px; height:260px; top:-75px; right:-70px; border:1px solid #BD854C35; border-radius:50%; background:#ECC57835; box-shadow:0 0 0 24px #ECC57815,0 0 0 48px #ECC57810; }
+html.knox-seasonal .fall-leaf { opacity:.55; animation-name:harvestDrift; top:0; }
+@keyframes harvestDrift { from { transform:translate3d(0,-70px,0); } to { transform:translate3d(28px,85vh,0); } }
+html.knox-seasonal .fall-harvest { width:clamp(100px,13vw,185px); bottom:9px; opacity:.9; }
+html.knox-seasonal .fall-harvest.right { right:90px; width:115px; }
+html.knox-seasonal .welcome-badge,html.knox-seasonal .hero-badge { color:#873D28!important; background:#FBE4C6!important; border-color:#D99857!important; box-shadow:0 3px 0 #D8AE79!important; }
+html.knox-seasonal .welcome-accent,html.knox-seasonal .hero-accent { color:#B94D24; text-shadow:none; }
+html.knox-seasonal .suggestion-chip { background:#FFF9EF; border-color:#D7BE99; box-shadow:0 5px 0 #D7BE99; }
+html.knox-seasonal #rightSidebar,html.knox-seasonal .sidebar-top { background:#F1E3CE; border-right-color:#D7BE99; box-shadow:none; }
+html.knox-seasonal #inputOuter { background:#FBF3E5; border-color:#C97837; box-shadow:0 -6px 24px #7953360A; }
+html.knox-seasonal #inputBox { background:#FFF9EF; border-color:#B89A73; }
+html.knox-seasonal .fc-deck,html.knox-seasonal .fc-card-row { background:var(--surface); }
+html.knox-seasonal #home .hero-mascot { filter:none!important; outline:none; display:block; margin:0 auto 22px; }
+html.knox-seasonal #home .hero-badge::after { content:' • A season to grow'; font-size:.85em; }
+html.knox-seasonal .knox-theme-menu button[data-mode="seasonal"] .ktm-icon { background:#F4D7A6; }
+html.knox-seasonal :is(input,textarea,select) { color:var(--text); }
+html.knox-seasonal .sidebar-extension-card { background:#E1EFF2; color:#245368; }
+html.knox-seasonal .sidebar-extension-card strong { color:#245368; }
+/* Seasonal uses a light surface even though the theme engine sets dark. */
+html.knox-seasonal .subject-showcase-card.math { --subject-tint:#FBE4C6; --subject-ink:#A34314; }
+html.knox-seasonal .subject-showcase-card.science { --subject-tint:#E6EACD; --subject-ink:#4B641E; }
+html.knox-seasonal .subject-showcase-card.history { --subject-tint:#ECE2F2; --subject-ink:#72518E; }
+html.knox-seasonal .subject-showcase-card.english { --subject-tint:#DDECEF; --subject-ink:#24647A; }
+html.knox-seasonal .subject-showcase-card.computer-science { --subject-tint:#F3DFE7; --subject-ink:#963E68; }
+html.knox-seasonal .subject-showcase-card.languages { --subject-tint:#DCECE4; --subject-ink:#286D61; }
+html.knox-seasonal .subject-showcase-card.economics { --subject-tint:#F5E6C1; --subject-ink:#825A1E; }
+html.knox-seasonal .subject-showcase-card.test-prep { --subject-tint:#F3DDD5; --subject-ink:#9D4237; }
+@media(max-width:768px) {
+ html.knox-seasonal .harvest-bough { width:145px; opacity:.35; }
+ html.knox-seasonal .harvest-wheat { width:55px; right:8px; opacity:.45; }
+ html.knox-seasonal .fall-leaf { opacity:.25; }
+ html.knox-seasonal #home .hero-badge::after { content:none; }
+}
+@media(prefers-reduced-motion:reduce) { html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); } }

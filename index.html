@@ -20,9 +20,9 @@
     (function() {
       try {
         // Three looks: light (default), dark, and seasonal (fall) — seasonal
-        // is the light Knox look plus the .knox-seasonal class (see seasonal.css).
+        // is built on dark, plus the .knox-seasonal class (see seasonal.css).
         var t = localStorage.getItem('knoxTheme');
-        if (t === 'dark') {
+        if (t === 'dark' || t === 'seasonal') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
         if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
@@ -295,7 +295,6 @@ html.knox-fit-short #home { padding-top: 22px !important; padding-bottom: 28px !
 html.knox-fit-short #home .hero-badge { margin-bottom: 12px !important; }
 html.knox-fit-short #home h1 + p { margin-top: 12px !important; }
 html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
-}
 
     * { margin:0; padding:0; box-sizing:border-box; }
     html {
@@ -2083,6 +2082,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <script src="/modal-click-guard.js" defer></script>
 <script src="/password-field.js" defer></script>
 <script src="/calc-percent.js"></script>
+  <link rel="stylesheet" href="/harvest.css">
 </head>
 <body class="landing-loading">
 

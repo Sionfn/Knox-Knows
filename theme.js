@@ -14,7 +14,7 @@
   const MODES = [
     { id: 'light',    icon: '☀️', name: 'Light', note: 'Knox’s classic look' },
     { id: 'dark',     icon: '🌙', name: 'Dark',  note: 'Easy on the eyes at night' },
-    { id: 'seasonal', icon: '🍁', name: 'Fall',  note: 'Warm colors, autumn leaves & Thanksgiving' },
+    { id: 'seasonal', icon: '🍁', name: 'Fall harvest', note: 'Warm colors, autumn leaves & Thanksgiving' },
   ];
   const current = () => root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   window.knoxTheme = current;
@@ -24,7 +24,7 @@
     // Pause color transitions while the look changes (see .knox-theme-switching)
     // so every element switches in the same frame.
     root.classList.add('knox-theme-switching');
-    if (mode === 'dark') root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme'); // Fall is built on the light look
+    if (mode === 'light') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
     root.classList.toggle('knox-seasonal', mode === 'seasonal');
     try { localStorage.setItem('knoxTheme', mode); } catch (e) { /* best effort */ }
     syncIcons();
@@ -115,8 +115,7 @@
 
   // ── Fall decorations ────────────────────────────────────────────────────
   const LEAF = '<svg viewBox="0 0 40 40" aria-hidden="true"><path fill="COLOR" d="M20 2l3.2 7.4 6.6-3.1-1.6 7.6 7.9.5-5.4 5.6 5.8 4.1-7.4 1.6 1.9 7.2-6.9-3.6L20 38l-3.1-8.7-6.9 3.6 1.9-7.2-7.4-1.6 5.8-4.1-5.4-5.6 7.9-.5-1.6-7.6 6.6 3.1z"/><path d="M20 12v26" stroke="rgba(0,0,0,.25)" stroke-width="1.4" fill="none"/></svg>';
-  // Knox's own orange and yellow, plus autumn red and gold.
-  const COLORS = ['#FF6B00', '#FFB800', '#E8553A', '#FF9500', '#FFC93C', '#D9480F', '#FF8A2B', '#F2A900'];
+  const COLORS = ['#E8620C', '#C0392B', '#F2A900', '#D35400', '#A0522D', '#E67E22', '#B03A2E', '#F5B041'];
   function leaves(n) {
     let html = '';
     for (let i = 0; i < n; i++) {
@@ -144,15 +143,14 @@
       <g transform="translate(130 92) rotate(-25) scale(.55)">${LEAF.replace('COLOR', '#C0392B').replace(/<\/?svg[^>]*>/g, '')}</g>
       <g transform="translate(70 96) rotate(35) scale(.45)">${LEAF.replace('COLOR', '#F2A900').replace(/<\/?svg[^>]*>/g, '')}</g>
     </svg>`;
-  // A leafy branch in the top corner and a wheat bundle by the pumpkins.
-  const BOUGH = `<svg class="harvest-bough" viewBox="0 0 340 250" aria-hidden="true" focusable="false"><g fill="none" stroke="#8B5A2B" stroke-linecap="round"><path d="M-20 12Q130 5 270 190M123 58Q210 40 306 100" stroke-width="5"/><path d="M42 19Q55 25 60 36M106 44L96 39M135 63L122 60M229 142Q213 132 204 122M208 61L211 66M275 84L261 91" stroke-width="3"/></g><g fill="#FF6B00"><path d="M60 36Q8 39 16 96Q68 93 60 36Z"/><path d="M122 60Q76 89 111 137Q152 107 122 60Z"/><path d="M204 122Q149 119 153 172Q206 178 204 122Z"/></g><g fill="#FFB800"><path d="M96 39Q116 -12 167 14Q147 62 96 39Z"/><path d="M211 66Q231 20 274 46Q257 87 211 66Z"/><path d="M261 91Q296 72 318 118Q272 135 261 91Z"/></g></svg>`;
-  const WHEAT = `<svg class="harvest-wheat" viewBox="0 0 120 190" aria-hidden="true" focusable="false"><g fill="none" stroke="#C98B2E" stroke-width="3" stroke-linecap="round"><path d="M60 190L56 24M60 190L20 61M60 190L100 51"/></g><g fill="#F2B544"><ellipse cx="47" cy="43" rx="7" ry="16" transform="rotate(-30 47 43)"/><ellipse cx="65" cy="57" rx="7" ry="16" transform="rotate(30 65 57)"/><ellipse cx="47" cy="77" rx="7" ry="16" transform="rotate(-30 47 77)"/><ellipse cx="65" cy="92" rx="7" ry="16" transform="rotate(30 65 92)"/><ellipse cx="17" cy="79" rx="7" ry="16" transform="rotate(-35 17 79)"/><ellipse cx="32" cy="104" rx="7" ry="16" transform="rotate(10 32 104)"/><ellipse cx="99" cy="74" rx="7" ry="16" transform="rotate(30 99 74)"/><ellipse cx="84" cy="101" rx="7" ry="16" transform="rotate(-10 84 101)"/></g></svg>`;
   function decorate() {
     const host = document.getElementById('welcomeScreen') || document.getElementById('home');
     if (!host || host.querySelector(':scope > .fall-sky')) return;
     host.insertAdjacentHTML('afterbegin',
-      `<div class="fall-sky" aria-hidden="true"><div class="harvest-sun"></div>${leaves(12)}</div>` + BOUGH +
-      HARVEST.replace('SIDE', 'left') + HARVEST.replace('SIDE', 'right') + WHEAT);
+      `<div class="fall-sky" aria-hidden="true"><div class="harvest-sun"></div>${leaves(10)}</div>` +
+      `<svg class="harvest-bough" viewBox="0 0 340 250" aria-hidden="true" focusable="false"><g fill="none" stroke="#795336" stroke-linecap="round"><path d="M-20 12Q130 5 270 190M123 58Q210 40 306 100" stroke-width="5"/><path d="M42 19Q55 25 60 36M106 44L96 39M135 63L122 60M229 142Q213 132 204 122M208 61L211 66M275 84L261 91" stroke-width="3"/></g><g fill="#B84F28"><path d="M60 36Q8 39 16 96Q68 93 60 36Z"/><path d="M122 60Q76 89 111 137Q152 107 122 60Z"/><path d="M204 122Q149 119 153 172Q206 178 204 122Z"/></g><g fill="#D99732"><path d="M96 39Q116 -12 167 14Q147 62 96 39Z"/><path d="M211 66Q231 20 274 46Q257 87 211 66Z"/><path d="M261 91Q296 72 318 118Q272 135 261 91Z"/></g></svg>` +
+      HARVEST.replace('SIDE', 'left') + HARVEST.replace('SIDE', 'right') +
+      `<svg class="harvest-wheat" viewBox="0 0 120 190" aria-hidden="true" focusable="false"><g fill="none" stroke="#C99543" stroke-width="3" stroke-linecap="round"><path d="M60 190L56 24M60 190L20 61M60 190L100 51"/></g><g fill="#D8AD60"><ellipse cx="47" cy="43" rx="7" ry="16" transform="rotate(-30 47 43)"/><ellipse cx="65" cy="57" rx="7" ry="16" transform="rotate(30 65 57)"/><ellipse cx="47" cy="77" rx="7" ry="16" transform="rotate(-30 47 77)"/><ellipse cx="65" cy="92" rx="7" ry="16" transform="rotate(30 65 92)"/><ellipse cx="17" cy="79" rx="7" ry="16" transform="rotate(-35 17 79)"/><ellipse cx="32" cy="104" rx="7" ry="16" transform="rotate(10 32 104)"/><ellipse cx="99" cy="74" rx="7" ry="16" transform="rotate(30 99 74)"/><ellipse cx="84" cy="101" rx="7" ry="16" transform="rotate(-10 84 101)"/></g></svg>`);
   }
 
   // ── "Fall mode is here" tip (app welcome screen; dismissible) ──────────
@@ -163,7 +161,7 @@
     const el = document.createElement('div');
     el.className = 'fall-tip';
     el.setAttribute('role', 'note');
-    el.innerHTML = '<span aria-hidden="true">🍂</span><span class="ft-text">Fall mode is here — warm colors and falling leaves.</span><button type="button" class="ft-btn">Try it</button><button type="button" class="ft-x" aria-label="Hide this tip" title="Hide">×</button>';
+    el.innerHTML = '<span aria-hidden="true">🍁</span><span class="ft-text">A fresh fall look. Make yourself at home.</span><button type="button" class="ft-btn">Try it</button><button type="button" class="ft-x" aria-label="Hide this tip" title="Hide">×</button>';
     el.querySelector('.ft-btn').addEventListener('click', () => window.knoxSetTheme('seasonal'));
     el.querySelector('.ft-x').addEventListener('click', () => { el.remove(); try { localStorage.setItem('knoxFallTip', 'hidden'); } catch (e) {} });
     badge.before(el);

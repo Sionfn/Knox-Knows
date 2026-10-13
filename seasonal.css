@@ -1,7 +1,7 @@
 /* seasonal.css — Knox's three looks, shared by the app and the landing page.
    Light: the default. Dark: html[data-theme="dark"] (the night look below).
-   Seasonal (fall / Thanksgiving): the light look plus html.knox-seasonal —
-   a warmer cream, falling leaves, pumpkins and wheat (theme.js adds them).
+   Seasonal (fall / Thanksgiving): dark plus html.knox-seasonal — a warm
+   harvest palette, falling leaves and a few pumpkins (theme.js adds them).
    The brand accent colors stay the same in every look. */
 
 /* ── Dark: the night look from the old Halloween mode, minus the Halloween
@@ -51,25 +51,32 @@ html[data-theme="dark"]:not(.knox-seasonal) .hero-badge { background: #2A1D1A !i
 html[data-theme="dark"]:not(.knox-seasonal) .hero-accent { text-shadow: 0 0 34px rgba(255,107,0,.35); }
 html[data-theme="dark"]:not(.knox-seasonal) .hero-mascot { filter: drop-shadow(0 0 34px rgba(255,140,40,.45)) !important; }
 
-/* ── Fall (seasonal): the light Knox Knows look — same bright colors,
-   sticker cards and shadows — with a warmer cream, a harvest sun, a leafy
-   branch, falling leaves, pumpkins and wheat (theme.js adds the art). ── */
-html.knox-seasonal:not([data-theme="dark"]) {
-  --cream:        #FFF3E3;
-  --cream-warm:   #FFEBD3;
-  --orange-cream: #FFF1E0;
-  --orange-light: #FFDDB8;
-  --border:       #EEDCC6;
+/* ── Seasonal palette: cozy autumn evening ───────────────────────────── */
+html.knox-seasonal[data-theme="dark"] {
+  --cream:        #17100B;
+  --cream-warm:   #1F160F;
+  --gray:         #261B13;
+  --surface:      #2F2219;
+  --border:       #4C3626;
+  --text:         #FAF0E4;
+  --text-light:   #CDB59D;
+  --text-body:    #E3D2C0;
+  --orange-cream: #2F1D0F;
+  --orange-light: #6E3A11;
+  --green-light:  #3D4A14;
+  --purple-light: #4A1D2B;
+  --purple-on-tint: #F2A9BE;
+  color-scheme: dark;
 }
-html.knox-seasonal,
-html.knox-seasonal body { background: var(--cream); }
+html.knox-seasonal[data-theme="dark"],
+html.knox-seasonal[data-theme="dark"] body { background: var(--cream); }
 
 /* Only-in-fall / not-in-fall text swaps (badges). */
-.season-only, .fall-sky, .fall-harvest, .harvest-bough, .harvest-wheat { display: none; }
+.season-only, .fall-sky, .fall-harvest { display: none; }
 html.knox-seasonal .season-only { display: inline; }
 html.knox-seasonal .season-hide { display: none; }
 
-/* ── Falling leaves + harvest sun ─────────────────────────────────────── */
+/* ── Falling leaves (theme.js puts .fall-sky in the welcome/hero area) ── */
 html.knox-seasonal .fall-sky {
   display: block; position: absolute; inset: 0; overflow: hidden;
   pointer-events: none; z-index: 0;
@@ -78,7 +85,7 @@ html.knox-seasonal .fall-sky {
   position: absolute; top: -60px; left: var(--x);
   width: var(--s, 26px); height: var(--s, 26px);
   animation: fallDrop var(--d, 14s) linear infinite; animation-delay: var(--delay, 0s);
-  opacity: .75;
+  opacity: .9;
 }
 .fall-leaf svg { width: 100%; height: 100%; animation: fallSway var(--sway, 4s) ease-in-out infinite alternate; }
 @keyframes fallDrop { to { top: 105%; } }
@@ -86,49 +93,57 @@ html.knox-seasonal .fall-sky {
   from { transform: translateX(-18px) rotate(-35deg); }
   to   { transform: translateX(18px) rotate(40deg); }
 }
-.harvest-sun { position: absolute; width: 280px; height: 280px; top: -90px; right: -80px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,200,60,.38), rgba(255,160,40,.16) 60%, transparent 70%); }
 
-/* Branch (top-left), pumpkins + acorns (bottom corners), wheat (bottom-right) */
-html.knox-seasonal .harvest-bough { display: block; position: absolute; top: 0; left: 0; width: clamp(150px, 20vw, 300px); height: auto; pointer-events: none; z-index: 0; opacity: .9; }
-html.knox-seasonal .fall-harvest { display: block; position: absolute; bottom: 6px; width: 170px; height: auto; z-index: 0; pointer-events: none; }
+/* Pumpkins and acorns in the bottom corners (desktop only) */
+html.knox-seasonal .fall-harvest {
+  display: block; position: absolute; bottom: 6px; width: 170px; height: auto;
+  z-index: 0; pointer-events: none;
+}
 html.knox-seasonal .fall-harvest.left { left: 16px; }
-html.knox-seasonal .fall-harvest.right { right: 96px; width: 130px; transform: scaleX(-1); }
-html.knox-seasonal .harvest-wheat { display: block; position: absolute; right: 24px; bottom: 18px; width: 90px; pointer-events: none; z-index: 0; }
+html.knox-seasonal .fall-harvest.right { right: 16px; transform: scaleX(-1); }
 @media (max-width: 768px) {
-  html.knox-seasonal .fall-harvest, html.knox-seasonal .harvest-wheat { display: none; }
-  html.knox-seasonal .harvest-bough { width: 130px; opacity: .55; }
-  html.knox-seasonal .fall-sky .fall-leaf:nth-child(n+8) { display: none; }
-  html.knox-seasonal .fall-leaf { opacity: .5; }
+  html.knox-seasonal .fall-harvest { display: none; }
+  html.knox-seasonal .fall-sky .fall-leaf:nth-child(n+7) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fall-leaf, .fall-leaf svg { animation: none !important; }
   .fall-leaf { top: var(--rest, 20%); }
 }
 
-/* ── App ──────────────────────────────────────────────────────────────── */
+/* ── App touches ─────────────────────────────────────────────────────── */
 html.knox-seasonal #welcomeScreen {
   background-color: var(--cream);
   background-image:
-    radial-gradient(ellipse at 85% 8%, rgba(255,184,0,.16), transparent 46%),
-    radial-gradient(ellipse at 8% 96%, rgba(255,107,0,.10), transparent 46%);
+    radial-gradient(ellipse at 82% 8%, rgba(255,166,64,.14), transparent 46%),
+    radial-gradient(ellipse at 10% 96%, rgba(196,74,36,.16), transparent 46%);
 }
 html.knox-seasonal #welcomeScreen::before,
 html.knox-seasonal #welcomeScreen::after { display: none; }
 /* The app gives every welcome-screen child position:relative; keep the
-   art absolute and behind the content. */
-html.knox-seasonal #welcomeScreen > :is(.fall-sky, .fall-harvest, .harvest-bough, .harvest-wheat),
-html.knox-seasonal #home > :is(.fall-sky, .fall-harvest, .harvest-bough, .harvest-wheat) { position: absolute; z-index: 0; }
+   decorations absolute and behind the content. */
+html.knox-seasonal #welcomeScreen > .fall-sky,
+html.knox-seasonal #home > .fall-sky { position: absolute; z-index: 0; }
+html.knox-seasonal #welcomeScreen > .fall-harvest,
+html.knox-seasonal #home > .fall-harvest { position: absolute; z-index: 0; }
+html.knox-seasonal .welcome-badge {
+  background: #3A2210; border-color: var(--orange);
+  box-shadow: 0 3px 0 #A34700, 0 0 26px rgba(255,140,40,.2);
+}
+html.knox-seasonal .welcome-accent { text-shadow: 0 0 28px rgba(255,140,40,.3); }
+html.knox-seasonal .suggestion-chip { background: rgba(47,34,25,.97); }
 html.knox-seasonal .sidebar-section-header > span::before { content: '🍂'; margin-right: 6px; font-size: 11px; }
+html.knox-seasonal #inputOuter { box-shadow: 0 -10px 28px rgba(255,140,40,.06); }
 
-/* ── Landing page ─────────────────────────────────────────────────────── */
+/* ── Landing page touches ────────────────────────────────────────────── */
 html.knox-seasonal #home {
   background-color: var(--cream) !important;
   background-image:
-    radial-gradient(ellipse at 85% 10%, rgba(255,184,0,.16), transparent 46%),
-    radial-gradient(ellipse at 8% 96%, rgba(255,107,0,.10), transparent 46%);
+    radial-gradient(ellipse at 84% 10%, rgba(255,166,64,.14), transparent 46%),
+    radial-gradient(ellipse at 8% 96%, rgba(196,74,36,.16), transparent 46%);
 }
 html.knox-seasonal #home > .hero-blob { display: none; }
+html.knox-seasonal .hero-badge { background: #3A2210 !important; box-shadow: 0 3px 0 #A34700, 0 0 26px rgba(255,140,40,.2); }
+html.knox-seasonal .hero-accent { text-shadow: 0 0 34px rgba(255,140,40,.3); }
 
 /* ── Theme picker (app: the Appearance button opens it) ──────────────── */
 .knox-theme-menu {
