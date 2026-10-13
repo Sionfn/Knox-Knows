@@ -375,8 +375,13 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /Never solve the whole photo/);
   assert.match(system, /Learn mode \(this overrides the response types above\)/);
   assert.match(system, /Not quite/);
-  assert.match(system, /After a first wrong answer, do not reveal the correct answer/);
-  assert.match(system, /Never reveal or hint at answers to problems the student has not attempted yet/);
+  assert.match(system, /After a first wrong answer, don't reveal the correct one/);
+  assert.match(system, /Never reveal or hint at answers to problems they haven't attempted yet/);
+  // Every kind of question is taught, not just math problems.
+  assert.match(system, /Concept questions \("why do leaves change color\?"/);
+  assert.match(system, /never write it for them/);
+  assert.match(system, /"Just give me the answer": kindly ask for one try first/);
+  assert.match(system, /must not contain the result or the full explanation/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
   const userText = requests[0].messages.at(-1).content.find(part => part.type === 'text').text;
   assert.match(userText, /instead of solving it/);
@@ -938,8 +943,10 @@ test('Learn mode guides even simple arithmetic instead of answering it', async (
   const res = response();
   await handler(askRequest({ question: '2 x 4', history: [{ role: 'user', content: 'hey' }, { role: 'assistant', content: "Hey! What's up?" }], learnMode: true }), res);
   const prompt = ai.calls.find(call => !isSmallTalkCheck(call)).messages[0].content;
-  assert.match(prompt, /even very simple ones like 2 x 4.*never the answer or an Answer: line in your first reply/s);
-  assert.match(prompt, /Final check before every Learn reply.*\n?.*ask a guiding question instead.$/s, 'the reminder is the last thing in the Learn instructions');
+  assert.match(prompt, /Your first reply to anything new never gives the answer/);
+  assert.match(prompt, /even very simple ones like 2 x 4/);
+  assert.match(prompt, /Never write an Answer: line in Learn mode/);
+  assert.match(prompt, /Final check before every Learn reply.*ask a guiding question instead.*not a quick fact to state\.$/s, 'the reminder is the last thing in the Learn instructions');
   assert.doesNotMatch(prompt, /Bare math:/);
 });
 

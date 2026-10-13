@@ -78,6 +78,7 @@ test('Learn replies get a heading that matches the message', () => {
   assert.equal(heading('Yes, that’s right! Neptune is the farthest.'), 'Nice work');
   assert.equal(heading('I read the worksheet as naming the planets.'), "Let's start");
   assert.equal(heading('Here’s how to do it:\n1. Find the Sun\n2. Count outward'), 'Worked example');
-  assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Study hint');
+  assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Your turn', 'Knox asked: the student answers next');
+  assert.equal(heading('Think about which planets are closest to the Sun first.'), 'Study hint');
   assert.doesNotMatch(context.renderAnswerHtml('Yes', 'answer'), /knox-response-heading/);
 });
