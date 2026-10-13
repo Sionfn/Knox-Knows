@@ -6,28 +6,16 @@ import { runInNewContext } from 'node:vm';
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 const app = read('app.html');
 
-test('Knox Calculator math: school rules, percent, functions, degrees, friendly errors (no eval)', () => {
-  const context = {};
-  runInNewContext(read('calc-core.js'), context);
-  const M = context.KnoxMath;
-  const val = (text, opts = { deg: true, ans: 21 }) => { const r = M.evaluate(text, opts); return r.error ? 'ERR ' + r.error : M.format(r.value); };
-  for (const [text, want] of [
-    ['12×(3+4)', '84'], ['2π', '6.28318530718'], ['3(4)', '12'], ['(2)(3)', '6'], ['2sin(30)', '1'], ['6÷2(1+2)', '9'],
-    ['-3^2', '-9'], ['−3^2', '-9'], ['2^3^2', '512'], ['3²', '9'], ['4³+1', '65'], ['5!', '120'], ['0.1+0.2', '0.3'],
-    // percent is postfix ÷100 and keeps grouping (same as the old calculator)
-    ['2/50%', '4'], ['(20+30)%', '0.5'], ['2/(20+30)%', '4'], ['√(25)%', '0.05'], ['50%%', '0.005'], ['2(30)%', '0.6'],
-    ['√16', '4'], ['∛-27', '-3'], ['(-8)^(1/3)', '-2'], ['sin(30)', '0.5'], ['cos(90)', '0'], ['sin(180)', '0'], ['tan(45)', '1'],
-    ['sin⁻¹(0.5)', '30'], ['log(1000)', '3'], ['ln(e)', '1'], ['abs(-7)', '7'], ['10^3', '1000'], ['Ans×2', '42'], ['(3+4', '7'],
-    ['7÷0', "ERR Can't divide by 0"], ['tan(90)', 'ERR tan is undefined there'], ['√-4', 'ERR No real answer'],
-    ['cos⁻¹(2)', 'ERR Use a number from −1 to 1'], ['2.5!', 'ERR ! needs a whole number'], ['3+4)', 'ERR Check your brackets'],
-    ['2+', 'ERR Finish the problem'], ['(+', 'ERR Finish the problem'], ['alert(1)', "ERR Knox can't read that"],
-  ]) assert.equal(val(text), want, text);
-  assert.equal(val('sin(π/2)', { deg: false }), '1', 'radians');
-  assert.equal(val('Ans+1', { deg: true }), 'ERR No answer yet');
-  assert.equal(M.format(1e22), '1 × 10²²');
-  assert.equal(M.fraction(0.75), '3/4'); assert.equal(M.fraction(1 / 3), '1/3'); assert.equal(M.fraction(-0.5), '−1/2');
-  assert.equal(M.fraction(Math.PI), ''); assert.equal(M.fraction(4), '');
-  assert.doesNotMatch(read('calc-core.js'), /\bFunction\(|\beval\(/, 'never runs typed text as code');
+test('calculator postfix percentages preserve precedence and grouping', () => {
+  const context = { window: { _calcUseDeg: true }, $: () => null };
+  runInNewContext(read('calc-percent.js'), context);
+  runInNewContext(app.slice(app.indexOf('function normalizeCalcExpr('), app.indexOf('window.calcMemStore')), context);
+  for (const [expression, expected] of [['2/50%', '4'], ['(20+30)%', '0.5'], ['2/(20+30)%', '4'], ['Math.sqrt(25)%', '0.05'], ['50%%', '0.005'], ['2(30)%', '0.6']]) {
+    context.window._calcExpr = expression; context.window._calcOpenParens = 0;
+    context.window.calcEquals(); assert.equal(context.window._calcExpr, expected, expression);
+  }
+  context.window._calcExpr = '(+'; context.window._calcOpenParens = 1;
+  context.window.calcEquals(); assert.equal(context.window._calcExpr, 'Error'); assert.equal(context.window._calcOpenParens, 0);
 });
 
 test('history saves full content atomically and refuses deleted parents', async () => {
