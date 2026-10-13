@@ -5851,6 +5851,8 @@ function learnHeadingHtml(text) {
   } else if (/^(here's how|here is how|let's work through|let me show|worked example)/.test(opening) ||
              (t.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length >= 2) {
     icon = '◆'; label = 'Worked example';
+  } else if (/\?\s*$/.test(t)) {
+    icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
   return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + '</div>';
 }
