@@ -114,7 +114,8 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
         // e.g. 3 days unused = +15 (capped), not an infinite backlog.
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) {
-          balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
+          // Never lowers a balance that's above the cap (Flame Fest bonus questions).
+          balance = Math.max(balance, Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN));
           lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
         }
       }
@@ -148,7 +149,7 @@ async function refundUsage(uid, charge) {
       const index = log.indexOf(charge.timestamp);
       if (index !== -1) { log.splice(index, 1); tx.update(usageRef, { log }); }
     } else {
-      tx.update(usageRef, { balance: Math.min(FREE_MAX_BALANCE, (snap.data().balance || 0) + charge.cost) });
+      tx.update(usageRef, { balance: (snap.data().balance || 0) + charge.cost }); // exactly what was taken
     }
   });
 }
@@ -785,6 +786,12 @@ function studyDay(clientDay) {
   }
   return utc;
 }
+// Flame Fest (November 2026): every study day in the event is saved as a
+// flame on the student's calendar (users/{uid}.flameFest.days); rewards are
+// claimed in api/flame-fest.js. Keep these dates in sync with that file.
+const FLAME_FEST_START = '2026-11-01', FLAME_FEST_END = '2026-11-30';
+const inFlameFest = day => day >= FLAME_FEST_START && day <= FLAME_FEST_END;
+const addDays = (day, n) => new Date(Date.parse(day) + n * 86400000).toISOString().slice(0, 10);
 async function advanceStudyStreak(uid, clientDay) {
   const ref = db.collection('users').doc(uid);
   const today = studyDay(clientDay);
@@ -797,8 +804,25 @@ async function advanceStudyStreak(uid, clientDay) {
     const lastValid = typeof last === 'string' && DAY_KEY.test(last) && last <= utcDayKey(1);
     if (lastValid && last > today) return; // never move a streak backwards
     const gap = lastValid ? (Date.parse(today) - Date.parse(last)) / 86400000 : NaN;
-    const count = gap === 1 ? Math.min(10000, Math.max(0, Number(data.streakCount) || 0) + 1) : 1;
-    tx.set(ref, { streakLastDay: today, streakCount: count }, { merge: true });
+    const previous = Math.max(0, Number(data.streakCount) || 0);
+    const shields = Math.max(0, Math.floor(Number(data.flameShields) || 0));
+    // Flame Shields (Flame Fest rewards) each cover one missed day, so the
+    // streak carries on; one shield per missed day, used automatically.
+    const missed = gap >= 2 ? gap - 1 : 0;
+    const shielded = missed > 0 && missed <= shields;
+    const count = gap === 1 || shielded ? Math.min(10000, previous + 1) : 1;
+    const update = { streakLastDay: today, streakCount: count };
+    if (shielded) update.flameShields = shields - missed;
+    const savedDays = shielded ? Array.from({ length: missed }, (_, k) => addDays(last, k + 1)) : [];
+    if (inFlameFest(today) || savedDays.some(inFlameFest)) {
+      const fest = data.flameFest && typeof data.flameFest === 'object' ? data.flameFest : {};
+      const days = new Set(Array.isArray(fest.days) ? fest.days : []);
+      if (inFlameFest(today)) days.add(today);
+      const shieldDays = new Set(Array.isArray(fest.shielded) ? fest.shielded : []);
+      savedDays.filter(inFlameFest).forEach(d => shieldDays.add(d));
+      update.flameFest = { ...fest, days: [...days].sort(), shielded: [...shieldDays].sort() };
+    }
+    tx.set(ref, update, { merge: true });
   });
 }
 
@@ -845,7 +869,12 @@ export default async function handler(req, res) {
   if (uid) {
     try {
       const userDoc = await db.collection("users").doc(uid).get();
-      if (userDoc.exists) plan = userDoc.data().plan || "free";
+      if (userDoc.exists) {
+        const d = userDoc.data();
+        plan = d.plan || "free";
+        // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
+        if (planTier(plan) === "free" && Number(d.plusUntil) > Date.now()) plan = "plus";
+      }
     } catch {
       return res.status(503).json({ error: "Account service is temporarily unavailable. Please try again." });
     }

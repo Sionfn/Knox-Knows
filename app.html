@@ -2242,7 +2242,17 @@
 </style>
 <link rel="stylesheet" href="/logo-theme.css">
 <link rel="stylesheet" href="/seasonal.css">
+<script>
+  // Flame Fest (Nov 1 – Dec 7, 2026, local time): used by the sidebar cards.
+  window.knoxFlameFestWindow = function() {
+    if (/[?&]flamefest=demo\b/.test(location.search)) return true;
+    var d = new Date(), k = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+    return k >= 20261101 && k <= 20261207;
+  };
+</script>
 <script src="/theme.js" defer></script>
+<link rel="stylesheet" href="/flamefest.css">
+<script src="/flamefest.js" defer></script>
 <script src="/payment-status.js" defer></script>
 <script src="/modal-click-guard.js" defer></script>
 <script src="/password-field.js" defer></script>
@@ -2349,7 +2359,12 @@
       <button type="button" class="sidebar-history-toggle sidebar-collapsible" id="sidebarHistoryToggle" aria-expanded="false" onclick="toggleHistoryExpanded()">Show all chats <span aria-hidden="true">↓</span></button>
       <!-- Discord and Chrome share one slot and take turns (see the script below). -->
       <div class="sidebar-promo-rotator sidebar-collapsible" id="sidebarPromoRotator" aria-roledescription="carousel" aria-label="Knox Knows links">
-        <a class="sidebar-extension-card sidebar-discord-card is-active" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — become a Knox Ambassador">
+<button type="button" class="sidebar-extension-card sidebar-flame-card is-active" onclick="window.knoxFlameFest?.open()" aria-label="Open the Flame Fest calendar — November study event with rewards">
+          <span class="ff-card-icon" aria-hidden="true">🔥</span>
+          <span class="sidebar-extension-copy"><strong>Flame Fest is on!</strong><span>Light flames, win rewards</span></span>
+          <span class="sidebar-extension-arrow" aria-hidden="true">→</span>
+        </button>
+        <a class="sidebar-extension-card sidebar-discord-card" tabindex="-1" aria-hidden="true" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — become a Knox Ambassador">
           <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
           <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Become a Knox Ambassador</span></span>
           <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
@@ -2359,7 +2374,7 @@
           <span class="sidebar-extension-copy"><strong>Knox in your browser</strong><span>Get the Chrome extension</span></span>
           <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
         </a>
-        <div class="promo-dots"><button type="button" class="is-active" aria-label="Show the Discord card" aria-current="true"></button><button type="button" aria-label="Show the Chrome extension card" aria-current="false"></button></div>
+        <div class="promo-dots"><button type="button" class="is-active ff-dot" aria-label="Show the Flame Fest card" aria-current="true"></button><button type="button" aria-label="Show the Discord card" aria-current="false"></button><button type="button" aria-label="Show the Chrome extension card" aria-current="false"></button></div>
       </div>
       <script>
         // Rotate the promo cards every 6s with a slide-and-fade. Pauses while
@@ -2367,6 +2382,15 @@
         (function() {
           var rot = document.getElementById('sidebarPromoRotator');
           if (!rot) return;
+          // The Flame Fest card only shows during the event (Nov 1 – Dec 7,
+          // 2026; ?flamefest=demo shows it any time). Otherwise Discord leads.
+          if (!window.knoxFlameFestWindow()) {
+            rot.querySelectorAll('.sidebar-flame-card, .ff-dot').forEach(function(el) { el.remove(); });
+            var first = rot.querySelector('.sidebar-extension-card');
+            if (first) { first.classList.add('is-active'); first.tabIndex = 0; first.setAttribute('aria-hidden', 'false'); }
+            var dot = rot.querySelector('.promo-dots button');
+            if (dot) { dot.classList.add('is-active'); dot.setAttribute('aria-current', 'true'); }
+          }
           var cards = Array.prototype.slice.call(rot.querySelectorAll('.sidebar-extension-card'));
           var dots = Array.prototype.slice.call(rot.querySelectorAll('.promo-dots button'));
           var i = 0, timer = null;
@@ -2766,7 +2790,13 @@
           Your past questions will show up here.
         </div>
       </div>
-      <a class="sidebar-extension-card sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — become a Knox Ambassador">
+<button type="button" class="sidebar-extension-card sidebar-flame-card" onclick="window.knoxFlameFest?.open()" aria-label="Open the Flame Fest calendar — November study event with rewards" id="mobileFlameCard">
+        <span class="ff-card-icon" aria-hidden="true">🔥</span>
+        <span class="sidebar-extension-copy"><strong>Flame Fest is on!</strong><span>Light flames, win rewards</span></span>
+        <span class="sidebar-extension-arrow" aria-hidden="true">→</span>
+      </button>
+      <script>if (!window.knoxFlameFestWindow()) document.getElementById('mobileFlameCard')?.remove();</script>
+            <a class="sidebar-extension-card sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — become a Knox Ambassador">
         <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
         <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Become a Knox Ambassador</span></span>
         <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
@@ -2984,6 +3014,8 @@
       const snap = await getDoc(doc(db, 'users', uid));
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
+      // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
+      if (planTier(window.userPlan) !== 'paid' && snap.exists() && Number(snap.data().plusUntil) > Date.now()) window.userPlan = 'plus';
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
       window.userComped = !!(snap.exists() && snap.data().comped === true);
     } catch (e) {
@@ -2994,6 +3026,9 @@
     // flash a placeholder after the loading screen goes away.
     await updatePlanUI();
   }
+
+  // Re-read the plan and question count (e.g. after a Flame Fest reward).
+  window.knoxRefreshPlan = () => { if (window.currentUser) fetchPlan(window.currentUser.uid); };
 
   // Poll for plan after payment success — webhook may not be done yet.
   // Tries 5 times over ~10 seconds, stops as soon as plan upgrades.
@@ -3604,8 +3639,10 @@
       const today = localDayKey();
       const lastDay = data.streakLastDay || null;
       let count = data.streakCount || 0;
-      // If they last studied before yesterday, the streak is broken.
-      if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
+      // If they last studied before yesterday, the streak is broken —
+      // unless they have enough Flame Shields to cover the missed days.
+      if (lastDay && daysBetween(lastDay, today) - 1 > (data.flameShields || 0) && daysBetween(lastDay, today) > 1) count = 0;
+      window.knoxFlameFest?.applyFlameStyle(data.flameStyle);
       // A saved day ahead of today's local date (e.g. from a different
       // timezone or the old UTC days) means today is already counted.
       const studiedToday = !!lastDay && lastDay >= today;
@@ -3686,13 +3723,14 @@
   // Streak detail popover when the pill is clicked
   window.showStreakDetail = async function() {
     if (!window.currentUser) return;
+    if (window.knoxFlameFest?.active()) { window.knoxFlameFest.open(); return; } // Flame Fest calendar in November
     try {
       const snap = await getDoc(doc(db, 'users', window.currentUser.uid));
       const data = snap.exists() ? snap.data() : {};
       const today = localDayKey();
       const lastDay = data.streakLastDay || null;
       let count = data.streakCount || 0;
-      if (lastDay && daysBetween(lastDay, today) > 1) count = 0;
+      if (lastDay && daysBetween(lastDay, today) - 1 > (data.flameShields || 0) && daysBetween(lastDay, today) > 1) count = 0;
       const studiedToday = !!lastDay && lastDay >= today; // a day ahead of today = already counted
 
       // Next milestone

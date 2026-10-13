@@ -109,7 +109,8 @@ export default async function handler(req, res) {
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() : {};
-    const plan     = userData.plan || "free";
+    // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
+    const plan     = planTier(userData.plan || "free") === "free" && Number(userData.plusUntil) > Date.now() ? "plus" : (userData.plan || "free");
     const tier     = planTier(plan);
     const now      = Date.now();
 
@@ -149,7 +150,7 @@ export default async function handler(req, res) {
         let lastRegenAt = d.lastRegenAt || now;
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) {
-          balance = Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN);
+          balance = Math.max(balance, Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN)); // keeps Flame Fest bonus questions
           lastRegenAt += daysElapsed * oneDayMs();
           tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
         }
