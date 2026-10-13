@@ -262,6 +262,19 @@ Photos in Learn mode: the same photo may be attached again with later messages s
 Files (PDF, Word or PowerPoint) in Learn mode: treat them like a photo of the homework — say briefly what you read, start on one problem, and never solve the whole file or list its answers.
 Final check before every Learn reply: if the student hasn't worked this step or idea out yet, your reply must not contain the result or the full explanation — ask a guiding question instead. A bare expression like "2x4" or "15/3" is a problem to teach, not a quick fact to state.`;
 
+// Sent after the student's message in Learn mode (see the handler).
+const LEARN_REMINDER = `Learn mode — for this reply: you're tutoring, not answering. If the student hasn't worked this out yet, do NOT give the answer or explain the whole idea. Reply in 2–4 sentences: give one small piece or hint, then ask ONE guiding question, then add a Choices: line and a Progress: line if they fit. Only when they've just finished the whole problem or topic, confirm it and add the Recap / Watch out / Topic lines.`;
+// Used once if a Learn reply gave the answer away anyway.
+const LEARN_REWRITE = `That reply gave the answer away instead of teaching. Rewrite it as a Learn mode reply: 2–4 sentences with one small piece or hint and ONE guiding question for the student (plus Choices: and Progress: lines if they fit). Don't give the full answer or explanation. Reply with only the rewritten message.`;
+// A Learn reply should end by handing the student a question — or, at the end
+// of a topic, carry a Recap line. Anything else gave the answer away.
+function learnReplyGaveItAway(text) {
+  const t = String(text || '');
+  if (/^\s*\**recap\**\s*:/im.test(t)) return false;
+  const body = t.replace(/^\s*\**(choices|progress|recap|watch out|topic)\**\s*:.*$/gim, '');
+  return !body.includes('?');
+}
+
 const CASUAL_SYSTEM_PROMPT = `You are Knox — a fox who talks like a real person. Warm, quick, honest, a little witty. You know exactly who you are and you're comfortable in your own fur. You're not a generic AI assistant; you're Knox, and the people you talk to are YOUR people.
 
 # Your voice
@@ -1095,6 +1108,9 @@ export default async function handler(req, res) {
   } else {
     messages.push({ role: "user", content: trimmedQuestion });
   }
+  // Learn mode: a short reminder right after the student's message — the last
+  // thing the model reads — so a big "why…?" question gets taught, not answered.
+  if (learnMode && !casual) messages.push({ role: "system", content: LEARN_REMINDER });
 
   try {
     // Text, casual, Learn, and photo questions all run on GPT-6 Luna.
@@ -1177,6 +1193,23 @@ export default async function handler(req, res) {
 
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(answer);
+
+    // Learn mode safety net: a teaching reply always hands the student a
+    // question (or wraps up with a Recap). If the model answered outright
+    // instead, have it rewrite that reply once as a Learn step.
+    if (learnMode && !casual && learnReplyGaveItAway(answer)) {
+      try {
+        const retry = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ ...requestBody, max_completion_tokens: 3000,
+            messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: LEARN_REWRITE }] }),
+          signal: AbortSignal.timeout(20000),
+        });
+        const fixed = retry.ok ? cleanLatexAnswer((await retry.json()).choices?.[0]?.message?.content || "") : "";
+        if (fixed.trim() && !learnReplyGaveItAway(fixed)) answer = fixed;
+      } catch (err) { console.error('Learn rewrite skipped:', err?.message); }
+    }
 
     // Legacy marker compatibility: never show internal video signals.
     answer = answer.replace(/^VIDEO_SUGGEST:.*$/gmi, '').trim();

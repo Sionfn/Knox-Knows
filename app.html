@@ -1476,6 +1476,10 @@
     }
     .knox-section-card strong { color: inherit; font-weight: 800; }
     .msg-knox-bubble strong { color: var(--orange); font-weight: 800; }
+    /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
+    .msg-knox-bubble:has(> .knox-response-heading.learn) { border-left-color: var(--purple); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
+    html[data-theme="dark"] .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple); }
 
     /* THINKING / TYPING */
     .thinking-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }

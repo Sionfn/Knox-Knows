@@ -360,7 +360,8 @@ test('Text, photo, small talk and Learn all use GPT-6 Luna', async () => {
   // The small-talk check runs only on messages that could be small talk; the
   // answers themselves are the three GPT-6 Luna calls.
   const isCheck = request => /Classify the LATEST user message/.test(request.messages?.[0]?.content || '');
-  const answers = requests.filter(request => !isCheck(request));
+  const isRewrite = request => /gave the answer away instead of teaching/.test(request.messages?.at(-1)?.content || '');
+  const answers = requests.filter(request => !isCheck(request) && !isRewrite(request));
   assert.equal(answers.length, 4);
   assert.equal(casual.body.model, 'gpt-6-luna');
   assert.equal(learn.body.model, 'gpt-6-luna');
@@ -398,7 +399,7 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /Progress: 2\/4/);
   assert.match(system, /Recap: what they learned/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
-  const userText = requests[0].messages.at(-1).content.find(part => part.type === 'text').text;
+  const userText = requests[0].messages.findLast(m => m.role === 'user').content.find(part => part.type === 'text').text;
   assert.match(userText, /instead of solving it/);
 });
 
@@ -1015,7 +1016,7 @@ test('A PDF/Word file is sent as study material, costs 2 like a photo, and is ne
   await handler(askRequest({ question: '', history: [], learnMode: true, document: { name: 'hw.docx', text: 'Q1. What is 3/4 + 1/8?' } }), learn);
   assert.equal(learn.code, 200);
   assert.equal(store.get('users/u1/usage/bank').balance, 4, 'Learn: 1 credit to start, like a photo');
-  assert.match(ai.calls.at(-1).messages.at(-1).content, /guide me step by step/);
+  assert.match(ai.calls.findLast(c => !/gave the answer away/.test(c.messages.at(-1).content)).messages.findLast(m => m.role === 'user').content, /guide me step by step/);
 });
 
 test('Bad or oversized files are refused before any AI call', async () => {
@@ -1379,4 +1380,37 @@ test('Admin can make gift codes; nobody else can', async () => {
   const other = await load('api/admin-comp.js', { db, adminUid: 'someone-else' });
   res = response(); await other({ method: 'POST', headers: { authorization: 'Bearer test' }, body: { action: 'gift-codes', gift: '1m', count: 1 } }, res);
   assert.equal(res.code, 403);
+});
+
+
+test('Learn mode: a reminder follows the student message, and a reply that gives the answer away is rewritten once', async () => {
+  const run = async replies => {
+    const { db } = memoryDb();
+    const calls = []; let k = 0;
+    const fetch = async (url, options) => {
+      const body = JSON.parse(options.body); calls.push(body);
+      if (/Classify the LATEST user message/.test(body.messages?.[0]?.content || '')) return { ok: true, json: async () => ({ choices: [{ message: { content: 'SUBSTANTIVE' }, finish_reason: 'stop' }] }) };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: replies[Math.min(k++, replies.length - 1)] }, finish_reason: 'stop' }] }) };
+    };
+    const handler = await load('api/ask.js', { db, fetch });
+    const res = response();
+    await handler(askRequest({ question: 'why do leaves change color during the fall?', history: [], learnMode: true }), res);
+    return { res, calls: calls.filter(c => !/Classify the LATEST/.test(c.messages?.[0]?.content || '')) };
+  };
+  let { res, calls } = await run(['Trees stop making chlorophyll, so the green fades and yellow shows.', 'Leaves are green because of a pigment. Do you know its name?\nChoices: chlorophyll | melanin']);
+  assert.equal(res.code, 200);
+  assert.equal(calls.length, 2, 'one rewrite');
+  const first = calls[0].messages;
+  assert.equal(first.at(-1).role, 'system');
+  assert.match(first.at(-1).content, /you're tutoring, not answering/);
+  assert.equal(first.at(-2).content, 'why do leaves change color during the fall?');
+  assert.match(calls[1].messages.at(-1).content, /gave the answer away instead of teaching/);
+  assert.match(res.body.answer, /Do you know its name\?/);
+  for (const reply of ['Leaves are green because of a pigment. Do you know its name?', 'Exactly right!\nRecap: Chlorophyll fades in fall.\nWatch out: The yellow was there all along.\nTopic: Leaves']) {
+    ({ calls } = await run([reply]));
+    assert.equal(calls.length, 1, reply.slice(0, 20));
+  }
+  ({ res, calls } = await run(['The answer is chlorophyll.', 'Still the answer: chlorophyll.']));
+  assert.equal(calls.length, 2);
+  assert.equal(res.body.answer, 'The answer is chlorophyll.');
 });

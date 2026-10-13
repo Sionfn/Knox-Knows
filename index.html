@@ -2033,8 +2033,32 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .user-avatar { width:32px; height:32px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); object-fit:cover; }
     .default-avatar { width:32px; height:32px; border-radius:50%; border:2px solid rgba(255,255,255,0.5); background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:14px; }
 
-    /* Cookie banner */
-    #cookieBanner { display:none; position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#1a1a1a; border-top:3px solid black; padding:14px 16px; }
+    /* Cookie banner: a floating Knox card (sticker border, fox, Knox buttons) */
+    #cookieBanner { display:none; position:fixed; left:16px; right:16px; bottom:max(16px, env(safe-area-inset-bottom)); z-index:9999; max-width:620px; margin:0 auto;
+      background:var(--surface); border:3px solid var(--orange); border-radius:22px; box-shadow:0 5px 0 #CC5500, 0 18px 44px rgba(0,0,0,.18); padding:16px 18px; animation:kkCookieIn .35s cubic-bezier(.2,.8,.2,1); }
+    @keyframes kkCookieIn { from { transform:translateY(24px); opacity:0; } to { transform:none; opacity:1; } }
+    .kk-cookie { display:flex; align-items:center; gap:14px; }
+    .kk-cookie-fox { position:relative; flex-shrink:0; width:52px; height:52px; }
+    .kk-cookie-fox img { width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); box-shadow:0 3px 0 #CC5500; }
+    .kk-cookie-fox span { position:absolute; right:-6px; bottom:-4px; font-size:22px; line-height:1; }
+    .kk-cookie-text { flex:1; min-width:0; }
+    .kk-cookie-text b { display:block; font-size:16px; font-weight:900; color:var(--text); margin-bottom:2px; }
+    .kk-cookie-text p { font-size:13px; font-weight:700; color:var(--text-light); line-height:1.45; margin:0; }
+    .kk-cookie-text a { color:var(--orange); font-weight:800; }
+    .kk-cookie-btns { display:flex; gap:8px; flex-shrink:0; }
+    .kk-cookie-btns button { font-family:inherit; font-size:14px; font-weight:900; border-radius:14px; padding:10px 16px; cursor:pointer; white-space:nowrap; transition:transform .12s, box-shadow .12s; }
+    .kk-cookie-yes { background:var(--orange); color:#fff; border:2px solid #CC5500; box-shadow:0 4px 0 #CC5500; }
+    .kk-cookie-no { background:var(--surface); color:var(--text); border:2px solid var(--border); box-shadow:0 4px 0 var(--border); }
+    .kk-cookie-btns button:hover { transform:translateY(-1px); }
+    .kk-cookie-btns button:active { transform:translateY(3px); box-shadow:0 1px 0 currentColor; }
+    @media (max-width:560px) {
+      .kk-cookie { flex-wrap:wrap; }
+      .kk-cookie-fox, .kk-cookie-fox img { width:44px; height:44px; }
+      .kk-cookie-text { flex-basis:calc(100% - 60px); }
+      .kk-cookie-btns { width:100%; }
+      .kk-cookie-btns button { flex:1; }
+    }
+    @media (prefers-reduced-motion:reduce) { #cookieBanner { animation:none; } }
 
     /* Mobile responsive */
     @media (max-width:640px) {
@@ -5468,15 +5492,16 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 </div>
 
 <!-- ===================== COOKIE CONSENT ===================== -->
-<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0f172a;border-top:3px solid black;padding:14px 16px;">
-  <div style="max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;">
-    <p style="color:#e2e8f0;font-size:13px;font-weight:600;line-height:1.5;flex:1;min-width:200px;">
-      🍪 We use cookies for sign-in and anonymous analytics to improve Knox. See our
-      <a href="/privacy.html" style="color:#c4b5fd;text-decoration:underline;">Privacy Policy</a>.
-    </p>
-    <div style="display:flex;gap:8px;flex-shrink:0;">
-      <button onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','1');}catch(e){}if(window.loadAnalytics)window.loadAnalytics();" style="background:var(--green);border:2px solid black;border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer;box-shadow:3px 3px 0 black;white-space:nowrap;">Accept ✓</button>
-      <button onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','0');}catch(e){}" style="background:#fff;border:2px solid black;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;box-shadow:3px 3px 0 black;white-space:nowrap;color:#0f172a;">Decline</button>
+<div id="cookieBanner" role="region" aria-label="Cookie choices">
+  <div class="kk-cookie">
+    <div class="kk-cookie-fox" aria-hidden="true"><img src="/knox-logo-square.jpg" alt="" draggable="false"><span>🍪</span></div>
+    <div class="kk-cookie-text">
+      <b>Knox uses cookies</b>
+      <p>They keep you signed in, and anonymous analytics help us make Knox better. See our <a href="/privacy.html">Privacy Policy</a>.</p>
+    </div>
+    <div class="kk-cookie-btns">
+      <button type="button" class="kk-cookie-no" onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','0');}catch(e){}">Decline</button>
+      <button type="button" class="kk-cookie-yes" onclick="document.getElementById('cookieBanner').style.display='none';try{localStorage.setItem('cookie_ok','1');}catch(e){}if(window.loadAnalytics)window.loadAnalytics();">Accept</button>
     </div>
   </div>
 </div>
