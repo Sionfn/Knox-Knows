@@ -7,8 +7,11 @@
 //
 //   window.knoxFlameFest.open()   — open the calendar (streak pill, sidebar card)
 //   window.knoxFlameFest.active() — true from Nov 1 until rewards close (Dec 7)
+//   window.knoxFlameFest.studied() — a Flashcards review: light today's flame
 //   ?flamefest=demo               — a pretend month, for trying the screen
 //                                   before November (nothing is saved)
+//   ?gift=CODE                    — a friend's Flame Fest gift: a free Plus week
+// Also shows a one-time "Flame Fest is on" popup during the event.
 (function () {
   const START = '2026-11-01', END = '2026-11-30', CLAIM_UNTIL = '2026-12-07';
   const demo = new URLSearchParams(location.search).get('flamefest') === 'demo';
@@ -19,7 +22,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
-  const STYLE_NAMES = { classic: '🔥 Classic', blue: '💙 Blue Flame', gold: '👑 Golden Flame' };
+  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '👑 Golden Flame' };
 
   // ── Data ────────────────────────────────────────────────────────────────
   let state = null, loading = false, error = '';
@@ -32,7 +35,7 @@
       { id: 'w4', name: 'Bonfire', start: '2026-11-22', end: '2026-11-28', need: 3, label: '🛡️ Flame Shield' },
       { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Knox Plus + 👑 Golden Flame' },
     ].map(r => ({ ...r, flames: days.filter(d => d >= r.start && d <= r.end).length }));
-    return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic'], plusUntil: 0, demo: true };
+    return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic'], plusUntil: 0, giftCode: '', demo: true };
   }
   async function api(method, body) {
     const user = window.currentUser;
@@ -90,21 +93,23 @@
     let grid = '';
     for (const d of ['S', 'M', 'T', 'W', 'T', 'F', 'S']) grid += `<div class="ff-dow" aria-hidden="true">${d}</div>`;
     for (let n = 1; n <= 30; n++) grid += dayCell(n); // Nov 1, 2026 is a Sunday
+    const giftUrl = state.giftCode ? `${location.origin}/app?gift=${state.giftCode}` : '';
+    const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Plus week to give</b><span>Send this link to a friend who doesn’t have Knox Plus — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.plusUntil > Date.now() ? `<div class="ff-note">⚡ Your free Knox Plus week runs until ${new Date(state.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
     const styles = state.flameStyles.length > 1 ? `<div class="ff-styles"><span>Your flame:</span>${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
     return `<div class="ff-head">
-        <span class="ff-badge">🔥 November event${state.demo ? ' · demo' : ''}</span>
+        <span class="ff-badge">🔥 November event${state.plus ? ' · ⚡ Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
         <p>${sub}</p>
         <div class="ff-stats"><div><b>${lit}</b><span>flames lit</span></div><div><b>${state.shields}</b><span>🛡️ shield${state.shields === 1 ? '' : 's'}</span></div><div><b>${Math.max(0, 20 - lit)}</b><span>to grand prize</span></div></div>
       </div>
-      ${plus}
+      ${plus}${gift}
       <div class="ff-cal" role="grid" aria-label="November 2026">${grid}</div>
       <div class="ff-legend" aria-hidden="true"><span>🔥 studied</span><span>🛡️ saved by a shield</span><span class="ff-legend-today">today</span></div>
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
       ${styles}
-      <p class="ff-fine">A flame lights when you study with Knox (Ask Knox or Learn) that day. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
+      <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
   }
   function render() {
     if (!wrap) return;
@@ -170,7 +175,9 @@
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('.ff-x')) { close(); return; }
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
-      const s = e.target.closest('[data-style]'); if (s) pickStyle(s.dataset.style);
+      const s = e.target.closest('[data-style]'); if (s) { pickStyle(s.dataset.style); return; }
+      const cp = e.target.closest('[data-copy]');
+      if (cp) navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast('Gift link copied — send it to a friend! 🎁'), () => { wrap.querySelector('.ff-gift-link')?.select(); toast('Copy the link above and send it to a friend.'); });
     });
     document.addEventListener('keydown', onKey, true);
     document.body.append(wrap);
@@ -182,10 +189,91 @@
   // ── Flame look on the streak pill (Blue / Golden) ───────────────────────
   function applyFlameStyle(style) {
     document.querySelectorAll('#streakFlame').forEach(el => {
-      el.classList.remove('flame-blue', 'flame-gold');
-      if (style === 'blue' || style === 'gold') el.classList.add('flame-' + style);
+      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold');
+      if (['purple', 'blue', 'gold'].includes(style)) el.classList.add('flame-' + style);
     });
   }
 
-  window.knoxFlameFest = { open, active, applyFlameStyle, close };
+  // ── Flashcards review → today's flame (and the streak) ──────────────────
+  const studiedKey = () => `knoxStudied.${window.currentUser?.uid}.${localDay()}`;
+  async function studied() {
+    if (!window.currentUser || demo) return;
+    try { if (localStorage.getItem(studiedKey())) return; } catch (e) {}
+    try {
+      const s = await api('POST', { studied: 'flashcards', localDay: localDay() });
+      try { localStorage.setItem(studiedKey(), '1'); } catch (e) {}
+      const lit = s.days?.includes(localDay());
+      if (state && !state.demo) state = s;
+      window.loadStreak?.(window.currentUser.uid);
+      if (lit && active()) note('🔥 Today’s Flame Fest flame is lit!');
+    } catch (e) { /* a missed flame is never worth an error */ }
+  }
+
+  // ── Small popups: launch announcement, gift messages, quick notes ───────
+  function note(msg) {
+    let el = document.getElementById('ffNote');
+    if (!el) { el = document.createElement('div'); el.id = 'ffNote'; el.className = 'ff-float'; el.setAttribute('role', 'status'); document.body.append(el); }
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3800);
+  }
+  function popup(html, buttons) {
+    if (wrap || document.querySelector('.ff-modal')) return;
+    const m = document.createElement('div');
+    m.className = 'ff-modal';
+    m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); m.setAttribute('aria-labelledby', 'ffPopTitle');
+    m.innerHTML = `<div class="ff-card ff-pop">${html}<div class="ff-pop-actions">${buttons.map((b, i) => `<button type="button" class="${i ? 'ff-pop-later' : 'ff-claim'}" data-i="${i}">${b.label}</button>`).join('')}</div></div>`;
+    const done = () => { m.remove(); document.removeEventListener('keydown', esc_, true); };
+    const esc_ = e => { if (e.key === 'Escape') { e.preventDefault(); done(); } };
+    m.addEventListener('click', e => {
+      const b = e.target.closest('[data-i]');
+      if (b) { done(); buttons[+b.dataset.i].run?.(); }
+      else if (e.target === m) done();
+    });
+    document.addEventListener('keydown', esc_, true);
+    document.body.append(m);
+    m.querySelector('[data-i="0"]').focus();
+  }
+  function intro() {
+    if (!active()) return;
+    const key = 'knoxFlameFestIntro2026';
+    try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
+    const startsToday = today() === START;
+    popup(`<div class="ff-pop-flame" aria-hidden="true">🔥</div><h2 id="ffPopTitle">Flame Fest ${startsToday ? 'starts today!' : 'is on!'}</h2>
+      <p>All November, every day you study with Knox lights a flame on your calendar.</p>
+      <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userPlan && ['super', 'max', 'plus'].includes(window.userPlan) ? ' — a Plus week to gift a friend' : ' — a free week of Knox Plus'}</li></ul>`,
+      [{ label: window.currentUser ? 'Open my calendar' : 'Sign in to join', run: () => window.currentUser ? open() : window.openAuthModal?.() }, { label: 'Later' }]);
+  }
+  // A friend's gift link: /app?gift=CODE (kept until the student is signed in).
+  async function redeemGift() {
+    let code = '';
+    try { code = sessionStorage.getItem('knoxGift') || ''; } catch (e) {}
+    if (!code) return;
+    if (!window.currentUser) {
+      popup(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="ffPopTitle">A friend sent you Knox Plus!</h2><p>Sign in or make a free account to claim your free week of Knox Plus.</p>`,
+        [{ label: 'Sign in to claim', run: () => window.openAuthModal?.() }, { label: 'Later' }]);
+      return;
+    }
+    try { sessionStorage.removeItem('knoxGift'); } catch (e) {}
+    try {
+      await api('POST', { redeem: code });
+      window.knoxRefreshPlan?.();
+      popup(`<div class="ff-pop-flame" aria-hidden="true">⚡</div><h2 id="ffPopTitle">Your free Plus week is on!</h2><p>Enjoy 7 days of Knox Plus — unlimited questions and everything else Plus has. 🎉</p>`, [{ label: 'Let’s go' }]);
+    } catch (e) {
+      popup(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="ffPopTitle">Couldn’t use that gift</h2><p>${esc(e.message)}</p>`, [{ label: 'OK' }]);
+    }
+  }
+  const giftParam = new URLSearchParams(location.search).get('gift');
+  if (giftParam) {
+    try { sessionStorage.setItem('knoxGift', giftParam); } catch (e) {}
+    const url = new URL(location.href); url.searchParams.delete('gift'); history.replaceState(null, '', url);
+  }
+  let started = false;
+  function whenReady() {
+    if (started) return; started = true;
+    setTimeout(() => { redeemGift(); intro(); }, 1500);
+  }
+  addEventListener('knox-auth-changed', () => { if (started) redeemGift(); else whenReady(); });
+  if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
+
+  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied };
 })();

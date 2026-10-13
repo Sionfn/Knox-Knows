@@ -51,7 +51,18 @@ async function load(file, { db, fetch, stripe, adminEmail, adminUid, env = {}, a
     fetch, setInterval() {}, AbortSignal, Date: date || Date, URLSearchParams, Buffer,
   });
   const module = new SourceTextModule(readFileSync(file, 'utf8'), { context, identifier: file });
-  await module.link(async specifier => {
+  const modules = new Map();
+  await module.link(async function link(specifier, referencing) {
+    // Shared helpers next to the API files (e.g. ./_streak.js) load as real modules.
+    if (specifier.startsWith('./')) {
+      const path = new URL(specifier, 'file:///' + referencing.identifier).pathname.slice(1);
+      if (!modules.has(path)) {
+        const child = new SourceTextModule(readFileSync(path, 'utf8'), { context, identifier: path });
+        modules.set(path, child);
+        await child.link(link);
+      }
+      return modules.get(path);
+    }
     const exports = specifier === 'firebase-admin/app'
       ? { cert: () => ({}), getApps: () => [true], initializeApp() {} }
       : specifier === 'firebase-admin/auth'
@@ -1220,4 +1231,54 @@ test('Flame Fest Plus week counts as Plus; bonus questions survive the daily ref
   res = response(); await handler(askRequest({ question: 'Solve 2x = 8' }), res);
   assert.equal(res.code, 200);
   assert.equal(store.get('users/u1/usage/bank').balance, 29, 'a refill never trims bonus questions down to 20');
+});
+
+test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gives a friend a free Plus week', async () => {
+  const { db, store } = memoryDb();
+  const now = Date.parse('2026-11-29T12:00:00Z');
+  const date = fakeDate('2026-11-29T12:00:00Z');
+  const days = ['01', '02', '03', '04', '08', '09', '10', '11', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26'].map(d => '2026-11-' + d);
+  store.set('users/u1', { plan: 'super', flameFest: { days } });
+  store.set('users/u1/usage/bank', { balance: 5, lastRegenAt: now });
+  const mine = await load('api/flame-fest.js', { db, date });
+  const call = async (handler, body) => { const res = response(); await handler(ffReq(body ? 'POST' : 'GET', body), res); return res; };
+
+  let res = await call(mine);
+  assert.equal(res.body.plus, true);
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Plus week to gift a friend + 👑 Golden Flame');
+  res = await call(mine, { claim: 'w1' });
+  assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
+  assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');
+  res = await call(mine, { claim: 'w3' });
+  assert.equal(res.body.shields, 1, 'Plus Blaze: a Flame Shield instead of questions');
+  res = await call(mine, { claim: 'month' });
+  assert.equal(res.code, 200);
+  const code = res.body.giftCode;
+  assert.match(code, /^[A-Z0-9]{8}$/);
+  assert.equal(store.get('users/u1').plusUntil, undefined, 'no Plus week for someone already on Plus');
+  assert.equal(store.get('giftCodes/' + code).from, 'u1');
+
+  assert.equal((await call(mine, { redeem: code })).code, 400, "can't redeem your own gift");
+  store.set('users/u2', { plan: 'free' });
+  const friend = await load('api/flame-fest.js', { db, date, token: { uid: 'u2' } });
+  res = await call(friend, { redeem: code.toLowerCase() });
+  assert.equal(res.code, 200);
+  assert.equal(store.get('users/u2').plusUntil, now + 7 * 86400000);
+  assert.equal(store.get('giftCodes/' + code).redeemedBy, 'u2');
+  assert.equal((await call(friend, { redeem: code })).code, 409, 'works once');
+  store.set('users/u3', { plan: 'super' });
+  const plusFriend = await load('api/flame-fest.js', { db, date, token: { uid: 'u3' } });
+  store.set('giftCodes/ABCDEFGH', { from: 'u1', days: 7, redeemedBy: null });
+  assert.equal((await call(plusFriend, { redeem: 'ABCDEFGH' })).code, 409, 'already on Plus');
+  assert.equal((await call(friend, { redeem: 'bad!' })).code, 400);
+});
+
+test('Flame Fest: a Flashcards review lights today’s flame and keeps the streak', async () => {
+  const { db, store } = memoryDb();
+  const handler = await load('api/flame-fest.js', { db, date: fakeDate('2026-11-05T18:00:00Z') });
+  store.set('users/u1', { streakCount: 3, streakLastDay: '2026-11-04', flameFest: { days: ['2026-11-04'] } });
+  const res = response(); await handler(ffReq('POST', { studied: 'flashcards', localDay: '2026-11-05' }), res);
+  assert.equal(res.code, 200);
+  assert.deepEqual(plain(res.body.days), ['2026-11-04', '2026-11-05']);
+  assert.equal(store.get('users/u1').streakCount, 4);
 });

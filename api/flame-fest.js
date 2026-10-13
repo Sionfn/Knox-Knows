@@ -5,15 +5,22 @@
 // day as the 🔥 streak). Lighting enough flames in a week, or in the whole
 // month, unlocks a reward the student claims here.
 //
-// GET  → { event, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil }
+// Free and Plus members get different prizes for the same goals (a Plus
+// member has no use for bonus questions or a free Plus week): see REWARDS.
+//
+// GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
-// POST { style: 'classic' | 'blue' | 'gold' }          → pick an unlocked flame look
+// POST { style: 'classic' | 'purple' | 'blue' | 'gold' } → pick an unlocked flame look
+// POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
+// POST { redeem: '<gift code>' }                      → a friend's gift: a free week of Knox Plus
 //
 // Everything is checked and written here with the Admin SDK — the Firestore
 // rules don't let the browser touch these fields.
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import crypto from "crypto";
+import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END } from "./_streak.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -28,16 +35,30 @@ if (!getApps().length) {
 const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
-// Keep the dates in sync with FLAME_FEST_START/END in api/ask.js.
-const EVENT = { name: "Flame Fest", start: "2026-11-01", end: "2026-11-30", claimUntil: "2026-12-07" };
+const EVENT = { name: "Flame Fest", start: FLAME_FEST_START, end: FLAME_FEST_END, claimUntil: "2026-12-07" };
+// free / plus: what each kind of member gets for the same goal.
 const REWARDS = [
-  { id: "w1", name: "Spark",    start: "2026-11-01", end: "2026-11-07", need: 4,  gives: { bonus: 10 },              label: "+10 bonus questions" },
-  { id: "w2", name: "Kindling", start: "2026-11-08", end: "2026-11-14", need: 4,  gives: { shields: 1 },             label: "🛡️ Flame Shield" },
-  { id: "w3", name: "Blaze",    start: "2026-11-15", end: "2026-11-21", need: 4,  gives: { bonus: 10, style: "blue" }, label: "+10 bonus questions + 💙 Blue Flame" },
-  { id: "w4", name: "Bonfire",  start: "2026-11-22", end: "2026-11-28", need: 3,  gives: { shields: 1 },             label: "🛡️ Flame Shield" },
-  { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20, gives: { plusDays: 7, style: "gold" }, label: "7 days of Knox Plus + 👑 Golden Flame" },
+  { id: "w1", name: "Spark",    start: "2026-11-01", end: "2026-11-07", need: 4,
+    free: { gives: { bonus: 10 }, label: "+10 bonus questions" },
+    plus: { gives: { style: "purple" }, label: "💜 Purple Flame" } },
+  { id: "w2", name: "Kindling", start: "2026-11-08", end: "2026-11-14", need: 4,
+    free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
+    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" } },
+  { id: "w3", name: "Blaze",    start: "2026-11-15", end: "2026-11-21", need: 4,
+    free: { gives: { bonus: 10, style: "blue" }, label: "+10 bonus questions + 💙 Blue Flame" },
+    plus: { gives: { shields: 1, style: "blue" }, label: "🛡️ Flame Shield + 💙 Blue Flame" } },
+  { id: "w4", name: "Bonfire",  start: "2026-11-22", end: "2026-11-28", need: 3,
+    free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
+    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" } },
+  { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
+    free: { gives: { plusDays: 7, style: "gold" }, label: "7 days of Knox Plus + 👑 Golden Flame" },
+    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Plus week to gift a friend + 👑 Golden Flame" } },
 ];
-const STYLES = ["classic", "blue", "gold"];
+const STYLES = ["classic", "purple", "blue", "gold"];
+const GIFT_DAYS = 7;
+// Plus for prizes = a real Plus plan or comped (a Flame Fest Plus week still
+// gets the free-member prizes).
+const isPaid = d => ["super", "max", "plus"].includes(d?.plan) || d?.comped === true;
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
 const DAY_MS = 86400000;
 
@@ -47,9 +68,11 @@ const flamesIn = (days, r) => days.filter(d => d >= r.start && d <= r.end).lengt
 function status(data) {
   const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
   const days = Array.isArray(fest.days) ? fest.days.filter(d => typeof d === "string") : [];
+  const plus = isPaid(data);
   return {
     event: EVENT,
-    rewards: REWARDS.map(({ gives, ...r }) => ({ ...r, flames: flamesIn(days, r) })),
+    plus,
+    rewards: REWARDS.map(({ free, plus: p, ...r }) => ({ ...r, label: (plus ? p : free).label, flames: flamesIn(days, r) })),
     days,
     shielded: Array.isArray(fest.shielded) ? fest.shielded : [],
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
@@ -57,6 +80,8 @@ function status(data) {
     flameStyle: STYLES.includes(data.flameStyle) ? data.flameStyle : "classic",
     flameStyles: ["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : [])],
     plusUntil: Number(data.plusUntil) || 0,
+    giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",
+    giftRedeemed: !!data.giftRedeemedAt,
   };
 }
 
@@ -79,6 +104,37 @@ export default async function handler(req, res) {
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
 
+    // A Flashcards review session lights today's flame (and keeps the streak),
+    // the same as asking Knox a question.
+    if (body.studied === "flashcards") {
+      await advanceStudyStreak(db, uid, body.localDay);
+      const snap = await userRef.get();
+      return res.status(200).json(status(snap.exists ? snap.data() : {}));
+    }
+
+    // Redeem a friend's gift: a free week of Knox Plus (one gift per account).
+    if (body.redeem != null) {
+      const code = String(body.redeem).trim().toUpperCase();
+      if (!/^[A-Z0-9]{8}$/.test(code)) return res.status(400).json({ error: "That gift link isn't valid." });
+      const giftRef = db.collection("giftCodes").doc(code);
+      const out = await db.runTransaction(async tx => {
+        const [gift, snap] = await Promise.all([tx.get(giftRef), tx.get(userRef)]);
+        const data = snap.exists ? snap.data() : {};
+        if (!gift.exists) return { error: "That gift link isn't valid.", code: 404 };
+        const g = gift.data();
+        if (g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
+        if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this gift." : "Someone already used this gift.", code: 409 };
+        if (isPaid(data)) return { error: "You already have Knox Plus — pass this gift to a friend who doesn't.", code: 409 };
+        if (data.giftRedeemedAt) return { error: "You've already used a Knox Plus gift.", code: 409 };
+        const plusUntil = Math.max(Date.now(), Number(data.plusUntil) || 0) + (g.days || GIFT_DAYS) * DAY_MS;
+        tx.set(giftRef, { redeemedBy: uid, redeemedAt: new Date().toISOString() }, { merge: true });
+        tx.set(userRef, { plusUntil, giftRedeemedAt: new Date().toISOString() }, { merge: true });
+        return { data: { ...data, plusUntil } };
+      });
+      if (out.error) return res.status(out.code).json({ error: out.error });
+      return res.status(200).json({ ...status(out.data), redeemed: true });
+    }
+
     // Pick a flame look you've unlocked.
     if (body.style != null) {
       if (!STYLES.includes(body.style)) return res.status(400).json({ error: "That flame look doesn't exist." });
@@ -98,6 +154,7 @@ export default async function handler(req, res) {
     if (!reward) return res.status(400).json({ error: "That reward doesn't exist." });
     if (utcDay() > EVENT.claimUntil) return res.status(410).json({ error: "Flame Fest rewards could be claimed until December 7." });
     const bankRef = userRef.collection("usage").doc("bank");
+    const giftCode = reward.id === "month" ? crypto.randomBytes(6).toString("base64").replace(/[^A-Za-z0-9]/g, "").toUpperCase().padEnd(8, "X").slice(0, 8) : "";
     const out = await db.runTransaction(async tx => {
       const [snap, bank] = await Promise.all([tx.get(userRef), tx.get(bankRef)]);
       const data = snap.exists ? snap.data() : {};
@@ -106,9 +163,14 @@ export default async function handler(req, res) {
       const flames = flamesIn(now.days, reward);
       if (flames < reward.need) return { error: `Light ${reward.need - flames} more flame${reward.need - flames === 1 ? "" : "s"} to unlock this reward.`, code: 403 };
 
-      const g = reward.gives;
+      const g = (now.plus ? reward.plus : reward.free).gives;
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
+      if (g.gift) {
+        // A one-time link: /app?gift=CODE gives a friend a free Plus week.
+        tx.set(db.collection("giftCodes").doc(giftCode), { from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
+        update.flameFest.giftCode = giftCode;
+      }
       if (g.shields) update.flameShields = now.shields + g.shields;
       if (g.style) {
         update.flameStyles = [...new Set([...now.flameStyles.filter(s => s !== "classic"), g.style])];

@@ -89,3 +89,27 @@
 
 /* Sidebar Flame Fest card */
 .sidebar-flame-card .ff-card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--orange-light); }
+
+/* Purple flame (Plus Spark reward) */
+#streakFlame.flame-purple { filter: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
+
+/* Gift link (Plus grand prize) */
+.ff-gift { margin: 0 0 12px; padding: 12px; border-radius: 14px; border: 2px dashed #F2B705; background: linear-gradient(135deg, rgba(242,183,5,.14), rgba(255,107,0,.08)); text-align: left; }
+.ff-gift b { display: block; font-size: 14.5px; font-weight: 900; }
+.ff-gift > span { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-light); margin: 2px 0 8px; line-height: 1.45; }
+.ff-gift-row { display: flex; gap: 6px; }
+.ff-gift-link { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 700; }
+.ff-copy { padding: 8px 12px; border: none; border-radius: 10px; background: var(--orange); color: #fff; font: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 var(--orange-dark); white-space: nowrap; }
+
+/* Small popups: launch announcement, gift messages */
+.ff-pop { width: min(400px, 100%); text-align: center; padding: 24px 22px 20px; }
+.ff-pop-flame { font-size: 54px; line-height: 1; animation: ffFlicker 2.6s ease-in-out infinite; }
+.ff-pop h2 { margin: 8px 0 6px; font-size: 26px; font-weight: 900; letter-spacing: -.01em; }
+.ff-pop p { margin: 0 auto; max-width: 320px; font-size: 14px; font-weight: 700; color: var(--text-light); line-height: 1.5; }
+.ff-pop-list { list-style: none; margin: 14px 0 0; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 6px; }
+.ff-pop-list li { padding: 8px 12px; border-radius: 12px; background: var(--cream-warm); border: 2px solid var(--border); font-size: 13.5px; font-weight: 800; }
+.ff-pop-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+.ff-pop-actions .ff-claim { padding: 11px 16px; font-size: 15px; animation: none; }
+.ff-pop-later { padding: 8px; border: none; background: transparent; color: var(--text-light); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.ff-float { position: fixed; top: 18px; left: 50%; transform: translate(-50%, -16px); z-index: 10060; padding: 11px 20px; border-radius: 16px; background: linear-gradient(135deg, #FF6B00, #FF9500); color: #fff; font-size: 14px; font-weight: 900; box-shadow: 0 8px 24px rgba(255,107,0,.4); opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; }
+.ff-float.show { opacity: 1; transform: translate(-50%, 0); }
