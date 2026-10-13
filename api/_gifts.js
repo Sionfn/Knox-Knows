@@ -11,7 +11,6 @@ import crypto from "crypto";
 
 export const GIFTS = {
   "1m":  { label: "1 month",   days: 31,  cents: 999 },
-  "3m":  { label: "3 months",  days: 92,  cents: 2499 },
   "12m": { label: "12 months", days: 365, cents: 7999 },
 };
 

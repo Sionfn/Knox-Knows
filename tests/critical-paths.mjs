@@ -1317,20 +1317,20 @@ test('Gift purchase: one-time Stripe payment; the webhook makes one code, emails
   const { db, store } = memoryDb();
   const mock = checkoutStripe();
   const checkout = await load('api/create-checkout-session.js', { db, stripe: mock.stripe });
-  let res = response(); await checkout(askRequest({ gift: '3m' }), res);
+  let res = response(); await checkout(askRequest({ gift: '12m' }), res);
   assert.equal(res.code, 200);
   const params = [...mock.sessions.values()][0].params;
   assert.equal(params.mode, 'payment');
-  assert.equal(params.line_items[0].price_data.unit_amount, 2499);
+  assert.equal(params.line_items[0].price_data.unit_amount, 7999);
   assert.equal(params.metadata.kind, 'gift');
-  res = response(); await checkout(askRequest({ gift: '5y' }), res);
+  res = response(); await checkout(askRequest({ gift: '3m' }), res); // no 3-month gift
   assert.equal(res.code, 400);
 
   const emails = [];
   let currentEvent;
   const stripe = { webhooks: { constructEvent: () => currentEvent } };
   const webhook = await load('api/webhook.js', { db, stripe, env: { RESEND_API_KEY: 'test' }, fetch: async (url, o) => { emails.push(JSON.parse(o.body)); return { ok: true, text: async () => '' }; } });
-  const session = { id: 'cs_gift_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_1', metadata: { kind: 'gift', gift: '3m', uid: 'u1', email: 'buyer@example.com' } };
+  const session = { id: 'cs_gift_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_1', metadata: { kind: 'gift', gift: '12m', uid: 'u1', email: 'buyer@example.com' } };
   for (const id of ['evt_gift_1', 'evt_gift_1_retry']) {
     currentEvent = { id, type: 'checkout.session.completed', data: { object: session } };
     res = response(); await webhook(webhookRequest(currentEvent), res);
@@ -1339,7 +1339,7 @@ test('Gift purchase: one-time Stripe payment; the webhook makes one code, emails
   const codes = [...store.keys()].filter(k => k.startsWith('giftCodes/'));
   assert.equal(codes.length, 1, 'one code even if Stripe sends the event twice');
   const gift = store.get(codes[0]);
-  assert.deepEqual([gift.days, gift.source, gift.buyerUid], [92, 'purchase', 'u1']);
+  assert.deepEqual([gift.days, gift.source, gift.buyerUid], [365, 'purchase', 'u1']);
   assert.equal(store.get('users/u1').giftsBought.length, 1);
   assert.equal(emails.length, 1);
   assert.match(emails[0].subject, /gift code/);

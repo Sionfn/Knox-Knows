@@ -9,7 +9,6 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const OPTIONS = [
     { id: '1m', label: '1 month', price: '$9.99', note: 'A great stocking stuffer' },
-    { id: '3m', label: '3 months', price: '$24.99', note: 'A whole semester' },
     { id: '12m', label: '12 months', price: '$79.99', note: 'The full school year and summer' },
   ];
   async function api(path, method, body) {
@@ -99,11 +98,11 @@
     const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Give Knox Plus</h2>
       <p>A gift card for unlimited homework help. You get a code by email to give or print — no subscription, it never renews.</p>
       <div class="kg-options" role="radiogroup" aria-label="Gift length">${OPTIONS.map((o, i) =>
-        `<button type="button" class="kg-option${i === 1 ? ' on' : ''}" role="radio" aria-checked="${i === 1}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('')}</div>
+        `<button type="button" class="kg-option${o.id === '12m' ? ' on' : ''}" role="radio" aria-checked="${o.id === '12m'}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('')}</div>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-checkout>Continue to payment</button></div>
       <div class="kg-msg" role="status"></div>
       <p class="kg-fine">The code works once and never expires. Whoever redeems it gets Knox Plus for that long, then goes back to the free plan — they’re never charged.</p>`);
-    let choice = '3m';
+    let choice = '12m';
     m.querySelector('.kg-options').addEventListener('click', e => {
       const b = e.target.closest('[data-gift]'); if (!b) return;
       choice = b.dataset.gift;
