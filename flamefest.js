@@ -10,6 +10,8 @@
 //   window.knoxFlameFest.studied() — a Flashcards review: light today's flame
 //   ?flamefest=demo               — a pretend month, for trying the screen
 //                                   before November (nothing is saved)
+//   ?flamefest=test               — tester mode for the Knox admin account:
+//                                   real rewards on your own account, any day
 // Also shows a one-time "Flame Fest is on" popup during the event.
 (function () {
   const START = '2026-11-01', END = '2026-11-30', CLAIM_UNTIL = '2026-12-07';
@@ -18,8 +20,11 @@
   try { if (demo) sessionStorage.setItem('knoxFlameDemo', '1'); else demo = sessionStorage.getItem('knoxFlameDemo') === '1'; } catch (e) {}
   const pad = n => String(n).padStart(2, '0');
   const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  // ?flamefest=test also sticks for this tab (the server checks it's the admin).
+  let testMode = new URLSearchParams(location.search).get('flamefest') === 'test';
+  try { if (testMode) { sessionStorage.setItem('knoxFlameTest', '1'); sessionStorage.removeItem('knoxFlameDemo'); demo = false; } else testMode = sessionStorage.getItem('knoxFlameTest') === '1'; } catch (e) {}
   const today = () => demo ? '2026-11-18' : localDay();
-  const active = () => demo || (today() >= START && today() <= CLAIM_UNTIL);
+  const active = () => demo || testMode || (today() >= START && today() <= CLAIM_UNTIL);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
@@ -110,7 +115,29 @@
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
       ${styles}
+      ${state.tester ? testerPanel() : ''}
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
+  }
+  function testerPanel() {
+    return `<div class="ff-tester"><b>🧪 Tester mode</b><span>Real rewards on your own account, so you can try everything before November. Only your admin account sees this.</span>
+      <div class="ff-tester-row">
+        <button type="button" class="ff-claim" data-test="fill">🔥 Light every flame</button>
+        <button type="button" class="ff-pop-later" data-test="miss"${state.shields ? '' : ' disabled title="Claim a reward with a Flame Shield first"'}>🛡️ Miss a day</button>
+        <button type="button" class="ff-pop-later" data-test="reset">↺ Reset</button>
+      </div>
+      <span class="ff-tester-tip">Miss a day pretends you skipped yesterday — ask Knox anything and watch a shield save your streak.</span></div>`;
+  }
+  async function runTest(kind, btn) {
+    if (kind === 'reset' && !confirm('Reset your Flame Fest? Flames, claims, shields, flame colours and the Flame Fest Mega Knox week are cleared.')) return;
+    btn.disabled = true;
+    try {
+      state = await api('POST', { test: kind, localDay: localDay() });
+      render(); applyFlameStyle(state.flameStyle);
+      window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid);
+      toast(kind === 'fill' ? '🔥 Every flame is lit — claim your rewards!'
+        : kind === 'miss' ? '🛡️ Yesterday is now “missed”. Ask Knox something to use a shield.'
+        : '↺ Flame Fest reset.');
+    } catch (e) { btn.disabled = false; toast(e.message); }
   }
   function render() {
     if (!wrap) return;
@@ -123,6 +150,7 @@
       const r = state.rewards.find(x => x.id === id);
       render();
       celebrate(r);
+      applyFlameStyle(state.flameStyle);
       if (!demo) { window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
     } catch (e) { btn.disabled = false; btn.textContent = 'Claim'; toast(e.message); }
   }
@@ -177,6 +205,7 @@
       if (e.target === wrap || e.target.closest('.ff-x')) { close(); return; }
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
       const s = e.target.closest('[data-style]'); if (s) { pickStyle(s.dataset.style); return; }
+      const t = e.target.closest('[data-test]'); if (t) { runTest(t.dataset.test, t); return; }
       const cp = e.target.closest('[data-copy]');
       if (cp) navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast('Gift link copied — send it to a friend! 🎁'), () => { wrap.querySelector('.ff-gift-link')?.select(); toast('Copy the link above and send it to a friend.'); });
     });

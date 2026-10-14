@@ -13,6 +13,15 @@
 // POST { style: 'classic' | 'purple' | 'blue' | 'gold' } → pick an unlocked flame look
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
 //
+// Tester (the ADMIN_UID account only, opened with ?flamefest=test): try every
+// reward for real before November. Claims give both the free and the Mega Knox
+// prizes and ignore the event dates.
+// POST { test: 'fill' }            → light every November flame
+// POST { test: 'miss', localDay }  → pretend yesterday was missed, so the next
+//                                    question uses a 🛡️ Flame Shield
+// POST { test: 'reset' }           → clear flames, claims, shields, flame looks
+//                                    and the Flame Fest Mega Knox week
+//
 // Everything is checked and written here with the Admin SDK — the Firestore
 // rules don't let the browser touch these fields.
 import { cert, getApps, initializeApp } from "firebase-admin/app";
@@ -39,19 +48,24 @@ const EVENT = { name: "Flame Fest", start: FLAME_FEST_START, end: FLAME_FEST_END
 const REWARDS = [
   { id: "w1", name: "Spark",    start: "2026-11-01", end: "2026-11-07", need: 4,
     free: { gives: { bonus: 10 }, label: "+10 bonus questions" },
-    plus: { gives: { style: "purple" }, label: "💜 Purple Flame" } },
+    plus: { gives: { style: "purple" }, label: "💜 Purple Flame" },
+    test: "+10 bonus questions + 💜 Purple Flame" },
   { id: "w2", name: "Kindling", start: "2026-11-08", end: "2026-11-14", need: 4,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" } },
+    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
+    test: "🛡️ Flame Shield" },
   { id: "w3", name: "Blaze",    start: "2026-11-15", end: "2026-11-21", need: 4,
     free: { gives: { bonus: 10, style: "blue" }, label: "+10 bonus questions + 💙 Blue Flame" },
-    plus: { gives: { shields: 1, style: "blue" }, label: "🛡️ Flame Shield + 💙 Blue Flame" } },
+    plus: { gives: { shields: 1, style: "blue" }, label: "🛡️ Flame Shield + 💙 Blue Flame" },
+    test: "+10 bonus questions + 🛡️ Flame Shield + 💙 Blue Flame" },
   { id: "w4", name: "Bonfire",  start: "2026-11-22", end: "2026-11-28", need: 3,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" } },
+    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
+    test: "🛡️ Flame Shield" },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
     free: { gives: { plusDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
-    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Mega Knox week to gift a friend + 👑 Golden Flame" } },
+    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Mega Knox week to gift a friend + 👑 Golden Flame" },
+    test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 👑 Golden Flame" },
 ];
 const STYLES = ["classic", "purple", "blue", "gold"];
 const GIFT_DAYS = 7;
@@ -64,14 +78,21 @@ const DAY_MS = 86400000;
 const utcDay = () => new Date().toISOString().slice(0, 10);
 const flamesIn = (days, r) => days.filter(d => d >= r.start && d <= r.end).length;
 
-function status(data) {
+const ALL_DAYS = Array.from({ length: 30 }, (_, k) => `2026-11-${String(k + 1).padStart(2, "0")}`);
+const addDays = (day, n) => new Date(Date.parse(day + "T00:00:00Z") + n * DAY_MS).toISOString().slice(0, 10);
+const isTester = decoded => {
+  const ADMIN_UID = (process.env.ADMIN_UID || "").trim();
+  return !!ADMIN_UID && decoded.uid === ADMIN_UID && decoded.email_verified === true;
+};
+
+function status(data, tester = false) {
   const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
   const days = Array.isArray(fest.days) ? fest.days.filter(d => typeof d === "string") : [];
   const plus = isPaid(data);
   return {
     event: EVENT,
     plus,
-    rewards: REWARDS.map(({ free, plus: p, ...r }) => ({ ...r, label: (plus ? p : free).label, flames: flamesIn(days, r) })),
+    rewards: REWARDS.map(({ free, plus: p, test, ...r }) => ({ ...r, label: tester ? test : (plus ? p : free).label, flames: flamesIn(days, r) })),
     days,
     shielded: Array.isArray(fest.shielded) ? fest.shielded : [],
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
@@ -81,6 +102,7 @@ function status(data) {
     plusUntil: Number(data.plusUntil) || 0,
     giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",
     giftRedeemed: !!data.giftRedeemedAt,
+    ...(tester ? { tester: true } : {}),
   };
 }
 
@@ -90,15 +112,18 @@ export default async function handler(req, res) {
 
   const authHeader = req.headers.authorization || "";
   if (!authHeader.startsWith("Bearer ")) return res.status(401).json({ error: "Sign in to join Flame Fest." });
-  let uid;
-  try { uid = (await adminAuth.verifyIdToken(authHeader.slice(7))).uid; }
+  let decoded;
+  try { decoded = await adminAuth.verifyIdToken(authHeader.slice(7)); }
   catch { return res.status(401).json({ error: "Please sign in again." }); }
+  const uid = decoded.uid;
+  const tester = isTester(decoded);
   const userRef = db.collection("users").doc(uid);
+  const send = (data, extra = {}) => res.status(200).json({ ...status(data, tester), ...extra });
 
   try {
     if (req.method === "GET") {
       const snap = await userRef.get();
-      return res.status(200).json(status(snap.exists ? snap.data() : {}));
+      return send(snap.exists ? snap.data() : {});
     }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
@@ -108,7 +133,32 @@ export default async function handler(req, res) {
     if (body.studied === "flashcards") {
       await advanceStudyStreak(db, uid, body.localDay);
       const snap = await userRef.get();
-      return res.status(200).json(status(snap.exists ? snap.data() : {}));
+      return send(snap.exists ? snap.data() : {});
+    }
+
+    if (body.test != null) {
+      if (!tester) return res.status(403).json({ error: "Tester mode is only for the Knox admin account." });
+      const out = await db.runTransaction(async tx => {
+        const snap = await tx.get(userRef);
+        const data = snap.exists ? snap.data() : {};
+        const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
+        let update;
+        if (body.test === "fill") {
+          update = { flameFest: { ...fest, days: ALL_DAYS } };
+        } else if (body.test === "miss") {
+          if (!status(data).shields) return { error: "Claim a reward with a 🛡️ Flame Shield first." };
+          const today = /^\d{4}-\d{2}-\d{2}$/.test(body.localDay) ? body.localDay : utcDay();
+          // Last studied two days ago → yesterday was missed. The next question
+          // (or Flashcards review) spends one shield and keeps the streak.
+          update = { streakLastDay: addDays(today, -2), streakCount: Math.max(1, Number(data.streakCount) || 0) };
+        } else if (body.test === "reset") {
+          update = { flameFest: {}, flameShields: 0, flameStyles: [], flameStyle: "classic", plusUntil: 0 };
+        } else return { error: "Unknown test." };
+        tx.set(userRef, update, { merge: true });
+        return { data: { ...data, ...update } };
+      });
+      if (out.error) return res.status(400).json({ error: out.error });
+      return send(out.data);
     }
 
 
@@ -123,13 +173,13 @@ export default async function handler(req, res) {
         return { data: { ...data, flameStyle: body.style } };
       });
       if (out.error) return res.status(403).json({ error: out.error });
-      return res.status(200).json(status(out.data));
+      return send(out.data);
     }
 
     // Claim a reward.
     const reward = REWARDS.find(r => r.id === body.claim);
     if (!reward) return res.status(400).json({ error: "That reward doesn't exist." });
-    if (utcDay() > EVENT.claimUntil) return res.status(410).json({ error: "Flame Fest rewards could be claimed until December 7." });
+    if (!tester && utcDay() > EVENT.claimUntil) return res.status(410).json({ error: "Flame Fest rewards could be claimed until December 7." });
     const bankRef = userRef.collection("usage").doc("bank");
     const giftCode = reward.id === "month" ? crypto.randomBytes(6).toString("base64").replace(/[^A-Za-z0-9]/g, "").toUpperCase().padEnd(8, "X").slice(0, 8) : "";
     const out = await db.runTransaction(async tx => {
@@ -140,7 +190,9 @@ export default async function handler(req, res) {
       const flames = flamesIn(now.days, reward);
       if (flames < reward.need) return { error: `Light ${reward.need - flames} more flame${reward.need - flames === 1 ? "" : "s"} to unlock this reward.`, code: 403 };
 
-      const g = (now.plus ? reward.plus : reward.free).gives;
+      // The tester gets both versions of every prize, so all of them can be tried.
+      const g = tester ? { ...reward.free.gives, ...reward.plus.gives } : (now.plus ? reward.plus : reward.free).gives;
+      if (tester && reward.free.gives.style && reward.plus.gives.style && reward.free.gives.style !== reward.plus.gives.style) g.styles = [reward.free.gives.style, reward.plus.gives.style];
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
       if (g.gift) {
@@ -151,7 +203,7 @@ export default async function handler(req, res) {
       }
       if (g.shields) update.flameShields = now.shields + g.shields;
       if (g.style) {
-        update.flameStyles = [...new Set([...now.flameStyles.filter(s => s !== "classic"), g.style])];
+        update.flameStyles = [...new Set([...now.flameStyles.filter(s => s !== "classic"), ...(g.styles || [g.style])])];
         update.flameStyle = g.style; // show the new flame right away
       }
       if (g.plusDays) update.plusUntil = Math.max(Date.now(), now.plusUntil) + g.plusDays * DAY_MS;
@@ -166,7 +218,7 @@ export default async function handler(req, res) {
       return { data: { ...data, ...update } };
     });
     if (out.error) return res.status(out.code).json({ error: out.error });
-    return res.status(200).json({ ...status(out.data), justClaimed: reward.id });
+    return send(out.data, { justClaimed: reward.id });
   } catch (err) {
     console.error("Flame Fest error:", err?.message);
     return res.status(503).json({ error: "Flame Fest is busy right now. Please try again in a moment." });

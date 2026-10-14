@@ -1229,6 +1229,43 @@ test('Flame Fest rewards: claim only when earned, once; bonus questions, shields
   assert.equal(anon.code, 401);
 });
 
+test('Flame Fest tester mode: admin only; every reward for real before November; miss a day uses a shield', async () => {
+  const { db, store } = memoryDb();
+  const date = fakeDate('2026-10-13T18:00:00Z');
+  store.set('users/u1', { plan: 'free', streakCount: 5, streakLastDay: '2026-10-13' });
+  const stranger = await load('api/flame-fest.js', { db, date, adminUid: 'someone-else' });
+  const no = response(); await stranger(ffReq('POST', { test: 'fill' }), no);
+  assert.equal(no.code, 403, 'only the admin account');
+  const plainGet = response(); await stranger(ffReq('GET'), plainGet);
+  assert.equal(plainGet.body.tester, undefined);
+
+  const handler = await load('api/flame-fest.js', { db, date, adminUid: 'u1' });
+  const call = async (method, body) => { const res = response(); await handler(ffReq(method, body), res); return res; };
+  assert.equal((await call('POST', { test: 'miss', localDay: '2026-10-13' })).code, 400, 'needs a shield first');
+  let res = await call('POST', { test: 'fill' });
+  assert.equal(res.body.tester, true);
+  assert.equal(res.body.days.length, 30);
+  for (const id of ['w1', 'w2', 'w3', 'w4', 'month']) assert.equal((await call('POST', { claim: id })).code, 200, id);
+  const u = store.get('users/u1');
+  assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'gold', 'purple']);
+  assert.equal(u.flameShields, 3);
+  assert.ok(u.plusUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Mega Knox week');
+  assert.match(u.flameFest.giftCode, /^[A-Z0-9]{8}$/, 'a gift link too');
+
+  res = await call('POST', { test: 'miss', localDay: '2026-10-13' });
+  assert.equal(res.code, 200);
+  assert.equal(store.get('users/u1').streakLastDay, '2026-10-11');
+  const ask = await load('api/ask.js', { db, fetch: askFetch(), date });
+  const r = response(); await ask(askRequest({ question: 'Solve 2x = 8', localDay: '2026-10-13' }), r);
+  assert.equal(store.get('users/u1').streakCount, 6, 'the shield kept the streak');
+  assert.equal(store.get('users/u1').flameShields, 2);
+
+  res = await call('POST', { test: 'reset' });
+  assert.equal(res.body.days.length, 0);
+  assert.equal(store.get('users/u1').flameShields, 0);
+  assert.equal(store.get('users/u1').plusUntil, 0);
+});
+
 test('Flame Fest Plus week counts as Plus; bonus questions survive the daily refill', async () => {
   const { db, store } = memoryDb();
   const handler = await load('api/ask.js', { db, fetch: askFetch() });
