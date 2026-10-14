@@ -88,8 +88,9 @@
     </div>`;
   }
   function html() {
-    if (loading && !state) return '<div class="ff-loading">Lighting the calendar…</div>';
-    if (error && !state) return `<div class="ff-loading">${esc(error)}</div>`;
+    // Until the calendar arrives: the same boxed loading card as the app.
+    if (loading && !state) return '<div class="ff-loading" role="status"><img class="ff-loading-logo" src="/knox-logo-square.jpg" alt=""><b>Flame Fest</b><span class="ff-loading-spinner" aria-hidden="true"></span><span>Lighting your calendar…</span></div>';
+    if (error && !state) return `<div class="ff-loading" role="status"><img class="ff-loading-logo" src="/knox-logo-square.jpg" alt=""><b>Flame Fest</b><span>${esc(error)}</span><button type="button" class="ff-claim" data-retry>Try again</button></div>`;
     const t = today(), lit = state.days.length;
     const before = t < START, after = t > END;
     const daysLeft = Math.round((Date.parse(START) - Date.parse(t)) / 86400000);
@@ -146,6 +147,7 @@
   }
   function render() {
     if (!wrap) return;
+    wrap.querySelector('.ff-card').classList.toggle('ff-card-loading', !state);
     wrap.querySelector('.ff-body').innerHTML = html();
   }
   async function claim(id, btn) {
@@ -211,6 +213,7 @@
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
       const s = e.target.closest('[data-style]'); if (s) { pickStyle(s.dataset.style); return; }
       const t = e.target.closest('[data-test]'); if (t) { runTest(t.dataset.test, t); return; }
+      if (e.target.closest('[data-retry]')) { load().then(render); return; }
       const cp = e.target.closest('[data-copy]');
       if (cp) navigator.clipboard?.writeText(cp.dataset.copy).then(() => toast('Gift link copied — send it to a friend! 🎁'), () => { wrap.querySelector('.ff-gift-link')?.select(); toast('Copy the link above and send it to a friend.'); });
     });

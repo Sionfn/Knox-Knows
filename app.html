@@ -1418,11 +1418,9 @@
       .learn-graph .lg-labels text { font-size: 19px; }
       .learn-graph .lg-curves path { stroke-width: 4.5; }
     }
-    /* Learn mode thinking: purple dots and stripe */
+    /* Learn mode thinking: purple stripe (the dots keep Knox's colors) */
     .learn-thinking .msg-knox-bubble { border-left-color: var(--purple); }
-    .learn-thinking .thinking-dot:nth-child(1) { background: var(--purple); }
-    .learn-thinking .thinking-dot:nth-child(2) { background: color-mix(in srgb, var(--purple) 65%, #fff); }
-    .learn-thinking .thinking-dot:nth-child(3) { background: var(--purple-dark); }
+
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
       background: var(--cream); color: var(--text-light); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: border-color .12s, color .12s; }
@@ -2254,7 +2252,7 @@
       background: var(--cream); color: var(--text);
     }
     .app-auth-pending #appLoading { display: flex; }
-    .app-loading-content { display: flex; flex-direction: column; align-items: center; gap: 13px; }
+    .app-loading-content { display: flex; flex-direction: column; align-items: center; gap: 13px; padding: 28px; border: 2px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: 0 6px 0 var(--border), 0 0 40px rgba(255,107,0,.08); } /* the boxed loading card */
     .app-loading-logo { width: 76px; height: 76px; border: 4px solid var(--orange); border-radius: 22px; box-shadow: 0 5px 0 var(--orange-dark); }
     .app-loading-title { font-size: 24px; font-weight: 900; }
     .app-loading-status { color: var(--text-light); font-size: 14px; font-weight: 700; }
@@ -3809,7 +3807,7 @@
       row.className = 'sidebar-history-item is-current shi-pending' + (historyMotion() ? ' shi-new' : '');
       row.setAttribute('aria-busy', 'true');
       row.innerHTML = '<span class="shi-icon" aria-hidden="true">' + (isLearn ? HISTORY_LEARN_ICON : HISTORY_CHAT_ICON) + '</span><span class="shi-text"></span><span class="shi-pending-dot' + (isLearn ? ' learn' : '') + '" aria-hidden="true"></span>';
-      row.querySelector('.shi-text').textContent = String((isLearn ? '🎓 ' : '') + (question || 'New chat')).substring(0, 60);
+      row.querySelector('.shi-text').textContent = String(question || 'New chat').substring(0, 60);
       list.prepend(row);
       glideHistoryRows(list, tops);
       list.scrollTop = 0;
@@ -3850,7 +3848,8 @@
         return;
       }
       if (old) old.remove();
-      const qText = String((d.title === '[image]' ? '📷 Photo' : d.title) || 'Untitled').substring(0, 200);
+      // The graduation-cap icon already marks Learn chats; drop the old "🎓 " title prefix.
+      const qText = String((d.title === '[image]' ? '📷 Photo' : d.title) || 'Untitled').replace(/^🎓\s*/u, '').substring(0, 200) || 'Untitled';
       const convId = s.id;
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
@@ -3984,7 +3983,7 @@
         if (originalId && !parent.exists()) throw new Error('Conversation was deleted.');
         if (existingMessage.exists()) return;
         if (!parent.exists()) tx.set(convRef, {
-          title: ((isLearn ? '🎓 ' : '') + String(question || 'Untitled')).substring(0, 60),
+          title: String(question || 'Untitled').substring(0, 60), // type: 'learn' marks Learn chats (icon)
           type: isLearn ? 'learn' : 'chat',
           ...(isLearn && context.sessionId ? { learnSessionId: context.sessionId } : {}),
           createdAt: now, updatedAt: now,

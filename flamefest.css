@@ -5,7 +5,14 @@
   background: var(--surface); color: var(--text); border: 3px solid var(--orange); border-radius: 26px; box-shadow: 0 7px 0 var(--orange-dark), 0 24px 60px rgba(0,0,0,.35); padding: 22px 22px 18px; font-family: inherit; }
 .ff-x { position: absolute; z-index: 5; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: var(--cream-warm); color: var(--text-light); font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; }
 .ff-x:hover { color: var(--text); }
-.ff-loading { padding: 48px 12px; text-align: center; font-weight: 800; color: var(--text-light); }
+/* Loading: the card shrinks to the app's boxed loading card */
+.ff-card.ff-card-loading { width: auto; min-width: 260px; padding: 28px 32px; }
+.ff-loading { display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center; font-size: 14px; font-weight: 700; color: var(--text-light); }
+.ff-loading b { font-size: 24px; font-weight: 900; color: var(--text); }
+.ff-loading-logo { width: 76px; height: 76px; border: 4px solid var(--orange); border-radius: 22px; box-shadow: 0 5px 0 var(--orange-dark); object-fit: cover; }
+.ff-loading-spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: ffSpin .8s linear infinite; }
+@keyframes ffSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ff-loading-spinner { animation: none; border-color: var(--orange); } }
 
 .ff-head { text-align: center; padding: 4px 26px 0; }
 .ff-badge { display: inline-block; padding: 5px 13px; border-radius: 999px; background: var(--orange-light); border: 2px solid var(--orange); color: var(--orange); font-size: 12.5px; font-weight: 900; }
