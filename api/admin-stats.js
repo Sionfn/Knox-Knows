@@ -20,6 +20,7 @@ import Stripe from "stripe";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { GIFTS } from "./_gifts.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -85,6 +86,7 @@ export default async function handler(req, res) {
       feedbackStats,
       usageStats,
       revenueStats,
+      giftStats,
     ] = await Promise.all([
       getUserStats(),
       getFeedbackStats(),
@@ -95,6 +97,7 @@ export default async function handler(req, res) {
         console.error("Admin revenue stats error:", err);
         return { error: "Could not reach Stripe", mrr: 0, activeSubscriptions: 0 };
       }),
+      getGiftStats().catch(err => { console.error("Admin gift stats error:", err); return null; }),
     ]);
 
     return res.status(200).json({
@@ -103,6 +106,7 @@ export default async function handler(req, res) {
       feedback: feedbackStats,
       usage:    usageStats,
       revenue:  revenueStats,
+      gifts:    giftStats,
     });
   } catch (err) {
     console.error("Admin stats error:", err);
@@ -189,6 +193,24 @@ async function getUserStats() {
 }
 
 // ────────────────────────────────────────────────────────────
+// GIFT CODES — one-time payments, so they never show up in MRR.
+// ────────────────────────────────────────────────────────────
+async function getGiftStats() {
+  const snap = await db.collection("giftCodes").limit(5000).get();
+  const out = { sold: 0, soldCents: 0, soldRedeemed: 0, refunded: 0, made: 0, madeRedeemed: 0, flameFest: 0, flameFestRedeemed: 0 };
+  snap.forEach(doc => {
+    const g = doc.data() || {};
+    if (g.source === "purchase") {
+      if (g.disabled) { out.refunded++; return; }
+      out.sold++; out.soldCents += GIFTS[g.gift]?.cents || 0;
+      if (g.redeemedBy) out.soldRedeemed++;
+    } else if (g.source === "admin") { out.made++; if (g.redeemedBy) out.madeRedeemed++; }
+    else if (g.source === "flamefest") { out.flameFest++; if (g.redeemedBy) out.flameFestRedeemed++; }
+  });
+  return out;
+}
+
+// ────────────────────────────────────────────────────────────
 // FEEDBACK STATS
 // ────────────────────────────────────────────────────────────
 async function getFeedbackStats() {
@@ -227,6 +249,7 @@ async function getFeedbackStats() {
         question: (f.question || "").slice(0, 240),
         answer:   (f.answer   || "").slice(0, 500),
         plan:     f.plan,
+        mode:     f.mode === "learn" ? "learn" : "ask",
         ts:       f.ts,
       });
     }
@@ -236,6 +259,7 @@ async function getFeedbackStats() {
         rating: r,
         question: (f.question || "").slice(0, 140),
         plan: f.plan,
+        mode: f.mode === "learn" ? "learn" : "ask",
         ts:   f.ts,
       });
     }

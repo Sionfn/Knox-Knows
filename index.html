@@ -132,7 +132,7 @@
           {
             "@type": "Question",
             "name": "How is Knox different from ChatGPT or other AI tools?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say 'quiz me instead' and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox is built specifically for students, not a generic chatbot. Ask Knox gives clear, step-by-step answers; Learn mode teaches you one small step at a time, with tap-to-answer questions and hints, instead of handing over the answer; and Flashcards turns any topic or your notes into a study deck. Your full chat history is saved, so you never lose your work." }
           },
           {
             "@type": "Question",
@@ -152,12 +152,12 @@
           {
             "@type": "Question",
             "name": "Can I upload a photo of my homework?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox can read photos of handwritten or printed homework, and PDF, Word and PowerPoint files too. Tap the upload button in the app (or drag a file in) and Knox reads it just like a typed question." }
           },
           {
             "@type": "Question",
             "name": "Is this just cheating?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox defaults to a straight, real answer. If you'd rather be taught than told, just say so — 'walk me through it' or 'quiz me' — and Knox switches to guiding you there yourself instead of handing over the solution." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox gives a straight, real answer when you just need to move on. When you'd rather be taught than told, turn on Learn mode: Knox guides you one step at a time with hints and questions, and never hands over the answer before you've worked it out." }
           },
           {
             "@type": "Question",
@@ -168,6 +168,11 @@
             "@type": "Question",
             "name": "Does Knox remember my previous questions?",
             "acceptedAnswer": { "@type": "Answer", "text": "Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account." }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I give Mega Knox as a gift?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — buy 1, 3 or 12 months of Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged." }
           },
           {
             "@type": "Question",
@@ -2651,7 +2656,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox is built specifically for students, not a generic chatbot. It reads how you ask — a straight question gets a direct answer, but say "quiz me instead" and Knox switches to teaching mode on the spot. No menus, no modes to pick, and a full chat history so you never lose your work.
+          Knox is built specifically for students, not a generic chatbot. Ask Knox gives clear, step-by-step answers; Learn mode teaches you one small step at a time, with tap-to-answer questions and hints, instead of handing over the answer; and Flashcards turns any topic or your notes into a study deck. Your full chat history is saved, so you never lose your work.
         </div>
       </details>
 
@@ -2695,7 +2700,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — Knox can read photos of handwritten or printed homework. Just tap the camera icon in the app and snap a photo. Knox will read it and answer it just like a typed question. Free users draw photos from the same daily credit pool as questions (a photo just uses a bit more of it); Mega Knox gets unlimited.
+          Yes — Knox can read photos of handwritten or printed homework, and PDF, Word and PowerPoint files too. Tap the upload button in the app (or drag a file in) and Knox reads it just like a typed question. Free users draw photos and files from the same daily credit pool as questions (they just use a bit more of it); Mega Knox gets unlimited.
         </div>
       </details>
 
@@ -2706,7 +2711,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox defaults to a straight, real answer — useful when you're stuck and just need to move on. But if you'd rather be taught than told, just say so: "walk me through it" or "quiz me instead" switches Knox into guiding you there yourself, one hint at a time, instead of handing over the solution.
+          Knox gives a straight, real answer when you're stuck and just need to move on. But when you'd rather be taught than told, turn on <strong>Learn mode</strong>: Knox guides you one step at a time with hints and tap-to-answer questions, and never hands over the answer before you've worked it out.
         </div>
       </details>
 
@@ -2729,6 +2734,16 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         </summary>
         <div class="knox-faq-body">
           Yes — Knox saves your chat history in the sidebar so you can always go back and review previous answers. Your history is saved to your account.
+        </div>
+      </details>
+
+      <details class="knox-faq reveal">
+        <summary>
+          <span>Can I give Mega Knox as a gift?</span>
+          <span class="knox-faq-icon" aria-hidden="true">+</span>
+        </summary>
+        <div class="knox-faq-body">
+          Yes — buy 1, 3 or 12 months of Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged. <a href="#" onclick="event.preventDefault();window.knoxGifts?.openBuy();" style="color:var(--orange);font-weight:800;">Give Mega Knox →</a>
         </div>
       </details>
 
@@ -3275,6 +3290,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
   // ── Google Sign In ────────────────────────────────────────────────────────
   window.handleGoogleLogin = async function() {
+    // Google blocks its sign-in inside app browsers (TikTok, Instagram,
+    // Snapchat…) with a dead-end error page, so explain what to do instead.
+    if (/FBAN|FBAV|FB_IAB|Instagram|musical_ly|Bytedance|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter/i.test(navigator.userAgent)) {
+      window.showLoginError?.("Google sign-in doesn’t work inside this app’s browser. Tap ⋯ (or the share button) and choose “Open in browser” — or sign in with your email below.");
+      return;
+    }
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);

@@ -44,6 +44,12 @@ export default async function handler(req, res) {
     // a custom token for that same uid. Only someone who genuinely signed in
     // can reach this, so it's safe.
     const decoded = await adminAuth.verifyIdToken(authHeader.slice(7));
+    // extension-auth.html always signs in fresh right before this call, so
+    // only a sign-in from the last 10 minutes may connect the extension — an
+    // older (or stolen) token can't be turned into a lasting session.
+    if (!decoded.auth_time || Date.now() / 1000 - decoded.auth_time > 600) {
+      return res.status(401).json({ error: "Please sign in again to connect the extension." });
+    }
     const customToken = await adminAuth.createCustomToken(decoded.uid);
     return res.status(200).json({ customToken });
   } catch (err) {

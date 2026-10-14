@@ -4000,7 +4000,7 @@
         knoxRow.className = 'msg-wrap';
         const historyFbId = 'fb_' + Math.random().toString(36).slice(2, 8);
         const historyLearn = window._learnModeActive && d.model !== 'knox-chat';
-        window._fbPayloads[historyFbId] = { question: d.question || '', answer: historyLearn ? (window.knoxLearnClean?.(d.answer || '') ?? (d.answer || '')) : (d.answer || '') };
+        window._fbPayloads[historyFbId] = { question: d.question || '', answer: historyLearn ? (window.knoxLearnClean?.(d.answer || '') ?? (d.answer || '')) : (d.answer || ''), mode: historyLearn ? 'learn' : 'ask' };
         knoxRow.innerHTML =
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
@@ -4051,7 +4051,7 @@
   window.deleteConversation = deleteConversation;
 
   // ── Feedback ────────────────────────────────────────────────
-  async function submitFeedback(rating, question, answer) {
+  async function submitFeedback(rating, question, answer, mode) {
     if (!window.currentUser) return false;
     if (rating !== 1 && rating !== -1) return false;
     try {
@@ -4061,6 +4061,7 @@
         question: String(question || '').substring(0, 500),
         answer:   String(answer   || '').substring(0, 2000),
         plan:     window.userPlan || 'free',
+        ...(mode === 'learn' || mode === 'ask' ? { mode } : {}), // Learn vs Ask Knox, for the admin page
         ts:       Date.now(),
       };
       await addDoc(collection(db, 'feedback'), { ...payload, uid });
@@ -4078,7 +4079,7 @@
     bar?.classList.add('fb-rated');
     btn?.classList.add('fb-on');
     btn?.setAttribute('aria-pressed', 'true');
-    const ok = await submitFeedback(rating, payload.question, payload.answer);
+    const ok = await submitFeedback(rating, payload.question, payload.answer, payload.mode);
     const label = bar?.querySelector('.fb-thanks');
     if (label) {
       label.textContent = ok ? (rating === 1 ? 'Thanks! 🦊' : 'Thanks — this helps Knox improve') : 'Couldn’t save that — try again later';
@@ -4215,6 +4216,12 @@
         if (nativeCancelled(e)) return;
         showAuthError(nativeAuthError(e, 'Google'));
       }
+      return;
+    }
+    // Google blocks its sign-in inside app browsers (TikTok, Instagram,
+    // Snapchat…) with a dead-end error page, so explain what to do instead.
+    if (/FBAN|FBAV|FB_IAB|Instagram|musical_ly|Bytedance|TikTok|Snapchat|Pinterest|LinkedInApp|Twitter/i.test(navigator.userAgent)) {
+      showAuthError("Google sign-in doesn’t work inside this app’s browser. Tap ⋯ (or the share button) and choose “Open in browser” — or sign in with your email below.");
       return;
     }
     try {
@@ -4509,8 +4516,9 @@
 'use strict';
 
 function $(id) { return document.getElementById(id); }
+// Also escapes quotes: the result is used inside attributes too (Learn buttons).
 function escHtml(s) {
-  return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 // Apply **bold** markdown — safe because we escape FIRST then transform.
 // The escape neutralizes any HTML in the source, and we only insert <strong>.
@@ -5441,6 +5449,9 @@ window.appHandleAsk = async function() {
   const requestConversationId = window._currentConversationId;
   const requestLearnMode = !!window._learnModeActive;
   const requestLearnSessionId = window._learnSessionId;
+  // "Keep going · 1 credit" after a Learn session ran out (see learnKeepGoing).
+  const renewLearn = window._appRenewLearn === true;
+  window._appRenewLearn = false;
   const requestHistory = [];
   let historyChars = 0;
   // Walk newest→oldest, keep everything that still fits.
@@ -5573,6 +5584,7 @@ window.appHandleAsk = async function() {
         history,
         learnMode: requestLearnMode,
         learnSessionId: requestLearnSessionId,
+        renewLearn: renewLearn || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
       }),
@@ -5597,10 +5609,13 @@ window.appHandleAsk = async function() {
         if (!window.currentUser) window.markGuestBlocked?.(); // keep the pill honest
         replaceThinking(thinkId, renderLimitCard(data, window.currentUser));
       } else if (data.learnSessionExpired) {
-        // Give a one-tap way into a fresh Learn chat (its first reply uses a credit, as the message says).
+        // Keep going in this chat for 1 credit (the lesson stays), or start fresh.
+        window._learnKeepGoing = q ? { q, userRow } : null;
+        const expiredBtn = 'margin-top:10px;margin-right:8px;padding:10px 16px;border-radius:12px;border:2px solid var(--purple);font-weight:900;font-family:inherit;cursor:pointer;';
         replaceThinking(thinkId,
           '<p style="font-weight:800;">🎓 ' + escHtml(data.error || 'This Learn session has ended.') + '</p>' +
-          '<button type="button" class="learn-restart-btn" onclick="window.openLearnMode()" style="margin-top:10px;padding:10px 16px;border-radius:12px;border:2px solid var(--purple);background:var(--purple-light);color:var(--purple);font-weight:900;font-family:inherit;cursor:pointer;">Start a new Learn chat</button>');
+          (q ? '<button type="button" class="learn-restart-btn" onclick="window.learnKeepGoing(this)" style="' + expiredBtn + 'background:var(--purple);color:#fff;">Keep going here · 1 credit</button>' : '') +
+          '<button type="button" class="learn-restart-btn" onclick="window.openLearnMode()" style="' + expiredBtn + 'background:var(--purple-light);color:var(--purple);">Start a new Learn chat</button>');
       } else {
         const errMsg = data.error || 'Something went wrong. Try again.';
         // Luna test path includes a `debug` field with the real OpenAI
@@ -5650,7 +5665,7 @@ window.appHandleAsk = async function() {
     // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer };
+    window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer, mode: requestLearnMode ? 'learn' : 'ask' };
 
     // Copy is always shown (works for guests too); the 👍/👎
     // only for signed-in users, same as before.
@@ -5689,6 +5704,19 @@ window.appHandleAsk = async function() {
       if (sendBtn) sendBtn.disabled = false;
     }
   }
+};
+
+// After a Learn session ran out: send the same message again in this chat,
+// agreeing to the 1 credit (the server only renews the session with renewLearn).
+window.learnKeepGoing = function(btn) {
+  const k = window._learnKeepGoing;
+  if (!k || window._appAskBusy) return;
+  window._learnKeepGoing = null;
+  btn.closest('.msg-wrap')?.remove();
+  k.userRow?.remove();
+  window._appRenewLearn = true;
+  window.appSetQuestion(k.q);
+  window.appHandleAsk();
 };
 
 function replaceThinking(thinkId, html, actionsHtml = '', modelLabel = '') {

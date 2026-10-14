@@ -251,6 +251,24 @@ test('Expired Learn sessions do not silently charge another credit', async () =>
   assert.equal(store.has('users/u1/usage/bank'), false);
 });
 
+test('An ended Learn session keeps going in the same chat: free for Mega Knox, 1 credit for free accounts that agree', async () => {
+  const { db, store } = memoryDb(); const id = crypto.randomUUID();
+  const handler = await load('api/ask.js', { db, fetch: askFetch() });
+  store.set('users/u1', { plan: 'super' });
+  store.set(`users/u1/learnSessions/${id}`, { turns: 20, createdAt: Date.now() });
+  let res = response(); await handler(askRequest({ question: 'Why?', learnMode: true, learnSessionId: id }), res);
+  assert.equal(res.code, 200, 'Mega Knox: no stop');
+  assert.equal(store.get(`users/u1/learnSessions/${id}`).turns, 1, 'a fresh session');
+
+  store.set('users/u1', { plan: 'free' });
+  store.set('users/u1/usage/bank', { balance: 5, lastRegenAt: Date.now() });
+  store.set(`users/u1/learnSessions/${id}`, { turns: 20, createdAt: Date.now() });
+  res = response(); await handler(askRequest({ question: 'Why?', learnMode: true, learnSessionId: id, renewLearn: true }), res);
+  assert.equal(res.code, 200);
+  assert.equal(store.get('users/u1/usage/bank').balance, 4, 'one credit, as agreed');
+  assert.equal(store.get(`users/u1/learnSessions/${id}`).turns, 1);
+});
+
 test('Admin endpoint rejects unverified or wrong UID even with matching email', async () => {
   for (const token of [{ uid: 'u1', email: 'owner@example.com', email_verified: false }, { uid: 'u2', email: 'owner@example.com', email_verified: true }]) {
     const handler = await load('api/admin-stats.js', { adminUid: 'u1', adminEmail: 'owner@example.com', token });
@@ -643,12 +661,16 @@ test('Admin stats list free trials with their outcome and keep trials out of pay
 test('Admin stats still load when Stripe is unreachable', async () => {
   const docs = { size: 0, docs: [], forEach() {} };
   const empty = { async get() { return docs; } };
-  const db = { collection: name => name === 'feedback' ? { orderBy: () => ({ limit: () => empty }) } : name === 'users' ? empty : { doc: () => ({ async get() { return { exists: false }; }, collection: () => empty }) } };
+  const gifts = [{ source: 'purchase', gift: '12m', redeemedBy: 'u9' }, { source: 'purchase', gift: '1m', redeemedBy: null }, { source: 'purchase', gift: '3m', disabled: true }, { source: 'admin', redeemedBy: null }, { source: 'flamefest', redeemedBy: 'u8' }];
+  const giftCodes = { limit: () => ({ async get() { return { forEach: f => gifts.forEach(d => f({ data: () => d })) }; } }) };
+  const db = { collection: name => name === 'feedback' ? { orderBy: () => ({ limit: () => empty }) } : name === 'users' ? empty : name === 'giftCodes' ? giftCodes : { doc: () => ({ async get() { return { exists: false }; }, collection: () => empty }) } };
   const stripe = { subscriptions: { list: async () => { throw new Error('Stripe down'); } } };
   const handler = await load('api/admin-stats.js', { db, stripe, adminUid: 'u1' });
   const res = response(); await handler({ method: 'GET', headers: { authorization: 'Bearer test' } }, res);
   assert.equal(res.code, 200);
   assert.equal(res.body.revenue.error, 'Could not reach Stripe');
+  // Gift sales are one-time payments, shown on their own (refunded ones left out).
+  assert.deepEqual(plain(res.body.gifts), { sold: 2, soldCents: 8998, soldRedeemed: 1, refunded: 1, made: 1, madeRedeemed: 0, flameFest: 1, flameFestRedeemed: 1 });
 });
 // ── Make with Knox (AI flashcards) ─────────────────────────────────────────
 function aiFetch(content, { ok = true } = {}) {

@@ -1103,6 +1103,7 @@
                   <div class="data-row-header">
                     <span class="tag tag-down">👎 Down</span>
                     <span class="tag tag-plan-${planClass(f.plan)}">${escHtml((f.plan || 'free').toUpperCase())}</span>
+                    ${f.mode === 'learn' ? '<span class="tag" style="background:#F3E8FF;color:#7C3AED;">🎓 Learn</span>' : ''}
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
                   <div class="row-question">${escHtml(f.question || '—')}</div>
@@ -1121,6 +1122,7 @@
                   <div class="data-row-header">
                     <span class="tag ${f.rating === 1 ? 'tag-up' : 'tag-down'}">${f.rating === 1 ? '👍' : '👎'}</span>
                     <span class="tag tag-plan-${planClass(f.plan)}">${escHtml((f.plan || 'free').toUpperCase())}</span>
+                    ${f.mode === 'learn' ? '<span class="tag" style="background:#F3E8FF;color:#7C3AED;">🎓 Learn</span>' : ''}
                     <span style="font-size:11px;font-weight:700;color:var(--text-light);margin-left:auto;">${relTime(f.ts)}</span>
                   </div>
                   <div class="row-question">${escHtml(f.question || '—')}</div>
@@ -1158,7 +1160,17 @@
       </div>
     `;
 
-    dash.innerHTML = revenueHtml + trialsHtml + usersHtml + feedbackHtml + usageHtml;
+    // ─── GIFT CODES (one-time payments — not part of MRR) ───
+    const g = data.gifts;
+    const giftsHtml = g ? `
+        <h2 class="section-title">🎁 Gift codes</h2>
+        <div class="grid grid-4">
+          <div class="metric-card orange"><div class="metric-label">Gifts sold</div><div class="metric-value">${fmt(g.sold)}</div><div class="metric-sub">${fmt(g.soldRedeemed)} redeemed${g.refunded ? ' · ' + fmt(g.refunded) + ' refunded' : ''}</div></div>
+          <div class="metric-card green"><div class="metric-label">Gift sales</div><div class="metric-value">${escHtml(fmtMoney(g.soldCents / 100))}</div><div class="metric-sub">One-time, before Stripe fees</div></div>
+          <div class="metric-card blue"><div class="metric-label">Codes you made</div><div class="metric-value">${fmt(g.made)}</div><div class="metric-sub">${fmt(g.madeRedeemed)} redeemed</div></div>
+          <div class="metric-card purple"><div class="metric-label">Flame Fest gifts</div><div class="metric-value">${fmt(g.flameFest)}</div><div class="metric-sub">${fmt(g.flameFestRedeemed)} redeemed</div></div>
+        </div>` : '';
+    dash.innerHTML = revenueHtml + giftsHtml + trialsHtml + usersHtml + feedbackHtml + usageHtml;
 
     const tabs = document.getElementById('trialTabs');
     if (tabs) tabs.addEventListener('click', e => {

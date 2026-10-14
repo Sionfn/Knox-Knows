@@ -92,7 +92,7 @@
   async function readPdf(file) {
     const pdfjs = await loadPdfJs();
     let doc;
-    try { doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise; }
+    try { doc = await pdfjs.getDocument({ data: await file.arrayBuffer(), isEvalSupported: false }).promise; }
     catch (err) {
       if (err?.name === 'PasswordException') throw new Error('That PDF is password-protected. Remove the password and try again.');
       throw new Error("Knox couldn't open that PDF. Try saving it again or uploading a photo instead.");

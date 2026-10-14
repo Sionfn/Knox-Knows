@@ -879,13 +879,13 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  const { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay, document: doc } = req.body;
+  const { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay, document: doc, renewLearn } = req.body;
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||
       !Array.isArray(history) || history.length > 40 ||
       history.some(msg => !msg || !['user', 'assistant'].includes(msg.role) || typeof msg.content !== 'string' || msg.content.length > 24000) ||
       history.reduce((total, msg) => total + msg.content.length, 0) > 120000 ||
       (learnSessionId != null && (typeof learnSessionId !== 'string' || learnSessionId.length > 100)) ||
-      (learnMode != null && typeof learnMode !== 'boolean')) {
+      (learnMode != null && typeof learnMode !== 'boolean') || (renewLearn != null && typeof renewLearn !== 'boolean')) {
     return res.status(400).json({ error: 'Invalid question or conversation.' });
   }
   if (doc != null && (typeof doc !== 'object' || Array.isArray(doc) || typeof doc.text !== 'string' || typeof doc.name !== 'string' ||
@@ -963,14 +963,14 @@ export default async function handler(req, res) {
   // for guests; the in-memory IP limiter earlier is just a fast pre-check.
   const guestCharges = [];
   let chargedUsage = null;
-  if (isGuest && image) {
+  if (isGuest && (image || doc)) { // a file costs as much to read as a photo
     const guestPhoto = await checkGuestUsage(ipHash, "photo");
     if (guestPhoto.unavailable) return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' });
     if (!guestPhoto.allowed) {
       const hours = Math.max(1, Math.ceil((guestPhoto.retryAfterMs || 0) / 3600000));
       return res.status(429).json({
         error: "Photo limit reached",
-        message: `Guests get ${guestPhoto.limit} free photo upload per day — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Sign up free for unlimited photo questions (up to your daily allowance).`,
+        message: `Guests get ${guestPhoto.limit} free photo or file upload per day — resets in about ${hours} hour${hours === 1 ? '' : 's'}. Sign up free to upload more (up to your daily allowance).`,
         limitReached: true,
         photoLimit: true,
       });
@@ -1021,10 +1021,18 @@ export default async function handler(req, res) {
     try { isLearnFollowUp = await consumeLearnFollowUp(uid, learnSessionId); }
     catch (err) { console.error('Learn session check failed:', err); return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' }); }
   }
-  if (isLearnFollowUp === 'expired') return res.status(409).json({
-    error: 'This Learn session has reached its 20-message or 2-hour limit. Start a new Learn chat to continue; its first answer uses one credit.',
-    learnSessionExpired: true,
-  });
+  // A session that hit its 20-message / 2-hour limit keeps going in the same
+  // chat (so the lesson isn't lost) as a fresh session: free for Mega Knox,
+  // and for free accounts only once they agree to spend 1 credit (renewLearn).
+  let renewLearnSession = false;
+  if (isLearnFollowUp === 'expired') {
+    if (planTier(plan) !== 'paid' && renewLearn !== true) return res.status(409).json({
+      error: 'This Learn session has reached its 20-message or 2-hour limit. Keep going in this chat for 1 credit, or start a new Learn chat.',
+      learnSessionExpired: true,
+    });
+    renewLearnSession = true;
+    isLearnFollowUp = false;
+  }
   if (uid && !casual) {
     if (!isLearnFollowUp) {
       const cost = learnMode ? 1 : ((image || doc) ? PHOTO_CREDIT_COST : 1);
@@ -1234,9 +1242,11 @@ export default async function handler(req, res) {
         // resetting the cap and granting another 19 free follow-ups.
         // Repeatable indefinitely by looping past the cap.
         const ref = db.collection('users').doc(uid).collection('learnSessions').doc(learnSessionId);
+        // A renewed session was paid for above (a credit, or Mega Knox), so
+        // it may start over.
         await db.runTransaction(async tx => {
           const snap = await tx.get(ref);
-          if (!snap.exists) tx.set(ref, { createdAt: Date.now(), turns: 1 });
+          if (!snap.exists || renewLearnSession) tx.set(ref, { createdAt: Date.now(), turns: 1 });
         });
       } catch (err) { console.error('Learn session creation failed:', err); }
     }

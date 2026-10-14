@@ -111,3 +111,11 @@ test('Learn recap: lesson-complete card with practice, flashcards and new-topic 
   assert.doesNotMatch(html, /Recap:|Watch out: The|Topic:/);
   assert.doesNotMatch(html, /I’m stuck/, 'no help chips once the lesson is done');
 });
+
+test('Learn buttons keep quotes inside their attribute (no injected handlers)', () => {
+  const html = context.renderAnswerHtml('Pick one?\nChoices: a" onmouseover="alert(1) | b\'s', 'learn');
+  assert.doesNotMatch(html, /onmouseover="/);
+  assert.match(html, /data-learn-send="a&quot; onmouseover=&quot;alert\(1\)"/);
+  const recap = context.renderAnswerHtml('Done!\nRecap: x" onclick="alert(1)\nTopic: t', 'learn');
+  assert.doesNotMatch(recap, /onclick="alert/);
+});
