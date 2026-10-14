@@ -35,9 +35,9 @@ test('all inline app scripts parse', () => {
 });
 
 test('landing and extension auth hide incomplete first paint, with a retry state', () => {
-  assert.match(landing, /localStorage\.getItem\('knoxWasSignedIn'\) === '1'\) window\.showLandingLoading\(\)/);
+  assert.match(landing, /<body class="landing-loading">/);
   assert.match(landing, /<div id="landingLoading" role="status" aria-live="polite">/);
-  assert.match(landing, /landingResolvedUid !== user\.uid/);
+  assert.match(landing, /landingResolvedUid !== \(user\?\.uid \|\| null\)/);
   assert.match(landing, /if \(loadVersion === landingAuthVersion\)[\s\S]*?window\.finishLandingLoading\(\)/);
   assert.match(landing, /id="appFab" href="\/app"/);
   assert.match(extension, /<body class="extension-loading">/);

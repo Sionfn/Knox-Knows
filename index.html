@@ -2113,7 +2113,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <script src="/calc-percent.js"></script>
   <link rel="stylesheet" href="/harvest.css">
 </head>
-<body>
+<body class="landing-loading">
 
 <noscript><style>#landingLoading { display:none !important; } body.landing-loading { overflow:auto; } body.landing-loading > *:not(script):not(noscript) { visibility:visible !important; }</style></noscript>
 
@@ -2129,7 +2129,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <script>
   // Every loading screen stays up for at least this long, so a fast load
   // doesn't flash it on and off.
-  const MIN_LOADING_MS = 250;
+  const MIN_LOADING_MS = 1000;
   window.showLandingLoading = function() {
     clearTimeout(window._landingLoadingFinishTimer);
     if (!window._landingLoadingShownAt) window._landingLoadingShownAt = performance.now();
@@ -2152,9 +2152,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       document.body.classList.remove('landing-loading', 'landing-loading-slow');
     }, wait);
   };
-  // Only returning signed-in visitors wait for their account; everyone else
-  // sees the page right away.
-  try { if (localStorage.getItem('knoxWasSignedIn') === '1') window.showLandingLoading(); } catch (e) {}
+  window.showLandingLoading();
 </script>
 
 
@@ -3206,8 +3204,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
   onAuthStateChanged(auth, async (user) => {
     const loadVersion = ++landingAuthVersion;
-    try { user ? localStorage.setItem('knoxWasSignedIn', '1') : localStorage.removeItem('knoxWasSignedIn'); } catch (e) {}
-    if (user && (document.body.classList.contains('landing-loading') || landingResolvedUid !== user.uid)) {
+    if (document.body.classList.contains('landing-loading') || landingResolvedUid !== (user?.uid || null)) {
       window.showLandingLoading();
     }
     try {
