@@ -762,6 +762,14 @@
       user-select: none;
     }
     .sidebar-history-item:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+    /* A chat new to History slides in; a "just sent" one shows a soft pulse until it's saved. */
+    @keyframes shiIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+    .sidebar-history-item.shi-new { animation: shiIn .28s cubic-bezier(.2,.8,.2,1); }
+    .shi-pending { cursor: default; }
+    .shi-pending-dot { margin-left: auto; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--orange); animation: shiPulse 1s ease-in-out infinite; }
+    .shi-pending-dot.learn { background: var(--purple); }
+    @keyframes shiPulse { 50% { opacity: .3; transform: scale(.7); } }
+    @media (prefers-reduced-motion: reduce) { .sidebar-history-item.shi-new, .shi-pending-dot { animation: none; } }
     /* Smooth removal — the row fades, slides left, and collapses its height
        before it's removed from the DOM, so deleting a chat glides instead of
        snapping. */
@@ -1377,6 +1385,44 @@
     .learn-choice:hover:not(:disabled) { transform: translateY(-1px); background: var(--purple-light); }
     .learn-choice:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--purple-dark); }
     .learn-choice.picked { background: var(--purple); color: #fff; }
+    /* Each answer in its own Knox color (like the welcome cards). */
+    .learn-choice { --lc: var(--purple); --lc-dark: var(--purple-dark); border-color: var(--lc); box-shadow: 0 3px 0 var(--lc-dark); }
+    .learn-choice:nth-child(4n+1) { --lc: var(--orange); --lc-dark: var(--orange-dark); }
+    .learn-choice:nth-child(4n+2) { --lc: var(--blue); --lc-dark: var(--blue-dark); }
+    .learn-choice:nth-child(4n+3) { --lc: var(--green); --lc-dark: var(--green-dark); }
+    .learn-choice:hover:not(:disabled) { background: color-mix(in srgb, var(--lc) 14%, var(--surface)); }
+    .learn-choice:active:not(:disabled) { box-shadow: 0 1px 0 var(--lc-dark); }
+    .learn-choice.picked { background: var(--lc); border-color: var(--lc-dark); color: #fff; }
+    /* Teaching cards: key idea, graph, video */
+    .learn-key, .learn-graph, .learn-video { margin: 0 18px 14px; }
+    .learn-key { padding: 12px 16px; border-radius: 16px; border: 2px solid var(--blue); background: color-mix(in srgb, var(--blue) 9%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 40%, transparent); }
+    .learn-key-title { font-size: 12.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: var(--blue-dark); margin-bottom: 4px; }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-key-title { color: var(--blue); }
+    .learn-key p { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
+    .learn-graph { max-width: 600px; padding: 10px 10px 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); }
+    .learn-graph svg { display: block; width: 100%; height: auto; }
+    .learn-graph .lg-grid line { stroke: var(--border); stroke-width: 1; opacity: .7; }
+    .learn-graph .lg-axes line { stroke: var(--text-light); stroke-width: 1.6; }
+    .learn-graph .lg-labels text { fill: var(--text-light); font-size: 11px; font-weight: 700; font-family: inherit; }
+    .learn-graph .lg-curves path { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .learn-graph figcaption { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 6px 6px 0; font-size: 13px; font-weight: 800; color: var(--text); }
+    .learn-graph figcaption i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+    .learn-video { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 16px; border: 2px solid #E5484D; background: color-mix(in srgb, #E5484D 8%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #E5484D 45%, transparent); color: var(--text); text-decoration: none; transition: transform .12s; }
+    .learn-video:hover { transform: translateY(-1px); }
+    .learn-video-play { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: #E5484D; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; padding-left: 2px; }
+    .learn-video b { display: block; font-size: 14.5px; font-weight: 900; }
+    .learn-video small { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-light); }
+    @media (max-width: 600px) {
+      .learn-key, .learn-graph, .learn-video { margin: 0 14px 12px; }
+      /* the graph is drawn at 560 wide and shrinks on phones: keep its numbers readable */
+      .learn-graph .lg-labels text { font-size: 19px; }
+      .learn-graph .lg-curves path { stroke-width: 4.5; }
+    }
+    /* Learn mode thinking: purple dots and stripe */
+    .learn-thinking .msg-knox-bubble { border-left-color: var(--purple); }
+    .learn-thinking .thinking-dot:nth-child(1) { background: var(--purple); }
+    .learn-thinking .thinking-dot:nth-child(2) { background: color-mix(in srgb, var(--purple) 65%, #fff); }
+    .learn-thinking .thinking-dot:nth-child(3) { background: var(--purple-dark); }
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
       background: var(--cream); color: var(--text-light); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: border-color .12s, color .12s; }
@@ -3728,8 +3774,56 @@
     });
   };
 
+  const HISTORY_CHAT_ICON  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.8-3A7.5 7.5 0 1 1 20 11.5Z"/></svg>';
+  const HISTORY_LEARN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-4 9 4-9 4-9-4Z"/><path d="M7 10v5c3 3 7 3 10 0v-5"/><path d="M21 8v7"/></svg>';
+  const historyMotion = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // FLIP: rows that change place glide to their new spot instead of jumping.
+  function glideHistoryRows(list, tops) {
+    if (!historyMotion()) return;
+    list.querySelectorAll('.sidebar-history-item').forEach(el => {
+      const was = tops.get(el.dataset.conversationId || el);
+      if (was === undefined) return;
+      const dy = was - el.getBoundingClientRect().top;
+      if (Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    });
+  }
+  const historyTops = list => new Map(Array.from(list.querySelectorAll('.sidebar-history-item:not(.shi-removing)'), el => [el.dataset.conversationId || el, el.getBoundingClientRect().top]));
+
+  // The moment a question is sent, its chat shows at the top of History — a
+  // new chat slides in, an older one glides up — without waiting for the
+  // answer and the save. The next refresh swaps in the saved row in place.
+  window.knoxHistoryPending = function(question, conversationId, isLearn) {
+    if (!window.currentUser) return;
+    for (const [listId, emptyId] of [['sidebarHistoryList', 'sidebarHistoryEmpty'], ['mobileHistoryList', 'mobileHistoryEmpty']]) {
+      const list = document.getElementById(listId);
+      if (!list) continue;
+      const tops = historyTops(list);
+      if (conversationId) {
+        const row = Array.from(list.querySelectorAll('.sidebar-history-item[data-conversation-id]')).find(el => el.dataset.conversationId === conversationId);
+        if (row && row !== list.querySelector('.sidebar-history-item')) { list.prepend(row); glideHistoryRows(list, tops); }
+        continue;
+      }
+      list.querySelector('.shi-pending')?.remove();
+      list.querySelectorAll('.sidebar-history-item.is-current').forEach(el => el.classList.remove('is-current'));
+      const row = document.createElement('div');
+      row.className = 'sidebar-history-item is-current shi-pending' + (historyMotion() ? ' shi-new' : '');
+      row.setAttribute('aria-busy', 'true');
+      row.innerHTML = '<span class="shi-icon" aria-hidden="true">' + (isLearn ? HISTORY_LEARN_ICON : HISTORY_CHAT_ICON) + '</span><span class="shi-text"></span><span class="shi-pending-dot' + (isLearn ? ' learn' : '') + '" aria-hidden="true"></span>';
+      row.querySelector('.shi-text').textContent = String((isLearn ? '🎓 ' : '') + (question || 'New chat')).substring(0, 60);
+      list.prepend(row);
+      glideHistoryRows(list, tops);
+      list.scrollTop = 0;
+      const empty = document.getElementById(emptyId);
+      if (empty) empty.style.display = 'none';
+    }
+  };
+
   function renderHistoryInto(list, empty, snaps, append = false) {
     if (!list) return;
+    // For the glide: where each row was, and whether a "just sent" row is being replaced.
+    const hadPending = !append && !!list.querySelector('.shi-pending');
+    const tops = append ? null : historyTops(list);
+    const firstLoad = !append && !list.querySelector('.sidebar-history-item[data-conversation-id]');
     const keepScroll = list.scrollTop; // a refresh shouldn't jump the list back to the top
     // A refresh (after every answer) reuses the rows already on screen and
     // only adds, re-titles or reorders what changed. Rebuilding every row
@@ -3770,9 +3864,7 @@
       // icon
       const icon = document.createElement('span');
       icon.className   = 'shi-icon';
-      icon.innerHTML = d.type === 'learn'
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-4 9 4-9 4-9-4Z"/><path d="M7 10v5c3 3 7 3 10 0v-5"/><path d="M21 8v7"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.8-3A7.5 7.5 0 1 1 20 11.5Z"/></svg>';
+      icon.innerHTML = d.type === 'learn' ? HISTORY_LEARN_ICON : HISTORY_CHAT_ICON;
       icon.setAttribute('aria-hidden', 'true');
       row.appendChild(icon);
       // text — textContent prevents XSS
@@ -3852,6 +3944,12 @@
     if (!append) prior.forEach((el, id) => { if (!kept.has(id)) el.remove(); });
     if (!append) list.scrollTop = keepScroll;
     window.syncActiveHistoryRows();
+    if (tops) {
+      glideHistoryRows(list, tops);
+      // A chat that's new to the list slides in (not on first load, and not
+      // when it just replaced its own "just sent" row).
+      if (!firstLoad && !hadPending && historyMotion()) list.querySelectorAll('.sidebar-history-item[data-conversation-id]').forEach(el => { if (!prior.has(el.dataset.conversationId)) el.classList.add('shi-new'); });
+    }
   }
 
   // ── Save a Q&A exchange into the current conversation thread.
@@ -5509,7 +5607,7 @@ window.appHandleAsk = async function() {
   const thinkId  = thinkIdFor;
   const askStartedAt = Date.now();
   const thinkRow = document.createElement('div');
-  thinkRow.className = 'msg-wrap';
+  thinkRow.className = 'msg-wrap' + (requestLearnMode ? ' learn-thinking' : '');
   thinkRow.id        = thinkId;
   thinkRow.innerHTML =
     '<div class="msg-knox">' +
@@ -5527,6 +5625,7 @@ window.appHandleAsk = async function() {
   window.appClearImage();
   // What this message is called in history and the sidebar.
   const askLabel = q || (doc ? '📄 ' + doc.name : '📷 Photo');
+  if (requestUid) window.knoxHistoryPending?.(askLabel, requestConversationId, requestLearnMode);
   const savedQuestion = (doc ? '📄 ' + doc.name + (q ? ' — ' + q : '') : askLabel).slice(0, 8000);
   // Learn follow-ups re-attach the session's homework photo (not shown again)
   // so Knox can keep checking answers against it. Signed-in only: Learn
@@ -5698,6 +5797,8 @@ window.appHandleAsk = async function() {
   } finally {
     clearTimeout(requestTimeout);
     slowNotes.forEach(clearTimeout);
+    // Nothing was saved (an error, a limit…): a refresh clears the "just sent" History row.
+    if (requestUid && document.querySelector('.shi-pending')) window.loadSidebarHistory?.();
     if (window._askController === requestController) {
       window._askController = null;
       window._appAskBusy = false;
@@ -5776,10 +5877,13 @@ function renderLimitCard(data, isSignedIn) {
 //   Choices: chlorophyll | melanin | carotene   → tap-to-answer buttons
 //   Progress: 2/4                                → step dots in the heading
 //   Recap: … / Watch out: … / Topic: …           → end-of-lesson card
+//   Key idea: …                                  → highlighted rule / method card
+//   Graph: y = x^2 - 4 | y = 2x + 1, x from -5 to 5 → a graph drawn in the app
+//   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
-const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic)\s*:\s*(.*)$/i; // may come as a bullet
+const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video)\s*:\s*(.*)$/i; // may come as a bullet
 function parseLearnExtras(text) {
-  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '' };
+  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = LEARN_MARKER.exec(line.replace(/\*\*/g, ''));
@@ -5792,19 +5896,93 @@ function parseLearnExtras(text) {
     else if (key === 'recap') out.recap = value;
     else if (key === 'watch out') out.watch = value;
     else if (key === 'topic') out.topic = value.slice(0, 80);
+    else if (key === 'key idea') out.keyIdea = value.slice(0, 400);
+    else if (key === 'graph') out.graph = value.slice(0, 200);
+    else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
   out.clean = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   return out;
 }
 window.knoxLearnClean = text => parseLearnExtras(text).clean;
-const LEARN_HELP = [
-  ['💡', 'Hint', 'Can I get a hint?'],
-  ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
-  ['📝', 'Show an example', 'Can you show me a similar example first?'],
-  ['🔄', 'Explain another way', 'Can you explain that a different way?'],
-];
-function learnExtrasHtml(x) {
+const LEARN_HELP = {
+  hint:    ['💡', 'Hint', 'Can I get a hint?'],
+  stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
+  example: ['📝', 'Show an example', 'Can you show me a similar example first?'],
+  another: ['🔄', 'Explain another way', 'Can you explain that a different way?'],
+};
+// Only the help that fits this moment: after a wrong answer, ways to see it
+// differently; on a tap-to-answer question just a hint; on a typed question a
+// hint, a smaller step or an example; nothing when Knox isn't asking anything.
+function learnHelpFor(x, tone) {
+  if (tone === 'retry') return ['hint', 'example', 'another'];
+  if (x.choices.length) return ['hint'];
+  if (/\?/.test(x.clean)) return ['hint', 'stuck', 'example'];
+  return [];
+}
+
+// ── Graphs in Learn mode (drawn here with the calculator's math engine) ──
+const GRAPH_COLORS = ['var(--orange)', 'var(--blue)', 'var(--green)'];
+function niceStep(span) {
+  const raw = span / 6, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+  return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * p;
+}
+function learnGraphHtml(spec) {
+  const M = window.KnoxMath;
+  if (!M || !spec) return '';
+  let x0 = -10, x1 = 10;
+  const range = /,?\s*x\s*(?:from|=|in)\s*\[?\s*(-?\d+(?:\.\d+)?)\s*(?:to|\.\.|,)\s*(-?\d+(?:\.\d+)?)\s*\]?/i.exec(spec);
+  if (range && +range[2] > +range[1]) { x0 = +range[1]; x1 = +range[2]; spec = spec.replace(range[0], ''); }
+  const fns = spec.split(/[|;]/).map(f => f.trim()).filter(Boolean).slice(0, 3).map(label => {
+    const expr = label.replace(/^(?:y|f\(x\)|g\(x\)|h\(x\))\s*=\s*/i, '').replace(/\*\*/g, '^').replace(/\bpi\b/gi, 'π').replace(/x/gi, '(Ans)');
+    const pts = [];
+    for (let i = 0; i <= 240; i++) {
+      const x = x0 + (x1 - x0) * i / 240, r = M.evaluate(expr, { deg: false, ans: x });
+      pts.push([x, r && Number.isFinite(r.value) ? r.value : NaN]);
+    }
+    return { label, pts };
+  }).filter(f => f.pts.filter(p => Number.isFinite(p[1])).length > 20);
+  if (!fns.length) return '';
+  const ys = fns.flatMap(f => f.pts.map(p => p[1]).filter(Number.isFinite)).sort((a, b) => a - b);
+  let y0 = ys[Math.floor(ys.length * 0.03)], y1 = ys[Math.ceil(ys.length * 0.97) - 1];
+  y0 = Math.min(y0, 0); y1 = Math.max(y1, 0);
+  if (y1 - y0 < 1e-9) { y0 -= 1; y1 += 1; }
+  const pad = (y1 - y0) * 0.1; y0 -= pad; y1 += pad;
+  const W = 560, H = 300, L = 36, B = 22, X = x => L + (x - x0) / (x1 - x0) * (W - L - 8), Y = y => 8 + (y1 - y) / (y1 - y0) * (H - B - 8);
+  const r = n => Math.round(n * 10) / 10, fmt = n => String(+n.toFixed(4));
+  let grid = '', labels = '';
+  const xs = niceStep(x1 - x0), yst = niceStep(y1 - y0);
+  for (let v = Math.ceil(x0 / xs) * xs; v <= x1 + 1e-9; v += xs) { grid += '<line x1="' + r(X(v)) + '" y1="8" x2="' + r(X(v)) + '" y2="' + (H - B) + '"/>'; labels += '<text x="' + r(X(v)) + '" y="' + (H - 6) + '" text-anchor="middle">' + fmt(v) + '</text>'; }
+  for (let v = Math.ceil(y0 / yst) * yst; v <= y1 + 1e-9; v += yst) { grid += '<line x1="' + L + '" y1="' + r(Y(v)) + '" x2="' + (W - 8) + '" y2="' + r(Y(v)) + '"/>'; labels += '<text x="' + (L - 5) + '" y="' + r(Y(v) + 4) + '" text-anchor="end">' + fmt(v) + '</text>'; }
+  const axes = (x0 <= 0 && x1 >= 0 ? '<line x1="' + r(X(0)) + '" y1="8" x2="' + r(X(0)) + '" y2="' + (H - B) + '"/>' : '') + '<line x1="' + L + '" y1="' + r(Y(0)) + '" x2="' + (W - 8) + '" y2="' + r(Y(0)) + '"/>';
+  const curves = fns.map((f, i) => {
+    let d = '', pen = false, prev = null;
+    for (const [x, y] of f.pts) {
+      const inside = Number.isFinite(y) && y >= y0 - (y1 - y0) && y <= y1 + (y1 - y0);
+      const jump = prev !== null && Math.abs(y - prev) > (y1 - y0) * 1.5; // an asymptote (tan, 1/x): lift the pen
+      if (!inside || jump) { pen = false; prev = inside ? y : null; if (!inside) continue; }
+      d += (pen ? 'L' : 'M') + r(X(x)) + ' ' + r(Y(Math.max(y0 - 50, Math.min(y1 + 50, y))));
+      pen = true; prev = y;
+    }
+    return '<path d="' + d + '" style="stroke:' + GRAPH_COLORS[i] + '"/>';
+  }).join('');
+  return '<figure class="learn-graph"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Graph of ' + escHtml(fns.map(f => f.label).join(' and ')) + '">' +
+    '<defs><clipPath id="lgClip"><rect x="' + L + '" y="8" width="' + (W - L - 8) + '" height="' + (H - B - 8) + '"/></clipPath></defs>' +
+    '<g class="lg-grid">' + grid + '</g><g class="lg-axes">' + axes + '</g><g class="lg-labels">' + labels + '</g>' +
+    '<g class="lg-curves" clip-path="url(#lgClip)">' + curves + '</g></svg>' +
+    '<figcaption>' + fns.map((f, i) => '<span><i style="background:' + GRAPH_COLORS[i] + '"></i>' + escHtml(f.label) + '</span>').join('') + '</figcaption></figure>';
+}
+window.learnGraphHtml = learnGraphHtml;
+
+// Teaching cards above the buttons: the key idea, a graph, a short video.
+function learnTeachHtml(x) {
+  return (x.keyIdea ? '<div class="learn-key"><div class="learn-key-title">🧠 Key idea</div><p>' + formatInline(x.keyIdea) + '</p></div>' : '') +
+    learnGraphHtml(x.graph) +
+    (x.video ? '<a class="learn-video" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.video) + '" target="_blank" rel="noopener noreferrer">' +
+      '<span class="learn-video-play" aria-hidden="true">▶</span><span><b>Watch a short video</b><small>' + escHtml(x.video) + ' · YouTube</small></span></a>' : '');
+}
+
+function learnExtrasHtml(x, tone) {
   const btn = (cls, attrs, inner) => '<button type="button" class="' + cls + '" ' + attrs + '>' + inner + '</button>';
   if (x.recap) {
     return '<div class="learn-actions"><div class="learn-recap">' +
@@ -5817,12 +5995,14 @@ function learnExtrasHtml(x) {
         btn('learn-chip', 'data-learn-new', '✨ New topic') +
       '</div></div></div>';
   }
+  const help = learnHelpFor(x, tone);
+  if (!x.choices.length && !help.length) return '';
   return '<div class="learn-actions">' +
     (x.choices.length ? '<div class="learn-choices" role="group" aria-label="Pick an answer">' +
       x.choices.map(c => btn('learn-choice', 'data-learn-send="' + escHtml(c) + '"', formatInline(c))).join('') + '</div>' : '') +
-    '<div class="learn-help" role="group" aria-label="Need help?">' +
-      LEARN_HELP.map(([icon, label, say]) => btn('learn-chip', 'data-learn-send="' + escHtml(say) + '"', '<span aria-hidden="true">' + icon + '</span>' + label)).join('') +
-    '</div></div>';
+    (help.length ? '<div class="learn-help" role="group" aria-label="Need help?">' +
+      help.map(k => { const [icon, label, say] = LEARN_HELP[k]; return btn('learn-chip', 'data-learn-send="' + escHtml(say) + '"', '<span aria-hidden="true">' + icon + '</span>' + label); }).join('') +
+    '</div>' : '') + '</div>';
 }
 // Only the newest Learn reply's buttons can be used; older ones go quiet.
 function settleLearnActions() {
@@ -5846,14 +6026,22 @@ document.addEventListener('click', e => {
   window.appHandleAsk?.();
 });
 
+// How a Learn reply opens: checking a wrong answer ('retry'), a right one ('good').
+function learnTone(text) {
+  const opening = String(text || '').trim().slice(0, 80).toLowerCase().replace(/[’]/g, "'");
+  if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) return 'retry';
+  if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) return 'good';
+  return '';
+}
 function learnHeadingHtml(text, progress, finished) {
   const t = String(text || '').trim();
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
+  const tone = learnTone(t);
   let cls = '', icon = '◆', label = 'Study hint';
   if (finished) { cls = ' good'; icon = '🎉'; label = 'Lesson complete'; }
-  else if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) {
+  else if (tone === 'retry') {
     cls = ' retry'; icon = '↺'; label = 'Not quite';
-  } else if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) {
+  } else if (tone === 'good') {
     cls = ' good'; icon = '✓'; label = 'Nice work';
   } else if (/^(i read|i can see|i see |looks like|this worksheet|your worksheet|from your photo|from the photo|the worksheet|this photo)/.test(opening)) {
     icon = '◆'; label = "Let's start";
@@ -5937,7 +6125,7 @@ function renderAnswerHtml(text, kind = 'answer') {
   if (firstAnswer) html += answerBox(firstAnswer);
   return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap) : '') +
     '<div class="knox-response-body">' + html + '</div>' +
-    (kind === 'learn' ? learnExtrasHtml(learnX) : '');
+    (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean)) : '');
 }
 
 // ── Render a video suggestion card (visual-learner topics) ─────

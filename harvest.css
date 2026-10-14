@@ -22,7 +22,7 @@ html.knox-seasonal .fall-harvest { width:clamp(100px,13vw,185px); bottom:9px; op
 html.knox-seasonal .fall-harvest.right { right:90px; width:115px; }
 html.knox-seasonal .welcome-badge,html.knox-seasonal .hero-badge { color:#873D28!important; background:#FBE4C6!important; border-color:#D99857!important; box-shadow:0 3px 0 #D8AE79!important; }
 html.knox-seasonal .welcome-accent,html.knox-seasonal .hero-accent { color:#B94D24; text-shadow:none; }
-html.knox-seasonal .suggestion-chip { background:#FFF9EF; border-color:#D7BE99; box-shadow:0 5px 0 #D7BE99; }
+html.knox-seasonal .suggestion-chip { background:#FFF9EF; } /* keeps each card's own color border, like Light and Dark */
 html.knox-seasonal #rightSidebar,html.knox-seasonal .sidebar-top { background:#F1E3CE; border-right-color:#D7BE99; box-shadow:none; }
 html.knox-seasonal #inputOuter { background:#FBF3E5; border-color:#C97837; box-shadow:0 -6px 24px #7953360A; }
 html.knox-seasonal #inputBox { background:#FFF9EF; border-color:#B89A73; }

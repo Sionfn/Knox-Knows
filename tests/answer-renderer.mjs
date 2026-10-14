@@ -90,7 +90,15 @@ test('Learn extras: choice buttons, step dots and help chips; the marker lines a
   assert.match(html, /data-learn-send="chlorophyll"/);
   assert.match(html, /aria-label="Step 1 of 3"/);
   assert.match(html, /Your turn/, 'the label still sees the question at the end');
-  assert.match(html, /I’m stuck/);
+  // Help fits the question: a tap-to-answer question gets just a hint ...
+  assert.match(html, /Hint/);
+  assert.doesNotMatch(html, /I’m stuck/);
+  // ... a typed question gets hint / stuck / example, a wrong answer gets new angles, a statement none.
+  const typed = context.renderAnswerHtml('What is 3 × 4?', 'learn');
+  assert.match(typed, /I’m stuck/); assert.match(typed, /Show an example/);
+  const retry = context.renderAnswerHtml('Not quite — check the sign. What is -3 + 5?', 'learn');
+  assert.match(retry, /Explain another way/); assert.doesNotMatch(retry, /I’m stuck/);
+  assert.doesNotMatch(context.renderAnswerHtml('Great, that is the whole idea.', 'learn'), /learn-help/);
   assert.doesNotMatch(html, /Choices:|Progress:/, 'marker lines never show');
   assert.equal(context.window.knoxLearnClean('Hi?\nChoices: a | b'), 'Hi?');
   // A single option isn't a choice; a silly progress number is ignored.
@@ -118,4 +126,11 @@ test('Learn buttons keep quotes inside their attribute (no injected handlers)', 
   assert.match(html, /data-learn-send="a&quot; onmouseover=&quot;alert\(1\)"/);
   const recap = context.renderAnswerHtml('Done!\nRecap: x" onclick="alert(1)\nTopic: t', 'learn');
   assert.doesNotMatch(recap, /onclick="alert/);
+});
+
+test('Learn teaching cards: key idea, video link and a graph line never show as text', () => {
+  const html = context.renderAnswerHtml('Here is how slope works. What is the slope of y = 3x - 2?\nKey idea: Slope is rise over run.\nVideo: slope intercept form khan academy\nGraph: y = 2x + 1', 'learn');
+  assert.match(html, /learn-key/); assert.match(html, /Slope is rise over run/);
+  assert.match(html, /youtube\.com\/results\?search_query=slope%20intercept%20form%20khan%20academy/);
+  assert.doesNotMatch(html, /Key idea:|Graph:|Video:/);
 });
