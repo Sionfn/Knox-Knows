@@ -27,7 +27,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import crypto from "crypto";
+import { newGiftCode } from "./_gifts.js";
 import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END } from "./_streak.js";
 
 if (!getApps().length) {
@@ -184,9 +184,11 @@ export default async function handler(req, res) {
     if (!reward) return res.status(400).json({ error: "That reward doesn't exist." });
     if (!tester && utcDay() > EVENT.claimUntil) return res.status(410).json({ error: "Flame Fest rewards could be claimed until December 7." });
     const bankRef = userRef.collection("usage").doc("bank");
-    const giftCode = reward.id === "month" ? crypto.randomBytes(6).toString("base64").replace(/[^A-Za-z0-9]/g, "").toUpperCase().padEnd(8, "X").slice(0, 8) : "";
+    // An 8-character friend link code, from the gift-card alphabet (no 0/O, 1/I).
+    const giftCode = reward.id === "month" ? newGiftCode().slice(0, 8) : "";
+    const giftRef = giftCode ? db.collection("giftCodes").doc(giftCode) : null;
     const out = await db.runTransaction(async tx => {
-      const [snap, bank] = await Promise.all([tx.get(userRef), tx.get(bankRef)]);
+      const [snap, bank, taken] = await Promise.all([tx.get(userRef), tx.get(bankRef), giftRef ? tx.get(giftRef) : null]);
       const data = snap.exists ? snap.data() : {};
       const now = status(data);
       if (now.claimed[reward.id]) return { error: "You already claimed this reward.", code: 409 };
@@ -198,10 +200,11 @@ export default async function handler(req, res) {
       if (tester && reward.free.gives.style && reward.plus.gives.style && reward.free.gives.style !== reward.plus.gives.style) g.styles = [reward.free.gives.style, reward.plus.gives.style];
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
+      if (g.gift && taken?.exists) return { error: "Flame Fest is busy right now. Please try again.", code: 503 };
       if (g.gift) {
         // A one-time link: /redeem?code=CODE gives a friend a free Mega Knox week
         // (redeemed in api/redeem.js, like any Knox gift code).
-        tx.set(db.collection("giftCodes").doc(giftCode), { source: "flamefest", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
+        tx.set(giftRef, { source: "flamefest", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
         update.flameFest.giftCode = giftCode;
       }
       if (g.shields) update.flameShields = now.shields + g.shields;

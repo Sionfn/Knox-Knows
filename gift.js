@@ -139,8 +139,12 @@
   } else {
     try { pending = JSON.parse(sessionStorage.getItem('knoxGiftAction') || 'null'); } catch (e) {}
   }
+  // Both pages keep a loading screen up until sign-in is known; wait for it.
+  const authSettling = () => document.body.classList.contains('app-auth-pending') || document.body.classList.contains('landing-loading');
+  let waits = 0;
   function run() {
     if (!pending) return;
+    if (authSettling() && waits++ < 40) { setTimeout(run, 400); return; }
     const p = pending;
     if (p.action !== 'purchased' && !window.currentUser) { needSignIn(p.action, p.code); return; }
     pending = null;
@@ -150,7 +154,7 @@
   // Wait for sign-in to settle (the app fires knox-auth-changed), then act.
   let ready = false;
   addEventListener('knox-auth-changed', () => { if (!ready) return; if (window.currentUser) { try { pending = pending || JSON.parse(sessionStorage.getItem('knoxGiftAction') || 'null'); } catch (e) {} run(); } });
-  addEventListener('load', () => setTimeout(() => { ready = true; run(); }, 1800));
+  addEventListener('load', () => setTimeout(() => { ready = true; run(); }, 600));
 
   window.knoxGifts = { openRedeem, openBuy, close };
 })();

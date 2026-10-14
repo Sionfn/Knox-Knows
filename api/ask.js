@@ -266,13 +266,15 @@ Final check before every Learn reply: if the student hasn't worked this step or 
 const LEARN_REMINDER = `Learn mode — for this reply: you're tutoring, not answering. If the student hasn't worked this out yet, do NOT give the answer or explain the whole idea. Reply in 2–4 sentences: give one small piece or hint, then ask ONE guiding question, then add a Choices: line and a Progress: line if they fit. Only when they've just finished the whole problem or topic, confirm it and add the Recap / Watch out / Topic lines.`;
 // Used once if a Learn reply gave the answer away anyway.
 const LEARN_REWRITE = `That reply gave the answer away instead of teaching. Rewrite it as a Learn mode reply: 2–4 sentences with one small piece or hint and ONE guiding question for the student (plus Choices: and Progress: lines if they fit). Don't give the full answer or explanation. Reply with only the rewritten message.`;
-// A Learn reply should end by handing the student a question — or, at the end
-// of a topic, carry a Recap line. Anything else gave the answer away.
+// A Learn reply should hand the student a question (or answer buttons) — or,
+// at the end of a topic, carry a Recap line. Anything else gave the answer away.
+// Marker lines may come bolded or as bullets ("- **Choices:** …").
+const LEARN_MARKER_LINE = /^\s*(?:[-*•]\s+)?\**(choices|progress|recap|watch out|topic)\**\s*:.*$/gim;
 function learnReplyGaveItAway(text) {
   const t = String(text || '');
-  if (/^\s*\**recap\**\s*:/im.test(t)) return false;
-  const body = t.replace(/^\s*\**(choices|progress|recap|watch out|topic)\**\s*:.*$/gim, '');
-  return !body.includes('?');
+  const markers = [...t.matchAll(LEARN_MARKER_LINE)].map(m => m[1].toLowerCase());
+  if (markers.includes('recap') || markers.includes('choices')) return false;
+  return !t.replace(LEARN_MARKER_LINE, '').includes('?');
 }
 
 const CASUAL_SYSTEM_PROMPT = `You are Knox — a fox who talks like a real person. Warm, quick, honest, a little witty. You know exactly who you are and you're comfortable in your own fur. You're not a generic AI assistant; you're Knox, and the people you talk to are YOUR people.
@@ -804,6 +806,7 @@ async function reserveRequestBudget(key, limit) {
 }
 
 export default async function handler(req, res) {
+  const startedAt = Date.now(); // the function has 60s in all (vercel.json)
   // Handle CORS preflight
   // localhost is only allowed in non-production environments
   const allowedOrigins = process.env.NODE_ENV === "production"
@@ -1194,17 +1197,24 @@ export default async function handler(req, res) {
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(answer);
 
-    // Learn mode safety net: a teaching reply always hands the student a
-    // question (or wraps up with a Recap). If the model answered outright
-    // instead, have it rewrite that reply once as a Learn step.
-    if (learnMode && !casual && learnReplyGaveItAway(answer)) {
+    // Learn mode safety net: a teaching reply to a new question always hands
+    // the student a question (or wraps up with a Recap). If the model answered
+    // outright instead, have it rewrite that reply once as a Learn step.
+    // Not when the student is answering Knox's last question: then a plain
+    // "Yes, that's right!" (or the worked step they earned) is the right reply.
+    // Only if there's time left inside the 60-second function limit.
+    const lastKnox = [...history].reverse().find(m => m.role === 'assistant')?.content || '';
+    const answeringKnox = !!lastKnox && !/^\s*(?:[-*•]\s+)?\**recap\**\s*:/im.test(lastKnox) && !/\?\s*$/.test(trimmedQuestion);
+    const timeLeft = 55000 - (Date.now() - startedAt);
+    if (learnMode && !casual && !answeringKnox && timeLeft > 12000 && learnReplyGaveItAway(answer)) {
       try {
+        const retryBody = { ...requestBody, messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: LEARN_REWRITE }] };
+        if (retryBody.max_completion_tokens) retryBody.max_completion_tokens = 3000; else retryBody.max_tokens = 3000;
         const retry = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ ...requestBody, max_completion_tokens: 3000,
-            messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: LEARN_REWRITE }] }),
-          signal: AbortSignal.timeout(20000),
+          body: JSON.stringify(retryBody),
+          signal: AbortSignal.timeout(Math.min(20000, timeLeft)),
         });
         const fixed = retry.ok ? cleanLatexAnswer((await retry.json()).choices?.[0]?.message?.content || "") : "";
         if (fixed.trim() && !learnReplyGaveItAway(fixed)) answer = fixed;

@@ -1401,6 +1401,27 @@ test('Gift purchase: one-time Stripe payment; the webhook makes one code, emails
   res = response(); await webhook(webhookRequest(currentEvent), res);
   assert.equal(res.code, 200);
   assert.equal(store.get(codes[0]).disabled, true, 'refunded before use: the code stops working');
+
+  // A slower payment method: nothing until the money arrives, then the code + email.
+  const slow = { ...session, id: 'cs_gift_2', payment_status: 'unpaid', payment_intent: 'pi_2' };
+  currentEvent = { id: 'evt_gift_2', type: 'checkout.session.completed', data: { object: slow } };
+  res = response(); await webhook(webhookRequest(currentEvent), res);
+  assert.equal([...store.keys()].filter(k => k.startsWith('giftCodes/')).length, 1, 'not paid yet');
+  currentEvent = { id: 'evt_gift_2_paid', type: 'checkout.session.async_payment_succeeded', data: { object: { ...slow, payment_status: 'paid' } } };
+  res = response(); await webhook(webhookRequest(currentEvent), res);
+  assert.equal(res.code, 200);
+  assert.equal([...store.keys()].filter(k => k.startsWith('giftCodes/')).length, 2);
+  assert.equal(emails.length, 2);
+
+  // An earlier try made the code but stopped before the email: the retry sends it.
+  const third = { ...session, id: 'cs_gift_3', payment_intent: 'pi_3' };
+  currentEvent = { id: 'evt_gift_3', type: 'checkout.session.completed', data: { object: third } };
+  res = response(); await webhook(webhookRequest(currentEvent), res);
+  const code3 = [...store.keys()].find(k => k.startsWith('giftCodes/') && store.get(k).sessionId === 'cs_gift_3');
+  store.set(code3, { ...store.get(code3), emailQueued: undefined });
+  currentEvent = { id: 'evt_gift_3_retry', type: 'checkout.session.completed', data: { object: third } };
+  res = response(); await webhook(webhookRequest(currentEvent), res);
+  assert.equal(emails.length, 4, 'the email goes out again');
 });
 
 test('Admin can make gift codes; nobody else can', async () => {
@@ -1450,4 +1471,18 @@ test('Learn mode: a reminder follows the student message, and a reply that gives
   ({ res, calls } = await run(['The answer is chlorophyll.', 'Still the answer: chlorophyll.']));
   assert.equal(calls.length, 2);
   assert.equal(res.body.answer, 'The answer is chlorophyll.');
+  // Answer buttons count as handing over a question, even as a bullet.
+  ({ calls } = await run(['Leaves are green because of a pigment.\n- **Choices:** chlorophyll | melanin']));
+  assert.equal(calls.length, 1);
+
+  // The student answering Knox's question: a plain confirmation is fine.
+  const { db } = memoryDb();
+  const sent = [];
+  const fetch = async (url, options) => { sent.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ choices: [{ message: { content: "Yes, that's right — chlorophyll!" }, finish_reason: 'stop' }] }) }; };
+  const handler = await load('api/ask.js', { db, fetch });
+  const res2 = response();
+  await handler(askRequest({ question: 'chlorophyll', learnMode: true, history: [{ role: 'user', content: 'why are leaves green?' }, { role: 'assistant', content: 'Leaves have a green pigment. Do you know its name?' }] }), res2);
+  assert.equal(res2.code, 200);
+  assert.equal(sent.length, 1, 'no rewrite when the student is answering');
+  assert.equal(res2.body.answer, "Yes, that's right — chlorophyll!");
 });

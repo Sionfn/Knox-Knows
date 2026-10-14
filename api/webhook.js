@@ -360,6 +360,12 @@ export default async function handler(req, res) {
     switch (event.type) {
 
       // Payment succeeded — activate plan
+      // A gift paid with a slower method (e.g. a bank debit) finishes later.
+      case "checkout.session.async_payment_succeeded": {
+        const session = event.data.object;
+        if (session.metadata?.kind === "gift") await fulfillGift(session, claim);
+        break;
+      }
       case "checkout.session.completed": {
         const session       = event.data.object;
         const uid           = session.metadata?.uid;
@@ -581,9 +587,13 @@ async function fulfillGift(session, claim) {
     }
     return true;
   });
-  if (!created || !email) return;
+  // Already made by an earlier try: still send the email if that try stopped
+  // before it was queued (the code is the same every time, and a second
+  // completion event for one purchase doesn't happen).
+  if (!email || (!created && (await giftRef.get()).data()?.emailQueued)) return;
   const { subject, text, html } = giftEmail({ code, label: g.label, appUrl: (process.env.APP_URL || "https://knoxknowsapp.com").replace(/\/$/, "") });
   await claim.ref.set({ notification: await sendEmail(email, subject, text, html, "gift") }, { merge: true });
+  await giftRef.set({ emailQueued: true }, { merge: true });
   console.log(`✓ Gift code created for ${uid || email}: ${g.label}`);
 }
 

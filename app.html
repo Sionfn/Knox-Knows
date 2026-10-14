@@ -48,12 +48,12 @@
   <meta property="og:description" content="Ask Knox any homework question and get a step-by-step answer. Free to start.">
   <meta property="og:url" content="https://knoxknowsapp.com/app">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://knoxknowsapp.com/KnoxKnox.png">
-  <meta property="og:image:width" content="1983">
-  <meta property="og:image:height" content="793">
+  <meta property="og:image" content="https://knoxknowsapp.com/knox-share.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="480">
   <meta property="og:image:alt" content="Knox Knows — AI study companion">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://knoxknowsapp.com/KnoxKnox.png">
+  <meta name="twitter:image" content="https://knoxknowsapp.com/knox-share.jpg">
   <meta name="twitter:site" content="@KnoxKnowsApp">
   <meta name="theme-color" content="#FF6B00">
   <script>
@@ -2908,12 +2908,15 @@
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
       // Flame Fest grand prize: a free week of Mega Knox (plusUntil, ms).
-      if (planTier(window.userPlan) !== 'paid' && snap.exists() && Number(snap.data().plusUntil) > Date.now()) window.userPlan = 'plus';
+      // Gift codes give the same time-limited Mega Knox (window.userGiftUntil).
+      window.userGiftUntil = planTier(window.userPlan) !== 'paid' && snap.exists() && Number(snap.data().plusUntil) > Date.now() ? Number(snap.data().plusUntil) : 0;
+      if (window.userGiftUntil) window.userPlan = 'plus';
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
       window.userComped = !!(snap.exists() && snap.data().comped === true);
     } catch (e) {
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = 'free';
+      window.userGiftUntil = 0;
     }
     // Include the usage request in initial readiness so the count does not
     // flash a placeholder after the loading screen goes away.
@@ -3445,6 +3448,7 @@
     } else {
       _firstAuth = false;
       window.userPlan = 'free';
+      window.userGiftUntil = 0;
       window._conversation = [];
       updatePlanUI();
       renderStreak(0, false);
@@ -3995,13 +3999,14 @@
         const knoxRow = document.createElement('div');
         knoxRow.className = 'msg-wrap';
         const historyFbId = 'fb_' + Math.random().toString(36).slice(2, 8);
-        window._fbPayloads[historyFbId] = { question: d.question || '', answer: window.knoxLearnClean?.(d.answer || '') ?? (d.answer || '') };
+        const historyLearn = window._learnModeActive && d.model !== 'knox-chat';
+        window._fbPayloads[historyFbId] = { question: d.question || '', answer: historyLearn ? (window.knoxLearnClean?.(d.answer || '') ?? (d.answer || '')) : (d.answer || '') };
         knoxRow.innerHTML =
           '<div class="msg-knox">' +
             '<div class="msg-knox-avatar"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"></div>' +
             '<div class="msg-knox-content">' +
               '<div class="msg-knox-label">Knox</div>' +
-              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', window._learnModeActive && d.model !== 'knox-chat' ? 'learn' : 'answer') + '</div>' +
+              '<div class="msg-knox-bubble">' + window.renderAnswerHtml(d.answer || '', historyLearn ? 'learn' : 'answer') + '</div>' +
               (d.model === 'knox-chat' ? '' : buildMessageActionsHtml(historyFbId, !!window.currentUser)) +
             '</div>' +
           '</div>';
@@ -4404,7 +4409,18 @@
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the
     // upgrade button.
-    if (isPaid && window.userComped && !window.hasBillingAccount) {
+    if (isPaid && window.userGiftUntil) {
+      // Mega Knox from a gift code or Flame Fest: no subscription, nothing to bill.
+      const until = new Date(window.userGiftUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+      el.appendChild(row('Mega Knox until', spanVal('🎁 ' + until)));
+      if (window.hasBillingAccount && !window.knoxNativeApp) {
+        const billBtn = document.createElement('button');
+        billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
+        billBtn.textContent = 'Manage Billing';
+        billBtn.onclick = function() { openBillingPortal(this); };
+        el.appendChild(row('Billing', billBtn));
+      }
+    } else if (isPaid && window.userComped && !window.hasBillingAccount) {
       // Comped Mega Knox has no Stripe billing to manage.
       const comp = document.createElement('span');
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
@@ -5634,7 +5650,7 @@ window.appHandleAsk = async function() {
     // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: askLabel, answer: window.knoxLearnClean(answer) };
+    window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer };
 
     // Copy is always shown (works for guests too); the 👍/👎
     // only for signed-in users, same as before.
@@ -5733,7 +5749,7 @@ function renderLimitCard(data, isSignedIn) {
 //   Progress: 2/4                                → step dots in the heading
 //   Recap: … / Watch out: … / Topic: …           → end-of-lesson card
 // The lines are hidden from the message itself (and from Copy).
-const LEARN_MARKER = /^\s*(choices|progress|recap|watch out|topic)\s*:\s*(.*)$/i;
+const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic)\s*:\s*(.*)$/i; // may come as a bullet
 function parseLearnExtras(text) {
   const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '' };
   const keep = [];

@@ -250,7 +250,10 @@ async function giftCheckout(res, gift, uid, email) {
   if (!g) return res.status(400).json({ error: "Choose a gift: 1, 3 or 12 months." });
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { timeout: 10000, maxNetworkRetries: 1 });
-    const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
+    // Same return address rule as plan checkout: a preview comes back to itself.
+    const baseUrl = process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: email,
