@@ -115,7 +115,7 @@
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
       ${styles}
-      ${state.tester ? testerPanel() : ''}
+      ${state.tester ? testerPanel() : testMode && !demo ? testerOff() : ''}
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
   }
   function testerPanel() {
@@ -126,6 +126,11 @@
         <button type="button" class="ff-pop-later" data-test="reset">↺ Reset</button>
       </div>
       <span class="ff-tester-tip">Miss a day pretends you skipped yesterday — ask Knox anything and watch a shield save your streak.</span></div>`;
+  }
+  function testerOff() {
+    return `<div class="ff-tester ff-tester-off"><b>🧪 Tester mode is off</b><span>${state.testerReady === false
+      ? 'This version of the site has no admin account set up (ADMIN_UID), so the tester buttons can’t turn on here.'
+      : 'Tester mode only works on the Knox admin account — the one that can open the admin page. Sign in with that account and try again.'}</span></div>`;
   }
   async function runTest(kind, btn) {
     if (kind === 'reset' && !confirm('Reset your Flame Fest? Flames, claims, shields, flame colours and the Flame Fest Mega Knox week are cleared.')) return;

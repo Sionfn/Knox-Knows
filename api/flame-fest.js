@@ -118,7 +118,10 @@ export default async function handler(req, res) {
   const uid = decoded.uid;
   const tester = isTester(decoded);
   const userRef = db.collection("users").doc(uid);
-  const send = (data, extra = {}) => res.status(200).json({ ...status(data, tester), ...extra });
+  // testerReady: false when this deployment has no ADMIN_UID (so ?flamefest=test
+  // can say why tester mode is missing).
+  const testerReady = !!(process.env.ADMIN_UID || "").trim();
+  const send = (data, extra = {}) => res.status(200).json({ ...status(data, tester), ...(testerReady ? {} : { testerReady }), ...extra });
 
   try {
     if (req.method === "GET") {
