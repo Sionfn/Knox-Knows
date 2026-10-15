@@ -134,7 +134,7 @@ test('Reply continues the lesson with its history and does not use a question', 
   assert.deepEqual(calls[1].history.map(m => m.content), ['How do I find slope?', 'What could you compare?']);
   const posted = submit.sent.at(-1);
   assert.match(posted.content, /<@amy>[\s\S]*rise over run\?[\s\S]*Rise over run/);
-  assert.match(posted.content, new RegExp(`${MAX_REPLIES - 1} replies left`));
+  assert.match(posted.content, new RegExp(`Lesson reply · doesn't use a question · ${MAX_REPLIES - 1} replies left`));
   assert.equal(buttonId(posted), id);
   // amy's 1 daily question went to /ask; the reply didn't need another.
   assert.equal(bot.limits.reserve('amy', false).ok, false);
@@ -325,4 +325,13 @@ test('Ended lessons are deleted from disk', async () => {
   lessons.prune();
   const { readFileSync } = await import('node:fs');
   assert.equal(readFileSync(lessons.file, 'utf8'), '{}');
+});
+
+test('Plus members see "Knox Plus" on lesson replies too', async () => {
+  const bot = setup(async () => 'Hint.');
+  const asked = fake({ roles: ['plus'] });
+  await bot.ask(asked);
+  const submit = fake({ roles: ['plus'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
+  await bot.replySubmitted(submit);
+  assert.match(submit.sent.at(-1).content, /-# Knox Plus · 9 replies left in this lesson/);
 });

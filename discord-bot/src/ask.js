@@ -18,6 +18,17 @@ const replyButton = lessonId => new ActionRowBuilder().addComponents(
 const roleOnly = { isPlus: async () => null, syncRole: async () => 'kept', granted: new Set() };
 
 export function createHandlers({ config, limits, lessons, askKnox, plus = roleOnly }) {
+  // Plus = a linked Knox Plus subscription, or the Knox Plus role (unless the
+  // bot gave that role and the subscription has since ended). Also keeps the
+  // role in step with the subscription.
+  async function isPlusMember(interaction) {
+    const userId = interaction.user.id;
+    const websitePlus = await plus.isPlus(userId);
+    plus.syncRole(interaction.member, websitePlus).catch(() => {});
+    const roleCounts = hasPlusRole(interaction.member, config.plusRoleId) && !(websitePlus === false && plus.granted.has(userId));
+    return websitePlus === true || roleCounts;
+  }
+
   const privately = (interaction, text) =>
     interaction.reply({ content: text, flags: MessageFlags.Ephemeral, allowedMentions: noPings });
 
@@ -51,12 +62,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     if (!inStudyHelp) return privately(interaction, `Ask me in <#${config.studyChannelId}> 📚`);
 
     const userId = interaction.user.id;
-    // Plus = a linked Knox Plus subscription, or the Knox Plus role (unless the
-    // bot gave that role and the subscription has since ended).
-    const websitePlus = await plus.isPlus(userId);
-    const roleCounts = hasPlusRole(interaction.member, config.plusRoleId) && !(websitePlus === false && plus.granted.has(userId));
-    plus.syncRole(interaction.member, websitePlus).catch(() => {});
-    const slot = limits.reserve(userId, websitePlus === true || roleCounts);
+    const slot = limits.reserve(userId, await isPlusMember(interaction));
     if (!slot.ok) {
       return privately(interaction, slot.reason === 'global'
         ? 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.'
@@ -106,11 +112,13 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       await interaction.deferReply();
       const reply = interaction.fields.getTextInputValue('reply').trim();
       const repliesLeft = MAX_REPLIES - lesson.replies - 1;
+      // Replies never use a daily question; Plus members just see their plan.
+      const label = await isPlusMember(interaction) ? 'Knox Plus' : "Lesson reply · doesn't use a question";
       await answer(interaction, {
         question: reply, history: [...lesson.history],
         header: `<@${interaction.user.id}>\n${quote(reply)}`,
         footer: () => repliesLeft > 0
-          ? `-# Lesson reply · free · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`
+          ? `-# ${label} · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`
           : '-# That was the last reply in this lesson. Use /ask to start a new one.',
         lessonIdFor: text => { lessons.addReply(lessonId, reply, text); return repliesLeft > 0 ? lessonId : null; },
         onFail: () => limits.refundGlobal(),
