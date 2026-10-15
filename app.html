@@ -782,8 +782,12 @@
       pointer-events: none;
       transition: height 0.22s ease, opacity 0.18s ease, transform 0.22s ease, padding 0.22s ease;
     }
-    .sidebar-history-item:hover { color: var(--text); background: var(--cream); }
+    /* Ask Knox chats light up orange, Learn chats purple (hover and open) */
+    .sidebar-history-item:hover { color: var(--orange); background: var(--orange-cream); }
+    .sidebar-history-item:hover .shi-icon { color: var(--orange); }
     .sidebar-history-item.is-current { color: var(--orange); background: var(--orange-cream); }
+    .sidebar-history-item.shi-learn:hover, .sidebar-history-item.shi-learn.is-current { color: var(--purple-on-tint); background: var(--purple-light); }
+    .sidebar-history-item.shi-learn:hover .shi-icon, .sidebar-history-item.shi-learn.is-current .shi-icon { color: var(--purple); }
     .sidebar-history-item .shi-text {
       flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
@@ -1221,6 +1225,9 @@
       margin-bottom: 12px;
     }
     .welcome-accent { color: var(--orange); }
+    /* Learn mode wears Learn's purple (badge + accent), in every look */
+    html body.knox-learn-mode .welcome-badge { background: var(--purple-light) !important; border-color: var(--purple) !important; color: var(--purple-on-tint) !important; box-shadow: 0 3px 0 color-mix(in srgb, var(--purple) 45%, transparent) !important; }
+    html body.knox-learn-mode .welcome-accent { color: var(--purple) !important; text-shadow: none !important; }
     .welcome-sub {
       font-size: 16px; font-weight: 700;
       color: var(--text-light);
@@ -3804,7 +3811,7 @@
       list.querySelector('.shi-pending')?.remove();
       list.querySelectorAll('.sidebar-history-item.is-current').forEach(el => el.classList.remove('is-current'));
       const row = document.createElement('div');
-      row.className = 'sidebar-history-item is-current shi-pending' + (historyMotion() ? ' shi-new' : '');
+      row.className = 'sidebar-history-item is-current shi-pending' + (isLearn ? ' shi-learn' : '') + (historyMotion() ? ' shi-new' : '');
       row.setAttribute('aria-busy', 'true');
       row.innerHTML = '<span class="shi-icon" aria-hidden="true">' + (isLearn ? HISTORY_LEARN_ICON : HISTORY_CHAT_ICON) + '</span><span class="shi-text"></span><span class="shi-pending-dot' + (isLearn ? ' learn' : '') + '" aria-hidden="true"></span>';
       row.querySelector('.shi-text').textContent = String(question || 'New chat').substring(0, 60);
@@ -3854,7 +3861,7 @@
       // Use div role=button (not <button>) so we can nest the delete button inside.
       // Nested <button>s are invalid HTML and behave inconsistently across browsers.
       const row = document.createElement('div');
-      row.className = 'sidebar-history-item' + (convId === window._currentConversationId ? ' is-current' : '');
+      row.className = 'sidebar-history-item' + (d.type === 'learn' ? ' shi-learn' : '') + (convId === window._currentConversationId ? ' is-current' : '');
       row.dataset.rowKey = rowKey;
       row.setAttribute('role', 'button');
       row.setAttribute('tabindex', '0');
@@ -4043,6 +4050,7 @@
       // continuing the conversation would silently fall back to normal
       // direct-answer behavior, which would feel like a broken promise.
       window._learnModeActive = convSnap.exists() && convSnap.data().type === 'learn';
+      document.body.classList.toggle('knox-learn-mode', !!window._learnModeActive); // purple Learn welcome
       // If a legacy Learn conversation is missing its saved learnSessionId,
       // generate one AND persist it back so the "free follow-ups" credit
       // rule can actually apply. Without the write, every reopened chat
@@ -4710,6 +4718,7 @@ window.appStartNewChat = function() {
   window._currentConversationId = null;
   window.syncActiveHistoryRows?.();
   window._learnModeActive = false;
+  document.body.classList.toggle('knox-learn-mode', !!window._learnModeActive); // purple Learn welcome
   window._learnSessionId = null;
   const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
   resetWelcomeCopy();
@@ -4740,6 +4749,7 @@ window.openLearnMode = function() {
   window._currentConversationId = null;
   window.syncActiveHistoryRows?.();
   window._learnModeActive = true;
+  document.body.classList.toggle('knox-learn-mode', !!window._learnModeActive); // purple Learn welcome
   window._learnSessionId = crypto.randomUUID();
   window.showLearnBar();
 
