@@ -63,7 +63,15 @@ X-Knox-Bot-Key: <KNOX_BOT_KEY>
 → { "answer": "..." }
 ```
 
-The website needs a small change to accept `X-Knox-Bot-Key` (it currently only accepts signed-in users and guests). Set the same secret `KNOX_BOT_KEY` in Vercel and wherever the bot runs.
+The website accepts this once `KNOX_BOT_KEY` is set in Vercel (Settings → Environment Variables, then redeploy). Use the **same** value in Vercel and wherever the bot runs. It must be at least 32 characters; anything shorter, or no key at all, keeps bot access switched off.
+
+Bot questions always use Learn mode, don't touch anyone's Knox credits, and show up in the admin panel's question totals. As a backstop if the key ever leaks, the website allows at most 100 bot questions an hour (change with `KNOX_BOT_HOURLY_LIMIT` in Vercel).
+
+To make a good key, run this and copy the output:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ## Host it 24/7 on Railway
 

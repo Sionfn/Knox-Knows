@@ -1099,3 +1099,37 @@ test('Card pictures skip animal pictures for a human card and prefer files that 
   assert.equal(bones.image, 'https://upload.wikimedia.org/legbones.png', 'the file named like the card wins');
   assert.equal(insect.image, 'https://upload.wikimedia.org/insect.png', 'an insect card can still show the insect');
 });
+
+test('Discord bot: a valid key gets a Learn-mode answer without a Knox account', async () => {
+  const { db, store } = memoryDb();
+  const botKey = 'k'.repeat(40);
+  let systemPrompt;
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.model !== 'gpt-4.1-mini') systemPrompt = body.messages[0].content;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: body.model === 'gpt-4.1-mini' ? 'SUBSTANTIVE' : 'What multiplies to 6?' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch, env: { KNOX_BOT_KEY: botKey }, token: null });
+  const bot = (headers, body = { question: 'How do I factor x^2+5x+6?', learnMode: false }) => {
+    const res = response();
+    return handler({ method: 'POST', headers: { 'x-forwarded-for': '192.0.2.9', ...headers }, body }, res).then(() => res);
+  };
+
+  const ok = await bot({ 'x-knox-bot-key': botKey });
+  assert.equal(ok.code, 200);
+  assert.equal(ok.body.answer, 'What multiplies to 6?');
+  assert.match(systemPrompt, /Learn mode/); // forced on, even though the body said false
+  assert.ok(![...store.keys()].some(key => key.startsWith('users/') || key.startsWith('guestUsage/')));
+
+  assert.equal((await bot({ 'x-knox-bot-key': 'wrong' })).code, 401);
+  assert.equal((await bot({ 'x-knox-bot-key': botKey }, { question: 'q', history: [{ role: 'user', content: 'hi' }] })).code, 400);
+});
+
+test('Discord bot access is off when no strong key is configured', async () => {
+  for (const botKey of [undefined, 'short']) {
+    const handler = await load('api/ask.js', { db: memoryDb().db, fetch: () => assert.fail('must not call the AI'), env: { KNOX_BOT_KEY: botKey } });
+    const res = response();
+    await handler({ method: 'POST', headers: { 'x-knox-bot-key': botKey || '' }, body: { question: 'Explain fractions' } }, res);
+    assert.equal(res.code, 401);
+  }
+});

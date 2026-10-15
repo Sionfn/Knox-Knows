@@ -760,6 +760,21 @@ function cleanLatexAnswer(text) {
   }).join('');
 }
 
+// ── Discord bot ─────────────────────────────────────────────────────────────
+// The Knox Discord bot calls this endpoint server-to-server with a shared
+// secret (KNOX_BOT_KEY, set in Vercel and on the bot's host) instead of a
+// Firebase sign-in. The bot enforces its own per-student and daily limits;
+// BOT_HOURLY_LIMIT is this side's ceiling in case the key ever leaks.
+const BOT_HOURLY_LIMIT = Number(process.env.KNOX_BOT_HOURLY_LIMIT) || 100;
+function isValidBotKey(provided) {
+  const expected = (process.env.KNOX_BOT_KEY || '').trim();
+  // Unset or weak key = bot access off. Compare hashes so the check takes the
+  // same time whatever was sent.
+  if (expected.length < 32 || typeof provided !== 'string') return false;
+  const hash = value => crypto.createHash('sha256').update(value).digest();
+  return crypto.timingSafeEqual(hash(provided), hash(expected));
+}
+
 // Shared across cold starts. This is a request budget, not student credits:
 // even free conversation and classification must have a durable abuse ceiling.
 async function reserveRequestBudget(key, limit) {
@@ -831,7 +846,9 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const ip         = getIp(req);
-  const authHeader = req.headers.authorization || "";
+  const isBot      = req.headers['x-knox-bot-key'] != null;
+  if (isBot && !isValidBotKey(req.headers['x-knox-bot-key'])) return res.status(401).json({ error: "Unauthorized" });
+  const authHeader = isBot ? "" : (req.headers.authorization || "");
   if (typeof authHeader !== "string" || (authHeader && !authHeader.startsWith("Bearer "))) return res.status(401).json({ error: "Please sign in again." });
   let uid, email, plan = "free";
 
@@ -856,7 +873,7 @@ export default async function handler(req, res) {
       return res.status(503).json({ error: "Account service is temporarily unavailable. Please try again." });
     }
   }
-  const isGuest = !uid;
+  const isGuest = !uid && !isBot;
   const ipHash  = hashIp(ip);
 
   // ── IP rate limiting ───────────────────────────────────────────────────────
@@ -864,8 +881,8 @@ export default async function handler(req, res) {
   // this is only a speed bump — the real, persistent limit is the Firestore
   // check below, since this in-memory one resets on cold start and isn't
   // shared across instances.
-  const ipLimit  = isGuest ? GUEST_HARD_LIMIT : IP_RATE_LIMIT;
-  const ipCheck  = checkIpRateLimit(uid ? `user:${uid}` : `guest:${ip}`, ipLimit);
+  const ipLimit  = isBot ? BOT_HOURLY_LIMIT : isGuest ? GUEST_HARD_LIMIT : IP_RATE_LIMIT;
+  const ipCheck  = checkIpRateLimit(isBot ? 'bot' : uid ? `user:${uid}` : `guest:${ip}`, ipLimit);
   if (!ipCheck.allowed) {
     const msg = isGuest
       ? "You've hit the guest limit. Sign up free for 10 questions to start, then 5 more each day — same AI quality, no card needed."
@@ -876,7 +893,14 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  const { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay } = req.body;
+  // The bot asks one text question at a time, always in Learn mode.
+  if (isBot) {
+    if (image != null || (Array.isArray(history) && history.length) || learnSessionId != null) {
+      return res.status(400).json({ error: 'The Discord bot sends one text question at a time.' });
+    }
+    learnMode = true;
+  }
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||
       !Array.isArray(history) || history.length > 40 ||
       history.some(msg => !msg || !['user', 'assistant'].includes(msg.role) || typeof msg.content !== 'string' || msg.content.length > 24000) ||
@@ -910,7 +934,7 @@ export default async function handler(req, res) {
   // truncated, possibly garbled version of their question with no warning.)
   const trimmedQuestion = (question || '').trim();
   try {
-    const budgetKey = uid ? 'u_' + crypto.createHash('sha256').update(uid).digest('hex') : 'g_' + ipHash;
+    const budgetKey = isBot ? 'discord_bot' : uid ? 'u_' + crypto.createHash('sha256').update(uid).digest('hex') : 'g_' + ipHash;
     if (!await reserveRequestBudget(budgetKey, ipLimit)) {
       return res.status(429).json({ error: uid
         ? 'Too many requests. Please try again in an hour. Free conversation does not use question credits, but request limits still apply.'
@@ -1199,6 +1223,7 @@ export default async function handler(req, res) {
       } catch (err) { console.error('Learn session creation failed:', err); }
     }
     if (uid && !casual) await recordDailyUsage(uid);
+    if (isBot && !casual) await recordDailyUsage(null); // counts toward the admin panel's question totals
     if (uid && !casual) {
       try { await advanceStudyStreak(uid, localDay); }
       catch (err) { console.error('Streak update failed:', err); }
