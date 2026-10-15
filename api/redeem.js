@@ -1,7 +1,8 @@
-// /api/redeem.js — use a Knox Plus gift code.
+// /api/redeem.js — use a Knox Plus or Mega Knox gift code.
 //
 // GET           → { gifts: [codes you bought], plusUntil }
-// POST { code } → adds the gift's days of Knox Plus to your account
+// POST { code } → adds the gift's days of Knox Plus (plusUntil) or Mega Knox
+//                 (megaUntil) to your account; codes without a tier are Plus
 //
 // Works for bought gift cards (KNOX-XXXX-XXXX-XXXX), codes made on the admin
 // page, and Flame Fest friend links (8 characters). Gift Knox Plus is time-limited
@@ -11,6 +12,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { normalizeCode } from "./_gifts.js";
+import { MEGA_PLAN } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -27,7 +29,8 @@ const db        = getFirestore();
 
 const DAY_MS = 86400000;
 const TRIES_PER_HOUR = 10; // stops anyone guessing codes
-const isPaid = d => ["super", "max", "plus"].includes(d?.plan) || d?.comped === true;
+// The plan someone pays for (or was comped) — gift time doesn't count here.
+const ownTier = d => d?.plan === MEGA_PLAN ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -72,17 +75,22 @@ export default async function handler(req, res) {
       if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
       const flameLink = g.source === "flamefest";
       if (flameLink && g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
-      if (isPaid(data)) return { error: "You already have Knox Plus! Save this code for later, or give it to a friend — it never expires.", code: 409 };
+      // A Plus gift needs a free account; a Mega gift works for free and Plus.
+      const giftTier = g.tier === "mega" ? "mega" : "plus", own = ownTier(data);
+      if (own === "mega" || (giftTier === "plus" && own === "plus")) {
+        return { error: `You already have ${own === "mega" ? "Mega Knox" : "Knox Plus"}! Save this code for later, or give it to a friend — it never expires.`, code: 409 };
+      }
       if (flameLink && data.giftRedeemedAt) return { error: "You've already used a Flame Fest gift.", code: 409 };
       const days = Math.max(1, Math.min(400, Number(g.days) || 7));
-      const plusUntil = Math.max(Date.now(), Number(data.plusUntil) || 0) + days * DAY_MS; // stacks with time left
+      const field = giftTier === "mega" ? "megaUntil" : "plusUntil";
+      const until = Math.max(Date.now(), Number(data[field]) || 0) + days * DAY_MS; // stacks with time left
       const at = new Date().toISOString();
       tx.set(giftRef, { redeemedBy: uid, redeemedAt: at }, { merge: true });
-      tx.set(userRef, { plusUntil, ...(flameLink ? { giftRedeemedAt: at } : {}) }, { merge: true });
-      return { plusUntil, days };
+      tx.set(userRef, { [field]: until, ...(flameLink ? { giftRedeemedAt: at } : {}) }, { merge: true });
+      return { until, days, tier: giftTier };
     });
     if (out.error) return res.status(out.code).json({ error: out.error });
-    return res.status(200).json({ redeemed: true, days: out.days, plusUntil: out.plusUntil });
+    return res.status(200).json({ redeemed: true, days: out.days, tier: out.tier, until: out.until, plusUntil: out.until });
   } catch (err) {
     console.error("Redeem error:", err?.message);
     return res.status(503).json({ error: "Couldn't check that code right now. Please try again in a moment." });

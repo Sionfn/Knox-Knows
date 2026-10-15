@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { GIFTS, newGiftCode, formatCode, giftEmail } from "./_gifts.js";
+import { MEGA_PLAN, compedPlan, megaPrices } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -47,6 +48,8 @@ const PRICE_TO_PLAN = {
   "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super",  // Knox Plus Monthly $9.99
   "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super",  // Knox Plus Yearly  $79.99
 };
+// Mega Knox's current prices (env vars, made in the Stripe dashboard).
+for (const id of Object.values(megaPrices())) if (id) PRICE_TO_PLAN[id] = MEGA_PLAN;
 
 export const config = { api: { bodyParser: false } };
 
@@ -64,8 +67,8 @@ async function getRawBody(req) {
 // into one paid tier — existing subscribers keep their old price IDs but
 // see the unified brand name in every email going forward.
 const PLAN_NAMES = {
-  super: { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
-  max:   { name: "Knox Plus", perks: "basically unlimited questions, unlimited photo uploads, and priority support if something goes wrong" },
+  super: { name: "Knox Plus", perks: "unlimited questions, unlimited photo and file uploads, and faster support" },
+  max:   { name: "Mega Knox", perks: "unlimited questions, the biggest flashcard decks you can customize, early access to new features, the highest limits everywhere, and a direct line to me on Discord" },
 };
 
 // ── Shared email shell ──────────────────────────────────────────────────────
@@ -427,7 +430,7 @@ export default async function handler(req, res) {
             if (!snap.exists || snap.data().stripeSubscription !== subscription.id) return false;
             // Comped users keep their free Knox Plus when a paid subscription stops.
             const comped = snap.data().comped === true;
-            tx.set(ref, comped ? { planStatus: 'comped' } : { plan: 'free', planStatus: subscription.status }, { merge: true });
+            tx.set(ref, comped ? { plan: compedPlan(snap.data()), planStatus: 'comped' } : { plan: 'free', planStatus: subscription.status }, { merge: true });
             return true;
           });
           if (paused) console.log(`⚠ Subscription ${subscription.status}: uid=${uid} — paid access removed`);
@@ -488,7 +491,7 @@ export default async function handler(req, res) {
               tx.set(claim.ref, { notification, notificationCustomer: subscription.customer }, { merge: true });
             }
             tx.set(ref, {
-              plan: comped ? 'super' : 'free',
+              plan: comped ? compedPlan(snap.data()) : 'free',
               planStatus: comped ? 'comped' : 'cancelled',
               cancelledAt: new Date().toISOString(), stripeSubscription: null,
               cancelNoticeFor: null,
@@ -577,13 +580,13 @@ async function fulfillGift(session, claim) {
     const [gift, user] = await Promise.all([tx.get(giftRef), uid ? tx.get(db.collection("users").doc(uid)) : null]);
     if (gift.exists) return false;
     const at = new Date().toISOString();
-    tx.set(giftRef, { days: g.days, gift: session.metadata.gift, source: "purchase", buyerUid: uid, buyerEmail: email,
+    tx.set(giftRef, { days: g.days, tier: g.tier, gift: session.metadata.gift, source: "purchase", buyerUid: uid, buyerEmail: email,
       sessionId: session.id, paymentIntent, createdAt: at, redeemedBy: null });
     if (paymentIntent) tx.set(db.collection("giftPayments").doc(paymentIntent), { code });
     if (uid) {
       // So the buyer can always find their codes under "Redeem a code".
       const bought = Array.isArray(user?.data()?.giftsBought) ? user.data().giftsBought : [];
-      tx.set(db.collection("users").doc(uid), { giftsBought: [...bought, { code: formatCode(code), label: g.label, boughtAt: at }].slice(-50) }, { merge: true });
+      tx.set(db.collection("users").doc(uid), { giftsBought: [...bought, { code: formatCode(code), label: `${g.name} · ${g.label}`, boughtAt: at }].slice(-50) }, { merge: true });
     }
     return true;
   });
@@ -591,7 +594,7 @@ async function fulfillGift(session, claim) {
   // before it was queued (the code is the same every time, and a second
   // completion event for one purchase doesn't happen).
   if (!email || (!created && (await giftRef.get()).data()?.emailQueued)) return;
-  const { subject, text, html } = giftEmail({ code, label: g.label, appUrl: (process.env.APP_URL || "https://knoxknowsapp.com").replace(/\/$/, "") });
+  const { subject, text, html } = giftEmail({ code, label: g.label, name: g.name, appUrl: (process.env.APP_URL || "https://knoxknowsapp.com").replace(/\/$/, "") });
   await claim.ref.set({ notification: await sendEmail(email, subject, text, html, "gift") }, { merge: true });
   await giftRef.set({ emailQueued: true }, { merge: true });
   console.log(`✓ Gift code created for ${uid || email}: ${g.label}`);

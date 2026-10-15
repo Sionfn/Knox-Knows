@@ -17,6 +17,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { GIFTS, createGiftCodes, formatCode } from "./_gifts.js";
+import { MEGA_PLAN, PLUS_PLAN } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -64,8 +65,8 @@ export default async function handler(req, res) {
       const count = Math.floor(Number(body.count) || 1);
       if (!g || count < 1 || count > 50) return res.status(400).json({ error: "Choose 1, 3 or 12 months and 1–50 codes." });
       const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
-      const codes = await createGiftCodes(db, { days: g.days, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
-      return res.status(200).json({ codes: codes.map(formatCode), label: g.label });
+      const codes = await createGiftCodes(db, { days: g.days, tier: g.tier, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
+      return res.status(200).json({ codes: codes.map(formatCode), label: `${g.name} · ${g.label}` });
     }
     return res.status(400).json({ error: "Unknown action." });
   } catch (err) {
@@ -90,6 +91,8 @@ async function listComped() {
       name: accounts.get(r.uid)?.displayName || null,
       compedAt: r.compedAt || null,
       note: r.compedNote || "",
+      tier: r.compedTier === "mega" ? "mega" : "plus",
+      ambassador: r.ambassador === true,
       alsoPaying: hasLiveSubscription(r),
     }))
     .sort((a, b) => String(b.compedAt || "").localeCompare(String(a.compedAt || "")));
@@ -98,6 +101,9 @@ async function listComped() {
 async function grant(res, body, adminUid) {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const note  = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
+  // 'plus' | 'mega' | 'ambassador' (Knox Ambassadors get Mega Knox).
+  const kind  = ["plus", "mega", "ambassador"].includes(body.tier) ? body.tier : "plus";
+  const tier  = kind === "plus" ? "plus" : "mega";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return res.status(400).json({ error: "Enter a valid email address." });
   }
@@ -114,19 +120,23 @@ async function grant(res, body, adminUid) {
   const already = await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     const d = snap.exists ? snap.data() : {};
-    if (d.comped === true) return true;
+    if (d.comped === true && (d.compedTier || "plus") === tier && (d.ambassador === true) === (kind === "ambassador")) return true;
     const paying = hasLiveSubscription(d);
     tx.set(ref, {
       comped: true,
-      compedAt: new Date().toISOString(),
+      compedTier: tier,
+      ambassador: kind === "ambassador",
+      compedAt: d.comped === true ? d.compedAt || new Date().toISOString() : new Date().toISOString(),
       compedBy: adminUid,
-      compedNote: note,
-      plan: PAID_PLANS.includes(d.plan) && paying ? d.plan : "super",
+      compedNote: note || d.compedNote || "",
+      // Someone who pays keeps their subscription's plan value; compedTier
+      // still makes a Mega comp count as Mega (api/_plans.js).
+      plan: PAID_PLANS.includes(d.plan) && paying ? d.plan : (tier === "mega" ? MEGA_PLAN : PLUS_PLAN),
       planStatus: paying ? d.planStatus : "comped",
     }, { merge: true });
     return false;
   });
-  console.log(`✓ Comped Knox Plus ${already ? "already active" : "granted"}: uid=${account.uid}`);
+  console.log(`✓ Comped ${kind} ${already ? "already active" : "granted"}: uid=${account.uid}`);
   return res.status(200).json({ ok: true, already, uid: account.uid, email: account.email });
 }
 
@@ -139,7 +149,7 @@ async function revoke(res, body) {
     const snap = await tx.get(ref);
     if (!snap.exists || snap.data().comped !== true) return "not-comped";
     const d = snap.data();
-    const update = { comped: false, compedRevokedAt: new Date().toISOString() };
+    const update = { comped: false, compedTier: null, ambassador: false, compedRevokedAt: new Date().toISOString() };
     // Someone who also pays keeps the Knox Plus they're paying for.
     if (!hasLiveSubscription(d)) Object.assign(update, { plan: "free", planStatus: "none" });
     tx.set(ref, update, { merge: true });

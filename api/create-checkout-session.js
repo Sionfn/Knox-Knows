@@ -9,6 +9,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from 'firebase-admin/firestore';
 import { GIFTS } from './_gifts.js';
+import { MEGA_PLAN, compedPlan, megaPrices } from './_plans.js';
 
 if (!getApps().length) {
   initializeApp({
@@ -42,17 +43,14 @@ const db = getFirestore();
 //      subscribers still pay via them).
 //   4. Update the user-facing prices in index.html.
 // ─────────────────────────────────────────────────────────────────────────
+// Two paid plans (Nov 2026): 'super' = Knox Plus, 'max' = Mega Knox. Mega's
+// Stripe prices come from env vars (see api/_plans.js megaPrices).
 const PRICES = {
-  // Both 'super' and legacy 'max' route to the same current Knox Plus
-  // prices — one paid plan across the board.
   super: {
-    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // $9.99/mo (Sept 2026 reset)
-    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // $79.99/yr (Sept 2026 reset)
+    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // Knox Plus $9.99/mo
+    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // Knox Plus $79.99/yr
   },
-  max: {
-    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // routes to Knox Plus monthly
-    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // routes to Knox Plus yearly
-  },
+  get max() { return megaPrices(); },          // Mega Knox $12.99/mo, $99.99/yr
 };
 
 export default async function handler(req, res) {
@@ -88,6 +86,7 @@ export default async function handler(req, res) {
   const priceId = Object.hasOwn(PRICES, plan) && ['monthly', 'yearly'].includes(billing)
     ? PRICES[plan][billing] : null;
   if (!priceId) {
+    if (plan === MEGA_PLAN && ['monthly', 'yearly'].includes(billing)) return res.status(503).json({ error: "Mega Knox isn't available just yet. Please try again soon." });
     return res.status(400).json({ error: "Invalid plan or billing period." });
   }
 
@@ -111,8 +110,21 @@ export default async function handler(req, res) {
     const subscriptionId = userSnap.exists ? userSnap.data().stripeSubscription : null;
     if (subscriptionId) {
       const currentSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+      // Switching between Knox Plus and Mega Knox (or monthly/yearly) changes
+      // the existing subscription's price — never a second subscription.
+      // Stripe prorates: the difference is charged or credited.
+      const currentPrice = currentSubscription.items?.data?.[0];
+      if (['active', 'trialing'].includes(currentSubscription.status) && currentPrice && currentPrice.price?.id !== priceId) {
+        await stripe.subscriptions.update(currentSubscription.id, {
+          items: [{ id: currentPrice.id, price: priceId }],
+          proration_behavior: 'create_prorations',
+          cancel_at_period_end: false,
+          metadata: { ...(currentSubscription.metadata || {}), plan, billing, uid: verifiedUid },
+        }, { idempotencyKey: `knox-switch-${currentSubscription.id}-${priceId}` });
+        return res.status(200).json({ switched: true, plan, billing });
+      }
       if (['active', 'trialing', 'past_due', 'unpaid'].includes(currentSubscription.status)) {
-        return res.status(409).json({ error: 'You already have a subscription. Use Manage Billing to change it.' });
+        return res.status(409).json({ error: currentPrice?.price?.id === priceId ? "You're already on this plan." : 'You already have a subscription. Use Manage Billing to change it.' });
       }
       if (['canceled', 'incomplete_expired'].includes(currentSubscription.status)) {
         // Reconcile a missed cancellation webhook before a replacement checkout.
@@ -122,7 +134,7 @@ export default async function handler(req, res) {
           if (latest.data()?.stripeSubscription === subscriptionId) {
             // Comped users keep their free Knox Plus.
             const comped = latest.data()?.comped === true;
-            tx.set(ref, { stripeSubscription: null, plan: comped ? 'super' : 'free', planStatus: comped ? 'comped' : 'cancelled' }, { merge: true });
+            tx.set(ref, { stripeSubscription: null, plan: comped ? compedPlan(latest.data()) : 'free', planStatus: comped ? 'comped' : 'cancelled' }, { merge: true });
           }
         });
       }
@@ -194,7 +206,7 @@ export default async function handler(req, res) {
       ? `https://${process.env.VERCEL_URL}`
       : (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
 
-    // 7-day free trial on Knox Plus MONTHLY only.
+    // 7-day free trial on Mega Knox MONTHLY only (Knox Plus has no trial).
     // Yearly buyers are already committing — they don't need a trial, and a
     // trial on a $79.99 annual purchase reads as gimmicky rather than useful.
     // 7 days is enough for a student to try it during a homework session or
@@ -203,7 +215,7 @@ export default async function handler(req, res) {
     // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
     // same 'super' → Knox Plus display mapping.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
-    if (plan === "super" && billing === "monthly") {
+    if (plan === MEGA_PLAN && billing === "monthly") {
       // The trial is for first-time subscribers only. Without this check,
       // anyone could subscribe, cancel inside the 7 days and re-subscribe
       // for another free week, indefinitely. A subscription that never got
@@ -247,7 +259,7 @@ export default async function handler(req, res) {
 
 async function giftCheckout(res, gift, uid, email) {
   const g = Object.hasOwn(GIFTS, gift) ? GIFTS[gift] : null;
-  if (!g) return res.status(400).json({ error: "Choose a gift: 1, 3 or 12 months." });
+  if (!g) return res.status(400).json({ error: "Choose a gift: Knox Plus or Mega Knox, for 1, 3 or 12 months." });
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { timeout: 10000, maxNetworkRetries: 1 });
     // Same return address rule as plan checkout: a preview comes back to itself.
@@ -263,7 +275,7 @@ async function giftCheckout(res, gift, uid, email) {
           currency: "usd",
           unit_amount: g.cents,
           product_data: {
-            name: `Knox Plus gift — ${g.label}`,
+            name: `${g.name} gift — ${g.label}`,
             description: "A gift code for Knox Plus. Not a subscription — it never renews or charges the person you give it to.",
           },
         },

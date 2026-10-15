@@ -3,6 +3,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { advanceStudyStreak } from "./_streak.js";
+import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import crypto from "crypto";
 
 if (!getApps().length) {
@@ -73,6 +74,8 @@ function planTier(plan) {
 // transaction keeps concurrent requests from double-spending.
 async function checkAndIncrementUsage(uid, plan, cost = 1) {
   const tier = planTier(plan);
+  // Mega Knox gets the higher abuse-only ceiling (see api/_plans.js).
+  const PAID_LIMIT = plan === MEGA_PLAN ? LIMITS.mega.askPer3h : PLUS_LIMIT;
   const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
   const now = Date.now();
 
@@ -82,13 +85,13 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
         const snap = await tx.get(usageRef);
         const log  = snap.exists ? (snap.data().log || []) : [];
         const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
-        if (recent.length >= PLUS_LIMIT) {
+        if (recent.length >= PAID_LIMIT) {
           const oldest = Math.min(...recent);
-          return { allowed: false, remaining: 0, limit: PLUS_LIMIT, retryAfterMs: PLUS_WINDOW_MS - (now - oldest) };
+          return { allowed: false, remaining: 0, limit: PAID_LIMIT, retryAfterMs: PLUS_WINDOW_MS - (now - oldest) };
         }
         recent.push(now);
         tx.set(usageRef, { log: recent, updatedAt: new Date().toISOString() });
-        return { allowed: true, remaining: PLUS_LIMIT - recent.length, limit: PLUS_LIMIT, charge: { kind: 'paid', timestamp: now } };
+        return { allowed: true, remaining: PAID_LIMIT - recent.length, limit: PAID_LIMIT, charge: { kind: 'paid', timestamp: now } };
       });
       return result;
     } catch (err) {
@@ -157,14 +160,14 @@ async function refundUsage(uid, charge) {
 
 const LEARN_SESSION_MS = 2 * 60 * 60 * 1000;
 const LEARN_MAX_TURNS = 20;
-async function consumeLearnFollowUp(uid, sessionId) {
+async function consumeLearnFollowUp(uid, sessionId, maxTurns = LEARN_MAX_TURNS) {
   if (!uid || !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(sessionId || '')) return false;
   const ref = db.collection('users').doc(uid).collection('learnSessions').doc(sessionId);
   return db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     if (!snap.exists) return false;
     const data = snap.data();
-    if (Date.now() - data.createdAt > LEARN_SESSION_MS || data.turns >= LEARN_MAX_TURNS) return 'expired';
+    if (Date.now() - data.createdAt > LEARN_SESSION_MS || data.turns >= maxTurns) return 'expired';
     tx.update(ref, { turns: data.turns + 1 });
     return true;
   });
@@ -837,7 +840,7 @@ export default async function handler(req, res) {
   const ip         = getIp(req);
   const authHeader = req.headers.authorization || "";
   if (typeof authHeader !== "string" || (authHeader && !authHeader.startsWith("Bearer "))) return res.status(401).json({ error: "Please sign in again." });
-  let uid, email, plan = "free";
+  let uid, email, plan = "free", tier = "free";
 
   if (authHeader.startsWith("Bearer ")) {
     try {
@@ -857,9 +860,10 @@ export default async function handler(req, res) {
       const userDoc = await db.collection("users").doc(uid).get();
       if (userDoc.exists) {
         const d = userDoc.data();
-        plan = d.plan || "free";
-        // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
-        if (planTier(plan) === "free" && Number(d.plusUntil) > Date.now()) plan = "plus";
+        // Free / Knox Plus / Mega Knox — including comped accounts and gift or
+        // Flame Fest time (api/_plans.js). Mega is plan 'max'.
+        tier = tierOf(d);
+        plan = tier === "mega" ? MEGA_PLAN : tier === "plus" ? (planTier(d.plan) === "paid" ? d.plan : "plus") : "free";
       }
     } catch {
       return res.status(503).json({ error: "Account service is temporarily unavailable. Please try again." });
@@ -895,7 +899,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid question or conversation.' });
   }
   if (doc != null && (typeof doc !== 'object' || Array.isArray(doc) || typeof doc.text !== 'string' || typeof doc.name !== 'string' ||
-      !doc.text.trim() || doc.text.length > DOC_TEXT_LIMIT || doc.name.length > DOC_NAME_LIMIT || image)) {
+      !doc.text.trim() || doc.text.length > (LIMITS[tier]?.docChars || DOC_TEXT_LIMIT) || doc.name.length > DOC_NAME_LIMIT || image)) {
     return res.status(400).json({ error: 'That file could not be read. Try a smaller PDF, Word or PowerPoint file.' });
   }
   if (!question.trim() && !image && !doc) return res.status(400).json({ error: "No question provided." });
@@ -1024,7 +1028,7 @@ export default async function handler(req, res) {
   // this credit system and is unaffected either way.
   let isLearnFollowUp = false;
   if (uid && learnMode && learnSessionId && !casual) {
-    try { isLearnFollowUp = await consumeLearnFollowUp(uid, learnSessionId); }
+    try { isLearnFollowUp = await consumeLearnFollowUp(uid, learnSessionId, LIMITS[tier]?.learnTurns); }
     catch (err) { console.error('Learn session check failed:', err); return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' }); }
   }
   // A session that hit its 20-message / 2-hour limit keeps going in the same

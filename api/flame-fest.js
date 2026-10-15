@@ -28,6 +28,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { newGiftCode } from "./_gifts.js";
+import { MEGA_PLAN } from "./_plans.js";
 import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END } from "./_streak.js";
 
 if (!getApps().length) {
@@ -63,15 +64,18 @@ const REWARDS = [
     plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
     test: "🛡️ Flame Shield" },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
-    free: { gives: { plusDays: 7, style: "gold" }, label: "7 days of Knox Plus + 👑 Golden Flame" },
-    plus: { gives: { gift: 7, style: "gold" }, label: "🎁 A free Knox Plus week to gift a friend + 👑 Golden Flame" },
-    test: "7 days of Knox Plus + 🎁 a Knox Plus week to gift + 👑 Golden Flame" },
+    free: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
+    plus: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
+    // Mega Knox members already have Mega: a week to gift a friend instead.
+    mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 👑 Golden Flame" },
+    test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 👑 Golden Flame" },
 ];
 const STYLES = ["classic", "purple", "blue", "gold"];
 const GIFT_DAYS = 7;
-// Knox Plus for prizes = a real Knox Plus plan or comped (a Flame Fest Knox Plus week still
-// gets the free-member prizes).
-const isPaid = d => ["super", "max", "plus"].includes(d?.plan) || d?.comped === true;
+// Which prizes a member gets: their real plan (paid or comped) — a gift or
+// Flame Fest week still gets the free-member prizes. Mega is plan 'max'.
+const prizeTier = d => d?.plan === MEGA_PLAN ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
+const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
 const DAY_MS = 86400000;
 
@@ -88,11 +92,12 @@ const isTester = decoded => {
 function status(data, tester = false) {
   const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
   const days = Array.isArray(fest.days) ? fest.days.filter(d => typeof d === "string") : [];
-  const plus = isPaid(data);
+  const tier = prizeTier(data), plus = tier !== "free";
   return {
     event: EVENT,
     plus,
-    rewards: REWARDS.map(({ free, plus: p, test, ...r }) => ({ ...r, label: tester ? test : (plus ? p : free).label, flames: flamesIn(days, r) })),
+    tier,
+    rewards: REWARDS.map(({ free, plus: p, mega, test, ...r }) => ({ ...r, label: tester ? test : pick({ free, plus: p, mega }, tier).label, flames: flamesIn(days, r) })),
     days,
     shielded: Array.isArray(fest.shielded) ? fest.shielded : [],
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
@@ -100,6 +105,7 @@ function status(data, tester = false) {
     flameStyle: STYLES.includes(data.flameStyle) ? data.flameStyle : "classic",
     flameStyles: ["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : [])],
     plusUntil: Number(data.plusUntil) || 0,
+    megaUntil: Number(data.megaUntil) || 0,
     giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",
     giftRedeemed: !!data.giftRedeemedAt,
     ...(tester ? { tester: true } : {}),
@@ -155,7 +161,7 @@ export default async function handler(req, res) {
           // (or Flashcards review) spends one shield and keeps the streak.
           update = { streakLastDay: addDays(today, -2), streakCount: Math.max(1, Number(data.streakCount) || 0) };
         } else if (body.test === "reset") {
-          update = { flameFest: {}, flameShields: 0, flameStyles: [], flameStyle: "classic", plusUntil: 0 };
+          update = { flameFest: {}, flameShields: 0, flameStyles: [], flameStyle: "classic", plusUntil: 0, megaUntil: 0 };
         } else return { error: "Unknown test." };
         tx.set(userRef, update, { merge: true });
         return { data: { ...data, ...update } };
@@ -196,15 +202,15 @@ export default async function handler(req, res) {
       if (flames < reward.need) return { error: `Light ${reward.need - flames} more flame${reward.need - flames === 1 ? "" : "s"} to unlock this reward.`, code: 403 };
 
       // The tester gets both versions of every prize, so all of them can be tried.
-      const g = tester ? { ...reward.free.gives, ...reward.plus.gives } : (now.plus ? reward.plus : reward.free).gives;
+      const g = tester ? { ...reward.free.gives, ...reward.plus.gives, ...(reward.mega?.gives || {}) } : pick(reward, now.tier).gives;
       if (tester && reward.free.gives.style && reward.plus.gives.style && reward.free.gives.style !== reward.plus.gives.style) g.styles = [reward.free.gives.style, reward.plus.gives.style];
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
       if (g.gift && taken?.exists) return { error: "Flame Fest is busy right now. Please try again.", code: 503 };
       if (g.gift) {
-        // A one-time link: /redeem?code=CODE gives a friend a free Knox Plus week
+        // A one-time link: /redeem?code=CODE gives a friend a free Mega Knox week
         // (redeemed in api/redeem.js, like any Knox gift code).
-        tx.set(giftRef, { source: "flamefest", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
+        tx.set(giftRef, { source: "flamefest", tier: "mega", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
         update.flameFest.giftCode = giftCode;
       }
       if (g.shields) update.flameShields = now.shields + g.shields;
@@ -212,7 +218,7 @@ export default async function handler(req, res) {
         update.flameStyles = [...new Set([...now.flameStyles.filter(s => s !== "classic"), ...(g.styles || [g.style])])];
         update.flameStyle = g.style; // show the new flame right away
       }
-      if (g.plusDays) update.plusUntil = Math.max(Date.now(), now.plusUntil) + g.plusDays * DAY_MS;
+      if (g.megaDays) update.megaUntil = Math.max(Date.now(), now.megaUntil) + g.megaDays * DAY_MS;
       if (g.bonus) {
         // Bonus questions go into the free daily bank and may sit above its
         // usual cap (ask.js never trims a balance down when it regenerates).

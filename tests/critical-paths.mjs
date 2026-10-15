@@ -724,11 +724,11 @@ test('Make with Knox: free accounts spend 2 credits per deck (up to 10 cards); K
   assert.equal(res.body.upgrade, true);
   assert.equal(store.get('users/u1/usage/bank').balance, 1, 'nothing taken');
 
-  // A gift / Flame Fest Knox Plus week counts as Knox Plus: no credits, 20 cards.
+  // A gift Knox Plus week counts as Knox Plus: no credits, up to 15 cards.
   store.set('users/u1', { plan: 'free', plusUntil: Date.now() + 86400000 });
   res = response(); await handler(deckReq({ request: 'cell biology', count: 20 }), res);
   assert.equal(res.code, 200);
-  assert.match(ai.calls.at(-1).messages[0].content, /Write exactly 20 flashcards/);
+  assert.match(ai.calls.at(-1).messages[0].content, /Write exactly 15 flashcards/);
   assert.equal(store.get('users/u1/usage/bank').balance, 1);
   assert.equal(res.body.creditsLeft, undefined);
 });
@@ -1246,7 +1246,7 @@ test('Flame Fest rewards: claim only when earned, once; bonus questions, shields
   res = await call('POST', { claim: 'month' });
   assert.equal(res.code, 200);
   const u = store.get('users/u1');
-  assert.equal(u.plusUntil, now + 7 * 86400000, 'a free week of Plus');
+  assert.equal(u.megaUntil, now + 7 * 86400000, 'a free week of Mega Knox');
   assert.equal(u.flameStyle, 'gold');
   assert.deepEqual(plain(res.body.flameStyles), ['classic', 'blue', 'gold']);
   assert.equal((await call('POST', { style: 'classic' })).body.flameStyle, 'classic');
@@ -1280,7 +1280,7 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   const u = store.get('users/u1');
   assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'gold', 'purple']);
   assert.equal(u.flameShields, 3);
-  assert.ok(u.plusUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Knox Plus week');
+  assert.ok(u.megaUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Mega Knox week');
   assert.match(u.flameFest.giftCode, /^[A-Z0-9]{8}$/, 'a gift link too');
 
   res = await call('POST', { test: 'miss', localDay: '2026-10-13' });
@@ -1295,6 +1295,7 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   assert.equal(res.body.days.length, 0);
   assert.equal(store.get('users/u1').flameShields, 0);
   assert.equal(store.get('users/u1').plusUntil, 0);
+  assert.equal(store.get('users/u1').megaUntil, 0);
 });
 
 test('Flame Fest Plus week counts as Plus; bonus questions survive the daily refill', async () => {
@@ -1313,7 +1314,7 @@ test('Flame Fest Plus week counts as Plus; bonus questions survive the daily ref
   assert.equal(store.get('users/u1/usage/bank').balance, 29, 'a refill never trims bonus questions down to 20');
 });
 
-test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gives a friend a free Plus week', async () => {
+test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-time link that gives a friend a free Mega week', async () => {
   const { db, store } = memoryDb();
   const now = Date.parse('2026-11-29T12:00:00Z');
   const date = fakeDate('2026-11-29T12:00:00Z');
@@ -1325,7 +1326,7 @@ test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gi
 
   let res = await call(mine);
   assert.equal(res.body.plus, true);
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Knox Plus week to gift a friend + 👑 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '7 days of Mega Knox + 👑 Golden Flame');
   res = await call(mine, { claim: 'w1' });
   assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');
@@ -1333,24 +1334,37 @@ test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gi
   assert.equal(res.body.shields, 1, 'Plus Blaze: a Flame Shield instead of questions');
   res = await call(mine, { claim: 'month' });
   assert.equal(res.code, 200);
+  assert.equal(store.get('users/u1').megaUntil, now + 7 * 86400000, 'Plus members try Mega Knox for a week');
+  assert.equal(res.body.giftCode, '');
+
+  // Mega Knox members (plan 'max') get a week to gift instead.
+  store.set('users/m1', { plan: 'max', flameFest: { days } });
+  const mega = await load('api/flame-fest.js', { db, date, token: { uid: 'm1', email: 'm@example.com', email_verified: true } });
+  res = await call(mega);
+  assert.equal(res.body.tier, 'mega');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A Mega Knox week to gift a friend + 👑 Golden Flame');
+  res = await call(mega, { claim: 'month' });
   const code = res.body.giftCode;
   assert.match(code, /^[A-Z0-9]{8}$/);
-  assert.equal(store.get('users/u1').plusUntil, undefined, 'no Plus week for someone already on Plus');
-  assert.equal(store.get('giftCodes/' + code).from, 'u1');
-
+  assert.equal(store.get('users/m1').megaUntil, undefined);
+  assert.equal(store.get('giftCodes/' + code).tier, 'mega');
   assert.equal(store.get('giftCodes/' + code).source, 'flamefest');
+
   const redeem = async (uid, value) => { const h = await load('api/redeem.js', { db, date, token: { uid } }); const r = response(); await h(ffReq('POST', { code: value }), r); return r; };
-  assert.equal((await redeem('u1', code)).code, 400, "can't redeem your own gift");
+  assert.equal((await redeem('m1', code)).code, 400, "can't redeem your own gift");
   store.set('users/u2', { plan: 'free' });
   res = await redeem('u2', code.toLowerCase());
   assert.equal(res.code, 200);
-  assert.equal(store.get('users/u2').plusUntil, now + 7 * 86400000);
+  assert.equal(res.body.tier, 'mega');
+  assert.equal(store.get('users/u2').megaUntil, now + 7 * 86400000);
   assert.equal(store.get('giftCodes/' + code).redeemedBy, 'u2');
   assert.equal((await redeem('u2', code)).code, 409, 'works once');
-  store.set('giftCodes/ABCDEFGH', { source: 'flamefest', from: 'u1', days: 7, redeemedBy: null });
+  store.set('giftCodes/ABCDEFGH', { source: 'flamefest', tier: 'mega', from: 'm1', days: 7, redeemedBy: null });
   assert.equal((await redeem('u2', 'ABCDEFGH')).code, 409, 'one Flame Fest gift per account');
-  store.set('users/u3', { plan: 'super' });
-  assert.equal((await redeem('u3', 'ABCDEFGH')).code, 409, 'already on Plus');
+  store.set('users/u3', { plan: 'max' });
+  assert.equal((await redeem('u3', 'ABCDEFGH')).code, 409, 'already on Mega Knox');
+  store.set('users/u4', { plan: 'super' });
+  assert.equal((await redeem('u4', 'ABCDEFGH')).code, 200, 'a Plus member can take a Mega week');
 });
 
 test('Flame Fest: a Flashcards review lights today’s flame and keeps the streak', async () => {
@@ -1516,4 +1530,116 @@ test('Learn mode: a reminder follows the student message, and a reply that gives
   assert.equal(res2.code, 200);
   assert.equal(sent.length, 1, 'no rewrite when the student is answering');
   assert.equal(res2.body.answer, "Yes, that's right — chlorophyll!");
+});
+
+// ── Two plans: Knox Plus ('super') and Mega Knox ('max') ───────────────────
+const MEGA_ENV = { STRIPE_PRICE_MEGA_MONTHLY: 'price_mega_m', STRIPE_PRICE_MEGA_YEARLY: 'price_mega_y' };
+
+test('Two plans: Mega Knox checkout uses its prices and is the only plan with a free trial', async () => {
+  const { db } = memoryDb(); const mock = checkoutStripe();
+  const handler = await load('api/create-checkout-session.js', { db, stripe: mock.stripe, env: MEGA_ENV });
+  let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly' }), res);
+  assert.equal(res.code, 200);
+  assert.equal(mock.sessions.get('cs_1').params.line_items[0].price, 'price_mega_m');
+  assert.equal(mock.sessions.get('cs_1').params.subscription_data.trial_period_days, 7, 'Mega monthly: 7-day trial');
+
+  const plus = memoryDb(); const mock2 = checkoutStripe();
+  const h2 = await load('api/create-checkout-session.js', { db: plus.db, stripe: mock2.stripe, env: MEGA_ENV });
+  res = response(); await h2(askRequest({ plan: 'super', billing: 'monthly' }), res);
+  assert.equal(res.code, 200);
+  assert.equal(mock2.sessions.get('cs_1').params.line_items[0].price, 'price_1UBcoACqlxC7aoKRR3DFKNhJ');
+  assert.equal(mock2.sessions.get('cs_1').params.subscription_data.trial_period_days, undefined, 'Knox Plus has no trial');
+
+  // Without the Mega prices set, Mega checkout says so instead of failing oddly.
+  const none = memoryDb();
+  const h3 = await load('api/create-checkout-session.js', { db: none.db, stripe: checkoutStripe().stripe });
+  res = response(); await h3(askRequest({ plan: 'max', billing: 'yearly' }), res);
+  assert.equal(res.code, 503);
+});
+
+test('Two plans: a Knox Plus subscriber moving to Mega Knox switches the same subscription', async () => {
+  const { db, store } = memoryDb(); const mock = checkoutStripe();
+  store.set('users/u1', { plan: 'super', stripeCustomerId: 'cus_one', stripeSubscription: 'sub_1' });
+  const updates = [];
+  mock.stripe.subscriptions.retrieve = async () => ({ id: 'sub_1', status: 'active', metadata: {}, items: { data: [{ id: 'si_1', price: { id: 'price_1UBcoACqlxC7aoKRR3DFKNhJ' } }] } });
+  mock.stripe.subscriptions.update = async (id, params) => { updates.push([id, params]); return {}; };
+  const handler = await load('api/create-checkout-session.js', { db, stripe: mock.stripe, env: MEGA_ENV });
+  let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly' }), res);
+  assert.equal(res.code, 200); assert.equal(res.body.switched, true);
+  assert.equal(updates[0][0], 'sub_1');
+  assert.deepEqual(plain(updates[0][1].items), [{ id: 'si_1', price: 'price_mega_m' }]);
+  assert.equal(mock.counts().sessionCount, 0, 'no second subscription');
+  res = response(); await handler(askRequest({ plan: 'super', billing: 'monthly' }), res);
+  assert.equal(res.code, 409, 'already on that plan');
+});
+
+test('Two plans: the webhook maps Mega prices to Mega Knox, and Mega features follow the plan, comps and gift time', async () => {
+  const { tierOf, LIMITS } = await import('../api/_plans.js');
+  assert.equal(tierOf({ plan: 'max' }), 'mega');
+  assert.equal(tierOf({ plan: 'super' }), 'plus');
+  assert.equal(tierOf({ plan: 'free', megaUntil: Date.now() + 1000 }), 'mega');
+  assert.equal(tierOf({ plan: 'super', comped: true, compedTier: 'mega' }), 'mega', 'a Mega comp beats a Plus subscription');
+  assert.equal(tierOf({ plan: 'free', plusUntil: Date.now() - 1 }), 'free');
+  assert.ok(LIMITS.mega.deckCards > LIMITS.plus.deckCards && LIMITS.plus.deckCards > LIMITS.free.deckCards);
+
+  // Mega Knox: a 40-card deck is written as two halves at once, with deck options.
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'max' });
+  const calls = [];
+  const fetch = async (url, options) => { const body = JSON.parse(options.body); calls.push(body);
+    const n = Number(/Write exactly (\d+)/.exec(body.messages[0].content)[1]); const part = calls.length;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ title: 'Cells', cards: Array.from({ length: n }, (_, i) => ({ front: `Q${part}-${i}`, back: 'A' })) }) } }] }) }; };
+  const handler = await load('api/generate-flashcards.js', { db, fetch });
+  let res = response(); await handler(deckReq({ request: 'cell biology', count: 40, style: 'tf', difficulty: 'hard', pictures: false }), res);
+  assert.equal(res.code, 200);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].messages[0].content, /part 1 of 2/); assert.match(calls[1].messages[0].content, /part 2 of 2/);
+  assert.match(calls[0].messages[0].content, /true or false/); assert.match(calls[0].messages[0].content, /Difficulty: hard/);
+  assert.equal(res.body.cards.length, 40);
+
+  // Knox Plus: up to 15 cards, and Mega-only options are ignored.
+  store.set('users/u1', { plan: 'super' }); calls.length = 0;
+  res = response(); await handler(deckReq({ request: 'cell biology', count: 40, style: 'tf', difficulty: 'hard', pictures: false }), res);
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].messages[0].content, /Write exactly 15 flashcards/);
+  assert.doesNotMatch(calls[0].messages[0].content, /true or false|Difficulty:/);
+});
+
+test('Two plans: admins can comp Plus, Mega or a Knox Ambassador (Mega); a Mega gift card makes a Mega code', async () => {
+  const { db, store } = memoryDb();
+  const auth = { getUserByEmail: async email => ({ uid: email.startsWith('amb') ? 'a1' : 'p1', email }), getUsers: async ids => ({ users: ids.map(({ uid }) => ({ uid, email: uid + '@x.com' })) }) };
+  const admin = await load('api/admin-comp.js', { db, adminUid: 'u1', auth });
+  const post = async body => { const r = response(); await admin({ method: 'POST', headers: { authorization: 'Bearer test' }, body }, r); return r; };
+  assert.equal((await post({ action: 'grant', email: 'amb@x.com', tier: 'ambassador' })).code, 200);
+  assert.equal((await post({ action: 'grant', email: 'plus@x.com', tier: 'plus' })).code, 200);
+  assert.deepEqual([store.get('users/a1').plan, store.get('users/a1').compedTier, store.get('users/a1').ambassador], ['max', 'mega', true]);
+  assert.deepEqual([store.get('users/p1').plan, store.get('users/p1').compedTier], ['super', 'plus']);
+  // Upgrading a comp from Plus to Mega.
+  assert.equal((await post({ action: 'grant', email: 'plus@x.com', tier: 'mega' })).body.already, false);
+  assert.equal(store.get('users/p1').plan, 'max');
+
+  const r = await post({ action: 'gift-codes', gift: 'mega-1m', count: 1 });
+  assert.equal(r.code, 200);
+  assert.match(r.body.label, /Mega Knox/);
+  const code = [...store.keys()].find(k => k.startsWith('giftCodes/'));
+  assert.equal(store.get(code).tier, 'mega');
+});
+
+test('Two plans: switching to a Mega Knox price makes the account Mega; a comped Mega member keeps Mega when their subscription ends', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super', planStatus: 'active', stripeCustomerId: 'cus_1', stripeSubscription: 'sub_1' });
+  const subscription = { id: 'sub_1', customer: 'cus_1', status: 'active', items: { data: [{ price: { id: 'price_mega_m' } }] }, metadata: { uid: 'u1' } };
+  let currentEvent;
+  const stripe = { webhooks: { constructEvent: () => currentEvent }, subscriptions: { retrieve: async () => subscription },
+    customers: { retrieve: async () => ({ email: 'owner@example.com', metadata: { uid: 'u1' } }) } };
+  const handler = await load('api/webhook.js', { db, stripe, env: { RESEND_API_KEY: 'test', ...MEGA_ENV }, fetch: async () => ({ ok: true }) });
+  currentEvent = { id: 'evt_switch', type: 'customer.subscription.updated', data: { object: subscription, previous_attributes: { items: {} } } };
+  let res = response(); await handler(webhookRequest(currentEvent), res);
+  assert.equal(res.code, 200);
+  assert.equal(store.get('users/u1').plan, 'max');
+
+  store.set('users/u1', { ...store.get('users/u1'), comped: true, compedTier: 'mega' });
+  currentEvent = { id: 'evt_end', type: 'customer.subscription.deleted', data: { object: { ...subscription, status: 'canceled' } } };
+  res = response(); await handler(webhookRequest(currentEvent), res);
+  assert.equal(store.get('users/u1').plan, 'max', 'the Mega comp stays');
 });

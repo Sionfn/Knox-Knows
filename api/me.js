@@ -7,6 +7,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
+import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -109,8 +110,10 @@ export default async function handler(req, res) {
     const userRef = db.collection("users").doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.exists ? userSnap.data() : {};
-    // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
-    const plan     = planTier(userData.plan || "free") === "free" && Number(userData.plusUntil) > Date.now() ? "plus" : (userData.plan || "free");
+    // Free / Knox Plus / Mega Knox, including comps and gift or Flame Fest
+    // time (api/_plans.js). Mega is plan 'max' (paid everywhere, extension too).
+    const planTierName = tierOf(userData);
+    const plan     = planTierName === "mega" ? MEGA_PLAN : planTierName === "plus" ? (planTier(userData.plan) === "paid" ? userData.plan : "plus") : "free";
     const tier     = planTier(plan);
     const now      = Date.now();
 
@@ -121,7 +124,7 @@ export default async function handler(req, res) {
       const log    = usageSnap.exists ? (usageSnap.data().log || []) : [];
       const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
       used      = recent.length;
-      limit     = PLUS_LIMIT;
+      limit     = planTierName === "mega" ? LIMITS.mega.askPer3h : PLUS_LIMIT;
       remaining = Math.max(0, limit - used);
       resetInMs = recent.length > 0
         ? Math.max(0, PLUS_WINDOW_MS - (now - Math.min(...recent)))
@@ -177,6 +180,7 @@ export default async function handler(req, res) {
       email: decoded.email || userData.email || null,
       name: userData.displayName || decoded.name || null,
       plan,
+      tier: planTierName, // 'free' | 'plus' | 'mega'
       planStatus: userData.planStatus || "none",
       usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" },
       streak,

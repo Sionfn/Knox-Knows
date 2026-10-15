@@ -3,16 +3,23 @@
 //   admin-comp.js (make codes yourself) and redeem.js (use a code).
 // Files starting with "_" aren't deployed as their own Vercel functions.
 //
-// A gift is time-limited Knox Plus with no subscription: redeeming adds its days
+// A gift is time-limited Knox Plus or Mega Knox with no subscription: redeeming
+// adds its days to users/{uid}.plusUntil or .megaUntil (stacking with any time
+// left) — old codes without a tier are Knox Plus. Formerly: redeeming adds its days
 // to users/{uid}.plusUntil (stacking with any time left), and nothing ever
 // renews or charges the person who redeems it. Codes never expire.
 // Codes live in giftCodes/{code} (12 characters; Flame Fest friend links use 8).
 import crypto from "crypto";
 
+// Knox Plus gifts keep their original ids; Mega Knox gifts start with "mega-".
+// `name` is how the plan is written in emails and on Stripe's checkout page.
 export const GIFTS = {
-  "1m":  { label: "1 month",   days: 31,  cents: 999 },
-  "3m":  { label: "3 months",  days: 92,  cents: 2999 },
-  "12m": { label: "12 months", days: 365, cents: 7999 },
+  "1m":       { tier: "plus", name: "Knox Plus", label: "1 month",   days: 31,  cents: 999 },
+  "3m":       { tier: "plus", name: "Knox Plus", label: "3 months",  days: 92,  cents: 2999 },
+  "12m":      { tier: "plus", name: "Knox Plus", label: "12 months", days: 365, cents: 7999 },
+  "mega-1m":  { tier: "mega", name: "Mega Knox", label: "1 month",   days: 31,  cents: 1299 },
+  "mega-3m":  { tier: "mega", name: "Mega Knox", label: "3 months",  days: 92,  cents: 3699 },
+  "mega-12m": { tier: "mega", name: "Mega Knox", label: "12 months", days: 365, cents: 9999 },
 };
 
 // No 0/O or 1/I, so a code read off a card is never ambiguous.
@@ -34,7 +41,7 @@ export function normalizeCode(input) {
   return /^[A-Z0-9]{8}$|^[A-Z0-9]{12}$/.test(s) ? s : "";
 }
 
-// Make `count` fresh codes worth `days` of Knox Plus (admin giveaways).
+// Make `count` fresh codes worth `days` of Knox Plus or Mega Knox (admin giveaways).
 export async function createGiftCodes(db, { days, count = 1, source, ...extra }) {
   const codes = [];
   for (let i = 0; i < count; i++) {
@@ -53,13 +60,13 @@ export async function createGiftCodes(db, { days, count = 1, source, ...extra })
 }
 
 // The email a buyer gets: a little gift card with the code and a redeem link.
-export function giftEmail({ code, label, appUrl = "https://knoxknowsapp.com" }) {
+export function giftEmail({ code, label, name = "Knox Plus", appUrl = "https://knoxknowsapp.com" }) {
   const pretty = formatCode(code);
   const link = `${appUrl}/redeem?code=${encodeURIComponent(pretty)}`;
-  const subject = `🎁 Your Knox Plus gift code (${label})`;
-  const text = `Thanks for giving Knox Plus!
+  const subject = `🎁 Your ${name} gift code (${label})`;
+  const text = `Thanks for giving ${name}!
 
-Gift: ${label} of Knox Plus
+Gift: ${label} of ${name}
 Code: ${pretty}
 
 To use it, open ${link} and sign in (or make a free account). The code works once and never expires. It's not a subscription — nothing renews and the person you give it to is never charged.
@@ -67,10 +74,10 @@ To use it, open ${link} and sign in (or make a free account). The code works onc
 Happy studying! 🦊
 — Sion at Knox Knows`;
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#18181B;">
-  <p style="font-size:16px;">Thanks for giving Knox Plus! Here's your gift card — forward this email or print it out.</p>
+  <p style="font-size:16px;">Thanks for giving ${name}! Here's your gift card — forward this email or print it out.</p>
   <div style="margin:22px 0;padding:26px 22px;border-radius:22px;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;text-align:center;box-shadow:0 6px 0 #CC5500;">
     <div style="font-size:40px;line-height:1;">🎁🦊</div>
-    <div style="font-size:24px;font-weight:900;margin:10px 0 2px;">${label} of Knox Plus</div>
+    <div style="font-size:24px;font-weight:900;margin:10px 0 2px;">${label} of ${name}</div>
     <div style="font-size:14px;font-weight:700;opacity:.9;">Unlimited homework help from Knox</div>
     <div style="margin:18px auto 6px;display:inline-block;padding:12px 18px;border-radius:14px;background:#fff;color:#18181B;font-family:'Courier New',monospace;font-size:20px;font-weight:900;letter-spacing:2px;">${pretty}</div>
   </div>
