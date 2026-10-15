@@ -1,4 +1,4 @@
-// /ask and the Reply button that continues a lesson.
+// Slash commands and buttons: /ask (with the Reply button), /link and /help.
 import {
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
@@ -14,7 +14,10 @@ const quote = text => '> ' + text.slice(0, 300).replace(/\n/g, '\n> ') + (text.l
 const replyButton = lessonId => new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Reply to Knox').setEmoji('💬').setStyle(ButtonStyle.Primary));
 
-export function createHandlers({ config, limits, lessons, askKnox }) {
+// Without a website connection (e.g. in tests), Plus comes from the role alone.
+const roleOnly = { isPlus: async () => null, syncRole: async () => 'kept', granted: new Set() };
+
+export function createHandlers({ config, limits, lessons, askKnox, plus = roleOnly }) {
   const privately = (interaction, text) =>
     interaction.reply({ content: text, flags: MessageFlags.Ephemeral, allowedMentions: noPings });
 
@@ -48,7 +51,12 @@ export function createHandlers({ config, limits, lessons, askKnox }) {
     if (!inStudyHelp) return privately(interaction, `Ask me in <#${config.studyChannelId}> 📚`);
 
     const userId = interaction.user.id;
-    const slot = limits.reserve(userId, hasPlusRole(interaction.member, config.plusRoleId));
+    // Plus = a linked Knox Plus subscription, or the Knox Plus role (unless the
+    // bot gave that role and the subscription has since ended).
+    const websitePlus = await plus.isPlus(userId);
+    const roleCounts = hasPlusRole(interaction.member, config.plusRoleId) && !(websitePlus === false && plus.granted.has(userId));
+    plus.syncRole(interaction.member, websitePlus).catch(() => {});
+    const slot = limits.reserve(userId, websitePlus === true || roleCounts);
     if (!slot.ok) {
       return privately(interaction, slot.reason === 'global'
         ? 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.'
@@ -112,7 +120,57 @@ export function createHandlers({ config, limits, lessons, askKnox }) {
     }
   }
 
-  return { ask, replyButtonClicked, replySubmitted };
+  // ── /link: connect a Knox account ──
+  async function link(interaction) {
+    const buttons = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setLabel('Connect Knox Knows').setStyle(ButtonStyle.Link).setURL(plus.linkUrl(interaction.user.id)),
+      new ButtonBuilder().setCustomId('checkplus').setLabel('Check my Plus').setEmoji('✅').setStyle(ButtonStyle.Secondary));
+    await interaction.reply({
+      content: [
+        '**Connect your Knox Knows account**',
+        '1. Click **Connect Knox Knows** and sign in (the link works for 15 minutes and only for you).',
+        '2. Come back here and click **Check my Plus**.',
+        '',
+        'Knox Plus members get unlimited questions here and the Knox Plus role, automatically.',
+      ].join('\n'),
+      components: [buttons], flags: MessageFlags.Ephemeral, allowedMentions: noPings,
+    });
+  }
+
+  // ── Check my Plus button ──
+  async function checkPlus(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    const isPlus = await plus.isPlus(interaction.user.id, { fresh: true });
+    if (isPlus === null) return interaction.editReply("I couldn't reach Knox Knows just now. Please try again in a minute.");
+    const role = await plus.syncRole(interaction.member, isPlus);
+    if (isPlus) {
+      return interaction.editReply(role === 'no-permission'
+        ? "You've got Knox Plus! Your questions here are unlimited. (I couldn't give you the Knox Plus role. Ask a moderator to check my permissions.)"
+        : "You've got Knox Plus! 🎉 Your questions here are unlimited and you have the Knox Plus role.");
+    }
+    const linked = (await plus.statuses([interaction.user.id]).catch(() => ({})))[interaction.user.id]?.linked;
+    return interaction.editReply(linked
+      ? 'Your Knox account is connected, but it doesn\'t have Knox Plus. Get it at https://knoxknowsapp.com and run this check again.'
+      : "Your Knox account isn't connected yet. Use the **Connect Knox Knows** button from /link, sign in, then check again.");
+  }
+
+  // ── /help ──
+  async function help(interaction) {
+    await interaction.reply({
+      content: [
+        '**How to use Knox here** 🦊',
+        `• \`/ask\` in <#${config.studyChannelId}>: ask about any schoolwork. Knox guides you with hints so you learn it, instead of just giving answers.`,
+        '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free.',
+        `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC). Knox Plus members get unlimited.`,
+        '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
+        '',
+        'Knox won\'t help during a test or exam, but it\'ll gladly help you study for the next one. More at https://knoxknowsapp.com',
+      ].join('\n'),
+      flags: MessageFlags.Ephemeral, allowedMentions: noPings,
+    });
+  }
+
+  return { ask, replyButtonClicked, replySubmitted, link, checkPlus, help };
 }
 
 // Why a student can't reply to this lesson, or null if they can.

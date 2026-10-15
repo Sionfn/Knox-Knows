@@ -66,7 +66,7 @@ function fake({ channelId = 'study', parentId = null, roles = [], userId = 'amy'
     fields: { getTextInputValue: () => reply },
     reply: async m => sent.push({ type: 'reply', ...m }),
     deferReply: async () => sent.push({ type: 'defer' }),
-    editReply: async m => sent.push({ type: 'edit', ...m }),
+    editReply: async m => sent.push({ type: 'edit', ...(typeof m === 'string' ? { content: m } : m) }),
     followUp: async m => sent.push({ type: 'followUp', ...m }),
     showModal: async m => sent.push({ type: 'modal', modal: m.toJSON() }),
   };
@@ -204,4 +204,115 @@ test('askKnox sends a Learn-mode request with the bot key and maps errors', asyn
   } finally {
     server.close();
   }
+});
+
+// ── Knox Plus linking and the Knox Plus role ──
+import { createHmac } from 'node:crypto';
+import { Plus } from '../src/plus.js';
+
+function fakeSite(statuses) {
+  const calls = [];
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    calls.push({ url, key: options.headers['X-Knox-Bot-Key'], ids: body.discordIds });
+    return { ok: true, json: async () => ({ results: Object.fromEntries(body.discordIds.map(id => [id, statuses[id] || { linked: false, plus: false }])) }) };
+  };
+  return { fetch, calls };
+}
+
+function fakeMember(id, roleIds = []) {
+  const roles = new Set(roleIds);
+  return {
+    id, roleSet: roles,
+    roles: { cache: { has: r => roles.has(r) }, add: async r => roles.add(r), remove: async r => roles.delete(r) },
+  };
+}
+
+const plusConfig = () => ({ ...config, knoxApiUrl: 'https://knoxknowsapp.com/api/ask', knoxBotKey: 'secret-key', dataFile: tempFile() });
+
+test('/link makes a signed website link the website can verify', () => {
+  const plus = new Plus({ config: plusConfig() });
+  const url = new URL(plus.linkUrl('123456789012345678', 1_000_000_000_000));
+  assert.equal(url.origin + url.pathname, 'https://knoxknowsapp.com/app');
+  const [id, expires, signature] = url.searchParams.get('discord').split('.');
+  assert.equal(id, '123456789012345678');
+  assert.equal(Number(expires), 1_000_000_000 + 15 * 60);
+  assert.equal(signature, createHmac('sha256', 'secret-key').update(`discord-link:${id}:${expires}`).digest('base64url'));
+});
+
+test('Plus status is asked with the bot key and cached', async () => {
+  const site = fakeSite({ amy: { linked: true, plus: true } });
+  const plus = new Plus({ config: plusConfig(), fetch: site.fetch });
+  assert.equal(await plus.isPlus('amy'), true);
+  assert.equal(await plus.isPlus('amy'), true);
+  assert.equal(site.calls.length, 1);
+  assert.equal(site.calls[0].url, 'https://knoxknowsapp.com/api/discord-link');
+  assert.equal(site.calls[0].key, 'secret-key');
+  await plus.isPlus('amy', { fresh: true });
+  assert.equal(site.calls.length, 2);
+  const down = new Plus({ config: plusConfig(), fetch: async () => { throw new Error('offline'); } });
+  assert.equal(await down.isPlus('amy'), null);
+});
+
+test('The role is given to subscribers, and only bot-given roles are taken back', async () => {
+  const plus = new Plus({ config: plusConfig(), fetch: fakeSite({}).fetch });
+  const amy = fakeMember('amy');
+  assert.equal(await plus.syncRole(amy, true), 'added');
+  assert.ok(amy.roleSet.has('plus'));
+  assert.equal(await plus.syncRole(amy, false), 'removed');
+  assert.ok(!amy.roleSet.has('plus'));
+
+  const owner = fakeMember('owner', ['plus']); // given the role by hand
+  assert.equal(await plus.syncRole(owner, false), 'kept');
+  assert.ok(owner.roleSet.has('plus'));
+  assert.equal(await plus.syncRole(fakeMember('x'), null), 'kept'); // website unreachable: change nothing
+});
+
+test('The sweep takes the role back when Plus ends', async () => {
+  const statuses = { amy: { linked: true, plus: true } };
+  const config = plusConfig();
+  const plus = new Plus({ config, fetch: fakeSite(statuses).fetch });
+  const amy = fakeMember('amy');
+  await plus.syncRole(amy, true);
+  statuses.amy = { linked: true, plus: false };
+  await new Plus({ config, fetch: fakeSite(statuses).fetch }).sweep({ members: { fetch: async () => amy } }); // after a restart
+  assert.ok(!amy.roleSet.has('plus'));
+});
+
+test('/ask: a linked subscriber is unlimited and gets the role; an ended bot-given role stops counting', async () => {
+  const statuses = { amy: { linked: true, plus: true } };
+  const cfg = plusConfig();
+  const plus = new Plus({ config: cfg, fetch: fakeSite(statuses).fetch });
+  const dataFile = tempFile();
+  const handlers = createHandlers({ config: { ...cfg, perUserLimit: 1 }, limits: new Limits({ perUserLimit: 1, globalCap: 50, dataFile }), lessons: new Lessons({ dataFile }), askKnox: async () => 'Hint.', plus });
+
+  const member = fakeMember('amy');
+  const first = { ...fake(), member };
+  await handlers.ask(first);
+  assert.match(first.sent.at(-1).content, /unlimited/);
+  await new Promise(r => setImmediate(r));
+  assert.ok(member.roleSet.has('plus'));
+
+  statuses.amy = { linked: true, plus: false };
+  plus.cache.clear();
+  const second = { ...fake(), member };
+  await handlers.ask(second);
+  // Back to the free limit (today's question already used) and the role is gone.
+  assert.match(second.sent.at(-1).content, /used your 1 questions/);
+  await new Promise(r => setImmediate(r));
+  assert.ok(!member.roleSet.has('plus'));
+});
+
+test('Check my Plus explains each case', async () => {
+  const statuses = { plus: { linked: true, plus: true }, free: { linked: true, plus: false } };
+  const plus = new Plus({ config: plusConfig(), fetch: fakeSite(statuses).fetch });
+  const handlers = createHandlers({ config: plusConfig(), limits: null, lessons: null, askKnox: null, plus });
+  const reply = async userId => {
+    const i = { ...fake({ userId }), member: fakeMember(userId) };
+    await handlers.checkPlus(i);
+    return i.sent.at(-1);
+  };
+  assert.match((await reply('plus')).content, /got Knox Plus/);
+  assert.match((await reply('free')).content, /doesn't have Knox Plus/);
+  assert.match((await reply('stranger')).content, /isn't connected yet/);
 });
