@@ -7,8 +7,10 @@ export const commands = [
     .addStringOption(option => option
       .setName('question')
       .setDescription('What are you stuck on?')
-      .setRequired(true)
-      .setMaxLength(1500)),
+      .setMaxLength(1500))
+    .addAttachmentOption(option => option
+      .setName('photo')
+      .setDescription('A photo of your homework (JPG, PNG, GIF or WebP, under 3 MB)')),
   new SlashCommandBuilder()
     .setName('link')
     .setDescription('Connect your Knox Knows account to get your Knox Plus perks here'),

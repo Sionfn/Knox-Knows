@@ -58,11 +58,11 @@ function setup(askKnox, { perUserLimit = 2, globalCap = 10 } = {}) {
   return { limits, lessons, ...createHandlers({ config: { ...config, perUserLimit }, limits, lessons, askKnox }) };
 }
 
-function fake({ channelId = 'study', parentId = null, roles = [], userId = 'amy', question = 'How do I factor x^2+5x+6?', customId, reply } = {}) {
+function fake({ channelId = 'study', parentId = null, roles = [], userId = 'amy', question = 'How do I factor x^2+5x+6?', photo = null, customId, reply } = {}) {
   const sent = [];
   return {
     sent, channelId, channel: { parentId }, user: { id: userId }, member: { roles }, customId,
-    options: { getString: () => question },
+    options: { getString: () => question, getAttachment: () => photo },
     fields: { getTextInputValue: () => reply },
     reply: async m => sent.push({ type: 'reply', ...m }),
     deferReply: async () => sent.push({ type: 'defer' }),
@@ -334,4 +334,71 @@ test('Plus members see "Knox Plus" on lesson replies too', async () => {
   const submit = fake({ roles: ['plus'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
   assert.match(submit.sent.at(-1).content, /-# Knox Plus · 9 replies left in this lesson/);
+});
+
+test('/ask with a photo sends it to Knox, shows it with the answer, and costs one question', async () => {
+  let sentTo;
+  const dataFile = tempFile();
+  const limits = new Limits({ perUserLimit: 2, globalCap: 10, dataFile });
+  const lessons = new Lessons({ dataFile });
+  const handlers = createHandlers({
+    config, limits, lessons,
+    askKnox: async args => { sentTo = args; return 'What does the first problem ask for?'; },
+    downloadPhoto: async url => { assert.equal(url, 'https://cdn.discordapp.com/hw.png'); return Buffer.from('png-bytes'); },
+  });
+  const i = fake({ question: null, photo: { url: 'https://cdn.discordapp.com/hw.png', name: 'hw.png', contentType: 'image/png', size: 1000 } });
+  await handlers.ask(i);
+  assert.equal(sentTo.image, Buffer.from('png-bytes').toString('base64'));
+  assert.equal(sentTo.imageType, 'image/png');
+  assert.equal(sentTo.question, '');
+  const posted = i.sent.at(-1);
+  assert.match(posted.content, /📷 Photo question[\s\S]*first problem/);
+  assert.equal(posted.files[0].name, 'hw.png');
+  assert.match(posted.content, /1 of 2 questions left/);
+  // Replies continue from the text of the lesson, like on the website.
+  const lessonId = buttonId(posted).slice('reply:'.length);
+  assert.equal(lessons.get(lessonId).history[0].content, '📷 Photo');
+});
+
+test('/ask checks photos before using a question', async () => {
+  const bot = setup(() => assert.fail('must not call Knox'));
+  for (const [photo, message] of [
+    [null, /Add a question, a photo/],
+    [{ url: 'x', contentType: 'application/pdf', size: 10 }, /JPG, PNG, GIF or WebP/],
+    [{ url: 'x', contentType: 'image/png', size: 5_000_000 }, /under 3 MB/],
+  ]) {
+    const i = fake({ question: null, photo });
+    await bot.ask(i);
+    assert.match(i.sent[0].content, message);
+  }
+  assert.equal(bot.limits.reserve('amy', false).remaining, 1);
+});
+
+test('A photo that cannot be downloaded is refunded', async () => {
+  const dataFile = tempFile();
+  const limits = new Limits({ perUserLimit: 2, globalCap: 10, dataFile });
+  const handlers = createHandlers({
+    config, limits, lessons: new Lessons({ dataFile }), askKnox: () => assert.fail('must not call Knox'),
+    downloadPhoto: async () => { throw new KnoxError("I couldn't open your photo. Please try attaching it again."); },
+  });
+  const i = fake({ photo: { url: 'x', contentType: 'image/jpeg', size: 10 } });
+  await handlers.ask(i);
+  assert.match(i.sent.at(-1).content, /couldn't open your photo.*didn't count/);
+  assert.equal(limits.reserve('amy', false).remaining, 1);
+});
+
+test('downloadPhoto fetches the attachment and rejects failures', async () => {
+  const { downloadPhoto } = await import('../src/knox.js');
+  const server = createServer((req, res) => {
+    if (req.url === '/ok.png') { res.writeHead(200); res.end('png-bytes'); }
+    else { res.writeHead(404); res.end(); }
+  });
+  await new Promise(r => server.listen(0, r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try {
+    assert.equal((await downloadPhoto(`${base}/ok.png`)).toString(), 'png-bytes');
+    await assert.rejects(downloadPhoto(`${base}/missing.png`), /couldn't open your photo/);
+  } finally {
+    server.close();
+  }
 });

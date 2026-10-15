@@ -5,13 +5,13 @@ const TIMEOUT_MS = 60_000;
 
 export class KnoxError extends Error {}
 
-export async function askKnox({ apiUrl, botKey, question, history = [], discordUserId }) {
+export async function askKnox({ apiUrl, botKey, question, history = [], image, imageType, discordUserId }) {
   let res;
   try {
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Knox-Bot-Key': botKey },
-      body: JSON.stringify({ question, learnMode: true, history, discordUserId }),
+      body: JSON.stringify({ question, learnMode: true, history, ...(image ? { image, imageType } : {}), discordUserId }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
@@ -28,4 +28,20 @@ export async function askKnox({ apiUrl, botKey, question, history = [], discordU
       : 'Knox had trouble answering that one. Please try again.');
   }
   return data.answer.trim();
+}
+
+export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+export const MAX_PHOTO_BYTES = 3_000_000; // the website's limit
+
+// Downloads a Discord attachment. Returns the raw bytes, or throws KnoxError.
+export async function downloadPhoto(url) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const bytes = Buffer.from(await res.arrayBuffer());
+    if (bytes.length > MAX_PHOTO_BYTES) throw new Error('too big');
+    return bytes;
+  } catch {
+    throw new KnoxError("I couldn't open your photo. Please try attaching it again.");
+  }
 }
