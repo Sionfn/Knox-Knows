@@ -5,13 +5,13 @@ const TIMEOUT_MS = 60_000;
 
 export class KnoxError extends Error {}
 
-export async function askKnox({ apiUrl, botKey, question, discordUserId }) {
+export async function askKnox({ apiUrl, botKey, question, history = [], discordUserId }) {
   let res;
   try {
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Knox-Bot-Key': botKey },
-      body: JSON.stringify({ question, learnMode: true, history: [], discordUserId }),
+      body: JSON.stringify({ question, learnMode: true, history, discordUserId }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {
