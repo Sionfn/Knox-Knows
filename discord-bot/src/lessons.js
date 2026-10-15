@@ -11,10 +11,11 @@ export class Lessons {
     this.file = dataFile.replace(/(\.json)?$/, '-lessons.json');
     this.lessons = loadJson(this.file) || {};
     this.busy = new Set(); // lessons Knox is answering right now
+    this.prune();
   }
 
   start(ownerId, question, answer) {
-    this.#prune();
+    this.prune();
     const id = randomUUID();
     this.lessons[id] = {
       ownerId, startedAt: Date.now(), replies: 0,
@@ -38,7 +39,11 @@ export class Lessons {
     saveJson(this.file, this.lessons);
   }
 
-  #prune() {
-    for (const id of Object.keys(this.lessons)) if (!this.get(id)) delete this.lessons[id];
+  // Delete ended lessons (the privacy policy promises this).
+  prune() {
+    const ended = Object.keys(this.lessons).filter(id => !this.get(id));
+    if (!ended.length) return;
+    ended.forEach(id => delete this.lessons[id]);
+    saveJson(this.file, this.lessons);
   }
 }

@@ -10,7 +10,11 @@ import { createHandlers, noPings } from './ask.js';
 
 const config = loadConfig();
 const plus = new Plus({ config });
-const handlers = createHandlers({ config, limits: new Limits(config), lessons: new Lessons(config), askKnox, plus });
+const lessons = new Lessons(config);
+const limits = new Limits(config);
+const handlers = createHandlers({ config, limits, lessons, askKnox, plus });
+// Hourly cleanup: ended lessons and yesterday's counts are deleted (see the privacy policy).
+setInterval(() => { lessons.prune(); limits.prune(); }, 3600_000);
 
 // Slash commands only: no message content intent needed.
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });

@@ -316,3 +316,13 @@ test('Check my Plus explains each case', async () => {
   assert.match((await reply('free')).content, /doesn't have Knox Plus/);
   assert.match((await reply('stranger')).content, /isn't connected yet/);
 });
+
+test('Ended lessons are deleted from disk', async () => {
+  const dataFile = tempFile();
+  const lessons = new Lessons({ dataFile });
+  const id = lessons.start('amy', 'q', 'a');
+  lessons.lessons[id].startedAt -= 3 * 3600_000; // 3 hours ago
+  lessons.prune();
+  const { readFileSync } = await import('node:fs');
+  assert.equal(readFileSync(lessons.file, 'utf8'), '{}');
+});
