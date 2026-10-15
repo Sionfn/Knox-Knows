@@ -1406,6 +1406,9 @@
       padding: 13px 18px 0;
       color: var(--purple-dark);
       background: var(--surface);
+      /* Follow the bubble's rounded top corners (6px / 20px minus its 2px border),
+         so this row's background never covers the corner. */
+      border-radius: 4px 18px 0 0;
       font-size: 12px; font-weight: 900;
       letter-spacing: .07em; text-transform: uppercase;
     }
