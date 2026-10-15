@@ -1122,7 +1122,21 @@ test('Discord bot: a valid key gets a Learn-mode answer without a Knox account',
   assert.ok(![...store.keys()].some(key => key.startsWith('users/') || key.startsWith('guestUsage/')));
 
   assert.equal((await bot({ 'x-knox-bot-key': 'wrong' })).code, 401);
-  assert.equal((await bot({ 'x-knox-bot-key': botKey }, { question: 'q', history: [{ role: 'user', content: 'hi' }] })).code, 400);
+  assert.equal((await bot({ 'x-knox-bot-key': botKey }, { question: 'q', image: 'aGVsbG8=', imageType: 'image/png' })).code, 400);
+
+  // A lesson reply carries the conversation so far, and Knox sees it.
+  let sentMessages;
+  const replyHandler = await load('api/ask.js', { db, env: { KNOX_BOT_KEY: botKey }, token: null, fetch: async (url, options) => {
+    sentMessages = JSON.parse(options.body).messages;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: 'Yes, rise over run!' }, finish_reason: 'stop' }] }) };
+  } });
+  const reply = response();
+  await replyHandler({ method: 'POST', headers: { 'x-knox-bot-key': botKey, 'x-forwarded-for': '192.0.2.9' }, body: {
+    question: 'rise over run?', history: [{ role: 'user', content: 'How do I find slope?' }, { role: 'assistant', content: 'What could you compare?' }],
+  } }, reply);
+  assert.equal(reply.code, 200);
+  assert.match(sentMessages[0].content, /Learn mode/);
+  assert.deepEqual(sentMessages.slice(1).map(m => m.content), ['How do I find slope?', 'What could you compare?', 'rise over run?']);
 });
 
 test('Discord bot access is off when no strong key is configured', async () => {

@@ -4,8 +4,9 @@ One slash command, `/ask`, for the Knox Knows Discord server.
 
 - `/ask question:<text>` sends the question to Knox (the same AI the website uses, in **Learn mode**). Knox guides the student with hints and questions instead of handing over answers, and won't help with a test or exam that's happening right now.
 - Works only in **#study-help** (and threads inside it). Anywhere else, the student gets a private message pointing them there.
+- **Reply button:** every answer has a 💬 Reply to Knox button. The student types their answer in a pop-up and Knox continues the same lesson, remembering what it asked. Replies are free (they don't use a daily question). Only the student who asked can reply, and a lesson allows 10 replies within 2 hours.
 - **5 questions per person per day** (resets at midnight UTC). Every answer shows how many are left. Members with the **Knox Plus** role have no limit.
-- **Cost guard:** `DAILY_GLOBAL_CAP` limits how many questions the whole server can ask per day, Plus members included. Once it's reached, `/ask` politely says to try again tomorrow.
+- **Cost guard:** `DAILY_GLOBAL_CAP` limits how many questions the whole server can ask per day, Plus members and lesson replies included. Once it's reached, `/ask` politely says to try again tomorrow.
 - If Knox fails or times out, the student gets a polite message and the question doesn't count.
 - Slash commands only. The bot doesn't read normal messages, so it doesn't need the Message Content intent.
 
@@ -14,7 +15,9 @@ One slash command, `/ask`, for the Knox Knows Discord server.
 | File | What it does |
 | --- | --- |
 | `src/index.js` | Starts the bot and routes `/ask` |
-| `src/ask.js` | The `/ask` command: channel check, limits, reply |
+| `src/ask.js` | `/ask` and the Reply button: channel check, limits, posting answers |
+| `src/lessons.js` | Remembers each lesson so replies continue it |
+| `src/store.js` | Saves state to small JSON files |
 | `src/knox.js` | Calls the Knox API |
 | `src/limits.js` | Daily counts per user and the global cap, saved to a small JSON file |
 | `src/split.js` | Splits long answers under Discord's 2000-character limit |
@@ -58,7 +61,7 @@ The bot sends each question to the website's `/api/ask`:
 ```
 POST https://knoxknowsapp.com/api/ask
 X-Knox-Bot-Key: <KNOX_BOT_KEY>
-{ "question": "...", "learnMode": true, "history": [], "discordUserId": "..." }
+{ "question": "...", "learnMode": true, "history": [ ...the lesson so far... ], "discordUserId": "..." }
 → { "answer": "..." }
 ```
 
