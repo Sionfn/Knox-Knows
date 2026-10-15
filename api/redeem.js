@@ -1,12 +1,12 @@
-// /api/redeem.js — use a Mega Knox gift code.
+// /api/redeem.js — use a Knox Plus gift code.
 //
 // GET           → { gifts: [codes you bought], plusUntil }
-// POST { code } → adds the gift's days of Mega Knox to your account
+// POST { code } → adds the gift's days of Knox Plus to your account
 //
 // Works for bought gift cards (KNOX-XXXX-XXXX-XXXX), codes made on the admin
-// page, and Flame Fest friend links (8 characters). Gift Mega Knox is time-limited
-// Mega Knox (users/{uid}.plusUntil) — no subscription, nothing renews. Someone who
-// already has Mega Knox (paid or comped) is asked to keep the code for later.
+// page, and Flame Fest friend links (8 characters). Gift Knox Plus is time-limited
+// Knox Plus (users/{uid}.plusUntil) — no subscription, nothing renews. Someone who
+// already has Knox Plus (paid or comped) is asked to keep the code for later.
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
       const flameLink = g.source === "flamefest";
       if (flameLink && g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
-      if (isPaid(data)) return { error: "You already have Mega Knox! Save this code for later, or give it to a friend — it never expires.", code: 409 };
+      if (isPaid(data)) return { error: "You already have Knox Plus! Save this code for later, or give it to a friend — it never expires.", code: 409 };
       if (flameLink && data.giftRedeemedAt) return { error: "You've already used a Flame Fest gift.", code: 409 };
       const days = Math.max(1, Math.min(400, Number(g.days) || 7));
       const plusUntil = Math.max(Date.now(), Number(data.plusUntil) || 0) + days * DAY_MS; // stacks with time left

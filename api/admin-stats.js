@@ -93,7 +93,7 @@ export default async function handler(req, res) {
       getUsageStats(),
       getRevenueStats().catch(err => {
         // Stripe being down or misconfigured shouldn't take the whole
-        // dashboard (and the Comped Mega Knox manager under it) down with it.
+        // dashboard (and the Comped Knox Plus manager under it) down with it.
         console.error("Admin revenue stats error:", err);
         return { error: "Could not reach Stripe", mrr: 0, activeSubscriptions: 0 };
       }),
@@ -135,10 +135,10 @@ async function getUserStats() {
     total++;
 
     const plan = u.plan || "free";
-    // Comped Mega Knox users without their own live subscription aren't paying.
+    // Comped Knox Plus users without their own live subscription aren't paying.
     const compedOnly = u.comped === true && !(u.stripeSubscription && ["active", "trialing", "past_due"].includes(u.planStatus));
     if      (compedOnly)       comped++;
-    // On a free trial: they have Mega Knox but haven't paid anything yet.
+    // On a free trial: they have Knox Plus but haven't paid anything yet.
     else if (u.planStatus === "trialing" && u.stripeSubscription) trial++;
     else if (plan === "max")   max++;
     else if (plan === "super" || plan === "plus") superCount++;
@@ -351,7 +351,7 @@ async function getRevenueStats() {
     "price_1Tb17FCqlxC7aoKRIE0BZaWg": "super_yearly",
     "price_1Tb17fCqlxC7aoKRgQ3uxxlK": "max_monthly",
     "price_1Tb17zCqlxC7aoKRNOYaO73B": "max_yearly",
-    // CURRENT prices (Sept 2026 reset — one plan: Mega Knox)
+    // CURRENT prices (Sept 2026 reset — one plan: Knox Plus)
     "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super_monthly",
     "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super_yearly",
   };

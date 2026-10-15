@@ -130,7 +130,7 @@ const EXAMPLES=[
 ];
 const isPlus=()=>['super','max','plus'].includes(window.userPlan)||window.userComped===true;
 const EVERYONE=true; // launched Nov 1: everyone can use Flashcards
-// Making a deck with Knox: Mega Knox is unlimited (up to 20 cards); free
+// Making a deck with Knox: Knox Plus is unlimited (up to 20 cards); free
 // accounts spend DECK_COST credits per deck, up to FREE_MAX cards (the server
 // in api/generate-flashcards.js enforces both).
 const DECK_COST=2, FREE_MAX=10;
@@ -152,13 +152,13 @@ function makeView(){
       <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${MAX_PHOTOS}) — or drag them here.</p>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
-        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Mega</span>`,'upgrade',false,`title="Mega Knox makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
+        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Knox Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
       <label class="fc-switch"><input type="checkbox" id="fcAutoPics"${autoPictures()?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>Add pictures automatically</b><small>Knox adds a free picture to cards where one helps (a body part, a place, an artwork). You can always add or change pictures yourself.</small></span></label>
-      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Mega Knox</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Mega Knox','upgrade',{cls:'small'})}</div>`:''}
+      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Knox Plus</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
       <div class="fc-toolbar" style="margin-top:20px">${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} credits`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${plus?'⚡ Mega Knox — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Mega Knox</b> makes unlimited decks.`}</p>
+      <p class="fc-cost">${plus?'⚡ Knox Plus — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes unlimited decks.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -558,8 +558,8 @@ if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=fa
 function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.title='Flashcards';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span><span class="fc-beta sidebar-collapsible">Beta</span>';b.addEventListener('click',open);nav.append(b);});
-// Visibility (see EVERYONE): if Flashcards is ever limited to Mega Knox again, the tab stays hidden until the plan is known to be Mega Knox,
-// and closes if the account changes to one without Mega Knox (e.g. sign-out).
+// Visibility (see EVERYONE): if Flashcards is ever limited to Knox Plus again, the tab stays hidden until the plan is known to be Knox Plus,
+// and closes if the account changes to one without Knox Plus (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}
 syncAccess();window.addEventListener('knox-plan-changed',syncAccess);
 // Leaving Flashcards from the sidebar: ask first if a deck has unsaved edits,

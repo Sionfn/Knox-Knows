@@ -722,7 +722,7 @@
 
     /* Pinned upgrade card — free users only, always visible at the bottom.
        Sticker treatment (darker border + drop-shadow ledge) so it reads as
-       a raised card matching Mega Knox pricing cards on the landing page. */
+       a raised card matching Knox Plus pricing cards on the landing page. */
     .sidebar-upgrade-card {
       margin: 10px 10px 16px; padding: 14px;
       background: var(--orange);
@@ -844,7 +844,7 @@
     .sidebar-extension-arrow { margin-left: auto; color: var(--blue); font-size: 17px; font-weight: 900; }
     #mobileHistoryDrawer .sidebar-extension-card { margin: 8px; }
     /* "Show all chats": once there are chats, a toggle under the list hides the
-       promo cards (Discord, Chrome, Mega Knox) so recent chats get the whole sidebar. */
+       promo cards (Discord, Chrome, Knox Plus) so recent chats get the whole sidebar. */
     .sidebar-history-toggle {
       display: none; align-items: center; justify-content: center; gap: 6px;
       margin: 4px 10px 9px; padding: 7px 10px; flex-shrink: 0;
@@ -855,7 +855,7 @@
     .sidebar-history-toggle:hover, .sidebar-history-toggle:focus-visible { color: var(--orange); border-color: var(--orange); outline: none; transform: translateY(-1px); }
     .sidebar-body:has(#sidebarHistoryList .sidebar-history-item) .sidebar-history-toggle { display: flex; }
     body.app-sidebar-collapsed .sidebar-history-toggle { display: none !important; }
-    /* The Mega Knox upgrade card stays — only the Discord and Chrome cards make room. */
+    /* The Knox Plus upgrade card stays — only the Discord and Chrome cards make room. */
     body.knox-history-expanded .sidebar-promo-rotator { display: none !important; }
     /* Discord / ambassadors card — same shape as the extension card, in Discord blurple. */
     .sidebar-extension-card.sidebar-discord-card { --discord: #5865F2; border-color: var(--discord); background: color-mix(in srgb, var(--discord) 12%, var(--surface)); margin-bottom: 6px; }
@@ -872,7 +872,7 @@
       #sidebarHistoryList { min-height: 0; }
       .sidebar-quicknav-link { padding-top: 8px; padding-bottom: 8px; }
       .sidebar-history-item { padding-top: 7px; padding-bottom: 7px; }
-      /* The three bottom cards (Discord, Chrome, Mega Knox) share one size and one
+      /* The three bottom cards (Discord, Chrome, Knox Plus) share one size and one
          10px rhythm: same height, width, corners and sticker shadow. */
       .sidebar-promo-rotator > .sidebar-extension-card,
       #sidebarUpgradeCard { box-sizing: border-box; height: 60px; margin: 0 10px 10px; padding: 0 11px; border-width: 1.5px; border-radius: 13px; }
@@ -891,7 +891,7 @@
       body.app-sidebar-collapsed .sidebar-promo-rotator { display: none; }
       @media (prefers-reduced-motion: reduce) { .sidebar-promo-rotator > .sidebar-extension-card { transition: none; } }
       #sidebarUpgradeCard[style*="display: block"] { display: flex !important; }
-      /* Mega Knox card: the same card as Discord and Chrome, in Knox orange. */
+      /* Knox Plus card: the same card as Discord and Chrome, in Knox orange. */
       #sidebarUpgradeCard { width: calc(100% - 20px); font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: var(--orange); background: color-mix(in srgb, var(--orange) 12%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--orange) 55%, transparent); }
       #sidebarUpgradeCard:hover, #sidebarUpgradeCard:focus-visible { box-shadow: 0 5px 0 var(--orange); }
       #sidebarUpgradeCard .plus-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--orange); font-size: 17px; box-shadow: 0 2px 0 var(--orange-dark); }
@@ -993,7 +993,7 @@
          the list and lingered as a bar on the left while collapsing. */
       body.app-sidebar-collapsed #sidebarHistoryList { visibility: hidden; }
       /* Collapsed sidebar, signed in: keep the questions-left pill (just the
-         number, or "Mega Knox") above the profile picture, and give the picture
+         number, or "Knox Plus") above the profile picture, and give the picture
          the same 34px size as the full sidebar. */
       body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row { display: flex !important; flex-direction: column; align-items: center; width: 100%; }
       body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row #streakPill { display: none !important; }
@@ -2220,7 +2220,7 @@
     }
     @media (max-width: 480px) {
       /* Upgrade shrinks to just the icon instead of disappearing entirely —
-         it's the only path to Mega Knox, so it should stay reachable even
+         it's the only path to Knox Plus, so it should stay reachable even
          on the smallest phones, not vanish along with the streak/usage
          pills competing for the same row. */
       #appUpgradeBtn { padding: 7px 9px; }
@@ -2496,9 +2496,9 @@
       </div><!-- end sidebar-body -->
 
       <!-- Account tools stay at the bottom of the desktop sidebar. -->
-      <button type="button" class="sidebar-extension-card sidebar-plus-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;" onclick="goToPricing()" aria-label="Go unlimited — upgrade to Mega Knox">
+      <button type="button" class="sidebar-extension-card sidebar-plus-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;" onclick="goToPricing()" aria-label="Go unlimited — upgrade to Knox Plus">
         <span class="plus-icon" aria-hidden="true">⚡</span>
-        <span class="sidebar-extension-copy"><strong>Go unlimited</strong><span>Upgrade to Mega Knox</span></span>
+        <span class="sidebar-extension-copy"><strong>Go unlimited</strong><span>Upgrade to Knox Plus</span></span>
         <span class="sidebar-extension-arrow" aria-hidden="true">→</span>
       </button>
       <div id="sidebarControlsSlot" class="sidebar-footer"></div>
@@ -2587,7 +2587,7 @@
     </button>
     <button class="app-dropdown-item" onclick="window.knoxGifts?.openBuy(); closeUserDropdown()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-      Give Mega Knox
+      Give Knox Plus
     </button>
     <a class="app-dropdown-item" href="mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback" style="text-decoration:none;">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -2986,8 +2986,8 @@
       const snap = await getDoc(doc(db, 'users', uid));
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
-      // Flame Fest grand prize: a free week of Mega Knox (plusUntil, ms).
-      // Gift codes give the same time-limited Mega Knox (window.userGiftUntil).
+      // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
+      // Gift codes give the same time-limited Knox Plus (window.userGiftUntil).
       window.userGiftUntil = planTier(window.userPlan) !== 'paid' && snap.exists() && Number(snap.data().plusUntil) > Date.now() ? Number(snap.data().plusUntil) : 0;
       if (window.userGiftUntil) window.userPlan = 'plus';
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
@@ -3066,7 +3066,7 @@
       const planBadge = document.getElementById('appAccountPlanBadge');
       if (planBadge) {
         const isPaid = planTier(plan) === 'paid';
-        planBadge.textContent = isPaid ? '⚡ Mega Knox' : 'Free plan';
+        planBadge.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
         planBadge.classList.toggle('paid', isPaid);
       }
       const settingsBtn = document.getElementById('sidebarSettingsBtn');
@@ -3088,7 +3088,7 @@
       const ddTier = document.getElementById('ddTierBadge');
       if (ddTier) {
         const isPaid = planTier(plan) === 'paid';
-        ddTier.textContent = isPaid ? '⚡ Mega Knox' : 'Free plan';
+        ddTier.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
         ddTier.classList.toggle('paid', isPaid);
       }
       if (ddName)  ddName.textContent  = user.displayName || '—';
@@ -3096,7 +3096,7 @@
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
         const cfg = planTier(plan) === 'paid'
-          ? { cls: 'super', icon: '⚡', name: 'Mega Knox', tag: 'Unlimited access' }
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
           : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
@@ -3192,7 +3192,7 @@
   const oneDayMs = () => 24 * 60 * 60 * 1000;
 
   function planTier(plan) {
-    // Match the server's paid allowlist so the app never shows Mega Knox perks to
+    // Match the server's paid allowlist so the app never shows Knox Plus perks to
     // someone the backend treats as free (e.g. a missing/blank plan field).
     return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
   }
@@ -3230,19 +3230,19 @@
     const tier = planTier(window.userPlan);
     const isCompact = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
 
-    // Paid users see "⚡ Mega Knox" instead of a countdown — Mega Knox is
+    // Paid users see "⚡ Knox Plus" instead of a countdown — Knox Plus is
     // marketed and treated as unlimited (the real ceiling is a very high,
     // abuse-only safety net no genuine user will ever reach).
     if (tier === 'paid') {
       usage.style.display = 'inline-flex';
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
-      text.textContent = isCompact ? '⚡ Mega' : '⚡ Mega Knox'; // short on phones
+      text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus'; // short on phones
       setUsageShort('⚡');
       return;
     }
     usage.classList.remove('unlimited');
-    // Free from here on: never leave a Mega Knox "⚡" behind while the count loads.
+    // Free from here on: never leave a Knox Plus "⚡" behind while the count loads.
     setUsageShort(window._knoxUsageState?.tier === 'free' ? String(window._knoxUsageState.left) : '');
 
     try {
@@ -3264,13 +3264,13 @@
       if (window.currentUser?.uid !== uid) return;
       const u = data.usage || {};
       // The plan can finish loading while this request is in flight. If the
-      // server says this is a paid account, show the Mega Knox pill — never the
+      // server says this is a paid account, show the Knox Plus pill — never the
       // abuse-only safety ceiling as if it were a question count.
       if (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false) {
         usage.style.display = 'inline-flex';
         usage.classList.remove('danger');
         usage.classList.add('unlimited');
-        text.textContent = isCompact ? '⚡ Mega' : '⚡ Mega Knox'; // short on phones
+        text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus'; // short on phones
         setUsageShort('⚡');
         return;
       }
@@ -3294,7 +3294,7 @@
     } catch (e) { /* silent */ }
   }
   window.updateUsageIndicator = updateUsageIndicator;
-  // The collapsed sidebar shows just the count (or "Mega Knox") under the dot.
+  // The collapsed sidebar shows just the count (or "Knox Plus") under the dot.
   function setUsageShort(v) {
     const el = document.getElementById('headerUsageShort');
     if (el) el.textContent = v;
@@ -3331,7 +3331,7 @@
   // ── Usage info panel — opens when the header pill is tapped/clicked.
   // Explains the whole system in plain language (not just a bare countdown),
   // since a tooltip was easy to miss, especially on mobile where it doesn't
-  // show at all. Free and Mega Knox each get a version relevant to them.
+  // show at all. Free and Knox Plus each get a version relevant to them.
   // Interval handle for the live countdown inside the usage panel — tracked
   // globally so closeUsageInfo() can always stop it, even if the panel gets
   // closed and reopened multiple times without leaking timers.
@@ -3369,7 +3369,7 @@
           <li>🎓 <strong>Learn mode</strong> only charges once per topic — starting one costs 1 credit (even with a photo), and the whole guided back-and-forth after that is free.</li>
           <li>Casual chit-chat with Knox doesn't use any credits — only real homework help does.</li>
         </ul>
-        <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Mega Knox</button>
+        <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Knox Plus</button>
       `;
     }
     let modal = document.getElementById('usageInfoModal');
@@ -4533,7 +4533,7 @@
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
     const isPaid = planTier(plan) === 'paid';
-    const planLabel = isPaid ? 'Mega Knox' : 'Free';
+    const planLabel = isPaid ? 'Knox Plus' : 'Free';
     const badgeClass = isPaid ? 'super' : 'free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
@@ -4565,9 +4565,9 @@
     // so free users can have one too: give them billing access AND keep the
     // upgrade button.
     if (isPaid && window.userGiftUntil) {
-      // Mega Knox from a gift code or Flame Fest: no subscription, nothing to bill.
+      // Knox Plus from a gift code or Flame Fest: no subscription, nothing to bill.
       const until = new Date(window.userGiftUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-      el.appendChild(row('Mega Knox until', spanVal('🎁 ' + until)));
+      el.appendChild(row('Knox Plus until', spanVal('🎁 ' + until)));
       if (window.hasBillingAccount && !window.knoxNativeApp) {
         const billBtn = document.createElement('button');
         billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
@@ -4576,10 +4576,10 @@
         el.appendChild(row('Billing', billBtn));
       }
     } else if (isPaid && window.userComped && !window.hasBillingAccount) {
-      // Comped Mega Knox has no Stripe billing to manage.
+      // Comped Knox Plus has no Stripe billing to manage.
       const comp = document.createElement('span');
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
-      comp.textContent = '🎁 Free Mega Knox from Knox Knows';
+      comp.textContent = '🎁 Free Knox Plus from Knox Knows';
       el.appendChild(row('Billing', comp));
     } else if ((isPaid || window.hasBillingAccount) && !window.knoxNativeApp) {
       const billBtn = document.createElement('button');
@@ -4592,7 +4592,7 @@
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
-      up.textContent = 'Upgrade to Mega Knox';
+      up.textContent = 'Upgrade to Knox Plus';
       up.onclick     = () => { goToPricing(); closeAppSettings(); };
       wrap.appendChild(up);
       el.appendChild(wrap);

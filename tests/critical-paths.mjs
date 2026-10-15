@@ -251,13 +251,13 @@ test('Expired Learn sessions do not silently charge another credit', async () =>
   assert.equal(store.has('users/u1/usage/bank'), false);
 });
 
-test('An ended Learn session keeps going in the same chat: free for Mega Knox, 1 credit for free accounts that agree', async () => {
+test('An ended Learn session keeps going in the same chat: free for Knox Plus, 1 credit for free accounts that agree', async () => {
   const { db, store } = memoryDb(); const id = crypto.randomUUID();
   const handler = await load('api/ask.js', { db, fetch: askFetch() });
   store.set('users/u1', { plan: 'super' });
   store.set(`users/u1/learnSessions/${id}`, { turns: 20, createdAt: Date.now() });
   let res = response(); await handler(askRequest({ question: 'Why?', learnMode: true, learnSessionId: id }), res);
-  assert.equal(res.code, 200, 'Mega Knox: no stop');
+  assert.equal(res.code, 200, 'Knox Plus: no stop');
   assert.equal(store.get(`users/u1/learnSessions/${id}`).turns, 1, 'a fresh session');
 
   store.set('users/u1', { plan: 'free' });
@@ -705,7 +705,7 @@ test('Make with Knox: Plus member gets a clean, de-duplicated deck', async () =>
   assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1);
 });
 
-test('Make with Knox: free accounts spend 2 credits per deck (up to 10 cards); Mega Knox and gift Mega Knox are unlimited', async () => {
+test('Make with Knox: free accounts spend 2 credits per deck (up to 10 cards); Knox Plus and gift Knox Plus are unlimited', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'free' });
   store.set('users/u1/usage/bank', { balance: 5, lastRegenAt: Date.now() });
@@ -724,7 +724,7 @@ test('Make with Knox: free accounts spend 2 credits per deck (up to 10 cards); M
   assert.equal(res.body.upgrade, true);
   assert.equal(store.get('users/u1/usage/bank').balance, 1, 'nothing taken');
 
-  // A gift / Flame Fest Mega Knox week counts as Mega Knox: no credits, 20 cards.
+  // A gift / Flame Fest Knox Plus week counts as Knox Plus: no credits, 20 cards.
   store.set('users/u1', { plan: 'free', plusUntil: Date.now() + 86400000 });
   res = response(); await handler(deckReq({ request: 'cell biology', count: 20 }), res);
   assert.equal(res.code, 200);
@@ -1280,7 +1280,7 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   const u = store.get('users/u1');
   assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'gold', 'purple']);
   assert.equal(u.flameShields, 3);
-  assert.ok(u.plusUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Mega Knox week');
+  assert.ok(u.plusUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Knox Plus week');
   assert.match(u.flameFest.giftCode, /^[A-Z0-9]{8}$/, 'a gift link too');
 
   res = await call('POST', { test: 'miss', localDay: '2026-10-13' });
@@ -1325,7 +1325,7 @@ test('Flame Fest for Plus members: Plus prizes, and a one-time gift link that gi
 
   let res = await call(mine);
   assert.equal(res.body.plus, true);
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Mega Knox week to gift a friend + 👑 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A free Knox Plus week to gift a friend + 👑 Golden Flame');
   res = await call(mine, { claim: 'w1' });
   assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');

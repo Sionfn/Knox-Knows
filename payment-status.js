@@ -48,8 +48,8 @@ window.showKnoxBillingStatus = function () {
         const data = await response.json();
         if (window.currentUser?.uid !== user.uid || !overlay.isConnected) return;
         if (response.ok && ['super', 'plus', 'max'].includes(data.plan)) {
-          title.textContent = 'Mega Knox is active';
-          status.textContent = data.planStatus === 'trialing' ? 'Your account has an active trial. Manage billing from Account & Plan.' : 'Your account has Mega Knox access. Manage billing from Account & Plan.';
+          title.textContent = 'Knox Plus is active';
+          status.textContent = data.planStatus === 'trialing' ? 'Your account has an active trial. Manage billing from Account & Plan.' : 'Your account has Knox Plus access. Manage billing from Account & Plan.';
           return;
         }
       } catch (_) { if (controller.signal.aborted) return; }

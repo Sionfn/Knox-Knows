@@ -1,4 +1,4 @@
-/* gift.css — Mega Knox gift windows (gift.js). Builds on flamefest.css's
+/* gift.css — Knox Plus gift windows (gift.js). Builds on flamefest.css's
    .ff-modal / .ff-card / .ff-pop look. */
 .kg-card { width: min(440px, 100%); }
 .kg-form { display: flex; gap: 8px; margin-top: 14px; }

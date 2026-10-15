@@ -24,12 +24,12 @@ const adminAuth = getAdminAuth();
 const db = getFirestore();
 
 // ─────────────────────────────────────────────────────────────────────────
-// PRICING MATRIX (Sept 2026 reset — one plan: Mega Knox at $9.99/$79.99):
-//   Mega Knox monthly: $9.99/mo  (7-day free trial)
-//   Mega Knox yearly:  $79.99/yr ($6.67/mo effective, 33% savings vs monthly)
+// PRICING MATRIX (Sept 2026 reset — one plan: Knox Plus at $9.99/$79.99):
+//   Knox Plus monthly: $9.99/mo  (7-day free trial)
+//   Knox Plus yearly:  $79.99/yr ($6.67/mo effective, 33% savings vs monthly)
 //
 // The "max" tier is a legacy holdover — we consolidated to one paid plan.
-// New checkouts always use `plan: "super"` which maps to Mega Knox. The
+// New checkouts always use `plan: "super"` which maps to Knox Plus. The
 // "max" entry stays here in case any old link/button still passes it, so
 // those requests don't 400 out — they'll fall through to the same prices.
 //
@@ -43,15 +43,15 @@ const db = getFirestore();
 //   4. Update the user-facing prices in index.html.
 // ─────────────────────────────────────────────────────────────────────────
 const PRICES = {
-  // Both 'super' and legacy 'max' route to the same current Mega Knox
+  // Both 'super' and legacy 'max' route to the same current Knox Plus
   // prices — one paid plan across the board.
   super: {
     monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // $9.99/mo (Sept 2026 reset)
     yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // $79.99/yr (Sept 2026 reset)
   },
   max: {
-    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // routes to Mega Knox monthly
-    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // routes to Mega Knox yearly
+    monthly: "price_1UBcoACqlxC7aoKRR3DFKNhJ",  // routes to Knox Plus monthly
+    yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // routes to Knox Plus yearly
   },
 };
 
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized — token missing uid or email." });
   }
 
-  // Gift a Mega Knox code: a one-time payment, not a subscription. The webhook
+  // Gift a Knox Plus code: a one-time payment, not a subscription. The webhook
   // makes the code and emails it to the buyer (see api/_gifts.js).
   if (req.body?.gift != null) return giftCheckout(res, req.body.gift, verifiedUid, verifiedEmail);
 
@@ -120,7 +120,7 @@ export default async function handler(req, res) {
           const ref = db.collection('users').doc(verifiedUid);
           const latest = await tx.get(ref);
           if (latest.data()?.stripeSubscription === subscriptionId) {
-            // Comped users keep their free Mega Knox.
+            // Comped users keep their free Knox Plus.
             const comped = latest.data()?.comped === true;
             tx.set(ref, { stripeSubscription: null, plan: comped ? 'super' : 'free', planStatus: comped ? 'comped' : 'cancelled' }, { merge: true });
           }
@@ -194,14 +194,14 @@ export default async function handler(req, res) {
       ? `https://${process.env.VERCEL_URL}`
       : (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
 
-    // 7-day free trial on Mega Knox MONTHLY only.
+    // 7-day free trial on Knox Plus MONTHLY only.
     // Yearly buyers are already committing — they don't need a trial, and a
     // trial on a $79.99 annual purchase reads as gimmicky rather than useful.
     // 7 days is enough for a student to try it during a homework session or
     // two, without giving away a full week's worth of unlimited usage.
     // Note: `plan === "super"` is the internal Stripe plan value that maps to
-    // the Mega Knox display name. Legacy — see webhook.js PLAN_NAMES for the
-    // same 'super' → Mega Knox display mapping.
+    // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
+    // same 'super' → Knox Plus display mapping.
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === "super" && billing === "monthly") {
       // The trial is for first-time subscribers only. Without this check,
@@ -263,8 +263,8 @@ async function giftCheckout(res, gift, uid, email) {
           currency: "usd",
           unit_amount: g.cents,
           product_data: {
-            name: `Mega Knox gift — ${g.label}`,
-            description: "A gift code for Mega Knox. Not a subscription — it never renews or charges the person you give it to.",
+            name: `Knox Plus gift — ${g.label}`,
+            description: "A gift code for Knox Plus. Not a subscription — it never renews or charges the person you give it to.",
           },
         },
       }],

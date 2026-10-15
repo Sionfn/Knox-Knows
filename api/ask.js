@@ -57,8 +57,8 @@ const oneDayMs = () => 24 * 60 * 60 * 1000;
 function planTier(plan) {
   // Explicit allowlist of PAID plan values. Anything else — including free,
   // an empty string, null, undefined, or an unknown value — is treated as
-  // free, so a missing/blank plan field can never accidentally grant Mega Knox.
-  // ('super' and 'max' are the legacy Stripe values for Mega Knox.)
+  // free, so a missing/blank plan field can never accidentally grant Knox Plus.
+  // ('super' and 'max' are the legacy Stripe values for Knox Plus.)
   return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
 }
 
@@ -427,7 +427,7 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
 }
 
 // Same input/output sizing and model for every plan — quality no longer
-// varies by plan, only volume does (Mega Knox gets a rolling PLUS_LIMIT ceiling,
+// varies by plan, only volume does (Knox Plus gets a rolling PLUS_LIMIT ceiling,
 // free runs on the daily bank in FREE_DAILY_REGEN / FREE_MAX_BALANCE above).
 // (The hard input-length guard is the 8000-char check earlier in the
 // handler; there's no separate truncation constant anymore — see the note
@@ -858,7 +858,7 @@ export default async function handler(req, res) {
       if (userDoc.exists) {
         const d = userDoc.data();
         plan = d.plan || "free";
-        // Flame Fest grand prize: a free week of Mega Knox (plusUntil, ms).
+        // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
         if (planTier(plan) === "free" && Number(d.plusUntil) > Date.now()) plan = "plus";
       }
     } catch {
@@ -1028,7 +1028,7 @@ export default async function handler(req, res) {
     catch (err) { console.error('Learn session check failed:', err); return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' }); }
   }
   // A session that hit its 20-message / 2-hour limit keeps going in the same
-  // chat (so the lesson isn't lost) as a fresh session: free for Mega Knox,
+  // chat (so the lesson isn't lost) as a fresh session: free for Knox Plus,
   // and for free accounts only once they agree to spend 1 credit (renewLearn).
   let renewLearnSession = false;
   if (isLearnFollowUp === 'expired') {
@@ -1051,9 +1051,9 @@ export default async function handler(req, res) {
           : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
         let message;
         if (usage.isDailyBank && (image || doc) && !learnMode) {
-          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Mega Knox gets unlimited photos, files and questions.`;
+          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited photos, files and questions.`;
         } else if (usage.isDailyBank) {
-          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Mega Knox gets unlimited questions.`;
+          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`;
         } else {
           message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
         }
@@ -1248,7 +1248,7 @@ export default async function handler(req, res) {
         // resetting the cap and granting another 19 free follow-ups.
         // Repeatable indefinitely by looping past the cap.
         const ref = db.collection('users').doc(uid).collection('learnSessions').doc(learnSessionId);
-        // A renewed session was paid for above (a credit, or Mega Knox), so
+        // A renewed session was paid for above (a credit, or Knox Plus), so
         // it may start over.
         await db.runTransaction(async tx => {
           const snap = await tx.get(ref);

@@ -123,7 +123,7 @@
         "description": "AI study companion that gives step-by-step homework answers for K-12 and college students. Every subject — math, science, history, English, and more.",
         "offers": [
           { "@type": "Offer", "name": "Free",      "price": "0",    "priceCurrency": "USD" },
-          { "@type": "Offer", "name": "Mega Knox",  "price": "9.99", "priceCurrency": "USD" }
+          { "@type": "Offer", "name": "Knox Plus",  "price": "9.99", "priceCurrency": "USD" }
         ]
       },
       {
@@ -137,7 +137,7 @@
           {
             "@type": "Question",
             "name": "Will I be charged after the 7-day free trial?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
           },
           {
             "@type": "Question",
@@ -162,7 +162,7 @@
           {
             "@type": "Question",
             "name": "How do I access Knox?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Mega Knox for truly unlimited." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Knox lives at knoxknowsapp.com/app. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited." }
           },
           {
             "@type": "Question",
@@ -171,8 +171,8 @@
           },
           {
             "@type": "Question",
-            "name": "Can I give Mega Knox as a gift?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — buy 1, 3 or 12 months of Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged." }
+            "name": "Can I give Knox Plus as a gift?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — buy 1, 3 or 12 months of Knox Plus as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged." }
           },
           {
             "@type": "Question",
@@ -487,7 +487,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     @media (max-width:768px) {
       #headerNav    { display:none !important; }
       #hamburgerBtn { display:flex !important; }
-      /* Full "⚡ Mega Knox" badge shows on mobile — the single merged auth
+      /* Full "⚡ Knox Plus" badge shows on mobile — the single merged auth
          button freed up enough room that the label fits without crowding. */
       #main-header { height:calc(64px + env(safe-area-inset-top)); border-bottom-width:4px; }
     }
@@ -511,7 +511,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     @media (max-width:400px) {
       .rg-4col   { grid-template-columns:1fr 1fr !important; }
       .rg-footer { grid-template-columns:1fr !important; }
-      /* Small phones: keep the full "⚡ Mega Knox" label visible (you want
+      /* Small phones: keep the full "⚡ Knox Plus" label visible (you want
          it readable, not just the bolt). Tighten header padding/gaps and
          trim the badge's own padding a touch so everything still fits. */
       #proBadge { padding:9px 12px !important; font-size:13px !important; }
@@ -2179,7 +2179,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <!-- Dark-mode toggle and "Open Knox" removed from the top bar. The theme
          (light, dark or fall) is picked in the app and carries over; getting
          back to the app is now the floating button (see #appFab below). -->
-    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡<span id="proBadgeLabel"> Mega Knox</span></button>
+    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡<span id="proBadgeLabel"> Knox Plus</span></button>
 
     <div class="account-dropdown-wrapper" id="accountDropdownWrapper" style="display:none;">
       <button id="accountBtn" onclick="toggleDropdown(event)" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:12px;padding:6px 12px 6px 6px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s;height:44px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -2396,7 +2396,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
         <div style="width:52px;height:52px;border-radius:14px;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;">🗂️</div>
         <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Flashcards</h3>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Tell Knox what you’re studying — or drop in your notes, slides or a photo — and it makes a deck with pictures (2 credits on the free plan, unlimited with Mega Knox). Smart review brings back the cards you miss.</p>
+        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Tell Knox what you’re studying — or drop in your notes, slides or a photo — and it makes a deck with pictures (2 credits on the free plan, unlimited with Knox Plus). Smart review brings back the cards you miss.</p>
       </div>
       <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
         <div style="width:52px;height:52px;border-radius:14px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;">🧮</div>
@@ -2562,12 +2562,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
          Both cards use the same internal structure (badge slot at top, then
          label, price, spacer, button) so buttons land at the same vertical
          position and the two cards read as symmetric. Free card gets an
-         invisible badge-slot placeholder so it doesn't sit taller than Mega Knox. -->
+         invisible badge-slot placeholder so it doesn't sit taller than Knox Plus. -->
     <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;align-items:stretch;">
 
       <!-- FREE card -->
       <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #075E8D;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <!-- Invisible placeholder to match Mega Knox's floating trial badge, so the two cards line up -->
+        <!-- Invisible placeholder to match Knox Plus's floating trial badge, so the two cards line up -->
         <div style="height:8px;" aria-hidden="true"></div>
         <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
         <div style="line-height:1;">
@@ -2579,12 +2579,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:#fff;color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
       </div>
 
-      <!-- MEGA KNOX card -->
+      <!-- KNOX PLUS card -->
       <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
         <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:var(--orange);color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
         <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
         <div style="height:8px;" aria-hidden="true"></div>
-        <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Mega Knox</div>
+        <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
         <div style="line-height:1;">
           <span style="font-size:44px;font-weight:900;" id="proPrice">$9.99</span>
           <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);" id="proPeriod">/mo</span>
@@ -2664,20 +2664,20 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
-      <button onclick="handlePurchase('Plus')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Mega Knox free for 7 days</button>
+      <button onclick="handlePurchase('Plus')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 7 days</button>
       <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
     </div>
 
-    <!-- Gift Mega Knox: gift.js opens the gift window right here -->
+    <!-- Gift Knox Plus: gift.js opens the gift window right here -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:36px auto 0;max-width:720px;padding:18px 22px;border-radius:20px;background:var(--orange-cream);border:2px solid var(--orange);box-shadow:0 4px 0 var(--orange-light);">
       <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 300px;text-align:left;">
         <span aria-hidden="true" style="font-size:34px;line-height:1;">🎁</span>
         <div>
-          <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Mega Knox as a gift</p>
-          <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Mega Knox with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
+          <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Knox Plus as a gift</p>
+          <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Knox Plus with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
         </div>
       </div>
-      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;">🎁 Give Mega Knox</button>
+      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;">🎁 Give Knox Plus</button>
     </div>
 
   </div><!-- /max-width wrapper -->
@@ -2712,7 +2712,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+          Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
         </div>
       </details>
 
@@ -2745,7 +2745,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — Knox can read photos of handwritten or printed homework, and PDF, Word and PowerPoint files too. Tap the upload button in the app (or drag a file in) and Knox reads it just like a typed question. Free users draw photos and files from the same daily credit pool as questions (they just use a bit more of it); Mega Knox gets unlimited.
+          Yes — Knox can read photos of handwritten or printed homework, and PDF, Word and PowerPoint files too. Tap the upload button in the app (or drag a file in) and Knox reads it just like a typed question. Free users draw photos and files from the same daily credit pool as questions (they just use a bit more of it); Knox Plus gets unlimited.
         </div>
       </details>
 
@@ -2767,7 +2767,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox lives at <a href="/app">knoxknowsapp.com/app</a>. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Mega Knox for truly unlimited.
+          Knox lives at <a href="/app">knoxknowsapp.com/app</a>. Sign up free and get 10 questions to start, then 5 more every day (save up to 20) — the same quality as paid. Upgrade to Knox Plus for truly unlimited.
         </div>
       </details>
 
@@ -2784,11 +2784,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <details class="knox-faq reveal">
         <summary>
-          <span>Can I give Mega Knox as a gift?</span>
+          <span>Can I give Knox Plus as a gift?</span>
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — buy 1, 3 or 12 months of Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged. <a href="#" onclick="event.preventDefault();window.knoxGifts?.openBuy();" style="color:var(--orange);font-weight:800;">Give Mega Knox →</a>
+          Yes — buy 1, 3 or 12 months of Knox Plus as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged. <a href="#" onclick="event.preventDefault();window.knoxGifts?.openBuy();" style="color:var(--orange);font-weight:800;">Give Knox Plus →</a>
         </div>
       </details>
 
@@ -3574,7 +3574,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   const DAILY_LIMIT = 10; // free plan hw quota
   // Legacy constants — kept for backward compatibility with older widget
   // code that reads them. Values map both 'super' and 'max' to the same
-  // Mega Knox tier (both are legacy Stripe plan names for the one paid plan).
+  // Knox Plus tier (both are legacy Stripe plan names for the one paid plan).
   const PLAN_LIMITS    = { free: 15, super: Infinity, max: Infinity };
   const LEARN_LIMITS   = { free: 15, super: Infinity, max: Infinity };
   const CASUAL_LIMITS  = { free: 30, super: Infinity, max: Infinity };
@@ -3667,7 +3667,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (!window.currentUser) {
       if (loginBtn)       loginBtn.style.display       = 'inline-flex';
       if (accountWrapper) accountWrapper.style.display = 'none';
-      // Guests see the "Mega Knox" badge on all sizes now — it scrolls to
+      // Guests see the "Knox Plus" badge on all sizes now — it scrolls to
       // pricing so they can browse plans before committing. On mobile it
       // shrinks to an icon-only ⚡ pill (see CSS) so it fits next to the
       // single auth button without crowding.
@@ -3694,7 +3694,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (dPlan) {
       // Render plan card (matches /app's dropdown) instead of plain text
       const cfg = userPlan !== 'free'
-                ? { cls: 'super', icon: '⚡', name: 'Mega Knox', tag: 'Unlimited access' }
+                ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
                 : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
       dPlan.innerHTML = '';
       const card = document.createElement('div');
@@ -3772,7 +3772,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (name) name.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'Your account');
     const paid = ['super', 'max', 'plus'].includes(window.userPlan);
     const badge = document.getElementById('lnAccountBadge');
-    if (badge) { badge.textContent = paid ? '⚡ Mega Knox' : 'Free plan'; badge.classList.toggle('paid', paid); }
+    if (badge) { badge.textContent = paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid); }
   }
   // iOS Safari ignores overflow:hidden on body, so pin the page in place
   // while the phone menu is open and restore the scroll spot on close.
@@ -4026,9 +4026,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   function showLimitModal(data) {
     const uPlan = window.userPlan || userPlan || 'free';
     const isPaid = uPlan !== 'free';
-    const upgradeText  = 'Upgrade to Mega Knox';
-    const upgradeSub   = 'Mega Knox gives you unlimited questions — no more waiting on quota.';
-    const upgradeBadge = '⚡ Go unlimited with Mega Knox';
+    const upgradeText  = 'Upgrade to Knox Plus';
+    const upgradeSub   = 'Knox Plus gives you unlimited questions — no more waiting on quota.';
+    const upgradeBadge = '⚡ Go unlimited with Knox Plus';
     const m = document.createElement('div');
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
     const upgradeSection = isPaid ? '' : `
@@ -4109,7 +4109,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (mBtn) { mBtn.style.background = type === 'monthly' ? '#FF6B00' : 'transparent'; mBtn.style.color = type === 'monthly' ? 'white' : '#9CA3AF'; mBtn.style.boxShadow = type === 'monthly' ? '0 3px 0 #CC5500' : 'none'; }
     if (yBtn) { yBtn.style.background = type === 'yearly' ? '#FF6B00' : 'transparent'; yBtn.style.color = type === 'yearly' ? 'white' : '#9CA3AF'; yBtn.style.boxShadow = type === 'yearly' ? '0 3px 0 #CC5500' : 'none'; }
 
-    // Mega Knox pricing — the one paid plan
+    // Knox Plus pricing — the one paid plan
     const proPrice   = document.getElementById('proPrice');
     const proPeriod  = document.getElementById('proPeriod');
     const proNote    = document.getElementById('proYearlyNote');
@@ -4121,11 +4121,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/mo'    : '/mo, billed yearly';
     if (proNote)   proNote.style.display = type === 'yearly'  ? 'block'  : 'none';
     if (proSubline) proSubline.textContent = type === 'monthly' ? 'Cancel anytime' : 'Best value · save 33%';
-    if (proBtn && !proBtn.disabled) proBtn.textContent = type === 'monthly' ? 'Start Free Trial' : 'Get Mega Knox Yearly';
+    if (proBtn && !proBtn.disabled) proBtn.textContent = type === 'monthly' ? 'Start Free Trial' : 'Get Knox Plus Yearly';
     // The big button under the table promised a 7-day trial even with Yearly
     // selected — but only Monthly has a trial, so it must follow the toggle.
     const bottomCTA = document.getElementById('proBottomCTA');
-    if (bottomCTA && !bottomCTA.disabled) bottomCTA.textContent = type === 'monthly' ? 'Try Mega Knox free for 7 days' : 'Get Mega Knox Yearly — $79.99/yr';
+    if (bottomCTA && !bottomCTA.disabled) bottomCTA.textContent = type === 'monthly' ? 'Try Knox Plus free for 7 days' : 'Get Knox Plus Yearly — $79.99/yr';
     // The badge changes content based on billing period:
     //   Monthly → "🎉 7-DAY FREE TRIAL" (matches server-side trial_period_days)
     //   Yearly  → "💰 4 MONTHS FREE"    ($39.89 saved ÷ $9.99/mo ≈ 4 months)
@@ -4159,7 +4159,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
   async function handlePurchase(planName, requestedBilling) {
     if (window._checkoutBusy) return;
-    // One paid plan now — "Plus" is the only real plan value (shown as Mega Knox), but Super/Max map
+    // One paid plan now — "Plus" is the only real plan value (shown as Knox Plus), but Super/Max map
     // to it too in case an old link or cached button still sends them.
     const planKey = 'super'; // keep existing Stripe price ID / Firestore plan value — no product changes needed
     const billingPeriod = requestedBilling || billing || 'monthly';
@@ -4226,7 +4226,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   // Expose so it can be called by post-signup resume logic
   window.handlePurchase = handlePurchase;
 
-  // Header "⚡ Mega Knox" badge → scroll to the pricing section instead of
+  // Header "⚡ Knox Plus" badge → scroll to the pricing section instead of
   // jumping straight to Stripe. People clicking a top-nav badge want to SEE
   // the plans and compare first, not land on a payment page — the actual
   // "buy" buttons live in the pricing section and still call handlePurchase.
@@ -4267,7 +4267,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     // Build plan display info
     const plan     = window.userPlan || 'free';
-    const planNames  = { free: 'Free', super: 'Mega Knox', max: 'Mega Knox' };
+    const planNames  = { free: 'Free', super: 'Knox Plus', max: 'Knox Plus' };
     const planPrices = { free: '$0', super: '$9.99/mo', max: '$9.99/mo' };
     const planColors = { free: '#6B7280', super: '#22C55E', max: '#22C55E' };
     const planEmojis = { free: '🐾', super: '⚡', max: '⚡' };
@@ -4286,7 +4286,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     modal.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);';
 
     const isPaid = ['super', 'max', 'plus'].includes(plan);
-    // Comped Mega Knox has no Stripe billing to manage.
+    // Comped Knox Plus has no Stripe billing to manage.
     const canManageBilling = window.hasBillingAccount || (isPaid && !window.userComped);
     const color  = planColors[plan] || '#FF6B00';
 
@@ -4342,7 +4342,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div style="text-align:center;padding:8px 0 16px;">
             <div style="font-size:15px;font-weight:700;color:var(--text-light);margin-bottom:20px;">Ready to go unlimited?</div>
             <div style="display:flex;flex-direction:column;gap:10px;">
-              <button onclick="document.getElementById('knoxBillingModal').remove();scrollToPricing();" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;border:none;background:#22C55E;color:white;cursor:pointer;box-shadow:0 4px 0 #16A34A;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">⚡ Get Mega Knox — $9.99/mo</button>
+              <button onclick="document.getElementById('knoxBillingModal').remove();scrollToPricing();" style="width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:800;font-family:inherit;border:none;background:#22C55E;color:white;cursor:pointer;box-shadow:0 4px 0 #16A34A;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">⚡ Get Knox Plus — $9.99/mo</button>
               ${canManageBilling ? `<button onclick="window._goToStripePortal()" style="width:100%;padding:12px;border-radius:14px;font-size:14px;font-weight:800;font-family:inherit;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;">Billing history &amp; payment method</button>
               <div id="knoxPortalStatus" style="display:none;text-align:center;font-size:13px;font-weight:700;color:var(--text-light);padding:4px;">Opening Stripe billing...</div>` : ''}
             </div>
@@ -4405,9 +4405,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         '</div>',
       ].join('');
     } else {
-      // Show trial message for Mega Knox monthly (the only plan with a free trial).
+      // Show trial message for Knox Plus monthly (the only plan with a free trial).
       // The internal plan value is still 'super' — that's the legacy Stripe key
-      // that now maps to Mega Knox. See webhook.js PLAN_NAMES for the same mapping.
+      // that now maps to Knox Plus. See webhook.js PLAN_NAMES for the same mapping.
       const _uPlan = window.userPlan || userPlan || 'free';
       const isSuperMonthlyTrial = (
         _uPlan === 'super' &&
@@ -4451,7 +4451,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       const proBtn = document.getElementById('proCTABtn');
       const bottomBtn = document.getElementById('proBottomCTA');
       if (proBtn) proBtn.textContent = '✓ Current Plan';
-      if (bottomBtn) bottomBtn.textContent = '✓ You have Mega Knox';
+      if (bottomBtn) bottomBtn.textContent = '✓ You have Knox Plus';
     } else {
       setBilling(billing || 'monthly');
     }
@@ -4472,14 +4472,14 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (banner) {
       const _bp = window.userPlan || userPlan || 'free';
       if (_bp !== 'free') {
-        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:var(--green-light);border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Mega Knox &nbsp;·&nbsp; Basically unlimited questions</span></div>';
+        banner.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:7px 20px;background:var(--green-light);border-top:1.5px solid #86EFAC;border-bottom:1.5px solid #86EFAC;"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><span style="font-size:12px;font-weight:800;color:var(--green-dark);letter-spacing:0.01em;">⚡ Knox Plus &nbsp;·&nbsp; Basically unlimited questions</span></div>';
       } else {
         banner.innerHTML = '';
       }
     }
     if (userPlan !== 'free') {
-      // Mega Knox users — no upgrade path, just show them they're set
-      counter.innerHTML = `⚡ Mega Knox — study away`;
+      // Knox Plus users — no upgrade path, just show them they're set
+      counter.innerHTML = `⚡ Knox Plus — study away`;
       counter.style.color = '#4b5563';
     } else if (!window.currentUser) {
       counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="openLoginModal()">Sign up free — 10 questions to start ✨</span>`;
@@ -4488,7 +4488,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       // Free user — usage is now a rolling 3-hour window, not a daily count.
       // The old daily-quota display doesn't map cleanly here, so just show a
       // simple call-to-action rather than a stale number.
-      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">Study more with Mega Knox ⚡</span>`;
+      counter.innerHTML = `<span style="font-weight:800;color:#7c3aed;cursor:pointer;" onclick="scrollToPricing()">Study more with Knox Plus ⚡</span>`;
       counter.style.color = '#4b5563';
     }
   }
@@ -5012,7 +5012,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-light);font-size:14px;font-weight:600;">Loading...</div>';
 
     // Plan → color/label for the little history badge. Legacy 'super' and
-    // 'max' both display as Mega Knox since that's the one paid plan now.
+    // 'max' both display as Knox Plus since that's the one paid plan now.
     const planColors = { max: '#58CC02', super: '#58CC02', free: '#1CB0F6' };
 
     // Try Firestore first for logged-in users (skip if just cleared)
@@ -5037,7 +5037,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     list.innerHTML = history.map((item, i) => {
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const label = plan !== 'free' ? '⚡ Mega Knox' : '🆓 Free';
+      const label = plan !== 'free' ? '⚡ Knox Plus' : '🆓 Free';
       const q = escapeHtml(item.question || '');
       return `<div class="hist-card" data-index="${i}" style="background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
         <div style="font-size:14px;font-weight:800;color:var(--text);line-height:1.5;">${q}</div>
@@ -5101,7 +5101,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   function renderFirestoreHistory(items) {
     const list = document.getElementById('historyList');
     if (!list) return;
-    // Both legacy 'super' and 'max' render as Mega Knox now
+    // Both legacy 'super' and 'max' render as Knox Plus now
     const planColors = { max: '#58CC02', super: '#58CC02', free: '#1CB0F6' };
     if (items.length === 0) {
       list.innerHTML = '<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🦊</div><div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px;">No history yet</div><div style="font-size:14px;font-weight:600;color:var(--text-light);">Ask Knox a question and it will appear here automatically.</div></div>';
@@ -5111,7 +5111,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       const date  = new Date(item.ts).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
       const plan  = item.plan || 'free';
       const color = planColors[plan] || '#1CB0F6';
-      const planLabel = plan !== 'free' ? '⚡ Mega Knox' : '🆓 Free';
+      const planLabel = plan !== 'free' ? '⚡ Knox Plus' : '🆓 Free';
       return `<div class="firestore-hist-card" data-id="${escapeHtml(item.id)}" style="background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:14px 16px;transition:all 0.2s;">
         <div style="font-size:14px;font-weight:800;color:var(--text);line-height:1.5;margin-bottom:12px;">${escapeHtml(item.question || '')}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -5159,7 +5159,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       return;
     }
     body.innerHTML = history.map((item, i) => {
-      const planLabel = item.plan && item.plan !== 'free' ? '\u26A1 Mega Knox' : '\uD83C\uDD93 Free';
+      const planLabel = item.plan && item.plan !== 'free' ? '\u26A1 Knox Plus' : '\uD83C\uDD93 Free';
       const shortQ = item.question.length > 120 ? item.question.substring(0, 120) + '\u2026' : item.question;
       return '<div class="history-item" id="hist-item-' + i + '">' +
         '<div class="history-q">' + shortQ.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
@@ -5226,7 +5226,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       else { cpl.push(line); }
     }
     fp(mode);
-    const planTag = item.plan && item.plan !== "free" ? "\u26A1 Mega Knox" : "\uD83C\uDD93 Free";
+    const planTag = item.plan && item.plan !== "free" ? "\u26A1 Knox Plus" : "\uD83C\uDD93 Free";
     const planTagClass = item.plan && item.plan !== "free" ? "tag-super" : "tag-free";
     let html = '<div class="ai-response-box">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:var(--border);border-radius:8px;font-size:12px;font-weight:700;color:var(--text-light);">\uD83D\uDD50 From history &nbsp;&middot;&nbsp; ' + escapeHtml(item.time || '') + '</div>';
@@ -5335,7 +5335,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     const _plan = window.userPlan || userPlan || 'free';
     userPlan = _plan;
-    const planLabel = _plan !== 'free' ? 'Mega Knox' : 'Free';
+    const planLabel = _plan !== 'free' ? 'Knox Plus' : 'Free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
     el.innerHTML = '';
@@ -5367,7 +5367,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (_isPaidPlan && window.userComped && !window.hasBillingAccount) {
       const comp = document.createElement('span');
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
-      comp.textContent = '🎁 Free Mega Knox from Knox Knows';
+      comp.textContent = '🎁 Free Knox Plus from Knox Knows';
       el.appendChild(row('Billing', comp));
     } else if (_isPaidPlan || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
@@ -5380,7 +5380,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'settings-primary-btn';
-      up.textContent = 'Upgrade to Mega Knox';
+      up.textContent = 'Upgrade to Knox Plus';
       up.onclick     = () => { closeSettings(); scrollToPricing(); };
       wrap.appendChild(up);
       el.appendChild(wrap);

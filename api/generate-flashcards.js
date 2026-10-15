@@ -8,7 +8,7 @@
 // → { title, cards: [{ front, back }] }
 //
 // Access:
-//   Mega Knox / comped / gift or Flame Fest Mega Knox — unlimited decks of up
+//   Knox Plus / comped / gift or Flame Fest Knox Plus — unlimited decks of up
 //                 to 20 cards (with a hidden daily safety limit on AI cost).
 //   Free        — each deck costs DECK_CREDIT_COST credits from the same daily
 //                 bank as Ask Knox questions (same rules as api/ask.js), decks
@@ -32,7 +32,7 @@ const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
 const MODEL = "gpt-6-luna";           // same model as Ask Knox
-const DAILY_DECK_LIMIT = 40;          // hidden per-account daily safety limit (Mega Knox)
+const DAILY_DECK_LIMIT = 40;          // hidden per-account daily safety limit (Knox Plus)
 const DECK_CREDIT_COST = 2;           // free: a deck costs 2 credits, like a photo
 const FREE_MAX_CARDS   = 10;
 // Free daily bank — keep in sync with api/ask.js (and api/me.js).
@@ -202,7 +202,7 @@ export default async function handler(req, res) {
   if (request.length < 3)    return res.status(400).json({ error: "Tell Knox what you're studying." });
   if (request.length > 4000) return res.status(400).json({ error: "That's a lot! Keep it under 4,000 characters." });
 
-  // ── Charge: Mega Knox uses the hidden daily safety limit, free spends
+  // ── Charge: Knox Plus uses the hidden daily safety limit, free spends
   // credits. One transaction, so parallel requests can't overspend.
   const userRef = db.collection("users").doc(uid);
   const capRef  = userRef.collection("usage").doc("flashcardsAI");
@@ -242,7 +242,7 @@ export default async function handler(req, res) {
   }
   if (charge.status === 429) return res.status(429).json({ error: `You've made ${DAILY_DECK_LIMIT} decks with Knox today — that's the daily limit. Try again tomorrow!` });
   if (charge.status === 402) return res.status(402).json({
-    error: `Making a deck costs ${DECK_CREDIT_COST} credits — you have ${charge.remaining} left. You get 5 more every day, or go unlimited with Mega Knox.`,
+    error: `Making a deck costs ${DECK_CREDIT_COST} credits — you have ${charge.remaining} left. You get 5 more every day, or go unlimited with Knox Plus.`,
     upgrade: true, remaining: charge.remaining,
   });
   if (charge.kind === "free") count = Math.min(count, FREE_MAX_CARDS);

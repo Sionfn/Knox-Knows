@@ -39,7 +39,7 @@
       { id: 'w2', name: 'Kindling', start: '2026-11-08', end: '2026-11-14', need: 4, label: '🛡️ Flame Shield' },
       { id: 'w3', name: 'Blaze', start: '2026-11-15', end: '2026-11-21', need: 4, label: '+10 bonus questions + 💙 Blue Flame' },
       { id: 'w4', name: 'Bonfire', start: '2026-11-22', end: '2026-11-28', need: 3, label: '🛡️ Flame Shield' },
-      { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Mega Knox + 👑 Golden Flame' },
+      { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Knox Plus + 👑 Golden Flame' },
     ].map(r => ({ ...r, flames: days.filter(d => d >= r.start && d <= r.end).length }));
     return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic'], plusUntil: 0, giftCode: '', demo: true };
   }
@@ -101,11 +101,11 @@
     for (const d of ['S', 'M', 'T', 'W', 'T', 'F', 'S']) grid += `<div class="ff-dow" aria-hidden="true">${d}</div>`;
     for (let n = 1; n <= 30; n++) grid += dayCell(n); // Nov 1, 2026 is a Sunday
     const giftUrl = state.giftCode ? `${location.origin}/redeem?code=${state.giftCode}` : '';
-    const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Mega Knox week to give</b><span>Send this link to a friend who doesn’t have Mega Knox — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
-    const plus = state.plusUntil > Date.now() ? `<div class="ff-note">⚡ Your free Mega Knox week runs until ${new Date(state.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
+    const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Knox Plus week to give</b><span>Send this link to a friend who doesn’t have Knox Plus — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
+    const plus = state.plusUntil > Date.now() ? `<div class="ff-note">⚡ Your free Knox Plus week runs until ${new Date(state.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
     const styles = state.flameStyles.length > 1 ? `<div class="ff-styles"><span>Your flame:</span>${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
     return `<div class="ff-head">
-        <span class="ff-badge">🔥 November event${state.plus ? ' · ⚡ Mega Knox rewards' : ''}${state.demo ? ' · demo' : ''}</span>
+        <span class="ff-badge">🔥 November event${state.plus ? ' · ⚡ Knox Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
         <p>${sub}</p>
         <div class="ff-stats"><div><b>${lit}</b><span>flames lit</span></div><div><b>${state.shields}</b><span>🛡️ shield${state.shields === 1 ? '' : 's'}</span></div><div><b>${Math.max(0, 20 - lit)}</b><span>to grand prize</span></div></div>
@@ -134,7 +134,7 @@
       : 'Tester mode only works on the Knox admin account — the one that can open the admin page. Sign in with that account and try again.'}</span></div>`;
   }
   async function runTest(kind, btn) {
-    if (kind === 'reset' && !confirm('Reset your Flame Fest? Flames, claims, shields, flame colours and the Flame Fest Mega Knox week are cleared.')) return;
+    if (kind === 'reset' && !confirm('Reset your Flame Fest? Flames, claims, shields, flame colours and the Flame Fest Knox Plus week are cleared.')) return;
     btn.disabled = true;
     try {
       state = await api('POST', { test: kind, localDay: localDay() });
@@ -278,7 +278,7 @@
     const startsToday = today() === START;
     popup(`<div class="ff-pop-flame" aria-hidden="true">🔥</div><h2 id="ffPopTitle">Flame Fest ${startsToday ? 'starts today!' : 'is on!'}</h2>
       <p>All November, every day you study with Knox lights a flame on your calendar.</p>
-      <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userPlan && ['super', 'max', 'plus'].includes(window.userPlan) ? ' — a Mega Knox week to gift a friend' : ' — a free week of Mega Knox'}</li></ul>`,
+      <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userPlan && ['super', 'max', 'plus'].includes(window.userPlan) ? ' — a Knox Plus week to gift a friend' : ' — a free week of Knox Plus'}</li></ul>`,
       [{ label: window.currentUser ? 'Open my calendar' : 'Sign in to join', run: () => window.currentUser ? open() : window.openAuthModal?.() }, { label: 'Later' }]);
   }
   let started = false;
