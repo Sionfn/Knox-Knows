@@ -3745,6 +3745,21 @@
     await loadMoreSidebarHistory();
   }
   window.loadSidebarHistory = loadSidebarHistory;
+
+  // ── Flashcard decks in the student's account (flashcards.js syncs them) ──
+  // users/{uid}/flashcardDecks/{deckId}: { data: deck JSON, title, updatedAt }
+  // or a deletion marker { deleted: true, updatedAt } so other devices drop it.
+  window.knoxDeckStore = {
+    async list(uid) {
+      if (window.currentUser?.uid !== uid) throw new Error('Account changed.');
+      const snaps = await getDocs(collection(db, 'users', uid, 'flashcardDecks'));
+      return snaps.docs.map(s => ({ id: s.id, ...s.data() }));
+    },
+    async put(uid, id, value) {
+      if (window.currentUser?.uid !== uid) throw new Error('Account changed.');
+      await setDoc(doc(db, 'users', uid, 'flashcardDecks', id), value);
+    },
+  };
   window.toggleHistoryExpanded = function() {
     const on = document.body.classList.toggle('knox-history-expanded');
     const btn = document.getElementById('sidebarHistoryToggle');

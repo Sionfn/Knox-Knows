@@ -61,6 +61,19 @@ service cloud.firestore {
                               && request.resource.data.answer.size() < 5000;
       }
 
+      // Flashcard decks, synced from the browser (flashcards.js): the deck as
+      // JSON text, or a deletion marker so other devices drop it too.
+      match /flashcardDecks/{deckId} {
+        allow read: if owner(userId);
+        allow create, update: if owner(userId)
+                              && request.resource.data.keys().hasOnly(['data', 'title', 'updatedAt', 'deleted'])
+                              && request.resource.data.updatedAt is int
+                              && (request.resource.data.get('deleted', false) == true
+                                  || (request.resource.data.data is string && request.resource.data.data.size() < 1000000
+                                      && request.resource.data.title is string && request.resource.data.title.size() <= 100));
+        allow delete: if false;
+      }
+
       match /learnSessions/{sessionId} {
         allow read: if owner(userId);
         allow write: if false;

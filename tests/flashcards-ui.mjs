@@ -57,3 +57,37 @@ test('analytics respects stored consent and privacy signals',()=>{
     vm.runInNewContext(script,ctx);assert.equal(appended,expected);
   }
 });
+
+test('decks sync with the account: newer copy wins, deletions travel, local pictures stay', async () => {
+  const storage = new Map(), remote = new Map();
+  const window = { currentUser: { uid: 'a' }, userPlan: 'free', addEventListener() {},
+    knoxDeckStore: { list: async () => [...remote].map(([id, v]) => ({ id, ...v })), put: async (uid, id, v) => { remote.set(id, structuredClone(v)); } } };
+  const el = () => ({ hidden: true, className: '', innerHTML: '', classList: { add() {}, remove() {}, toggle() {} }, setAttribute() {}, append() {}, addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] });
+  const ctx = vm.createContext({ window, document: { createElement: el, querySelector: el, querySelectorAll: () => [], addEventListener() {}, body: { classList: { add() {}, remove() {}, contains: () => false } } },
+    localStorage: { getItem: k => storage.get(k) ?? null, setItem: (k, v) => storage.set(k, v) }, validateDeck, schedule, studyQueue, parseTable, rowsToCards, parseList, parsePasted, toCsv, toTabText, cleanImage,
+    setTimeout: () => 0, clearTimeout() {}, crypto: { randomUUID: () => 'x' }, structuredClone, console, Blob, URL, Date });
+  vm.runInContext(source + '\nwindow.t={load,save,pullDecks,pushDecks,decks:()=>decks};', ctx);
+  const t = window.t; t.load();
+  const deck = (id, title, extra = {}) => ({ id, title, cards: [{ front: 'Q', back: 'A', due: 0, interval: 0, reviews: 0, ...extra }] });
+
+  // A deck made on this device goes up to the account.
+  t.save([deck('d1', 'Biology', { image: 'data:image/jpeg;base64,AAAA' })]);
+  await t.pushDecks();
+  assert.equal(JSON.parse(remote.get('d1').data).title, 'Biology');
+
+  // Another device edits it later: pulling brings the newer copy (and keeps this device's picture if the account copy left it out).
+  const newer = deck('d1', 'Biology (edited)', { localImage: true });
+  remote.set('d1', { data: JSON.stringify({ ...newer, updatedAt: Date.now() + 5000 }), title: 'Biology (edited)', updatedAt: Date.now() + 5000 });
+  remote.set('d2', { data: JSON.stringify({ ...deck('d2', 'History'), updatedAt: 5 }), title: 'History', updatedAt: 5 });
+  assert.equal(await t.pullDecks(), true);
+  assert.deepEqual(t.decks().map(d => d.title).sort(), ['Biology (edited)', 'History']);
+  assert.equal(t.decks().find(d => d.id === 'd1').cards[0].image, 'data:image/jpeg;base64,AAAA');
+
+  // Deleting here leaves a marker in the account; a marker from elsewhere removes the deck here.
+  t.save(t.decks().filter(d => d.id !== 'd2'));
+  await t.pushDecks();
+  assert.equal(remote.get('d2').deleted, true);
+  remote.set('d1', { deleted: true, updatedAt: Date.now() + 60000 });
+  await t.pullDecks();
+  assert.equal(t.decks().length, 0);
+});

@@ -323,3 +323,4 @@ html[data-theme="dark"] .fc-dropzone { background:transparent; color:var(--blue)
 .fc-empty-start img { width:56px; height:56px; margin:0; flex-shrink:0; }
 .fc-empty-start h2 { font-size:17px; }
 .fc-empty-start .fc-sub { font-size:14px; margin:0; max-width:none; }
+.fc-sync-note { text-align:center; font-size:12.5px; font-weight:700; color:var(--text-light); margin:6px 0 0; }

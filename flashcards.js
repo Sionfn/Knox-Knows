@@ -28,7 +28,77 @@ const flavorOf=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))
 let pendingMessage='';
 
 function load(){ identity=key(); session=null; editing=null; dirty=false; try{const raw=JSON.parse(localStorage.getItem(identity)||'[]'); if(!Array.isArray(raw))throw Error(); decks=raw.filter(d=>{try{validateDeck(d);return typeof d.id==='string';}catch{return false;}});}catch{decks=[];pendingMessage='Saved decks could not be read. Import a backup to recover them.';} }
-function save(next){try{localStorage.setItem(identity,JSON.stringify(next));decks=next;return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
+function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
+
+// ── Decks in the student's account (window.knoxDeckStore in app.html) ──
+// This browser keeps the decks (fast, works offline). Every change is
+// stamped and sent to the account a moment later, and opening Flashcards
+// pulls the account's decks: the newer copy of each deck wins, so decks
+// follow the student to any device. A deleted deck leaves a marker so
+// other devices drop it too. Guests' decks stay on this device.
+const SYNC_LIMIT=900000; // one deck record stays under Firestore's 1 MB
+const IS_DATA_IMAGE=/^data:/;
+const delKey=()=>identity+'.deleted';
+const syncUid=()=>window.currentUser?.uid||'';
+let syncTimer=0, syncWarned=false;
+const dirtyIds=new Set();
+function deletedMap(){try{return JSON.parse(localStorage.getItem(delKey())||'{}')||{};}catch{return {};}}
+function setDeleted(m){try{localStorage.setItem(delKey(),JSON.stringify(m));}catch{}}
+// Called by save(): stamp the decks that changed, remember the ones deleted.
+function stamp(prev,next){
+  const before=new Map(prev.map(d=>[d.id,JSON.stringify(d)])), now=Date.now();
+  for(const d of next){if(before.get(d.id)!==JSON.stringify(d)){d.updatedAt=now;dirtyIds.add(d.id);}before.delete(d.id);}
+  if(before.size){const m=deletedMap();for(const id of before.keys()){m[id]=now;dirtyIds.add(id);}setDeleted(m);}
+}
+function schedulePush(){if(!syncUid()||!window.knoxDeckStore)return;clearTimeout(syncTimer);syncTimer=setTimeout(pushDecks,2000);}
+// A deck too big for one record goes without the pictures uploaded from this
+// device (each device keeps its own); if it's still too big it stays local.
+function packDeck(d){
+  let data=JSON.stringify(d);
+  if(data.length>SYNC_LIMIT)data=JSON.stringify({...d,cards:d.cards.map(c=>{if(!IS_DATA_IMAGE.test(c.image||''))return c;const{image,imageCredit,...rest}=c;return{...rest,localImage:true};})});
+  if(data.length>SYNC_LIMIT){if(!syncWarned){syncWarned=true;message(`“${d.title}” is too big to save to your account, so it stays on this device. Export it to keep a backup.`);}return null;}
+  return{data,title:d.title.slice(0,100),updatedAt:d.updatedAt||Date.now()};
+}
+async function pushDecks(){
+  const uid=syncUid();
+  if(!uid||!window.knoxDeckStore||identity!==key()||!dirtyIds.size)return;
+  const ids=[...dirtyIds];dirtyIds.clear();
+  const del=deletedMap();
+  for(const id of ids){
+    try{
+      const d=decks.find(x=>x.id===id);
+      if(d){const value=packDeck(d);if(value)await window.knoxDeckStore.put(uid,id,value);}
+      else if(del[id])await window.knoxDeckStore.put(uid,id,{deleted:true,updatedAt:del[id]});
+    }catch{dirtyIds.add(id);} // offline or signed out: try again on the next change or visit
+  }
+}
+// → true when this device's decks changed.
+async function pullDecks(){
+  const uid=syncUid(), mine=identity;
+  if(!uid||!window.knoxDeckStore)return false;
+  let remote;try{remote=await window.knoxDeckStore.list(uid);}catch{return false;}
+  if(mine!==identity||uid!==syncUid())return false;
+  const del=deletedMap(), next=decks.slice(), seen=new Set();
+  let changed=false;
+  for(const r of remote){
+    seen.add(r.id);
+    const i=next.findIndex(d=>d.id===r.id), local=next[i], localTime=local?.updatedAt||0;
+    if(r.deleted){if(local&&localTime<=r.updatedAt){next.splice(i,1);changed=true;}continue;}
+    if((del[r.id]||0)>=r.updatedAt)continue; // deleted on this device after that save
+    if(local&&localTime>=r.updatedAt){if(localTime>r.updatedAt)dirtyIds.add(r.id);continue;}
+    let deck;try{deck=JSON.parse(r.data);validateDeck(deck);if(deck.id!==r.id)throw Error();}catch{continue;}
+    // Pictures uploaded on this device that the account copy left out: keep them.
+    deck.cards=deck.cards.map(c=>{if(!c.localImage)return c;const{localImage,...rest}=c;const m=local?.cards.find(x=>x.front===c.front&&IS_DATA_IMAGE.test(x.image||''));return m?{...rest,image:m.image,...(m.imageCredit?{imageCredit:m.imageCredit}:{})}:rest;});
+    if(i>=0)next[i]=deck;else next.push(deck);
+    changed=true;
+  }
+  // Decks only on this device (made before syncing, or offline): send them up.
+  for(const d of next)if(!seen.has(d.id)){if(!d.updatedAt)d.updatedAt=Date.now();dirtyIds.add(d.id);}
+  if(changed){try{localStorage.setItem(identity,JSON.stringify(next));decks=next;}catch{changed=false;}}
+  schedulePush();
+  return changed;
+}
+
 // Messages show as a toast pinned to the top of the panel.
 // Success messages fade after a few seconds, errors stay a little longer;
 // clicking the message dismisses it right away.
@@ -152,6 +222,7 @@ function home(query=''){
       ${way('import','green','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
     <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
+    <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
     <p class="fc-note">Your decks are saved in this browser${window.currentUser?' for your account':''}. Use Export to back them up or move them to another device.</p>`,true);
@@ -467,7 +538,9 @@ function exportView(target){
 function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 function exportData(data){const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();}
+async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
+ // Bring in decks from the account; redraw the deck list if still on it.
+ pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 // From a finished Learn lesson: open Make with Knox with the lesson filled in.
 window.flashcardsMake=async request=>{if(!canSee())return false;await open();if(panel.hidden)return false;makeOpts.request=String(request||'').slice(0,4000);makeView();return true;};
