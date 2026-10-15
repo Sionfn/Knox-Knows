@@ -12,7 +12,8 @@ export const noPings = { parse: [] };
 const quote = text => '> ' + text.slice(0, 300).replace(/\n/g, '\n> ') + (text.length > 300 ? '…' : '');
 
 const replyButton = lessonId => new ActionRowBuilder().addComponents(
-  new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Reply to Knox').setEmoji('💬').setStyle(ButtonStyle.Primary));
+  new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Reply to Knox').setEmoji('💬').setStyle(ButtonStyle.Primary),
+  new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('End lesson').setEmoji('🏁').setStyle(ButtonStyle.Secondary));
 
 // Without a website connection (e.g. in tests), Plus comes from the role alone.
 const roleOnly = { isPlus: async () => null, syncRole: async () => 'kept', granted: new Set() };
@@ -190,7 +191,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         '**How to use Knox here** 🦊',
         `• \`/ask\` in <#${config.studyChannelId}>: ask about any schoolwork. Knox guides you with hints so you learn it, instead of just giving answers.`,
         '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` (with or without a question).',
-        '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free.',
+        '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free. **🏁 End lesson** when you\'re done.',
         `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC). Knox Plus members get unlimited.`,
         '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
         '',
@@ -200,7 +201,21 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     });
   }
 
-  return { ask, replyButtonClicked, replySubmitted, link, checkPlus, help };
+  // ── End lesson button: close the lesson and remove its buttons ──
+  async function endLesson(interaction) {
+    const lessonId = interaction.customId.slice('end:'.length);
+    const lesson = lessons.get(lessonId);
+    if (!lesson) return privately(interaction, 'This lesson has already ended. Use /ask to start a new one.');
+    if (lesson.ownerId !== interaction.user.id) return privately(interaction, 'Only the student who asked can end this lesson.');
+    if (lessons.busy.has(lessonId)) return privately(interaction, 'Knox is still answering your last reply. One sec!');
+    lessons.end(lessonId);
+    await interaction.update({
+      content: `${interaction.message.content}\n-# 🏁 Lesson ended. Nice work! Use /ask to start a new one.`,
+      components: [], allowedMentions: noPings,
+    });
+  }
+
+  return { ask, replyButtonClicked, replySubmitted, endLesson, link, checkPlus, help };
 }
 
 // Why a student can't reply to this lesson, or null if they can.

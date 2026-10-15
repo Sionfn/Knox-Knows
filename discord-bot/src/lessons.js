@@ -33,6 +33,11 @@ export class Lessons {
     return lesson;
   }
 
+  end(id) {
+    delete this.lessons[id];
+    saveJson(this.file, this.lessons);
+  }
+
   addReply(id, reply, answer) {
     const lesson = this.lessons[id];
     lesson.replies++;
