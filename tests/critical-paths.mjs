@@ -1147,3 +1147,40 @@ test('Discord bot access is off when no strong key is configured', async () => {
     assert.equal(res.code, 401);
   }
 });
+
+test('Discord link: a signed code links the account, and the bot sees Plus', async () => {
+  const { db, store } = memoryDb();
+  const botKey = 'k'.repeat(40);
+  const sign = (id, expires) => `${id}.${expires}.` + crypto.createHmac('sha256', botKey).update(`discord-link:${id}:${expires}`).digest('base64url');
+  const later = Math.floor(Date.now() / 1000) + 600;
+  const discordId = '123456789012345678';
+  store.set('users/u1', { plan: 'super' });
+
+  const handler = await load('api/discord-link.js', { db, env: { KNOX_BOT_KEY: botKey } });
+  const call = async (headers, body) => { const res = response(); await handler({ method: 'POST', headers, body }, res); return res; };
+  const asStudent = body => call({ authorization: 'Bearer test' }, body);
+  const asBot = ids => call({ 'x-knox-bot-key': botKey }, { action: 'status', discordIds: ids });
+
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: false, plus: false });
+  assert.equal((await asStudent({ code: sign(discordId, Math.floor(Date.now() / 1000) - 1) })).code, 400); // expired
+  assert.equal((await asStudent({ code: sign(discordId, later).slice(0, -2) + 'xx' })).code, 400);       // forged
+  assert.equal((await call({}, { code: sign(discordId, later) })).code, 401);                              // not signed in
+
+  const linked = await asStudent({ code: sign(discordId, later) });
+  assert.equal(linked.code, 200);
+  assert.equal(linked.body.plus, true);
+  assert.equal(store.get('users/u1').discordId, discordId);
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true });
+
+  // Cancelling Plus shows up right away.
+  store.set('users/u1', { ...store.get('users/u1'), plan: 'free' });
+  assert.equal((await asBot([discordId])).body.results[discordId].plus, false);
+
+  // Linking a different Discord moves the link; the old one is no longer linked.
+  const otherId = '223456789012345678';
+  await asStudent({ code: sign(otherId, later) });
+  assert.equal((await asBot([discordId])).body.results[discordId].linked, false);
+  assert.equal((await asBot([otherId])).body.results[otherId].linked, true);
+
+  assert.equal((await call({ 'x-knox-bot-key': 'wrong' }, { action: 'status', discordIds: [discordId] })).code, 401);
+});

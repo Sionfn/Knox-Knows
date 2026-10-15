@@ -6445,6 +6445,74 @@ if (savedQuestion) {
   history.replaceState(history.state, '', url.pathname + url.search + url.hash);
 }
 
+// Discord /link: /app?discord=<code> connects this Knox account to the
+// student's Discord, so the Knox Knows bot can see their Plus. The code is
+// kept for this tab until they've signed in, then sent once.
+(function linkDiscordAccount() {
+  const fromUrl = new URLSearchParams(location.search).get('discord');
+  if (fromUrl) {
+    try { sessionStorage.setItem('knoxDiscordLink', fromUrl); } catch (e) {}
+    const url = new URL(location.href);
+    url.searchParams.delete('discord');
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  }
+  let code = fromUrl;
+  try { code = sessionStorage.getItem('knoxDiscordLink') || fromUrl; } catch (e) {}
+  if (!code) return;
+
+  let busy = false, askedToSignIn = false;
+  async function finish() {
+    // Wait for sign-in and the loading screen to finish first.
+    if (!code || busy || document.body.classList.contains('app-auth-pending')) return;
+    const user = window.currentUser;
+    if (!user) {
+      if (!askedToSignIn) { askedToSignIn = true; window.openAuthModal?.(); }
+      return;
+    }
+    busy = true;
+    let title, message;
+    try {
+      const res = await fetch('/api/discord-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + await user.getIdToken() },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        title = 'Discord connected!';
+        message = data.plus
+          ? 'Your Knox Plus now works in the Knox Knows Discord too. Head back to Discord and click \u201cCheck my Plus\u201d to get your role.'
+          : 'Your Discord is linked to this account. Get Knox Plus and the bot will give you unlimited questions in Discord automatically.';
+      } else {
+        title = 'Couldn\u2019t connect Discord';
+        message = data.error || 'Please run /link in Discord and try again.';
+      }
+      if (res.ok || res.status === 400) { try { sessionStorage.removeItem('knoxDiscordLink'); } catch (e) {} code = null; }
+    } catch (e) {
+      title = 'Couldn\u2019t connect Discord';
+      message = 'Please check your connection and try again.';
+    } finally {
+      busy = false;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.innerHTML =
+      '<div class="auth-card">' +
+        '<div class="auth-header"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"><h2></h2></div>' +
+        '<div class="auth-body"><p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;margin-bottom:18px;"></p>' +
+        '<button class="auth-submit">Got it</button></div>' +
+      '</div>';
+    modal.querySelector('h2').textContent = title;
+    modal.querySelector('p').textContent = message;
+    modal.querySelector('button').onclick = () => modal.remove();
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+  window.addEventListener('knox-auth-changed', () => setTimeout(finish, 0));
+  new MutationObserver(finish).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  finish();
+})();
+
 // In the native app the logo stays in the app instead of opening the
 // marketing page (it has pricing and checkout).
 if (window.knoxNativeApp) {

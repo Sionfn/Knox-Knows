@@ -5,6 +5,8 @@ One slash command, `/ask`, for the Knox Knows Discord server.
 - `/ask question:<text>` sends the question to Knox (the same AI the website uses, in **Learn mode**). Knox guides the student with hints and questions instead of handing over answers, and won't help with a test or exam that's happening right now.
 - Works only in **#study-help** (and threads inside it). Anywhere else, the student gets a private message pointing them there.
 - **Reply button:** every answer has a 💬 Reply to Knox button. The student types their answer in a pop-up and Knox continues the same lesson, remembering what it asked. Replies are free (they don't use a daily question). Only the student who asked can reply, and a lesson allows 10 replies within 2 hours.
+- **`/link`:** connects a student's Discord to their Knox Knows account (they sign in on the website through a one-time link). Knox Plus subscribers then get unlimited questions here and the **Knox Plus** role automatically; when their subscription ends, the bot takes the role back. It only removes roles it gave, so roles given by hand stay.
+- **`/help`:** explains how to use Knox in the server.
 - **5 questions per person per day** (resets at midnight UTC). Every answer shows how many are left. Members with the **Knox Plus** role have no limit.
 - **Cost guard:** `DAILY_GLOBAL_CAP` limits how many questions the whole server can ask per day, Plus members and lesson replies included. Once it's reached, `/ask` politely says to try again tomorrow.
 - If Knox fails or times out, the student gets a polite message and the question doesn't count.
@@ -16,6 +18,7 @@ One slash command, `/ask`, for the Knox Knows Discord server.
 | --- | --- |
 | `src/index.js` | Starts the bot and routes `/ask` |
 | `src/ask.js` | `/ask` and the Reply button: channel check, limits, posting answers |
+| `src/plus.js` | `/link` links, Knox Plus checks and the Knox Plus role |
 | `src/lessons.js` | Remembers each lesson so replies continue it |
 | `src/store.js` | Saves state to small JSON files |
 | `src/knox.js` | Calls the Knox API |
@@ -50,9 +53,13 @@ You should see `Knox bot online as …` and `/ask registered …`. The bot regis
 | `DAILY_GLOBAL_CAP` | Default 200. Your worst-case daily AI bill is this × your cost per question |
 | `DATA_FILE` | Where daily counts are saved. On Railway, point it at the volume (below) |
 
+### Let the bot give the Knox Plus role
+
+Server Settings → Roles: drag the bot's own role (**Knox Knows**) **above** Knox Plus, and make sure it has **Manage Roles**. Discord only lets a bot hand out roles below its own.
+
 ### Add the bot to your server
 
-Developer Portal → your application → OAuth2 → URL Generator: tick **bot** and **applications.commands**, then under Bot Permissions tick **Send Messages**. Open the generated link and pick the Knox Knows server.
+Developer Portal → your application → OAuth2 → URL Generator: tick **bot** and **applications.commands**, then under Bot Permissions tick **Send Messages** and **Manage Roles**. Open the generated link and pick the Knox Knows server.
 
 ## Connecting to Knox
 
