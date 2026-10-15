@@ -435,3 +435,37 @@ test('Replies in a photo lesson send the photo to Knox again, without reposting 
   assert.equal(calls[2].image, undefined);
   assert.match(later.sent.at(-1).content, /Keep going/);
 });
+
+test('End lesson: only the asker can end it; it removes the buttons and closes the lesson', async () => {
+  const bot = setup(async () => 'Hint.');
+  const asked = fake();
+  await bot.ask(asked);
+  const posted = asked.sent.at(-1);
+  const ids = posted.components[0].toJSON().components.map(c => c.custom_id);
+  const lessonId = ids[0].slice('reply:'.length);
+  assert.deepEqual(ids, [`reply:${lessonId}`, `end:${lessonId}`]);
+
+  const clickEnd = userId => {
+    const i = { ...fake({ userId, customId: `end:${lessonId}` }), message: { content: posted.content } };
+    i.update = async m => i.sent.push({ type: 'update', ...m });
+    return i;
+  };
+  const stranger = clickEnd('ben');
+  await bot.endLesson(stranger);
+  assert.match(stranger.sent[0].content, /Only the student who asked/);
+  assert.ok(bot.lessons.get(lessonId));
+
+  const owner = clickEnd('amy');
+  await bot.endLesson(owner);
+  assert.equal(owner.sent[0].type, 'update');
+  assert.deepEqual(owner.sent[0].components, []);
+  assert.match(owner.sent[0].content, /Hint\.[\s\S]*🏁 Lesson ended/);
+  assert.equal(bot.lessons.get(lessonId), null);
+
+  const replyAfter = fake({ customId: `reply:${lessonId}` });
+  await bot.replyButtonClicked(replyAfter);
+  assert.match(replyAfter.sent[0].content, /lesson has ended/);
+  const again = clickEnd('amy');
+  await bot.endLesson(again);
+  assert.match(again.sent[0].content, /already ended/);
+});
