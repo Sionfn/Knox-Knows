@@ -402,3 +402,36 @@ test('downloadPhoto fetches the attachment and rejects failures', async () => {
     server.close();
   }
 });
+
+test('Replies in a photo lesson send the photo to Knox again, without reposting it', async () => {
+  const calls = [];
+  const dataFile = tempFile();
+  const lessons = new Lessons({ dataFile });
+  let downloads = 0;
+  const handlers = createHandlers({
+    config, limits: new Limits({ perUserLimit: 2, globalCap: 10, dataFile }), lessons,
+    askKnox: async args => { calls.push(args); return 'Next: 1 + 4?'; },
+    downloadPhoto: async () => { downloads++; return Buffer.from('png-bytes'); },
+  });
+  const asked = fake({ question: null, photo: { url: 'https://cdn.discordapp.com/hw.png', name: 'hw.png', contentType: 'image/png', size: 1000 } });
+  await handlers.ask(asked);
+  const submit = fake({ customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: '8' });
+  await handlers.replySubmitted(submit);
+  assert.equal(calls[1].question, '8');
+  assert.equal(calls[1].image, Buffer.from('png-bytes').toString('base64'));
+  assert.equal(calls[1].imageType, 'image/png');
+  assert.equal(downloads, 2);
+  assert.equal(submit.sent.at(-1).files, undefined);
+
+  // If the photo's link has expired, the lesson carries on as text.
+  const lessonId = buttonId(asked.sent.at(-1)).slice('reply:'.length);
+  const expired = createHandlers({
+    config, limits: new Limits({ perUserLimit: 2, globalCap: 10, dataFile }), lessons,
+    askKnox: async args => { calls.push(args); return 'Keep going!'; },
+    downloadPhoto: async () => { throw new Error('expired'); },
+  });
+  const later = fake({ customId: `answer:${lessonId}`, reply: '5' });
+  await expired.replySubmitted(later);
+  assert.equal(calls[2].image, undefined);
+  assert.match(later.sent.at(-1).content, /Keep going/);
+});

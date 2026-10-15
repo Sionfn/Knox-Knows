@@ -14,11 +14,12 @@ export class Lessons {
     this.prune();
   }
 
-  start(ownerId, question, answer) {
+  // photo: { url, contentType } for a photo question, so replies can show it to Knox again.
+  start(ownerId, question, answer, photo = null) {
     this.prune();
     const id = randomUUID();
     this.lessons[id] = {
-      ownerId, startedAt: Date.now(), replies: 0,
+      ownerId, startedAt: Date.now(), replies: 0, photo,
       history: [{ role: 'user', content: question }, { role: 'assistant', content: answer }],
     };
     saveJson(this.file, this.lessons);

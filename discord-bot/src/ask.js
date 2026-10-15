@@ -34,10 +34,15 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
 
   // Ask Knox and post the answer (split if long), with a Reply button on the last part.
   // Returns the answer, or null after telling the student what went wrong.
-  async function answer(interaction, { question, history, photo, header, footer, lessonIdFor, onFail }) {
+  // photo: the student's photo to send to Knox. showPhoto posts it with the
+  // answer (on the first answer, not on every reply).
+  async function answer(interaction, { question, history, photo, showPhoto = true, header, footer, lessonIdFor, onFail }) {
     let text, photoBytes;
     try {
-      if (photo) photoBytes = await downloadPhoto(photo.url);
+      if (photo) {
+        // On a reply, carry on without the photo if its link has expired.
+        photoBytes = showPhoto ? await downloadPhoto(photo.url) : await downloadPhoto(photo.url).catch(() => undefined);
+      }
       text = await askKnox({ apiUrl: config.knoxApiUrl, botKey: config.knoxBotKey, question, history, image: photoBytes?.toString('base64'), imageType: photo?.contentType, discordUserId: interaction.user.id });
     } catch (err) {
       onFail();
@@ -50,7 +55,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     const parts = splitMessage(`${header}\n\n${text}\n\n${footer(lessonId)}`);
     const button = lessonId ? { components: [replyButton(lessonId)] } : {};
     // Show the student's photo with the answer (Discord's own link to it expires).
-    const files = photoBytes ? { files: [{ attachment: photoBytes, name: photo.name || 'homework.png' }] } : {};
+    const files = photoBytes && showPhoto ? { files: [{ attachment: photoBytes, name: photo.name || 'homework.png' }] } : {};
     await interaction.editReply({ content: parts[0], allowedMentions: noPings, ...files, ...(parts.length === 1 ? button : {}) });
     for (let i = 1; i < parts.length; i++) {
       await interaction.followUp({ content: parts[i], allowedMentions: noPings, ...(i === parts.length - 1 ? button : {}) });
@@ -89,8 +94,10 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       question, history: [], photo: photo && { url: photo.url, name: photo.name, contentType: photoType },
       header: question ? quote(question) : '> 📷 Photo question',
       footer: () => `-# ${left}`,
-      // Like the website, later replies carry the photo as text, not the image.
-      lessonIdFor: text => lessons.start(userId, photo ? [question, '📷 Photo'].filter(Boolean).join('\n') : question, text),
+      // The lesson keeps the photo's link so every reply can show it to Knox again
+      // (a worksheet has many problems; Knox needs to keep reading it).
+      lessonIdFor: text => lessons.start(userId, photo ? [question, '📷 Photo'].filter(Boolean).join('\n') : question, text,
+        photo && { url: photo.url, contentType: photoType }),
       onFail: () => limits.refund(userId),
     });
   }
@@ -129,7 +136,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       // Replies never use a daily question; Plus members just see their plan.
       const label = await isPlusMember(interaction) ? 'Knox Plus' : "Lesson reply · doesn't use a question";
       await answer(interaction, {
-        question: reply, history: [...lesson.history],
+        question: reply, history: [...lesson.history], photo: lesson.photo, showPhoto: false,
         header: `<@${interaction.user.id}>\n${quote(reply)}`,
         footer: () => repliesLeft > 0
           ? `-# ${label} · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`

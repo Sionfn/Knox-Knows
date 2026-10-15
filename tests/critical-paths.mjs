@@ -1137,6 +1137,17 @@ test('Discord bot: a valid key gets a Learn-mode answer without a Knox account',
   assert.match(photoMessages[0].content, /Learn mode/);
   assert.equal(photoMessages.at(-1).content[0].image_url.url, 'data:image/png;base64,aGVsbG8=');
 
+  // A reply in a photo lesson: the lesson so far plus the photo again.
+  const photoReply = response();
+  await photoHandler({ method: 'POST', headers: { 'x-knox-bot-key': botKey, 'x-forwarded-for': '192.0.2.9' }, body: {
+    question: '8', image: 'aGVsbG8=', imageType: 'image/png',
+    history: [{ role: 'user', content: '📷 Photo' }, { role: 'assistant', content: 'What is 3 + 5?' }],
+  } }, photoReply);
+  assert.equal(photoReply.code, 200);
+  assert.deepEqual(photoMessages.slice(1, 3).map(m => m.content), ['📷 Photo', 'What is 3 + 5?']);
+  assert.equal(photoMessages.at(-1).content[1].text, '8');
+  assert.equal(photoMessages.at(-1).content[0].image_url.url, 'data:image/png;base64,aGVsbG8=');
+
   // A lesson reply carries the conversation so far, and Knox sees it.
   let sentMessages;
   const replyHandler = await load('api/ask.js', { db, env: { KNOX_BOT_KEY: botKey }, token: null, fetch: async (url, options) => {
