@@ -32,3 +32,10 @@
 .kg-input { background: var(--surface); border-radius: 14px; min-height: 44px; box-shadow: 0 3px 0 var(--border); }
 .kg-form .ff-claim { min-height: 44px; }
 .kg-bought-row { background: var(--surface); box-shadow: 0 2px 0 var(--border); }
+/* Plan picker (Knox Plus / Mega Knox) */
+.kg-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.kg-plan { min-height: 42px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 var(--border); transition: transform .12s, box-shadow .12s; }
+.kg-plan:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--border); }
+.kg-plan.on { border-color: var(--orange); background: var(--orange-cream); color: var(--orange); box-shadow: 0 3px 0 var(--orange-dark); }
+.kg-plan.mega.on { border-color: #F2B705; background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; box-shadow: 0 3px 0 #C99404; }
+.kg-blurb { margin: 8px auto 0 !important; font-size: 13px !important; min-height: 2.6em; }

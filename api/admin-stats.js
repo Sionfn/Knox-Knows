@@ -21,6 +21,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { GIFTS } from "./_gifts.js";
+import { megaPrices } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -125,7 +126,8 @@ async function getUserStats() {
   const todayStart = startOfDay();
   const weekStart  = startOfDay(7);
 
-  let total = 0, free = 0, superCount = 0, max = 0, comped = 0, trial = 0;
+  // super = Knox Plus, max = Mega Knox (paying); comps split by plan.
+  let total = 0, free = 0, superCount = 0, max = 0, comped = 0, compedMega = 0, ambassadors = 0, trial = 0;
   let newToday = 0, newThisWeek = 0;
   let activeToday = 0, activeThisWeek = 0;
   const dailySignups = {}; // YYYY-MM-DD -> count
@@ -137,7 +139,7 @@ async function getUserStats() {
     const plan = u.plan || "free";
     // Comped Knox Plus users without their own live subscription aren't paying.
     const compedOnly = u.comped === true && !(u.stripeSubscription && ["active", "trialing", "past_due"].includes(u.planStatus));
-    if      (compedOnly)       comped++;
+    if      (compedOnly)       { if (u.compedTier === "mega") compedMega++; else comped++; if (u.ambassador === true) ambassadors++; }
     // On a free trial: they have Knox Plus but haven't paid anything yet.
     else if (u.planStatus === "trialing" && u.stripeSubscription) trial++;
     else if (plan === "max")   max++;
@@ -181,7 +183,7 @@ async function getUserStats() {
 
   return {
     total,
-    byPlan: { free, super: superCount, max, comped, trial },
+    byPlan: { free, super: superCount, max, comped, compedMega, ambassadors, trial },
     paying,
     conversionPct:  +conversion.toFixed(1),
     newToday,
@@ -355,6 +357,10 @@ async function getRevenueStats() {
     "price_1UBcoACqlxC7aoKRR3DFKNhJ": "super_monthly",
     "price_1UBcpYCqlxC7aoKR7FUFZ0e2": "super_yearly",
   };
+  // Mega Knox (env-configured prices).
+  const mega = megaPrices();
+  if (mega.monthly) PRICE_LABELS[mega.monthly] = "max_monthly";
+  if (mega.yearly)  PRICE_LABELS[mega.yearly]  = "max_yearly";
 
   const trials = [];
 

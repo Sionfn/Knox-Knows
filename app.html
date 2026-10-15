@@ -469,6 +469,13 @@
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     .dd-badge { border: 1px solid var(--border); background: var(--surface); color: var(--text-light); padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
     .dd-badge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+    /* 💎 Mega Knox badge: gold, everywhere the plan shows */
+    .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: #F2B705 !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
+    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; }
+    body.knox-mega #headerUsage.unlimited { background: linear-gradient(135deg, rgba(255,217,0,.28), rgba(255,170,0,.22)); border-color: #F2B705; }
+    .dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #C99404; box-shadow: 0 2px 0 #C99404; }
+    .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
+    .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: #C99404; }
     .app-dropdown-header .dd-name {
       font-size: 15px; font-weight: 900; color: var(--text);
       margin-bottom: 2px; word-break: break-word;
@@ -2578,7 +2585,7 @@
     <div id="ddUpgradeRow" style="display:none;">
       <button class="app-dropdown-item" onclick="goToPricing(); closeUserDropdown()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Upgrade Plan
+        <span class="dd-upgrade-label">Upgrade Plan</span>
       </button>
     </div>
     <button class="app-dropdown-item" onclick="window.knoxGifts?.openRedeem(); closeUserDropdown()">
@@ -2587,7 +2594,7 @@
     </button>
     <button class="app-dropdown-item" onclick="window.knoxGifts?.openBuy(); closeUserDropdown()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-      Give Knox Plus
+      Give a gift
     </button>
     <a class="app-dropdown-item" href="mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback" style="text-decoration:none;">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -2985,16 +2992,24 @@
     try {
       const snap = await getDoc(doc(db, 'users', uid));
       if (window.currentUser?.uid !== uid) return;
-      window.userPlan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
-      // Flame Fest grand prize: a free week of Knox Plus (plusUntil, ms).
-      // Gift codes give the same time-limited Knox Plus (window.userGiftUntil).
-      window.userGiftUntil = planTier(window.userPlan) !== 'paid' && snap.exists() && Number(snap.data().plusUntil) > Date.now() ? Number(snap.data().plusUntil) : 0;
-      if (window.userGiftUntil) window.userPlan = 'plus';
+      // Free / Knox Plus / Mega Knox — same rules as api/_plans.js. Mega is
+      // plan 'max'; comps can be Plus or Mega (Knox Ambassadors are Mega);
+      // gift codes and Flame Fest add plusUntil / megaUntil (ms).
+      const d = snap.exists() ? snap.data() : {}, now = Date.now();
+      const megaComp = d.comped === true && d.compedTier === 'mega';
+      const ownTier = d.plan === 'max' || megaComp ? 'mega' : (planTier(d.plan) === 'paid' || d.comped === true) ? 'plus' : 'free';
+      const tier = ownTier === 'mega' || Number(d.megaUntil) > now ? 'mega' : ownTier === 'plus' || Number(d.plusUntil) > now ? 'plus' : 'free';
+      window.userTier = tier;
+      window.userPlan = tier === 'mega' ? 'max' : tier === 'plus' ? (planTier(d.plan) === 'paid' ? d.plan : 'plus') : 'free';
+      // Plan time from a gift or Flame Fest, beyond what they pay for (shown in Account & Plan).
+      window.userGiftUntil = tier !== ownTier ? Number(tier === 'mega' ? d.megaUntil : d.plusUntil) || 0 : 0;
+      window.userAmbassador = d.ambassador === true;
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
       window.userComped = !!(snap.exists() && snap.data().comped === true);
     } catch (e) {
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = 'free';
+      window.userTier = 'free';
       window.userGiftUntil = 0;
     }
     // Include the usage request in initial readiness so the count does not
@@ -3014,8 +3029,7 @@
         if (window.currentUser?.uid !== uid) return;
         const plan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
         if (planTier(plan) === 'paid') {
-          window.userPlan = plan;
-          updatePlanUI();
+          await fetchPlan(uid); // works out Plus vs Mega Knox
           return;
         }
       } catch (e) { /* keep trying */ }
@@ -3026,7 +3040,16 @@
   }
   window.pollForPlanUpdate = pollForPlanUpdate;
 
+  // How each plan is shown: the ⚡ Knox Plus and 💎 Mega Knox badges.
+  const tierName = () => window.userTier === 'mega' ? 'Mega Knox' : window.userTier === 'plus' ? 'Knox Plus' : 'Free';
+  const tierBadge = () => window.userTier === 'mega' ? '💎 Mega Knox' : window.userTier === 'plus' ? '⚡ Knox Plus' : 'Free plan';
+  window.knoxTierName = tierName;
+  // Early access: new features can check this before Mega Knox members (and
+  // Knox Ambassadors, who have Mega) see them first.
+  window.knoxEarlyAccess = () => window.userTier === 'mega';
   function updatePlanUI() {
+    if (!window.userTier) window.userTier = planTier(window.userPlan) === 'paid' ? (window.userPlan === 'max' ? 'mega' : 'plus') : 'free';
+    document.body.classList.toggle('knox-mega', window.userTier === 'mega' && !!window.currentUser);
     window.dispatchEvent(new Event('knox-plan-changed'));
     const plan       = window.userPlan;
     const user       = window.currentUser;
@@ -3066,8 +3089,9 @@
       const planBadge = document.getElementById('appAccountPlanBadge');
       if (planBadge) {
         const isPaid = planTier(plan) === 'paid';
-        planBadge.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
+        planBadge.textContent = tierBadge();
         planBadge.classList.toggle('paid', isPaid);
+        planBadge.classList.toggle('mega', window.userTier === 'mega');
       }
       const settingsBtn = document.getElementById('sidebarSettingsBtn');
       if (settingsBtn) settingsBtn.style.display = '';
@@ -3088,15 +3112,18 @@
       const ddTier = document.getElementById('ddTierBadge');
       if (ddTier) {
         const isPaid = planTier(plan) === 'paid';
-        ddTier.textContent = isPaid ? '⚡ Knox Plus' : 'Free plan';
+        ddTier.textContent = tierBadge() + (window.userAmbassador ? ' · Ambassador' : '');
         ddTier.classList.toggle('paid', isPaid);
+        ddTier.classList.toggle('mega', window.userTier === 'mega');
       }
       if (ddName)  ddName.textContent  = user.displayName || '—';
       if (ddEmail) ddEmail.textContent = user.email || '—';
       if (ddPlan) {
         // Build a card-style plan display (icon + name + tagline)
-        const cfg = planTier(plan) === 'paid'
-          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
+        const cfg = window.userTier === 'mega'
+          ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
+          : planTier(plan) === 'paid'
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
           : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
@@ -3119,14 +3146,13 @@
         ddPlan.appendChild(card);
       }
 
-      // Upgrade button shown for free users only — one paid plan now, so
-      // anyone already paying has nothing further to upgrade to.
-      if (planTier(plan) === 'free') {
-        if (upgradeBtn) upgradeBtn.style.display = '';
-        if (ddUpgrade)  ddUpgrade.style.display  = '';
-      } else {
-        if (upgradeBtn) upgradeBtn.style.display = 'none';
-        if (ddUpgrade)  ddUpgrade.style.display  = 'none';
+      // Upgrade: free users see the header button; Knox Plus members can still
+      // move up to Mega Knox from the account menu. Mega has nothing above it.
+      if (upgradeBtn) upgradeBtn.style.display = planTier(plan) === 'free' ? '' : 'none';
+      if (ddUpgrade) {
+        ddUpgrade.style.display = window.userTier === 'mega' ? 'none' : '';
+        const label = ddUpgrade.querySelector('.dd-upgrade-label');
+        if (label) label.textContent = window.userTier === 'plus' ? 'Upgrade to Mega Knox' : 'Upgrade Plan';
       }
       // Restore the logged-in behaviours in case this account just signed in
       // after being a guest (the guest branch below repurposes both).
@@ -3237,8 +3263,8 @@
       usage.style.display = 'inline-flex';
       usage.classList.remove('danger');
       usage.classList.add('unlimited');
-      text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus'; // short on phones
-      setUsageShort('⚡');
+      text.textContent = window.userTier === 'mega' ? (isCompact ? '💎 Mega' : '💎 Mega Knox') : (isCompact ? '⚡ Plus' : '⚡ Knox Plus'); // short on phones
+      setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
       return;
     }
     usage.classList.remove('unlimited');
@@ -3270,8 +3296,8 @@
         usage.style.display = 'inline-flex';
         usage.classList.remove('danger');
         usage.classList.add('unlimited');
-        text.textContent = isCompact ? '⚡ Plus' : '⚡ Knox Plus'; // short on phones
-        setUsageShort('⚡');
+        text.textContent = window.userTier === 'mega' ? (isCompact ? '💎 Mega' : '💎 Mega Knox') : (isCompact ? '⚡ Plus' : '⚡ Knox Plus'); // short on phones
+        setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
         return;
       }
       const left = typeof u.remaining === 'number' ? u.remaining : FREE_STARTING_BALANCE;
@@ -3527,6 +3553,7 @@
     } else {
       _firstAuth = false;
       window.userPlan = 'free';
+      window.userTier = 'free';
       window.userGiftUntil = 0;
       window._conversation = [];
       updatePlanUI();
@@ -4533,8 +4560,8 @@
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
     const isPaid = planTier(plan) === 'paid';
-    const planLabel = isPaid ? 'Knox Plus' : 'Free';
-    const badgeClass = isPaid ? 'super' : 'free';
+    const planLabel = tierName() + (window.userAmbassador ? ' · Ambassador' : '');
+    const badgeClass = window.userTier === 'mega' ? 'mega' : isPaid ? 'super' : 'free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
 
@@ -4565,9 +4592,9 @@
     // so free users can have one too: give them billing access AND keep the
     // upgrade button.
     if (isPaid && window.userGiftUntil) {
-      // Knox Plus from a gift code or Flame Fest: no subscription, nothing to bill.
+      // Plan time from a gift code or Flame Fest: no subscription for it, nothing to bill.
       const until = new Date(window.userGiftUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-      el.appendChild(row('Knox Plus until', spanVal('🎁 ' + until)));
+      el.appendChild(row(tierName() + ' until', spanVal('🎁 ' + until)));
       if (window.hasBillingAccount && !window.knoxNativeApp) {
         const billBtn = document.createElement('button');
         billBtn.style.cssText = 'padding:9px 18px;border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;font-weight:800;font-family:inherit;box-shadow:0 2px 0 var(--border);transition:all 0.15s;';
@@ -4579,7 +4606,7 @@
       // Comped Knox Plus has no Stripe billing to manage.
       const comp = document.createElement('span');
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
-      comp.textContent = '🎁 Free Knox Plus from Knox Knows';
+      comp.textContent = window.userAmbassador ? '🦊 Knox Ambassador — free Mega Knox' : '🎁 Free ' + tierName() + ' from Knox Knows';
       el.appendChild(row('Billing', comp));
     } else if ((isPaid || window.hasBillingAccount) && !window.knoxNativeApp) {
       const billBtn = document.createElement('button');
@@ -4588,11 +4615,12 @@
       billBtn.onclick = function() { openBillingPortal(this); };
       el.appendChild(row('Billing', billBtn));
     }
-    if (!isPaid && !window.knoxNativeApp) {
+    // Free → see the plans; Knox Plus → move up to Mega Knox.
+    if (window.userTier !== 'mega' && !window.knoxNativeApp) {
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
-      up.textContent = 'Upgrade to Knox Plus';
+      up.textContent = isPaid ? '💎 Upgrade to Mega Knox' : 'See Knox Plus & Mega Knox';
       up.onclick     = () => { goToPricing(); closeAppSettings(); };
       wrap.appendChild(up);
       el.appendChild(wrap);
@@ -4979,6 +5007,7 @@ window.openMobileHistory = function() {
     const drawerBadge = $('drawerAccountBadge');
     drawerBadge.textContent = (badge?.textContent || '').trim() || 'Free plan';
     drawerBadge.classList.toggle('paid', !!badge?.classList.contains('paid'));
+    drawerBadge.classList.toggle('mega', !!badge?.classList.contains('mega'));
   }
   d.classList.add('open');
   document.body.style.overflow = 'hidden';

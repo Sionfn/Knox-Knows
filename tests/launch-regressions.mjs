@@ -72,7 +72,7 @@ test('billing intent survives auth until a checkout link is obtained', () => {
   const html = read('index.html');
   const start = html.indexOf('async function resumePendingCheckoutIfAny');
   const resume = html.slice(start, html.indexOf('window.resumePendingCheckoutIfAny =', start));
-  assert.match(resume, /await handlePurchase\('Plus', pending.billing\)/);
+  assert.match(resume, /await handlePurchase\(pending.plan === 'max' \? 'Mega' : 'Plus', pending.billing\)/);
   assert.doesNotMatch(resume, /setTimeout/);
   assert.match(html, /if \(window\._checkoutBusy \|\| window\._pendingCheckout\) return false/);
 });

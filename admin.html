@@ -481,7 +481,7 @@
     /* Its heading is the panel's first child, which .section-title:first-child zeroes. */
     #compPanel { margin-top: 40px; }
     .comp-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
-    .comp-form input {
+    .comp-form input, .comp-form select {
       flex: 1 1 200px; min-width: 0; padding: 11px 14px; border-radius: 12px;
       border: 2px solid var(--border); font: inherit; font-weight: 700; color: var(--text); background: white;
     }
@@ -749,30 +749,32 @@
   function renderCompPanel() {
     const panel = document.getElementById('compPanel');
     panel.innerHTML = `
-      <h2 class="section-title">Comped Knox Plus</h2>
+      <h2 class="section-title">Comped plans</h2>
       <div class="card card-lg">
-        <div class="metric-label">Give someone free Knox Plus</div>
+        <div class="metric-label">Give someone free Knox Plus or Mega Knox</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
-          They need a Knox account first. Comped Knox Plus works everywhere Knox Plus does and is never charged.
-          If they also pay for Knox Plus, removing the comp keeps the Knox Plus they pay for.
+          They need a Knox account first. A comped plan works everywhere that plan does and is never charged.
+          Knox Ambassadors get Mega Knox. Pick a different plan for someone already comped to change it.
+          If they also pay for a plan, removing the comp keeps the plan they pay for.
         </p>
         <form class="comp-form" id="compForm" autocomplete="off">
           <input id="compEmail" type="email" placeholder="their@email.com" required maxlength="254">
+          <select id="compTier" aria-label="Plan to give"><option value="plus">⚡ Knox Plus</option><option value="mega">💎 Mega Knox</option><option value="ambassador">🦊 Knox Ambassador (Mega)</option></select>
           <input id="compNote" type="text" placeholder="Note (optional), e.g. beta tester" maxlength="200">
-          <button class="comp-btn" id="compSubmit" type="submit">Give free Knox Plus</button>
+          <button class="comp-btn" id="compSubmit" type="submit">Give free plan</button>
         </form>
         <div class="comp-msg" id="compMsg"></div>
         <div class="comp-list" id="compList"><div class="comp-empty">Loading…</div></div>
       </div>
       <h2 class="section-title">Gift codes</h2>
       <div class="card card-lg">
-        <div class="metric-label">Make Knox Plus gift codes</div>
+        <div class="metric-label">Make Knox Plus or Mega Knox gift codes</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
           For giveaways and contests. Each code works once and never expires — anyone enters it at knoxknowsapp.com/redeem.
-          It's time-limited Knox Plus, not a subscription.
+          It's time-limited Knox Plus or Mega Knox, not a subscription.
         </p>
         <form class="comp-form" id="giftForm" autocomplete="off">
-          <select id="giftLength" aria-label="Gift length"><option value="1m">1 month</option><option value="3m">3 months</option><option value="12m">12 months</option></select>
+          <select id="giftLength" aria-label="Gift"><option value="1m">⚡ Plus · 1 month</option><option value="3m">⚡ Plus · 3 months</option><option value="12m">⚡ Plus · 12 months</option><option value="mega-1m">💎 Mega · 1 month</option><option value="mega-3m">💎 Mega · 3 months</option><option value="mega-12m">💎 Mega · 12 months</option></select>
           <input id="giftCount" type="number" min="1" max="50" value="1" aria-label="How many codes">
           <input id="giftNote" type="text" placeholder="Note (optional), e.g. Discord giveaway" maxlength="200">
           <button class="comp-btn" id="giftSubmit" type="submit">Make codes</button>
@@ -790,8 +792,10 @@
       btn.disabled = true;
       compMessage('', true);
       try {
-        const r = await compFetch('POST', { action: 'grant', email, note });
-        compMessage(r.already ? `${r.email} already has Comped Knox Plus.` : `Gave free Knox Plus to ${r.email}.`, true);
+        const tier = document.getElementById('compTier').value;
+        const name = tier === 'plus' ? 'Knox Plus' : tier === 'mega' ? 'Mega Knox' : 'Knox Ambassador (Mega Knox)';
+        const r = await compFetch('POST', { action: 'grant', email, note, tier });
+        compMessage(r.already ? `${r.email} already has comped ${name}.` : `Gave free ${name} to ${r.email}.`, true);
         document.getElementById('compEmail').value = '';
         document.getElementById('compNote').value = '';
         await loadComped();
@@ -851,6 +855,7 @@
               <strong>${escHtml(c.name || c.email || c.uid)}</strong>
               <span>${escHtml(c.name ? (c.email || '') : '')}${c.name && c.email ? ' · ' : ''}since ${escHtml(since)}${c.note ? ' · ' + escHtml(c.note) : ''}</span>
             </div>
+            <span class="comp-tag" style="${c.tier === 'mega' ? 'background:#FFF3C4;color:#8A5A00;border-color:#F2B705;' : ''}">${c.ambassador ? '🦊 Ambassador' : c.tier === 'mega' ? '💎 Mega' : '⚡ Plus'}</span>
             ${c.alsoPaying ? '<span class="comp-tag">Also paying</span>' : ''}
             <button class="comp-remove" type="button" data-uid="${escHtml(c.uid)}" data-label="${escHtml(label)}">Remove</button>
           </div>`;
@@ -1028,9 +1033,11 @@
           <div class="metric-label">Plan distribution</div>
           <div style="margin-top:14px;">
             ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
-            ${planBar('Knox Plus (paying)', (users.byPlan.super || 0) + (users.byPlan.max || 0), users.total, 'green')}
-            ${planBar('Free trial', users.byPlan.trial || 0, users.total, 'purple')}
+            ${planBar('⚡ Knox Plus (paying)', users.byPlan.super || 0, users.total, 'green')}
+            ${planBar('💎 Mega Knox (paying)', users.byPlan.max || 0, users.total, 'orange')}
+            ${planBar('Free trial (Mega Knox)', users.byPlan.trial || 0, users.total, 'purple')}
             ${planBar('Comped Knox Plus', users.byPlan.comped || 0, users.total, 'blue')}
+            ${planBar('Comped Mega Knox' + (users.byPlan.ambassadors ? ` (${users.byPlan.ambassadors} Ambassador${users.byPlan.ambassadors === 1 ? '' : 's'})` : ''), users.byPlan.compedMega || 0, users.total, 'blue')}
           </div>
         </div>
       </div>
@@ -1273,9 +1280,12 @@
     // Max buyers). Merge by billing cadence rather than by legacy tier
     // name so the chart tells us what actually matters — monthly vs yearly
     // revenue split.
+    // super_* = Knox Plus, max_* = Mega Knox (including the old Max prices).
     const items = [
-      ['Knox Plus Monthly', (byPlan.super_monthly || 0) + (byPlan.max_monthly || 0), 'orange'],
-      ['Knox Plus Yearly', (byPlan.super_yearly  || 0) + (byPlan.max_yearly  || 0), 'green'],
+      ['⚡ Knox Plus Monthly', byPlan.super_monthly || 0, 'green'],
+      ['⚡ Knox Plus Yearly',  byPlan.super_yearly  || 0, 'green'],
+      ['💎 Mega Knox Monthly', byPlan.max_monthly   || 0, 'orange'],
+      ['💎 Mega Knox Yearly',  byPlan.max_yearly    || 0, 'orange'],
     ];
     const total = items.reduce((s, [, n]) => s + n, 0) || 1;
     return items.map(([label, n, c]) => `

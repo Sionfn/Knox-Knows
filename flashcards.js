@@ -117,7 +117,7 @@ function frame(head,body,center=false){
 }
 
 // ── Make with Knox (AI-written decks) ───────────────────────────────────────
-const makeOpts={request:'',count:10,style:'qa',upgrade:false,files:[],reading:false};
+const makeOpts={request:'',count:10,style:'qa',difficulty:'mixed',upgrade:false,files:[],reading:false};
 // Setting: let Knox add pictures to new decks automatically (remembered on this device).
 const PICS_KEY='knox.flashcards.autoPictures';
 const autoPictures=()=>{try{return localStorage.getItem(PICS_KEY)!=='off';}catch{return true;}};
@@ -134,12 +134,18 @@ const EVERYONE=true; // launched Nov 1: everyone can use Flashcards
 // accounts spend DECK_COST credits per deck, up to FREE_MAX cards (the server
 // in api/generate-flashcards.js enforces both).
 const DECK_COST=2, FREE_MAX=10;
+// Plan limits for decks Knox makes (match api/_plans.js): free 10 cards,
+// Knox Plus 15, Mega Knox 40 plus difficulty and two more card styles.
+const tierNow=()=>window.userTier||(isPlus()?'plus':'free');
+const MAX_CARDS={free:10,plus:15,mega:40}, PHOTO_LIMIT={free:5,plus:5,mega:10}, DOC_CHARS={free:30000,plus:30000,mega:60000};
+const tierTag=t=>t==='mega'?'<span class="fc-plus-tag mega">💎 Mega</span>':'<span class="fc-plus-tag">⚡ Plus</span>';
 const canSee=()=>EVERYONE||isPlus();
 const chip=(label,action,on,attrs='')=>`<button type="button" class="fc-chip${on?' on':''}" data-action="${action}" ${attrs}>${label}</button>`;
 function makeView(){
   generationVersion++;session=null;editing=null;dirty=false;importNote=null;
-  const plus=isPlus();
-  if(!plus&&makeOpts.count>FREE_MAX)makeOpts.count=FREE_MAX;
+  const plus=isPlus(), tier=tierNow(), mega=tier==='mega';
+  if(makeOpts.count>MAX_CARDS[tier])makeOpts.count=MAX_CARDS[tier];
+  if(!mega){if(['fill','tf'].includes(makeOpts.style))makeOpts.style='qa';makeOpts.difficulty='mixed';}
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
@@ -149,16 +155,17 @@ function makeView(){
       <div class="fc-doc-row">${makeOpts.files.map((f,i)=>`<span class="fc-doc-chip">${f.kind==='photo'?'🖼️':'📄'} <span>${esc(f.name)}${f.truncated?' · first part':''}</span><button type="button" class="fc-doc-x" data-action="doc-clear" data-index="${i}" aria-label="Remove ${esc(f.name)}">✕</button></span>`).join('')}
         ${makeOpts.reading?btn('Reading file…','doc-pick',{cls:'small',attrs:'disabled'}):makeOpts.files.length<MAX_MAKE_FILES?btn(makeOpts.files.length?'+ Add another':'📎 Add your notes, slides or photos','doc-pick',{cls:'small'}):''}
         <input type="file" id="fcDocInput" accept="${MAKE_ACCEPT}" multiple hidden></div>
-      <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${MAX_PHOTOS}) — or drag them here.</p>
+      <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${PHOTO_LIMIT[tier]}) — or drag them here.</p>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
-        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Plus</span>`,'upgrade',false,`title="Knox Plus makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
-        <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
+        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20,30,40].map(n=>n>MAX_CARDS[tier]?chip(`${n} ${tierTag(n>MAX_CARDS.plus?'mega':'plus')}`,'upgrade',false,`title="${n>MAX_CARDS.plus?'Mega Knox makes decks up to 40 cards':'Knox Plus makes decks up to 15 cards'}"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
+        <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}${[['fill','Fill in the blank'],['tf','True or false']].map(([id,label])=>mega?chip(label,'make-style',makeOpts.style===id,`data-style="${id}"`):chip(`${label} ${tierTag('mega')}`,'upgrade',false,'title="Mega Knox: more card styles"')).join('')}</div></div>
+        <div><span class="fc-field-label">Difficulty</span><div class="fc-chips">${[['mixed','Mixed'],['easy','Easy'],['medium','Medium'],['hard','Hard']].map(([id,label])=>mega||id==='mixed'?chip(label,'make-difficulty',makeOpts.difficulty===id,`data-difficulty="${id}"`):chip(`${label} ${tierTag('mega')}`,'upgrade',false,'title="Mega Knox: choose the difficulty"')).join('')}</div></div>
       </div>
       <label class="fc-switch"><input type="checkbox" id="fcAutoPics"${autoPictures()?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>Add pictures automatically</b><small>Knox adds a free picture to cards where one helps (a body part, a place, an artwork). You can always add or change pictures yourself.</small></span></label>
-      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Knox Plus</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Knox Plus','upgrade',{cls:'small'})}</div>`:''}
+      ${makeOpts.upgrade?`<div class="fc-upsell">${mega?'⚡':'💎'} <span>${tier==='plus'?'<b>Mega Knox</b> makes decks up to 40 cards, with difficulty, more card styles and up to 10 photos.':'Go unlimited with <b>Knox Plus</b> (up to 15 cards a deck) or <b>Mega Knox</b> (up to 40, fully customizable).'}</span>${btn('See the plans','upgrade',{cls:'small'})}</div>`:''}
       <div class="fc-toolbar" style="margin-top:20px">${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} credits`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${plus?'⚡ Knox Plus — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes unlimited decks.`}</p>
+      <p class="fc-cost">${mega?'💎 Mega Knox — unlimited decks, up to 40 cards, any style and difficulty.':plus?'⚡ Knox Plus — unlimited decks, up to 15 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes unlimited decks.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -200,8 +207,8 @@ async function makeDeck(){
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
   const owner=key(), version=++generationVersion;
   const texts=makeOpts.files.filter(f=>f.kind==='text'),photos=makeOpts.files.filter(f=>f.kind==='photo');
-  const options={request,count:makeOpts.count,style:makeOpts.style,pictures:autoPictures(),
-    ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_LIMIT)}}:{}),
+  const options={request,count:makeOpts.count,style:makeOpts.style,difficulty:makeOpts.difficulty,pictures:autoPictures(),
+    ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_CHARS[tierNow()])}}:{}),
     ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
   frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes a few seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
@@ -462,7 +469,7 @@ const confirmLeave=()=>knoxConfirm({title:'Leave without saving?',body:'Your dec
 // Files Make with Knox can read (doc-extract.js).
 const MAKE_ACCEPT='.pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.txt,.md,text/plain,image/*,.heic,.heif';
 const IMPORT_ACCEPT='.json,application/json,.csv,text/csv,.tsv,.txt,text/plain,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const MAX_PHOTOS=5,MAX_MAKE_FILES=8,DOC_LIMIT=30000;
+const MAX_MAKE_FILES=12; // photos (5, or 10 on Mega Knox) plus a few files — PHOTO_LIMIT / DOC_CHARS set the rest
 let importNote=null; // {files} — notes or photos dropped on Import
 function importView(){
   generationVersion++;session=null;editing=null;dirty=false;
@@ -575,7 +582,7 @@ async function takeFiles(list){
   makeOpts.reading=true;makeView();
   const owner=key();
   const addPhoto=(p,name)=>{
-    if(makeOpts.files.filter(f=>f.kind==='photo').length>=MAX_PHOTOS)throw Error(`Knox can use up to ${MAX_PHOTOS} photos per deck.`);
+    if(makeOpts.files.filter(f=>f.kind==='photo').length>=PHOTO_LIMIT[tierNow()])throw Error(`Knox can use up to ${PHOTO_LIMIT[tierNow()]} photos per deck${tierNow()==='mega'?'':' — Mega Knox takes up to 10'}.`);
     makeOpts.files.push({kind:'photo',name:name||p.name,type:p.type,data:p.data});
   };
   try{
@@ -586,7 +593,7 @@ async function takeFiles(list){
         const doc=await window.knoxReadDocument(file);
         if(owner!==key())return;
         if(doc.kind==='image'){addPhoto(await window.knoxShrinkPhoto(doc.file),doc.name+' (page 1)');continue;} // scanned PDF
-        const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_LIMIT-used-doc.name.length-8;
+        const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_CHARS[tierNow()]-used-doc.name.length-8;
         if(room<500)throw Error(`That’s a lot of reading for one deck — make this one, then another with ${doc.name}.`);
         makeOpts.files.push({kind:'text',name:doc.name,text:doc.text.slice(0,room),truncated:doc.truncated||doc.text.length>room});
       }catch(err){message(err.message||'Knox couldn’t read that file.');}
@@ -637,7 +644,7 @@ window.flashcardsTakeDrop=files=>{
   importFiles(list).catch(err=>message(err.message||'Knox couldn’t import that file.'));
   return true;
 };
-window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
+window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',difficulty:'mixed',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;if(e.target.dataset.field==='front')delete c.imageTopic;}});
 panel.addEventListener('click',async e=>{
@@ -650,7 +657,7 @@ panel.addEventListener('click',async e=>{
  if(action==='doc-clear'){makeOpts.request=panel.querySelector('#fcMakeReq')?.value??makeOpts.request;makeOpts.files.splice(+b.dataset.index,1);makeView();}
  if(action==='make-go'){b.disabled=true;try{await makeDeck();}finally{b.disabled=false;}}
  if(action==='make-example'){makeOpts.request=b.dataset.text;const t=panel.querySelector('#fcMakeReq');t.value=b.dataset.text;t.focus();}
- if(action==='make-count'||action==='make-style'){if(action==='make-count')makeOpts.count=+b.dataset.count;else makeOpts.style=b.dataset.style;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}
+ if(action==='make-count'||action==='make-style'||action==='make-difficulty'){if(action==='make-count')makeOpts.count=+b.dataset.count;else if(action==='make-style')makeOpts.style=b.dataset.style;else makeOpts.difficulty=b.dataset.difficulty;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}
  if(action==='upgrade')window.goToPricing?.();
  if(action==='back'){if(!dirty||await knoxConfirm({title:'Discard your changes?',body:'You have edits that aren’t saved yet. If you go back now, they’ll be lost.',ok:'Discard',cancel:'Keep editing',danger:true}))home();}
  if(action==='edit')editor(decks.find(d=>d.id===id));

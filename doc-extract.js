@@ -17,7 +17,8 @@
 
   const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
   const MAX_PAGES      = 60;               // PDF pages read
-  const TEXT_LIMIT     = 30000;            // characters sent to Knox (matches the server)
+  // Characters sent to Knox (matches the server): Mega Knox reads files twice as long.
+  const textLimit = () => window.userTier === 'mega' ? 60000 : 30000;
   const SCANNED_BELOW  = 15;               // fewer real characters than this = a scanned PDF (no text layer)
 
   const PDF_TYPES  = ['application/pdf'];
@@ -85,8 +86,8 @@
 
   function finish(name, text, pages, morePages) {
     const clean = tidy(text);
-    const truncated = morePages || clean.length > TEXT_LIMIT;
-    return { kind: 'text', name, text: clean.slice(0, TEXT_LIMIT), truncated, pages };
+    const truncated = morePages || clean.length > textLimit();
+    return { kind: 'text', name, text: clean.slice(0, textLimit()), truncated, pages };
   }
 
   async function readPdf(file) {
@@ -100,7 +101,7 @@
     const pages = Math.min(doc.numPages, MAX_PAGES);
     const parts = [];
     let length = 0;
-    for (let i = 1; i <= pages && length < TEXT_LIMIT; i++) {
+    for (let i = 1; i <= pages && length < textLimit(); i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
       let line = '', lastY = null;
@@ -163,7 +164,7 @@
     const parts = [];
     let length = 0;
     for (const path of slides.slice(0, MAX_PAGES)) {
-      if (length >= TEXT_LIMIT) break;
+      if (length >= textLimit()) break;
       const text = textOf(await zip.file(path).async('string'));
       const notesPath = `ppt/notesSlides/notesSlide${num(path)}.xml`;
       const notes = zip.file(notesPath) ? textOf(await zip.file(notesPath).async('string')).replace(/^\d+$/m, '').trim() : '';
@@ -263,5 +264,5 @@
       throw new Error("Knox couldn't load its file reader. Check your connection and try again.");
     }
   };
-  window.KNOX_DOC_TEXT_LIMIT = TEXT_LIMIT;
+  Object.defineProperty(window, 'KNOX_DOC_TEXT_LIMIT', { get: textLimit, configurable: true });
 })();

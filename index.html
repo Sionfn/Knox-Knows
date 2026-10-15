@@ -137,7 +137,7 @@
           {
             "@type": "Question",
             "name": "Will I be charged after the 7-day free trial?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page." }
           },
           {
             "@type": "Question",
@@ -171,8 +171,8 @@
           },
           {
             "@type": "Question",
-            "name": "Can I give Knox Plus as a gift?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — buy 1, 3 or 12 months of Knox Plus as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged." }
+            "name": "Can I give Knox Knows as a gift?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — buy 1, 3 or 12 months of Knox Plus or Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged." }
           },
           {
             "@type": "Question",
@@ -798,6 +798,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .dd-plan-super { background: var(--green-light); border-color: #B9F6CA;                       box-shadow: 0 2px 0 #B9F6CA;                              }
     .dd-plan-super .plan-name { color: var(--green-dark); }
     .dd-plan-super .plan-tag  { color: var(--green-dark); }
+    .dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #C99404; box-shadow: 0 2px 0 #C99404; }
+    .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
     .dd-plan-max   { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max   .plan-name { color: #CC5500; }
     .dd-plan-max   .plan-tag  { color: #CC5500; }
@@ -1338,7 +1340,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       0%, 100% { transform:translateX(-50%) translateY(0); }
       50%      { transform:translateX(-50%) translateY(-2px); }
     }
-    #proTrialBadge {
+    #proTrialBadge, #megaTrialBadge {
       animation:badgeBob 2.4s ease-in-out infinite;
     }
     /* Shared bullet rows so all three cards have identical structure */
@@ -1366,7 +1368,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     @media (prefers-reduced-motion: reduce) {
       .price-pop { animation:none; }
-      #proTrialBadge { animation:none; }
+      #proTrialBadge, #megaTrialBadge { animation:none; }
     }
     .popular-badge {
       position:absolute; top:-14px; left:50%; transform:translateX(-50%);
@@ -1897,6 +1899,43 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       contain-intrinsic-size: auto 700px;
     }
 
+    /* ── Pricing: three plan cards + a comparison table ── */
+    .pt-cards { gap:16px !important; margin-bottom:24px; align-items:stretch; }
+    .pt-card { position:relative; display:flex; flex-direction:column; padding:26px 22px; border-radius:22px; text-align:center; color:#fff; }
+    .pt-free { background:var(--blue); border:3px solid #0A85C2; box-shadow:0 6px 0 #075E8D; }
+    .pt-plus { background:var(--green); border:3px solid #46A302; box-shadow:0 6px 0 #2D6A00; }
+    .pt-mega { background:linear-gradient(160deg,#FFD84D,#F2B705); border:3px solid #C99404; box-shadow:0 6px 0 #8A6500; color:#3D2800; }
+    .pt-badge-slot { height:8px; }
+    .pt-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:999px; background:var(--orange); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; box-shadow:0 2px 0 #CC5500; }
+    .pt-name { font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; opacity:.92; margin-bottom:10px; }
+    .pt-price { line-height:1; }
+    .pt-price span { font-size:44px; font-weight:900; }
+    .pt-price em { font-style:normal; font-size:15px; font-weight:800; opacity:.9; }
+    .pt-sub { font-size:12px; font-weight:800; opacity:.88; margin-top:4px; }
+    .pt-space { flex:1; min-height:18px; }
+    .pt-btn { width:100%; padding:13px; border-radius:14px; border:none; background:#fff; font:inherit; font-size:15px; font-weight:900; cursor:pointer; box-shadow:0 4px 0 rgba(0,0,0,.18); transition:transform .15s, box-shadow .15s; }
+    .pt-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 6px 0 rgba(0,0,0,.18); }
+    .pt-btn:disabled { opacity:.75; cursor:default; }
+    .pt-free .pt-btn { color:#0A85C2; } .pt-plus .pt-btn { color:#2D6A00; } .pt-mega .pt-btn { color:#6B4A00; }
+    .pt-table { background:var(--surface); border:2px solid var(--border); border-radius:22px; box-shadow:0 4px 0 var(--border); overflow:hidden; }
+    .pt-row { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; align-items:center; padding:16px 22px; border-bottom:1.5px solid var(--border); text-align:center; }
+    .pt-row.pt-last { border-bottom:none; }
+    .pt-head { background:var(--gray); font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--text-light); }
+    .pt-label { text-align:left; font-size:15px; font-weight:700; color:var(--text); }
+    .pt-label small { display:block; margin-top:2px; font-size:12px; font-weight:600; color:var(--text-light); line-height:1.35; }
+    .pt-group { color:var(--orange); font-size:12px; font-weight:900; }
+    .pt-yes { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--green-light); color:var(--green-dark); font-size:15px; font-weight:900; }
+    .pt-no { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--border); color:var(--text-light); font-size:16px; font-weight:900; line-height:1; }
+    .pt-text { font-size:13.5px; font-weight:800; }
+    .pt-text.free { color:#0A85C2; } .pt-text.plus { color:#2D6A00; } .pt-text.mega { color:#9A6B00; }
+    html[data-theme="dark"]:not(.knox-seasonal) .pt-text.plus { color:var(--green); }
+    html[data-theme="dark"]:not(.knox-seasonal) .pt-text.free { color:var(--blue); }
+    html[data-theme="dark"]:not(.knox-seasonal) .pt-text.mega { color:#FFD45C; }
+    @media (max-width:640px) {
+      .pt-row { grid-template-columns:1.25fr .9fr .9fr .9fr; padding:14px 12px; gap:4px; }
+      .pt-label { font-size:13.5px; } .pt-text { font-size:11.5px; } .pt-head { font-size:10.5px; }
+      .pt-cards { gap:22px !important; }
+    }
     /* Cards carry inline hover transitions, which used to replace the fade
        (some popped in, some faded). !important keeps one smooth fade for all;
        the stagger delay only applies to the fade, not to hover. */
@@ -2535,7 +2574,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <!-- ===================== ASK AI ===================== -->
 <!-- ===================== PRICING ===================== -->
 <section id="pricing" style="background:var(--surface);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:820px;margin:0 auto;">
+  <div style="max-width:1000px;margin:0 auto;">
 
     <!-- Header -->
     <div style="text-align:center;margin-bottom:32px;">
@@ -2549,7 +2588,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <div style="display:inline-flex;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:4px;gap:4px;box-shadow:0 3px 0 var(--border);">
         <button id="monthlyBtn" onclick="setBilling('monthly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:var(--orange);color:white;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;">Monthly</button>
         <button id="yearlyBtn" onclick="setBilling('yearly')" style="padding:10px 24px;border-radius:10px;font-size:14px;font-weight:800;font-family:inherit;border:none;cursor:pointer;background:transparent;color:var(--text-light);transition:all 0.15s;">
-          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:var(--green);color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save 33%</span>
+          Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:var(--green);color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save up to 36%</span>
         </button>
       </div>
       <div style="display:flex;align-items:center;gap:6px;background:var(--green-light);border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
@@ -2558,113 +2597,69 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       </div>
     </div>
 
-    <!-- Plan headers — two full Knox-style cards side by side.
-         Both cards use the same internal structure (badge slot at top, then
-         label, price, spacer, button) so buttons land at the same vertical
-         position and the two cards read as symmetric. Free card gets an
-         invisible badge-slot placeholder so it doesn't sit taller than Knox Plus. -->
-    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;align-items:stretch;">
+    <!-- Plan cards: Free, Knox Plus and Mega Knox — same structure, so the
+         buttons line up. Only Mega Knox has a free trial. -->
+    <div class="reveal rg-3col pt-cards">
 
       <!-- FREE card -->
-      <div style="background:var(--blue);border:3px solid #0A85C2;border-radius:22px;box-shadow:0 6px 0 #075E8D;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <!-- Invisible placeholder to match Knox Plus's floating trial badge, so the two cards line up -->
-        <div style="height:8px;" aria-hidden="true"></div>
-        <div style="font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.85);margin-bottom:10px;">Free</div>
-        <div style="line-height:1;">
-          <span style="font-size:44px;font-weight:900;">$0</span>
-          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);">forever</span>
-        </div>
-        <div style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">No card needed</div>
-        <div style="flex:1;min-height:20px;"></div>
-        <button onclick="window.location.href='/app'" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:#fff;color:#0A85C2;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free</button>
+      <div class="pt-card pt-free">
+        <div class="pt-badge-slot" aria-hidden="true"></div>
+        <div class="pt-name">Free</div>
+        <div class="pt-price"><span>$0</span><em>forever</em></div>
+        <div class="pt-sub">No card needed</div>
+        <div class="pt-space"></div>
+        <button class="pt-btn" onclick="window.location.href='/app'">Start Free</button>
       </div>
 
       <!-- KNOX PLUS card -->
-      <div style="background:var(--green);border:3px solid #46A302;border-radius:22px;box-shadow:0 6px 0 #2D6A00;padding:26px 22px;text-align:center;color:white;position:relative;display:flex;flex-direction:column;">
-        <div id="proTrialBadge" style="display:inline-flex;position:absolute;top:-14px;left:50%;transform:translateX(-50%);align-items:center;gap:4px;background:var(--orange);color:white;font-size:10.5px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 #CC5500;">🎉 7-DAY FREE TRIAL</div>
-        <!-- Matches Free's placeholder, since the badge above floats absolutely and doesn't take layout space -->
-        <div style="height:8px;" aria-hidden="true"></div>
-        <div style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.9);margin-bottom:10px;">⚡ Knox Plus</div>
-        <div style="line-height:1;">
-          <span style="font-size:44px;font-weight:900;" id="proPrice">$9.99</span>
-          <span style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.9);" id="proPeriod">/mo</span>
-        </div>
-        <div class="yearly-note" id="proYearlyNote" style="display:none;font-size:12px;font-weight:800;color:rgba(255,255,255,0.9);margin-top:4px;">$79.99/yr — save $39.89</div>
-        <div id="proSubline" style="font-size:12px;font-weight:800;color:rgba(255,255,255,0.85);margin-top:4px;">Cancel anytime</div>
-        <div style="flex:1;min-height:8px;"></div>
-        <button onclick="handlePurchase('Plus')" id="proCTABtn" style="width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;cursor:pointer;background:#fff;color:#2D6A00;box-shadow:0 4px 0 rgba(0,0,0,0.18);transition:transform 0.15s,box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 0 rgba(0,0,0,0.18)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 0 rgba(0,0,0,0.18)'">Start Free Trial</button>
+      <div class="pt-card pt-plus">
+        <div class="pt-badge" id="proTrialBadge" style="display:none;"></div>
+        <div class="pt-badge-slot" aria-hidden="true"></div>
+        <div class="pt-name">⚡ Knox Plus</div>
+        <div class="pt-price"><span id="proPrice">$9.99</span><em id="proPeriod">/mo</em></div>
+        <div class="yearly-note pt-sub" id="proYearlyNote" style="display:none;">$79.99/yr — save $39.89</div>
+        <div class="pt-sub" id="proSubline">Unlimited questions · cancel anytime</div>
+        <div class="pt-space"></div>
+        <button class="pt-btn" onclick="handlePurchase('Plus')" id="proCTABtn">Get Knox Plus</button>
+      </div>
+
+      <!-- MEGA KNOX card -->
+      <div class="pt-card pt-mega">
+        <div class="pt-badge" id="megaTrialBadge">🎉 7-DAY FREE TRIAL</div>
+        <div class="pt-badge-slot" aria-hidden="true"></div>
+        <div class="pt-name">💎 Mega Knox</div>
+        <div class="pt-price"><span id="megaPrice">$12.99</span><em id="megaPeriod">/mo</em></div>
+        <div class="yearly-note pt-sub" id="megaYearlyNote" style="display:none;">$99.99/yr — save $55.89</div>
+        <div class="pt-sub" id="megaSubline">Everything Knox has · cancel anytime</div>
+        <div class="pt-space"></div>
+        <button class="pt-btn" onclick="handlePurchase('Mega')" id="megaCTABtn">Start Free Trial</button>
       </div>
 
     </div>
 
-    <!-- Feature-comparison rows — clean rounded card, checkmarks aligned under each plan column.
-         Reordered so the two rows that actually differentiate the plans (Questions,
-         Photo upload) come FIRST, right under the plan headers — that way when a
-         visitor's eye moves from the buttons down into the table, the first thing
-         they see is the real difference, not a wall of matching checkmarks. -->
-    <div class="reveal" style="background:var(--surface);border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);overflow:hidden;">
-
-      <!-- Group label -->
-      <div style="padding:18px 24px 12px;border-bottom:1.5px solid var(--border);background:var(--gray);">
-        <span style="font-size:12px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);">What's included</span>
-      </div>
-
-      <!-- Differentiating rows first -->
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Questions</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">5 / day*</div>
-        <div class="plan-unlimited" style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Photo &amp; file upload</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">2 credits each</div>
-        <div class="plan-unlimited" style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
-      </div>
-
-      <!-- Shared feature rows below the differentiators -->
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Answers, tutoring &amp; work-checking</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Learn mode (step-by-step tutoring)</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Flashcards made by Knox</div>
-        <div style="text-align:center;font-size:14px;font-weight:800;color:#0A85C2;">2 credits each</div>
-        <div class="plan-unlimited" style="text-align:center;font-size:14px;font-weight:800;color:#2D6A00;">Unlimited</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Knox Calculator</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Full AI quality</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;border-bottom:1.5px solid var(--border);">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Priority support</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-light);font-size:16px;font-weight:900;line-height:1;">—</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;padding:18px 24px;">
-        <div style="font-size:15px;font-weight:700;color:var(--text);">Early access to new features</div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--border);color:var(--text-light);font-size:16px;font-weight:900;line-height:1;">—</span></div>
-        <div style="text-align:center;"><span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--green-light);color:var(--green-dark);font-size:15px;font-weight:900;">✓</span></div>
-      </div>
-
+    <!-- What each plan includes. The rows that differ come first. -->
+    <div class="reveal pt-table">
+      <div class="pt-row pt-head"><div class="pt-label pt-group">What's included</div><div>Free</div><div>⚡ Plus</div><div>💎 Mega</div></div>
+      <div class="pt-row"><div class="pt-label">Questions</div><div><span class="pt-text free">5 / day*</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
+      <div class="pt-row"><div class="pt-label">Photo &amp; file upload<small>Mega reads files twice as long</small></div><div><span class="pt-text free">2 credits each</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
+      <div class="pt-row"><div class="pt-label">Flashcards made by Knox</div><div><span class="pt-text free">2 credits · 10 cards</span></div><div><span class="pt-text plus">Unlimited · 15 cards</span></div><div><span class="pt-text mega">Unlimited · 40 cards</span></div></div>
+      <div class="pt-row"><div class="pt-label">Custom decks<small>Difficulty, fill-in-the-blank and true/false cards, 10 photos per deck</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Usage limits<small>Uploads, file size, Learn sessions and decks a day</small></div><div><span class="pt-text free">Daily credits</span></div><div><span class="pt-text plus">High</span></div><div><span class="pt-text mega">Highest</span></div></div>
+      <div class="pt-row"><div class="pt-label">Support</div><div><span class="pt-text free">Email</span></div><div><span class="pt-text plus">Faster</span></div><div><span class="pt-text mega">Fastest</span></div></div>
+      <div class="pt-row"><div class="pt-label">Talk to the founder on Discord<small>Private Mega Knox channel, plus a vote on what Knox builds next</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Early access to new features</div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Mega badge in the app</div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Answers, tutoring &amp; work-checking</div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Learn mode (step-by-step tutoring)</div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Knox Calculator</div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row pt-last"><div class="pt-label">Full AI quality<small>The same AI on every plan</small></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div></div>
     </div>
 
     <p style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin-top:14px;">*Starts at 10, then +5 every day — save up unused questions up to 20.</p>
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
-      <button onclick="handlePurchase('Plus')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Knox Plus free for 7 days</button>
+      <button onclick="handlePurchase('Mega')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Mega Knox free for 7 days</button>
       <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
     </div>
 
@@ -2673,11 +2668,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 300px;text-align:left;">
         <span aria-hidden="true" style="font-size:34px;line-height:1;">🎁</span>
         <div>
-          <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Knox Plus as a gift</p>
-          <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Knox Plus with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
+          <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Knox Knows as a gift</p>
+          <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Knox Plus or Mega Knox with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
         </div>
       </div>
-      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;">🎁 Give Knox Plus</button>
+      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;">🎁 Give a gift</button>
     </div>
 
   </div><!-- /max-width wrapper -->
@@ -2712,7 +2707,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — unless you cancel before the trial ends. The free trial on Knox Plus Monthly gives you 7 days of full access. After that, $9.99/month is charged automatically. You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
         </div>
       </details>
 
@@ -2784,11 +2779,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <details class="knox-faq reveal">
         <summary>
-          <span>Can I give Knox Plus as a gift?</span>
+          <span>Can I give Knox Knows as a gift?</span>
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — buy 1, 3 or 12 months of Knox Plus as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged. <a href="#" onclick="event.preventDefault();window.knoxGifts?.openBuy();" style="color:var(--orange);font-weight:800;">Give Knox Plus →</a>
+          Yes — buy 1, 3 or 12 months of Knox Plus or Mega Knox as a gift code. It's a one-time payment, not a subscription: the code arrives by email, works once, never expires, and the person who redeems it is never charged. <a href="#" onclick="event.preventDefault();window.knoxGifts?.openBuy();" style="color:var(--orange);font-weight:800;">Give a gift →</a>
         </div>
       </details>
 
@@ -3233,13 +3228,20 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       if (window.currentUser?.uid !== uid) return;
       if (snap.exists()) {
         const data = snap.data();
-        const plan = data.plan || "free";
+        // Free / Knox Plus / Mega Knox — same rules as api/_plans.js (Mega is
+        // plan 'max'; comps, gift and Flame Fest time count too).
+        const now = Date.now(), paidPlan = ['super', 'max', 'plus'].includes(data.plan);
+        const tier = data.plan === 'max' || Number(data.megaUntil) > now || (data.comped === true && data.compedTier === 'mega') ? 'mega'
+          : paidPlan || data.comped === true || Number(data.plusUntil) > now ? 'plus' : 'free';
+        const plan = tier === 'mega' ? 'max' : tier === 'plus' ? (paidPlan ? data.plan : 'plus') : 'free';
+        window.userTier = tier;
         window.userPlan = plan;
         window.hasBillingAccount = !!data.stripeCustomerId;
         window.userComped = data.comped === true;
         userPlan = plan;
       } else {
         window.userPlan = "free";
+        window.userTier = "free";
         window.hasBillingAccount = false;
         window.userComped = false;
         userPlan = "free";
@@ -3693,8 +3695,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (dEmail)  dEmail.textContent  = email || '';
     if (dPlan) {
       // Render plan card (matches /app's dropdown) instead of plain text
-      const cfg = userPlan !== 'free'
-                ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited access' }
+      const cfg = window.userTier === 'mega'
+                ? { cls: 'mega', icon: '💎', name: 'Mega Knox', tag: 'Everything Knox has' }
+                : userPlan !== 'free'
+                ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
                 : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
       dPlan.innerHTML = '';
       const card = document.createElement('div');
@@ -3772,7 +3776,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (name) name.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'Your account');
     const paid = ['super', 'max', 'plus'].includes(window.userPlan);
     const badge = document.getElementById('lnAccountBadge');
-    if (badge) { badge.textContent = paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid); }
+    if (badge) { badge.textContent = window.userTier === 'mega' ? '💎 Mega Knox' : paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid); }
   }
   // iOS Safari ignores overflow:hidden on body, so pin the page in place
   // while the phone menu is open and restore the scroll spot on close.
@@ -4109,49 +4113,34 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (mBtn) { mBtn.style.background = type === 'monthly' ? '#FF6B00' : 'transparent'; mBtn.style.color = type === 'monthly' ? 'white' : '#9CA3AF'; mBtn.style.boxShadow = type === 'monthly' ? '0 3px 0 #CC5500' : 'none'; }
     if (yBtn) { yBtn.style.background = type === 'yearly' ? '#FF6B00' : 'transparent'; yBtn.style.color = type === 'yearly' ? 'white' : '#9CA3AF'; yBtn.style.boxShadow = type === 'yearly' ? '0 3px 0 #CC5500' : 'none'; }
 
-    // Knox Plus pricing — the one paid plan
-    const proPrice   = document.getElementById('proPrice');
-    const proPeriod  = document.getElementById('proPeriod');
-    const proNote    = document.getElementById('proYearlyNote');
-    const proSubline = document.getElementById('proSubline');
-    const proBtn     = document.getElementById('proCTABtn');
-    const proTrial   = document.getElementById('proTrialBadge');
-    // Monthly → $9.99/mo · Yearly → effective $6.67/mo billed as $79.99/yr
-    if (proPrice)  proPrice.textContent  = type === 'monthly' ? '$9.99'  : '$6.67';
-    if (proPeriod) proPeriod.textContent = type === 'monthly' ? '/mo'    : '/mo, billed yearly';
-    if (proNote)   proNote.style.display = type === 'yearly'  ? 'block'  : 'none';
-    if (proSubline) proSubline.textContent = type === 'monthly' ? 'Cancel anytime' : 'Best value · save 33%';
-    if (proBtn && !proBtn.disabled) proBtn.textContent = type === 'monthly' ? 'Start Free Trial' : 'Get Knox Plus Yearly';
-    // The big button under the table promised a 7-day trial even with Yearly
-    // selected — but only Monthly has a trial, so it must follow the toggle.
-    const bottomCTA = document.getElementById('proBottomCTA');
-    if (bottomCTA && !bottomCTA.disabled) bottomCTA.textContent = type === 'monthly' ? 'Try Knox Plus free for 7 days' : 'Get Knox Plus Yearly — $79.99/yr';
-    // The badge changes content based on billing period:
-    //   Monthly → "🎉 7-DAY FREE TRIAL" (matches server-side trial_period_days)
-    //   Yearly  → "💰 4 MONTHS FREE"    ($39.89 saved ÷ $9.99/mo ≈ 4 months)
-    if (proTrial) {
-      proTrial.style.display = 'flex';
-      if (type === 'monthly') {
-        proTrial.textContent = '🎉 7-DAY FREE TRIAL';
-        proTrial.style.background = '#FF6B00';
-        proTrial.style.boxShadow  = '0 2px 0 #CC5500';
-      } else {
-        proTrial.textContent = '💰 4 MONTHS FREE';
-        proTrial.style.background = '#7C3AED';
-        proTrial.style.boxShadow  = '0 2px 0 #5B21B6';
-      }
+    // Two paid plans: Knox Plus ($9.99/mo or $79.99/yr) and Mega Knox ($12.99/mo
+    // or $99.99/yr). Only Mega Knox monthly has the 7-day free trial.
+    const yearly = type === 'yearly';
+    const $ = id => document.getElementById(id);
+    if ($('proPrice'))  $('proPrice').textContent  = yearly ? '$6.67' : '$9.99';
+    if ($('proPeriod')) $('proPeriod').textContent = yearly ? '/mo, billed yearly' : '/mo';
+    if ($('proSubline')) $('proSubline').textContent = yearly ? 'Best value · save 33%' : 'Unlimited questions · cancel anytime';
+    if ($('megaPrice'))  $('megaPrice').textContent  = yearly ? '$8.33' : '$12.99';
+    if ($('megaPeriod')) $('megaPeriod').textContent = yearly ? '/mo, billed yearly' : '/mo';
+    if ($('megaSubline')) $('megaSubline').textContent = yearly ? 'Best value · save 36%' : 'Everything Knox has · cancel anytime';
+    // Badges: Mega shows its free trial (monthly) or its savings (yearly);
+    // Plus shows its savings on yearly only.
+    const proTrial = $('proTrialBadge'), megaTrial = $('megaTrialBadge');
+    if (proTrial) { proTrial.style.display = yearly ? 'flex' : 'none'; proTrial.textContent = '💰 SAVE 33%'; proTrial.style.background = '#7C3AED'; proTrial.style.boxShadow = '0 2px 0 #5B21B6'; }
+    if (megaTrial) {
+      megaTrial.style.display = 'flex';
+      megaTrial.textContent = yearly ? '💰 SAVE 36%' : '🎉 7-DAY FREE TRIAL';
+      megaTrial.style.background = yearly ? '#7C3AED' : '#FF6B00';
+      megaTrial.style.boxShadow  = yearly ? '0 2px 0 #5B21B6' : '0 2px 0 #CC5500';
     }
-
-    document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = type === 'yearly' ? 'block' : 'none'; });
-
-    // Trigger the price-pop animation on the price element.
-    // Removing and re-adding the class on the next animation frame is the
-    // canonical way to "replay" a CSS animation in vanilla JS.
-    if (proPrice) {
-      proPrice.classList.remove('price-pop');
-      // Force reflow before re-adding so the browser registers it as new
-      void proPrice.offsetWidth;
-      proPrice.classList.add('price-pop');
+    document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = yearly ? 'block' : 'none'; });
+    updatePricingButtons(true);
+    // Replay the price-pop animation.
+    for (const el of [$('proPrice'), $('megaPrice')]) {
+      if (!el) continue;
+      el.classList.remove('price-pop');
+      void el.offsetWidth;
+      el.classList.add('price-pop');
     }
   }
 
@@ -4159,9 +4148,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
   async function handlePurchase(planName, requestedBilling) {
     if (window._checkoutBusy) return;
-    // One paid plan now — "Plus" is the only real plan value (shown as Knox Plus), but Super/Max map
-    // to it too in case an old link or cached button still sends them.
-    const planKey = 'super'; // keep existing Stripe price ID / Firestore plan value — no product changes needed
+    // 'super' = Knox Plus, 'max' = Mega Knox (the Stripe / Firestore plan values).
+    const planKey = planName === 'Mega' ? 'max' : 'super';
     const billingPeriod = requestedBilling || billing || 'monthly';
 
     // Guest? Save their intent so we can resume checkout after they sign up.
@@ -4181,7 +4169,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     window._checkoutBusy = true;
     const requestUser = window.currentUser;
-    const btn = document.getElementById('proCTABtn');
+    const btn = document.getElementById(planKey === 'max' ? 'megaCTABtn' : 'proCTABtn');
     const originalText = btn?.textContent;
     if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
 
@@ -4202,6 +4190,16 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
       if (window.currentUser !== requestUser) throw new Error('Account changed. Please try again.');
+      // Already subscribed: the server switched the plan on the same
+      // subscription (Stripe charges or credits the difference).
+      if (data.switched) {
+        window._pendingCheckout = null;
+        try { sessionStorage.removeItem('pendingCheckout'); } catch (_) {}
+        const name = planKey === 'max' ? 'Mega Knox' : 'Knox Plus';
+        alert(`You're on ${name} now! 🎉 Stripe will adjust your next bill for the change.`);
+        window.location.href = '/app?payment=success';
+        return;
+      }
       if (!data.url || new URL(data.url).origin !== 'https://checkout.stripe.com') throw new Error('Invalid checkout link. Please contact support.');
       window._pendingCheckout = null;
       try { sessionStorage.removeItem('pendingCheckout'); } catch (_) {}
@@ -4257,7 +4255,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     window._pendingCheckout = pending;
     // Close login modal if it's open, then route through handlePurchase
     try { document.getElementById('loginModal')?.classList?.remove('open'); } catch(e) {}
-    await handlePurchase('Plus', pending.billing);
+    await handlePurchase(pending.plan === 'max' ? 'Mega' : 'Plus', pending.billing);
   }
   window.resumePendingCheckoutIfAny = resumePendingCheckoutIfAny;
 
@@ -4267,14 +4265,15 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     // Build plan display info
     const plan     = window.userPlan || 'free';
-    const planNames  = { free: 'Free', super: 'Knox Plus', max: 'Knox Plus' };
-    const planPrices = { free: '$0', super: '$9.99/mo', max: '$9.99/mo' };
-    const planColors = { free: '#6B7280', super: '#22C55E', max: '#22C55E' };
-    const planEmojis = { free: '🐾', super: '⚡', max: '⚡' };
+    const planNames  = { free: 'Free', super: 'Knox Plus', plus: 'Knox Plus', max: 'Mega Knox' };
+    const planPrices = { free: '$0', super: '$9.99/mo', plus: '$9.99/mo', max: '$12.99/mo' };
+    const planColors = { free: '#6B7280', super: '#22C55E', plus: '#22C55E', max: '#D4A000' };
+    const planEmojis = { free: '🐾', super: '⚡', plus: '⚡', max: '💎' };
     const planDescs  = {
       free:   'You\'re on the free plan — 5 questions a day, save up to 20, no card needed.',
-      super:  'Basically unlimited questions — study as much as you need to.',
-      max:    'Basically unlimited questions — study as much as you need to.',
+      super:  'Unlimited questions — study as much as you need to.',
+      plus:   'Unlimited questions — study as much as you need to.',
+      max:    'Everything Knox has — the biggest custom flashcard decks, early access and the highest limits.',
     };
 
     // Remove existing modal if open
@@ -4405,12 +4404,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         '</div>',
       ].join('');
     } else {
-      // Show trial message for Knox Plus monthly (the only plan with a free trial).
-      // The internal plan value is still 'super' — that's the legacy Stripe key
-      // that now maps to Knox Plus. See webhook.js PLAN_NAMES for the same mapping.
+      // Show the trial message for Mega Knox monthly (the only plan with a free
+      // trial). Plan values: 'super' = Knox Plus, 'max' = Mega Knox.
       const _uPlan = window.userPlan || userPlan || 'free';
       const isSuperMonthlyTrial = (
-        _uPlan === 'super' &&
+        _uPlan === 'max' &&
         window._lastPurchasedBilling === 'monthly'
       );
       toast.innerHTML = [
@@ -4433,28 +4431,34 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   }
 
   // ── Update pricing buttons based on current plan ─────────────────────────
-  function updatePricingButtons() {
+  // Plan buttons follow the account: your plan says "✓ Current Plan"; a Knox
+  // Plus member can move up to Mega Knox (or a Mega member down to Plus) —
+  // the server switches the same subscription. Signed out / free: normal
+  // buttons for the chosen billing.
+  function updatePricingButtons(fromBilling) {
     userPlan = window.userPlan || userPlan; // sync from module scope
-    // One paid plan now — any non-free plan (including legacy 'max' from
-    // before the merge) shows "Current Plan" instead of a trial button that
-    // would only error with "you already have a subscription". Signing out
-    // (or a free account) restores the normal buttons for the chosen billing.
-    const isPaid = !!window.currentUser && ['super', 'max', 'plus'].includes(userPlan);
-    for (const id of ['proCTABtn', 'proBottomCTA']) {
+    const tier = !window.currentUser ? 'free' : (window.userTier || (userPlan === 'max' ? 'mega' : ['super', 'plus'].includes(userPlan) ? 'plus' : 'free'));
+    const yearly = (billing || 'monthly') === 'yearly';
+    const set = (id, text, disabled) => {
       const btn = document.getElementById(id);
-      if (!btn) continue;
-      btn.disabled = isPaid;
-      btn.style.opacity = isPaid ? '0.7' : '';
-      btn.style.cursor = isPaid ? 'default' : '';
-    }
-    if (isPaid) {
-      const proBtn = document.getElementById('proCTABtn');
-      const bottomBtn = document.getElementById('proBottomCTA');
-      if (proBtn) proBtn.textContent = '✓ Current Plan';
-      if (bottomBtn) bottomBtn.textContent = '✓ You have Knox Plus';
+      if (!btn) return;
+      btn.textContent = text; btn.disabled = !!disabled;
+      btn.style.opacity = disabled ? '0.7' : ''; btn.style.cursor = disabled ? 'default' : '';
+    };
+    if (tier === 'mega') {
+      set('megaCTABtn', '✓ Current Plan', true);
+      set('proCTABtn', 'Switch to Knox Plus', false);
+      set('proBottomCTA', '✓ You have Mega Knox', true);
+    } else if (tier === 'plus') {
+      set('proCTABtn', '✓ Current Plan', true);
+      set('megaCTABtn', 'Upgrade to Mega Knox', false);
+      set('proBottomCTA', '💎 Upgrade to Mega Knox', false);
     } else {
-      setBilling(billing || 'monthly');
+      set('proCTABtn', yearly ? 'Get Knox Plus Yearly' : 'Get Knox Plus', false);
+      set('megaCTABtn', yearly ? 'Get Mega Knox Yearly' : 'Start Free Trial', false);
+      set('proBottomCTA', yearly ? 'Get Mega Knox Yearly — $99.99/yr' : 'Try Mega Knox free for 7 days', false);
     }
+    if (!fromBilling && tier === 'free') setBilling(billing || 'monthly');
   }
   window.updatePricingButtons = updatePricingButtons;
 

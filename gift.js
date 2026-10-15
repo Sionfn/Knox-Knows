@@ -7,11 +7,19 @@
 // The server (api/redeem.js, api/create-checkout-session.js) does all checks.
 (function () {
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const OPTIONS = [
-    { id: '1m', label: '1 month', price: '$9.99', note: 'A great stocking stuffer' },
-    { id: '3m', label: '3 months', price: '$29.99', note: 'A whole semester' },
-    { id: '12m', label: '12 months', price: '$79.99', note: 'The full school year and summer' },
-  ];
+  // Gift cards for both plans (prices match api/_gifts.js).
+  const PLANS = {
+    plus: { name: 'Knox Plus', icon: '⚡', blurb: 'Unlimited questions, photos and files.', options: [
+      { id: '1m', label: '1 month', price: '$9.99', note: 'A great stocking stuffer' },
+      { id: '3m', label: '3 months', price: '$29.99', note: 'A whole semester' },
+      { id: '12m', label: '12 months', price: '$79.99', note: 'The full school year and summer' },
+    ] },
+    mega: { name: 'Mega Knox', icon: '💎', blurb: 'Everything in Plus, plus the biggest custom flashcard decks, early access and the highest limits.', options: [
+      { id: 'mega-1m', label: '1 month', price: '$12.99', note: 'A great stocking stuffer' },
+      { id: 'mega-3m', label: '3 months', price: '$36.99', note: 'A whole semester' },
+      { id: 'mega-12m', label: '12 months', price: '$99.99', note: 'The full school year and summer' },
+    ] },
+  };
   async function api(path, method, body) {
     const user = window.currentUser;
     if (!user?.getIdToken) throw new Error('Please sign in first.');
@@ -48,8 +56,8 @@
   // Signed out: remember what they wanted, ask them to sign in, carry on after.
   function needSignIn(action, code) {
     try { sessionStorage.setItem('knoxGiftAction', JSON.stringify({ action, code: code || '' })); } catch (e) {}
-    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">${action === 'buy' ? 'Give Knox Plus' : 'Redeem your gift'}</h2>
-      <p>${action === 'buy' ? 'Sign in first, so we can send your gift code to your email.' : 'Sign in or make a free account to add your Knox Plus gift.'}</p>
+    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">${action === 'buy' ? 'Give Knox Knows' : 'Redeem your gift'}</h2>
+      <p>${action === 'buy' ? 'Sign in first, so we can send your gift code to your email.' : 'Sign in or make a free account to add your gift.'}</p>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-signin>Sign in</button></div>`);
     m.querySelector('[data-signin]').addEventListener('click', () => { close(); (window.openAuthModal || window.openLoginModal)?.('signin'); }); // app / landing page
   }
@@ -58,11 +66,11 @@
   async function openRedeem(code = '') {
     if (!window.currentUser) return needSignIn('redeem', code);
     const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Redeem a code</h2>
-      <p>Got a Knox Plus gift card? Enter the code to add Knox Plus to your account.</p>
+      <p>Got a Knox Plus or Mega Knox gift card? Enter the code to add it to your account.</p>
       <form class="kg-form" autocomplete="off"><input class="kg-input" id="kgCode" placeholder="KNOX-XXXX-XXXX-XXXX" value="${esc(code)}" aria-label="Gift code" autocapitalize="characters" spellcheck="false" maxlength="40"><button type="submit" class="ff-claim">Redeem</button></form>
       <div class="kg-msg" role="status"></div>
       <div class="kg-bought"></div>
-      <button type="button" class="ff-pop-later" data-buy>🎁 Want to give Knox Plus instead?</button>`);
+      <button type="button" class="ff-pop-later" data-buy>🎁 Want to give Knox Knows instead?</button>`);
     const input = m.querySelector('#kgCode'), msg = m.querySelector('.kg-msg');
     input.focus();
     m.querySelector('[data-buy]').addEventListener('click', openBuy);
@@ -73,9 +81,10 @@
       try {
         const r = await api('/api/redeem', 'POST', { code: input.value });
         window.knoxRefreshPlan?.();
-        const until = new Date(r.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-        show(`<div class="ff-pop-flame" aria-hidden="true">⚡</div><h2 id="kgTitle">You’re on Knox Plus!</h2>
-          <p>Your gift added ${r.days} days of Knox Plus — unlimited questions and everything else Knox Plus has, through <b>${until}</b>. Nothing renews and you won’t be charged. 🎉</p>
+        const until = new Date(r.until || r.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+        const name = r.tier === 'mega' ? 'Mega Knox' : 'Knox Plus';
+        show(`<div class="ff-pop-flame" aria-hidden="true">${r.tier === 'mega' ? '💎' : '⚡'}</div><h2 id="kgTitle">You’re on ${name}!</h2>
+          <p>Your gift added ${r.days} days of ${name} — everything ${name} has, through <b>${until}</b>. Nothing renews and you won’t be charged. 🎉</p>
           <div class="ff-pop-actions"><button type="button" class="ff-claim" data-ok>Let’s go</button></div>`).querySelector('[data-ok]').addEventListener('click', close);
       } catch (err) { msg.className = 'kg-msg err'; msg.textContent = err.message; btn.disabled = false; }
     });
@@ -96,18 +105,33 @@
   // ── Buy a gift ──────────────────────────────────────────────────────────
   function openBuy() {
     if (!window.currentUser) return needSignIn('buy');
-    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Give Knox Plus</h2>
-      <p>A gift card for unlimited homework help. You get a code by email to give or print — no subscription, it never renews.</p>
-      <div class="kg-options" role="radiogroup" aria-label="Gift length">${OPTIONS.map((o, i) =>
-        `<button type="button" class="kg-option${o.id === '12m' ? ' on' : ''}" role="radio" aria-checked="${o.id === '12m'}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('')}</div>
+    let plan = 'plus', choice = '12m';
+    const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Give Knox Knows</h2>
+      <p>A gift card for homework help. You get a code by email to give or print — no subscription, it never renews.</p>
+      <div class="kg-plans" role="radiogroup" aria-label="Plan">${Object.entries(PLANS).map(([id, p]) =>
+        `<button type="button" class="kg-plan${id === plan ? ' on' : ''}${id === 'mega' ? ' mega' : ''}" role="radio" aria-checked="${id === plan}" data-plan="${id}">${p.icon} ${p.name}</button>`).join('')}</div>
+      <p class="kg-blurb"></p>
+      <div class="kg-options" role="radiogroup" aria-label="Gift length"></div>
       <div class="ff-pop-actions"><button type="button" class="ff-claim" data-checkout>Continue to payment</button></div>
       <div class="kg-msg" role="status"></div>
-      <p class="kg-fine">The code works once and never expires. Whoever redeems it gets Knox Plus for that long, then goes back to the free plan — they’re never charged.</p>`);
-    let choice = '12m';
+      <p class="kg-fine">The code works once and never expires. Whoever redeems it gets that plan for that long, then goes back to the free plan — they’re never charged.</p>`);
+    const draw = () => {
+      const p = PLANS[plan];
+      m.querySelector('.kg-blurb').textContent = p.blurb;
+      m.querySelector('.kg-options').innerHTML = p.options.map(o =>
+        `<button type="button" class="kg-option${o.id === choice ? ' on' : ''}" role="radio" aria-checked="${o.id === choice}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('');
+      m.querySelectorAll('.kg-plan').forEach(x => { const on = x.dataset.plan === plan; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
+    };
+    draw();
+    m.querySelector('.kg-plans').addEventListener('click', e => {
+      const b = e.target.closest('[data-plan]'); if (!b) return;
+      const months = choice.replace('mega-', '');
+      plan = b.dataset.plan; choice = plan === 'mega' ? 'mega-' + months : months;
+      draw();
+    });
     m.querySelector('.kg-options').addEventListener('click', e => {
       const b = e.target.closest('[data-gift]'); if (!b) return;
-      choice = b.dataset.gift;
-      m.querySelectorAll('.kg-option').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+      choice = b.dataset.gift; draw();
     });
     m.querySelector('[data-checkout]').addEventListener('click', async e => {
       const btn = e.currentTarget, msg = m.querySelector('.kg-msg');
