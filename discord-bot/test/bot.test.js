@@ -91,7 +91,7 @@ test('/ask answers publicly, shows questions left, never pings, and offers a Rep
   assert.equal(sentTo.question, '@everyone factor x^2+5x+6');
   assert.deepEqual(i.sent.map(m => m.type), ['defer', 'edit']);
   assert.match(i.sent[1].content, /multiply to 6/);
-  assert.match(i.sent[1].content, /1 of 2 questions left today/);
+  assert.match(i.sent[1].content, /1 of 2 questions left today · Replies to this lesson are free/);
   assert.equal(JSON.stringify(i.sent[1].allowedMentions), '{"parse":[]}');
   assert.match(buttonId(i.sent[1]), /^reply:/);
 });
@@ -105,7 +105,7 @@ test('/ask stops at the daily limit, but Plus members keep going', async () => {
   assert.match(blocked.sent[0].content, /used your 2 questions/);
   const plus = fake({ roles: ['plus'] });
   await bot.ask(plus);
-  assert.match(plus.sent.at(-1).content, /unlimited/);
+  assert.match(plus.sent.at(-1).content, /-# Knox Plus · unlimited questions$/);
 });
 
 test('/ask explains errors politely and refunds the question', async () => {
