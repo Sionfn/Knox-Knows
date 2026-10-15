@@ -72,10 +72,13 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     // Knox can take a while; deferring gives us up to 15 minutes to answer.
     await interaction.deferReply();
     const question = interaction.options.getString('question', true).trim();
-    const left = slot.remaining === null ? 'Knox Plus · unlimited questions' : `${slot.remaining} of ${config.perUserLimit} questions left today`;
+    // Plus members are unlimited anyway, so only free members hear that replies are free.
+    const left = slot.remaining === null
+      ? 'Knox Plus · unlimited questions'
+      : `${slot.remaining} of ${config.perUserLimit} questions left today · Replies to this lesson are free`;
     await answer(interaction, {
       question, history: [], header: quote(question),
-      footer: () => `-# ${left} · Replies to this lesson are free`,
+      footer: () => `-# ${left}`,
       lessonIdFor: text => lessons.start(userId, question, text),
       onFail: () => limits.refund(userId),
     });
