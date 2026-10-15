@@ -149,7 +149,7 @@ Thanks for signing up for Knox Knows — your account is ready to use.
 
 Ask Knox any homework question at https://knoxknowsapp.com. You get 10 free questions to start, then 5 more each day (save up to 20), every subject, and you can snap a photo of your homework (or upload a PDF, Word doc or slides) instead of typing it.
 
-Want to really learn it? Turn on Learn mode and Knox teaches you step by step instead of handing over the answer. And Flashcards turns any topic or your notes into a study deck — free.
+Want to really learn it? Turn on Learn mode and Knox teaches you step by step instead of handing over the answer. And Flashcards turns any topic or your notes into a study deck.
 
 I built Knox Knows because I wanted a tutor that actually explains the why, not one that just spits out answers. If Knox ever gets something wrong, hit the thumbs-down on the answer — I read those personally.
 
@@ -168,7 +168,7 @@ Knox Knows`;
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Every subject</strong> — math, science, history, english</li>
       <li style="margin-bottom:6px;"><strong style="color:#FF6B00;">Snap a photo</strong> of your homework (or upload a PDF, Word doc or slides)</li>
       <li style="margin-bottom:6px;"><strong style="color:#7C3AED;">Learn mode</strong> — Knox teaches you step by step instead of handing over the answer</li>
-      <li style="margin-bottom:6px;"><strong style="color:#58A700;">Flashcards</strong> — turn any topic or your notes into a study deck, free</li>
+      <li style="margin-bottom:6px;"><strong style="color:#58A700;">Flashcards</strong> — turn any topic or your notes into a study deck</li>
     </ul>
     <p style="margin:0 0 14px;">I built Knox because I wanted a tutor that actually explains the <em>why</em>, not one that just spits out answers. If Knox ever gets something wrong, hit the <strong>thumbs-down</strong> on the answer — I read those personally.</p>
     <p style="margin:0 0 16px;">Any questions, just reply to this email. It comes straight to me.</p>

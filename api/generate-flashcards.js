@@ -7,9 +7,13 @@
 //   style:   'qa' (question → answer, default) or 'term' (term → definition)
 // → { title, cards: [{ front, back }] }
 //
-// Access: free for every signed-in account — no credits, decks of up to 20
-// cards — with a hidden daily safety limit (DAILY_DECK_LIMIT) on AI cost.
-// Failed or refused generations don't count toward the limit.
+// Access:
+//   Mega Knox / comped / gift or Flame Fest Mega Knox — unlimited decks of up
+//                 to 20 cards (with a hidden daily safety limit on AI cost).
+//   Free        — each deck costs DECK_CREDIT_COST credits from the same daily
+//                 bank as Ask Knox questions (same rules as api/ask.js), decks
+//                 of up to FREE_MAX_CARDS cards.
+// Failed or refused generations give the credits / use back.
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
@@ -28,7 +32,13 @@ const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
 const MODEL = "gpt-6-luna";           // same model as Ask Knox
-const DAILY_DECK_LIMIT = 40;          // hidden per-account daily safety limit on AI decks
+const DAILY_DECK_LIMIT = 40;          // hidden per-account daily safety limit (Mega Knox)
+const DECK_CREDIT_COST = 2;           // free: a deck costs 2 credits, like a photo
+const FREE_MAX_CARDS   = 10;
+// Free daily bank — keep in sync with api/ask.js (and api/me.js).
+const FREE_DAILY_REGEN = 5, FREE_MAX_BALANCE = 20, FREE_STARTING_BALANCE = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isPaid = d => ["super", "max", "plus"].includes(d?.plan) || d?.comped === true || Number(d?.plusUntil) > Date.now();
 const ALLOWED_COUNTS = [5, 10, 15, 20];
 const MAX_PHOTOS = 5;                 // photos of notes per deck
 const MAX_FRONT = 300, MAX_BACK = 600, MAX_TITLE = 80;
@@ -192,26 +202,58 @@ export default async function handler(req, res) {
   if (request.length < 3)    return res.status(400).json({ error: "Tell Knox what you're studying." });
   if (request.length > 4000) return res.status(400).json({ error: "That's a lot! Keep it under 4,000 characters." });
 
-  // ── Free for everyone: no credits. One hidden per-account daily limit keeps
-  // AI costs safe; one transaction, so parallel requests can't overshoot it.
-  const capRef = db.collection("users").doc(uid).collection("usage").doc("flashcardsAI");
-  let allowed;
+  // ── Charge: Mega Knox uses the hidden daily safety limit, free spends
+  // credits. One transaction, so parallel requests can't overspend.
+  const userRef = db.collection("users").doc(uid);
+  const capRef  = userRef.collection("usage").doc("flashcardsAI");
+  const bankRef = userRef.collection("usage").doc("bank");
+  let charge;
   try {
-    allowed = await db.runTransaction(async tx => {
-      const cap  = await tx.get(capRef);
-      const used = cap.exists && cap.data().day === today() ? cap.data().count || 0 : 0;
-      if (used >= DAILY_DECK_LIMIT) return false;
-      tx.set(capRef, { day: today(), count: used + 1, updatedAt: new Date().toISOString() });
-      return true;
+    charge = await db.runTransaction(async tx => {
+      const user = await tx.get(userRef);
+      if (isPaid(user.exists ? user.data() : {})) {
+        const cap  = await tx.get(capRef);
+        const used = cap.exists && cap.data().day === today() ? cap.data().count || 0 : 0;
+        if (used >= DAILY_DECK_LIMIT) return { status: 429 };
+        tx.set(capRef, { day: today(), count: used + 1, updatedAt: new Date().toISOString() });
+        return { status: 200, kind: "paid" };
+      }
+      // Free: the same daily-bank rules as Ask Knox (regen once per full day,
+      // never trimming a balance above the cap, e.g. Flame Fest bonus questions).
+      const now = Date.now(), snap = await tx.get(bankRef);
+      let balance = FREE_STARTING_BALANCE, lastRegenAt = now;
+      if (snap.exists) {
+        const d = snap.data();
+        balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
+        lastRegenAt = d.lastRegenAt || now;
+        const days = Math.floor((now - lastRegenAt) / DAY_MS);
+        if (days > 0) { balance = Math.max(balance, Math.min(FREE_MAX_BALANCE, balance + days * FREE_DAILY_REGEN)); lastRegenAt += days * DAY_MS; }
+      }
+      if (balance < DECK_CREDIT_COST) {
+        tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
+        return { status: 402, remaining: balance };
+      }
+      tx.set(bankRef, { balance: balance - DECK_CREDIT_COST, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
+      return { status: 200, kind: "free", remaining: balance - DECK_CREDIT_COST };
     });
   } catch (err) {
     console.error("Flashcards usage check failed:", err);
     return res.status(503).json({ error: "Knox is busy right now. Please try again in a moment." });
   }
-  if (!allowed) return res.status(429).json({ error: `You've made ${DAILY_DECK_LIMIT} decks with Knox today — that's the daily limit. Try again tomorrow!` });
+  if (charge.status === 429) return res.status(429).json({ error: `You've made ${DAILY_DECK_LIMIT} decks with Knox today — that's the daily limit. Try again tomorrow!` });
+  if (charge.status === 402) return res.status(402).json({
+    error: `Making a deck costs ${DECK_CREDIT_COST} credits — you have ${charge.remaining} left. You get 5 more every day, or go unlimited with Mega Knox.`,
+    upgrade: true, remaining: charge.remaining,
+  });
+  if (charge.kind === "free") count = Math.min(count, FREE_MAX_CARDS);
 
-  // A deck Knox couldn't deliver doesn't count toward the daily limit.
+  // A deck Knox couldn't deliver gives the credits (or the daily use) back.
   const refund = () => db.runTransaction(async tx => {
+    if (charge.kind === "free") {
+      const bank = await tx.get(bankRef);
+      if (bank.exists) tx.set(bankRef, { balance: (bank.data().balance || 0) + DECK_CREDIT_COST }, { merge: true }); // exactly what was taken
+      return;
+    }
     const cap = await tx.get(capRef);
     if (cap.exists && cap.data().day === today() && cap.data().count > 0) tx.set(capRef, { count: cap.data().count - 1 }, { merge: true });
   }).catch(() => {});
@@ -269,5 +311,5 @@ export default async function handler(req, res) {
   const title = clean(parsed.title, MAX_TITLE) || clean(request.split(/[.\n]/)[0], 60) || "My Knox deck";
   if (pictures) await addPictures(cards);
   else for (const c of cards) { if (c.imageTitle) c.imageTopic = c.imageTitle; delete c.imageTitle; }
-  return res.status(200).json({ title, cards });
+  return res.status(200).json({ title, cards, ...(charge.kind === "free" ? { creditsLeft: charge.remaining, creditCost: DECK_CREDIT_COST } : {}) });
 }

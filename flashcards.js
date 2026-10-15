@@ -129,11 +129,17 @@ const EXAMPLES=[
   ['🫀','Nursing · the heart','College nursing student: anatomy of the heart and the path of blood flow'],
 ];
 const isPlus=()=>['super','max','plus'].includes(window.userPlan)||window.userComped===true;
-const EVERYONE=true; // launched Nov 1: Flashcards (and Make with Knox) are free for everyone
+const EVERYONE=true; // launched Nov 1: everyone can use Flashcards
+// Making a deck with Knox: Mega Knox is unlimited (up to 20 cards); free
+// accounts spend DECK_COST credits per deck, up to FREE_MAX cards (the server
+// in api/generate-flashcards.js enforces both).
+const DECK_COST=2, FREE_MAX=10;
 const canSee=()=>EVERYONE||isPlus();
 const chip=(label,action,on,attrs='')=>`<button type="button" class="fc-chip${on?' on':''}" data-action="${action}" ${attrs}>${label}</button>`;
 function makeView(){
   generationVersion++;session=null;editing=null;dirty=false;importNote=null;
+  const plus=isPlus();
+  if(!plus&&makeOpts.count>FREE_MAX)makeOpts.count=FREE_MAX;
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
@@ -146,12 +152,13 @@ function makeView(){
       <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${MAX_PHOTOS}) — or drag them here.</p>
       <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
-        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
+        <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20].map(n=>!plus&&n>FREE_MAX?chip(`${n} <span class="fc-plus-tag">⚡ Mega</span>`,'upgrade',false,`title="Mega Knox makes decks up to 20 cards"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}</div></div>
       </div>
       <label class="fc-switch"><input type="checkbox" id="fcAutoPics"${autoPictures()?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>Add pictures automatically</b><small>Knox adds a free picture to cards where one helps (a body part, a place, an artwork). You can always add or change pictures yourself.</small></span></label>
-      <div class="fc-toolbar" style="margin-top:20px">${btn('✨ Make my deck','make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">Free for everyone · up to 20 cards per deck.</p>
+      ${makeOpts.upgrade?`<div class="fc-upsell">⚡ <span>Go unlimited with <b>Mega Knox</b> — make as many decks as you want, up to 20 cards each.</span>${btn('See Mega Knox','upgrade',{cls:'small'})}</div>`:''}
+      <div class="fc-toolbar" style="margin-top:20px">${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} credits`,'make-go',{cls:'primary'})}</div>
+      <p class="fc-cost">${plus?'⚡ Mega Knox — unlimited decks, up to 20 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Mega Knox</b> makes unlimited decks.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -181,6 +188,7 @@ async function sampleDeck(){
     const valid=validateDeck({title:data.title||'Sample deck',cards});
     deck={id:crypto.randomUUID(),title:valid.title,cards:valid.cards.map((c,i)=>({...c,...(cards[i].imageTopic?{imageTopic:cards[i].imageTopic}:{})}))};
   }catch{home();message('Knox couldn’t make a sample deck. Please try again.');return;}
+  window.updateUsageIndicator?.();
   if(save([...decks,deck])){home();message(`Sample deck added: ${deck.title} · ${deck.cards.length} cards. Try Review due!`,'ok');}
 }
 async function makeDeck(){
@@ -204,10 +212,12 @@ async function makeDeck(){
     data=await r.json().catch(()=>({}));ok=r.ok;
   }catch{data={error:'Couldn’t reach Knox. Check your connection and try again.'};}
   if(version!==generationVersion||owner!==key())return;
-  if(!ok||!Array.isArray(data.cards)){makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
+  if(!ok||!Array.isArray(data.cards)){makeOpts.upgrade=!!data.upgrade;makeView();message(data.error||'Knox couldn’t make that deck. Please try again.');return;}
+  window.updateUsageIndicator?.(); // the sidebar's credits reflect the deck
   editing={id:crypto.randomUUID(),title:data.title||'My Knox deck',cards:data.cards.map(c=>({front:c.front,back:c.back,...cleanImage(c),...(typeof c.imageTopic==='string'&&c.imageTopic.trim()?{imageTopic:c.imageTopic.trim().slice(0,120)}:{})}))};
   renderEditor();dirty=true;makeOpts.request='';makeOpts.files=[];
-  message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!`,'ok');
+  const left=typeof data.creditsLeft==='number'?` You have ${data.creditsLeft} credit${data.creditsLeft===1?'':'s'} left.`:'';
+  message(`Knox made ${editing.cards.length} card${editing.cards.length===1?'':'s'}. Read them over, change anything you like, then save!${left}`,'ok');
 }
 
 const way=(action,flavor,icon,title,text)=>`<button type="button" class="fc-way" data-action="${action}" data-flavor="${flavor}"><span class="fc-way-icon" aria-hidden="true">${icon}</span><b>${title}</b><span>${text}</span></button>`;
@@ -221,7 +231,7 @@ function home(query=''){
       ${way('create','blue','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
       ${way('import','green','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
-    <div class="fc-toolbar fc-toolbar-quiet">${btn('Try a sample deck','sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
+    <div class="fc-toolbar fc-toolbar-quiet">${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>

@@ -705,23 +705,32 @@ test('Make with Knox: Plus member gets a clean, de-duplicated deck', async () =>
   assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1);
 });
 
-test('Make with Knox is free for everyone: no credits, up to 20 cards, one hidden daily limit', async () => {
+test('Make with Knox: free accounts spend 2 credits per deck (up to 10 cards); Mega Knox and gift Mega Knox are unlimited', async () => {
   const { db, store } = memoryDb();
   store.set('users/u1', { plan: 'free' });
-  store.set('users/u1/usage/bank', { balance: 1, lastRegenAt: Date.now() });
+  store.set('users/u1/usage/bank', { balance: 5, lastRegenAt: Date.now() });
   const ai = aiFetch({ title: 'Cells', cards: [{ front: 'a', back: 'b' }, { front: 'c', back: 'd' }, { front: 'e', back: 'f' }] });
   const handler = await load('api/generate-flashcards.js', { db, fetch: ai.fetch });
-  const res = response();
+  let res = response();
   await handler(deckReq({ request: 'cell biology', count: 20 }), res);
-  assert.equal(res.code, 200, 'a free account with 1 question left can still make a deck');
-  assert.match(ai.calls[0].messages[0].content, /Write exactly 20 flashcards/, 'free accounts can pick 20 cards');
-  assert.equal(store.get('users/u1/usage/bank').balance, 1, 'no questions spent');
+  assert.equal(res.code, 200);
+  assert.match(ai.calls[0].messages[0].content, /Write exactly 10 flashcards/, 'free decks are capped at 10 cards');
+  assert.equal(store.get('users/u1/usage/bank').balance, 3, '2 credits spent');
+  assert.equal(res.body.creditsLeft, 3);
+
+  store.set('users/u1/usage/bank', { balance: 1, lastRegenAt: Date.now() });
+  res = response(); await handler(deckReq({ request: 'cell biology' }), res);
+  assert.equal(res.code, 402, 'not enough credits');
+  assert.equal(res.body.upgrade, true);
+  assert.equal(store.get('users/u1/usage/bank').balance, 1, 'nothing taken');
+
+  // A gift / Flame Fest Mega Knox week counts as Mega Knox: no credits, 20 cards.
+  store.set('users/u1', { plan: 'free', plusUntil: Date.now() + 86400000 });
+  res = response(); await handler(deckReq({ request: 'cell biology', count: 20 }), res);
+  assert.equal(res.code, 200);
+  assert.match(ai.calls.at(-1).messages[0].content, /Write exactly 20 flashcards/);
+  assert.equal(store.get('users/u1/usage/bank').balance, 1);
   assert.equal(res.body.creditsLeft, undefined);
-  assert.equal(store.get('users/u1/usage/flashcardsAI').count, 1, 'counts toward the hidden daily limit');
-  store.set('users/u1/usage/flashcardsAI', { day: new Date().toISOString().slice(0, 10), count: 40 });
-  const capped = response();
-  await handler(deckReq({ request: 'cell biology', count: 10 }), capped);
-  assert.equal(capped.code, 429, 'the hidden daily limit applies to everyone');
 });
 
 test('Make with Knox: Plus cap, and failed generations give credits back', async () => {
