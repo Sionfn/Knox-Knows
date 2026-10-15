@@ -18,7 +18,7 @@ One slash command, `/ask`, for the Knox Knows Discord server.
 | `src/knox.js` | Calls the Knox API |
 | `src/limits.js` | Daily counts per user and the global cap, saved to a small JSON file |
 | `src/split.js` | Splits long answers under Discord's 2000-character limit |
-| `src/register-commands.js` | Tells Discord about `/ask` (run once) |
+| `src/register-commands.js` | Registers `/ask` by hand (optional; the bot does this itself on startup) |
 | `test/` | Tests (`npm test`) |
 
 ## Run it on your computer
@@ -29,11 +29,10 @@ Needs Node.js 22.9 or newer.
 cd discord-bot
 npm install
 cp .env.example .env     # then fill in .env (never commit it; it's git-ignored)
-npm run register         # once, and again only if /ask changes
 npm run dev
 ```
 
-You should see `Knox bot online as …`.
+You should see `Knox bot online as …` and `/ask registered …`. The bot registers `/ask` with Discord every time it starts.
 
 ### What goes in `.env`
 
@@ -80,7 +79,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 3. In the service's **Settings**, set **Root Directory** to `discord-bot`. Railway runs `npm install` and `npm start` on its own.
 4. In **Variables**, add everything from `.env.example` with your real values. Put the token here, not in a file.
 5. Right-click the service → **Attach Volume**, mount it at `/data`, and set `DATA_FILE=/data/usage.json` so daily counts survive redeploys.
-6. Run `npm run register` once from your computer (or Railway's shell) so `/ask` shows up in Discord.
+6. Deploy. The logs should show `Knox bot online` and `/ask registered`. That's it: nothing to run on your computer.
 
 The bot doesn't need a public URL or a port; it connects out to Discord.
 
