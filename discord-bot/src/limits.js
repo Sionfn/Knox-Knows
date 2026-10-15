@@ -51,6 +51,13 @@ export class Limits {
     saveJson(this.dataFile, this.state);
   }
 
+  // Clear yesterday's counts even if nobody has asked anything today yet.
+  prune() {
+    if (this.state.day === today()) return;
+    this.#rollover();
+    saveJson(this.dataFile, this.state);
+  }
+
   #rollover() {
     if (this.state.day !== today()) this.state = this.#fresh();
   }
