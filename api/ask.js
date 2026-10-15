@@ -894,12 +894,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
   let { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay } = req.body;
-  // The bot sends text only, always in Learn mode. History is the lesson so
-  // far (its Reply button), bounded by the same checks as the website's.
+  // The bot always uses Learn mode. History is the lesson so far (its Reply
+  // button) and a photo goes through the same size and type checks as the
+  // website's.
   if (isBot) {
-    if (image != null || learnSessionId != null) {
-      return res.status(400).json({ error: 'The Discord bot sends text questions only.' });
-    }
+    if (learnSessionId != null) return res.status(400).json({ error: 'Invalid request.' });
     learnMode = true;
   }
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||

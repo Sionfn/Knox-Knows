@@ -2,7 +2,7 @@
 import {
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
-import { KnoxError } from './knox.js';
+import { KnoxError, MAX_PHOTO_BYTES, PHOTO_TYPES, downloadPhoto as defaultDownloadPhoto } from './knox.js';
 import { MAX_REPLIES } from './lessons.js';
 import { splitMessage } from './split.js';
 
@@ -17,7 +17,7 @@ const replyButton = lessonId => new ActionRowBuilder().addComponents(
 // Without a website connection (e.g. in tests), Plus comes from the role alone.
 const roleOnly = { isPlus: async () => null, syncRole: async () => 'kept', granted: new Set() };
 
-export function createHandlers({ config, limits, lessons, askKnox, plus = roleOnly }) {
+export function createHandlers({ config, limits, lessons, askKnox, plus = roleOnly, downloadPhoto = defaultDownloadPhoto }) {
   // Plus = a linked Knox Plus subscription, or the Knox Plus role (unless the
   // bot gave that role and the subscription has since ended). Also keeps the
   // role in step with the subscription.
@@ -34,10 +34,11 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
 
   // Ask Knox and post the answer (split if long), with a Reply button on the last part.
   // Returns the answer, or null after telling the student what went wrong.
-  async function answer(interaction, { question, history, header, footer, lessonIdFor, onFail }) {
-    let text;
+  async function answer(interaction, { question, history, photo, header, footer, lessonIdFor, onFail }) {
+    let text, photoBytes;
     try {
-      text = await askKnox({ apiUrl: config.knoxApiUrl, botKey: config.knoxBotKey, question, history, discordUserId: interaction.user.id });
+      if (photo) photoBytes = await downloadPhoto(photo.url);
+      text = await askKnox({ apiUrl: config.knoxApiUrl, botKey: config.knoxBotKey, question, history, image: photoBytes?.toString('base64'), imageType: photo?.contentType, discordUserId: interaction.user.id });
     } catch (err) {
       onFail();
       if (!(err instanceof KnoxError)) console.error('Knox request failed:', err);
@@ -48,7 +49,9 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     const lessonId = lessonIdFor(text);
     const parts = splitMessage(`${header}\n\n${text}\n\n${footer(lessonId)}`);
     const button = lessonId ? { components: [replyButton(lessonId)] } : {};
-    await interaction.editReply({ content: parts[0], allowedMentions: noPings, ...(parts.length === 1 ? button : {}) });
+    // Show the student's photo with the answer (Discord's own link to it expires).
+    const files = photoBytes ? { files: [{ attachment: photoBytes, name: photo.name || 'homework.png' }] } : {};
+    await interaction.editReply({ content: parts[0], allowedMentions: noPings, ...files, ...(parts.length === 1 ? button : {}) });
     for (let i = 1; i < parts.length; i++) {
       await interaction.followUp({ content: parts[i], allowedMentions: noPings, ...(i === parts.length - 1 ? button : {}) });
     }
@@ -61,6 +64,13 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     const inStudyHelp = interaction.channelId === config.studyChannelId || interaction.channel?.parentId === config.studyChannelId;
     if (!inStudyHelp) return privately(interaction, `Ask me in <#${config.studyChannelId}> 📚`);
 
+    const question = (interaction.options.getString('question') || '').trim();
+    const photo = interaction.options.getAttachment?.('photo') || null;
+    const photoType = photo?.contentType?.split(';')[0];
+    if (!question && !photo) return privately(interaction, 'Add a question, a photo of your homework, or both.');
+    if (photo && !PHOTO_TYPES.includes(photoType)) return privately(interaction, 'Photos need to be JPG, PNG, GIF or WebP.');
+    if (photo && photo.size > MAX_PHOTO_BYTES) return privately(interaction, 'That photo is too big. Please use one under 3 MB.');
+
     const userId = interaction.user.id;
     const slot = limits.reserve(userId, await isPlusMember(interaction));
     if (!slot.ok) {
@@ -71,15 +81,16 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
 
     // Knox can take a while; deferring gives us up to 15 minutes to answer.
     await interaction.deferReply();
-    const question = interaction.options.getString('question', true).trim();
     // Plus members are unlimited anyway, so only free members hear that replies are free.
     const left = slot.remaining === null
       ? 'Knox Plus · unlimited questions'
       : `${slot.remaining} of ${config.perUserLimit} questions left today · Replies to this lesson are free`;
     await answer(interaction, {
-      question, history: [], header: quote(question),
+      question, history: [], photo: photo && { url: photo.url, name: photo.name, contentType: photoType },
+      header: question ? quote(question) : '> 📷 Photo question',
       footer: () => `-# ${left}`,
-      lessonIdFor: text => lessons.start(userId, question, text),
+      // Like the website, later replies carry the photo as text, not the image.
+      lessonIdFor: text => lessons.start(userId, photo ? [question, '📷 Photo'].filter(Boolean).join('\n') : question, text),
       onFail: () => limits.refund(userId),
     });
   }
@@ -171,6 +182,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       content: [
         '**How to use Knox here** 🦊',
         `• \`/ask\` in <#${config.studyChannelId}>: ask about any schoolwork. Knox guides you with hints so you learn it, instead of just giving answers.`,
+        '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` (with or without a question).',
         '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free.',
         `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC). Knox Plus members get unlimited.`,
         '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
