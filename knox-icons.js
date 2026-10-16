@@ -6,7 +6,7 @@
 // look without each module changing its strings. It never touches what
 // people type: inputs, textareas, editable areas and the student's own
 // messages are skipped, the 🦊 and 🍪 stay real emoji, and plain-text places (alerts, the tab title,
-// copied answers) keep their emoji.
+// copied answers) keep their emoji, and so does the AI's own writing.
 (function () {
   if (window.KI) return;
   const SVG = (body, cls = '') => `<svg class="kk-ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`;
@@ -117,11 +117,16 @@
   };
 
   const SKIP = 'textarea,input,select,option,script,style,title,noscript,[contenteditable=""],[contenteditable="true"],.msg-user,.msg-user-bubble,.no-ki,svg';
+  const OWN_UI = '.learn-key-title,.learn-help,.learn-recap-title,.learn-recap-buttons,.learn-actions,.learn-video,.learn-progress,.knox-response-heading';
   function swapText(node) {
     const t = node.data;
     if (!t || !TEST.test(t)) return;
     const p = node.parentElement;
     if (!p || p.closest(SKIP)) return;
+    // Knox's answers keep the AI's own emoji (it can use thousands; only
+    // swapping a few would look broken). Knox's own buttons inside answers
+    // still get icons.
+    if (p.closest('.msg-knox-bubble') && !p.closest(OWN_UI)) return;
     const tpl = document.createElement('template');
     tpl.innerHTML = t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])).replace(RE, (e, ch) => KI(MAP[ch]));
     node.replaceWith(tpl.content);
