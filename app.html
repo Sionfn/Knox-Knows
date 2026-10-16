@@ -325,15 +325,13 @@
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
     #headerUsage.danger .usage-dot { background: var(--red); }
-    /* Paid pill: ⚡ Knox Plus in orange, 💎 Mega Knox in gold (body.knox-mega). */
     #headerUsage.unlimited {
-      background: var(--orange-cream);
-      border-color: var(--orange);
-      color: var(--orange-dark);
+      background: rgba(255,217,0,0.22);
+      border-color: rgba(255,217,0,0.55);
     }
     #headerUsage.unlimited .usage-dot {
-      background: var(--orange);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 25%, transparent);
+      background: var(--yellow);
+      box-shadow: 0 0 0 3px rgba(255,217,0,0.25);
     }
     body.knox-mega #headerUsage.unlimited { color: #8A5A00; }
     body.knox-mega #headerUsage.unlimited .usage-dot { background: #F2B705; box-shadow: 0 0 0 3px rgba(242,183,5,.3); }
@@ -474,12 +472,13 @@
     .dd-badge { border: 1px solid var(--border); background: var(--surface); color: var(--text-light); padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
     .dd-badge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
     /* 💎 Mega Knox badge: gold, everywhere the plan shows */
-    .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: #F2B705 !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
-    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; }
+    /* 💎 Mega Knox badge: gold with an orange outline (same on the landing page) */
+    .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: var(--orange) !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
+    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; border-color: var(--orange) !important; }
     body.knox-mega #headerUsage.unlimited { background: linear-gradient(135deg, rgba(255,217,0,.28), rgba(255,170,0,.22)); border-color: #F2B705; }
     .dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #C99404; box-shadow: 0 2px 0 #C99404; }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
-    .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: #C99404; }
+    .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: var(--orange); }
     .app-dropdown-header .dd-name {
       font-size: 15px; font-weight: 900; color: var(--text);
       margin-bottom: 2px; word-break: break-word;
@@ -518,10 +517,9 @@
     .dd-plan-free   { background: var(--surface);             border-color: var(--border);       }
     .dd-plan-free   .plan-name { color: var(--text); }
     .dd-plan-free   .plan-tag  { color: var(--text-light); }
-    /* ⚡ Knox Plus is orange, 💎 Mega Knox is gold — same on the landing page. */
-    .dd-plan-super  { background: var(--orange-cream); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
-    .dd-plan-super  .plan-name { color: var(--orange-dark); }
-    .dd-plan-super  .plan-tag  { color: var(--orange-dark); }
+    .dd-plan-super  { background: var(--green-light); border-color: var(--green-dark);             box-shadow: 0 2px 0 var(--green-dark); }
+    .dd-plan-super  .plan-name { color: var(--text); }
+    .dd-plan-super  .plan-tag  { color: var(--text); }
     .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), var(--orange-dark)); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max    .plan-name { color: var(--orange-dark); }
     .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
@@ -548,7 +546,7 @@
       display: inline-block;
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
-    .badge-super { background: var(--orange-cream);  color: var(--orange);     border-color: var(--orange); }
+    .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: var(--green-dark); }
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
@@ -956,7 +954,7 @@
       #sidebarControlsSlot #headerUsage:hover,
       #sidebarControlsSlot #appAccountBtn:hover,
       #sidebarSettingsBtn:hover { background: var(--orange-cream); }
-      #sidebarControlsSlot #headerUsage.unlimited { border-color: var(--orange); }
+      #sidebarControlsSlot #headerUsage.unlimited { border-color: var(--yellow); }
       body.knox-mega #sidebarControlsSlot #headerUsage.unlimited { border-color: #F2B705; }
       #sidebarControlsSlot #appAccountBtn { flex: 1; min-width: 0; height: 52px; justify-content: flex-start; background: transparent; border-color: transparent; padding: 5px 3px; }
       #sidebarControlsSlot #appAccountIcon { width: 34px; height: 34px; background: var(--orange); }
