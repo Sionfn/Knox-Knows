@@ -156,7 +156,7 @@ function makeView(){
         ${makeOpts.reading?btn('Reading file…','doc-pick',{cls:'small',attrs:'disabled'}):makeOpts.files.length<MAX_MAKE_FILES?btn(makeOpts.files.length?'+ Add another':'📎 Add your notes, slides or photos','doc-pick',{cls:'small'}):''}
         <input type="file" id="fcDocInput" accept="${MAKE_ACCEPT}" multiple hidden></div>
       <p class="fc-doc-hint">PDF, Word, PowerPoint, text files or photos of your notes (up to ${PHOTO_LIMIT[tier]}) — or drag them here.</p>
-      <div class="fc-examples">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
+      <div class="fc-examples no-ki">${EXAMPLES.map(([ic,label,text])=>chip(`${ic} ${label}`,'make-example',false,`data-text="${esc(text)}"`)).join('')}</div>
       <div class="fc-make-opts">
         <div><span class="fc-field-label">How many cards?</span><div class="fc-chips">${[10,15,20,30,40].map(n=>n>MAX_CARDS[tier]?chip(`${n} ${tierTag(n>MAX_CARDS.plus?'mega':'plus')}`,'upgrade',false,`title="${n>MAX_CARDS.plus?'Mega Knox makes decks up to 40 cards':'Knox Plus makes decks up to 15 cards'}"`):chip(String(n),'make-count',makeOpts.count===n,`data-count="${n}"`)).join('')}</div></div>
         <div><span class="fc-field-label">Card style</span><div class="fc-chips">${chip('Question → answer','make-style',makeOpts.style==='qa','data-style="qa"')}${chip('Term → definition','make-style',makeOpts.style==='term','data-style="term"')}${[['fill','Fill in the blank'],['tf','True or false']].map(([id,label])=>mega?chip(label,'make-style',makeOpts.style===id,`data-style="${id}"`):chip(`${label} ${tierTag('mega')}`,'upgrade',false,'title="Mega Knox: more card styles"')).join('')}</div></div>
@@ -409,7 +409,7 @@ function study(){
   const s=session,d=decks.find(d=>d.id===s.id);
   if(!s.queue.length){
     const gotIt=s.reviewed-s.again;
-    frame(null,`<div class="fc-done"><img src="${FOX}" alt=""><h1 class="fc-title" tabindex="-1">Session <span class="accent">complete!</span> 🎉</h1>
+    frame(null,`<div class="fc-done"><img src="${FOX}" alt=""><h1 class="fc-title" tabindex="-1">Session <span class="accent">complete!</span> <span class="no-ki">🎉</span></h1>
       <p class="fc-sub">Nice work on <b>${esc(d.title)}</b>. Your schedule is saved — Knox will bring cards back when they’re due.</p>
       <div class="fc-stats"><div class="fc-stat orange"><b>${s.reviewed}</b><span>Reviews</span></div><div class="fc-stat green"><b>${gotIt}</b><span>Got it</span></div><div class="fc-stat red"><b>${s.again}</b><span>Again</span></div></div>
       <div class="fc-toolbar">${btn('Back to decks','back',{cls:'primary'})}${btn('Practice again','practice',{attrs:`data-id="${esc(d.id)}"`})}</div></div>`,true);

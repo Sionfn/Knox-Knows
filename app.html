@@ -3759,6 +3759,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'streakToast';
+      toast.className = 'no-ki'; // celebrations keep real emoji
       toast.style.cssText = 'position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:linear-gradient(135deg,#FF6B00,#FF9500);color:white;font-weight:900;font-size:14px;line-height:1.35;padding:12px 22px;border-radius:16px;box-shadow:0 8px 24px rgba(255,107,0,0.4);z-index:5000;opacity:0;transition:opacity 0.3s,transform 0.3s;pointer-events:none;font-family:inherit;max-width:min(420px,calc(100vw / var(--kz, 1) - 32px));text-align:center;';
       document.body.appendChild(toast);
     }
@@ -5854,7 +5855,7 @@ window.appHandleAsk = async function() {
         const debugLine = data.debug
           ? '<div style="margin-top:8px;font-size:12px;font-weight:600;color:#999;word-break:break-all;">DEBUG: ' + escHtml(data.debug) + '</div>'
           : '';
-        replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">😬 ' + escHtml(errMsg) + '</p>' + debugLine);
+        replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;"><span class="no-ki">😬</span> ' + escHtml(errMsg) + '</p>' + debugLine);
       }
       return;
     }
@@ -6117,7 +6118,7 @@ function learnExtrasHtml(x, tone) {
   const btn = (cls, attrs, inner) => '<button type="button" class="' + cls + '" ' + attrs + '>' + inner + '</button>';
   if (x.recap) {
     return '<div class="learn-actions"><div class="learn-recap">' +
-      '<div class="learn-recap-title">🎉 What you learned' + (x.topic ? ' · ' + escHtml(x.topic) : '') + '</div>' +
+      '<div class="learn-recap-title"><span class="no-ki">🎉</span> What you learned' + (x.topic ? ' · ' + escHtml(x.topic) : '') + '</div>' +
       '<p>' + formatInline(x.recap) + '</p>' +
       (x.watch ? '<p class="learn-recap-watch"><b>Watch out:</b> ' + formatInline(x.watch) + '</p>' : '') +
       '<div class="learn-recap-buttons">' +
@@ -6169,7 +6170,7 @@ function learnHeadingHtml(text, progress, finished) {
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
   const tone = learnTone(t);
   let cls = '', icon = '◆', label = 'Study hint';
-  if (finished) { cls = ' good'; icon = '🎉'; label = 'Lesson complete'; }
+  if (finished) { cls = ' good'; icon = '<span class="no-ki">🎉</span>'; label = 'Lesson complete'; }
   else if (tone === 'retry') {
     cls = ' retry'; icon = '↺'; label = 'Not quite';
   } else if (tone === 'good') {
