@@ -357,6 +357,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     @media (prefers-reduced-motion: reduce) { .landing-loading-spinner { animation:none; border-color:var(--orange); } }
 
     /* ── BUTTONS ─────────────────────────────────────────────── */
+    /* Knox icons (replace emoji): line icons in the current text color. */
+    .kk-ic { width:1.15em; height:1.15em; flex-shrink:0; display:inline-block; vertical-align:-0.2em; }
     .ft-social { transition:transform .15s, opacity .15s; }
     .ft-social:hover { transform:translateY(-2px); opacity:.9; }
     .btn-orange {
@@ -980,9 +982,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       transform:translateY(-4px);
       box-shadow:0 9px 0 var(--subject-shadow);
     }
+    .subject-showcase-card .subject-icon .kk-ic { width:24px; height:24px; }
     .subject-showcase-card .subject-icon {
       width:44px; height:44px; border-radius:12px;
-      background:var(--subject-tint);
+      background:var(--subject-tint); color:var(--subject-accent); border:2px solid var(--subject-accent); box-shadow:0 3px 0 var(--subject-shadow);
       display:flex; align-items:center; justify-content:center;
       font-size:24px; margin-bottom:12px;
     }
@@ -2230,7 +2233,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <!-- Dark-mode toggle and "Open Knox" removed from the top bar. The theme
          (light, dark or fall) is picked in the app and carries over; getting
          back to the app is now the floating button (see #appFab below). -->
-    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()">⚡<span id="proBadgeLabel"> Plans</span></button>
+    <button class="pro-badge" id="proBadge" style="text-decoration:none;border:none;font-family:inherit;" onclick="goToPricing()"><svg class="kk-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span id="proBadgeLabel"> Plans</span></button>
 
     <div class="account-dropdown-wrapper" id="accountDropdownWrapper" style="display:none;">
       <button id="accountBtn" onclick="toggleDropdown(event)" style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:12px;padding:6px 12px 6px 6px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all 0.15s;height:44px;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
@@ -2348,7 +2351,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <!-- Knox wave badge -->
     <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      <span class="season-hide">Your AI study companion 🦊</span><span class="season-only">🍂 Cozy fall study buddy</span>
+      <span class="season-hide">Your AI study companion <img src="/knox-logo-square.jpg" alt="" aria-hidden="true" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-left:2px;"></span><span class="season-only"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5-6"/></svg> Cozy fall study buddy</span>
     </div>
 
     <h1 style="font-size:clamp(38px,calc(6.5vw / var(--kz, 1)),74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
@@ -2371,13 +2374,13 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">📚</span> Every subject K-12 → College
+          <span style="display:flex;color:var(--orange);"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/></svg></span> Every subject K-12 → College
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">📷</span> Snap a photo, done
+          <span style="display:flex;color:var(--blue);"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></span> Snap a photo, done
         </div>
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="font-size:20px;">🎓</span> Teaches, doesn't just tell
+          <span style="display:flex;color:#7C3AED;"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/></svg></span> Teaches, doesn't just tell
         </div>
       </div>
     </div>
@@ -2448,7 +2451,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <!-- SOLVE IT — orange -->
       <div class="reveal delay-1" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">⚡ Solve it</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg> Solve it</div>
         <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"What's the derivative of 3x² + 5x − 2?"</p>
         <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
@@ -2457,11 +2460,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <!-- LEARN MODE — purple -->
       <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--purple-light);color:#7C3AED;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">🎓 Learn mode</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--purple-light);color:#7C3AED;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg> Learn mode</div>
         <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
         <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"Why do leaves change color in the fall?"</p>
         <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:var(--text-body);line-height:1.55;flex:1;">Let’s figure it out together. Leaves are green because of a pigment that helps them use sunlight. <strong style="color:#7C3AED;">Do you know what it’s called?</strong> <span style="display:inline-block;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--text-light);">Tap an answer · 💡 Hint · step 1 of 3</span></p>
+        <p style="font-size:14.5px;font-weight:600;color:var(--text-body);line-height:1.55;flex:1;">Let’s figure it out together. Leaves are green because of a pigment that helps them use sunlight. <strong style="color:#7C3AED;">Do you know what it’s called?</strong> <span style="display:inline-block;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--text-light);">Tap an answer · <svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"/><path d="M15.1 14c.2-1 .7-1.7 1.4-2.5A5 5 0 1 0 7.5 11.5c.7.8 1.2 1.5 1.4 2.5"/></svg> Hint · step 1 of 3</span></p>
       </div>
 
       <!-- CHECK MY WORK — green -->
@@ -2490,7 +2493,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">A full scientific calculator built in — trig, powers, roots, logs and more. Stuck on why? Tap Explain it and Knox walks you through the math.</p>
       </div>
       <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9.5 14 2 2 3.5-3.5"/></svg></div>
+        <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M1 18h11"/><rect x="16" y="9" width="6" height="12" rx="1.5"/><path d="M19 18h.01"/></svg></div>
         <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Your work follows you</h3>
         <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Chats, Learn lessons and flashcard decks save to your account, so you can start on your laptop and finish on your phone.</p>
       </div>
@@ -2514,56 +2517,56 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <div class="rg-4col">
       <!-- Math — orange -->
       <div class="subject-card subject-showcase-card math reveal delay-1">
-        <div class="subject-icon">📐</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4v16Z"/><path d="M20 14h-3M20 17h-2M14 20v-3M11 20v-2"/></svg></div>
         <div class="subject-name">Math</div>
         <div class="subject-tags">Algebra · Geometry · Calculus · Stats</div>
       </div>
 
       <!-- Science — green -->
       <div class="subject-card subject-showcase-card science reveal delay-2">
-        <div class="subject-icon">🔬</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg></div>
         <div class="subject-name">Science</div>
         <div class="subject-tags">Biology · Chemistry · Physics</div>
       </div>
 
       <!-- History — purple -->
       <div class="subject-card subject-showcase-card history reveal delay-3">
-        <div class="subject-icon">🌍</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 18h14M6 18v-7M10 18v-7M14 18v-7M18 18v-7M3 11h18L12 4Z"/></svg></div>
         <div class="subject-name">History</div>
         <div class="subject-tags">World · US · AP · Geography</div>
       </div>
 
       <!-- English — blue -->
       <div class="subject-card subject-showcase-card english reveal delay-4">
-        <div class="subject-icon">📖</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/></svg></div>
         <div class="subject-name">English</div>
         <div class="subject-tags">Essays · Grammar · Literature</div>
       </div>
 
       <!-- Computer Science — pink -->
       <div class="subject-card subject-showcase-card computer-science reveal delay-1">
-        <div class="subject-icon">💻</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></div>
         <div class="subject-name">Computer Science</div>
         <div class="subject-tags">Python · Java · Algorithms</div>
       </div>
 
       <!-- Languages — teal -->
       <div class="subject-card subject-showcase-card languages reveal delay-2">
-        <div class="subject-icon">🌐</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg></div>
         <div class="subject-name">Languages</div>
         <div class="subject-tags">Spanish · French · German · Latin</div>
       </div>
 
       <!-- Economics — amber/yellow -->
       <div class="subject-card subject-showcase-card economics reveal delay-3">
-        <div class="subject-icon">📊</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg></div>
         <div class="subject-name">Economics</div>
         <div class="subject-tags">Micro · Macro · Accounting</div>
       </div>
 
       <!-- Test Prep — red -->
       <div class="subject-card subject-showcase-card test-prep reveal delay-4">
-        <div class="subject-icon">🎓</div>
+        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/></svg></div>
         <div class="subject-name">Test Prep</div>
         <div class="subject-tags">SAT · ACT · AP · GRE · LSAT</div>
       </div>
@@ -2618,7 +2621,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <div class="pt-card pt-plus">
         <div class="pt-badge" id="proTrialBadge" style="display:none;"></div>
         <div class="pt-badge-slot" aria-hidden="true"></div>
-        <div class="pt-name">⚡ Knox Plus</div>
+        <div class="pt-name"><svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg> Knox Plus</div>
         <div class="pt-price"><span id="proPrice">$9.99</span><em id="proPeriod">/mo</em></div>
         <div class="yearly-note pt-sub" id="proYearlyNote" style="display:none;">$79.99/yr — save $39.89</div>
         <div class="pt-sub" id="proSubline">Unlimited questions · cancel anytime</div>
@@ -2628,9 +2631,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <!-- MEGA KNOX card -->
       <div class="pt-card pt-mega">
-        <div class="pt-badge" id="megaTrialBadge">🎉 3-DAY FREE TRIAL</div>
+        <div class="pt-badge" id="megaTrialBadge"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg> 3-DAY FREE TRIAL</div>
         <div class="pt-badge-slot" aria-hidden="true"></div>
-        <div class="pt-name">💎 Mega Knox</div>
+        <div class="pt-name"><svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg> Mega Knox</div>
         <div class="pt-price"><span id="megaPrice">$12.99</span><em id="megaPeriod">/mo</em></div>
         <div class="yearly-note pt-sub" id="megaYearlyNote" style="display:none;">$99.99/yr — save $55.89</div>
         <div class="pt-sub" id="megaSubline">Everything Knox has · cancel anytime</div>
@@ -2642,7 +2645,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <!-- What each plan includes. The rows that differ come first. -->
     <div class="reveal pt-table">
-      <div class="pt-row pt-head"><div class="pt-label pt-group">What's included</div><div>Free</div><div>⚡ Plus</div><div>💎 Mega</div></div>
+      <div class="pt-row pt-head"><div class="pt-label pt-group">What's included</div><div>Free</div><div><svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg> Plus</div><div><svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg> Mega</div></div>
       <div class="pt-row"><div class="pt-label">Questions</div><div><span class="pt-text free">5 / day*</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
       <div class="pt-row"><div class="pt-label">Photos &amp; files</div><div><span class="pt-text free">2 credits each</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
       <div class="pt-row"><div class="pt-label">Flashcard decks made by Knox</div><div><span class="pt-text free">2 credits · 10 cards</span></div><div><span class="pt-text plus">15 cards</span></div><div><span class="pt-text mega">40 cards</span></div></div>
@@ -2653,24 +2656,24 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     </div>
 
     <p style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin-top:14px;">*Starts at 10, then +5 every day — save up unused questions up to 20. Every plan gets Ask Knox, Learn mode and the Calculator, with the same AI.</p>
-    <p style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin:6px auto 0;max-width:760px;line-height:1.5;">**Mega extras: custom flashcard decks (choose the difficulty, plus fill-in-the-blank and true/false cards), the 💎 Mega badge, and the highest limits — files twice as long, decks made from up to 10 photos of your notes (Plus: 5), 100 Knox-made decks a day (Plus: 40) and Learn sessions of 50 messages (Plus: 20).</p>
+    <p style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin:6px auto 0;max-width:760px;line-height:1.5;">**Mega extras: custom flashcard decks (choose the difficulty, plus fill-in-the-blank and true/false cards), the <svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg> Mega badge, and the highest limits — files twice as long, decks made from up to 10 photos of your notes (Plus: 5), 100 Knox-made decks a day (Plus: 40) and Learn sessions of 50 messages (Plus: 20).</p>
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
       <button onclick="handlePurchase('Mega')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Mega Knox free for 3 days</button>
-      <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
+      <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Cancel anytime · Secure Stripe checkout · 30-day money back</p>
     </div>
 
     <!-- Gift Knox Plus: gift.js opens the gift window right here -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:36px auto 0;max-width:720px;padding:18px 22px;border-radius:20px;background:var(--orange-cream);border:2px solid var(--orange);box-shadow:0 4px 0 var(--orange-light);">
       <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 300px;text-align:left;">
-        <span aria-hidden="true" style="font-size:34px;line-height:1;">🎁</span>
+        <span aria-hidden="true" style="display:flex;width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;align-items:center;justify-content:center;flex-shrink:0;"><svg class="kk-ic" style="width:28px;height:28px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>
         <div>
           <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Knox Knows as a gift</p>
           <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Knox Plus or Mega Knox with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
         </div>
       </div>
-      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;">🎁 Give a gift</button>
+      <button type="button" onclick="window.knoxGifts ? window.knoxGifts.openBuy() : (location.href='/app?buy_gift=1')" class="btn-orange" style="font-size:15px;padding:12px 22px;white-space:nowrap;font-family:inherit;border:none;cursor:pointer;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg> Give a gift</button>
     </div>
 
   </div><!-- /max-width wrapper -->
@@ -2803,7 +2806,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the 👎 button below the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com">support@knoxknowsapp.com</a>.
+          Knox is highly accurate but not perfect — like any tutor. Always double-check important answers against your notes or textbook, especially for graded work. If you spot something off, hit the <svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2M9 18.1 10 14H4.2a2 2 0 0 1-1.9-2.6l2.3-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.8a2 2 0 0 0-1.8 1.1L13 22a3.1 3.1 0 0 1-3-3.9Z"/></svg> button below the response and we'll use that to make Knox smarter. Direct feedback also welcome at <a href="mailto:support@knoxknowsapp.com">support@knoxknowsapp.com</a>.
         </div>
       </details>
 
@@ -2977,7 +2980,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     </div>
 
     <div style="border-top:1px solid #333;padding-top:24px;margin-top:40px;text-align:center;">
-      <p style="font-size:13px;font-weight:700;color:#888;margin-bottom:6px;">Built by Sion in Arizona 🌵</p>
+      <p style="font-size:13px;font-weight:700;color:#888;margin-bottom:6px;">Built by Sion in Arizona <span style="color:#58CC02;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V5a2 2 0 0 1 4 0v9M12 15H9a3 3 0 0 1-3-3V9a1.5 1.5 0 0 1 3 0v3M16 12h1a2 2 0 0 0 2-2V8a1.5 1.5 0 0 0-3 0M8 21h12"/></svg></span></p>
       <p style="font-size:13px;font-weight:600;color:#555;">© 2026 Knox Knows™ | All rights reserved.</p>
     </div>
   </div>
@@ -3710,10 +3713,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (dPlan) {
       // Render plan card (matches /app's dropdown) instead of plain text
       const cfg = window.userTier === 'mega'
-                ? { cls: 'mega', icon: '💎', name: 'Mega Knox', tag: 'Everything Knox has' }
+                ? { cls: 'mega', icon: '<svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg>', name: 'Mega Knox', tag: 'Everything Knox has' }
                 : userPlan !== 'free'
-                ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
-                : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
+                ? { cls: 'super', icon: '<svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg>', name: 'Knox Plus', tag: 'Unlimited questions' }
+                : { cls: 'free',  icon: '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg>', name: 'Free',      tag: '5 free/day, up to 20 saved' };
       dPlan.innerHTML = '';
       const card = document.createElement('div');
       card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -3725,7 +3728,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       info.appendChild(tg);
       const icon = document.createElement('span');
       icon.className   = 'plan-icon';
-      icon.textContent = cfg.icon;
+      icon.innerHTML = cfg.icon;
       icon.setAttribute('aria-hidden', 'true');
       card.appendChild(info);
       card.appendChild(icon);
@@ -3790,7 +3793,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (name) name.textContent = user.displayName || (user.email ? user.email.split('@')[0] : 'Your account');
     const paid = ['super', 'max', 'plus'].includes(window.userPlan);
     const badge = document.getElementById('lnAccountBadge');
-    if (badge) { badge.textContent = window.userTier === 'mega' ? '💎 Mega Knox' : paid ? '⚡ Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid && window.userTier !== 'mega'); badge.classList.toggle('mega', window.userTier === 'mega'); }
+    if (badge) { badge.innerHTML = window.userTier === 'mega' ? '<svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg>' + ' Mega Knox' : paid ? '<svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg>' + ' Knox Plus' : 'Free plan'; badge.classList.toggle('paid', paid && window.userTier !== 'mega'); badge.classList.toggle('mega', window.userTier === 'mega'); }
   }
   // iOS Safari ignores overflow:hidden on body, so pin the page in place
   // while the phone menu is open and restore the scroll spot on close.
@@ -4140,10 +4143,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     // Badges: Mega shows its free trial (monthly) or its savings (yearly);
     // Plus shows its savings on yearly only.
     const proTrial = $('proTrialBadge'), megaTrial = $('megaTrialBadge');
-    if (proTrial) { proTrial.style.display = yearly ? 'flex' : 'none'; proTrial.textContent = '💰 SAVE 33%'; proTrial.style.background = '#7C3AED'; proTrial.style.boxShadow = '0 2px 0 #5B21B6'; }
+    const KK_TAG = '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>', KK_SPARK = '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg>';
+    if (proTrial) { proTrial.style.display = yearly ? 'flex' : 'none'; proTrial.innerHTML = KK_TAG + ' SAVE 33%'; proTrial.style.background = '#7C3AED'; proTrial.style.boxShadow = '0 2px 0 #5B21B6'; }
     if (megaTrial) {
       megaTrial.style.display = 'flex';
-      megaTrial.textContent = yearly ? '💰 SAVE 36%' : '🎉 3-DAY FREE TRIAL';
+      megaTrial.innerHTML = yearly ? KK_TAG + ' SAVE 36%' : KK_SPARK + ' 3-DAY FREE TRIAL';
       megaTrial.style.background = yearly ? '#7C3AED' : '#FF6B00';
       megaTrial.style.boxShadow  = yearly ? '0 2px 0 #5B21B6' : '0 2px 0 #CC5500';
     }
@@ -5385,7 +5389,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (_isPaidPlan && window.userComped && !window.hasBillingAccount) {
       const comp = document.createElement('span');
       comp.style.cssText = 'font-size:13px;font-weight:800;color:var(--text-light);';
-      comp.textContent = '🎁 Free Knox Plus from Knox Knows';
+      comp.innerHTML = '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>' + ' Free Knox Plus from Knox Knows';
       el.appendChild(row('Billing', comp));
     } else if (_isPaidPlan || window.hasBillingAccount) {
       const billBtn = document.createElement('button');
@@ -5575,7 +5579,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <!-- Footer -->
     <div style="padding:12px 16px;border-top:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <p style="font-size:12px;font-weight:600;color:var(--text-light);margin:0;">Saved automatically · Delete anytime</p>
-      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'">🗑 Clear All</button>
+      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg> Clear All</button>
     </div>
   </div>
 </div>
@@ -5583,7 +5587,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <!-- ===================== COOKIE CONSENT ===================== -->
 <div id="cookieBanner" role="region" aria-label="Cookie choices">
   <div class="kk-cookie">
-    <div class="kk-cookie-fox" aria-hidden="true"><img src="/knox-logo-square.jpg" alt="" draggable="false"><span>🍪</span></div>
+    <div class="kk-cookie-fox" aria-hidden="true"><img src="/knox-logo-square.jpg" alt="" draggable="false"><span><svg class="kk-ic" style="color:#B8732E" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5h.01M16 15.5h.01M12 12h.01M11 17h.01M7 14h.01"/></svg></span></div>
     <div class="kk-cookie-text">
       <b>Knox uses cookies</b>
       <p>They keep you signed in, and anonymous analytics help us make Knox better. See our <a href="/privacy.html">Privacy Policy</a>.</p>
