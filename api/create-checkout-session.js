@@ -26,7 +26,7 @@ const db = getFirestore();
 
 // ─────────────────────────────────────────────────────────────────────────
 // PRICING MATRIX (Sept 2026 reset — one plan: Knox Plus at $9.99/$79.99):
-//   Knox Plus monthly: $9.99/mo  (7-day free trial)
+//   Knox Plus monthly: $9.99/mo  (no trial; Mega Knox monthly has a 3-day trial)
 //   Knox Plus yearly:  $79.99/yr ($6.67/mo effective, 33% savings vs monthly)
 //
 // The "max" tier is a legacy holdover — we consolidated to one paid plan.
@@ -206,10 +206,10 @@ export default async function handler(req, res) {
       ? `https://${process.env.VERCEL_URL}`
       : (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
 
-    // 7-day free trial on Mega Knox MONTHLY only (Knox Plus has no trial).
+    // 3-day free trial on Mega Knox MONTHLY only (Knox Plus has no trial).
     // Yearly buyers are already committing — they don't need a trial, and a
     // trial on a $79.99 annual purchase reads as gimmicky rather than useful.
-    // 7 days is enough for a student to try it during a homework session or
+    // 3 days is enough for a student to try it during a homework session or
     // two, without giving away a full week's worth of unlimited usage.
     // Note: `plan === "super"` is the internal Stripe plan value that maps to
     // the Knox Plus display name. Legacy — see webhook.js PLAN_NAMES for the
@@ -217,13 +217,13 @@ export default async function handler(req, res) {
     let subscriptionData = { metadata: { plan, billing, uid: verifiedUid } };
     if (plan === MEGA_PLAN && billing === "monthly") {
       // The trial is for first-time subscribers only. Without this check,
-      // anyone could subscribe, cancel inside the 7 days and re-subscribe
-      // for another free week, indefinitely. A subscription that never got
+      // anyone could subscribe, cancel inside the 3 days and re-subscribe
+      // for another free trial, indefinitely. A subscription that never got
       // past a failed first payment (incomplete) doesn't count as a trial used.
       const userData = userSnap.exists ? userSnap.data() : {};
       let hadSubscription = !!(userData.planActivatedAt || userData.stripeSubscription);
       if (!hadSubscription) hadSubscription = subscriptions.some(sub => !['incomplete', 'incomplete_expired'].includes(sub.status));
-      if (!hadSubscription) subscriptionData.trial_period_days = 7;
+      if (!hadSubscription) subscriptionData.trial_period_days = 3;
     }
 
     const session = await stripe.checkout.sessions.create({

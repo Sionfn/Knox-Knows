@@ -1541,7 +1541,7 @@ test('Two plans: Mega Knox checkout uses its prices and is the only plan with a 
   let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly' }), res);
   assert.equal(res.code, 200);
   assert.equal(mock.sessions.get('cs_1').params.line_items[0].price, 'price_mega_m');
-  assert.equal(mock.sessions.get('cs_1').params.subscription_data.trial_period_days, 7, 'Mega monthly: 7-day trial');
+  assert.equal(mock.sessions.get('cs_1').params.subscription_data.trial_period_days, 3, 'Mega monthly: 3-day trial');
 
   const plus = memoryDb(); const mock2 = checkoutStripe();
   const h2 = await load('api/create-checkout-session.js', { db: plus.db, stripe: mock2.stripe, env: MEGA_ENV });

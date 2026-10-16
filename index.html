@@ -136,8 +136,8 @@
           },
           {
             "@type": "Question",
-            "name": "Will I be charged after the 7-day free trial?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page." }
+            "name": "Will I be charged after the 3-day free trial?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 3 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page." }
           },
           {
             "@type": "Question",
@@ -2631,7 +2631,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <!-- MEGA KNOX card -->
       <div class="pt-card pt-mega">
-        <div class="pt-badge" id="megaTrialBadge">🎉 7-DAY FREE TRIAL</div>
+        <div class="pt-badge" id="megaTrialBadge">🎉 3-DAY FREE TRIAL</div>
         <div class="pt-badge-slot" aria-hidden="true"></div>
         <div class="pt-name">💎 Mega Knox</div>
         <div class="pt-price"><span id="megaPrice">$12.99</span><em id="megaPeriod">/mo</em></div>
@@ -2660,7 +2660,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <!-- Primary CTA — Knox's signature loud button, so the main action isn't buried in a table cell -->
     <div style="text-align:center;margin-top:32px;">
-      <button onclick="handlePurchase('Mega')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Mega Knox free for 7 days</button>
+      <button onclick="handlePurchase('Mega')" id="proBottomCTA" class="btn-orange" style="font-size:17px;padding:17px 40px;">Try Mega Knox free for 3 days</button>
       <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:12px;">🔒 Cancel anytime · Secure Stripe checkout · 30-day money back</p>
     </div>
 
@@ -2704,11 +2704,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <!-- Q2 -->
       <details class="knox-faq reveal">
         <summary>
-          <span>Will I be charged after the 7-day free trial?</span>
+          <span>Will I be charged after the 3-day free trial?</span>
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 7 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 3 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
         </div>
       </details>
 
@@ -4115,7 +4115,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (yBtn) { yBtn.style.background = type === 'yearly' ? '#FF6B00' : 'transparent'; yBtn.style.color = type === 'yearly' ? 'white' : '#9CA3AF'; yBtn.style.boxShadow = type === 'yearly' ? '0 3px 0 #CC5500' : 'none'; }
 
     // Two paid plans: Knox Plus ($9.99/mo or $79.99/yr) and Mega Knox ($12.99/mo
-    // or $99.99/yr). Only Mega Knox monthly has the 7-day free trial.
+    // or $99.99/yr). Only Mega Knox monthly has the 3-day free trial.
     const yearly = type === 'yearly';
     const $ = id => document.getElementById(id);
     if ($('proPrice'))  $('proPrice').textContent  = yearly ? '$6.67' : '$9.99';
@@ -4130,7 +4130,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (proTrial) { proTrial.style.display = yearly ? 'flex' : 'none'; proTrial.textContent = '💰 SAVE 33%'; proTrial.style.background = '#7C3AED'; proTrial.style.boxShadow = '0 2px 0 #5B21B6'; }
     if (megaTrial) {
       megaTrial.style.display = 'flex';
-      megaTrial.textContent = yearly ? '💰 SAVE 36%' : '🎉 7-DAY FREE TRIAL';
+      megaTrial.textContent = yearly ? '💰 SAVE 36%' : '🎉 3-DAY FREE TRIAL';
       megaTrial.style.background = yearly ? '#7C3AED' : '#FF6B00';
       megaTrial.style.boxShadow  = yearly ? '0 2px 0 #5B21B6' : '0 2px 0 #CC5500';
     }
@@ -4417,7 +4417,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         '<div style="font-weight:800;font-size:17px;margin-bottom:6px;">You\'re all set!</div>',
         '<div style="color:var(--text-light);font-size:14px;line-height:1.5;">',
         isSuperMonthlyTrial
-          ? 'Your 7-day free trial has started.<br>No charge until the trial ends!'
+          ? 'Your 3-day free trial has started.<br>No charge until the trial ends!'
           : 'Your subscription is now active.<br>Enjoy your upgraded access!',
         '</div>',
       ].join('');
@@ -4457,7 +4457,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     } else {
       set('proCTABtn', yearly ? 'Get Knox Plus Yearly' : 'Get Knox Plus', false);
       set('megaCTABtn', yearly ? 'Get Mega Knox Yearly' : 'Start Free Trial', false);
-      set('proBottomCTA', yearly ? 'Get Mega Knox Yearly — $99.99/yr' : 'Try Mega Knox free for 7 days', false);
+      set('proBottomCTA', yearly ? 'Get Mega Knox Yearly — $99.99/yr' : 'Try Mega Knox free for 3 days', false);
     }
     if (!fromBilling && tier === 'free') setBilling(billing || 'monthly');
   }
