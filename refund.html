@@ -4,7 +4,7 @@
   <script>
     // Same theme as the landing page and app (localStorage 'knoxTheme'), set
     // before first paint so dark-mode users don't get a white flash.
-    (function(){try{var t=localStorage.getItem('knoxTheme');if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('knoxTheme');if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');}catch(e){}})();
   </script>
 
   <meta charset="UTF-8">
@@ -34,7 +34,7 @@
     .content-wrap { max-width:780px; margin:0 auto; padding:48px 24px 80px; }
 
     /* Big guarantee card */
-    .guarantee-card { background:#1CB0F6; border-radius:20px; border:3px solid #0A85C2; box-shadow:0 6px 0 #0A85C2; padding:32px; margin-bottom:32px; text-align:center; }
+    .guarantee-card { --lg-glow:#1CB0F6; background:#1CB0F6; border-radius:20px; border:3px solid #0A85C2; box-shadow:0 6px 0 #0A85C2; padding:32px; margin-bottom:32px; text-align:center; }
     .guarantee-badge { font-size:52px; margin-bottom:12px; }
     .guarantee-card h2 { font-size:24px; font-weight:900; color:white; margin-bottom:8px; }
     .guarantee-card p { font-size:15px; font-weight:700; color:rgba(255,255,255,0.9); line-height:1.6; max-width:480px; margin:0 auto 20px; }

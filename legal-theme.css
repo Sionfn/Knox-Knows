@@ -1,32 +1,67 @@
-/* legal-theme.css — dark mode + shared footer for the static pages
-   (privacy, terms, refund, updates). The theme comes from the same
-   localStorage key as the landing page and app ('knoxTheme'), applied by an
-   inline script at the top of each page so there's no white flash. Colors
-   match the landing page's dark palette. */
+/* legal-theme.css — shared look for the static pages (privacy, terms,
+   refund, updates). The theme comes from the same localStorage key as the
+   landing page and app ('knoxTheme'), applied by an inline script at the top
+   of each page so there's no white flash. Colors are the app's own
+   (seasonal.css): the midnight night look and the warm fall look. */
 
-html[data-theme="dark"] { color-scheme: dark; }
-html[data-theme="dark"] body { background:#101013; color:#EDEDED; }
-html[data-theme="dark"] .page-hero { background:#0B0B0D; }
+/* Hero + footer use the app sidebar's midnight color in every look. */
+.page-hero { background-color:#261E2E; }
+footer { background:#1B1622; }
+
+/* ── Dark looks: neutrals ─────────────────────────────────────────────── */
+html[data-theme="dark"] {
+  --lg-page:#120E17; --lg-card:#261E2E; --lg-hero:#1A1421; --lg-border:#3E3249;
+  --lg-text:#F5EEF7; --lg-body:#CFC3D6; --lg-muted:#B6A8BD; --lg-code:#1C1623;
+  --lg-glow-warm:rgba(255,154,60,.10); --lg-glow-cool:rgba(142,111,176,.16);
+  color-scheme: dark;
+}
+html.knox-seasonal[data-theme="dark"] {
+  --lg-page:#17100B; --lg-card:#2F2219; --lg-hero:#1F160F; --lg-border:#4C3626;
+  --lg-text:#FAF0E4; --lg-body:#E3D2C0; --lg-muted:#CDB59D; --lg-code:#261B13;
+  --lg-glow-warm:rgba(255,140,40,.12); --lg-glow-cool:rgba(201,90,40,.10);
+}
+html[data-theme="dark"] body {
+  background-color:var(--lg-page); color:var(--lg-text);
+  background-image:
+    radial-gradient(ellipse at 85% 30%, var(--lg-glow-warm), transparent 40%),
+    radial-gradient(ellipse at 5% 80%, var(--lg-glow-cool), transparent 40%);
+  background-attachment:fixed;
+}
+
+/* Hero: the same soft orange + purple lights as the app's welcome screen. */
+html[data-theme="dark"] .page-hero {
+  background-color:var(--lg-hero);
+  background-image:
+    radial-gradient(ellipse at 82% 10%, rgba(255,154,60,.14), transparent 50%),
+    radial-gradient(ellipse at 10% 100%, rgba(142,111,176,.20), transparent 50%);
+}
+html[data-theme="dark"] .page-hero h1 { text-shadow:0 0 34px rgba(255,107,0,.30); }
+html[data-theme="dark"] .page-hero .badge { box-shadow:0 0 26px color-mix(in srgb, currentColor 30%, transparent); }
+
+/* Cards */
 html[data-theme="dark"] .policy-section,
-html[data-theme="dark"] .version-card { background:#29292E; border-color:#34343D; box-shadow:0 4px 0 rgba(0,0,0,0.4); }
+html[data-theme="dark"] .version-card { background:var(--lg-card); border-color:var(--lg-border); box-shadow:0 4px 0 rgba(0,0,0,.45); }
+/* Colored cards keep their ledge and get a soft glow in their own color. */
+html[data-theme="dark"] :is(.summary-card, .guarantee-card) { filter:drop-shadow(0 0 22px color-mix(in srgb, var(--lg-glow, #FF8C28) 22%, transparent)); }
+html[data-theme="dark"] .version-badge { box-shadow:0 2px 0 #A34700, 0 0 20px rgba(255,107,0,.30); }
 html[data-theme="dark"] .section-title,
-html[data-theme="dark"] .version-title { color:#EDEDED; }
-html[data-theme="dark"] .change-row { border-top-color:#34343D; }
+html[data-theme="dark"] .version-title,
+html[data-theme="dark"] .policy-section strong,
+html[data-theme="dark"] .change-text strong { color:var(--lg-text); }
 html[data-theme="dark"] .policy-section p,
 html[data-theme="dark"] .policy-section ul li,
-html[data-theme="dark"] .change-text { color:#C2C2CA; }
-html[data-theme="dark"] .policy-section strong,
-html[data-theme="dark"] .change-text strong { color:#EDEDED; }
-html[data-theme="dark"] .highlight { background:rgba(255,255,255,0.09); color:#EDEDED; }
-html[data-theme="dark"] .change-text code { background:#1F1F23; border-color:#34343D; color:#EDEDED; }
+html[data-theme="dark"] .change-text { color:var(--lg-body); }
+html[data-theme="dark"] .version-date,
+html[data-theme="dark"] .end-note { color:var(--lg-muted); }
+html[data-theme="dark"] .change-row { border-top-color:var(--lg-border); }
+html[data-theme="dark"] .highlight { background:rgba(255,255,255,0.09); color:var(--lg-text); }
+html[data-theme="dark"] .change-text code { background:var(--lg-code); border-color:var(--lg-border); color:var(--lg-text); }
 html[data-theme="dark"] .tag-new      { background:rgba(88,204,2,0.16);  color:#7BE33A; }
 html[data-theme="dark"] .tag-improved { background:rgba(28,176,246,0.16); color:#5CC8FA; }
 html[data-theme="dark"] .tag-fixed    { background:rgba(255,107,0,0.16); color:#FF9A4D; }
-html[data-theme="dark"] footer { background:#0B0B0D; }
+html[data-theme="dark"] footer { background:var(--lg-hero); }
 
 /* Shared footer bits (same wording as the landing page). */
 footer .footer-links a[aria-current="page"] { color:#aaa; }
 footer .ft-made { color:#888; font-weight:700; margin-bottom:6px; }
-footer .ft-made a { color:#aaa; margin:0; text-decoration:underline; text-underline-offset:3px; }
-footer .ft-made a:hover { color:#fff; }
 footer .ft-made + p { color:#555; }

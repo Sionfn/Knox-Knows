@@ -4,7 +4,7 @@
   <script>
     // Same theme as the landing page and app (localStorage 'knoxTheme'), set
     // before first paint so dark-mode users don't get a white flash.
-    (function(){try{var t=localStorage.getItem('knoxTheme');if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('knoxTheme');if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');}catch(e){}})();
   </script>
 
   <meta charset="UTF-8">
@@ -33,7 +33,7 @@
     .page-hero h1 { font-size:clamp(28px,5vw,48px); font-weight:900; color:white; letter-spacing:-0.02em; line-height:1.1; }
     .page-hero p { margin-top:10px; font-size:15px; color:#888; font-weight:600; }
     .content-wrap { max-width:780px; margin:0 auto; padding:48px 24px 80px; }
-    .summary-card { background:#58CC02; border-radius:20px; border:3px solid #46A302; box-shadow:0 6px 0 #46A302; padding:28px 32px; margin-bottom:32px; }
+    .summary-card { --lg-glow:#58CC02; background:#58CC02; border-radius:20px; border:3px solid #46A302; box-shadow:0 6px 0 #46A302; padding:28px 32px; margin-bottom:32px; }
     .summary-card h2 { font-size:17px; font-weight:900; color:white; margin-bottom:14px; }
     .summary-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
     .summary-list li { display:flex; align-items:flex-start; gap:10px; font-size:14px; font-weight:700; color:white; line-height:1.5; }
