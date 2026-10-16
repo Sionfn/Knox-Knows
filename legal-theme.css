@@ -1,0 +1,32 @@
+/* legal-theme.css — dark mode + shared footer for the static pages
+   (privacy, terms, refund, updates). The theme comes from the same
+   localStorage key as the landing page and app ('knoxTheme'), applied by an
+   inline script at the top of each page so there's no white flash. Colors
+   match the landing page's dark palette. */
+
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] body { background:#101013; color:#EDEDED; }
+html[data-theme="dark"] .page-hero { background:#0B0B0D; }
+html[data-theme="dark"] .policy-section,
+html[data-theme="dark"] .version-card { background:#29292E; border-color:#34343D; box-shadow:0 4px 0 rgba(0,0,0,0.4); }
+html[data-theme="dark"] .section-title,
+html[data-theme="dark"] .version-title { color:#EDEDED; }
+html[data-theme="dark"] .change-row { border-top-color:#34343D; }
+html[data-theme="dark"] .policy-section p,
+html[data-theme="dark"] .policy-section ul li,
+html[data-theme="dark"] .change-text { color:#C2C2CA; }
+html[data-theme="dark"] .policy-section strong,
+html[data-theme="dark"] .change-text strong { color:#EDEDED; }
+html[data-theme="dark"] .highlight { background:rgba(255,255,255,0.09); color:#EDEDED; }
+html[data-theme="dark"] .change-text code { background:#1F1F23; border-color:#34343D; color:#EDEDED; }
+html[data-theme="dark"] .tag-new      { background:rgba(88,204,2,0.16);  color:#7BE33A; }
+html[data-theme="dark"] .tag-improved { background:rgba(28,176,246,0.16); color:#5CC8FA; }
+html[data-theme="dark"] .tag-fixed    { background:rgba(255,107,0,0.16); color:#FF9A4D; }
+html[data-theme="dark"] footer { background:#0B0B0D; }
+
+/* Shared footer bits (same wording as the landing page). */
+footer .footer-links a[aria-current="page"] { color:#aaa; }
+footer .ft-made { color:#888; font-weight:700; margin-bottom:6px; }
+footer .ft-made a { color:#aaa; margin:0; text-decoration:underline; text-underline-offset:3px; }
+footer .ft-made a:hover { color:#fff; }
+footer .ft-made + p { color:#555; }

@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    // Same theme as the landing page and app (localStorage 'knoxTheme'), set
+    // before first paint so dark-mode users don't get a white flash.
+    (function(){try{var t=localStorage.getItem('knoxTheme');if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#F4F4F5">
@@ -55,6 +61,7 @@
   </style>
 <link rel="stylesheet" href="/logo-theme.css">
 <link rel="stylesheet" href="/hover-steady.css">
+<link rel="stylesheet" href="/legal-theme.css">
 </head>
 <body>
 
@@ -69,7 +76,7 @@
 <div class="page-hero">
   <div class="badge">💰 Refund Policy</div>
   <h1>We stand behind Knox</h1>
-  <p>Last updated: September 2026 · Knox Knows</p>
+  <p>Last updated: November 2026 · Knox Knows</p>
 </div>
 
 <div class="content-wrap">
@@ -132,12 +139,14 @@
 
 <footer>
   <div class="footer-links">
+    <a href="/about">Home</a>
     <a href="/privacy.html">Privacy Policy</a>
     <a href="/terms.html">Terms of Service</a>
-    <a href="/refund.html">Refund Policy</a>
+    <a href="/refund.html" aria-current="page">Refund Policy</a>
     <a href="/updates.html">What's New</a>
   </div>
-  <p>© 2026 Knox Knows · All rights reserved</p>
+  <p class="ft-made">Built by Sion in Arizona 🌵 · <a href="https://www.tiktok.com/@sionknows" target="_blank" rel="noopener noreferrer">Say hi on TikTok</a></p>
+  <p>© 2026 Knox Knows™ | All rights reserved.</p>
 </footer>
 
 <script src="/legal-navigation.js"></script>
