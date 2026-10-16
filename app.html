@@ -325,14 +325,18 @@
       width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
     }
     #headerUsage.danger .usage-dot { background: var(--red); }
+    /* Paid pill: ⚡ Knox Plus in orange, 💎 Mega Knox in gold (body.knox-mega). */
     #headerUsage.unlimited {
-      background: rgba(255,217,0,0.22);
-      border-color: rgba(255,217,0,0.55);
+      background: var(--orange-cream);
+      border-color: var(--orange);
+      color: var(--orange-dark);
     }
     #headerUsage.unlimited .usage-dot {
-      background: var(--yellow);
-      box-shadow: 0 0 0 3px rgba(255,217,0,0.25);
+      background: var(--orange);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 25%, transparent);
     }
+    body.knox-mega #headerUsage.unlimited { color: #8A5A00; }
+    body.knox-mega #headerUsage.unlimited .usage-dot { background: #F2B705; box-shadow: 0 0 0 3px rgba(242,183,5,.3); }
 
     /* ── Study streak pill ─────────────────────────────────── */
     #streakPill {
@@ -514,9 +518,10 @@
     .dd-plan-free   { background: var(--surface);             border-color: var(--border);       }
     .dd-plan-free   .plan-name { color: var(--text); }
     .dd-plan-free   .plan-tag  { color: var(--text-light); }
-    .dd-plan-super  { background: var(--green-light); border-color: var(--green-dark);             box-shadow: 0 2px 0 var(--green-dark); }
-    .dd-plan-super  .plan-name { color: var(--text); }
-    .dd-plan-super  .plan-tag  { color: var(--text); }
+    /* ⚡ Knox Plus is orange, 💎 Mega Knox is gold — same on the landing page. */
+    .dd-plan-super  { background: var(--orange-cream); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
+    .dd-plan-super  .plan-name { color: var(--orange-dark); }
+    .dd-plan-super  .plan-tag  { color: var(--orange-dark); }
     .dd-plan-max    { background: linear-gradient(135deg, var(--orange-light), var(--orange-dark)); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max    .plan-name { color: var(--orange-dark); }
     .dd-plan-max    .plan-tag  { color: var(--orange-dark); }
@@ -543,7 +548,7 @@
       display: inline-block;
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
-    .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: var(--green-dark); }
+    .badge-super { background: var(--orange-cream);  color: var(--orange);     border-color: var(--orange); }
     .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
@@ -951,7 +956,8 @@
       #sidebarControlsSlot #headerUsage:hover,
       #sidebarControlsSlot #appAccountBtn:hover,
       #sidebarSettingsBtn:hover { background: var(--orange-cream); }
-      #sidebarControlsSlot #headerUsage.unlimited { border-color: var(--yellow); }
+      #sidebarControlsSlot #headerUsage.unlimited { border-color: var(--orange); }
+      body.knox-mega #sidebarControlsSlot #headerUsage.unlimited { border-color: #F2B705; }
       #sidebarControlsSlot #appAccountBtn { flex: 1; min-width: 0; height: 52px; justify-content: flex-start; background: transparent; border-color: transparent; padding: 5px 3px; }
       #sidebarControlsSlot #appAccountIcon { width: 34px; height: 34px; background: var(--orange); }
       #sidebarControlsSlot .account-identity { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -1661,6 +1667,16 @@
       padding: 20px;
     }
     .usage-info-overlay.open { display: flex; }
+    /* Plan label at the top, and the gold Mega Knox version of the card */
+    .usage-info-plan { display: inline-block; margin: 0 auto 8px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; color: var(--orange); background: var(--orange-cream); border: 2px solid var(--orange); }
+    .usage-info-plan.mega { color: #8A5A00; background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #F2B705; }
+    html[data-theme="dark"]:not(.knox-seasonal) .usage-info-plan.mega { color: #FFD45C; background: rgba(242,183,5,.16); }
+    .usage-info-card.mega { background: linear-gradient(180deg, #FFF3C4 0%, var(--surface) 42%); border-color: #F2B705; box-shadow: 0 6px 0 #C99404, 0 20px 50px rgba(0,0,0,.18); }
+    html[data-theme="dark"]:not(.knox-seasonal) .usage-info-card.mega { background: linear-gradient(180deg, rgba(242,183,5,.16) 0%, var(--surface) 42%); }
+    .usage-info-card.mega ul li strong { color: #9A6B00; }
+    html[data-theme="dark"]:not(.knox-seasonal) .usage-info-card.mega ul li strong { color: #FFD45C; }
+    .usage-info-card ul li a { color: inherit; font-weight: 800; text-decoration: underline; }
+    .usage-info-upgrade.mega { background: linear-gradient(135deg, #FFD84D, #F2B705) !important; color: #4A3300 !important; box-shadow: 0 4px 0 #C99404 !important; }
     .usage-info-card {
       position: relative;
       /* Token-based gradient so it works in light AND dark. The old hardcoded
@@ -3370,12 +3386,34 @@
   function openUsageInfo() {
     const tier = planTier(window.userPlan);
     let html;
-    if (tier === 'paid') {
+    const mega = tier === 'paid' && window.userTier === 'mega';
+    if (mega) {
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
+        <span class="usage-info-plan mega">💎 Mega Knox${window.userAmbassador ? ' · Ambassador' : ''}</span>
+        <h3>Everything Knox has</h3>
+        <p>Unlimited questions, no daily cap, no waiting — plus the most Knox can do.</p>
+        <ul>
+          <li><strong>Flashcard decks up to 40 cards</strong> — pick the difficulty, fill-in-the-blank or true/false cards.</li>
+          <li><strong>The highest limits</strong> — files twice as long, 10 photos per deck, the longest Learn sessions.</li>
+          <li><strong>Early access</strong> to new features before anyone else.</li>
+          <li><strong>Fastest support</strong> and the private Mega Knox channel on <a href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer">Discord</a> — talk to the founder and vote on what's next.</li>
+        </ul>
+        <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
+      `;
+    } else if (tier === 'paid') {
+      html = `
+        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
+        <span class="usage-info-plan">⚡ Knox Plus</span>
         <h3>Unlimited, for real</h3>
         <p>Ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
+        <ul>
+          <li><strong>Unlimited questions</strong>, photos and files.</li>
+          <li><strong>Flashcard decks up to 15 cards</strong>, made by Knox.</li>
+          <li><strong>Faster support</strong> when you need help.</li>
+        </ul>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
+        ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">💎 See Mega Knox — 40-card decks, early access &amp; more</button>'}
       `;
     } else {
       const st = window._knoxUsageState || {};
@@ -3410,7 +3448,7 @@
       modal.onclick = (e) => { if (e.target === modal) closeUsageInfo(); };
       document.body.appendChild(modal);
     }
-    modal.innerHTML = `<div class="usage-info-card">
+    modal.innerHTML = `<div class="usage-info-card${mega ? ' mega' : ''}">
       <button class="usage-info-close" onclick="closeUsageInfo()" aria-label="Close">✕</button>
       ${html}
     </div>`;
