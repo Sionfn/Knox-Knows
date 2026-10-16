@@ -603,7 +603,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       align-self:flex-start; padding:1px 7px; border-radius:6px; border:1px solid var(--border);
       background:var(--surface); font-size:10px; font-weight:900; color:var(--text-light); white-space:nowrap;
     }
-    #lnAccountBadge.paid { color:var(--orange); border-color:var(--orange-light); background:var(--orange-cream); }
+    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with an orange outline. */
+    #lnAccountBadge.paid { color:var(--green-dark); border-color:var(--green-dark); background:var(--green-light); }
+    html[data-theme="dark"]:not(.knox-seasonal) #lnAccountBadge.paid { color:var(--green); border-color:var(--green); background:color-mix(in srgb, var(--green) 14%, var(--surface)); }
     /* 💎 Mega Knox badge: gold with an orange outline (same as in the app) */
     #lnAccountBadge.mega { color:#8A5A00; border-color:var(--orange); background:linear-gradient(135deg, #FFF3C4, #FFE08A); }
     html[data-theme="dark"]:not(.knox-seasonal) #lnAccountBadge.mega { color:#FFD45C; background:rgba(242,183,5,.16); border-color:var(--orange); }
@@ -798,10 +800,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .dd-plan-free  { background: var(--surface);             border-color: var(--border);                                                                             }
     .dd-plan-free  .plan-name { color: var(--text); }
     .dd-plan-free  .plan-tag  { color: var(--text-light); }
-    .dd-plan-super { background: var(--green-light); border-color: #B9F6CA;                       box-shadow: 0 2px 0 #B9F6CA;                              }
-    .dd-plan-super .plan-name { color: var(--green-dark); }
-    .dd-plan-super .plan-tag  { color: var(--green-dark); }
-    .dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #C99404; box-shadow: 0 2px 0 #C99404; }
+    .dd-plan-super { background: var(--green-light); border-color: var(--green-dark); box-shadow: 0 2px 0 var(--green-dark); }
+    .dd-plan-super .plan-name { color: var(--text); }
+    .dd-plan-super .plan-tag  { color: var(--text); }
+    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
     .dd-plan-max   { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max   .plan-name { color: #CC5500; }
@@ -1818,7 +1820,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       white-space: nowrap;
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
-    .badge-super, .badge-plus { background: var(--green-light);   color: var(--green-dark); border-color: #B9F6CA; }
+    .badge-super, .badge-plus { background: var(--green-light);   color: var(--green-dark); border-color: var(--green-dark); }
     .badge-max   { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: var(--orange); }
 
     /* "Manage billing" small button inside the Billing row — matches /app */

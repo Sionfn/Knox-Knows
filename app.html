@@ -470,13 +470,16 @@
     .dd-identity-copy { min-width: 0; }
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     .dd-badge { border: 1px solid var(--border); background: var(--surface); color: var(--text-light); padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
-    .dd-badge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with an orange outline.
+       The small badges match the plan cards. */
+    .dd-badge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
+    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.paid, #appAccountPlanBadge.paid, #drawerAccountBadge.paid) { color: var(--green); border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--surface)); }
     /* 💎 Mega Knox badge: gold, everywhere the plan shows */
     /* 💎 Mega Knox badge: gold with an orange outline (same on the landing page) */
     .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: var(--orange) !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
     html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; border-color: var(--orange) !important; }
     body.knox-mega #headerUsage.unlimited { background: linear-gradient(135deg, rgba(255,217,0,.28), rgba(255,170,0,.22)); border-color: #F2B705; }
-    .dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #C99404; box-shadow: 0 2px 0 #C99404; }
+    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
     .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: var(--orange); }
     .app-dropdown-header .dd-name {
@@ -547,7 +550,7 @@
     }
     .badge-free  { background: var(--gray);          color: var(--text-light); border-color: var(--border); }
     .badge-super { background: var(--green-light);   color: var(--green-dark); border-color: var(--green-dark); }
-    .badge-max   { background: var(--orange-light);  color: var(--orange);     border-color: var(--orange-light); }
+    .badge-max   { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: var(--orange); }
 
     /* ═══ MAIN AREA ═══════════════════════════════════════ */
     /* SIDEBAR */
@@ -961,7 +964,7 @@
       #sidebarControlsSlot .account-identity { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
       #sidebarControlsSlot #appAccountName { max-width: 135px; font-size: 12px; line-height: 1.2; }
       #sidebarControlsSlot #appAccountPlanBadge { display: inline-block; align-self: flex-start; padding: 1px 6px; margin-top: 3px; border-radius: 6px; border: 1px solid var(--border); font-size: 9px; color: var(--text-light); background: var(--surface); font-weight: 900; white-space: nowrap; }
-      #sidebarControlsSlot #appAccountPlanBadge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+      #sidebarControlsSlot #appAccountPlanBadge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
       #sidebarSettingsBtn { display: flex; align-items: center; width: 36px; height: 36px; cursor: pointer; flex: 0 0 36px; }
       #sidebarControlsSlot #appUpgradeBtn { width: 100%; }
       #sidebarControlsSlot #appGuestBtns { display: flex; }
@@ -1106,7 +1109,7 @@
       border: 1px solid var(--border); background: var(--surface);
       font-size: 10px; font-weight: 900; color: var(--text-light); white-space: nowrap;
     }
-    #drawerAccountBadge.paid { color: var(--orange); border-color: var(--orange-light); background: var(--orange-cream); }
+    #drawerAccountBadge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
     .drawer-account-gear { color: var(--text-light); flex-shrink: 0; }
     #drawerGuestBtns { display: none; gap: 8px; }
     #drawerGuestBtns button {
