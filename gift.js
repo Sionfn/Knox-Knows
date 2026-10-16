@@ -121,6 +121,7 @@
       m.querySelector('.kg-options').innerHTML = p.options.map(o =>
         `<button type="button" class="kg-option${o.id === choice ? ' on' : ''}" role="radio" aria-checked="${o.id === choice}" data-gift="${o.id}"><b>${o.label}</b><span class="kg-price">${o.price}</span><small>${o.note}</small></button>`).join('');
       m.querySelectorAll('.kg-plan').forEach(x => { const on = x.dataset.plan === plan; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(on)); });
+      m.querySelector('.kg-card')?.classList.toggle('kg-mega', plan === 'mega'); // gold window for Mega
     };
     draw();
     m.querySelector('.kg-plans').addEventListener('click', e => {

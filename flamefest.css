@@ -160,3 +160,10 @@
 .ff-reward.grand { box-shadow: 0 3px 0 #C99404; }
 .ff-reward-icon { box-shadow: 0 2px 0 var(--border); }
 .ff-gift-link { border-radius: 12px; min-height: 38px; }
+
+/* Main buttons: the same chunky Knox button as "Try it yourself →" on the
+   landing page — normal case, a darker orange ledge, no outline. */
+.ff-claim, .ff-copy { border: none; border-radius: 14px; text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 800; box-shadow: 0 4px 0 #CC5500; }
+.ff-claim:hover:not(:disabled), .ff-copy:hover { box-shadow: 0 6px 0 #CC5500; }
+.ff-claim:active:not(:disabled), .ff-copy:active { box-shadow: 0 1px 0 #CC5500; }
+.ff-pop-actions .ff-claim { min-height: 54px; padding: 15px 28px; border-radius: 16px; font-size: 17px; }
