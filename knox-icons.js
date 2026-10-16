@@ -5,7 +5,7 @@
 // Fest, gifts, flashcards, the calculator…), so every screen gets the same
 // look without each module changing its strings. It never touches what
 // people type: inputs, textareas, editable areas and the student's own
-// messages are skipped, and plain-text places (alerts, the tab title,
+// messages are skipped, the 🦊 and 🍪 stay real emoji, and plain-text places (alerts, the tab title,
 // copied answers) keep their emoji.
 (function () {
   if (window.KI) return;
@@ -78,13 +78,12 @@
     star: FILL('<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z" fill="#FFD23F" stroke="#E0A100" stroke-width="1.6" stroke-linejoin="round"/>', 'kk-star'),
     party: FILL('<path d="M3 21 8 7l9 9Z" fill="#FF8A2B" stroke="#CC5500" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3c0 2-1 3-1 3M19 9s1.2-1 3-1M17 4l-1.5 3M20 13l-3-1" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" fill="none"/><circle cx="20" cy="4" r="1.3" fill="#1CB0F6"/><circle cx="11" cy="3" r="1" fill="#58CC02"/><circle cx="21" cy="17" r="1" fill="#F2B705"/>', 'kk-party'),
   };
-  const fox = '<img class="kk-ic kk-fox" src="/knox-logo-square.jpg" alt="" aria-hidden="true" draggable="false">';
 
   // Emoji → icon name (a trailing variation selector is matched too).
   const MAP = {
     '🔥': 'flame', '💜': 'flamePurple', '💙': 'flameBlue', '👑': 'crown', '🟡': 'flameGold', '💎': 'gem', '⚡': 'bolt',
     '🛡': 'shield', '🎁': 'gift', '🎄': 'gift', '🏆': 'trophy', '🌟': 'star', '⭐': 'star', '🎉': 'party',
-    '🦊': 'fox', '🎓': 'cap', '👍': 'up', '👎': 'down', '📄': 'doc', '📷': 'camera', '📸': 'camera',
+    '🎓': 'cap', '👍': 'up', '👎': 'down', '📄': 'doc', '📷': 'camera', '📸': 'camera',
     '📐': 'math', '🌿': 'leaf', '🍂': 'leaf', '🍁': 'leaf', '🌍': 'globe', '⚠': 'warn', '🚀': 'rocket',
     '💫': 'spark', '✨': 'spark', '😬': 'grimace', '💡': 'bulb', '🤔': 'think', '📝': 'note', '🔄': 'refresh',
     '🧠': 'brain', '🎯': 'target', '📇': 'cards', '🗂': 'cards', '🎥': 'video', '🧪': 'flask', '🪵': 'logs',
@@ -97,7 +96,6 @@
   const TINT = { cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6' };
 
   function KI(name, opts = {}) {
-    if (name === 'fox') return fox;
     if (F[name]) return F[name];
     const body = L[name]; if (!body) return '';
     const svg = SVG(body, 'kk-line');

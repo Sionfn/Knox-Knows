@@ -228,6 +228,8 @@
       /* Anything that was hardcoded "white" before dark mode existed now
          uses this instead, so it inverts along with everything else. */
       --surface: #FFFFFF;
+      /* Used by the shared gift + Flame Fest windows (same values as the app). */
+      --orange-dark: #CC5500; --orange-cream: #FFF4EC; --cream-warm: #FFF8F2;
       --danger-bg: #FEF2F2;
       --danger-border: #FECACA;
       /* Body copy on cards/sections — flips in dark mode (was hardcoded #555/#666). */
@@ -286,6 +288,7 @@
       --shadow-blue:   0 4px 0 #06638F;
       --shadow-green:  0 4px 0 #327A01;
       --surface: #29292E;
+      --orange-dark: #CC5500; --orange-cream: #241C14; --cream-warm: #1A1A1E;
       --danger-bg: #3A2020;
       --danger-border: #5C2E2E;
       --text-body: #C2C2CA;
@@ -2352,7 +2355,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <!-- Knox wave badge -->
     <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      <span class="season-hide">Your AI study companion <img src="/knox-logo-square.jpg" alt="" aria-hidden="true" style="width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-left:2px;"></span><span class="season-only"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5-6"/></svg> Cozy fall study buddy</span>
+      <span class="season-hide">Your AI study companion 🦊</span><span class="season-only"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5-6"/></svg> Cozy fall study buddy</span>
     </div>
 
     <h1 style="font-size:clamp(38px,calc(6.5vw / var(--kz, 1)),74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
@@ -5588,7 +5591,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 <!-- ===================== COOKIE CONSENT ===================== -->
 <div id="cookieBanner" role="region" aria-label="Cookie choices">
   <div class="kk-cookie">
-    <div class="kk-cookie-fox" aria-hidden="true"><img src="/knox-logo-square.jpg" alt="" draggable="false"><span><svg class="kk-ic" style="color:#B8732E" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5h.01M16 15.5h.01M12 12h.01M11 17h.01M7 14h.01"/></svg></span></div>
+    <div class="kk-cookie-fox" aria-hidden="true"><img src="/knox-logo-square.jpg" alt="" draggable="false"><span>🍪</span></div>
     <div class="kk-cookie-text">
       <b>Knox uses cookies</b>
       <p>They keep you signed in, and anonymous analytics help us make Knox better. See our <a href="/privacy.html">Privacy Policy</a>.</p>
