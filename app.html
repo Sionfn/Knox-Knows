@@ -1318,6 +1318,12 @@
     .suggestion-chip[data-flavor="blue"]   .chip-circle { background: var(--blue-light);   border: 3px solid var(--blue);   box-shadow: 0 3px 0 var(--blue); }
     .suggestion-chip[data-flavor="green"]  .chip-circle { background: var(--green-light);  border: 3px solid var(--green);  box-shadow: 0 3px 0 var(--green); }
     .suggestion-chip[data-flavor="purple"] .chip-circle { background: var(--purple-light);   border: 3px solid var(--purple); box-shadow: 0 3px 0 var(--purple); }
+    /* Knox icons in the circles take the chip's own color. */
+    .suggestion-chip[data-flavor="orange"] .chip-circle { color: var(--orange); }
+    .suggestion-chip[data-flavor="blue"]   .chip-circle { color: var(--blue); }
+    .suggestion-chip[data-flavor="green"]  .chip-circle { color: var(--green-dark); }
+    .suggestion-chip[data-flavor="purple"] .chip-circle { color: var(--purple-dark); }
+    .chip-circle .kk-line { color: inherit !important; }
 
     .chip-content { flex: 1; min-width: 0; }
     .chip-text {
