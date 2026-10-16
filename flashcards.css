@@ -326,3 +326,6 @@ html[data-theme="dark"] .fc-dropzone { background:transparent; color:var(--blue)
 .fc-sync-note { text-align:center; font-size:12.5px; font-weight:700; color:var(--text-light); margin:6px 0 0; }
 .fc-plus-tag.mega { color:#B07A00; }
 html[data-theme="dark"]:not(.knox-seasonal) .fc-plus-tag.mega { color:#FFD45C; }
+/* Knox icons inside the round tiles take the tile's darker color. */
+.fc-way-icon, .fc-deck-icon { color:var(--chip-ledge); }
+.fc-way-icon .kk-line, .fc-deck-icon .kk-line { color:inherit !important; }
