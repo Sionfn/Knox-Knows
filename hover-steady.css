@@ -59,6 +59,7 @@
   .metric-card,
   .gate-btn,
   .guarantee-btn,
+  .ft-social,
   .btn,
   [onmouseover*="translateY(-"]
 ):not(.ff-x):not(.usage-info-close):not(#appFab) { position: relative; }
@@ -117,6 +118,7 @@
   .metric-card,
   .gate-btn,
   .guarantee-btn,
+  .ft-social,
   .btn,
   [onmouseover*="translateY(-"]
 ):hover::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 10px; }
