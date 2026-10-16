@@ -162,7 +162,9 @@
     if (url.pathname.replace(/\/$/, '') === '/redeem') url.pathname = '/app';
     history.replaceState(null, '', url);
   } else {
-    try { pending = JSON.parse(sessionStorage.getItem('knoxGiftAction') || 'null'); } catch (e) {}
+    // A gift they started before signing in: picked up again once they're
+    // signed in (not re-shown on every page while they're still signed out).
+    try { pending = JSON.parse(sessionStorage.getItem('knoxGiftAction') || 'null'); if (pending) pending.saved = true; } catch (e) {}
   }
   // Both pages keep a loading screen up until sign-in is known; wait for it.
   const authSettling = () => document.body.classList.contains('app-auth-pending') || document.body.classList.contains('landing-loading');
@@ -171,7 +173,7 @@
     if (!pending) return;
     if (authSettling() && waits++ < 40) { setTimeout(run, 400); return; }
     const p = pending;
-    if (p.action !== 'purchased' && !window.currentUser) { needSignIn(p.action, p.code); return; }
+    if (p.action !== 'purchased' && !window.currentUser) { if (!p.saved) needSignIn(p.action, p.code); return; }
     pending = null;
     try { sessionStorage.removeItem('knoxGiftAction'); } catch (e) {}
     if (p.action === 'buy') openBuy(); else if (p.action === 'purchased') purchased(); else openRedeem(p.code);
