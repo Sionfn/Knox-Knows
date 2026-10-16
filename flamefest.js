@@ -28,7 +28,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
-  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '👑 Golden Flame' };
+  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame' };
 
   // ── Data ────────────────────────────────────────────────────────────────
   let state = null, loading = false, error = '';
@@ -39,7 +39,7 @@
       { id: 'w2', name: 'Kindling', start: '2026-11-08', end: '2026-11-14', need: 4, label: '🛡️ Flame Shield' },
       { id: 'w3', name: 'Blaze', start: '2026-11-15', end: '2026-11-21', need: 4, label: '+10 bonus questions + 💙 Blue Flame' },
       { id: 'w4', name: 'Bonfire', start: '2026-11-22', end: '2026-11-28', need: 3, label: '🛡️ Flame Shield' },
-      { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Mega Knox + 👑 Golden Flame' },
+      { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Mega Knox + 🟡 Golden Flame' },
     ].map(r => ({ ...r, flames: days.filter(d => d >= r.start && d <= r.end).length }));
     return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic'], plusUntil: 0, megaUntil: 0, giftCode: '', demo: true };
   }

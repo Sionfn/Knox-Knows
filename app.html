@@ -2336,6 +2336,7 @@
 
 </style>
 <link rel="stylesheet" href="/logo-theme.css">
+<script src="/knox-icons.js"></script>
 <link rel="stylesheet" href="/seasonal.css">
 <script>
   // Flame Fest (Nov 1 – Dec 7, 2026, local time): used by the sidebar cards.
@@ -2653,7 +2654,7 @@
 
           <!-- WELCOME -->
           <div id="welcomeScreen">
-            <div class="welcome-badge"><span class="season-hide">🦊 Your AI homework companion</span><span class="season-only">🍂 Cozy fall study buddy</span></div>
+            <div class="welcome-badge"><span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span></div>
             <h1 class="welcome-title">What are we<br><span class="welcome-accent">tackling today?</span></h1>
             <p class="welcome-sub">Pick a topic below to get started — or type your own question in the box.</p>
 
@@ -4888,7 +4889,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '<span class="season-hide">🦊 Your AI homework companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
+  if (badge) badge.innerHTML = '<span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);
