@@ -93,10 +93,6 @@ html.knox-seasonal :is(#welcomeScreen,#home) .fall-harvest {
 html.knox-seasonal .fall-harvest.left { left:12px; }
 html.knox-seasonal .fall-harvest.right { right:12px; }
 html.knox-seasonal .harvest-wheat { display:none; }
-html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
- bottom:125px; height:auto;
- mask-image:linear-gradient(#000 0%,#000 65%,transparent 100%);
-}
 html.knox-seasonal .harvest-turkey { opacity:1; }
 html.knox-seasonal :is(#welcomeScreen,#home) .harvest-turkey-track {
  position:absolute!important; bottom:9px; z-index:0!important;
@@ -150,10 +146,6 @@ html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .harvest-truck {
  width:clamp(150px,22%,215px); right:clamp(110px,20%,210px); bottom:13px;
  transform:scaleX(-1);
 }
-/* Leaves stay at the outer edges, away from headings, copy and controls. */
-html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
- mask-image:linear-gradient(90deg,#000 0%,#000 7%,transparent 25%,transparent 75%,#000 93%,#000 100%);
-}
 @media(max-width:768px) {
  html.knox-seasonal :is(#welcomeScreen,#home) > .harvest-tree-branches { top:5%; width:64px; }
  html.knox-seasonal :is(#welcomeScreen,#home) > .harvest-footer {
@@ -181,26 +173,28 @@ html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .fall-harvest { z-i
 /* "Fall mode is resting" note after the season. */
 .fall-rest-note { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:10060; display:inline-flex !important; }
 
-/* Falling leaves: drift all the way down to the ground, land, and fade —
-   swinging side to side like a pendulum with a slight tumble on the way. */
-html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky { top:0; bottom:22px; height:auto; }
+/* Falling leaves: a slow, gentle drift down to the ground, where they tuck
+   behind the pumpkins and vanish. No mask — they're placed at the edges. */
+html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
+ inset:0; height:auto; mask-image:none; -webkit-mask-image:none;
+}
 html.knox-seasonal .fall-leaf {
- top:-60px; opacity:0; transform:none;
- animation:leafFall var(--d,14s) linear infinite; animation-delay:var(--delay,0s);
+ top:-8%; opacity:0;
+ animation:leafFall var(--d,15s) cubic-bezier(.45,.05,.55,.95) infinite;
+ animation-delay:var(--delay,0s); will-change:top,opacity;
 }
-html.knox-seasonal .fall-leaf svg { animation:leafSwing var(--sway,4s) ease-in-out infinite alternate; transform-origin:50% 20%; }
+html.knox-seasonal .fall-leaf svg { animation:leafSway var(--sway,5s) ease-in-out infinite alternate; }
 @keyframes leafFall {
- 0%   { top:-60px; transform:translateX(0); opacity:0; }
- 8%   { opacity:.75; }
- 88%  { top:calc(100% - var(--s,26px)); transform:translateX(var(--drift,20px)); opacity:.75; }
- 100% { top:calc(100% - var(--s,26px)); transform:translateX(var(--drift,20px)); opacity:0; }
+ 0%   { top:-8%;  opacity:0; }
+ 6%   { opacity:.8; }
+ 94%  { opacity:.8; }
+ 100% { top:101%; opacity:.8; }   /* settles into the ground, then resets */
 }
-@keyframes leafSwing {
- 0%   { transform:translateX(-18px) rotate(-38deg) rotateY(0deg); }
- 50%  { transform:translateX(0) rotate(0deg) rotateY(45deg); }
- 100% { transform:translateX(18px) rotate(32deg) rotateY(0deg); }
+@keyframes leafSway {
+ from { transform:translateX(-14px) rotate(-16deg); }
+ to   { transform:translateX(14px)  rotate(16deg); }
 }
 @media(prefers-reduced-motion:reduce) {
- html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); opacity:.6; }
- html.knox-seasonal .fall-leaf svg { animation:none!important; }
+ html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); opacity:.55; }
+ html.knox-seasonal .fall-leaf svg { animation:none!important; transform:rotate(12deg); }
 }
