@@ -1,0 +1,19 @@
+{
+  "name": "knox-discord-bot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Knox Knows Discord bot: /ask in #study-help",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --env-file=.env src/index.js",
+    "register": "node --env-file-if-exists=.env src/register-commands.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3"
+  }
+}

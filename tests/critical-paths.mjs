@@ -1643,3 +1643,112 @@ test('Two plans: switching to a Mega Knox price makes the account Mega; a comped
   res = response(); await handler(webhookRequest(currentEvent), res);
   assert.equal(store.get('users/u1').plan, 'max', 'the Mega comp stays');
 });
+
+test('Discord bot: a valid key gets a Learn-mode answer without a Knox account', async () => {
+  const { db, store } = memoryDb();
+  const botKey = 'k'.repeat(40);
+  let systemPrompt;
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (body.model !== 'gpt-4.1-mini') systemPrompt = body.messages[0].content;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: body.model === 'gpt-4.1-mini' ? 'SUBSTANTIVE' : 'What multiplies to 6?' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch, env: { KNOX_BOT_KEY: botKey }, token: null });
+  const bot = (headers, body = { question: 'How do I factor x^2+5x+6?', learnMode: false }) => {
+    const res = response();
+    return handler({ method: 'POST', headers: { 'x-forwarded-for': '192.0.2.9', ...headers }, body }, res).then(() => res);
+  };
+
+  const ok = await bot({ 'x-knox-bot-key': botKey });
+  assert.equal(ok.code, 200);
+  assert.equal(ok.body.answer, 'What multiplies to 6?');
+  assert.match(systemPrompt, /Learn mode/); // forced on, even though the body said false
+  assert.ok(![...store.keys()].some(key => key.startsWith('users/') || key.startsWith('guestUsage/')));
+
+  assert.equal((await bot({ 'x-knox-bot-key': 'wrong' })).code, 401);
+  assert.equal((await bot({ 'x-knox-bot-key': botKey }, { question: 'q', learnSessionId: 'x' })).code, 400);
+  assert.equal((await bot({ 'x-knox-bot-key': botKey }, { question: 'q', image: 'aGVsbG8=', imageType: 'image/bmp' })).code, 400); // same image checks as the website
+
+  // A photo question reaches the model as an image, in Learn mode.
+  let photoMessages;
+  const photoHandler = await load('api/ask.js', { db, env: { KNOX_BOT_KEY: botKey }, token: null, fetch: async (url, options) => {
+    photoMessages = JSON.parse(options.body).messages;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: 'What is the first step?' }, finish_reason: 'stop' }] }) };
+  } });
+  const photo = response();
+  await photoHandler({ method: 'POST', headers: { 'x-knox-bot-key': botKey, 'x-forwarded-for': '192.0.2.9' }, body: { question: '', image: 'aGVsbG8=', imageType: 'image/png' } }, photo);
+  assert.equal(photo.code, 200);
+  assert.match(photoMessages[0].content, /Learn mode/);
+  assert.equal(photoMessages.findLast(m => m.role === 'user').content[0].image_url.url, 'data:image/png;base64,aGVsbG8=');
+
+  // A reply in a photo lesson: the lesson so far plus the photo again.
+  const photoReply = response();
+  await photoHandler({ method: 'POST', headers: { 'x-knox-bot-key': botKey, 'x-forwarded-for': '192.0.2.9' }, body: {
+    question: '8', image: 'aGVsbG8=', imageType: 'image/png',
+    history: [{ role: 'user', content: '📷 Photo' }, { role: 'assistant', content: 'What is 3 + 5?' }],
+  } }, photoReply);
+  assert.equal(photoReply.code, 200);
+  assert.deepEqual(photoMessages.slice(1, 3).map(m => m.content), ['📷 Photo', 'What is 3 + 5?']);
+  assert.equal(photoMessages.findLast(m => m.role === 'user').content[1].text, '8');
+  assert.equal(photoMessages.findLast(m => m.role === 'user').content[0].image_url.url, 'data:image/png;base64,aGVsbG8=');
+
+  // A lesson reply carries the conversation so far, and Knox sees it.
+  let sentMessages;
+  const replyHandler = await load('api/ask.js', { db, env: { KNOX_BOT_KEY: botKey }, token: null, fetch: async (url, options) => {
+    sentMessages = JSON.parse(options.body).messages;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: 'Yes, rise over run!' }, finish_reason: 'stop' }] }) };
+  } });
+  const reply = response();
+  await replyHandler({ method: 'POST', headers: { 'x-knox-bot-key': botKey, 'x-forwarded-for': '192.0.2.9' }, body: {
+    question: 'rise over run?', history: [{ role: 'user', content: 'How do I find slope?' }, { role: 'assistant', content: 'What could you compare?' }],
+  } }, reply);
+  assert.equal(reply.code, 200);
+  assert.match(sentMessages[0].content, /Learn mode/);
+  assert.deepEqual(sentMessages.slice(1).filter(m => m.role !== 'system').map(m => m.content).slice(0, 3), ['How do I find slope?', 'What could you compare?', 'rise over run?']);
+});
+
+test('Discord bot access is off when no strong key is configured', async () => {
+  for (const botKey of [undefined, 'short']) {
+    const handler = await load('api/ask.js', { db: memoryDb().db, fetch: () => assert.fail('must not call the AI'), env: { KNOX_BOT_KEY: botKey } });
+    const res = response();
+    await handler({ method: 'POST', headers: { 'x-knox-bot-key': botKey || '' }, body: { question: 'Explain fractions' } }, res);
+    assert.equal(res.code, 401);
+  }
+});
+
+test('Discord link: a signed code links the account, and the bot sees Plus', async () => {
+  const { db, store } = memoryDb();
+  const botKey = 'k'.repeat(40);
+  const sign = (id, expires) => `${id}.${expires}.` + crypto.createHmac('sha256', botKey).update(`discord-link:${id}:${expires}`).digest('base64url');
+  const later = Math.floor(Date.now() / 1000) + 600;
+  const discordId = '123456789012345678';
+  store.set('users/u1', { plan: 'super' });
+
+  const handler = await load('api/discord-link.js', { db, env: { KNOX_BOT_KEY: botKey } });
+  const call = async (headers, body) => { const res = response(); await handler({ method: 'POST', headers, body }, res); return res; };
+  const asStudent = body => call({ authorization: 'Bearer test' }, body);
+  const asBot = ids => call({ 'x-knox-bot-key': botKey }, { action: 'status', discordIds: ids });
+
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: false, plus: false });
+  assert.equal((await asStudent({ code: sign(discordId, Math.floor(Date.now() / 1000) - 1) })).code, 400); // expired
+  assert.equal((await asStudent({ code: sign(discordId, later).slice(0, -2) + 'xx' })).code, 400);       // forged
+  assert.equal((await call({}, { code: sign(discordId, later) })).code, 401);                              // not signed in
+
+  const linked = await asStudent({ code: sign(discordId, later) });
+  assert.equal(linked.code, 200);
+  assert.equal(linked.body.plus, true);
+  assert.equal(store.get('users/u1').discordId, discordId);
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true });
+
+  // Cancelling Plus shows up right away.
+  store.set('users/u1', { ...store.get('users/u1'), plan: 'free' });
+  assert.equal((await asBot([discordId])).body.results[discordId].plus, false);
+
+  // Linking a different Discord moves the link; the old one is no longer linked.
+  const otherId = '223456789012345678';
+  await asStudent({ code: sign(otherId, later) });
+  assert.equal((await asBot([discordId])).body.results[discordId].linked, false);
+  assert.equal((await asBot([otherId])).body.results[otherId].linked, true);
+
+  assert.equal((await call({ 'x-knox-bot-key': 'wrong' }, { action: 'status', discordIds: [discordId] })).code, 401);
+});
