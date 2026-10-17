@@ -125,9 +125,7 @@
   function leaves(n) {
     let html = '';
     for (let i = 0; i < n; i++) {
-      // Keep leaves to the left/right edges, clear of the headings and cards.
-      const band = (i % 2) ? [76, 97] : [2, 23];
-      const x = (band[0] + ((i * 29) % (band[1] - band[0]))) + '%';
+      const x = ((i * 37 + 11) % 97) + '%';
       const size = 18 + ((i * 7) % 16);
       const dur = 11 + ((i * 5) % 9);
       const delay = -((i * 3.7) % dur).toFixed(1);
