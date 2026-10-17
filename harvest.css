@@ -56,12 +56,13 @@ html.knox-seasonal { --danger-bg:#F7E3DA; --danger-border:#DDAA98; }
 html.knox-seasonal #welcomeScreen > .harvest-turkey-track { position:absolute!important; z-index:0!important; width:100%; }
 html.knox-seasonal #chatColumn { position:relative; isolation:isolate; }
 html.knox-seasonal .harvest-turkey-track { display:block; position:absolute; inset: auto 0 8px; height:85px; overflow:hidden; pointer-events:none; z-index:0; }
-html.knox-seasonal .harvest-turkey { position:absolute; width:90px; height:77px; left:0; bottom:0; opacity:.55; animation:turkey-run 26s linear infinite; }
+html.knox-seasonal .harvest-turkey { position:absolute; width:90px; height:77px; left:-100px; bottom:0; opacity:.55; animation:turkey-run 45s linear infinite; }
 html.knox-seasonal :is(#welcomeScreen,#chatThread,#learnModeBar) { position:relative; z-index:1; }
 .turkey-body { animation:turkey-bob .34s ease-in-out infinite alternate; }
 .turkey-leg { transform-origin:65px 77px; animation:turkey-stride .34s ease-in-out infinite alternate; }
 .turkey-leg-back { animation-delay:-.34s; }
-@keyframes turkey-run { from { left:-100px; } to { left:calc(100% + 10px); } }
+/* One crossing (~18s), then a long rest off-screen before it comes back. */
+@keyframes turkey-run { 0% { left:-100px; } 40%, 100% { left:calc(100% + 10px); } }
 @keyframes turkey-bob { to { transform:translateY(-3px) rotate(2deg); } }
 @keyframes turkey-stride { from { transform:rotate(-24deg); } to { transform:rotate(24deg); } }
 @media(prefers-reduced-motion:reduce) {
@@ -173,3 +174,9 @@ html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
 @media(max-width:768px) {
  html.knox-seasonal #welcomeScreen > .harvest-footer { display:none; }
 }
+
+/* The turkey holds still while you type, and walks behind the pumpkins. */
+html.knox-seasonal:has(#appChatInput:focus) :is(.harvest-turkey,.turkey-body,.turkey-leg) { animation-play-state:paused; }
+html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .fall-harvest { z-index:2!important; }
+/* "Fall mode is resting" note after the season. */
+.fall-rest-note { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:10060; display:inline-flex !important; }
