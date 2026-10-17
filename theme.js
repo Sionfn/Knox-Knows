@@ -131,7 +131,8 @@
       const delay = -((i * 3.7) % dur).toFixed(1);
       const sway = 3 + ((i * 3) % 4);
       const rest = (8 + (i * 13) % 70) + '%';
-      html += `<span class="fall-leaf" style="--x:${x};--s:${size}px;--d:${dur}s;--delay:${delay}s;--sway:${sway}s;--rest:${rest}">${LEAF.replace('COLOR', COLORS[i % COLORS.length])}</span>`;
+      const drift = ((i * 17) % 70 - 30) + 'px'; // where the wind carries it on the way down
+      html += `<span class="fall-leaf" style="--x:${x};--s:${size}px;--d:${dur}s;--delay:${delay}s;--sway:${sway}s;--rest:${rest};--drift:${drift}">${LEAF.replace('COLOR', COLORS[i % COLORS.length])}</span>`;
     }
     return html;
   }
