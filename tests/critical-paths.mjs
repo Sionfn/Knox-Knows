@@ -1326,7 +1326,7 @@ test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-t
 
   let res = await call(mine);
   assert.equal(res.body.plus, true);
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '7 days of Mega Knox + 👑 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '7 days of Mega Knox + 🟡 Golden Flame');
   res = await call(mine, { claim: 'w1' });
   assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');
@@ -1342,7 +1342,7 @@ test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-t
   const mega = await load('api/flame-fest.js', { db, date, token: { uid: 'm1', email: 'm@example.com', email_verified: true } });
   res = await call(mega);
   assert.equal(res.body.tier, 'mega');
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A Mega Knox week to gift a friend + 👑 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame');
   res = await call(mega, { claim: 'month' });
   const code = res.body.giftCode;
   assert.match(code, /^[A-Z0-9]{8}$/);
