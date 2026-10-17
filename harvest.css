@@ -167,3 +167,9 @@ html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
  html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .harvest-truck { width:112px; right:80px; }
  html.knox-seasonal .harvest-footer .fall-harvest { width:68px; }
 }
+/* Phones: the app's message box covers the bottom of the screen, so the
+   harvest scene would peek out half-hidden. The tree and leaves carry the
+   look there; the landing page keeps the full scene. */
+@media(max-width:768px) {
+ html.knox-seasonal #welcomeScreen > .harvest-footer { display:none; }
+}
