@@ -1,5 +1,7 @@
-// /api/discord-link.js — connects a Discord account to a Knox Knows account,
-// so the Discord bot can tell who has Knox Plus.
+// api/_discord-link.js — connects a Discord account to a Knox Knows account,
+// so the Discord bot can tell who has Knox Plus. Served at /api/discord-link
+// (vercel.json sends it through /api/me, to stay within Vercel's 12-function
+// limit; files starting with "_" aren't their own functions).
 //
 //   Student (signed in, from /app?discord=<code>):
 //     POST { code } with "Authorization: Bearer <Firebase ID token>"

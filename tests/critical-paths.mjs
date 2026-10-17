@@ -1724,7 +1724,7 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   const discordId = '123456789012345678';
   store.set('users/u1', { plan: 'super' });
 
-  const handler = await load('api/discord-link.js', { db, env: { KNOX_BOT_KEY: botKey } });
+  const handler = await load('api/_discord-link.js', { db, env: { KNOX_BOT_KEY: botKey } });
   const call = async (headers, body) => { const res = response(); await handler({ method: 'POST', headers, body }, res); return res; };
   const asStudent = body => call({ authorization: 'Bearer test' }, body);
   const asBot = ids => call({ 'x-knox-bot-key': botKey }, { action: 'status', discordIds: ids });
