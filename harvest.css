@@ -180,3 +180,44 @@ html.knox-seasonal:has(#appChatInput:focus) :is(.harvest-turkey,.turkey-body,.tu
 html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .fall-harvest { z-index:2!important; }
 /* "Fall mode is resting" note after the season. */
 .fall-rest-note { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:10060; display:inline-flex !important; }
+
+/* ── Falling leaves ──────────────────────────────────────────────────────
+   The leaf area reaches the ground (it used to stop 125px above it, and a
+   mask hid leaves mid-screen, so they vanished in the air). Each leaf falls
+   in a zig-zag, tilting into each swing like a real leaf, lands on the
+   ground, lies there a moment, then fades. Fall and swing share one
+   duration, so the leaf stops swinging once it lands. */
+html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
+ top:0; bottom:14px; height:auto; mask-image:none; -webkit-mask-image:none;
+}
+html.knox-seasonal .fall-leaf {
+ top:-50px; opacity:0; transform:none; --leaf-o:.85;
+ animation:leafDrop var(--d,15s) linear infinite var(--delay,0s);
+}
+html.knox-seasonal .fall-leaf svg {
+ transform-origin:50% 30%;
+ animation:leafPath var(--d,15s) ease-in-out infinite var(--delay,0s);
+}
+@keyframes leafDrop {
+ 0%   { top:-50px; opacity:0; }
+ 5%   { opacity:var(--leaf-o); }
+ 84%  { top:calc(100% - var(--s,26px) * .7); }
+ 93%  { top:calc(100% - var(--s,26px) * .7); opacity:var(--leaf-o); }
+ 100% { top:calc(100% - var(--s,26px) * .7); opacity:0; }
+}
+@keyframes leafPath {
+ 0%      { transform:translate(0,0) rotate(0deg); }
+ 11%     { transform:translate(calc(var(--dir,1) * 24px),-5px) rotate(calc(var(--dir,1) * 30deg)); }
+ 22%     { transform:translate(calc(var(--dir,1) * -2px),5px) rotate(calc(var(--dir,1) * -4deg)); }
+ 33%     { transform:translate(calc(var(--dir,1) * -24px),-5px) rotate(calc(var(--dir,1) * -30deg)); }
+ 44%     { transform:translate(calc(var(--dir,1) * 2px),5px) rotate(calc(var(--dir,1) * 4deg)); }
+ 55%     { transform:translate(calc(var(--dir,1) * 22px),-5px) rotate(calc(var(--dir,1) * 28deg)); }
+ 66%     { transform:translate(calc(var(--dir,1) * -2px),5px) rotate(calc(var(--dir,1) * -4deg)); }
+ 77%     { transform:translate(calc(var(--dir,1) * -20px),-4px) rotate(calc(var(--dir,1) * -26deg)); }
+ 84%,100%{ transform:translate(calc(var(--dir,1) * -10px),0) rotate(calc(var(--dir,1) * -78deg)); }
+}
+@media(max-width:768px) { html.knox-seasonal .fall-leaf { --leaf-o:.6; } }
+@media(prefers-reduced-motion:reduce) {
+ html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); opacity:.55; }
+ html.knox-seasonal .fall-leaf svg { animation:none!important; transform:rotate(14deg); }
+}
