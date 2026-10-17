@@ -180,27 +180,3 @@ html.knox-seasonal:has(#appChatInput:focus) :is(.harvest-turkey,.turkey-body,.tu
 html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .fall-harvest { z-index:2!important; }
 /* "Fall mode is resting" note after the season. */
 .fall-rest-note { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:10060; display:inline-flex !important; }
-
-/* Falling leaves: drift all the way down to the ground, land, and fade —
-   swinging side to side like a pendulum with a slight tumble on the way. */
-html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky { top:0; bottom:22px; height:auto; }
-html.knox-seasonal .fall-leaf {
- top:-60px; opacity:0; transform:none;
- animation:leafFall var(--d,14s) linear infinite; animation-delay:var(--delay,0s);
-}
-html.knox-seasonal .fall-leaf svg { animation:leafSwing var(--sway,4s) ease-in-out infinite alternate; transform-origin:50% 20%; }
-@keyframes leafFall {
- 0%   { top:-60px; transform:translateX(0); opacity:0; }
- 8%   { opacity:.75; }
- 88%  { top:calc(100% - var(--s,26px)); transform:translateX(var(--drift,20px)); opacity:.75; }
- 100% { top:calc(100% - var(--s,26px)); transform:translateX(var(--drift,20px)); opacity:0; }
-}
-@keyframes leafSwing {
- 0%   { transform:translateX(-18px) rotate(-38deg) rotateY(0deg); }
- 50%  { transform:translateX(0) rotate(0deg) rotateY(45deg); }
- 100% { transform:translateX(18px) rotate(32deg) rotateY(0deg); }
-}
-@media(prefers-reduced-motion:reduce) {
- html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); opacity:.6; }
- html.knox-seasonal .fall-leaf svg { animation:none!important; }
-}
