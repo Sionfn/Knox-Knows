@@ -127,13 +127,12 @@
     for (let i = 0; i < n; i++) {
       // Leaves fall down the left and right edges, clear of the headings and cards.
       const x = (i % 2 ? 78 + (i * 7) % 19 : 2 + (i * 7) % 19) + '%';
-      const dir = (i % 4 < 2) ? 1 : -1; // half swing right first, half left
       const size = 18 + ((i * 7) % 16);
       const dur = 17 + ((i * 5) % 9); // 17–25s: a slow, calm fall
       const delay = -((i * 3.7) % dur).toFixed(1);
       const sway = 3 + ((i * 3) % 4);
       const rest = (8 + (i * 13) % 70) + '%';
-      html += `<span class="fall-leaf" style="--x:${x};--s:${size}px;--d:${dur}s;--delay:${delay}s;--sway:${sway}s;--rest:${rest};--dir:${dir}">${LEAF.replace('COLOR', COLORS[i % COLORS.length])}</span>`;
+      html += `<span class="fall-leaf" style="--x:${x};--s:${size}px;--d:${dur}s;--delay:${delay}s;--sway:${sway}s;--rest:${rest}">${LEAF.replace('COLOR', COLORS[i % COLORS.length])}</span>`;
     }
     return html;
   }
