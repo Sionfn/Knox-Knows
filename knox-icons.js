@@ -153,7 +153,9 @@
 
   const css = document.createElement('style');
   css.textContent = '.kk-ic{width:1.15em;height:1.15em;display:inline-block;vertical-align:-0.2em;flex-shrink:0}' +
-    'img.kk-fox{border-radius:50%;object-fit:cover}';
+    'img.kk-fox{border-radius:50%;object-fit:cover}' +
+    // Inside a pill badge, line icons match the badge text (e.g. the fall leaf).
+    ':is(.fc-badge,.kc-badge,.welcome-badge,.hero-badge,.ff-badge) .kk-line{color:inherit!important}';
   document.head.appendChild(css);
   const start = () => KI.watch(document.body);
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

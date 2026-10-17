@@ -64,11 +64,11 @@ const REWARDS = [
     plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
     test: "🛡️ Flame Shield" },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
-    free: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
-    plus: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 👑 Golden Flame" },
+    free: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 🟡 Golden Flame" },
+    plus: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 🟡 Golden Flame" },
     // Mega Knox members already have Mega: a week to gift a friend instead.
-    mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 👑 Golden Flame" },
-    test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 👑 Golden Flame" },
+    mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" },
+    test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 🟡 Golden Flame" },
 ];
 const STYLES = ["classic", "purple", "blue", "gold"];
 const GIFT_DAYS = 7;

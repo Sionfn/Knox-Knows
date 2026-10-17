@@ -87,6 +87,9 @@
   .ff-day.today::after { display: none; }
   .ff-reward { gap: 9px; padding: 10px; }
   .ff-reward-icon { width: 34px; height: 34px; font-size: 18px; }
+  /* Small day boxes: number in the corner, icon a bit lower so they never overlap. */
+  .ff-mark { font-size: 17px; margin-top: 9px; }
+  .ff-stats span { font-size: 10.5px; }
 }
 @media (prefers-reduced-motion: reduce) { .ff-day.lit .ff-mark, .ff-claim, .ff-burst span { animation: none !important; } }
 
@@ -94,7 +97,12 @@
 #streakFlame.flame-blue { filter: hue-rotate(190deg) saturate(1.5) brightness(1.1); }
 #streakFlame.flame-gold { filter: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15) drop-shadow(0 0 4px rgba(242,183,5,.8)); }
 
-/* Sidebar Flame Fest card */
+/* Sidebar Flame Fest card: warm orange, not the blue of the other cards. */
+html .sidebar-extension-card.sidebar-flame-card { border-color: var(--orange) !important; background: color-mix(in srgb, var(--orange) 10%, var(--surface)) !important; color: var(--text) !important; }
+html .sidebar-flame-card .sidebar-extension-copy span, html .sidebar-flame-card .sidebar-extension-arrow { color: var(--orange-dark, #CC5500) !important; }
+html[data-theme="dark"]:not(.knox-seasonal) .sidebar-flame-card .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) .sidebar-flame-card .sidebar-extension-arrow { color: #FF9A4D !important; }
+html .sidebar-promo-rotator > .sidebar-flame-card { box-shadow: 0 3px 0 color-mix(in srgb, var(--orange) 55%, transparent) !important; }
+html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rotator > .sidebar-flame-card:focus-visible, html .sidebar-flame-card:hover { box-shadow: 0 5px 0 var(--orange) !important; }
 .sidebar-flame-card .ff-card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--orange-light); }
 
 /* Purple flame (Knox Plus Spark reward) */

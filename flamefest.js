@@ -153,7 +153,12 @@
   async function claim(id, btn) {
     btn.disabled = true; btn.textContent = 'Claiming…';
     try {
-      if (demo) { state.claimed[id] = 'demo'; } else state = await api('POST', { claim: id });
+      if (demo) {
+        // The demo hands out flame colors too, so the color picker can be tried.
+        state.claimed[id] = 'demo';
+        const won = { w3: 'blue', month: 'gold' }[id];
+        if (won && !state.flameStyles.includes(won)) { state.flameStyles.push(won); state.flameStyle = won; }
+      } else state = await api('POST', { claim: id });
       const r = state.rewards.find(x => x.id === id);
       render();
       celebrate(r);
@@ -272,7 +277,7 @@
     m.querySelector('[data-i="0"]').focus();
   }
   function intro() {
-    if (!active()) return;
+    if (!active() || today() > END) return; // not during the Dec 1–7 claim week
     const key = 'knoxFlameFestIntro2026';
     try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
     const startsToday = today() === START;
