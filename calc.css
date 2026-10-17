@@ -134,3 +134,70 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
   .kc-pads { gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .kc-caret, .kc-pop { animation: none; } }
+
+/* Shared Flashcards card language: blue calculator, purple history,
+   comfortable keys, and layout based on available panel width. */
+#calcModal { container-type:inline-size; align-items:flex-start; padding:20px 24px; overscroll-behavior:none; overflow-anchor:none; }
+#calcModal .kc-wrap { max-width:1040px; margin:0 auto; min-width:0; }
+.kc-head { margin-bottom:24px; }
+.kc-badge { background:var(--blue-light); color:var(--blue-dark); border-color:var(--blue); box-shadow:0 3px 0 var(--blue-dark); }
+.kc-title { font-size:clamp(28px,3.4vw,40px); line-height:1.2; margin:8px 0; }
+.kc-title .accent { color:var(--blue); }
+.kc-sub { font-size:14px; }
+.kc-layout { grid-template-columns:minmax(0,1fr) 240px; align-items:start; gap:20px; max-width:860px; margin:auto; }
+.kc-card,.kc-card.kc-is-sci { width:100%; min-width:0; padding:20px; border:2px solid var(--blue); border-radius:20px; box-shadow:0 4px 0 var(--blue-dark); }
+.kc-cardbar { flex-wrap:wrap; gap:12px; margin-bottom:18px; }
+.kc-modes { padding:4px; border-radius:14px; }
+.kc-mode { min-height:38px; }
+.kc-mode.on { background:var(--blue); box-shadow:0 3px 0 var(--blue-dark); }
+.kc-screen { height:auto; min-height:116px; max-height:220px; overflow:auto; padding:16px 18px; border-radius:16px; background:var(--blue-light); border-color:color-mix(in srgb,var(--blue) 40%,var(--border)); margin-bottom:18px; }
+.kc-result { font-variant-numeric:tabular-nums; }
+.kc-big { color:var(--text); }
+.kc-keys { gap:10px; }
+.kc-key { min-height:50px; border-radius:13px; font-size:22px; box-shadow:0 3px 0 var(--border); }
+.kc-sci .kc-key { min-height:44px; }
+.kc-actions { margin-top:18px; gap:10px; }
+.kc-act { min-height:46px; padding:8px 6px; }
+.kc-history { height:auto; min-height:0; max-height:550px; padding:18px; border:2px solid var(--purple); border-radius:20px; box-shadow:0 4px 0 var(--purple-dark); }
+.kc-history-top { padding-bottom:12px; border-bottom:2px solid var(--border); gap:8px; }
+.kc-history-top b { color:var(--text); font-size:14px; }
+.kc-history-body { max-height:440px; }
+#calcModal button:focus-visible { outline:3px solid var(--blue); outline-offset:4px; }
+html[data-theme="dark"]:not(.knox-seasonal) .kc-badge { color:var(--blue); }
+html.knox-seasonal .kc-fn,html.knox-seasonal .kc-badge { color:var(--blue-dark); }
+html.knox-seasonal .kc-const { color:var(--green-dark); }
+.kc-layout:has(.kc-is-sci) { grid-template-columns:minmax(0,1fr) 220px; max-width:1040px; }
+@container (max-width:900px) {
+ .kc-layout,.kc-layout:has(.kc-is-sci) { grid-template-columns:minmax(0,1fr); max-width:680px; margin:auto; }
+ .kc-history { max-height:260px; }
+ .kc-history-body { max-height:190px; }
+}
+@container (max-width:560px) {
+ .kc-is-sci .kc-pads { grid-template-columns:1fr; }
+ .kc-card,.kc-card.kc-is-sci { padding:14px; }
+ .kc-cardbar { justify-content:center; }
+ .kc-back { margin-right:auto; }
+ .kc-sci { gap:7px; }
+ .kc-sci .kc-key { min-height:44px; font-size:14px; }
+ .kc-actions { gap:6px; }
+ .kc-act { font-size:12px; }
+}
+@media(max-width:760px) {
+ #calcModal { padding:18px 12px 28px; }
+ .kc-badge { display:inline-flex; }
+ .kc-head { margin-bottom:18px; }
+ .kc-is-sci .kc-key { min-height:48px; }
+}
+/* Phone scientific mode keeps the number pad near the function keys. */
+@container (max-width:560px) {
+ .kc-wrap:has(.kc-is-sci) .kc-head { margin-bottom:12px; }
+ .kc-wrap:has(.kc-is-sci) .kc-title { font-size:26px; margin:4px 0; }
+ .kc-wrap:has(.kc-is-sci) .kc-badge { margin-bottom:4px; padding:4px 12px; }
+ .kc-is-sci .kc-screen { min-height:68px; padding:8px 12px; margin-bottom:12px; }
+ .kc-is-sci .kc-cardbar { gap:6px; margin-bottom:12px; }
+ .kc-is-sci .kc-sci .kc-key { min-height:32px; font-size:13px; }
+ .kc-is-sci .kc-keys { gap:7px; }
+ .kc-is-sci .kc-keys .kc-key { min-height:40px; font-size:20px; }
+ .kc-is-sci .kc-pads { gap:10px; }
+ .kc-is-sci .kc-actions { margin-top:12px; }
+}

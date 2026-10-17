@@ -182,6 +182,7 @@
     <header class="kc-head">
       <span class="kc-badge">🧮 Knox Calculator</span>
       <h1 class="kc-title" tabindex="-1">Crunch the <span class="accent">numbers.</span></h1>
+      <p class="kc-sub">Work it out here. Let Knox explain the why.</p>
     </header>
     <div class="kc-layout">
       <section class="kc-card" aria-label="Calculator">

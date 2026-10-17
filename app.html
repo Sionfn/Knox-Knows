@@ -470,18 +470,18 @@
     .dd-identity-copy { min-width: 0; }
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     .dd-badge { border: 1px solid var(--border); background: var(--surface); color: var(--text-light); padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
-    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with an orange outline.
+    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with a dark gold outline.
        The small badges match the plan cards. */
     .dd-badge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
     html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.paid, #appAccountPlanBadge.paid, #drawerAccountBadge.paid) { color: var(--green); border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--surface)); }
     /* 💎 Mega Knox badge: gold, everywhere the plan shows */
-    /* 💎 Mega Knox badge: gold with an orange outline (same on the landing page) */
-    .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: var(--orange) !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
-    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; border-color: var(--orange) !important; }
+    /* 💎 Mega Knox badge: gold with a dark gold outline (same on the landing page) */
+    .dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega { color: #8A5A00 !important; border-color: #B98500 !important; background: linear-gradient(135deg, #FFF3C4, #FFE08A) !important; }
+    html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.mega, #appAccountPlanBadge.mega, #drawerAccountBadge.mega) { color: #FFD45C !important; background: rgba(242,183,5,.16) !important; border-color: #B98500 !important; }
     body.knox-mega #headerUsage.unlimited { background: linear-gradient(135deg, rgba(255,217,0,.28), rgba(255,170,0,.22)); border-color: #F2B705; }
-    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
+    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #B98500; box-shadow: 0 2px 0 #8A6200; }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
-    .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: var(--orange); }
+    .badge-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); color: #8A5A00; border-color: #B98500; }
     .app-dropdown-header .dd-name {
       font-size: 15px; font-weight: 900; color: var(--text);
       margin-bottom: 2px; word-break: break-word;
@@ -1435,6 +1435,7 @@
     .learn-progress i.done { background: var(--green); }
     .learn-progress i.now { background: var(--purple); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 25%, transparent); }
     .learn-progress b { margin-left: 4px; font-size: 11px; color: var(--text-light); letter-spacing: 0; }
+    .learn-status { margin-left:auto; font-size:11px; color:var(--text-light); letter-spacing:0; }
     .learn-actions { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
     .learn-choices { display: flex; flex-wrap: wrap; gap: 8px; }
     .learn-choice { padding: 10px 16px; border-radius: 14px; border: 2px solid var(--purple); background: var(--surface); color: var(--text);
@@ -1449,7 +1450,10 @@
     .learn-choice:nth-child(4n+3) { --lc: var(--green); --lc-dark: var(--green-dark); }
     .learn-choice:hover:not(:disabled) { background: color-mix(in srgb, var(--lc) 14%, var(--surface)); }
     .learn-choice:active:not(:disabled) { box-shadow: 0 1px 0 var(--lc-dark); }
-    .learn-choice.picked { background: var(--lc); border-color: var(--lc-dark); color: #fff; }
+    .learn-choice.picked { background: var(--purple-light); border-color: var(--purple); color: var(--text); }
+    .learn-style { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
+    .learn-style button { font:inherit; font-weight:800; border:2px solid var(--border); border-radius:14px; padding:10px 16px; background:var(--surface); color:var(--text); cursor:pointer; }
+    .learn-style button[aria-pressed="true"] { border-color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
     /* Teaching cards: key idea, graph, video */
     .learn-key, .learn-graph, .learn-video { margin: 0 18px 14px; }
     .learn-key { padding: 12px 16px; border-radius: 16px; border: 2px solid var(--blue); background: color-mix(in srgb, var(--blue) 9%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 40%, transparent); }
@@ -3628,7 +3632,7 @@
       resolvedAuthUid = user?.uid || null;
       // Refreshed inside a section? Open it now, while the loading screen still
       // covers the page, so it appears already in place — just like Ask Knox.
-      window.knoxRestoreSection?.();
+      await window.knoxRestoreSection?.();
       window.finishAppLoading();
     }
   });
@@ -4159,6 +4163,12 @@
     window.closeCalc?.();
     const viewVersion = ++window._appViewVersion;
     const uid = window.currentUser.uid;
+    const priorNav = document.querySelector('#rightSidebar .sidebar-nav-active')?.dataset.nav || 'chat';
+    const historyRow = Array.from(document.querySelectorAll('.sidebar-history-item[data-conversation-id]')).find(el => el.dataset.conversationId === conversationId);
+    const highlightNav = name => document.querySelectorAll('.sidebar-quicknav-link').forEach(el => {
+      el.classList.toggle('sidebar-nav-active', (el.dataset.nav || el.dataset.mobileNav) === name);
+    });
+    if (historyRow) highlightNav(historyRow.classList.contains('shi-learn') ? 'learn' : 'chat');
     try {
       const convRef = doc(db, 'users', uid, 'conversations', conversationId);
       const q = query(
@@ -4167,6 +4177,7 @@
       );
       const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
       if (window._appViewVersion !== viewVersion || window.currentUser?.uid !== uid) return;
+      if (!convSnap.exists() || convSnap.data().deleting) { highlightNav(priorNav); return false; }
 
       const thread = document.getElementById('chatThread');
       if (!thread) return;
@@ -4254,7 +4265,11 @@
 
       window.showChatThread();
       window.scrollChat();
-    } catch (e) { /* silent — history is non-critical */ }
+      return true;
+    } catch (e) {
+      if (window._appViewVersion === viewVersion && window.currentUser?.uid === uid) highlightNav(priorNav);
+      return false; /* Caller can recover to the welcome screen. */
+    }
   };
 
   // ── Delete a whole conversation — Firestore doesn't cascade-delete
@@ -4889,6 +4904,15 @@ window.openLearnMode = function() {
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
   if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.";
+  let styles = document.getElementById('learnStylePicker');
+  if (!styles && sub) {
+    styles = document.createElement('div'); styles.id='learnStylePicker'; styles.className='learn-style';
+    styles.setAttribute('role','group'); styles.setAttribute('aria-label','How would you like to learn?');
+    styles.innerHTML='<button type="button" data-learn-style="teach">Teach me first</button><button type="button" data-learn-style="quiz">Quiz me</button>';
+    sub.after(styles);
+    styles.addEventListener('click', e => { const b=e.target.closest('[data-learn-style]'); if(!b)return; window._learnStyle=b.dataset.learnStyle; styles.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); });
+  }
+  if(styles) { styles.hidden=false; styles.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.learnStyle===(window._learnStyle||'teach')))); }
   updateSuggestionChipsForMode(true);
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
@@ -4901,6 +4925,7 @@ window.openLearnMode = function() {
 // Restores the normal welcome copy — called whenever a Learn session ends
 // (New Chat, Home, or opening a different saved conversation).
 function resetWelcomeCopy() {
+  document.getElementById('learnStylePicker')?.remove();
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
@@ -5822,6 +5847,7 @@ window.appHandleAsk = async function() {
         document:  doc ? { name: doc.name, text: doc.text } : undefined,
         history,
         learnMode: requestLearnMode,
+        learnStyle: window._learnStyle || 'teach',
         learnSessionId: requestLearnSessionId,
         renewLearn: renewLearn || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
@@ -6042,6 +6068,8 @@ function parseLearnExtras(text) {
   }
   if (out.choices.length < 2) out.choices = [];
   out.clean = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  // A check-for-understanding question is still a lesson step, not completion.
+  if (out.recap && /\?/.test(out.clean)) { out.recap=''; out.watch=''; }
   return out;
 }
 window.knoxLearnClean = text => parseLearnExtras(text).clean;
@@ -6193,7 +6221,7 @@ function learnHeadingHtml(text, progress, finished) {
   }
   const dots = progress ? '<span class="learn-progress" role="img" aria-label="Step ' + progress.n + ' of ' + progress.total + '">' +
     Array.from({ length: progress.total }, (_, i) => '<i class="' + (i < progress.n - 1 ? 'done' : i === progress.n - 1 ? 'now' : '') + '"></i>').join('') +
-    '<b>' + progress.n + '/' + progress.total + '</b></span>' : '';
+    '<b>' + progress.n + '/' + progress.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
   return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + dots + '</div>';
 }
 
@@ -6388,11 +6416,18 @@ if (window.knoxNativeApp) {
 const openTarget = new URLSearchParams(location.search).get('open');
 if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards') {
   let restored = false;
-  window.knoxRestoreSection = function() {
+  window.knoxRestoreSection = async function() {
     if (restored) return;
     restored = true;
     if (openTarget === 'calculator') window.openCalc?.();
-    else if (openTarget === 'learn') window.openLearnMode?.();
+    else if (openTarget === 'learn') {
+      let resume;
+      try { resume=JSON.parse(sessionStorage.getItem('knoxLearnResume')||'null'); } catch {}
+      if(resume?.uid===window.currentUser?.uid && resume?.id && window.openConversation) {
+        window._learnStyle=resume.style==='quiz'?'quiz':'teach';
+        if (!(await window.openConversation(resume.id))) window.openLearnMode?.();
+      } else window.openLearnMode?.();
+    }
     else if (window.openFlashcards) window.openFlashcards();
     else window.__knoxOpenFlashcardsWhenReady = true; // flashcards.js picks this up when it loads
     document.documentElement.classList.remove('knox-restoring');
@@ -6402,6 +6437,13 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
 }
 
 // Keep the address in step with the open section (?open=learn, calculator or
+window.addEventListener('pagehide', () => {
+  try {
+    const uid=window.currentUser?.uid, id=window._currentConversationId;
+    if(uid && id && window._learnModeActive) sessionStorage.setItem('knoxLearnResume',JSON.stringify({uid,id,style:window._learnStyle||'teach'}));
+    else sessionStorage.removeItem('knoxLearnResume');
+  } catch {}
+});
 // flashcards; nothing for Ask Knox), so refreshing reopens the same section
 // instead of always falling back to Ask Knox. replaceState, so switching
 // sections doesn't pile up Back-button entries.

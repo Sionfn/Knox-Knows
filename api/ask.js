@@ -889,13 +889,13 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  const { question = '', history = [], image, imageType, learnMode, learnSessionId, localDay, document: doc, renewLearn } = req.body;
+  const { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn } = req.body;
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||
       !Array.isArray(history) || history.length > 40 ||
       history.some(msg => !msg || !['user', 'assistant'].includes(msg.role) || typeof msg.content !== 'string' || msg.content.length > 24000) ||
       history.reduce((total, msg) => total + msg.content.length, 0) > 120000 ||
       (learnSessionId != null && (typeof learnSessionId !== 'string' || learnSessionId.length > 100)) ||
-      (learnMode != null && typeof learnMode !== 'boolean') || (renewLearn != null && typeof renewLearn !== 'boolean')) {
+      (learnMode != null && typeof learnMode !== 'boolean') || !['teach','quiz'].includes(learnStyle) || (renewLearn != null && typeof renewLearn !== 'boolean')) {
     return res.status(400).json({ error: 'Invalid question or conversation.' });
   }
   if (doc != null && (typeof doc !== 'object' || Array.isArray(doc) || typeof doc.text !== 'string' || typeof doc.name !== 'string' ||
@@ -1131,7 +1131,12 @@ export default async function handler(req, res) {
   }
   // Learn mode: a short reminder right after the student's message — the last
   // thing the model reads — so a big "why…?" question gets taught, not answered.
-  if (learnMode && !casual) messages.push({ role: "system", content: LEARN_REMINDER });
+  if (learnMode && !casual) messages.push({ role: "system", content: LEARN_REMINDER + '\n' +
+    (learnStyle === 'teach'
+      ? 'Teaching preference overrides the first-reply quiz rule: TEACH FIRST. Start a new concept with a short, clear explanation and a concrete example, then check understanding with one question. For a math problem, demonstrate a similar problem with different numbers before their turn. Honor requests to explain first. Do not require a guess before giving this small lesson.'
+      : 'Teaching preference: QUIZ ME. Start with a diagnostic question. Keep explanations brief unless the student asks for help or makes a mistake.') +
+    '\nFor a lesson with countable steps, include Progress: 1/N on the FIRST reply and Progress: n/N on every subsequent step; keep N steady. For an open discussion with no honest step count, omit numeric progress.' +
+    '\nCompletion rule overrides the requirement to always ask a question: ask the final understanding check BEFORE completion. A reply containing Recap: must contain no further question, request to explain, or new exercise. Confirm success and recap only after the student answers that check.' });
 
   try {
     // Text, casual, Learn, and photo questions all run on GPT-6 Luna.

@@ -242,7 +242,7 @@ function home(query=''){
     <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
-    <p class="fc-note">Your decks are saved in this browser${window.currentUser?' for your account':''}. Use Export to back them up or move them to another device.</p>`,true);
+    <p class="fc-note">${window.currentUser?'This browser keeps an offline copy. Account sync resumes when you’re online. Export makes an extra backup.':'Guest decks stay in this browser. Export a backup before clearing browser data.'}</p>`,true);
   renderDecks(query);
   if(pendingMessage){message(pendingMessage);pendingMessage='';}
 }

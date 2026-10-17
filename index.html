@@ -615,12 +615,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       align-self:flex-start; padding:1px 7px; border-radius:6px; border:1px solid var(--border);
       background:var(--surface); font-size:10px; font-weight:900; color:var(--text-light); white-space:nowrap;
     }
-    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with an orange outline. */
+    /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with a dark gold outline. */
     #lnAccountBadge.paid { color:var(--green-dark); border-color:var(--green-dark); background:var(--green-light); }
     html[data-theme="dark"]:not(.knox-seasonal) #lnAccountBadge.paid { color:var(--green); border-color:var(--green); background:color-mix(in srgb, var(--green) 14%, var(--surface)); }
-    /* 💎 Mega Knox badge: gold with an orange outline (same as in the app) */
-    #lnAccountBadge.mega { color:#8A5A00; border-color:var(--orange); background:linear-gradient(135deg, #FFF3C4, #FFE08A); }
-    html[data-theme="dark"]:not(.knox-seasonal) #lnAccountBadge.mega { color:#FFD45C; background:rgba(242,183,5,.16); border-color:var(--orange); }
+    /* 💎 Mega Knox badge: gold with a dark gold outline (same as in the app) */
+    #lnAccountBadge.mega { color:#8A5A00; border-color: #B98500; background:linear-gradient(135deg, #FFF3C4, #FFE08A); }
+    html[data-theme="dark"]:not(.knox-seasonal) #lnAccountBadge.mega { color:#FFD45C; background:rgba(242,183,5,.16); border-color: #B98500; }
     #mobileNav .ln-gear { color:var(--text-light); display:flex; flex-shrink:0; }
     #lnGuestBtns { display:flex; gap:8px; }
     #lnGuestBtns button {
@@ -815,7 +815,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .dd-plan-super { background: var(--green-light); border-color: var(--green-dark); box-shadow: 0 2px 0 var(--green-dark); }
     .dd-plan-super .plan-name { color: var(--text); }
     .dd-plan-super .plan-tag  { color: var(--text); }
-    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-dark); }
+    .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #B98500; box-shadow: 0 2px 0 #8A6200; }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
     .dd-plan-max   { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
     .dd-plan-max   .plan-name { color: #CC5500; }
@@ -1922,7 +1922,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .pt-card { position:relative; display:flex; flex-direction:column; padding:26px 22px; border-radius:22px; text-align:center; color:#fff; }
     .pt-free { background:var(--blue); border:3px solid #0A85C2; box-shadow:0 6px 0 #075E8D; }
     .pt-plus { background:var(--green); border:3px solid #46A302; box-shadow:0 6px 0 #2D6A00; }
-    .pt-mega { background:linear-gradient(160deg,#FFD84D,#F2B705); border:3px solid var(--orange); box-shadow:0 6px 0 #CC5500; color:#3D2800; } /* gold with an orange outline, like the Mega badges */
+    .pt-mega { background:linear-gradient(160deg,#FFD84D,#F2B705); border:3px solid #B98500; box-shadow:0 6px 0 #8A6200; color:#3D2800; } /* gold with a dark gold outline, like the Mega badges */
     .pt-badge-slot { height:8px; }
     .pt-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:999px; background:var(--orange); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; box-shadow:0 2px 0 #CC5500; }
     .pt-name { font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; opacity:.92; margin-bottom:10px; }
@@ -1953,6 +1953,24 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       .pt-row { grid-template-columns:1.25fr .9fr .9fr .9fr; padding:14px 12px; gap:4px; }
       .pt-label { font-size:13.5px; } .pt-text { font-size:11.5px; } .pt-head { font-size:10.5px; }
       .pt-cards { gap:22px !important; }
+    }
+    /* Legible plan descriptions; phone rows keep each feature name intact. */
+    .pt-free { color:#103F57; }
+    .pt-plus { color:#213B0E; }
+    .pt-name,.pt-sub { opacity:1; }
+    .pt-name { font-size:14px; }
+    .pt-sub { font-size:14px; line-height:1.5; }
+    #why-knox,#how-it-works { padding-top:56px!important; padding-bottom:56px!important; }
+    @media(max-width:640px) {
+      .pt-row:not(.pt-head) { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 6px; padding:18px 14px; }
+      .pt-row .pt-label { grid-column:1/-1; font-size:15px; line-height:1.4; }
+      .pt-label small { font-size:13px; }
+      .pt-head { display:none; }
+      .pt-row:not(.pt-head)>div:not(.pt-label)::before { display:block; font-size:11px; font-weight:900; letter-spacing:.05em; color:var(--text-light); margin-bottom:5px; }
+      .pt-row>div:nth-child(2)::before { content:'FREE'; }
+      .pt-row>div:nth-child(3)::before { content:'PLUS'; }
+      .pt-row>div:nth-child(4)::before { content:'MEGA'; }
+      .pt-text { font-size:13px; }
     }
     /* Cards carry inline hover transitions, which used to replace the fade
        (some popped in, some faded). !important keeps one smooth fade for all;
@@ -2406,7 +2424,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div style="width:52px;height:52px;border-radius:15px;background:var(--green-light);color:var(--green);border:2px solid var(--green);box-shadow:0 4px 0 #3D9900;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 14.06 5 19M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg></div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Free gets the same quality as paid</h3>
         </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Most apps stick free users on a lite version to push you to upgrade. Knox gives you the full AI on day one. Paying only removes the usage limit — it doesn't unlock better answers.</p>
+        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Every plan uses the same AI. Start free, then upgrade for more questions, files and study tools.</p>
       </div>
 
       <!-- Learn mode -->
@@ -2415,7 +2433,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div style="width:52px;height:52px;border-radius:15px;background:var(--purple-light);color:#7C3AED;border:2px solid #7C3AED;box-shadow:0 4px 0 #5B21B6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg></div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Learn mode teaches, not tells</h3>
         </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">When you want to actually get it, switch on Learn mode. Knox shows how it’s done with a worked example, then walks you through yours one step at a time — tap-to-answer questions, hints when you’re stuck, graphs and short videos — and never just hands over the answer.</p>
+        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Learn with worked examples, one-step questions and hints. Choose “Teach me first” or test yourself with “Quiz me.”</p>
       </div>
 
       <!-- Talks like a person -->
@@ -2424,7 +2442,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div style="width:52px;height:52px;border-radius:15px;background:var(--blue-light);color:var(--blue);border:2px solid var(--blue);box-shadow:0 4px 0 #0A85C2;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg></div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Talks like a tutor, not a template</h3>
         </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">You won't get "Final Answer:" / "Explanation:" / "Key Points:" like it's a filled-out form. Knox answers the way a smart friend would — direct, natural, with real reasoning. No filler.</p>
+        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Ask in your own words. Knox gives a direct explanation, and you can ask follow-up questions whenever something doesn’t click.</p>
       </div>
 
       <!-- Snap a photo -->
@@ -2433,13 +2451,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></div>
           <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Snap a photo or drop in a file</h3>
         </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Point your camera at a worksheet, whiteboard, textbook, or your own handwriting — or upload a PDF, Word doc or PowerPoint. Knox reads it, confirms what it sees so you know it got the right problem, then helps.</p>
+        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Bring a worksheet photo, handwritten notes, PDF, Word document or PowerPoint. Knox reads what you share and helps you work through it.</p>
       </div>
     </div>
 
-    <div style="text-align:center;margin-top:40px;">
-      <button class="btn-orange" onclick="window.location.href='/app'" style="font-size:16px;padding:15px 32px;">Try it free →</button>
-    </div>
   </div>
 </section>
 
@@ -2497,7 +2512,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">A full scientific calculator built in — trig, powers, roots, logs and more. Stuck on why? Tap Explain it and Knox walks you through the math.</p>
       </div>
       <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"/><path d="M1 18h11"/><rect x="16" y="9" width="6" height="12" rx="1.5"/><path d="M19 18h.01"/></svg></div>
+        <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></svg></div>
         <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Your work follows you</h3>
         <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Chats, Learn lessons and flashcard decks save to your account, so you can start on your laptop and finish on your phone.</p>
       </div>
