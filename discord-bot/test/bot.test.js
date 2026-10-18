@@ -49,7 +49,7 @@ import { createHandlers } from '../src/ask.js';
 import { KnoxError } from '../src/knox.js';
 import { Lessons, MAX_REPLIES } from '../src/lessons.js';
 
-const config = { studyChannelId: 'study', plusRoleId: 'plus', perUserLimit: 2, knoxApiUrl: 'x', knoxBotKey: 'k' };
+const config = { studyChannelId: 'study', plusRoleId: 'plus', megaRoleId: 'mega', perUserLimit: 2, knoxApiUrl: 'x', knoxBotKey: 'k' };
 
 function setup(askKnox, { perUserLimit = 2, globalCap = 10 } = {}) {
   const dataFile = tempFile();
@@ -333,7 +333,17 @@ test('Plus members see "Knox Plus" on lesson replies too', async () => {
   await bot.ask(asked);
   const submit = fake({ roles: ['plus'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
-  assert.match(submit.sent.at(-1).content, /-# Knox Plus · 9 replies left in this lesson/);
+  assert.match(submit.sent.at(-1).content, /-# Knox Plus · 19 replies left in this lesson/); // 20 replies, like Learn on the website
+});
+
+test('Mega Knox members get Mega on /ask and 50-reply lessons, like the website', async () => {
+  const bot = setup(async () => 'Hint.');
+  const asked = fake({ roles: ['mega'] });
+  await bot.ask(asked);
+  assert.match(asked.sent.at(-1).content, /-# Mega Knox · unlimited questions$/);
+  const submit = fake({ roles: ['mega'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
+  await bot.replySubmitted(submit);
+  assert.match(submit.sent.at(-1).content, /-# Mega Knox · 49 replies left in this lesson/);
 });
 
 test('/ask with a photo sends it to Knox, shows it with the answer, and costs one question', async () => {

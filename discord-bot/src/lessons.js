@@ -3,7 +3,9 @@
 import { randomUUID } from 'node:crypto';
 import { loadJson, saveJson } from './store.js';
 
-export const MAX_REPLIES = 10;
+export const MAX_REPLIES = 10; // free members
+// Paid members get the same lesson length as Learn mode on the website.
+export const REPLIES_BY_TIER = { free: MAX_REPLIES, plus: 20, mega: 50 };
 const LESSON_HOURS = 2;
 
 export class Lessons {
@@ -15,11 +17,11 @@ export class Lessons {
   }
 
   // photo: { url, contentType } for a photo question, so replies can show it to Knox again.
-  start(ownerId, question, answer, photo = null) {
+  start(ownerId, question, answer, photo = null, maxReplies = MAX_REPLIES) {
     this.prune();
     const id = randomUUID();
     this.lessons[id] = {
-      ownerId, startedAt: Date.now(), replies: 0, photo,
+      ownerId, startedAt: Date.now(), replies: 0, photo, maxReplies,
       history: [{ role: 'user', content: question }, { role: 'assistant', content: answer }],
     };
     saveJson(this.file, this.lessons);

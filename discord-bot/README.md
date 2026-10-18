@@ -48,6 +48,7 @@ You should see `Knox bot online as …` and `/ask registered …`. The bot regis
 | `DISCORD_GUILD_ID` | Right-click your server → Copy Server ID (turn on Developer Mode in Discord settings → Advanced) |
 | `STUDY_HELP_CHANNEL_ID` | Already set to #study-help |
 | `KNOX_PLUS_ROLE_ID` | Server Settings → Roles → right-click Knox Plus → Copy Role ID |
+| `KNOX_MEGA_ROLE_ID` | Server Settings → Roles → right-click Mega Knox → Copy Role ID (optional; Mega members get both roles — keep Mega above Plus so their name shows gold) |
 | `KNOX_API_URL`, `KNOX_BOT_KEY` | See "Connecting to Knox" below |
 | `DAILY_QUESTIONS_PER_USER` | Default 5 |
 | `DAILY_GLOBAL_CAP` | Default 200. Your worst-case daily AI bill is this × your cost per question |

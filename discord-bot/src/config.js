@@ -19,6 +19,7 @@ export function loadConfig() {
     guildId:        (process.env.DISCORD_GUILD_ID || '').trim() || null,
     studyChannelId: (process.env.STUDY_HELP_CHANNEL_ID || '1557948470852321290').trim(),
     plusRoleId:     (process.env.KNOX_PLUS_ROLE_ID || '').trim() || null,
+    megaRoleId:     (process.env.KNOX_MEGA_ROLE_ID || '').trim() || null,
     knoxApiUrl:     required('KNOX_API_URL'),
     knoxBotKey:     required('KNOX_BOT_KEY'),
     perUserLimit:   number('DAILY_QUESTIONS_PER_USER', 5),

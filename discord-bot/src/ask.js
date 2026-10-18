@@ -3,7 +3,7 @@ import {
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
 import { KnoxError, MAX_PHOTO_BYTES, PHOTO_TYPES, downloadPhoto as defaultDownloadPhoto } from './knox.js';
-import { MAX_REPLIES } from './lessons.js';
+import { MAX_REPLIES, REPLIES_BY_TIER } from './lessons.js';
 import { splitMessage } from './split.js';
 
 // Never ping anyone from text a student typed (e.g. "@everyone").
@@ -16,18 +16,27 @@ const replyButton = lessonId => new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('End lesson').setEmoji('🏁').setStyle(ButtonStyle.Secondary));
 
 // Without a website connection (e.g. in tests), Plus comes from the role alone.
-const roleOnly = { isPlus: async () => null, syncRole: async () => 'kept', granted: new Set() };
+const roleOnly = { isPlus: async () => null, tier: async () => null, syncRole: async () => 'kept', granted: new Set() };
+const PLAN_NAME = { plus: 'Knox Plus', mega: 'Mega Knox' };
 
 export function createHandlers({ config, limits, lessons, askKnox, plus = roleOnly, downloadPhoto = defaultDownloadPhoto }) {
   // Plus = a linked Knox Plus subscription, or the Knox Plus role (unless the
   // bot gave that role and the subscription has since ended). Also keeps the
   // role in step with the subscription.
-  async function isPlusMember(interaction) {
+  // The member's plan: 'free' | 'plus' | 'mega' — from their linked Knox
+  // account (same rules as the website), or their Discord role. Mega members
+  // get both the Knox Plus and Mega Knox roles.
+  async function memberTier(interaction) {
     const userId = interaction.user.id;
-    const websitePlus = await plus.isPlus(userId);
-    plus.syncRole(interaction.member, websitePlus).catch(() => {});
-    const roleCounts = hasPlusRole(interaction.member, config.plusRoleId) && !(websitePlus === false && plus.granted.has(userId));
-    return websitePlus === true || roleCounts;
+    const websiteTier = plus.tier ? await plus.tier(userId)
+      : await plus.isPlus(userId).then(p => p === null ? null : p ? 'plus' : 'free');
+    plus.syncRole(interaction.member, websiteTier === null ? null : websiteTier !== 'free').catch(() => {});
+    plus.syncMegaRole?.(interaction.member, websiteTier === null ? null : websiteTier === 'mega').catch(() => {});
+    if (websiteTier === 'mega' || websiteTier === 'plus') return websiteTier;
+    const megaRole = hasPlusRole(interaction.member, config.megaRoleId) && !(websiteTier === 'free' && plus.grantedMega?.has(userId));
+    if (megaRole) return 'mega';
+    const plusRole = hasPlusRole(interaction.member, config.plusRoleId) && !(websiteTier === 'free' && plus.granted.has(userId));
+    return plusRole ? 'plus' : 'free';
   }
 
   const privately = (interaction, text) =>
@@ -78,7 +87,8 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     if (photo && photo.size > MAX_PHOTO_BYTES) return privately(interaction, 'That photo is too big. Please use one under 3 MB.');
 
     const userId = interaction.user.id;
-    const slot = limits.reserve(userId, await isPlusMember(interaction));
+    const tier = await memberTier(interaction);
+    const slot = limits.reserve(userId, tier !== 'free');
     if (!slot.ok) {
       return privately(interaction, slot.reason === 'global'
         ? 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.'
@@ -89,7 +99,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     await interaction.deferReply();
     // Plus members are unlimited anyway, so only free members hear that replies are free.
     const left = slot.remaining === null
-      ? 'Knox Plus · unlimited questions'
+      ? `${PLAN_NAME[tier] || 'Knox Plus'} · unlimited questions`
       : `${slot.remaining} of ${config.perUserLimit} questions left today · Replies to this lesson are free`;
     await answer(interaction, {
       question, history: [], photo: photo && { url: photo.url, name: photo.name, contentType: photoType },
@@ -98,7 +108,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       // The lesson keeps the photo's link so every reply can show it to Knox again
       // (a worksheet has many problems; Knox needs to keep reading it).
       lessonIdFor: text => lessons.start(userId, photo ? [question, '📷 Photo'].filter(Boolean).join('\n') : question, text,
-        photo && { url: photo.url, contentType: photoType }),
+        photo && { url: photo.url, contentType: photoType }, REPLIES_BY_TIER[tier] || MAX_REPLIES),
       onFail: () => limits.refund(userId),
     });
   }
@@ -133,9 +143,9 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     try {
       await interaction.deferReply();
       const reply = interaction.fields.getTextInputValue('reply').trim();
-      const repliesLeft = MAX_REPLIES - lesson.replies - 1;
-      // Replies never use a daily question; Plus members just see their plan.
-      const label = await isPlusMember(interaction) ? 'Knox Plus' : "Lesson reply · doesn't use a question";
+      const repliesLeft = (lesson.maxReplies || MAX_REPLIES) - lesson.replies - 1;
+      // Replies never use a daily question; Plus and Mega members just see their plan.
+      const label = PLAN_NAME[await memberTier(interaction)] || "Lesson reply · doesn't use a question";
       await answer(interaction, {
         question: reply, history: [...lesson.history], photo: lesson.photo, showPhoto: false,
         header: `<@${interaction.user.id}>\n${quote(reply)}`,
@@ -161,7 +171,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         '1. Click **Connect Knox Knows** and sign in (the link works for 15 minutes and only for you).',
         '2. Come back here and click **Check my Plus**.',
         '',
-        'Knox Plus members get unlimited questions here and the Knox Plus role, automatically.',
+        'Knox Plus and Mega Knox members get their plan here automatically: unlimited questions, longer lessons, and their role.',
       ].join('\n'),
       components: [buttons], flags: MessageFlags.Ephemeral, allowedMentions: noPings,
     });
@@ -170,13 +180,20 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
   // ── Check my Plus button ──
   async function checkPlus(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    const isPlus = await plus.isPlus(interaction.user.id, { fresh: true });
-    if (isPlus === null) return interaction.editReply("I couldn't reach Knox Knows just now. Please try again in a minute.");
-    const role = await plus.syncRole(interaction.member, isPlus);
-    if (isPlus) {
+    const tier = plus.tier ? await plus.tier(interaction.user.id, { fresh: true })
+      : await plus.isPlus(interaction.user.id, { fresh: true }).then(p => p === null ? null : p ? 'plus' : 'free');
+    if (tier === null) return interaction.editReply("I couldn't reach Knox Knows just now. Please try again in a minute.");
+    const role = await plus.syncRole(interaction.member, tier !== 'free');
+    const megaRole = await (plus.syncMegaRole?.(interaction.member, tier === 'mega') ?? 'kept');
+    if (tier === 'mega') {
+      return interaction.editReply(role === 'no-permission' || megaRole === 'no-permission'
+        ? `You've got Mega Knox! Your questions here are unlimited and lessons go up to ${REPLIES_BY_TIER.mega} replies. (I couldn't give you your role. Ask a moderator to check my permissions.)`
+        : `You've got Mega Knox! 💎 Your questions here are unlimited, lessons go up to ${REPLIES_BY_TIER.mega} replies, and you have the Mega Knox role.`);
+    }
+    if (tier === 'plus') {
       return interaction.editReply(role === 'no-permission'
-        ? "You've got Knox Plus! Your questions here are unlimited. (I couldn't give you the Knox Plus role. Ask a moderator to check my permissions.)"
-        : "You've got Knox Plus! 🎉 Your questions here are unlimited and you have the Knox Plus role.");
+        ? `You've got Knox Plus! Your questions here are unlimited and lessons go up to ${REPLIES_BY_TIER.plus} replies. (I couldn't give you the Knox Plus role. Ask a moderator to check my permissions.)`
+        : `You've got Knox Plus! 🎉 Your questions here are unlimited, lessons go up to ${REPLIES_BY_TIER.plus} replies, and you have the Knox Plus role.`);
     }
     const linked = (await plus.statuses([interaction.user.id]).catch(() => ({})))[interaction.user.id]?.linked;
     return interaction.editReply(linked
@@ -192,7 +209,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         `• \`/ask\` in <#${config.studyChannelId}>: ask about any schoolwork. Knox guides you with hints so you learn it, instead of just giving answers.`,
         '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` (with or without a question).',
         '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free. **🏁 End lesson** when you\'re done.',
-        `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC). Knox Plus members get unlimited.`,
+        `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC) and ${MAX_REPLIES} replies per lesson. Knox Plus: unlimited questions, ${REPLIES_BY_TIER.plus} replies per lesson. Mega Knox: unlimited questions, ${REPLIES_BY_TIER.mega} replies per lesson.`,
         '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
         '',
         'Knox won\'t help during a test or exam, but it\'ll gladly help you study for the next one. More at https://knoxknowsapp.com',
@@ -222,7 +239,8 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
 function lessonProblem(lesson, userId) {
   if (!lesson) return 'This lesson has ended (they last 2 hours). Use /ask to start a new one.';
   if (lesson.ownerId !== userId) return 'Only the student who asked can reply to this lesson. Use /ask to start your own!';
-  if (lesson.replies >= MAX_REPLIES) return `This lesson has used all ${MAX_REPLIES} replies. Use /ask to start a new one.`;
+  const max = lesson.maxReplies || MAX_REPLIES;
+  if (lesson.replies >= max) return `This lesson has used all ${max} replies. Use /ask to start a new one.`;
   return null;
 }
 
