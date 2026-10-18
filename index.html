@@ -3282,12 +3282,16 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         window.userPlan = plan;
         window.hasBillingAccount = !!data.stripeCustomerId;
         window.userComped = data.comped === true;
+        // The Mega trial is for first-time subscribers (same check as
+        // api/create-checkout-session.js), so don't advertise it once it's used.
+        window.megaTrialUsed = !!(data.planActivatedAt || data.stripeSubscription);
         userPlan = plan;
       } else {
         window.userPlan = "free";
         window.userTier = "free";
         window.hasBillingAccount = false;
         window.userComped = false;
+        window.megaTrialUsed = false;
         userPlan = "free";
       }
     } catch (err) {
@@ -3334,6 +3338,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       window.userPlan = "free";
       window.hasBillingAccount = false;
       window.userComped = false;
+      window.megaTrialUsed = false;
       userPlan = "free";
       window.dispatchEvent(new CustomEvent('knoxAuthChange', { detail: { loggedIn: false } }));
       if (window.updateLoginUI) window.updateLoginUI();
@@ -4173,7 +4178,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     const KK_TAG = '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>', KK_SPARK = '<svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg>';
     if (proTrial) { proTrial.style.display = yearly ? 'flex' : 'none'; proTrial.innerHTML = KK_TAG + ' SAVE 33%'; proTrial.style.background = '#7C3AED'; proTrial.style.boxShadow = '0 2px 0 #5B21B6'; }
     if (megaTrial) {
-      megaTrial.style.display = 'flex';
+      // Monthly shows the trial only to people who can still get it (signed
+      // out, or free and never subscribed). Yearly always shows the savings.
+      megaTrial.style.display = yearly || megaTrialAvailable() ? 'flex' : 'none';
       megaTrial.innerHTML = yearly ? KK_TAG + ' SAVE 36%' : KK_SPARK + ' 3-DAY FREE TRIAL';
       megaTrial.style.background = yearly ? '#7C3AED' : '#FF6B00';
       megaTrial.style.boxShadow  = yearly ? '0 2px 0 #5B21B6' : '0 2px 0 #CC5500';
@@ -4480,6 +4487,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   // Plus member can move up to Mega Knox (or a Mega member down to Plus) —
   // the server switches the same subscription. Signed out / free: normal
   // buttons for the chosen billing.
+  function megaTrialAvailable() {
+    if (!window.currentUser) return true;
+    return (window.userTier || 'free') === 'free' && !window.megaTrialUsed;
+  }
+  window.megaTrialAvailable = megaTrialAvailable;
+
   function updatePricingButtons(fromBilling) {
     userPlan = window.userPlan || userPlan; // sync from module scope
     const tier = !window.currentUser ? 'free' : (window.userTier || (userPlan === 'max' ? 'mega' : ['super', 'plus'].includes(userPlan) ? 'plus' : 'free'));
@@ -4500,9 +4513,13 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       set('proBottomCTA', '💎 Upgrade to Mega Knox', false);
     } else {
       set('proCTABtn', yearly ? 'Get Knox Plus Yearly' : 'Get Knox Plus', false);
-      set('megaCTABtn', yearly ? 'Get Mega Knox Yearly' : 'Start Free Trial', false);
-      set('proBottomCTA', yearly ? 'Get Mega Knox Yearly — $99.99/yr' : 'Try Mega Knox free for 3 days', false);
+      const trial = megaTrialAvailable();
+      set('megaCTABtn', yearly ? 'Get Mega Knox Yearly' : trial ? 'Start Free Trial' : 'Get Mega Knox', false);
+      set('proBottomCTA', yearly ? 'Get Mega Knox Yearly — $99.99/yr' : trial ? 'Try Mega Knox free for 3 days' : 'Get Mega Knox — $12.99/mo', false);
     }
+    // Paid members never get the trial, so their Mega badge shows no trial either.
+    const megaTrial = document.getElementById('megaTrialBadge');
+    if (megaTrial && !yearly && !megaTrialAvailable()) megaTrial.style.display = 'none';
     if (!fromBilling && tier === 'free') setBilling(billing || 'monthly');
   }
   window.updatePricingButtons = updatePricingButtons;
