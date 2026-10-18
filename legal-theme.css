@@ -89,3 +89,11 @@ html.knox-seasonal .page-hero .badge { box-shadow:0 3px 0 #D7BE99; background:#F
 html.knox-seasonal :is(.summary-card,.guarantee-card) { filter:none; }
 footer,html[data-theme="dark"] footer { background:var(--lg-hero); color:var(--lg-body); }
 footer :is(p,a),footer .ft-made,footer .ft-made + p,footer .footer-links a[aria-current="page"] { color:var(--lg-muted); }
+
+/* Key words read like Knox's answers in Ask Knox: bold orange, no pill. */
+.policy-section :is(.highlight, strong), .change-text strong, .review blockquote strong {
+ background:none; padding:0; border-radius:0; color:#E85D00; font-weight:800;
+}
+html[data-theme="dark"]:not(.knox-seasonal) .policy-section :is(.highlight, strong),
+html[data-theme="dark"]:not(.knox-seasonal) .change-text strong { color:#FF9A4D; background:none; padding:0; }
+html.knox-seasonal .policy-section :is(.highlight, strong), html.knox-seasonal .change-text strong { color:#B94D24; background:none; padding:0; }
