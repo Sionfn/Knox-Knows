@@ -14,6 +14,8 @@ export class Plus {
     this.cache = new Map(); // discordId → { plus, linked, at }
     this.grantsFile = config.dataFile.replace(/(\.json)?$/, '-plus-roles.json');
     this.granted = new Set(loadJson(this.grantsFile) || []); // roles the bot gave, so it only removes those
+    this.megaGrantsFile = config.dataFile.replace(/(\.json)?$/, '-mega-roles.json');
+    this.grantedMega = new Set(loadJson(this.megaGrantsFile) || []);
   }
 
   // A one-time website link that connects this Discord account to a Knox account.
@@ -55,6 +57,38 @@ export class Plus {
   async isPlus(discordId, options) {
     try { return (await this.statuses([discordId], options))[discordId]?.plus === true; }
     catch (err) { console.error(err.message); return null; }
+  }
+
+  // The website plan for one person: 'free' | 'plus' | 'mega', or null if the
+  // website couldn't be reached. (An older website without "tier" reports plus only.)
+  async tier(discordId, options) {
+    try {
+      const status = (await this.statuses([discordId], options))[discordId];
+      return status?.tier || (status?.plus ? 'plus' : 'free');
+    } catch (err) { console.error(err.message); return null; }
+  }
+
+  // Give or take the Mega Knox role to match (only removes a role the bot gave).
+  async syncMegaRole(member, mega) {
+    const roleId = this.config.megaRoleId;
+    if (!roleId || !member?.roles?.cache || mega === null) return 'kept';
+    const hasRole = member.roles.cache.has(roleId);
+    try {
+      if (mega && !hasRole) {
+        await member.roles.add(roleId, 'Mega Knox member (linked with /link)');
+        this.grantedMega.add(member.id); saveJson(this.megaGrantsFile, [...this.grantedMega]);
+        return 'added';
+      }
+      if (!mega && hasRole && this.grantedMega.has(member.id)) {
+        await member.roles.remove(roleId, 'Mega Knox ended');
+        this.grantedMega.delete(member.id); saveJson(this.megaGrantsFile, [...this.grantedMega]);
+        return 'removed';
+      }
+    } catch (err) {
+      console.error(`Could not update the Mega Knox role for ${member.id}: ${err.message}`);
+      return 'no-permission';
+    }
+    return 'kept';
   }
 
   // Give or take the Knox Plus role to match. Returns 'added', 'removed',

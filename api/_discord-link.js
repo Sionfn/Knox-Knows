@@ -7,7 +7,7 @@
 //     POST { code } with "Authorization: Bearer <Firebase ID token>"
 //     → links the Discord account in the code to this Knox account
 //   Discord bot (X-Knox-Bot-Key, same key as /api/ask):
-//     POST { action: 'status', discordIds: [...] } → { results: { id: { linked, plus } } }
+//     POST { action: 'status', discordIds: [...] } → { results: { id: { linked, plus, tier } } }
 //
 // The bot makes the code: "<discordId>.<expiry seconds>.<signature>", signed
 // with KNOX_BOT_KEY, so nobody can forge a link for someone else's Discord.
@@ -17,6 +17,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import crypto from "crypto";
+import { tierOf } from "./_plans.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -32,7 +33,8 @@ const adminAuth = getAdminAuth();
 const db        = getFirestore();
 
 const DISCORD_ID = /^\d{15,25}$/;
-const isPlus = plan => plan === "super" || plan === "max" || plan === "plus"; // same allowlist as api/ask.js
+// The same plan rules as the website (paid, comped, gift codes, Flame Fest weeks).
+const planOf = data => tierOf(data || {}); // "free" | "plus" | "mega"
 
 function botKey() {
   const key = (process.env.KNOX_BOT_KEY || "").trim();
@@ -92,12 +94,13 @@ export default async function handler(req, res) {
 
 async function status(discordId) {
   const account = await db.collection("discordAccounts").doc(discordId).get();
-  if (!account.exists) return { linked: false, plus: false };
+  if (!account.exists) return { linked: false, plus: false, tier: "free" };
   const user = await db.collection("users").doc(account.data().uid).get();
   // The user doc is the source of truth: a stale mapping (they linked a
   // different Discord since) counts as not linked.
-  if (!user.exists || user.data().discordId !== discordId) return { linked: false, plus: false };
-  return { linked: true, plus: isPlus(user.data().plan) };
+  if (!user.exists || user.data().discordId !== discordId) return { linked: false, plus: false, tier: "free" };
+  const tier = planOf(user.data());
+  return { linked: true, plus: tier !== "free", tier };
 }
 
 async function link(uid, discordId) {
@@ -115,6 +118,6 @@ async function link(uid, discordId) {
     if (user.discordId && user.discordId !== discordId) tx.delete(db.collection("discordAccounts").doc(user.discordId));
     tx.set(userRef, { discordId }, { merge: true });
     tx.set(accountRef, { uid, linkedAt: new Date().toISOString() });
-    return isPlus(user.plan);
+    return planOf(user) !== "free";
   });
 }

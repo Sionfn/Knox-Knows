@@ -1729,7 +1729,7 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   const asStudent = body => call({ authorization: 'Bearer test' }, body);
   const asBot = ids => call({ 'x-knox-bot-key': botKey }, { action: 'status', discordIds: ids });
 
-  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: false, plus: false });
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: false, plus: false, tier: 'free' });
   assert.equal((await asStudent({ code: sign(discordId, Math.floor(Date.now() / 1000) - 1) })).code, 400); // expired
   assert.equal((await asStudent({ code: sign(discordId, later).slice(0, -2) + 'xx' })).code, 400);       // forged
   assert.equal((await call({}, { code: sign(discordId, later) })).code, 401);                              // not signed in
@@ -1738,10 +1738,19 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   assert.equal(linked.code, 200);
   assert.equal(linked.body.plus, true);
   assert.equal(store.get('users/u1').discordId, discordId);
-  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true });
+  assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true, tier: 'plus' });
+
+  // Mega Knox (plan 'max'), a comped Mega account and a Flame Fest Mega week all show as Mega to the bot.
+  for (const data of [{ plan: 'max' }, { comped: true, compedTier: 'mega' }, { plan: 'free', megaUntil: Date.now() + 86400000 }]) {
+    store.set('users/u1', { ...store.get('users/u1'), plan: undefined, comped: undefined, compedTier: undefined, megaUntil: undefined, ...data });
+    assert.equal((await asBot([discordId])).body.results[discordId].tier, 'mega');
+  }
+  // A Knox Plus gift (plusUntil) counts as Plus.
+  store.set('users/u1', { discordId, plan: 'free', plusUntil: Date.now() + 86400000 });
+  assert.equal((await asBot([discordId])).body.results[discordId].tier, 'plus');
 
   // Cancelling Plus shows up right away.
-  store.set('users/u1', { ...store.get('users/u1'), plan: 'free' });
+  store.set('users/u1', { discordId, plan: 'free' });
   assert.equal((await asBot([discordId])).body.results[discordId].plus, false);
 
   // Linking a different Discord moves the link; the old one is no longer linked.
