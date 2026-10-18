@@ -581,6 +581,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     #mobileNav .ln-subj  { color:var(--green);  background:var(--green-light);  box-shadow:0 3px 0 var(--green-dark); }
     #mobileNav .ln-price { color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
     #mobileNav .ln-faq   { color:var(--orange); background:var(--orange-cream); box-shadow:0 3px 0 #CC5500; }
+    #mobileNav .ln-rev   { color:var(--blue); background:var(--blue-light); box-shadow:0 3px 0 var(--blue-dark, #0A85C2); }
     #mobileNav .ln-ext {
       display:flex; align-items:center; gap:10px; margin:8px; padding:10px 12px; border-radius:14px;
       background:var(--blue-light); border:2px solid var(--blue); box-shadow:0 3px 0 var(--blue-dark);
@@ -1940,6 +1941,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .pt-table { background:var(--surface); border:2px solid var(--border); border-radius:22px; box-shadow:0 4px 0 var(--border); overflow:hidden; }
     .pt-row { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; align-items:center; padding:16px 22px; border-bottom:1.5px solid var(--border); text-align:center; }
     .pt-row.pt-last { border-bottom:none; }
+    .pt-text.pt-list { display:inline-block; line-height:1.55; font-size:12.5px; }
     .pt-head { background:var(--gray); font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--text-light); }
     .pt-label { text-align:left; font-size:15px; font-weight:700; color:var(--text); }
     .pt-label small { display:block; margin-top:2px; font-size:12px; font-weight:600; color:var(--text-light); line-height:1.35; }
@@ -2334,6 +2336,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <a class="ln-link" href="#faq" onclick="closeMobileNav();smoothScroll('faq',event);">
         <span class="ln-icon ln-faq" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><path d="M12 17h.01"/></svg></span><span>FAQ</span>
       </a>
+      <a class="ln-link" href="/reviews">
+        <span class="ln-icon ln-rev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="m9 11.5 2 2 4-4"/></svg></span><span>Student reviews</span>
+      </a>
     </div>
 
     <a class="ln-ext ln-discord" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — become a Knox Ambassador">
@@ -2671,8 +2676,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <div class="pt-row"><div class="pt-label">Photos &amp; files</div><div><span class="pt-text free">2 credits each</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
       <div class="pt-row"><div class="pt-label">Flashcard decks made by Knox</div><div><span class="pt-text free">2 credits · 10 cards</span></div><div><span class="pt-text plus">15 cards</span></div><div><span class="pt-text mega">40 cards</span></div></div>
       <div class="pt-row"><div class="pt-label">Support</div><div><span class="pt-text free">Email</span></div><div><span class="pt-text plus">Faster</span></div><div><span class="pt-text mega">Fastest</span></div></div>
+      <div class="pt-row"><div class="pt-label">Knox Discord<small>Free gets the community server. Plus gets its own members’ lounge. Mega gets the private Mega lounge, an early-access channel, the Mega hangout voice chat, and a direct line to the founder — plus a vote on what Knox builds next.</small></div><div><span class="pt-text free">Community</span></div><div><span class="pt-text plus">Plus lounge</span></div><div><span class="pt-text mega pt-list">Mega lounge<br>Early-access channel<br>Voice hangout<br>Chat with the founder</span></div></div>
       <div class="pt-row"><div class="pt-label">Early access to new features</div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
-      <div class="pt-row"><div class="pt-label">Knox Discord<small>Plus gets its own members’ lounge. Mega gets the private Mega lounge and voice hangout, an early-access channel, and a direct line to the founder — plus a vote on what Knox builds next.</small></div><div><span class="pt-text free">Community</span></div><div><span class="pt-text plus">Plus lounge</span></div><div><span class="pt-text mega">Mega lounge + founder</span></div></div>
       <div class="pt-row pt-last"><div class="pt-label">Mega extras**<small>Custom flashcard decks, the Mega badge, and the highest limits on files, photos, decks and Learn sessions.</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
     </div>
 
@@ -2962,6 +2967,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <a href="#subjects" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Subjects</a>
         <a href="#pricing" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Pricing</a>
         <a href="#faq" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">FAQ</a>
+        <a href="/reviews" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Student Reviews</a>
         <a href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Chrome Extension</a>
         <a href="/redeem" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Redeem a gift</a>
       </div>
