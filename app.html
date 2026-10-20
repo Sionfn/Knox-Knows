@@ -1175,9 +1175,9 @@
     #welcomeScreen {
       flex: 1;
       display: flex; flex-direction: column;
-      /* "safe": if the content is taller than the space (short laptop
-         screens), start it at the top so nothing is cut off unreachably. */
-      align-items: center; justify-content: safe center;
+      /* Content starts at the top in every look (fall's pumpkin patch needs
+         the space below), so switching looks never moves it. */
+      align-items: center; justify-content: flex-start;
       padding: 40px 24px 32px;
       text-align: center;
       /* On mobile the 4 cards + heading genuinely don't fit, so scrolling
@@ -1453,9 +1453,6 @@
     .learn-choice:hover:not(:disabled) { background: color-mix(in srgb, var(--lc) 14%, var(--surface)); }
     .learn-choice:active:not(:disabled) { box-shadow: 0 1px 0 var(--lc-dark); }
     .learn-choice.picked { background: var(--purple-light); border-color: var(--purple); color: var(--text); }
-    .learn-style { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:14px 0; }
-    .learn-style button { font:inherit; font-weight:800; border:2px solid var(--border); border-radius:14px; padding:10px 16px; background:var(--surface); color:var(--text); cursor:pointer; }
-    .learn-style button[aria-pressed="true"] { border-color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
     /* Teaching cards: key idea, graph, video */
     .learn-key, .learn-graph, .learn-video { margin: 0 18px 14px; }
     .learn-key { padding: 12px 16px; border-radius: 16px; border: 2px solid var(--blue); background: color-mix(in srgb, var(--blue) 9%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--blue) 40%, transparent); }
@@ -4909,15 +4906,6 @@ window.openLearnMode = function() {
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
   if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.";
-  let styles = document.getElementById('learnStylePicker');
-  if (!styles && sub) {
-    styles = document.createElement('div'); styles.id='learnStylePicker'; styles.className='learn-style';
-    styles.setAttribute('role','group'); styles.setAttribute('aria-label','How would you like to learn?');
-    styles.innerHTML='<button type="button" data-learn-style="teach">Teach me first</button><button type="button" data-learn-style="quiz">Quiz me</button>';
-    sub.after(styles);
-    styles.addEventListener('click', e => { const b=e.target.closest('[data-learn-style]'); if(!b)return; window._learnStyle=b.dataset.learnStyle; styles.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); });
-  }
-  if(styles) { styles.hidden=false; styles.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.learnStyle===(window._learnStyle||'teach')))); }
   updateSuggestionChipsForMode(true);
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
@@ -4930,7 +4918,7 @@ window.openLearnMode = function() {
 // Restores the normal welcome copy — called whenever a Learn session ends
 // (New Chat, Home, or opening a different saved conversation).
 function resetWelcomeCopy() {
-  document.getElementById('learnStylePicker')?.remove();
+  window._learnStyle = 'teach'; // an old Quiz chat's style doesn't carry into the next session
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
