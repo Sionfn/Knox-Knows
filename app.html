@@ -2679,7 +2679,7 @@
             <div class="suggestion-grid">
               <button class="suggestion-chip" data-flavor="orange"
                 data-q-normal="Explain the quadratic formula and solve 3x² - 5x + 2 = 0 step by step"
-                data-q-learn="Quiz me on the quadratic formula — walk me through solving 3x² - 5x + 2 = 0 with hints, don't just give me the answer"
+                data-q-learn="Teach me the quadratic formula — walk me through solving 3x² - 5x + 2 = 0 with hints, don't just give me the answer"
                 onclick="appSuggestionClick(this)">
                 <div class="chip-circle">📐</div>
                 <div class="chip-content">
@@ -2699,7 +2699,7 @@
               </button>
               <button class="suggestion-chip" data-flavor="blue"
                 data-q-normal="What caused World War 1? Explain the main reasons."
-                data-q-learn="Quiz me on what caused World War 1 until I can explain the main reasons myself"
+                data-q-learn="Help me understand what caused World War 1 until I can explain the main reasons myself"
                 onclick="appSuggestionClick(this)">
                 <div class="chip-circle">🌍</div>
                 <div class="chip-content">
@@ -3598,6 +3598,8 @@
         loadStreak(user.uid),
       ]);
       if (loadVersion !== authLoadVersion || window.currentUser?.uid !== user.uid) return;
+      // A guest tapped Learn and was asked to sign up: open it now.
+      if (window._learnAfterSignIn) { window._learnAfterSignIn = false; window.openLearnMode?.(); }
       // Track activity for the admin dashboard's DAU/WAU.
       // Uses setDoc with merge so it doesn't clobber other user fields.
       // firestore.rules permits writing lastActiveAt/firstSeenAt because
@@ -4882,7 +4884,26 @@ window.appStartNewChat = function() {
 // same chat UI as normal Knox (not a separate view like the calculator),
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
-window.openLearnMode = function() {
+window.openLearnMode = function(authChecked) {
+  // Guests: every guest message counts toward 3 a day, so a lesson would stop
+  // after a couple of answers. Ask them to sign up (free), then open Learn.
+  // While sign-in is still loading (a /app?open=learn link), decide once it's known.
+  if (!window.currentUser && authChecked !== true && document.body.classList.contains('app-auth-pending')) {
+    const started = Date.now();
+    const wait = setInterval(() => {
+      if (document.body.classList.contains('app-auth-pending') && Date.now() - started < 8000) return;
+      clearInterval(wait); window.openLearnMode(true);
+    }, 100);
+    return;
+  }
+  if (!window.currentUser) {
+    window._learnAfterSignIn = true;
+    window.closeMobileHistory?.();
+    window.openAuthModal?.('signup');
+    const sub = $('authHeaderSubtitle');
+    if (sub) sub.textContent = 'Learn lessons are free with an account — sign up to start one.';
+    return;
+  }
   window._appViewVersion++;
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
@@ -4966,6 +4987,8 @@ window.openAuthModal = function(initialTab) {
 };
 window.closeAuthModal = function() {
   $('authModal').style.display = 'none';
+  const sub = $('authHeaderSubtitle'); // drop the Learn note (see openLearnMode)
+  if (sub && /^Learn lessons/.test(sub.textContent)) sub.textContent = 'Sign in or create your free account';
 };
 
 window.switchAuthTab = function(tab) {
