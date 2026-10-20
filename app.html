@@ -1175,9 +1175,9 @@
     #welcomeScreen {
       flex: 1;
       display: flex; flex-direction: column;
-      /* Content starts at the top in every look (fall's pumpkin patch needs
-         the space below), so switching looks never moves it. */
-      align-items: center; justify-content: flex-start;
+      /* "safe": if the content is taller than the space (short laptop
+         screens), start it at the top so nothing is cut off unreachably. */
+      align-items: center; justify-content: safe center;
       padding: 40px 24px 32px;
       text-align: center;
       /* On mobile the 4 cards + heading genuinely don't fit, so scrolling
