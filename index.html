@@ -1447,6 +1447,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       border:1.5px solid var(--blue); border-radius:8px;
       padding:5px 10px; font-size:12px; font-weight:800; margin-top:8px;
     }
+    /* "7-day money back" chip beside the Monthly/Yearly toggle */
+    .mb-chip { display:flex; align-items:center; gap:6px; background:var(--green-light); border:1.5px solid #86EFAC; border-radius:10px; padding:7px 14px; color:#16A34A; font-size:12px; font-weight:800; }
+    html[data-theme="dark"]:not(.knox-seasonal) .mb-chip { color:#7BE33A; border-color:rgba(123,227,58,.45); }
     .money-back-pill {
       display:inline-flex; align-items:center; gap:10px;
       background:var(--green-light); border:2px solid var(--green);
@@ -2624,9 +2627,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           Yearly &nbsp;<span style="font-size:11px;font-weight:900;background:var(--green);color:white;border-radius:8px;padding:3px 8px;white-space:nowrap;vertical-align:middle;">Save up to 36%</span>
         </button>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;background:var(--green-light);border:1.5px solid #86EFAC;border-radius:10px;padding:7px 14px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span style="font-size:12px;font-weight:800;color:#16A34A;">7-day money back</span>
+      <div class="mb-chip">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>7-day money back</span>
       </div>
     </div>
 
