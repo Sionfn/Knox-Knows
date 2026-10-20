@@ -6520,6 +6520,16 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
   if (!document.body.classList.contains('app-auth-pending')) window.knoxRestoreSection();
 }
 
+// /app?open=flamefest (the Chrome extension's Flame Fest button): open the
+// calendar once sign-in is known; guests get the sign-in box (see flamefest.js).
+if (openTarget === 'flamefest') {
+  const started = Date.now();
+  const wait = setInterval(() => {
+    if (document.body.classList.contains('app-auth-pending') && Date.now() - started < 8000) return;
+    clearInterval(wait); window.knoxFlameFest?.open();
+  }, 150);
+}
+
 // Keep the address in step with the open section (?open=learn, calculator or
 window.addEventListener('pagehide', () => {
   try {
