@@ -40,11 +40,13 @@ html[data-theme="dark"]:not(.knox-seasonal) .app-loading-content {
   background: var(--surface); box-shadow: 0 6px 0 var(--border), 0 0 40px rgba(255,107,0,.08);
 }
 /* Landing page */
+/* !important on both: #home's inline `background:` shorthand would otherwise
+   reset the image and hide the glows. */
 html[data-theme="dark"]:not(.knox-seasonal) #home {
   background-color: var(--cream) !important;
   background-image:
     radial-gradient(ellipse at 82% 12%, rgba(255,154,60,.10), transparent 45%),
-    radial-gradient(ellipse at 8% 95%, rgba(142,111,176,.16), transparent 45%);
+    radial-gradient(ellipse at 8% 95%, rgba(142,111,176,.16), transparent 45%) !important;
 }
 html[data-theme="dark"]:not(.knox-seasonal) #home > .hero-blob { display: none; }
 html[data-theme="dark"]:not(.knox-seasonal) .hero-badge { background: #2A1D1A !important; box-shadow: 0 3px 0 #A34700, 0 0 26px rgba(255,107,0,.22); }
