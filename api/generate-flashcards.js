@@ -106,9 +106,11 @@ const stem = w => w.length > 4 ? w.replace(/(ing|es|ed|s)$/, "") : w; // focuses
 const FILLER = new Set("the and for with from that this what which who whom how why when where are was were did does has have had its into about than then their there these those your you can could would should will not but all any each other some such only also more most very just one two three four five six seven eight nine ten first second third part parts type types kind main called name known used use make made give gives between during after before over under view english version file".split(" "));
 const words = t => [...new Set(String(t || "").replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2 && !FILLER.has(w)))];
 // → { pick, score }: score 0 means nothing in the article matched the card.
-function pictureFor(card, pictures, used) {
+// `common`: words most cards in the deck share ("newton", "force") — a file
+// named after the deck's topic isn't a match for one particular card.
+function pictureFor(card, pictures, used, common = new Set()) {
   const text = [card.front, card.back, card.imageTitle].join(" ").toLowerCase();
-  const cardWords = new Set(words(text).flatMap(w => [w, stem(w)]));
+  const cardWords = new Set(words(text).flatMap(w => [w, stem(w)]).filter(w => !common.has(w)));
   let pick = null, score = -Infinity;
   for (const p of pictures) {
     if (used.has(p.src)) continue;
@@ -163,19 +165,23 @@ async function addPictures(cards) {
     const titles = [...new Set(wanted.map(c => c.imageTitle))];
     const found = new Map(await Promise.all(titles.map(async t => [t, await articlePictures(t)])));
     const used = new Set();
+    // Words in at least 40% of the cards (3+) are the deck's topic, not a card's.
+    const counts = new Map();
+    for (const c of wanted) for (const w of new Set(words([c.front, c.back].join(" ")).flatMap(w => [w, stem(w)]))) counts.set(w, (counts.get(w) || 0) + 1);
+    const common = new Set([...counts].filter(([, n]) => wanted.length >= 5 && n >= Math.max(3, wanted.length * 0.4)).map(([w]) => w));
     // A card whose article has nothing that fits gets a second article from its own words.
     const retry = new Map(await Promise.all(wanted
-      .filter(c => pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set()).score < 2) // < 2: nothing matched the card's words (the main picture alone scores 1.5)
+      .filter(c => pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common).score < 2) // < 2: nothing matched the card's words (the main picture alone scores 1.5)
       .map(async c => { const t = await betterArticle(c); return [c, t && t !== c.imageTitle ? { title: t, ...(await articlePictures(t)) } : null]; })));
     for (const card of wanted) {
       let { title, pictures = [] } = found.get(card.imageTitle) || {};
-      let best = pictureFor(card, pictures, used);
+      let best = pictureFor(card, pictures, used, common);
       const other = retry.get(card);
       if (other?.pictures?.length) {
-        const alt = pictureFor(card, other.pictures, used);
+        const alt = pictureFor(card, other.pictures, used, common);
         if (alt.score > best.score) { best = alt; title = other.title; }
       }
-      if (!best.pick && pictures.length) best = pictureFor(card, pictures, new Set()); // all used: allow a repeat
+      if (!best.pick && pictures.length) best = pictureFor(card, pictures, new Set(), common); // all used: allow a repeat
       if (title) card.imageTopic = title; // the picture picker searches this later
       // Score 0: nothing about the file matches the card (a singer's Walk of Fame
       // star on a Newton's third law card) — no picture beats a wrong one.
