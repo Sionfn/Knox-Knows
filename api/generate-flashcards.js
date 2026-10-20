@@ -57,7 +57,7 @@ function systemPrompt(count, style, pictures = true, difficulty = "mixed", part 
   const shape = style === 'term'
     ? 'The front of each card is a key term or concept; the back is its clear definition or explanation.'
     : style === 'fill'
-    ? 'The front of each card is a sentence from the material with one key word or phrase replaced by "_____"; the back is the missing word or phrase, then a short reason.'
+    ? 'The front of each card is a sentence from the material with one key word or phrase replaced by "_____"; the back starts with exactly the word or phrase that fits the blank, written as it would appear in that sentence (lowercase unless it is a name; no words the sentence already has), then a period and a short reason. Blank only one short word or phrase per card.'
     : style === 'tf'
     ? 'The front of each card is a statement that is either true or false (mix them about evenly); the back starts with "True." or "False." and then gives the correct fact.'
     : 'The front of each card is one clear question; the back is its accurate answer.';
@@ -177,7 +177,9 @@ async function addPictures(cards) {
       }
       if (!best.pick && pictures.length) best = pictureFor(card, pictures, new Set()); // all used: allow a repeat
       if (title) card.imageTopic = title; // the picture picker searches this later
-      if (best.pick) { used.add(best.pick.src); card.image = best.pick.src; card.imageCredit = best.pick.credit; }
+      // Score 0: nothing about the file matches the card (a singer's Walk of Fame
+      // star on a Newton's third law card) — no picture beats a wrong one.
+      if (best.pick && best.score >= 1) { used.add(best.pick.src); card.image = best.pick.src; card.imageCredit = best.pick.credit; }
     }
   } catch (err) {
     console.error("Card pictures skipped:", err?.message);

@@ -47,7 +47,8 @@ function setDeleted(m){try{localStorage.setItem(delKey(),JSON.stringify(m));}cat
 // Called by save(): stamp the decks that changed, remember the ones deleted.
 function stamp(prev,next){
   const before=new Map(prev.map(d=>[d.id,JSON.stringify(d)])), now=Date.now();
-  for(const d of next){if(before.get(d.id)!==JSON.stringify(d)){d.updatedAt=now;dirtyIds.add(d.id);}before.delete(d.id);}
+  // createdAt keeps the deck list in the same order on every device.
+  for(const d of next){if(!d.createdAt)d.createdAt=d.updatedAt||now;if(before.get(d.id)!==JSON.stringify(d)){d.updatedAt=now;dirtyIds.add(d.id);}before.delete(d.id);}
   if(before.size){const m=deletedMap();for(const id of before.keys()){m[id]=now;dirtyIds.add(id);}setDeleted(m);}
 }
 function schedulePush(){if(!syncUid()||!window.knoxDeckStore)return;clearTimeout(syncTimer);syncTimer=setTimeout(pushDecks,2000);}
@@ -210,7 +211,7 @@ async function makeDeck(){
   const options={request,count:makeOpts.count,style:makeOpts.style,difficulty:makeOpts.difficulty,pictures:autoPictures(),
     ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_CHARS[tierNow()])}}:{}),
     ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
-  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes a few seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
+  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes 10–30 seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{
     const token=await user.getIdToken();
@@ -248,7 +249,7 @@ function home(query=''){
 }
 function renderDecks(query){
   const grid=panel.querySelector('#fcDecks');
-  const results=decks.map(d=>[d,flavorOf(d.id)]).filter(([d])=>d.title.toLowerCase().includes(query.toLowerCase()));
+  const results=[...decks].sort((a,b)=>(a.createdAt||a.updatedAt||0)-(b.createdAt||b.updatedAt||0)).map(d=>[d,flavorOf(d.id)]).filter(([d])=>d.title.toLowerCase().includes(query.toLowerCase()));
   if(!results.length){
     grid.style.display='block';
     grid.innerHTML=decks.length
@@ -405,6 +406,21 @@ function controls(){
     ?`<div class="fc-grades">${btn('<span><span class="k">1</span>Again</span><small>See it again soon</small>','again',{cls:'fc-grade again'})}${btn('<span><span class="k">2</span>Good</span><small>Got it</small>','good',{cls:'fc-grade good'})}${btn('<span><span class="k">3</span>Easy</span><small>Knew it cold</small>','easy',{cls:'fc-grade easy'})}</div>`
     :btn('Reveal answer','flip',{cls:'primary fc-reveal'});
 }
+
+// Fill-in-the-blank cards: the back shows the sentence with the blank filled
+// in (the answer highlighted), then the short reason — instead of a bare
+// "2. One glucose…" that reads like a numbered list.
+const BLANK=/_{3,}/;
+function fillBack(c){
+  const plain=`<p class="fc-face-text" id="fcAnswerText">${esc(c.back)}</p>`;
+  if(!BLANK.test(c.front||''))return plain;
+  const m=String(c.back||'').match(/^\s*(.+?)(?:[.!]\s+|\s+[—–-]\s+|$)([\s\S]*)$/);
+  const ans=m&&m[1].trim().replace(/[.!]$/,'');
+  if(!ans||ans.length>80)return plain;
+  const [before,...after]=String(c.front).split(BLANK);
+  return `<p class="fc-face-text" id="fcAnswerText">${esc(before)}<mark class="fc-fill">${esc(ans)}</mark>${esc(after.join('_____'))}</p>${m[2].trim()?`<p class="fc-fill-why">${esc(m[2].trim())}</p>`:''}`;
+}
+
 function study(){
   const s=session,d=decks.find(d=>d.id===s.id);
   if(!s.queue.length){
@@ -421,7 +437,7 @@ function study(){
     <div class="fc-progress"><div class="fc-progress-text"><span>${s.reviewed} reviewed</span><span>${s.queue.length} to go</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
     <div class="fc-stage"><button type="button" class="fc-card${s.flipped?' is-flipped':''}" data-action="flip" aria-label="${s.flipped?'Show question':'Reveal answer'}" aria-describedby="${s.flipped?'fcAnswerText':'fcQuestionText'}"><div class="fc-card-inner">
       <div class="fc-face front" aria-hidden="${s.flipped}"><span class="fc-face-label${retry?' retry':''}">${retry?'↻ Try again':'Question'}</span><p class="fc-face-text" id="fcQuestionText">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div>
-      <div class="fc-face back" aria-hidden="${!s.flipped}"><span class="fc-face-label">Answer</span><p class="fc-face-text" id="fcAnswerText">${esc(c.back)}</p>${cleanImage(c).image?`<img class="fc-card-img" src="${esc(c.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.nextElementSibling?.remove();this.remove()">${c.imageCredit?`<span class="fc-img-credit">${esc(c.imageCredit)}</span>`:''}`:''}<span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
+      <div class="fc-face back" aria-hidden="${!s.flipped}"><span class="fc-face-label">Answer</span>${fillBack(c)}${cleanImage(c).image?`<img class="fc-card-img" src="${esc(c.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.nextElementSibling?.remove();this.remove()">${c.imageCredit?`<span class="fc-img-credit">${esc(c.imageCredit)}</span>`:''}`:''}<span class="fc-face-hint">How did you do? Tap to see the question again</span></div>
     </div></button></div>
     <div class="fc-controls" id="fcControls">${controls()}</div>
     <p class="fc-tip">Again brings the card back in a few cards. Good and Easy schedule it for another day.</p>`,true);
