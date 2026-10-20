@@ -165,10 +165,10 @@ async function addPictures(cards) {
     const titles = [...new Set(wanted.map(c => c.imageTitle))];
     const found = new Map(await Promise.all(titles.map(async t => [t, await articlePictures(t)])));
     const used = new Set();
-    // Words in at least 40% of the cards (3+) are the deck's topic, not a card's.
+    // Words in at least a quarter of the cards (3+) are the deck’s topic, not a card’s.
     const counts = new Map();
     for (const c of wanted) for (const w of new Set(words([c.front, c.back].join(" ")).flatMap(w => [w, stem(w)]))) counts.set(w, (counts.get(w) || 0) + 1);
-    const common = new Set([...counts].filter(([, n]) => wanted.length >= 5 && n >= Math.max(3, wanted.length * 0.4)).map(([w]) => w));
+    const common = new Set([...counts].filter(([, n]) => wanted.length >= 5 && n >= Math.max(3, wanted.length * 0.25)).map(([w]) => w));
     // A card whose article has nothing that fits gets a second article from its own words.
     const retry = new Map(await Promise.all(wanted
       .filter(c => pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common).score < 2) // < 2: nothing matched the card's words (the main picture alone scores 1.5)
