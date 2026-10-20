@@ -43,3 +43,27 @@ html.knox-seasonal .harvest-sun{width:220px;height:220px;background:#F4D28C55;bo
 /* 3) Phones: in the app the message box covers the bottom of the screen, so the
    patch would peek out half-hidden. The landing page keeps it. */
 @media(max-width:768px){html.knox-seasonal #welcomeScreen>.pumpkin-patch{display:none}}
+
+/* 4) Same spot in every look (app, desktop): the welcome content is centered
+   in the space above the patch. Fall pins the patch to the bottom of that
+   space; light and dark keep the same space empty, so switching looks never
+   moves the heading or cards. --patch-room matches the patch heights above. */
+#welcomeScreen{--patch-room:190px}
+@media(min-width:901px) and (max-height:760px){#welcomeScreen{--patch-room:150px}}
+@media(min-width:1400px) and (min-height:880px){#welcomeScreen{--patch-room:232px}}
+@media(min-width:769px){
+ /* Auto margins center the content in the space above the patch; when the
+    content is taller than that space (Learn on short laptops) they shrink to
+    0, so it starts at the top and the patch follows below, as before. */
+ #welcomeScreen,html.knox-seasonal #welcomeScreen{justify-content:flex-start}
+ #welcomeScreen>.welcome-badge{margin-top:auto}
+ #welcomeScreen>.suggestion-grid{margin-bottom:auto}
+ html:not(.knox-seasonal) #welcomeScreen{padding-bottom:var(--patch-room)}
+ html.knox-seasonal #welcomeScreen>.pumpkin-patch{margin-top:0}
+}
+/* Learn's taller welcome on shorter laptops: the same tightening in every look. */
+@media(min-width:901px) and (max-height:850px){
+ .knox-learn-mode #welcomeScreen{padding-top:20px}
+ .knox-learn-mode .welcome-sub{margin-bottom:16px}
+ .knox-learn-mode .learn-style{margin:8px 0}
+}
