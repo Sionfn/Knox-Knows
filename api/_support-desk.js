@@ -16,7 +16,7 @@
 import Stripe from "stripe";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue } from "firebase-admin/firestore";
-import { accountFacts, sendEmail, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL } from "./_support.js";
+import { accountFacts, sendEmail, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL } from "./_support-shared.js";
 
 const APP_URL = "https://knoxknowsapp.com/app?open=messages";
 const DEFAULT_REPLIES = [

@@ -20,64 +20,14 @@
 //   say    { id?, text }     → { chat, action? }   (new chat when no id)
 //   handoff{ id, kind }      → { chat }            kind: 'refund' | 'human'
 //   desk-*                   → the Support Desk (api/_support-desk.js)
-import Stripe from "stripe";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { tierOf } from "./_plans.js";
 import desk from "./_support-desk.js";
+import { SUPPORT_EMAIL, MAX_MESSAGES, esc, fmtDate, clip, accountFacts, forStudent, summary, transcriptOf, sendEmail } from "./_support-shared.js";
 
 const MODEL = "gpt-6-luna";                 // same model as Ask Knox
-export const SUPPORT_EMAIL = "support@knoxknowsapp.com";
-const APP_URL = "https://knoxknowsapp.com/app?open=messages";
-const NEW_REFUND_RULES_FROM = Date.parse("2026-11-01T00:00:00-07:00"); // before this: 30 days
-const DAY = 86400000;
 const CHAT_LIMIT = 40;                      // Knox Support replies per student per day
 const SEND_LIMIT = 15;                      // messages to the Knox team per student per day
-export const MAX_MESSAGES = 120;                   // per conversation
-export const NAMES = { free: "Free", plus: "Knox Plus", mega: "Mega Knox" };
-
-export const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-export const fmtDate = ms => new Date(ms).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "America/Phoenix" });
-export const clip = (s, n) => String(s || "").trim().slice(0, n);
-
-// What Knox Support knows about this student's account, as short lines.
-export async function accountFacts(db, uid, email) {
-  const d = (await db.collection("users").doc(uid).get()).data() || {};
-  const now = Date.now(), tier = tierOf(d), lines = [`Email: ${email || "unknown"}`, `Plan: ${NAMES[tier]}`];
-  let refund = null;
-  if (d.ambassador === true) lines.push("Knox Ambassador: free Mega Knox (nothing billed).");
-  else if (d.comped === true) lines.push(`Free ${NAMES[d.compedTier === "mega" ? "mega" : "plus"]} given by Knox Knows (nothing billed).`);
-  const giftUntil = Math.max(Number(d.megaUntil) || 0, Number(d.plusUntil) || 0);
-  if (giftUntil > now) lines.push(`Plan time from a gift code or Flame Fest until ${fmtDate(giftUntil)} (one-time, never renews, nothing to cancel).`);
-  if (d.planStatus === "cancelled" || d.cancelledAt) lines.push(`A subscription was cancelled${d.cancelledAt ? " on " + fmtDate(Date.parse(d.cancelledAt)) : ""}.`);
-
-  if (d.stripeSubscription && process.env.STRIPE_SECRET_KEY) {
-    try {
-      const sub = await new Stripe(process.env.STRIPE_SECRET_KEY).subscriptions.retrieve(d.stripeSubscription);
-      const item = sub.items?.data?.[0];
-      const interval = item?.price?.recurring?.interval === "year" ? "yearly" : "monthly";
-      const periodEnd = (sub.current_period_end || item?.current_period_end || 0) * 1000;
-      lines.push(`Subscription: ${NAMES[tier]} ${interval}, status ${sub.status}.`);
-      if (sub.status === "trialing" && sub.trial_end) {
-        lines.push(`In the free trial until ${fmtDate(sub.trial_end * 1000)}. Cancelling before then means no charge at all; nothing has been paid yet.`);
-      } else {
-        // First payment: the end of the trial, if there was one, else the start.
-        const firstPaid = (sub.trial_end || sub.start_date || 0) * 1000 || Date.parse(d.planActivatedAt || "") || 0;
-        if (firstPaid) {
-          const windowDays = firstPaid < NEW_REFUND_RULES_FROM ? 30 : interval === "yearly" ? 14 : 7;
-          const deadline = firstPaid + windowDays * DAY;
-          refund = now <= deadline;
-          lines.push(`First payment: ${fmtDate(firstPaid)}. Refund window: ${windowDays} days, until ${fmtDate(deadline)} — ${refund ? "STILL INSIDE the window" : "the window has PASSED"}.`);
-        }
-      }
-      if (sub.cancel_at_period_end && periodEnd) lines.push(`Already set to cancel; the plan ends on ${fmtDate(periodEnd)} with no more charges.`);
-      else if (periodEnd && sub.status !== "trialing") lines.push(`Renews on ${fmtDate(periodEnd)}.`);
-    } catch { lines.push("Billing details couldn't be loaded right now."); }
-  } else if (tier === "free") {
-    lines.push("No paid subscription on this account.");
-  }
-  return { text: lines.join("\n"), refund, name: d.displayName || d.name || "" };
-}
 
 const RULES = `You are Knox Support, the friendly help chat inside Knox Knows (an AI homework helper at knoxknowsapp.com, made by a small team led by its founder, Sion). You help with accounts, plans, billing, refunds, gift codes, the Knox Discord and the Chrome extension — not homework (for homework, point them to Ask Knox or Learn in the app).
 
@@ -118,28 +68,6 @@ async function countUse(db, uid, key, limit) {
 }
 
 // What the student sees (no internal fields).
-export const forStudent = (id, c) => ({
-  id, status: c.status, kind: c.kind || null, title: c.title, updatedAt: c.updatedAt,
-  unread: c.userUnread || 0, messages: (c.messages || []).map(({ byUid, ...m }) => m),
-});
-export const summary = (id, c) => {
-  const last = (c.messages || []).at(-1);
-  return { id, status: c.status, kind: c.kind || null, title: c.title, updatedAt: c.updatedAt, unread: c.userUnread || 0, last: last ? { from: last.from, by: last.by || null, text: clip(last.text, 140) } : null };
-};
-export const transcriptOf = c => (c.messages || []).map(m => `${m.from === "user" ? "Student" : m.from === "team" ? "Knox team" : "Knox Support"}: ${m.text}`).join("\n\n");
-
-export async function sendEmail({ to, replyTo, subject, html, text, from = "Knox Support" }) {
-  if (!process.env.RESEND_API_KEY) return;
-  try {
-    const r = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: `${from} <${process.env.EMAIL_FROM || SUPPORT_EMAIL}>`, to: [to], ...(replyTo ? { reply_to: replyTo } : {}), subject, html, text }),
-    });
-    if (!r.ok) console.error("Support email failed:", (await r.text()).slice(0, 300));
-  } catch (e) { console.error("Support email failed:", e?.message); }
-}
-
 // Tell the Knox team: email support@ (reply-to the student) and team members
 // who turned on email alerts in the Support Desk, plus a ping in a private
 // Discord channel if SUPPORT_DISCORD_WEBHOOK is set.
