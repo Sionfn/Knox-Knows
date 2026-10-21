@@ -510,6 +510,42 @@
     }
     .comp-empty { margin-top: 16px; font-size: 13px; font-weight: 700; color: var(--text-light); }
 
+    /* ─── SUPPORT INBOX ─────────────────────────────────── */
+    #supportPanel { margin-bottom: 36px; }
+    #supportPanel .section-title { display: flex; align-items: center; gap: 8px; }
+    .si-count { background: var(--red); color: white; border-radius: 999px; padding: 1px 8px; font-size: 11px; letter-spacing: 0; }
+    .si-wrap { display: grid; grid-template-columns: 320px 1fr; gap: 0; padding: 0; overflow: hidden; min-height: 420px; }
+    .si-list { border-right: 2px solid var(--border); max-height: 620px; overflow-y: auto; }
+    .si-filter { display: flex; gap: 6px; padding: 12px; border-bottom: 2px solid var(--border); }
+    .si-item { display: block; width: 100%; text-align: left; padding: 12px 14px; border: none; border-bottom: 1.5px solid var(--border); background: white; font: inherit; cursor: pointer; }
+    .si-item:hover { background: var(--orange-cream); }
+    .si-item.on { background: var(--orange-light); }
+    .si-item b { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+    .si-item b span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .si-item time { font-size: 11px; color: var(--text-light); font-weight: 700; flex-shrink: 0; }
+    .si-item p { margin: 3px 0 0; font-size: 12.5px; font-weight: 700; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .si-item.new b span::before { content: '● '; color: var(--red); }
+    .si-tag { display: inline-block; margin-top: 5px; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 6px; background: var(--gray); color: var(--text-light); }
+    .si-tag.waiting { background: var(--orange-light); color: var(--orange-dark); }
+    .si-tag.refund { background: var(--red-light); color: var(--red); }
+    .si-tag.replied { background: var(--green-light); color: var(--green-dark); }
+    .si-view { display: flex; flex-direction: column; min-width: 0; }
+    .si-empty { margin: auto; padding: 40px; text-align: center; font-size: 14px; font-weight: 700; color: var(--text-light); }
+    .si-head { padding: 14px 18px; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .si-head strong { font-size: 15px; }
+    .si-facts { margin: 6px 0 0; font-size: 12px; font-weight: 700; color: var(--text-light); white-space: pre-wrap; line-height: 1.5; }
+    .si-thread { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; background: var(--cream); }
+    .si-msg { max-width: 80%; padding: 9px 13px; border-radius: 14px; font-size: 14px; font-weight: 600; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; background: white; border: 2px solid var(--border); }
+    .si-msg small { display: block; font-size: 10.5px; font-weight: 900; color: var(--text-light); margin-bottom: 2px; }
+    .si-msg.user { align-self: flex-end; background: var(--orange); border-color: var(--orange); color: white; }
+    .si-msg.user small { color: rgba(255,255,255,.8); }
+    .si-msg.team { border-color: var(--green); }
+    .si-msg.note { align-self: center; background: var(--orange-light); border: none; font-size: 12.5px; font-weight: 800; }
+    .si-reply { display: flex; gap: 10px; padding: 12px 14px; border-top: 2px solid var(--border); align-items: flex-end; }
+    .si-reply textarea { flex: 1; min-height: 64px; resize: vertical; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); font: inherit; font-weight: 600; }
+    .si-reply textarea:focus { outline: none; border-color: var(--orange); }
+    @media (max-width: 800px) { .si-wrap { grid-template-columns: 1fr; } .si-list { border-right: none; border-bottom: 2px solid var(--border); max-height: 280px; } }
+
     /* ─── FREE TRIALS ───────────────────────────────────── */
     .trial-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .trial-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -576,6 +612,7 @@
 
 <main style="display:none;" id="adminMain">
   <div id="errorBanner" style="display:none;" class="error-banner"></div>
+  <div id="supportPanel"></div>
   <div id="dashboard"></div>
   <div id="compPanel"></div>
 </main>
@@ -603,6 +640,7 @@
   onAuthStateChanged(auth, async (user) => {
     document.getElementById('dashboard').replaceChildren();
     document.getElementById('compPanel').replaceChildren();
+    document.getElementById('supportPanel').replaceChildren();
     document.getElementById('authGate').style.display = 'flex';
     document.getElementById('adminHeader').style.display = 'none';
     document.getElementById('adminMain').style.display = 'none';
@@ -709,6 +747,7 @@
       // The Comped Knox Plus manager has its own endpoint, so keep it usable.
       if (!document.getElementById('compForm')) renderCompPanel();
       loadComped();
+      loadSupport();
       return;
     }
 
@@ -723,7 +762,88 @@
     renderDashboard(data);
     if (!document.getElementById('compForm')) renderCompPanel();
     loadComped();
+    loadSupport();
   };
+
+  // ─── Support inbox ───
+  // Conversations from the Knox Support chat in the app (api/_support.js).
+  // Ones sent to the team ("Refund request" / "Needs a person") wait here;
+  // a reply shows up in the student's Messages tab and is emailed to them.
+  const si = { chats: [], id: null, filter: 'waiting' };
+  async function supportFetch(body) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Please sign in again.');
+    const res = await fetch('/api/me?route=support', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+  const siAgo = ms => { const m = (Date.now() - ms) / 60000; return m < 1 ? 'now' : m < 60 ? Math.floor(m) + 'm' : m < 1440 ? Math.floor(m / 60) + 'h' : new Date(ms).toLocaleDateString([], { month: 'short', day: 'numeric' }); };
+  const siTag = c => c.status === 'waiting' ? `<span class="si-tag ${c.kind === 'refund' ? 'refund' : 'waiting'}">${c.kind === 'refund' ? '💸 Refund request' : '🙋 Needs a reply'}</span>`
+    : c.status === 'replied' ? '<span class="si-tag replied">Replied</span>' : c.status === 'closed' ? '<span class="si-tag">Closed</span>' : '<span class="si-tag">Knox Support only</span>';
+  function renderSupportList() {
+    const panel = document.getElementById('supportPanel');
+    const waiting = si.chats.filter(c => c.status === 'waiting').length;
+    const shown = si.filter === 'waiting' ? si.chats.filter(c => c.status === 'waiting') : si.chats;
+    if (!panel.querySelector('.si-wrap')) {
+      panel.innerHTML = `<h2 class="section-title">Support inbox <span class="si-count" id="siCount" hidden></span></h2>
+        <div class="card si-wrap"><div class="si-list"><div class="si-filter" id="siFilter">
+          <button class="trial-tab" data-f="waiting">Needs a reply</button><button class="trial-tab" data-f="all">All</button>
+          <button class="trial-tab" data-f="refresh" title="Refresh">↻</button></div><div id="siItems"></div></div>
+          <div class="si-view" id="siView"><div class="si-empty">Pick a conversation.</div></div></div>`;
+      panel.querySelector('#siFilter').addEventListener('click', e => {
+        const f = e.target.closest('button')?.dataset.f; if (!f) return;
+        if (f === 'refresh') return loadSupport();
+        si.filter = f; renderSupportList();
+      });
+      panel.querySelector('#siItems').addEventListener('click', e => { const b = e.target.closest('.si-item'); if (b) openSupportChat(b.dataset.id); });
+    }
+    panel.querySelectorAll('#siFilter [data-f]').forEach(b => b.classList.toggle('on', b.dataset.f === si.filter));
+    const count = panel.querySelector('#siCount'); count.hidden = !waiting; count.textContent = waiting;
+    panel.querySelector('#siItems').innerHTML = shown.length ? shown.map(c => `
+      <button class="si-item${c.id === si.id ? ' on' : ''}${c.teamUnread ? ' new' : ''}" data-id="${escHtml(c.id)}">
+        <b><span>${escHtml(c.name || c.email || 'Student')}</span><time>${siAgo(c.updatedAt)}</time></b>
+        <p>${escHtml(c.last ? (c.last.from === 'user' ? '' : c.last.from === 'team' ? 'You: ' : 'Knox Support: ') + c.last.text : c.title)}</p>${siTag(c)}
+      </button>`).join('') : `<div class="si-empty">${si.filter === 'waiting' ? 'All caught up 🎉' : 'No conversations yet.'}</div>`;
+  }
+  async function loadSupport() {
+    try { si.chats = (await supportFetch({ action: 'admin-list' })).chats || []; }
+    catch (err) { document.getElementById('supportPanel').innerHTML = '<h2 class="section-title">Support inbox</h2><div class="card"><div class="comp-empty">Could not load support messages: ' + escHtml(err.message) + '</div></div>'; return; }
+    renderSupportList();
+    const fromLink = (location.hash.match(/^#support-([\w-]+)/) || [])[1];
+    if (fromLink && !si.id) { si.filter = 'all'; renderSupportList(); openSupportChat(fromLink); document.getElementById('supportPanel').scrollIntoView(); }
+  }
+  async function openSupportChat(id) {
+    si.id = id; renderSupportList();
+    const view = document.getElementById('siView');
+    view.innerHTML = '<div class="si-empty">Loading…</div>';
+    let r;
+    try { r = await supportFetch({ action: 'admin-get', id }); }
+    catch (err) { view.innerHTML = '<div class="si-empty">' + escHtml(err.message) + '</div>'; return; }
+    const c = r.chat, s = si.chats.find(x => x.id === id); if (s) s.teamUnread = false;
+    view.innerHTML = `<div class="si-head"><div><strong>${escHtml(c.name || c.email || 'Student')}</strong> ${siTag(c)}
+        <p class="si-facts">${escHtml(r.account)}\nUser ID: ${escHtml(c.uid)}</p></div>
+        ${c.status !== 'closed' ? '<button class="comp-remove" id="siClose" style="color:var(--text-light)">Mark solved</button>' : ''}</div>
+      <div class="si-thread" id="siThread">${c.messages.map(m => `<div class="si-msg ${m.note ? 'note' : m.from}">${m.note ? '' : `<small>${m.from === 'user' ? 'Student' : m.from === 'team' ? 'You (Knox team)' : 'Knox Support (AI)'} · ${new Date(m.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small>`}${escHtml(m.text)}</div>`).join('')}</div>
+      <form class="si-reply" id="siReply"><textarea id="siText" placeholder="Reply to ${escHtml(c.name || 'them')}… (they see it in Knox and get an email)" maxlength="4000"></textarea><button class="comp-btn" type="submit">Send</button></form>`;
+    const t = view.querySelector('#siThread'); t.scrollTop = t.scrollHeight;
+    renderSupportList();
+    view.querySelector('#siReply').addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = view.querySelector('#siText').value.trim(), btn = e.submitter;
+      if (!text) return;
+      btn.disabled = true;
+      try { await supportFetch({ action: 'admin-reply', id, text }); await loadSupport(); openSupportChat(id); }
+      catch (err) { alert(err.message); btn.disabled = false; }
+    });
+    view.querySelector('#siClose')?.addEventListener('click', async () => {
+      try { await supportFetch({ action: 'admin-close', id }); await loadSupport(); openSupportChat(id); } catch (err) { alert(err.message); }
+    });
+  }
 
   // ─── Comped Knox Plus manager ───
   async function compFetch(method, body) {

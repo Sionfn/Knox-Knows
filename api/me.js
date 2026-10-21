@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import discordLink from "./_discord-link.js";
 import testerPlan from "./_tester-plan.js";
+import support from "./_support.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -85,6 +86,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "discord-link") return discordLink(req, res);
   // Preview site only: testers pick their own plan (see api/_tester-plan.js).
   if (req.query?.route === "tester-plan") return testerPlan(req, res);
+  // Knox Support chat + the team's inbox (see api/_support.js).
+  if (req.query?.route === "support") return support(req, res);
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");
