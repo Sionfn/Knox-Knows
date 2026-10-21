@@ -47,7 +47,7 @@
     const footer=host?.querySelector('.harvest-footer');
     if(!footer||footer.classList.contains('pumpkin-patch'))return;
     footer.classList.add('pumpkin-patch');
-    host.querySelectorAll('.harvest-trunk,.harvest-bough,.harvest-tree-branches,.harvest-truck,.fall-harvest,.harvest-wheat').forEach(el=>el.remove());
+    host.querySelectorAll('.harvest-trunk,.harvest-tree-branches,.harvest-truck,.fall-harvest,.harvest-wheat').forEach(el=>el.remove());
     footer.insertAdjacentHTML('afterbegin',svg('patch-land','0 0 1200 180',`
       <path d="M0 70Q170 4 380 70T800 62T1200 38V180H0Z" fill="#D8B974"/>
       <path d="M0 106Q220 54 485 98T1200 83V180H0Z" fill="#C3AA67"/>

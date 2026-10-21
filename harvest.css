@@ -177,24 +177,16 @@ html.knox-seasonal :is(#welcomeScreen,#home) .harvest-footer .fall-harvest { z-i
 .fall-rest-note { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); z-index:10060; display:inline-flex !important; }
 
 /* ── Falling leaves ──────────────────────────────────────────────────────
-   Codex's motion: a steady diagonal drift with the leaf swaying side to
-   side. The leaf area reaches the ground, and each leaf fades out only as
-   it lands there (no mid-air cut-off, no mid-screen mask). */
+   Original fall-theme diagonal drift and gentle side-to-side sway. */
 html.knox-seasonal :is(#welcomeScreen,#home) > .fall-sky {
  top:0; bottom:14px; height:auto; mask-image:none; -webkit-mask-image:none;
 }
 html.knox-seasonal .fall-leaf {
- top:-50px; opacity:0; --leaf-o:.85;
- animation:leafDrop var(--d,20s) linear infinite var(--delay,0s);
+ top:0; opacity:.55;
+ animation:harvestDrift var(--d,14s) linear infinite var(--delay,0s);
 }
 html.knox-seasonal .fall-leaf svg { animation:fallSway var(--sway,4s) ease-in-out infinite alternate; }
-@keyframes leafDrop {
- 0%   { top:-50px; transform:translateX(0); opacity:0; }
- 4%   { opacity:var(--leaf-o); }
- 95%  { top:calc(100% - var(--s,26px) * .8); transform:translateX(28px); opacity:var(--leaf-o); }
- 100% { top:calc(100% - var(--s,26px) * .8); transform:translateX(28px); opacity:0; }
-}
-@media(max-width:768px) { html.knox-seasonal .fall-leaf { --leaf-o:.6; } }
+@media(max-width:768px) { html.knox-seasonal .fall-leaf { opacity:.25; } }
 @media(prefers-reduced-motion:reduce) {
  html.knox-seasonal .fall-leaf { animation:none!important; top:var(--rest); opacity:.55; }
  html.knox-seasonal .fall-leaf svg { animation:none!important; transform:rotate(14deg); }
