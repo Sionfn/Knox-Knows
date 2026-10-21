@@ -2160,6 +2160,24 @@
     }
     .auth-terms a { color: var(--orange); text-decoration: none; }
 
+    /* Help & support panel (reuses the Account & Plan card) */
+    .help-search { display:flex; align-items:center; gap:8px; padding:10px 14px; border:2px solid var(--border); border-radius:14px; background:var(--surface); color:var(--text-light); margin-bottom:14px; }
+    .help-search input { flex:1; min-width:0; border:none; outline:none; background:transparent; font:inherit; font-size:15px; font-weight:700; color:var(--text); }
+    .help-search:focus-within { border-color:var(--orange); }
+    .help-list { display:flex; flex-direction:column; gap:8px; }
+    .help-item { border:2px solid var(--border); border-radius:14px; background:var(--surface); box-shadow:0 2px 0 var(--border); }
+    .help-item summary { list-style:none; cursor:pointer; padding:12px 40px 12px 14px; font-weight:800; font-size:14.5px; color:var(--text); position:relative; }
+    .help-item summary::-webkit-details-marker { display:none; }
+    .help-item summary::after { content:'+'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:20px; font-weight:900; color:var(--orange); }
+    .help-item[open] summary::after { content:'–'; }
+    .help-item[open] { border-color:var(--orange); box-shadow:0 2px 0 var(--orange-dark); }
+    .help-item p { margin:0; padding:0 14px 14px; font-size:14px; line-height:1.55; font-weight:600; color:var(--text-body, var(--text-light)); }
+    .help-item p a { color:var(--orange); font-weight:800; }
+    .help-empty { margin:10px 2px; font-size:13.5px; font-weight:700; color:var(--text-light); }
+    .help-contact { margin-top:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px; border-radius:16px; background:var(--orange-light); }
+    .help-contact > div { flex:1 1 200px; display:flex; flex-direction:column; gap:3px; font-size:13px; font-weight:700; color:var(--text-light); }
+    .help-contact b { font-size:14.5px; color:var(--text); }
+    .help-contact-btn { padding:10px 18px; border-radius:12px; background:var(--orange); color:#fff; font-weight:900; font-size:14px; text-decoration:none; box-shadow:0 3px 0 var(--orange-dark); white-space:nowrap; }
     .settings-card {
       background: var(--surface);
       border-radius: 24px;
@@ -2652,6 +2670,10 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
       Give a gift
     </button>
+    <button class="app-dropdown-item" onclick="window.openHelp?.(); closeUserDropdown()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      Help &amp; support
+    </button>
     <a class="app-dropdown-item" href="mailto:support@knoxknowsapp.com?subject=Knox%20Knows%20feedback" style="text-decoration:none;">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       Send feedback
@@ -2946,6 +2968,25 @@
 </div>
 
 <!-- ═══════ SETTINGS MODAL ═══════════════════════════════════ -->
+<div id="helpModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeHelp()">
+  <div class="settings-card help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="settings-header">
+      <h2 id="helpTitle">Help &amp; support</h2>
+      <button class="settings-close" onclick="closeHelp()" aria-label="Close">✕</button>
+    </div>
+    <div class="settings-body">
+      <label class="help-search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="helpSearch" placeholder="Search help — refunds, gift codes, Discord…" autocomplete="off" aria-label="Search help"></label>
+      <div id="helpList" class="help-list"></div>
+      <p class="help-empty" id="helpEmpty" hidden>No answers match that. Try other words, or contact us below.</p>
+      <div class="help-contact">
+        <div><b>Still need help?</b><span>Email us and we’ll get back to you. Your account details are added so we can help faster.</span></div>
+        <a class="help-contact-btn" id="helpContactBtn" href="mailto:support@knoxknowsapp.com">Contact support</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="appSettingsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAppSettings()">
   <div class="settings-card">
     <div class="settings-header">
@@ -3044,6 +3085,56 @@
   }
 
   // ── Plan fetch ──────────────────────────────────────────────
+  // ── Help & support ───────────────────────────────────────────────────────
+  // Quick answers to what students and parents ask most, a search, and a
+  // contact button that pre-fills the account details for support.
+  const HELP = [
+    ['Will I be charged after the Mega Knox free trial?', 'Yes, unless you cancel before it ends. The 3-day trial on Mega Knox monthly is for first-time subscribers; after it, $12.99/month starts automatically. Cancel anytime from <b>Account &amp; Plan → Manage Billing</b>.', 'trial charge billing'],
+    ['How do I cancel my plan?', 'Tap your profile → <b>Account &amp; Plan</b> → <b>Manage Billing</b>, then cancel there. You keep your plan until the end of the time you paid for.', 'cancel subscription stop billing unsubscribe'],
+    ['How do refunds work?', 'Not happy? You can get a full refund within 7 days of your first payment on a monthly plan, or 14 days on a yearly plan. Bought before November 1, 2026? You keep the 30-day window you signed up with. Email us to ask — see our <a href="/refund" target="_blank">Refund Policy</a>.', 'refund money back'],
+    ['How do I move from Knox Plus to Mega Knox?', 'Tap your profile → <b>Account &amp; Plan</b> → <b>Upgrade to Mega Knox</b>, or open <a href="/about#pricing" target="_blank">Plans</a>.', 'upgrade switch plan plus mega'],
+    ['I paid but my plan isn’t showing.', 'Make sure you’re signed in with the same email you used to pay, then refresh the page. Plans from a gift code show after you redeem it. Still missing? Contact us below and we’ll fix it.', 'plan missing not showing paid wrong account'],
+    ['How do I redeem a gift code?', 'Tap your profile → <b>Redeem a code</b>, or go to <a href="/redeem" target="_blank">knoxknowsapp.com/redeem</a>. Gift codes never renew and you’re never charged for them.', 'gift code redeem'],
+    ['How do I give Knox as a gift?', 'Tap your profile → <b>Give a gift</b>. Pick Knox Plus or Mega Knox for 1, 3 or 12 months — it’s a one-time payment and the code arrives by email.', 'gift buy present'],
+    ['How many questions do I get on the free plan?', 'You start with 10 questions, and 5 more come back every day (you can save up to 20). A photo or file counts as 2. Knox Plus and Mega Knox are unlimited.', 'free questions limit credits'],
+    ['How does Learn mode work?', 'Learn teaches you step by step instead of handing over the answer: a small piece at a time, with tap-to-answer questions, hints, and a recap at the end. Learn is free with a Knox account.', 'learn mode lesson teach'],
+    ['How do I connect the Knox Discord?', 'Join from the Discord card in the sidebar, then type <b>/link</b> in the server to connect your Knox account — Knox Plus and Mega Knox members get their perks there automatically. Use <b>/ask</b> to ask Knox.', 'discord link server role'],
+    ['How do I get the Chrome extension?', 'Get <a href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener">Knox Knows for Chrome</a>, then sign in with the same account to ask Knox from any website.', 'chrome extension browser'],
+    ['What is Flame Fest?', 'All November, every day you study lights a flame on your calendar. Hit each week’s goal for rewards and light 20 flames for a free week of Mega Knox. Open it from your 🔥 streak.', 'flame fest streak november rewards'],
+    ['Does Knox save my chats?', 'Yes — when you’re signed in, your chats are saved in Recent chats on any device.', 'history chats saved'],
+    ['What if Knox gets something wrong?', 'Knox is AI and can make mistakes, so check important answers. Tap 👎 under a reply to tell us — it helps Knox get better.', 'wrong mistake incorrect report'],
+    ['How do I delete my account?', 'Tap your profile → <b>Account &amp; Plan</b> → <b>Delete my account</b>. We’ll confirm it’s you and delete your account and data.', 'delete account remove data privacy'],
+  ];
+  const helpEsc = t => String(t).replace(/<[^>]+>/g, ' ').toLowerCase();
+  function renderHelp() {
+    const q = ($('helpSearch').value || '').trim().toLowerCase();
+    const words = q.split(/\s+/).filter(Boolean);
+    const hits = HELP.filter(([title, body, tags]) => {
+      const text = (title + ' ' + helpEsc(body) + ' ' + tags).toLowerCase();
+      return words.every(w => text.includes(w));
+    });
+    $('helpList').innerHTML = hits.map(([title, body]) => `<details class="help-item"${words.length && hits.length <= 2 ? ' open' : ''}><summary>${title}</summary><p>${body}</p></details>`).join('');
+    $('helpEmpty').hidden = hits.length > 0;
+  }
+  window.openHelp = function() {
+    const u = window.currentUser;
+    const name = { free: 'Free', plus: 'Knox Plus', mega: 'Mega Knox' };
+    const details = u
+      ? `Account: ${u.email || '—'}\nUser ID: ${u.uid}\nPlan: ${name[window.userTierReal || window.userTier] || 'Free'}`
+      : 'Account: not signed in';
+    $('helpContactBtn').href = 'mailto:support@knoxknowsapp.com?subject=' + encodeURIComponent('Knox Knows help') +
+      '&body=' + encodeURIComponent('Hi Knox team,\n\n[Tell us what you need help with]\n\n— — —\n' + details + '\nBrowser: ' + navigator.userAgent.slice(0, 160));
+    $('helpSearch').value = '';
+    renderHelp();
+    $('helpModal').style.display = 'flex';
+    setTimeout(() => $('helpSearch').focus({ preventScroll: true }), 50);
+  };
+  window.closeHelp = () => { $('helpModal').style.display = 'none'; };
+  $('helpSearch').addEventListener('input', renderHelp);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('helpModal').style.display === 'flex') window.closeHelp(); });
+  // /app?open=help (from the landing page footer) opens it on arrival.
+  if (new URLSearchParams(location.search).get('open') === 'help') setTimeout(() => window.openHelp(), 600);
+
   // ── View as (owner only) ───────────────────────────────────────────────
   // Lets the Knox owner see the app as a Free, Knox Plus or Mega Knox user:
   // badges, the question counter, upgrade buttons and plan-based options.
@@ -3650,7 +3741,7 @@
       document.getElementById('settingsContent')?.replaceChildren();
       window.closeAppSettings?.();
       window.closeAuthModal?.();
-      document.querySelectorAll('.modal-backdrop:not(#authModal):not(#appSettingsModal)').forEach(el => el.remove());
+      document.querySelectorAll('.modal-backdrop:not(#authModal):not(#appSettingsModal):not(#helpModal)').forEach(el => el.remove());
       window._appViewVersion++;
       historyRequestVersion++;
       historyCursor = null;
