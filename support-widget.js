@@ -117,7 +117,7 @@
       <div class="ks-cards">
         ${recent ? `<button type="button" class="ks-card ks-recent" data-chat="${esc(recent.id)}">
             <span class="ks-card-label">Recent message</span>
-            <span class="ks-recent-row">${LOGO}<span class="ks-recent-text"><b>${esc(recent.last?.from === 'user' ? 'You' : recent.last?.from === 'team' ? 'Knox team' : 'Knox Support')}</b><span>${esc(recent.last?.text || recent.title)}</span></span>${recent.unread ? '<i class="ks-pill-dot"></i>' : ''}</span>
+            <span class="ks-recent-row">${LOGO}<span class="ks-recent-text"><b>${esc(recent.last?.from === 'user' ? 'You' : recent.last?.from === 'team' ? (recent.last.by || 'Knox team') : 'Knox Support')}</b><span>${esc(recent.last?.text || recent.title)}</span></span>${recent.unread ? '<i class="ks-pill-dot"></i>' : ''}</span>
           </button>` : ''}
         <button type="button" class="ks-card ks-ask" data-new>
           <span><b>Send us a message</b><span>Knox Support and the Knox team can help</span></span>
@@ -153,8 +153,8 @@
   function msgHtml(m) {
     if (m.note) return `<div class="ks-note">${linkify(m.text)}</div>`;
     if (m.from === 'user') return `<div class="ks-msg me"><div class="ks-bubble">${linkify(m.text)}</div></div>`;
-    const who = m.from === 'team' ? 'Knox team' : 'Knox Support';
-    return `<div class="ks-msg them${m.from === 'team' ? ' team' : ''}">${LOGO}<div><span class="ks-who">${who}${m.from === 'team' ? ' <i>Person</i>' : ''}</span><div class="ks-bubble">${linkify(m.text)}</div></div></div>`;
+    const who = m.from === 'team' ? esc(m.by || 'Knox team') : 'Knox Support';
+    return `<div class="ks-msg them${m.from === 'team' ? ' team' : ''}">${LOGO}<div><span class="ks-who">${who}${m.from === 'team' ? ' <i>Knox team</i>' : ''}</span><div class="ks-bubble">${linkify(m.text)}</div></div></div>`;
   }
 
   function chatView() {

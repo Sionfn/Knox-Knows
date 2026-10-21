@@ -7,6 +7,7 @@
     { "source": "/redeem",       "destination": "/app.html"     },
     { "source": "/admin",        "destination": "/admin.html"   },
     { "source": "/admin.html",   "destination": "/admin.html"   },
+    { "source": "/support-desk", "destination": "/support-desk.html" },
     { "source": "/privacy.html", "destination": "/privacy.html" },
     { "source": "/terms.html",   "destination": "/terms.html"   },
     { "source": "/refund.html",  "destination": "/refund.html"  },
@@ -40,6 +41,13 @@
     },
     {
       "source": "/admin(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag",     "value": "noindex, nofollow" },
+        { "key": "Cache-Control",    "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/support-desk(.*)",
       "headers": [
         { "key": "X-Robots-Tag",     "value": "noindex, nofollow" },
         { "key": "Cache-Control",    "value": "no-store" }

@@ -3,5 +3,6 @@ Allow: /
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin.html
+Disallow: /support-desk
 
 Sitemap: https://www.knoxknowsapp.com/sitemap.xml
