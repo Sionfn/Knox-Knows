@@ -9,6 +9,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import discordLink from "./_discord-link.js";
+import testerPlan from "./_tester-plan.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -82,6 +83,8 @@ function daysBetween(aKey, bKey) {
 export default async function handler(req, res) {
   // /api/discord-link is rewritten here (see api/_discord-link.js).
   if (req.query?.route === "discord-link") return discordLink(req, res);
+  // Preview site only: testers pick their own plan (see api/_tester-plan.js).
+  if (req.query?.route === "tester-plan") return testerPlan(req, res);
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");

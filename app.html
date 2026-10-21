@@ -2638,7 +2638,7 @@
       </button>
     </div>
     <div id="ddViewAs" hidden>
-      <div class="dd-viewas-title">👀 View as <span>only you see this</span></div>
+      <div class="dd-viewas-title" id="ddViewAsTitle">👀 View as <span>only you see this</span></div>
       <div class="dd-viewas-seg" role="group" aria-label="View the app as">
         <button type="button" data-view-as="free">Free</button><button type="button" data-view-as="plus">⚡ Plus</button><button type="button" data-view-as="mega">💎 Mega</button>
       </div>
@@ -3052,11 +3052,23 @@
   const KNOX_OWNER = 'sion22comp@gmail.com';
   window.knoxIsOwner = () => !!window.currentUser && window.currentUser.emailVerified === true && (window.currentUser.email || '').toLowerCase() === KNOX_OWNER;
   window.knoxViewAsChoice = () => { try { const v = localStorage.getItem('knoxViewAs'); return ['free', 'plus', 'mega'].includes(v) ? v : null; } catch { return null; } };
+  // On the preview site every tester can really switch their test account's
+  // plan (the server allows it only there — api/_tester-plan.js).
+  window._testerPlans = false;
+  fetch('/api/me?route=tester-plan').then(r => r.ok ? r.json() : {}).then(d => {
+    window._testerPlans = d.available === true;
+    if (window._testerPlans) {
+      try { localStorage.removeItem('knoxViewAs'); } catch {}
+      if (window._viewAs && window.currentUser) fetchPlan(window.currentUser.uid); else syncViewAs();
+    }
+  }).catch(() => {});
   function syncViewAs() {
     const box = document.getElementById('ddViewAs');
     if (!box) return;
-    box.hidden = !window.knoxIsOwner();
+    box.hidden = !window.currentUser || !(window._testerPlans || window.knoxIsOwner());
     if (box.hidden) return;
+    document.getElementById('ddViewAsTitle').innerHTML = window._testerPlans
+      ? '🧪 Pick your plan <span>preview only</span>' : '👀 View as <span>only you see this</span>';
     const real = window.userTierReal || 'free', shown = window.userTier || real;
     box.querySelectorAll('[data-view-as]').forEach(b => {
       b.classList.toggle('on', b.dataset.viewAs === shown);
@@ -3064,14 +3076,30 @@
       b.classList.toggle('real', b.dataset.viewAs === real);
     });
     const name = { free: 'Free', plus: 'Knox Plus', mega: 'Mega Knox' };
-    document.getElementById('ddViewAsNote').textContent = shown === real
+    document.getElementById('ddViewAsNote').textContent = window._testerPlans
+      ? 'Your test account is on ' + name[real] + '. Switch anytime to try each plan — nothing is charged.'
+      : shown === real
       ? 'Showing your real plan (' + name[real] + ').'
       : 'Viewing as ' + name[shown] + '. Your real plan is ' + name[real] + '; tap it to go back.';
   }
   document.addEventListener('click', async e => {
     const b = e.target.closest('#ddViewAs [data-view-as]');
-    if (!b || !window.knoxIsOwner()) return;
+    if (!b || !window.currentUser || !(window._testerPlans || window.knoxIsOwner())) return;
     e.stopPropagation(); // keep the menu open to see the change
+    if (window._testerPlans) {
+      // Preview: really switch this test account's plan, then reload it.
+      const note = document.getElementById('ddViewAsNote');
+      note.textContent = 'Switching…';
+      try {
+        const res = await fetch('/api/me?route=tester-plan', { method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + await window.currentUser.getIdToken() },
+          body: JSON.stringify({ tier: b.dataset.viewAs }) });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Couldn’t switch plans.');
+      } catch (err) { note.textContent = err.message || 'Couldn’t switch plans. Try again.'; return; }
+      await fetchPlan(window.currentUser.uid);
+      window.updateUsageIndicator?.();
+      return;
+    }
     try {
       if (b.dataset.viewAs === window.userTierReal) localStorage.removeItem('knoxViewAs');
       else localStorage.setItem('knoxViewAs', b.dataset.viewAs);
@@ -3094,7 +3122,7 @@
       window.userTierReal = realTier;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.
-      window._viewAs = window.knoxIsOwner?.() ? window.knoxViewAsChoice?.() : null;
+      window._viewAs = !window._testerPlans && window.knoxIsOwner?.() ? window.knoxViewAsChoice?.() : null;
       const tier = window._viewAs || realTier;
       window.userTier = tier;
       window.userPlan = tier === 'mega' ? 'max' : tier === 'plus' ? (planTier(d.plan) === 'paid' ? d.plan : 'plus') : 'free';
