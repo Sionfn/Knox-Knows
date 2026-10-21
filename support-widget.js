@@ -194,12 +194,15 @@
     panel.querySelectorAll('.ks-nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === st.tab));
     panel.classList.toggle('in-chat', st.tab === 'messages' && st.view === 'chat');
     panel.dataset.tab = st.tab;
+    // Keep a half-typed message when the view refreshes (new replies arriving).
+    const old = body.querySelector('#ksInput'), draft = old?.value || '', hadFocus = old && document.activeElement === old;
     body.innerHTML = st.tab === 'home' ? homeView() : st.tab === 'help' ? helpView() : st.view === 'chat' ? chatView() : messagesListView();
     syncBadge();
     if (st.tab === 'messages' && st.view === 'chat') {
       const t = body.querySelector('#ksThread'); t.scrollTop = t.scrollHeight;
       const input = body.querySelector('#ksInput');
-      if (input && window.matchMedia('(pointer:fine)').matches) input.focus({ preventScroll: true });
+      if (input && draft) { input.value = draft; input.dispatchEvent(new Event('input', { bubbles: true })); }
+      if (input && (hadFocus || window.matchMedia('(pointer:fine)').matches)) input.focus({ preventScroll: true });
     }
     if (st.tab === 'help') {
       const s = body.querySelector('#ksHelpSearch');
@@ -234,6 +237,7 @@
   async function say(text, kind) {
     text = text.trim();
     if (!text || st.busy) return;
+    const input = body.querySelector('#ksInput'); if (input) input.value = '';
     st.error = ''; st.action = null; st.busy = true;
     const c = st.chat || { id: null, messages: [], status: 'open' };
     st.chat = { ...c, messages: [...c.messages, { from: 'user', text, at: Date.now() }] };
@@ -312,7 +316,27 @@
   // Signed in / out: refresh the badge; a reply from the Knox team shows up
   // within a few minutes while Knox is open.
   window.addEventListener('knox-auth-changed', () => { st.chats = null; st.chat = null; st.view = 'list'; loadChats(); });
-  setInterval(() => { if (user() && document.visibilityState === 'visible') loadChats(); }, 4 * 60 * 1000);
+  // Live updates: an open conversation checks every 5 seconds, the open panel
+  // every 15, and the badge every 45 while Knox is on screen.
+  let ticks = 0;
+  async function refreshChat() {
+    const id = st.chat?.id;
+    try {
+      const c = (await call({ action: 'get', id })).chat;
+      if (st.chat?.id !== id || st.busy) return;
+      if (c.messages.length !== st.chat.messages.length || c.status !== st.chat.status) { st.chat = c; render(); }
+    } catch {}
+  }
+  setInterval(() => {
+    ticks++;
+    if (!user() || document.visibilityState !== 'visible' || st.busy) return;
+    if (st.open && st.tab === 'messages' && st.view === 'chat') { if (st.chat?.id) refreshChat(); }
+    else if (st.open ? ticks % 3 === 0 : ticks % 9 === 0) loadChats();
+  }, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !user()) return;
+    if (st.open && st.view === 'chat' && st.chat?.id) refreshChat(); else loadChats();
+  });
   if (user()) loadChats();
 
   // /app?open=help or ?open=messages (landing footer, reply emails).

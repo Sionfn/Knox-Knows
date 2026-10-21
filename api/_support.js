@@ -19,7 +19,7 @@
 //   say    { id?, text }     → { chat, action? }   (new chat when no id)
 //   handoff{ id, kind }      → { chat }            kind: 'refund' | 'human'
 //   admin-list               → { chats }           (ADMIN_UID only)
-//   admin-get  { id }        → { chat, account }
+//   admin-get  { id, light? }→ { chat, account }   (light: skip the account lookup)
 //   admin-reply{ id, text }  → { chat }
 //   admin-close{ id }        → { chat }
 import Stripe from "stripe";
@@ -209,7 +209,7 @@ export default async function support(req, res) {
     const c = snap.data();
     if (action === "admin-get") {
       if (c.teamUnread) await ref.update({ teamUnread: false });
-      return res.status(200).json({ chat: { ...forStudent(ref.id, c), email: c.email || null, name: c.name || "", uid: c.uid }, account: (await accountFacts(db, c.uid, c.email)).text });
+      return res.status(200).json({ chat: { ...forStudent(ref.id, c), email: c.email || null, name: c.name || "", uid: c.uid }, account: body.light ? null : (await accountFacts(db, c.uid, c.email)).text });
     }
     if (action === "admin-reply") {
       const text = clip(body.text, 4000);

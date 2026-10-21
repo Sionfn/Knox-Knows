@@ -817,6 +817,26 @@
     const fromLink = (location.hash.match(/^#support-([\w-]+)/) || [])[1];
     if (fromLink && !si.id) { si.filter = 'all'; renderSupportList(); openSupportChat(fromLink); document.getElementById('supportPanel').scrollIntoView(); }
   }
+  const siMsgs = c => c.messages.map(m => `<div class="si-msg ${m.note ? 'note' : m.from}">${m.note ? '' : `<small>${m.from === 'user' ? 'Student' : m.from === 'team' ? 'You (Knox team)' : 'Knox Support (AI)'} · ${new Date(m.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small>`}${escHtml(m.text)}</div>`).join('');
+  // Live updates: the open conversation checks every 5 seconds (keeping your
+  // half-written reply), the list every 15.
+  let siTicks = 0;
+  setInterval(async () => {
+    siTicks++;
+    if (document.visibilityState !== 'visible' || !auth.currentUser || !document.getElementById('siItems')) return;
+    if (siTicks % 3 === 0) {
+      try { si.chats = (await supportFetch({ action: 'admin-list' })).chats || si.chats; renderSupportList(); } catch {}
+    }
+    const id = si.id, thread = document.getElementById('siThread');
+    if (!id || !thread) return;
+    try {
+      const c = (await supportFetch({ action: 'admin-get', id, light: true })).chat;
+      if (si.id !== id || c.messages.length === si.count) return;
+      si.count = c.messages.length;
+      thread.innerHTML = siMsgs(c);
+      thread.scrollTop = thread.scrollHeight;
+    } catch {}
+  }, 5000);
   async function openSupportChat(id) {
     si.id = id; renderSupportList();
     const view = document.getElementById('siView');
@@ -825,10 +845,11 @@
     try { r = await supportFetch({ action: 'admin-get', id }); }
     catch (err) { view.innerHTML = '<div class="si-empty">' + escHtml(err.message) + '</div>'; return; }
     const c = r.chat, s = si.chats.find(x => x.id === id); if (s) s.teamUnread = false;
+    si.count = c.messages.length;
     view.innerHTML = `<div class="si-head"><div><strong>${escHtml(c.name || c.email || 'Student')}</strong> ${siTag(c)}
         <p class="si-facts">${escHtml(r.account)}\nUser ID: ${escHtml(c.uid)}</p></div>
         ${c.status !== 'closed' ? '<button class="comp-remove" id="siClose" style="color:var(--text-light)">Mark solved</button>' : ''}</div>
-      <div class="si-thread" id="siThread">${c.messages.map(m => `<div class="si-msg ${m.note ? 'note' : m.from}">${m.note ? '' : `<small>${m.from === 'user' ? 'Student' : m.from === 'team' ? 'You (Knox team)' : 'Knox Support (AI)'} · ${new Date(m.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</small>`}${escHtml(m.text)}</div>`).join('')}</div>
+      <div class="si-thread" id="siThread">${siMsgs(c)}</div>
       <form class="si-reply" id="siReply"><textarea id="siText" placeholder="Reply to ${escHtml(c.name || 'them')}… (they see it in Knox and get an email)" maxlength="4000"></textarea><button class="comp-btn" type="submit">Send</button></form>`;
     const t = view.querySelector('#siThread'); t.scrollTop = t.scrollHeight;
     renderSupportList();
