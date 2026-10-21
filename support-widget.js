@@ -81,8 +81,8 @@
   const launcher = document.createElement('button');
   launcher.id = 'ksLauncher';
   launcher.type = 'button';
-  launcher.setAttribute('aria-label', 'Help & messages');
-  launcher.innerHTML = `<span class="ks-l-icon ks-l-chat">${ICON.chat}</span><span class="ks-l-icon ks-l-down">${ICON.down}</span><span class="ks-badge" hidden></span>`;
+  launcher.setAttribute('aria-label', 'Help & messages (beta)');
+  launcher.innerHTML = `<span class="ks-l-icon ks-l-chat">${ICON.chat}</span><span class="ks-l-icon ks-l-down">${ICON.down}</span><span class="ks-badge" hidden></span><span class="ks-beta" aria-hidden="true">Beta</span>`;
   const panel = document.createElement('section');
   panel.id = 'ksPanel';
   panel.setAttribute('role', 'dialog');
