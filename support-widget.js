@@ -161,10 +161,17 @@
     const c = st.chat, msgs = c?.messages || [];
     const withTeam = c && (c.status === 'waiting' || c.status === 'replied');
     const greet = `<div class="ks-msg them">${LOGO}<div><span class="ks-who">Knox Support</span><div class="ks-bubble">Hi${firstName() ? ' ' + esc(firstName()) : ''}! I'm Knox Support 🦊 I can help with your plan, billing, refunds, gift codes and more. What's up?</div></div></div>`;
+    if (c?.loading) {
+      return `<header class="ks-head chat">
+          <button type="button" class="ks-x" data-back aria-label="Back">${ICON.back}</button>
+          <span class="ks-head-who">${LOGO}<span><b>Knox Support</b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
+          <button type="button" class="ks-x" data-close aria-label="Close">${ICON.close}</button>
+        </header><div class="ks-thread" id="ksThread"><div class="ks-loading"><i></i><i></i><i></i></div>${st.error ? `<div class="ks-err">${esc(st.error)}</div>` : ''}</div>`;
+    }
     const starters = !msgs.length ? `<div class="ks-starters">${STARTERS.map(([e, t, k]) => `<button type="button" data-starter="${esc(t)}"${k ? ` data-kind="${k}"` : ''}><span aria-hidden="true">${e}</span>${esc(t)}</button>`).join('')}</div>` : '';
     const act = st.action && !withTeam ? `<div class="ks-action"><b>${st.action === 'refund' ? 'Send your refund request to the Knox team?' : 'Send this to the Knox team?'}</b><span>A person reads it and replies here and by email.</span>
         <div><button type="button" class="ks-btn" data-handoff="${st.action}">${st.action === 'refund' ? 'Send refund request' : 'Send to the Knox team'}</button><button type="button" class="ks-btn ghost" data-dismiss>Not now</button></div></div>` : '';
-    const typing = st.busy ? `<div class="ks-msg them">${LOGO}<div><div class="ks-bubble ks-typing"><i></i><i></i><i></i></div></div></div>` : '';
+    const typing = st.busy && !withTeam ? `<div class="ks-msg them">${LOGO}<div><div class="ks-bubble ks-typing"><i></i><i></i><i></i></div></div></div>` : '';
     return `<header class="ks-head chat">
         <button type="button" class="ks-x" data-back aria-label="Back">${ICON.back}</button>
         <span class="ks-head-who">${LOGO}<span><b>Knox Support</b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
@@ -219,7 +226,8 @@
 
   async function openChat(id) {
     st.tab = 'messages'; st.view = 'chat'; st.action = null; st.error = '';
-    st.chat = (st.chats || []).find(c => c.id === id) ? { id, messages: [], status: 'open' } : null;
+    const known = (st.chats || []).find(c => c.id === id);
+    st.chat = { id, messages: [], status: known?.status || 'open', loading: true };
     render();
     try {
       st.chat = (await call({ action: 'get', id })).chat;
