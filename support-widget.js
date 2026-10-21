@@ -33,7 +33,7 @@
     ['🙋', 'Talk to a person', 'human'],
   ];
   const ICON = {
-    chat: '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M5 3h14a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-1v3.5L13.5 18H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3z"/><path d="M7.5 11.5q4.5 3.5 9 0" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path fill="currentColor" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M3 3.2 9 7.4q3-.9 6 0l6-4.2-1.2 7.6 2.4 3.1L12 20.8 1.8 13.9l2.4-3.1z"/><path fill="var(--orange)" opacity=".3" d="M4.6 5.3 7.8 7.8q-1.6 1-2.6 2.4zM19.4 5.3 16.2 7.8q1.6 1 2.6 2.4z"/><circle cx="8.6" cy="12" r="1.3" fill="var(--orange-dark)"/><circle cx="15.4" cy="12" r="1.3" fill="var(--orange-dark)"/><path fill="var(--orange-dark)" d="M10.6 16.4h2.8c.4 0 .6.4.4.7l-1.4 1.3c-.2.2-.6.2-.8 0l-1.4-1.3c-.2-.3 0-.7.4-.7z"/></svg>',
     down: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     home: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8.5 15.5q3.5 2.5 7 0" stroke-linecap="round"/></svg>',
     msgs: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 9h8M8 12.5h5"/></svg>',
