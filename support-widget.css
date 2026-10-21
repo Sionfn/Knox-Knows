@@ -27,12 +27,12 @@ body.knox-flashcards #ksLauncher { display: none; }
 }
 .ks-badge[hidden] { display: none; }
 .ks-beta {
-  position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
-  padding: 2px 8px; border-radius: 999px; background: var(--purple-dark, #7C3AED); color: #fff;
-  font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; line-height: 14px;
-  pointer-events: none; transition: opacity .2s; box-shadow: 0 2px 0 #5B21B6;
+  display: inline-block; vertical-align: 2px; margin-left: 4px; padding: 1px 7px; border-radius: 999px;
+  background: var(--purple-dark, #7C3AED); color: #fff; font-style: normal;
+  font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; line-height: 15px;
 }
-#ksLauncher.open .ks-beta { opacity: 0; }
+.ks-brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 900; }
+.ks-hero .ks-beta { background: rgba(255,255,255,.95); color: var(--orange-dark); }
 
 /* ── Panel ── */
 #ksPanel {

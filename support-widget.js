@@ -33,7 +33,7 @@
     ['🙋', 'Talk to a person', 'human'],
   ];
   const ICON = {
-    chat: '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M4.5 13.5V12a7.5 7.5 0 0 1 15 0v1.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="2.6" y="11.6" width="5" height="7.6" rx="2.3" fill="currentColor"/><rect x="16.4" y="11.6" width="5" height="7.6" rx="2.3" fill="currentColor"/><path d="M19 19.2v.3a2.6 2.6 0 0 1-2.6 2.6h-2.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="10.6" y="20.6" width="4" height="2.9" rx="1.45" fill="currentColor"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M4.2 2.6 8 5.3h8l3.8-2.7c.4-.3.9 0 .9.5V6A3.5 3.5 0 0 1 22 8.6v7.2a3.5 3.5 0 0 1-3.5 3.5h-8.3L5.6 22.6c-.5.4-1.1 0-1.1-.6v-2.8A3.5 3.5 0 0 1 2 15.8V8.6A3.5 3.5 0 0 1 3.3 6V3.1c0-.5.5-.8.9-.5z"/><circle cx="7.6" cy="12.3" r="1.55" fill="var(--orange)"/><circle cx="12" cy="12.3" r="1.55" fill="var(--orange)"/><circle cx="16.4" cy="12.3" r="1.55" fill="var(--orange)"/></svg>',
     down: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     home: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8.5 15.5q3.5 2.5 7 0" stroke-linecap="round"/></svg>',
     msgs: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 9h8M8 12.5h5"/></svg>',
@@ -82,7 +82,7 @@
   launcher.id = 'ksLauncher';
   launcher.type = 'button';
   launcher.setAttribute('aria-label', 'Help & messages (beta)');
-  launcher.innerHTML = `<span class="ks-l-icon ks-l-chat">${ICON.chat}</span><span class="ks-l-icon ks-l-down">${ICON.down}</span><span class="ks-badge" hidden></span><span class="ks-beta" aria-hidden="true">Beta</span>`;
+  launcher.innerHTML = `<span class="ks-l-icon ks-l-chat">${ICON.chat}</span><span class="ks-l-icon ks-l-down">${ICON.down}</span><span class="ks-badge" hidden></span>`;
   const panel = document.createElement('section');
   panel.id = 'ksPanel';
   panel.setAttribute('role', 'dialog');
@@ -110,7 +110,7 @@
     const name = firstName(), recent = (st.chats || [])[0];
     const top = HELP.slice(0, 4).map((h, i) => `<button type="button" class="ks-row" data-help="${i}"><span>${esc(h[0])}</span>${ICON.arrow}</button>`).join('');
     return `<div class="ks-hero">
-        <div class="ks-hero-top">${LOGO}<button type="button" class="ks-x" data-close aria-label="Close">${ICON.close}</button></div>
+        <div class="ks-hero-top"><span class="ks-brand">${LOGO}<span>Knox Support <i class="ks-beta">Beta</i></span></span><button type="button" class="ks-x" data-close aria-label="Close">${ICON.close}</button></div>
         <p class="ks-hi">Hi ${name ? esc(name) : 'there'} 👋</p>
         <h2 class="ks-how">How can we help?</h2>
       </div>
@@ -164,7 +164,7 @@
     if (c?.loading) {
       return `<header class="ks-head chat">
           <button type="button" class="ks-x" data-back aria-label="Back">${ICON.back}</button>
-          <span class="ks-head-who">${LOGO}<span><b>Knox Support</b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
+          <span class="ks-head-who">${LOGO}<span><b>Knox Support <i class="ks-beta">Beta</i></b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
           <button type="button" class="ks-x" data-close aria-label="Close">${ICON.close}</button>
         </header><div class="ks-thread" id="ksThread"><div class="ks-loading"><i></i><i></i><i></i></div>${st.error ? `<div class="ks-err">${esc(st.error)}</div>` : ''}</div>`;
     }
@@ -174,7 +174,7 @@
     const typing = st.busy && !withTeam ? `<div class="ks-msg them">${LOGO}<div><div class="ks-bubble ks-typing"><i></i><i></i><i></i></div></div></div>` : '';
     return `<header class="ks-head chat">
         <button type="button" class="ks-x" data-back aria-label="Back">${ICON.back}</button>
-        <span class="ks-head-who">${LOGO}<span><b>Knox Support</b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
+        <span class="ks-head-who">${LOGO}<span><b>Knox Support <i class="ks-beta">Beta</i></b><span>${withTeam ? 'The Knox team will reply here' : 'The Knox team can step in'}</span></span></span>
         <button type="button" class="ks-x" data-close aria-label="Close">${ICON.close}</button>
       </header>
       <div class="ks-thread" id="ksThread">${greet}${msgs.map(msgHtml).join('')}${typing}${act}${starters}
