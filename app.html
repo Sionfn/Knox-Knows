@@ -919,6 +919,12 @@
       #sidebarUpgradeCard:hover, #sidebarUpgradeCard:focus-visible { box-shadow: 0 5px 0 var(--orange); }
       #sidebarUpgradeCard .plus-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--orange); font-size: 17px; box-shadow: 0 2px 0 var(--orange-dark); }
       #sidebarUpgradeCard .sidebar-extension-copy span, #sidebarUpgradeCard .sidebar-extension-arrow { color: var(--orange); }
+      /* It advertises Mega Knox now, so it wears Mega's gold. */
+      #sidebarUpgradeCard { border-color: #F2B705; background: color-mix(in srgb, #F2B705 14%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #F2B705 60%, transparent); }
+      #sidebarUpgradeCard:hover, #sidebarUpgradeCard:focus-visible { box-shadow: 0 5px 0 #C99404; }
+      #sidebarUpgradeCard .plus-icon { background: linear-gradient(135deg, #FFD84D, #F2B705); box-shadow: 0 2px 0 #C99404; }
+      #sidebarUpgradeCard .sidebar-extension-copy span, #sidebarUpgradeCard .sidebar-extension-arrow { color: #9A6B00; }
+      html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-arrow { color: #FFD45C; }
       #sidebarControlsSlot .header-right { flex-direction: column; align-items: stretch; gap: 8px; }
       #sidebarControlsSlot .account-status-row { display: flex; align-items: stretch; gap: 5px; min-width: 0; }
       #sidebarControlsSlot .account-dock { display: flex; align-items: center; gap: 5px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--border); }
@@ -1675,6 +1681,7 @@
       font-family: inherit;
     }
     .limit-card-btn:hover { filter: brightness(1.07); box-shadow: 0 5px 0 var(--orange-dark); }
+    .limit-card-btn.mega { background: linear-gradient(135deg, #FFD84D, #F2B705); color: #4A3300; box-shadow: 0 4px 0 #C99404; }
 
     /* USAGE INFO PANEL — opens when the header question-counter is tapped */
     .usage-info-overlay {
@@ -2553,9 +2560,9 @@
       </div><!-- end sidebar-body -->
 
       <!-- Account tools stay at the bottom of the desktop sidebar. -->
-      <button type="button" class="sidebar-extension-card sidebar-plus-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;" onclick="goToPricing()" aria-label="Go unlimited — upgrade to Knox Plus">
-        <span class="plus-icon" aria-hidden="true">⚡</span>
-        <span class="sidebar-extension-copy"><strong>Go unlimited</strong><span>Upgrade to Knox Plus</span></span>
+      <button type="button" class="sidebar-extension-card sidebar-plus-card sidebar-collapsible" id="sidebarUpgradeCard" style="display:none;" onclick="goToPricing()" aria-label="Try Mega Knox">
+        <span class="plus-icon" aria-hidden="true">💎</span>
+        <span class="sidebar-extension-copy"><strong id="upgradeCardTitle">Try Mega Knox free</strong><span id="upgradeCardSub">3-day free trial</span></span>
         <span class="sidebar-extension-arrow" aria-hidden="true">→</span>
       </button>
       <div id="sidebarControlsSlot" class="sidebar-footer"></div>
@@ -2607,7 +2614,7 @@
       <div class="account-dock">
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
-        <span class="account-identity"><span id="appAccountName"></span><span id="appAccountPlanBadge">Free plan</span></span>
+        <span class="account-identity"><span id="appAccountName"></span><span id="appAccountPlanBadge">🌱 Free plan</span></span>
       </button>
       </div>
       <div id="appGuestBtns">
@@ -2625,7 +2632,7 @@
         <span id="ddAvatar">?</span>
         <div class="dd-identity-copy"><p class="dd-name" id="ddName">—</p><span class="dd-email" id="ddEmail">—</span></div>
       </div>
-      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
+      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
       <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
@@ -2857,7 +2864,7 @@
       <div class="drawer-footer">
         <button id="drawerAccountBtn" onclick="window.openAppSettings();closeMobileHistory();" aria-label="Account and plan">
           <span id="drawerAccountIcon">?</span>
-          <span class="drawer-identity"><span id="drawerAccountName">Your account</span><span id="drawerAccountBadge">Free plan</span></span>
+          <span class="drawer-identity"><span id="drawerAccountName">Your account</span><span id="drawerAccountBadge">🌱 Free plan</span></span>
           <svg class="drawer-account-gear" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
         </button>
         <div id="drawerGuestBtns">
@@ -3172,7 +3179,7 @@
 
   // How each plan is shown: the ⚡ Knox Plus and 💎 Mega Knox badges.
   const tierName = () => window.userTier === 'mega' ? 'Mega Knox' : window.userTier === 'plus' ? 'Knox Plus' : 'Free';
-  const tierBadge = () => window.userTier === 'mega' ? '💎 Mega Knox' : window.userTier === 'plus' ? '⚡ Knox Plus' : 'Free plan';
+  const tierBadge = () => window.userTier === 'mega' ? '💎 Mega Knox' : window.userTier === 'plus' ? '⚡ Knox Plus' : '🌱 Free plan';
   window.knoxTierName = tierName;
   // Early access: new features can check this before Mega Knox members (and
   // Knox Ambassadors, who have Mega) see them first.
@@ -3254,7 +3261,7 @@
           ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
           : planTier(plan) === 'paid'
           ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
-          : { cls: 'free',  icon: '🆓', name: 'Free',      tag: '5 free/day, up to 20 saved' };
+          : { cls: 'free',  icon: '🌱', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -3353,15 +3360,31 @@
     return (plan === 'super' || plan === 'max' || plan === 'plus') ? 'paid' : 'free';
   }
 
+  // What to say when advertising Mega Knox (null when they already have it).
+  window.knoxMegaPitch = function () {
+    if (window.userTier === 'mega') return null;
+    if (window.userTier === 'plus') return { title: 'Go Mega Knox', sub: '40-card decks & early access', button: '💎 Upgrade to Mega Knox' };
+    return window.hasBillingAccount
+      ? { title: 'Get Mega Knox', sub: 'Everything Knox has', button: '💎 Get Mega Knox — everything Knox has' }
+      : { title: 'Try Mega Knox free', sub: '3-day free trial', button: '💎 Try Mega Knox free for 3 days' };
+  };
+
   async function updateUsageIndicator() {
     const usage = document.getElementById('headerUsage');
     const text  = document.getElementById('headerUsageText');
     const upgradeCard = document.getElementById('sidebarUpgradeCard');
     // Pinned sidebar upgrade card only makes sense for free users — paid
     // users already have what it's selling.
+    // Free and Knox Plus members see Mega Knox; the 3-day trial is mentioned
+    // only to people who have never subscribed (the trial is first-time only).
     if (upgradeCard) {
-      const isFree = planTier(window.userPlan) === 'free';
-      upgradeCard.style.display = isFree ? 'block' : 'none';
+      const pitch = window.knoxMegaPitch();
+      upgradeCard.style.display = pitch ? 'block' : 'none';
+      if (pitch) {
+        document.getElementById('upgradeCardTitle').textContent = pitch.title;
+        document.getElementById('upgradeCardSub').textContent = pitch.sub;
+        upgradeCard.setAttribute('aria-label', pitch.title + ' — ' + pitch.sub);
+      }
     }
     if (upgradeCard && !window.currentUser) upgradeCard.style.display = 'none';
     if (!usage || !text) return;
@@ -3548,7 +3571,8 @@
           <li>🎓 <strong>Learn mode</strong> only charges once per topic — starting one costs 1 credit (even with a photo), and the whole guided back-and-forth after that is free.</li>
           <li>Casual chit-chat with Knox doesn't use any credits — only real homework help does.</li>
         </ul>
-        <button class="usage-info-upgrade" onclick="closeUsageInfo(); goToPricing();">⚡ Get unlimited with Knox Plus</button>
+        ${window.knoxNativeApp ? '' : `<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">${window.knoxMegaPitch()?.button || '💎 See Mega Knox'}</button>
+        <p class="usage-info-fine">Mega Knox: unlimited questions, 40-card decks, the longest Learn sessions and early access.</p>`}
       `;
     }
     let modal = document.getElementById('usageInfoModal');
@@ -4728,7 +4752,7 @@
     if (!u) { openAuthModal(); return; }
     const plan      = window.userPlan;
     const isPaid = planTier(plan) === 'paid';
-    const planLabel = tierName() + (window.userAmbassador ? ' · Ambassador' : '');
+    const planLabel = tierBadge() + (window.userAmbassador ? ' · Ambassador' : '');
     const badgeClass = window.userTier === 'mega' ? 'mega' : isPaid ? 'super' : 'free';
     const el = document.getElementById('settingsContent');
     if (!el) return;
@@ -4788,7 +4812,7 @@
       const wrap = document.createElement('div'); wrap.style.marginTop = '18px';
       const up = document.createElement('button');
       up.className   = 'auth-submit';
-      up.textContent = isPaid ? '💎 Upgrade to Mega Knox' : 'See Knox Plus & Mega Knox';
+      up.textContent = window.knoxMegaPitch()?.button || '💎 Upgrade to Mega Knox';
       up.onclick     = () => { goToPricing(); closeAppSettings(); };
       wrap.appendChild(up);
       el.appendChild(wrap);
@@ -4974,26 +4998,9 @@ window.appStartNewChat = function() {
 // same chat UI as normal Knox (not a separate view like the calculator),
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
-window.openLearnMode = function(authChecked) {
-  // Guests: every guest message counts toward 3 a day, so a lesson would stop
-  // after a couple of answers. Ask them to sign up (free), then open Learn.
-  // While sign-in is still loading (a /app?open=learn link), decide once it's known.
-  if (!window.currentUser && authChecked !== true && document.body.classList.contains('app-auth-pending')) {
-    const started = Date.now();
-    const wait = setInterval(() => {
-      if (document.body.classList.contains('app-auth-pending') && Date.now() - started < 8000) return;
-      clearInterval(wait); window.openLearnMode(true);
-    }, 100);
-    return;
-  }
-  if (!window.currentUser) {
-    window._learnAfterSignIn = true;
-    window.closeMobileHistory?.();
-    window.openAuthModal?.('signup');
-    const sub = $('authHeaderSubtitle');
-    if (sub) sub.textContent = 'Learn lessons are free with an account — sign up to start one.';
-    return;
-  }
+window.openLearnMode = function() {
+  // Guests can open Learn and look around; starting a lesson asks them to
+  // sign up (free) — see learnNeedsAccount() in appHandleAsk.
   window._appViewVersion++;
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
@@ -5016,7 +5023,8 @@ window.openLearnMode = function(authChecked) {
   const sub   = document.querySelector('.welcome-sub');
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
-  if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.";
+  if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand." +
+    (window.currentUser ? '' : ' Free with a Knox account.');
   updateSuggestionChipsForMode(true);
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
@@ -5025,6 +5033,19 @@ window.openLearnMode = function(authChecked) {
 
   document.getElementById('appChatInput')?.focus();
 };
+
+// A guest in Learn who sends a question: every guest message counts toward 3
+// a day, so a lesson would stop after a couple of answers. Ask them to sign
+// up (free); their question stays in the box and Learn reopens after.
+function learnNeedsAccount() {
+  if (window.currentUser || !window._learnModeActive) return false;
+  window._learnAfterSignIn = true;
+  window.closeMobileHistory?.();
+  window.openAuthModal?.('signup');
+  const sub = $('authHeaderSubtitle');
+  if (sub) sub.textContent = 'Learn lessons are free with an account — sign up to start yours.';
+  return true;
+}
 
 // Restores the normal welcome copy — called whenever a Learn session ends
 // (New Chat, Home, or opening a different saved conversation).
@@ -5195,7 +5216,7 @@ window.openMobileHistory = function() {
     $('drawerAccountName').textContent = ($('appAccountName')?.textContent || '').trim()
       || window.currentUser.displayName || window.currentUser.email || 'Your account';
     const drawerBadge = $('drawerAccountBadge');
-    drawerBadge.textContent = (badge?.textContent || '').trim() || 'Free plan';
+    drawerBadge.textContent = (badge?.textContent || '').trim() || '🌱 Free plan';
     drawerBadge.classList.toggle('paid', !!badge?.classList.contains('paid'));
     drawerBadge.classList.toggle('mega', !!badge?.classList.contains('mega'));
   }
@@ -5785,6 +5806,7 @@ window.appHandleAsk = async function() {
   const q = (input?.value || '').trim();
   if (!q && !window._appImage && !window._appDoc) return;
   if ($('appImagePill')?.classList.contains('is-reading')) return; // still reading the file
+  if (learnNeedsAccount()) return;
   // A new message is on its way: the last Learn reply's buttons go quiet.
   document.querySelectorAll('#chatThread .learn-actions button').forEach(b => { b.disabled = true; });
 
@@ -6125,7 +6147,7 @@ function renderLimitCard(data, isSignedIn) {
     title = "You've reached today's limit";
     cta   = '<p style="font-size:12px;font-weight:700;color:var(--text-light);margin-top:6px;">This is a rare, abuse-prevention limit — it clears again shortly.</p>';
   } else {
-    cta   = '<button class="limit-card-btn" onclick="goToPricing()">⚡ Upgrade for more</button>';
+    cta   = '<button class="limit-card-btn mega" onclick="goToPricing()">' + escHtml(window.knoxMegaPitch?.()?.button || '💎 See Mega Knox') + '</button>';
   }
   return '<div class="limit-card">' +
     '<h3>🦊 ' + escHtml(title) + '</h3>' +

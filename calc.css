@@ -17,8 +17,12 @@ html[data-theme="dark"]:not(.knox-seasonal) .kc-badge { color: var(--blue); }
 
 /* Back + Basic/Scientific, inside the top of the card */
 .kc-cardbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.kc-back { border: 0; background: transparent; color: var(--text-light); font-size: 13.5px; font-weight: 900; padding: 7px 8px; border-radius: 10px; }
-.kc-back:hover { color: var(--orange); background: var(--orange-cream); }
+.kc-back { border: 0; font-size: 13.5px; font-weight: 900; padding: 7px 12px; border-radius: 10px;
+  color: var(--orange); background: var(--orange-light); } /* the color of the mode you came from: Ask Knox… */
+.kc-back:hover { filter: brightness(.97); box-shadow: inset 0 0 0 2px var(--orange); }
+body.knox-learn-mode .kc-back { color: var(--purple-on-tint); background: var(--purple-light); } /* …or Learn */
+body.knox-learn-mode .kc-back:hover { box-shadow: inset 0 0 0 2px var(--purple); }
+html.knox-seasonal body:not(.knox-learn-mode) .kc-back { color: #873D28; background: #FBE4C6; } /* Fall's Ask Knox colors */
 .kc-modes { display: inline-flex; gap: 3px; padding: 3px; border-radius: 13px; background: var(--cream-warm); border: 2px solid var(--border); }
 .kc-mode { border: 0; border-radius: 10px; padding: 6px 14px; background: transparent; color: var(--text-light); font-size: 13px; font-weight: 900; }
 .kc-mode.on { background: var(--orange); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
