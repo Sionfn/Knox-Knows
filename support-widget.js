@@ -5,7 +5,8 @@
 //   Help      searchable answers (moved here from the old Help & support modal)
 // Conversations are stored server-side (api/_support.js via /api/me?route=support).
 // Knox Support answers account questions; refunds and anything it can't solve
-// go to the Knox team, who reply from /admin — replies show up here with a badge.
+// go to the Knox team, who reply from the Support Desk (/support-desk) —
+// replies show up here with a badge.
 (function () {
   'use strict';
   const API = '/api/me?route=support';
@@ -62,6 +63,11 @@
   // ── State ──
   const st = { open: false, tab: 'home', chats: null, chat: null, view: 'list', busy: false, action: null, helpQ: '', helpOpen: -1, error: '' };
   const user = () => window.currentUser || null;
+  // A conversation the Knox team has (or had) goes to them, even once solved
+  // (same rule as the server's isWithTeam).
+  const withTeamOf = c => !!c && (c.status === 'waiting' || c.status === 'replied' || (c.status === 'closed' && !!c.kind));
+  // Conversations keep their newest 120 messages, so compare the last one too.
+  const sig = c => (c?.messages?.length || 0) + ':' + (c?.messages?.at(-1)?.at || 0) + ':' + c?.status;
   const firstName = () => {
     const u = user();
     const n = (u?.displayName || '').trim().split(/\s+/)[0] || (u?.email || '').split('@')[0].split(/[._\d]/)[0];
@@ -143,7 +149,7 @@
     const list = st.chats.map(c => `<button type="button" class="ks-conv${c.unread ? ' unread' : ''}" data-chat="${esc(c.id)}">
         ${LOGO}
         <span class="ks-conv-main"><span class="ks-conv-top"><b>${esc(c.title || 'Conversation')}</b><time>${ago(c.updatedAt)}</time></span>
-          <span class="ks-conv-last">${esc(c.last ? (c.last.from === 'user' ? 'You: ' : c.last.from === 'team' ? 'Knox team: ' : '') + c.last.text : '')}</span>
+          <span class="ks-conv-last">${esc(c.last ? (c.last.from === 'user' ? 'You: ' : c.last.from === 'team' ? (c.last.by || 'Knox team') + ': ' : '') + c.last.text : '')}</span>
           ${c.status === 'waiting' ? '<span class="ks-tag wait">With the Knox team</span>' : c.status === 'replied' ? '<span class="ks-tag replied">Knox team replied</span>' : c.status === 'closed' ? '<span class="ks-tag">Solved</span>' : ''}
         </span>${c.unread ? '<i class="ks-pill-dot"></i>' : ''}</button>`).join('');
     return head + (st.chats.length ? `<div class="ks-convs">${list}</div>` : `<div class="ks-empty">${LOGO}<b>No messages yet</b><span>Questions about your plan, billing or a refund? We're here.</span></div>`) +
@@ -159,7 +165,7 @@
 
   function chatView() {
     const c = st.chat, msgs = c?.messages || [];
-    const withTeam = c && (c.status === 'waiting' || c.status === 'replied');
+    const withTeam = withTeamOf(c);
     const greet = `<div class="ks-msg them">${LOGO}<div><span class="ks-who">Knox Support</span><div class="ks-bubble">Hi${firstName() ? ' ' + esc(firstName()) : ''}! I'm Knox Support 🦊 I can help with your plan, billing, refunds, gift codes and more. What's up?</div></div></div>`;
     if (c?.loading) {
       return `<header class="ks-head chat">
@@ -254,7 +260,14 @@
       const r = await call({ action: 'say', id: c.id, text });
       st.chat = r.chat; st.action = r.action || null;
       if (kind === 'human') { st.busy = false; return handoff('human'); }
-    } catch (e) { st.error = e.message; st.chat = c.id ? c : (c.messages.length ? c : null); }
+    } catch (e) {
+      // Not sent: take the message back out of the thread and put it back in
+      // the box so nothing they typed is lost.
+      st.error = e.message; st.chat = c.id || c.messages.length ? c : null;
+      st.busy = false; render();
+      const box = body.querySelector('#ksInput'); if (box && !box.value) { box.value = text; box.dispatchEvent(new Event('input', { bubbles: true })); }
+      return;
+    }
     st.busy = false;
     render();
     loadChats();
@@ -323,7 +336,11 @@
 
   // Signed in / out: refresh the badge; a reply from the Knox team shows up
   // within a few minutes while Knox is open.
-  window.addEventListener('knox-auth-changed', () => { st.chats = null; st.chat = null; st.view = 'list'; loadChats(); });
+  window.addEventListener('knox-auth-changed', () => {
+    st.chats = null; st.chat = null; st.view = 'list'; st.action = null; st.error = ''; st.busy = false;
+    if (st.open) render();
+    loadChats();
+  });
   // Live updates: an open conversation checks every 5 seconds, the open panel
   // every 15, and the badge every 45 while Knox is on screen.
   let ticks = 0;
@@ -332,7 +349,10 @@
     try {
       const c = (await call({ action: 'get', id })).chat;
       if (st.chat?.id !== id || st.busy) return;
-      if (c.messages.length !== st.chat.messages.length || c.status !== st.chat.status) { st.chat = c; render(); }
+      if (sig(c) !== sig(st.chat)) {
+        st.chat = c; render();
+        const s = (st.chats || []).find(x => x.id === id); if (s) { s.unread = 0; syncBadge(); } // just read it
+      }
     } catch {}
   }
   setInterval(() => {

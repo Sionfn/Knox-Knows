@@ -15,8 +15,7 @@
 //   supportConfig/replies { list:[{title,text}] }
 import Stripe from "stripe";
 import { getAuth } from "firebase-admin/auth";
-import { FieldValue } from "firebase-admin/firestore";
-import { accountFacts, sendEmail, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL } from "./_support-shared.js";
+import { accountFacts, sendEmail, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL, updateChat } from "./_support-shared.js";
 
 const APP_URL = "https://knoxknowsapp.com/app?open=messages";
 const DEFAULT_REPLIES = [
@@ -131,7 +130,10 @@ export default async function desk(req, res, { user, db, body }) {
   const snap = await ref.get();
   if (!snap.exists) return res.status(404).json({ error: "Conversation not found." });
   const c = snap.data();
-  const reply = async (update) => { await ref.update(update); return res.status(200).json({ chat: deskChat(ref.id, { ...c, ...update }) }); };
+  // Every change starts from the stored conversation (see updateChat), so two
+  // teammates — or the student — writing at once never erase each other.
+  const save = async change => res.status(200).json({ chat: deskChat(ref.id, await updateChat(db, ref, change)) });
+  const withNote = (cur, text, system) => ({ notes: [...(cur.notes || []), { text, by: me.name, byUid: me.uid, at: now, ...(system ? { system: true } : {}) }].slice(-100) });
 
   if (action === "desk-get") {
     if (c.teamUnread && (!c.assignedTo || c.assignedTo.uid === me.uid)) await ref.update({ teamUnread: false });
@@ -152,15 +154,14 @@ export default async function desk(req, res, { user, db, body }) {
     const text = clip(body.text, 4000);
     if (!text) return res.status(400).json({ error: "Write a reply first." });
     const solve = body.solve === true;
-    const update = {
-      messages: [...(c.messages || []), { from: "team", text, at: now, by: me.name, byUid: me.uid }].slice(-MAX_MESSAGES),
-      status: solve ? "closed" : "replied", updatedAt: now, userUnread: (c.userUnread || 0) + 1, teamUnread: false,
-      ...(c.firstReplyAt ? {} : { firstReplyAt: now }),
-      ...(c.assignedTo ? {} : { assignedTo: { uid: me.uid, name: me.name } }),
+    const after = await updateChat(db, ref, cur => ({
+      messages: [...(cur.messages || []), { from: "team", text, at: now, by: me.name, byUid: me.uid }].slice(-MAX_MESSAGES),
+      status: solve ? "closed" : "replied", updatedAt: now, userUnread: (cur.userUnread || 0) + 1, teamUnread: false,
+      kind: cur.kind || "human",
+      ...(cur.firstReplyAt ? {} : { firstReplyAt: now }),
+      ...(cur.assignedTo ? {} : { assignedTo: { uid: me.uid, name: me.name } }),
       ...(solve ? { solvedAt: now, solvedBy: me.name } : {}),
-      kind: c.kind || "human",
-    };
-    await ref.update(update);
+    }));
     if (c.email) {
       await sendEmail({
         to: c.email, replyTo: SUPPORT_EMAIL, from: "Knox Knows", subject: `${me.name} from Knox Knows replied to your message`,
@@ -172,13 +173,13 @@ export default async function desk(req, res, { user, db, body }) {
         text: `${me.name} from the Knox team replied:\n\n${text}\n\nOpen your messages: ${APP_URL}\n(You can also reply to this email.)`,
       });
     }
-    return res.status(200).json({ chat: deskChat(ref.id, { ...c, ...update }) });
+    return res.status(200).json({ chat: deskChat(ref.id, after) });
   }
 
   if (action === "desk-note") {
     const text = clip(body.text, 4000);
     if (!text) return res.status(400).json({ error: "Write a note first." });
-    return reply({ notes: [...(c.notes || []), { text, by: me.name, byUid: me.uid, at: now }].slice(-100) });
+    return save(cur => withNote(cur, text));
   }
 
   if (action === "desk-assign") {
@@ -190,12 +191,12 @@ export default async function desk(req, res, { user, db, body }) {
       else if (body.to === (process.env.ADMIN_UID || "").trim()) to = { uid: body.to, name: "Sion" };
       else return res.status(404).json({ error: "That team member wasn't found." });
     }
-    return reply({ assignedTo: to, notes: [...(c.notes || []), { text: to ? `Assigned to ${to.name}` : "Unassigned", by: me.name, byUid: me.uid, at: now, system: true }].slice(-100) });
+    return save(cur => ({ assignedTo: to, ...withNote(cur, to ? `Assigned to ${to.name}` : "Unassigned", true) }));
   }
 
   if (action === "desk-status") {
-    if (body.status === "closed") return reply({ status: "closed", teamUnread: false, solvedAt: now, solvedBy: me.name, updatedAt: now });
-    if (body.status === "waiting") return reply({ status: "waiting", kind: c.kind || "human", solvedAt: null, solvedBy: null, updatedAt: now });
+    if (body.status === "closed") return save(() => ({ status: "closed", teamUnread: false, solvedAt: now, solvedBy: me.name, updatedAt: now }));
+    if (body.status === "waiting") return save(cur => ({ status: "waiting", kind: cur.kind || "human", solvedAt: null, solvedBy: null, updatedAt: now }));
     return res.status(400).json({ error: "Unknown status." });
   }
 
@@ -213,7 +214,7 @@ export default async function desk(req, res, { user, db, body }) {
         hasSubscription: !!u.stripeSubscription,
         charges: list.data.filter(ch => ch.paid).map(ch => ({
           id: ch.id, amount: ch.amount, refunded: ch.amount_refunded, currency: ch.currency, created: ch.created * 1000,
-          description: ch.description || (ch.invoice ? "Plan payment" : "One-time payment (e.g. a gift)"), label: money(ch.amount, ch.currency),
+          description: ch.description || (ch.invoice ? "Plan payment" : "Payment"), label: money(ch.amount, ch.currency),
           fullyRefunded: ch.refunded,
         })),
       });
@@ -234,10 +235,7 @@ export default async function desk(req, res, { user, db, body }) {
     }
     const amount = money(refund.amount, refund.currency);
     const entry = { chargeId: ch.id, refundId: refund.id, amount: refund.amount, currency: refund.currency, by: me.name, byUid: me.uid, at: now, cancelled };
-    await ref.update({
-      refunds: FieldValue.arrayUnion(entry),
-      notes: [...(c.notes || []), { text: `Refunded ${amount}${cancelled ? " and cancelled their plan" : ""}`, by: me.name, byUid: me.uid, at: now, system: true }].slice(-100),
-    });
+    await updateChat(db, ref, cur => ({ refunds: [...(cur.refunds || []), entry], ...withNote(cur, `Refunded ${amount}${cancelled ? " and cancelled their plan" : ""}`, true) }));
     return res.status(200).json({ refunded: amount, cancelled });
   }
 

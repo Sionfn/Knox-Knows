@@ -60,6 +60,23 @@ export const summary = (id, c) => {
   const last = (c.messages || []).at(-1);
   return { id, status: c.status, kind: c.kind || null, title: c.title, updatedAt: c.updatedAt, unread: c.userUnread || 0, last: last ? { from: last.from, by: last.by || null, text: clip(last.text, 140) } : null };
 };
+// Change a conversation inside a transaction, starting from what's stored
+// right now: a team reply, note or assignment can land while Knox Support is
+// thinking, and a plain overwrite would erase it. `change(current)` returns
+// the fields to write; resolves to the conversation after the change.
+export async function updateChat(db, ref, change) {
+  return db.runTransaction(async tx => {
+    const cur = (await tx.get(ref)).data() || {};
+    const update = change(cur);
+    tx.set(ref, update, { merge: true });
+    return { ...cur, ...update };
+  });
+}
+
+// A conversation the Knox team has (or had) is theirs: new messages from the
+// student go to them instead of Knox Support, even after it was solved.
+export const isWithTeam = c => c.status === "waiting" || c.status === "replied" || (c.status === "closed" && !!c.kind);
+
 export const transcriptOf = c => (c.messages || []).map(m => `${m.from === "user" ? "Student" : m.from === "team" ? "Knox team" : "Knox Support"}: ${m.text}`).join("\n\n");
 
 export async function sendEmail({ to, replyTo, subject, html, text, from = "Knox Support" }) {

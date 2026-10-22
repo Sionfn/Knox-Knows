@@ -380,6 +380,7 @@
     }).join('');
   }
 
+  const STATUS_NAME = { open: 'Knox Support only', waiting: 'Needs a reply', replied: 'Waiting on student', closed: 'Solved' };
   function factsHtml(t) {
     return esc(t || '').replace(/STILL INSIDE the window/, '<span class="inside">STILL INSIDE the window</span>').replace(/the window has PASSED/, '<span class="passed">the window has PASSED</span>');
   }
@@ -419,7 +420,7 @@
       <aside class="side">
         <div><h4>Account</h4><p class="facts">${x.account ? factsHtml(x.account) : 'Loading…'}</p></div>
         ${refundBox(c, x)}
-        <div><h4>Other conversations</h4><div class="mini">${(x.history || []).length ? x.history.map(h => `<button data-open="${esc(h.id)}">${esc(h.title || 'Conversation')}<span>${ago(h.updatedAt)} · ${h.status === 'closed' ? 'Solved' : h.status}</span></button>`).join('') : '<span class="facts" style="color:var(--text-light)">None</span>'}</div></div>
+        <div><h4>Other conversations</h4><div class="mini">${(x.history || []).length ? x.history.map(h => `<button data-open="${esc(h.id)}">${esc(h.title || 'Conversation')}<span>${ago(h.updatedAt)} · ${STATUS_NAME[h.status] || h.status}</span></button>`).join('') : '<span class="facts" style="color:var(--text-light)">None</span>'}</div></div>
         <div><h4>Details</h4><p class="facts" style="color:var(--text-light)">Student ID: ${esc(c.uid)}\nConversation: ${esc(c.id)}${c.firstReplyAt ? '\nFirst team reply: ' + when(c.firstReplyAt) : ''}</p></div>
       </aside>`;
     const d = $('draft'); d.value = draft;
@@ -635,8 +636,9 @@
       try {
         const id = S.id, r = await api({ action: 'desk-get', id, light: true });
         if (S.id !== id) return;
-        const n = r.chat.messages.length + r.chat.notes.length, had = S.chat.messages.length + S.chat.notes.length;
-        if (n !== had || r.chat.status !== S.chat.status || r.chat.assignedTo?.uid !== S.chat.assignedTo?.uid) {
+        // Conversations keep their newest 120 messages, so compare the newest too.
+        const sig = c => [c.messages.length, c.messages.at(-1)?.at, c.notes.length, c.notes.at(-1)?.at, c.status, c.assignedTo?.uid, (c.refunds || []).length].join(':');
+        if (sig(r.chat) !== sig(S.chat)) {
           const t = $('thread'), atBottom = t && t.scrollHeight - t.scrollTop - t.clientHeight < 60;
           S.chat = r.chat; renderChat(atBottom);
         }

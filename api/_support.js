@@ -23,7 +23,7 @@
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import desk from "./_support-desk.js";
-import { SUPPORT_EMAIL, MAX_MESSAGES, esc, fmtDate, clip, accountFacts, forStudent, summary, transcriptOf, sendEmail } from "./_support-shared.js";
+import { SUPPORT_EMAIL, MAX_MESSAGES, esc, fmtDate, clip, accountFacts, forStudent, summary, transcriptOf, sendEmail, updateChat, isWithTeam } from "./_support-shared.js";
 
 const MODEL = "gpt-6-luna";                 // same model as Ask Knox
 const CHAT_LIMIT = 40;                      // Knox Support replies per student per day
@@ -67,7 +67,6 @@ async function countUse(db, uid, key, limit) {
   });
 }
 
-// What the student sees (no internal fields).
 // Tell the Knox team: email support@ (reply-to the student) and team members
 // who turned on email alerts in the Support Desk, plus a ping in a private
 // Discord channel if SUPPORT_DISCORD_WEBHOOK is set.
@@ -150,44 +149,51 @@ export default async function support(req, res) {
     if (!text) return res.status(400).json({ error: "Type a message first." });
     const own = await ownChat(body.id);
     if (body.id && !own) return res.status(404).json({ error: "Conversation not found." });
-    const withTeam = own && (own.c.status === "waiting" || own.c.status === "replied");
+    const withTeam = !!own && isWithTeam(own.c);
     if (!(await countUse(db, user.uid, withTeam ? "sends" : "chats", withTeam ? SEND_LIMIT : CHAT_LIMIT))) {
       return res.status(429).json({ error: withTeam ? "You've sent a lot of messages today — the Knox team will reply soon." : "That's a lot of messages today. Tap “Talk to the Knox team” and a person will help." });
     }
     const facts = await accountFacts(db, user.uid, user.email);
-    const c = own ? { ...own.c } : {
-      uid: user.uid, email: user.email || null, name: clip(facts.name || user.name, 80), title: clip(text, 80),
-      status: "open", kind: null, messages: [], createdAt: now, userUnread: 0, teamUnread: false,
-    };
-    const ref = own ? own.ref : chats.doc();
-    c.facts = facts.text;
-    c.refundEligible = facts.refund;
-    c.messages = [...(c.messages || []), { from: "user", text, at: now }].slice(-MAX_MESSAGES);
-    c.updatedAt = now;
-    c.userUnread = 0;
-
-    // Already with the Knox team: the message goes to them; Knox Support stays quiet.
-    // Emails go out when the ball comes back to the team (after a reply),
-    // not for every message while it's already waiting.
-    if (withTeam) {
-      const wasReplied = c.status === "replied";
-      c.status = "waiting"; c.teamUnread = true;
+    const mine = { from: "user", text, at: now };
+    let ref, c;
+    if (own) {
+      ref = own.ref;
+      c = await updateChat(db, ref, cur => {
+        const team = isWithTeam(cur);
+        return {
+          messages: [...(cur.messages || []), mine].slice(-MAX_MESSAGES),
+          facts: facts.text, refundEligible: facts.refund, updatedAt: now, userUnread: 0,
+          // With the Knox team: it waits for them. Otherwise Knox Support answers.
+          ...(team ? { status: "waiting", teamUnread: true, solvedAt: null, solvedBy: null } : { status: "open" }),
+        };
+      });
+    } else {
+      ref = chats.doc();
+      c = {
+        uid: user.uid, email: user.email || null, name: clip(facts.name || user.name, 80), title: clip(text, 80),
+        status: "open", kind: null, messages: [mine], createdAt: now, updatedAt: now, userUnread: 0, teamUnread: false,
+        facts: facts.text, refundEligible: facts.refund,
+      };
       await ref.set(c);
-      if (wasReplied) await notifyTeam(db, ref.id, c, "New message");
+    }
+
+    // Already with the Knox team: the message goes to them; Knox Support stays
+    // quiet. Emails go out when the ball comes back to the team (after a reply
+    // or once solved), not for every message while it's already waiting.
+    if (c.status === "waiting") {
+      if (own && own.c.status !== "waiting") await notifyTeam(db, ref.id, c, own.c.status === "closed" ? "Wrote again after it was solved" : "New message");
       return res.status(200).json({ chat: forStudent(ref.id, c) });
     }
 
-    if (c.status === "closed") c.status = "open";
     let reply;
     try { reply = await knoxReply(c); }
     catch (e) {
       console.error("Support chat failed:", e?.message);
       reply = { text: "Sorry, I'm having trouble right now. I can send this to the Knox team so a person can help.", action: "human" };
     }
-    c.messages = [...c.messages, { from: "knox", text: reply.text, at: Date.now() }].slice(-MAX_MESSAGES);
-    c.updatedAt = Date.now();
-    await ref.set(c);
-    return res.status(200).json({ chat: forStudent(ref.id, c), action: reply.action });
+    const knox = { from: "knox", text: reply.text, at: Date.now() };
+    c = await updateChat(db, ref, cur => ({ messages: [...(cur.messages || []), knox].slice(-MAX_MESSAGES), updatedAt: knox.at }));
+    return res.status(200).json({ chat: forStudent(ref.id, c), action: isWithTeam(c) ? null : reply.action });
   }
 
   if (action === "handoff") {
@@ -196,12 +202,14 @@ export default async function support(req, res) {
     if (!own) return res.status(404).json({ error: "Conversation not found." });
     if (own.c.status === "waiting") return res.status(200).json({ chat: forStudent(own.ref.id, own.c) });
     if (!(await countUse(db, user.uid, "sends", SEND_LIMIT))) return res.status(429).json({ error: "You've sent a lot of messages today — the Knox team will reply soon." });
-    const c = { ...own.c, kind, status: "waiting", teamUnread: true, updatedAt: Date.now() };
-    c.messages = [...(c.messages || []), { from: "knox", note: true, at: Date.now(),
-      text: kind === "refund"
-        ? "I've sent your refund request to the Knox team. They'll reply right here and by email, usually within a day."
-        : "I've sent this to the Knox team. A person will reply right here and by email, usually within a day." }].slice(-MAX_MESSAGES);
-    await own.ref.set(c);
+    const at = Date.now();
+    const c = await updateChat(db, own.ref, cur => ({
+      kind, status: "waiting", teamUnread: true, updatedAt: at, solvedAt: null, solvedBy: null,
+      messages: [...(cur.messages || []), { from: "knox", note: true, at,
+        text: kind === "refund"
+          ? "I've sent your refund request to the Knox team. They'll reply right here and by email, usually within a day."
+          : "I've sent this to the Knox team. A person will reply right here and by email, usually within a day." }].slice(-MAX_MESSAGES),
+    }));
     await notifyTeam(db, own.ref.id, c, kind === "refund" ? "Refund request" : "Needs a person");
     return res.status(200).json({ chat: forStudent(own.ref.id, c) });
   }
