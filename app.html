@@ -5780,6 +5780,10 @@ function hasExcessBlankLines(text) {
 if (_ci) {
   _ci.addEventListener('paste', function(e) {
     const clipboardData = e.clipboardData || window.clipboardData;
+    // A pasted picture (a screenshot, or a snip copied from the Knox
+    // extension) attaches like the upload button. Text pastes are untouched.
+    const pastedImage = [...(clipboardData?.files || [])].find(f => /^image\//.test(f.type));
+    if (pastedImage) { e.preventDefault(); handleAttachment(pastedImage); return; }
     const plain = clipboardData?.getData('text') || '';
     const isLatex      = looksLikeLatex(plain);
     const isExcessive   = hasExcessBlankLines(plain);
