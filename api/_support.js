@@ -23,7 +23,7 @@
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import desk from "./_support-desk.js";
-import { SUPPORT_EMAIL, MAX_MESSAGES, esc, fmtDate, clip, accountFacts, forStudent, summary, transcriptOf, sendEmail, updateChat, isWithTeam } from "./_support-shared.js";
+import { SUPPORT_EMAIL, MAX_MESSAGES, esc, fmtDate, clip, accountFacts, forStudent, summary, transcriptOf, sendEmail, flushEmails, updateChat, isWithTeam } from "./_support-shared.js";
 
 const MODEL = "gpt-6-luna";                 // same model as Ask Knox
 const CHAT_LIMIT = 40;                      // Knox Support replies per student per day
@@ -81,7 +81,7 @@ async function notifyTeam(db, id, c, headline) {
   const subject = `[Knox Support] ${headline} — ${c.email || c.uid}`;
   const text = `${headline}\nOpen: ${deskUrl}\n\n${c.facts || ""}\n\n${transcriptOf(c)}`;
   await Promise.all([
-    ...to.map(addr => sendEmail({ to: addr, replyTo: addr === SUPPORT_EMAIL ? c.email || undefined : undefined, subject, html, text })),
+    ...to.map(addr => sendEmail({ db, studentUid: c.uid, to: addr, replyTo: addr === SUPPORT_EMAIL ? c.email || undefined : undefined, subject, html, text })),
     process.env.SUPPORT_DISCORD_WEBHOOK ? fetch(process.env.SUPPORT_DISCORD_WEBHOOK, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: `📬 **${headline}** — ${c.email || c.uid}\n> ${clip((c.messages || []).filter(m => m.from === "user").at(-1)?.text, 300).replace(/\n/g, "\n> ")}\n<${deskUrl}>` }),
@@ -125,8 +125,11 @@ export default async function support(req, res) {
 
   // ── Student ──
   if (action === "list") {
-    const snap = await chats.where("uid", "==", user.uid).limit(50).get();
-    const list = snap.docs.map(d => summary(d.id, d.data())).sort((a, b) => b.updatedAt - a.updatedAt);
+    await flushEmails(db, user.uid);
+    // Sort the student's complete result before capping it; limiting an
+    // unordered query first can permanently hide their newest conversations.
+    const snap = await chats.where("uid", "==", user.uid).get();
+    const list = snap.docs.map(d => summary(d.id, d.data())).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 50);
     return res.status(200).json({ chats: list });
   }
 

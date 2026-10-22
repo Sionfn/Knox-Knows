@@ -57,7 +57,7 @@ const AGENT = { uid: 'agent', email: 'helper@example.com', email_verified: true 
 async function setup({ users = {} } = {}) {
   const { db, store } = memoryDb();
   for (const [uid, data] of Object.entries(users)) store.set(`users/${uid}`, data);
-  const state = { token: STUDENT, ai: () => 'Happy to help!', emails: [], aiCalls: 0, beforeAiReturns: null, refunds: [], cancels: [] };
+  const state = { token: STUDENT, ai: () => 'Happy to help!', emails: [], emailFails: false, aiCalls: 0, beforeAiReturns: null, refunds: [], cancels: [] };
   const fetch = async (url, opts) => {
     const body = JSON.parse(opts.body);
     if (String(url).includes('openai')) {
@@ -65,10 +65,11 @@ async function setup({ users = {} } = {}) {
       if (state.beforeAiReturns) { await state.beforeAiReturns(); state.beforeAiReturns = null; }
       return { ok: true, json: async () => ({ choices: [{ message: { content: state.ai(body) } }] }) };
     }
-    if (String(url).includes('resend')) { state.emails.push(body); return { ok: true, text: async () => '' }; }
+    if (String(url).includes('resend')) { state.emails.push(body); return { ok: !state.emailFails, status: state.emailFails ? 503 : 200, text: async () => '' }; }
     return { ok: true, text: async () => '' };
   };
   const stripe = {
+    invoices: { list: async () => ({ data: [{ id: 'in_paid', amount_paid: 999, status_transitions: { paid_at: Math.floor(Date.now() / 1000) - 2 * 86400 }, lines: { data: [{ price: { recurring: { interval: 'month' } } }] } }], has_more: false }) },
     subscriptions: {
       retrieve: async () => ({ status: 'active', start_date: Math.floor(Date.now() / 1000) - 2 * 86400, current_period_end: Math.floor(Date.now() / 1000) + 28 * 86400, items: { data: [{ price: { recurring: { interval: 'month' } } }] } }),
       cancel: async id => { state.cancels.push(id); },
@@ -106,8 +107,63 @@ async function setup({ users = {} } = {}) {
     await handler({ method: 'POST', headers: { authorization: 'Bearer t' }, body }, res);
     return res;
   };
-  return { call, state, store, chat: id => store.get(`supportChats/${id}`) };
+  return { call, state, store, stripe, env: context.process.env, shared: cache.get('api/_support-shared.js').namespace, db, chat: id => store.get(`supportChats/${id}`) };
 }
+
+test('Newest conversations are selected after sorting the full student inbox', async () => {
+  const s = await setup();
+  for (let i = 0; i < 65; i++) s.store.set('supportChats/c' + i, { uid: STUDENT.uid, title: 'Chat ' + i, updatedAt: i, messages: [] });
+  const r = await s.call(STUDENT, { action: 'list' });
+  assert.equal(r.body.chats.length, 50);
+  assert.equal(r.body.chats[0].id, 'c64');
+  assert.equal(r.body.chats.at(-1).id, 'c15');
+});
+
+test('Support email failures persist, recover on polling, and are not sent again', async () => {
+  const s = await setup();
+  s.state.emailFails = true;
+  await s.shared.sendEmail({ db: s.db, studentUid: STUDENT.uid, to: STUDENT.email, subject: 'Reply', html: '<p>Reply</p>', text: 'Reply' });
+  const [path, queued] = [...s.store].find(([p]) => p.startsWith('supportNotifications/'));
+  assert.equal(queued.state, 'pending');
+  assert.match(queued.lastError, /503/);
+  s.store.set(path, { ...queued, nextAttemptAt: 0 });
+  s.state.emailFails = false;
+  await s.shared.flushEmails(s.db, OTHER.uid);
+  assert.equal(s.state.emails.length, 1, 'another student cannot drain this queue');
+  await s.shared.flushEmails(s.db, STUDENT.uid);
+  assert.equal(s.store.get(path).state, 'sent');
+  assert.equal(s.store.get(path).payload, null, 'sent transcript payload is removed');
+  await s.shared.flushEmails(s.db);
+  assert.equal(s.state.emails.length, 2);
+});
+
+test('Missing email configuration is visible and retained for later delivery', async () => {
+  const s = await setup();
+  delete s.env.RESEND_API_KEY;
+  await s.shared.sendEmail({ db: s.db, studentUid: STUDENT.uid, to: STUDENT.email, subject: 'Reply', html: 'Reply', text: 'Reply' });
+  const queued = [...s.store].find(([p]) => p.startsWith('supportNotifications/'))[1];
+  assert.equal(queued.state, 'pending');
+  assert.match(queued.lastError, /not configured/);
+  assert.equal(s.state.emails.length, 0);
+  s.state.token = OWNER;
+  const r = await s.call(OWNER, { action: 'desk-list' });
+  assert.equal(r.body.delivery.pending, 1);
+});
+
+test('Refund facts use actual paid invoices, never subscription start or free invoices', async () => {
+  const s = await setup({ users: { stu: { plan: 'super', stripeSubscription: 'sub_1' } } });
+  s.stripe.invoices.list = async () => ({ data: [], has_more: false });
+  let facts = await s.shared.accountFacts(s.db, STUDENT.uid, STUDENT.email);
+  assert.equal(facts.refund, null);
+  assert.match(facts.text, /could not be confirmed/);
+  s.stripe.invoices.list = async () => ({ data: [
+    { id: 'zero', amount_paid: 0, status_transitions: { paid_at: 1 } },
+    { id: 'paid', amount_paid: 999, status_transitions: { paid_at: Math.floor(Date.now() / 1000) - 40 * 86400 } }
+  ], has_more: false });
+  facts = await s.shared.accountFacts(s.db, STUDENT.uid, STUDENT.email);
+  assert.equal(facts.refund, false);
+  assert.match(facts.text, /window has PASSED/);
+});
 
 test('Student chat: Knox Support answers, ACTION is stripped and offered, refund goes to the team by email', async () => {
   const s = await setup({ users: { stu: { plan: 'super', stripeSubscription: 'sub_1', stripeCustomerId: 'cus_stu' } } });

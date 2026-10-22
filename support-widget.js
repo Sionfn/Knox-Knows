@@ -62,6 +62,7 @@
 
   // ── State ──
   const st = { open: false, tab: 'home', chats: null, chat: null, view: 'list', busy: false, action: null, helpQ: '', helpOpen: -1, error: '' };
+  let authEpoch = 0, viewEpoch = 0;
   const user = () => window.currentUser || null;
   // A conversation the Knox team has (or had) goes to them, even once solved
   // (same rule as the server's isWithTeam).
@@ -75,10 +76,13 @@
   };
 
   async function call(body) {
-    const u = user();
+    const u = user(), epoch = authEpoch;
     if (!u?.getIdToken) throw new Error('Sign in to message the Knox team.');
-    const r = await fetch(API, { method: 'POST', headers: { Authorization: 'Bearer ' + await u.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const guard = () => { if (epoch !== authEpoch || user()?.uid !== u.uid) throw Object.assign(new Error('Account changed.'), { stale: true }); };
+    const token = await u.getIdToken(); guard();
+    const r = await fetch(API, { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await r.json().catch(() => ({}));
+    guard();
     if (!r.ok) throw new Error(data.error || 'Something went wrong. Try again.');
     return data;
   }
@@ -226,23 +230,27 @@
 
   async function loadChats() {
     if (!user()) { st.chats = []; syncBadge(); return; }
-    try { st.chats = (await call({ action: 'list' })).chats || []; } catch { if (st.chats === null) st.chats = []; }
+    try { st.chats = (await call({ action: 'list' })).chats || []; } catch (e) { if (e.stale) return; if (st.chats === null) st.chats = []; }
     if (st.open && (st.tab === 'home' || (st.tab === 'messages' && st.view === 'list'))) render(); else syncBadge();
   }
 
   async function openChat(id) {
+    const epoch = ++viewEpoch; st.busy = false;
     st.tab = 'messages'; st.view = 'chat'; st.action = null; st.error = '';
     const known = (st.chats || []).find(c => c.id === id);
     st.chat = { id, messages: [], status: known?.status || 'open', loading: true };
     render();
     try {
-      st.chat = (await call({ action: 'get', id })).chat;
+      const result = await call({ action: 'get', id });
+      if (epoch !== viewEpoch) return;
+      st.chat = result.chat;
       const s = (st.chats || []).find(c => c.id === id); if (s) s.unread = 0;
-    } catch (e) { st.error = e.message; }
+    } catch (e) { if (e.stale || epoch !== viewEpoch) return; st.error = e.message; }
     render();
   }
 
   function newChat() {
+    viewEpoch++; st.busy = false;
     st.tab = 'messages';
     if (!user()) { st.view = 'list'; render(); return; }
     st.view = 'chat'; st.chat = null; st.action = null; st.error = ''; render();
@@ -251,6 +259,7 @@
   async function say(text, kind) {
     text = text.trim();
     if (!text || st.busy) return;
+    const epoch = viewEpoch;
     const input = body.querySelector('#ksInput'); if (input) input.value = '';
     st.error = ''; st.action = null; st.busy = true;
     const c = st.chat || { id: null, messages: [], status: 'open' };
@@ -258,9 +267,11 @@
     render();
     try {
       const r = await call({ action: 'say', id: c.id, text });
+      if (epoch !== viewEpoch) return;
       st.chat = r.chat; st.action = r.action || null;
       if (kind === 'human') { st.busy = false; return handoff('human'); }
     } catch (e) {
+      if (e.stale || epoch !== viewEpoch) return;
       // Not sent: take the message back out of the thread and put it back in
       // the box so nothing they typed is lost.
       st.error = e.message; st.chat = c.id || c.messages.length ? c : null;
@@ -275,16 +286,17 @@
 
   async function handoff(kind) {
     if (!st.chat?.id || st.busy) return;
+    const epoch = viewEpoch;
     st.busy = true; st.action = null; render();
-    try { st.chat = (await call({ action: 'handoff', id: st.chat.id, kind })).chat; }
-    catch (e) { st.error = e.message; }
+    try { const r = await call({ action: 'handoff', id: st.chat.id, kind }); if (epoch !== viewEpoch) return; st.chat = r.chat; }
+    catch (e) { if (e.stale || epoch !== viewEpoch) return; st.error = e.message; }
     st.busy = false; render(); loadChats();
   }
 
   // ── Open / close ──
   function open(tab) {
     st.open = true;
-    if (tab) { st.tab = tab; if (tab === 'messages') st.view = 'list'; }
+    if (tab) { viewEpoch++; st.busy = false; st.tab = tab; if (tab === 'messages') st.view = 'list'; }
     panel.hidden = false;
     document.documentElement.classList.add('ks-open');
     requestAnimationFrame(() => panel.classList.add('show'));
@@ -310,7 +322,7 @@
     if (t.matches('summary')) { const d = t.parentElement; st.helpOpen = d.open ? -1 : +d.dataset.i; return; }
     if (t.dataset.tab) { st.tab = t.dataset.tab; if (st.tab === 'messages' && st.view === 'chat' && !st.chat) st.view = 'list'; render(); if (st.tab !== 'help') loadChats(); return; }
     if (t.hasAttribute('data-close')) return close();
-    if (t.hasAttribute('data-back')) { st.view = 'list'; st.chat = null; st.action = null; render(); return loadChats(); }
+    if (t.hasAttribute('data-back')) { viewEpoch++; st.busy = false; st.view = 'list'; st.chat = null; st.action = null; render(); return loadChats(); }
     if (t.hasAttribute('data-new')) return newChat();
     if (t.dataset.chat) return openChat(t.dataset.chat);
     if (t.dataset.help) { st.tab = 'help'; st.helpQ = ''; st.helpOpen = +t.dataset.help; return render(); }
@@ -337,6 +349,7 @@
   // Signed in / out: refresh the badge; a reply from the Knox team shows up
   // within a few minutes while Knox is open.
   window.addEventListener('knox-auth-changed', () => {
+    authEpoch++; viewEpoch++;
     st.chats = null; st.chat = null; st.view = 'list'; st.action = null; st.error = ''; st.busy = false;
     if (st.open) render();
     loadChats();

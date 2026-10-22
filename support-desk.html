@@ -223,6 +223,7 @@
     <section class="list" id="listPane">
       <div class="list-head">
         <h2 id="listTitle">Needs a reply</h2>
+        <p id="emailDeliveryWarning" hidden role="status" style="font-size:13px;margin:8px 0"></p>
         <input class="field" id="search" type="search" placeholder="Search name, email or message" autocomplete="off">
       </div>
       <div class="items" id="items"><div class="empty">Loading…</div></div>
@@ -251,11 +252,15 @@
   const when = ms => new Date(ms).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   const toast = t => { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 2600); };
 
+  let authEpoch = 0;
   async function api(body) {
-    const u = auth.currentUser;
+    const u = auth.currentUser, epoch = authEpoch;
     if (!u) throw new Error('Please sign in again.');
-    const r = await fetch('/api/me?route=support', { method: 'POST', headers: { Authorization: 'Bearer ' + await u.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const guard = () => { if (epoch !== authEpoch || auth.currentUser?.uid !== u.uid) throw Object.assign(new Error('Account changed. Please sign in again.'), { stale: true }); };
+    const token = await u.getIdToken(); guard();
+    const r = await fetch('/api/me?route=support', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await r.json().catch(() => ({}));
+    guard();
     if (!r.ok) { const e = new Error(data.error || 'Something went wrong.'); e.status = r.status; throw e; }
     return data;
   }
@@ -270,14 +275,19 @@
   $('gateOut').onclick = $('signOutBtn').onclick = () => signOut(auth).then(() => location.reload());
 
   onAuthStateChanged(auth, async user => {
+    const epoch = ++authEpoch;
+    Object.assign(S, { me: null, replies: [], chats: [], id: null, chat: null, extra: null, charges: null, team: [], seenWaiting: null });
+    $('view').replaceChildren(); $('items').replaceChildren(); $('folders').replaceChildren(); $('page').replaceChildren();
     $('desk').hidden = true; $('gate').hidden = false;
     $('gateForms').hidden = !!user; $('gateOut').hidden = !user;
     if (!user) { $('gateText').textContent = 'For the Knox support team. Sign in with the account Sion added to the team.'; return; }
     $('gateText').textContent = 'Checking your access…';
     try {
       const r = await api({ action: 'desk-me' });
+      if (epoch !== authEpoch || auth.currentUser?.uid !== user.uid) return;
       S.me = r.me; S.replies = r.replies || [];
     } catch (e) {
+      if (e.stale || epoch !== authEpoch) return;
       $('gateText').textContent = e.status === 403 ? `${user.email} isn't on the Knox support team yet. Ask Sion to add you.` : e.message;
       return;
     }
@@ -286,6 +296,7 @@
     syncAlertsBtn();
     renderFolders();
     await Promise.all([loadList(), loadTeam()]);
+    if (epoch !== authEpoch || auth.currentUser?.uid !== user.uid) return;
     const fromLink = (location.hash.match(/^#c-([\w-]+)/) || [])[1];
     if (fromLink) { S.folder = 'all'; renderFolders(); renderList(); openChat(fromLink); }
   });
@@ -324,7 +335,11 @@
 
   // ── List ──
   async function loadList() {
-    try { S.chats = (await api({ action: 'desk-list' })).chats || []; } catch (e) { $('items').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+    try {
+      const r = await api({ action: 'desk-list' }); S.chats = r.chats || [];
+      const w = $('emailDeliveryWarning'); w.hidden = !r.delivery?.pending;
+      w.textContent = r.delivery?.pending ? `${r.delivery.pending} email notification(s) queued. Delivery retries while Support is open; students can still read replies in the app.` : '';
+    } catch (e) { if (e.stale) return; $('items').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
     alertNew();
     renderFolders(); renderList();
   }

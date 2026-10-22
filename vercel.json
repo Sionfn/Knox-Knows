@@ -20,6 +20,7 @@
     { "source": "/api/discord-link", "destination": "/api/me?route=discord-link" }
   ],
   "functions": {
+    "api/me.js": { "maxDuration": 60 },
     "api/ask.js":                     { "maxDuration": 60 },
     "api/generate-flashcards.js":     { "maxDuration": 60 },
     "api/create-checkout-session.js": { "maxDuration": 30 },

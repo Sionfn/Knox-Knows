@@ -100,6 +100,7 @@
     }
     const pages = Math.min(doc.numPages, MAX_PAGES);
     const parts = [];
+    const scannedPages = [];
     let length = 0;
     for (let i = 1; i <= pages && length < textLimit(); i++) {
       const page = await doc.getPage(i);
@@ -114,11 +115,13 @@
       }
       lines.push(line);
       const text = lines.join('\n');
+      if (text.replace(/\s/g, '').length < SCANNED_BELOW) scannedPages.push(i);
       parts.push(`— Page ${i} —\n${text}`);
       length += text.length;
     }
     const realChars = parts.join('').replace(/— Page \d+ —|\s/g, '').length;
     if (realChars < SCANNED_BELOW) {
+      if (doc.numPages > 1) throw new Error(`This scanned PDF has ${doc.numPages} pages. Knox can read one scanned page at a time here. Upload a photo of the page you need, split it into one-page PDFs, or export a searchable PDF to include all the pages.`);
       // A scanned PDF is just pictures of pages: send page 1 as a photo.
       const page = await doc.getPage(1);
       const base = page.getViewport({ scale: 1 });
@@ -133,6 +136,7 @@
       const name = file.name.replace(/\.pdf$/i, '') + ' (page 1).jpg';
       return { kind: 'image', name: file.name, file: new File([blob], name, { type: 'image/jpeg' }) };
     }
+    if (scannedPages.length) throw new Error(`Knox couldn't read the text on PDF page${scannedPages.length === 1 ? '' : 's'} ${scannedPages.join(', ')}. Those pages may be scanned pictures. Upload photos of those pages, or export a searchable PDF, so no notes are left out.`);
     return finish(file.name, parts.join('\n\n'), pages, doc.numPages > MAX_PAGES);
   }
 
@@ -152,8 +156,26 @@
     let zip;
     try { zip = await JSZip.loadAsync(await file.arrayBuffer()); }
     catch { throw new Error("Knox couldn't open that PowerPoint. Try saving it again as .pptx or PDF."); }
-    const num = path => Number(path.match(/(\d+)\.xml$/)?.[1] || 0);
-    const slides = Object.keys(zip.files).filter(p => /^ppt\/slides\/slide\d+\.xml$/.test(p)).sort((a, b) => num(a) - num(b));
+    const xmlDoc = xml => {
+      const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      if (doc.getElementsByTagName('parsererror').length) throw new Error("Knox couldn't read this PowerPoint's slide list. Try exporting it as a PDF.");
+      return doc;
+    };
+    const nodes = (doc, name) => [...doc.getElementsByTagName('*')].filter(n => n.localName === name);
+    const resolvePath = (from, target) => {
+      if (!target || /^[a-z]+:/i.test(target)) return '';
+      return new URL(target, 'https://knox.invalid/' + from).pathname.slice(1);
+    };
+    const relationships = async path => {
+      if (!zip.file(path)) return [];
+      return nodes(xmlDoc(await zip.file(path).async('string')), 'Relationship').filter(r => r.getAttribute('TargetMode') !== 'External');
+    };
+    const presentation = zip.file('ppt/presentation.xml');
+    const rels = await relationships('ppt/_rels/presentation.xml.rels');
+    if (!presentation || !rels.length) throw new Error("Knox couldn't read this PowerPoint's slide order. Try saving it again or exporting it as a PDF.");
+    const slideTargets = new Map(rels.filter(r => /\/slide$/.test(r.getAttribute('Type') || '')).map(r => [r.getAttribute('Id'), resolvePath('ppt/presentation.xml', r.getAttribute('Target'))]));
+    const slides = nodes(xmlDoc(await presentation.async('string')), 'sldId').map(n => slideTargets.get(n.getAttribute('r:id') || n.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id')));
+    if (slides.some(p => !p || !zip.file(p))) throw new Error("This PowerPoint has a missing slide. Try saving it again or exporting it as a PDF.");
     if (!slides.length) throw new Error('That PowerPoint has no slides Knox can read.');
     const textOf = xml => {
       const doc = new DOMParser().parseFromString(xml, 'application/xml');
@@ -163,12 +185,15 @@
     };
     const parts = [];
     let length = 0;
-    for (const path of slides.slice(0, MAX_PAGES)) {
+    for (const [index, path] of slides.slice(0, MAX_PAGES).entries()) {
       if (length >= textLimit()) break;
       const text = textOf(await zip.file(path).async('string'));
-      const notesPath = `ppt/notesSlides/notesSlide${num(path)}.xml`;
+      const slash = path.lastIndexOf('/');
+      const slideRels = await relationships(path.slice(0, slash + 1) + '_rels/' + path.slice(slash + 1) + '.rels');
+      const notesRel = slideRels.find(r => /\/notesSlide$/.test(r.getAttribute('Type') || ''));
+      const notesPath = notesRel ? resolvePath(path, notesRel.getAttribute('Target')) : '';
       const notes = zip.file(notesPath) ? textOf(await zip.file(notesPath).async('string')).replace(/^\d+$/m, '').trim() : '';
-      const block = `— Slide ${num(path)} —\n${text}${notes ? '\nNotes: ' + notes : ''}`;
+      const block = `— Slide ${index + 1} —\n${text}${notes ? '\nNotes: ' + notes : ''}`;
       parts.push(block);
       length += block.length;
     }

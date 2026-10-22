@@ -15,7 +15,7 @@
 //   supportConfig/replies { list:[{title,text}] }
 import Stripe from "stripe";
 import { getAuth } from "firebase-admin/auth";
-import { accountFacts, sendEmail, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL, updateChat } from "./_support-shared.js";
+import { accountFacts, sendEmail, flushEmails, clip, esc, MAX_MESSAGES, SUPPORT_EMAIL, updateChat } from "./_support-shared.js";
 
 const APP_URL = "https://knoxknowsapp.com/app?open=messages";
 const DEFAULT_REPLIES = [
@@ -121,8 +121,9 @@ export default async function desk(req, res, { user, db, body }) {
 
   // ── Inbox ──
   if (action === "desk-list") {
+    const delivery = await flushEmails(db);
     const snap = await chats.orderBy("updatedAt", "desc").limit(300).get();
-    return res.status(200).json({ chats: snap.docs.map(d => deskSummary(d.id, d.data())) });
+    return res.status(200).json({ delivery, chats: snap.docs.map(d => deskSummary(d.id, d.data())) });
   }
 
   // Everything below works on one conversation.
@@ -163,7 +164,7 @@ export default async function desk(req, res, { user, db, body }) {
       ...(solve ? { solvedAt: now, solvedBy: me.name } : {}),
     }));
     if (c.email) {
-      await sendEmail({
+      await sendEmail({ db, studentUid: c.uid,
         to: c.email, replyTo: SUPPORT_EMAIL, from: "Knox Knows", subject: `${me.name} from Knox Knows replied to your message`,
         html: `<div style="font-family:Nunito,Arial,sans-serif;max-width:520px;margin:auto;color:#3C3C3C">
           <h2 style="color:#FF6B00;margin:0 0 12px">${esc(me.name)} from the Knox team replied 🦊</h2>
