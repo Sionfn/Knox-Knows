@@ -112,7 +112,10 @@ const words = t => [...new Set(String(t || "").replace(/^File:/, "").replace(/\.
 // named after the deck's topic isn't a match for one particular card.
 function pictureFor(card, pictures, used, common = new Set()) {
   const text = [card.front, card.back, card.imageTitle].join(" ").toLowerCase();
-  const cardWords = new Set(words(text).flatMap(w => [w, stem(w)]).filter(w => !common.has(w)));
+  // Only the card's own question and answer count as a match: a file that just
+  // shares the article's name ("Newton's reflecting telescope" on a third-law
+  // card) isn't about the card. The article's main picture is trusted anyway.
+  const cardWords = new Set(words([card.front, card.back].join(" ")).flatMap(w => [w, stem(w)]).filter(w => !common.has(w)));
   let pick = null, score = -Infinity;
   for (const p of pictures) {
     if (used.has(p.src)) continue;
@@ -184,7 +187,10 @@ async function addPictures(cards) {
       let { title, pictures = [] } = found.get(card.imageTitle) || {};
       let best = pictureFor(card, pictures, used, common);
       const other = retry.get(card);
-      if (other?.pictures?.length) {
+      // A search can return an unrelated article (a celebrity for "Newton's third
+      // law"): only use it if its title shares a real word with the card.
+      const cardText = new Set(words([card.front, card.back].join(" ")).flatMap(w => [w, stem(w)]));
+      if (other?.pictures?.length && words(other.title).some(w => cardText.has(w) || cardText.has(stem(w)))) {
         const alt = pictureFor(card, other.pictures, used, common);
         if (alt.score > best.score) { best = alt; title = other.title; }
       }
