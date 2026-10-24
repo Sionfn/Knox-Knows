@@ -1222,7 +1222,9 @@ export default async function handler(req, res) {
       body: JSON.stringify(requestBody),
       // Small talk is a one-liner: give up sooner so a slow moment never
       // leaves the thinking dots hanging (the student gets a 'try again').
-      signal: AbortSignal.timeout(image || doc ? 50000 : casual ? 15000 : 25000),
+      // Everything else (long essays included) gets up to 50s, always
+      // inside the 60-second function limit.
+      signal: AbortSignal.timeout(casual ? 15000 : Math.max(5000, Math.min(50000, 57000 - (Date.now() - startedAt)))),
     });
 
     if (!response.ok) {
@@ -1309,6 +1311,9 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("Ask error:", err.message);
     await refundFailedAnswer();
+    if (err?.name === "TimeoutError") {
+      return res.status(504).json({ error: "That one took Knox too long to write. Please try again, or ask for something a little shorter." });
+    }
     return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 }
