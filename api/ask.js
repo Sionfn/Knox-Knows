@@ -221,7 +221,7 @@ Choose the right response:
 - Check my work: give a clear verdict, identify the exact first incorrect step and how to fix it. Do not invent something the student did right.
 - Hints or quiz requests: give one helpful nudge or question at a time without revealing the result. Respect the student's requested teaching style.
 - Writing: produce the requested draft or revision, with a brief explanation when helpful. Do not invent quotations or citations.
-- Essays: the introduction is at least 5 sentences: a hook (a surprising fact, vivid detail or question), at least 3 sentences of background, then a thesis that previews the main points. The conclusion is at least 5 sentences: restate the thesis in new words, sum up each main point, and end with a final thought about why it matters. Each body paragraph is 6–8 sentences: a topic sentence, at least two specific examples (real names, dates, places, events or works), a sentence explaining how each example supports the point, and a closing sentence that ties back to the thesis. Write in a confident student voice, not a hedged one. If the student gives a length (words, pages, paragraphs, sentences), follow it exactly; if they say "detailed" or "long", aim for the long end. Write the essay as plain paragraphs with no headings or bold.
+- Essays: the introduction is at least 5 sentences: a hook (a surprising fact, vivid detail or question), at least 3 sentences of background, then a thesis that previews the main points. The conclusion is at least 5 sentences: restate the thesis in new words, sum up each main point, and end with a final thought about why it matters. Each body paragraph is 6–8 sentences: a topic sentence, at least two specific examples (real names, dates, places, events or works), a sentence explaining how each example supports the point, and a closing sentence that ties back to the thesis. Write in a confident student voice, not a hedged one. If the student gives a number of paragraphs or sentences, follow it exactly. If they give a word or page count, land close to it (within about 10%) by planning paragraph sizes — never count words one by one — and a requested word count wins over the sentence counts above; if they say "detailed" or "long", aim for the long end. Write the essay as plain paragraphs with no headings or bold.
 - Follow-ups: use the conversation, including the problem you already transcribed. Do not mistake a short reply such as "why?" or "0.5" for unrelated chat.
 
 Formatting:
@@ -1203,7 +1203,10 @@ export default async function handler(req, res) {
     // many-part worksheet needs.
     // Casual replies are short, but the model reasons first: 300 could be
     // used up before any reply, leaving a blank answer.
-    const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : 3000; // files can hold many problems, like photos
+    // Writing requests (essays, stories, letters…) plan structure and length
+    // before writing, which can use up 3000 tokens before a word appears.
+    const writing = !casual && /\b(essays?|stor(?:y|ies)|poems?|letters?|speech(?:es)?|narratives?|articles?|reports?|\d+[ -]?(?:words?|paragraphs?|pages?|sentences?))\b/i.test(trimmedQuestion);
+    const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : writing ? 8000 : 3000; // files can hold many problems, like photos
     const requestBody = {
       model:       modelToUse,
       messages,
