@@ -248,7 +248,9 @@ body.app-sidebar-collapsed .fc-beta { display:none; }
 .fc-format-btn:hover, .fc-format-btn:focus-visible { border-color:var(--orange); box-shadow:0 3px 0 var(--orange); outline:none; }
 
 /* Card pictures: on the answer side while studying, and in the editor. */
-.fc-card-img { max-width:100%; max-height:170px; object-fit:contain; border-radius:12px; background:#fff; margin-top:6px; }
+/* A fixed height holds the picture's space before it loads, so the card doesn't
+   open small and then grow (the card is as tall as its taller side). */
+.fc-card-img { width:auto; max-width:100%; height:170px; object-fit:contain; border-radius:12px; background:#fff; margin-top:6px; }
 .fc-img-credit { font-size:10.5px; font-weight:700; color:var(--text-light); max-width:90%; text-align:center; line-height:1.3; }
 
 /* Card editor: picture tile + Wikimedia picture picker */
