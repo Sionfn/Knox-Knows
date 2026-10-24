@@ -134,3 +134,12 @@ test('Learn teaching cards: key idea, video link and a graph line never show as 
   assert.match(html, /youtube\.com\/results\?search_query=slope%20intercept%20form%20khan%20academy/);
   assert.doesNotMatch(html, /Key idea:|Graph:|Video:/);
 });
+
+test('Single-asterisk titles become italics without touching math or bold', () => {
+  assert.equal(context.formatInline('In *The Great Gatsby*, the light glows.'), 'In <em>The Great Gatsby</em>, the light glows.');
+  assert.equal(context.formatInline('Shakespeare’s *Macbeth*.'), 'Shakespeare’s <em>Macbeth</em>.');
+  assert.equal(context.formatInline('7+5*2*3 = 37'), '7+5*2*3 = 37');
+  assert.equal(context.formatInline('2 * 3 * 4 = 24'), '2 * 3 * 4 = 24');
+  assert.equal(context.formatInline('x*y and a*b'), 'x*y and a*b');
+  assert.equal(context.formatInline('**Bold** and *italic*'), '<strong>Bold</strong> and <em>italic</em>');
+});

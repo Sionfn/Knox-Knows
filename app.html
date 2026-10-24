@@ -4898,7 +4898,9 @@ function escHtml(s) {
 function formatInline(text) {
   return String(text).split(/(`[^`\n]+`)/g).map((part, index) => index % 2
     ? '<code>' + escHtml(part.slice(1, -1)) + '</code>'
-    : escHtml(part).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')).join('');
+    : escHtml(part).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // *Title* → italics, only around words, so 5*2*3 and 2 * 3 stay math.
+      .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).join('');
 }
 
 // Give numbered steps the same visual hierarchy regardless of whether a
