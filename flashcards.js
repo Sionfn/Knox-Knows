@@ -462,7 +462,7 @@ function evenCards(d){
   }
   for(const f of card.querySelectorAll('.fc-face'))f.style.minHeight=s.evenHeight+'px';
 }
-addEventListener('resize',()=>{if(session&&!panel.hidden&&panel.querySelector('.fc-card'))evenCards(decks.find(d=>d.id===session.id));});
+window.addEventListener('resize',()=>{if(session&&!panel.hidden&&panel.querySelector('.fc-card'))evenCards(decks.find(d=>d.id===session.id));});
 // Flip in place so the card animates instead of being redrawn.
 function flip(){
   session.flipped=!session.flipped;
