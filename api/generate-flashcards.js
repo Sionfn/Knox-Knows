@@ -95,7 +95,7 @@ const WIKI_HEADERS = { "User-Agent": "KnoxKnows/1.0 (https://knoxknowsapp.com; s
 const WIKI_API = "https://en.wikipedia.org/w/api.php?action=query&format=json&redirects=1";
 const MAX_PICTURES = LIMITS.mega.deckCards; // every card, even a 40-card Mega deck
 // Wikipedia's interface art (logos, icons, flags, maps…), not pictures of the topic.
-const NOT_A_PICTURE = /logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
+const NOT_A_PICTURE = /logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|great[ _]seal|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
 const stripTags = s => String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 // Just the creator's name: drop uploader notes ("BruceBlaus. When using this image…"), labels and stray symbols.
 const cleanArtist = s => String(s || "").replace(/&amp;?/g, "&").replace(/&quot;?/g, "\"").replace(/&#0?39;?/g, "'").replace(/^\s*(.{3,}?)\s*\1\s*$/, "$1").replace(/^unknown( author)?$/i, "").replace(/\s+\.\s.*$|(?<=\p{L}{3})\.\s.*$/u, "").replace(/\b(when using|this image|derivative work|if you use|please credit|cited as)\b.*$/i, "").replace(/^(original|author|photo|image|by|user|w|en|commons)\s*:\s*/i, "").replace(/[^\p{L}\p{N}\s.,:'’&()\/-]/gu, "").replace(/[\s.,;:-]+$/, "").trim().slice(0, 60);
@@ -116,13 +116,20 @@ function pictureFor(card, pictures, used, common = new Set()) {
   // shares the article's name ("Newton's reflecting telescope" on a third-law
   // card) isn't about the card. The article's main picture is trusted anyway.
   const cardWords = new Set(words([card.front, card.back].join(" ")).flatMap(w => [w, stem(w)]).filter(w => !common.has(w)));
+  // A word from the article's own name counts half: every file in "Santiago" says
+  // Santiago, so a railway-museum photo naming it shouldn't beat the city's main picture.
+  const topic = new Set(words(card.imageTitle).flatMap(w => [w, stem(w)]));
   let pick = null, score = -Infinity;
   for (const p of pictures) {
     if (used.has(p.src)) continue;
     const name = words(p.name);
     const animal = name.join(" ").match(ANIMALS);
     if (animal && !text.includes(animal[1].replace(/s$/, ""))) continue;
-    const s = (p.main ? 1.5 : 0) + name.filter(w => cardWords.has(w) || cardWords.has(stem(w))).length;
+    // A long caption-like name ("Locomotora de vapor Kitson-Meyer, año 1909, del
+    // Museo Ferroviario de Santiago de Chile") is mostly about something else, so
+    // its matches count half; a short one ("Blausen 0608 LegBones") is all about them.
+    const hits = name.filter(w => cardWords.has(w) || cardWords.has(stem(w))).reduce((n, w) => n + (topic.has(w) || topic.has(stem(w)) ? 0.5 : 1), 0);
+    const s = (p.main ? 1.4 : 0) + (name.length > 6 ? hits / 2 : hits);
     if (s > score) { pick = p; score = s; }
   }
   return { pick, score: pick ? score : 0 };
