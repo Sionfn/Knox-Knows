@@ -255,7 +255,7 @@ test('An ended Learn session keeps going in the same chat: free for Knox Plus, 1
   const { db, store } = memoryDb(); const id = crypto.randomUUID();
   const handler = await load('api/ask.js', { db, fetch: askFetch() });
   store.set('users/u1', { plan: 'super' });
-  store.set(`users/u1/learnSessions/${id}`, { turns: 20, createdAt: Date.now() });
+  store.set(`users/u1/learnSessions/${id}`, { turns: 30, createdAt: Date.now() }); // Knox Plus lessons run 30 replies
   let res = response(); await handler(askRequest({ question: 'Why?', learnMode: true, learnSessionId: id }), res);
   assert.equal(res.code, 200, 'Knox Plus: no stop');
   assert.equal(store.get(`users/u1/learnSessions/${id}`).turns, 1, 'a fresh session');

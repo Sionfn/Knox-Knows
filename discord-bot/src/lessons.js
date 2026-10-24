@@ -3,9 +3,9 @@
 import { randomUUID } from 'node:crypto';
 import { loadJson, saveJson } from './store.js';
 
-export const MAX_REPLIES = 10; // free members
+export const MAX_REPLIES = 20; // free members (same Learn lengths as the website)
 // Paid members get the same lesson length as Learn mode on the website.
-export const REPLIES_BY_TIER = { free: MAX_REPLIES, plus: 20, mega: 50 };
+export const REPLIES_BY_TIER = { free: MAX_REPLIES, plus: 30, mega: 50 };
 const LESSON_HOURS = 2;
 
 export class Lessons {

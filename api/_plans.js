@@ -25,7 +25,7 @@ export const isPaidTier = tier => tier === "plus" || tier === "mega";
 // paid plans; same AI for everyone).
 export const LIMITS = {
   free: { deckCards: 10, deckPhotos: 5,  decksPerDay: 40,  docChars: 30000, askPer3h: 0,    learnTurns: 20 },
-  plus: { deckCards: 15, deckPhotos: 5,  decksPerDay: 40,  docChars: 30000, askPer3h: 500,  learnTurns: 20 },
+  plus: { deckCards: 15, deckPhotos: 5,  decksPerDay: 40,  docChars: 30000, askPer3h: 500,  learnTurns: 30 },
   mega: { deckCards: 40, deckPhotos: 10, decksPerDay: 100, docChars: 60000, askPer3h: 1000, learnTurns: 50 },
 };
 

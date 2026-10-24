@@ -333,7 +333,7 @@ test('Plus members see "Knox Plus" on lesson replies too', async () => {
   await bot.ask(asked);
   const submit = fake({ roles: ['plus'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
-  assert.match(submit.sent.at(-1).content, /-# Knox Plus · 19 replies left in this lesson/); // 20 replies, like Learn on the website
+  assert.match(submit.sent.at(-1).content, /-# Knox Plus · 29 replies left in this lesson/); // 30 replies, like Learn on the website
 });
 
 test('Mega Knox members get Mega on /ask and 50-reply lessons, like the website', async () => {
