@@ -917,12 +917,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
   let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn } = req.body;
-  // The bot always uses Learn mode. History is the lesson so far (its Reply
-  // button) and a photo goes through the same size and type checks as the
-  // website's.
+  // The bot uses Learn mode (/learn) unless it asks for Ask Knox (/ask sends
+  // learnMode: false). History is the lesson so far (its Reply button) and a
+  // photo goes through the same size and type checks as the website's.
   if (isBot) {
     if (learnSessionId != null) return res.status(400).json({ error: 'Invalid request.' });
-    learnMode = true;
+    learnMode = learnMode !== false;
   }
   if (typeof question !== 'string' || (image != null && typeof image !== 'string') ||
       !Array.isArray(history) || history.length > 40 ||

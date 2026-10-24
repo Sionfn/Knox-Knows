@@ -1,17 +1,18 @@
-// Sends a question to the Knox Knows API (the same one the website uses),
-// in Learn mode so Knox guides the student instead of handing over answers.
+// Sends a question to the Knox Knows API (the same one the website uses):
+// Learn mode (/learn) guides the student; Ask Knox (/ask, learnMode: false)
+// gives the full step-by-step answer, like the website's two modes.
 
 const TIMEOUT_MS = 60_000;
 
 export class KnoxError extends Error {}
 
-export async function askKnox({ apiUrl, botKey, question, history = [], image, imageType, discordUserId }) {
+export async function askKnox({ apiUrl, botKey, question, history = [], image, imageType, discordUserId, learnMode = true }) {
   let res;
   try {
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Knox-Bot-Key': botKey },
-      body: JSON.stringify({ question, learnMode: true, history, ...(image ? { image, imageType } : {}), discordUserId }),
+      body: JSON.stringify({ question, learnMode, history, ...(image ? { image, imageType } : {}), discordUserId }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch (err) {

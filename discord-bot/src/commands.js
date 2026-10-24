@@ -3,10 +3,20 @@ import { SlashCommandBuilder } from 'discord.js';
 export const commands = [
   new SlashCommandBuilder()
     .setName('ask')
-    .setDescription('Ask Knox for help with schoolwork (in #study-help)')
+    .setDescription('Ask Knox: a full step-by-step answer (in #study-help)')
     .addStringOption(option => option
       .setName('question')
       .setDescription('What are you stuck on?')
+      .setMaxLength(1500))
+    .addAttachmentOption(option => option
+      .setName('photo')
+      .setDescription('A photo of your homework (JPG, PNG, GIF or WebP, under 3 MB)')),
+  new SlashCommandBuilder()
+    .setName('learn')
+    .setDescription('Learn mode: Knox teaches you step by step with hints (in #study-help)')
+    .addStringOption(option => option
+      .setName('question')
+      .setDescription('What do you want to learn?')
       .setMaxLength(1500))
     .addAttachmentOption(option => option
       .setName('photo')

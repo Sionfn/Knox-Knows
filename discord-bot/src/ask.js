@@ -12,9 +12,18 @@ export const noPings = { parse: [] };
 
 const quote = text => '> ' + text.slice(0, 300).replace(/\n/g, '\n> ') + (text.length > 300 ? '…' : '');
 
-const replyButton = lessonId => new ActionRowBuilder().addComponents(
+// Learn lessons: Reply / End lesson. Ask Knox answers: a follow-up, "Teach me this"
+// (the same question as a Learn lesson) and Done.
+const replyButton = (lessonId, mode = 'learn') => new ActionRowBuilder().addComponents(...(mode === 'answer' ? [
+  new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Ask a follow-up').setEmoji('💬').setStyle(ButtonStyle.Primary),
+  new ButtonBuilder().setCustomId(`teach:${lessonId}`).setLabel('Teach me this').setEmoji('🎓').setStyle(ButtonStyle.Secondary),
+  new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('Done').setEmoji('✅').setStyle(ButtonStyle.Secondary),
+] : [
   new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Reply to Knox').setEmoji('💬').setStyle(ButtonStyle.Primary),
-  new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('End lesson').setEmoji('🏁').setStyle(ButtonStyle.Secondary));
+  new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('End lesson').setEmoji('🏁').setStyle(ButtonStyle.Secondary),
+]));
+// Ask Knox ends with "Answer: …" (the website's answer box); in Discord it's a ✅ line.
+const formatAnswer = text => String(text).replace(/^\s*Answer:\s*(.+)$/gim, (_, a) => `> ✅ **Answer:** ${a.replace(/^\*\*(.*)\*\*$/, '$1').trim()}`);
 // Tap-to-answer options from a Learn reply's "Choices:" line (like the website's buttons).
 const choiceButtons = (lessonId, choices) => new ActionRowBuilder().addComponents(choices.map((c, i) =>
   new ButtonBuilder().setCustomId(`choice:${lessonId}:${i}`).setLabel(c.replace(/\*\*|`/g, '').slice(0, 80)).setStyle(ButtonStyle.Secondary)));
@@ -50,14 +59,14 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
   // Returns the answer, or null after telling the student what went wrong.
   // photo: the student's photo to send to Knox. showPhoto posts it with the
   // answer (on the first answer, not on every reply).
-  async function answer(interaction, { question, history, photo, showPhoto = true, header, footer, lessonIdFor, onFail }) {
+  async function answer(interaction, { question, history, photo, showPhoto = true, header, footer, lessonIdFor, onFail, mode = 'learn' }) {
     let text, photoBytes;
     try {
       if (photo) {
         // On a reply, carry on without the photo if its link has expired.
         photoBytes = showPhoto ? await downloadPhoto(photo.url) : await downloadPhoto(photo.url).catch(() => undefined);
       }
-      text = await askKnox({ apiUrl: config.knoxApiUrl, botKey: config.knoxBotKey, question, history, image: photoBytes?.toString('base64'), imageType: photo?.contentType, discordUserId: interaction.user.id });
+      text = await askKnox({ apiUrl: config.knoxApiUrl, botKey: config.knoxBotKey, question, history, image: photoBytes?.toString('base64'), imageType: photo?.contentType, discordUserId: interaction.user.id, learnMode: mode === 'learn' });
     } catch (err) {
       onFail();
       if (!(err instanceof KnoxError)) console.error('Knox request failed:', err);
@@ -67,10 +76,10 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     }
     const lessonId = lessonIdFor(text);
     // Learn marker lines become Discord formatting; choices become buttons.
-    const shown = formatLearn(text);
+    const shown = mode === 'learn' ? formatLearn(text) : { text: formatAnswer(text), choices: [] };
     const options = shown.choices.length && !lessonId ? `\n\n**Options:** ${shown.choices.join(' · ')}` : '';
     const parts = splitMessage(`${header}\n\n${shown.text}${options}\n\n${footer(lessonId)}`);
-    const button = lessonId ? { components: [...(shown.choices.length ? [choiceButtons(lessonId, shown.choices)] : []), replyButton(lessonId)] } : {};
+    const button = lessonId ? { components: [...(shown.choices.length ? [choiceButtons(lessonId, shown.choices)] : []), replyButton(lessonId, mode)] } : {};
     // Show the student's photo with the answer (Discord's own link to it expires).
     const files = photoBytes && showPhoto ? { files: [{ attachment: photoBytes, name: photo.name || 'homework.png' }] } : {};
     await interaction.editReply({ content: parts[0], allowedMentions: noPings, ...files, ...(parts.length === 1 ? button : {}) });
@@ -80,8 +89,10 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     return text;
   }
 
-  // ── /ask ──
-  async function ask(interaction) {
+  // ── /ask (Ask Knox) and /learn (Learn mode) ──
+  const ask = interaction => start(interaction, 'answer');
+  const learn = interaction => start(interaction, 'learn');
+  async function start(interaction, mode) {
     // Only in #study-help (or a thread inside it).
     const inStudyHelp = interaction.channelId === config.studyChannelId || interaction.channel?.parentId === config.studyChannelId;
     if (!inStudyHelp) return privately(interaction, `Ask me in <#${config.studyChannelId}> 📚`);
@@ -107,7 +118,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     // Plus members are unlimited anyway, so only free members hear that replies are free.
     const left = slot.remaining === null
       ? `${PLAN_NAME[tier] || 'Knox Plus'} · unlimited questions`
-      : `${slot.remaining} of ${config.perUserLimit} questions left today · Replies to this lesson are free`;
+      : `${slot.remaining} of ${config.perUserLimit} questions left today · ${mode === 'learn' ? 'Replies to this lesson are free' : 'Follow-ups use a question'}`;
     await answer(interaction, {
       question, history: [], photo: photo && { url: photo.url, name: photo.name, contentType: photoType },
       header: question ? quote(question) : '> 📷 Photo question',
@@ -115,8 +126,8 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       // The lesson keeps the photo's link so every reply can show it to Knox again
       // (a worksheet has many problems; Knox needs to keep reading it).
       lessonIdFor: text => lessons.start(userId, photo ? [question, '📷 Photo'].filter(Boolean).join('\n') : question, text,
-        photo && { url: photo.url, contentType: photoType }, REPLIES_BY_TIER[tier] || MAX_REPLIES),
-      onFail: () => limits.refund(userId),
+        photo && { url: photo.url, contentType: photoType }, REPLIES_BY_TIER[tier] || MAX_REPLIES, mode),
+      onFail: () => limits.refund(userId), mode,
     });
   }
 
@@ -128,10 +139,10 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     if (problem) return privately(interaction, problem);
 
     const input = new TextInputBuilder()
-      .setCustomId('reply').setLabel('Your answer or question').setStyle(TextInputStyle.Paragraph)
+      .setCustomId('reply').setLabel(lesson.mode === 'answer' ? 'Your follow-up question' : 'Your answer or question').setStyle(TextInputStyle.Paragraph)
       .setMaxLength(1500).setRequired(true);
     await interaction.showModal(new ModalBuilder()
-      .setCustomId(`answer:${lessonId}`).setTitle('Reply to Knox')
+      .setCustomId(`answer:${lessonId}`).setTitle(lesson.mode === 'answer' ? 'Ask Knox a follow-up' : 'Reply to Knox')
       .addComponents(new ActionRowBuilder().addComponents(input)));
   }
 
@@ -139,6 +150,26 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
   async function replySubmitted(interaction) {
     const lessonId = interaction.customId.slice('answer:'.length);
     return continueLesson(interaction, lessonId, () => interaction.fields.getTextInputValue('reply').trim());
+  }
+
+  // ── "Teach me this" on an Ask Knox answer: the same question as a Learn lesson ──
+  async function teachClicked(interaction) {
+    const lessonId = interaction.customId.slice('teach:'.length);
+    const lesson = lessons.get(lessonId);
+    if (!lesson) return privately(interaction, 'This answer has expired (they last 2 hours). Use /learn to start a lesson.');
+    if (lesson.ownerId !== interaction.user.id) return privately(interaction, 'Only the student who asked can start this lesson. Use /learn to start your own!');
+    if (!limits.reserveGlobal()) return privately(interaction, 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.');
+    const tier = await memberTier(interaction);
+    const question = lesson.history[0].content;
+    await interaction.deferReply();
+    // Already paid for with the /ask question, so the lesson itself is free.
+    await answer(interaction, {
+      question, history: [], photo: lesson.photo, showPhoto: false,
+      header: `<@${interaction.user.id}> 🎓 **Teach me this**\n${quote(question)}`,
+      footer: () => `-# ${PLAN_NAME[tier] || 'Learn lesson'} · Replies to this lesson are free`,
+      lessonIdFor: text => lessons.start(interaction.user.id, question, text, lesson.photo, REPLIES_BY_TIER[tier] || MAX_REPLIES, 'learn'),
+      onFail: () => limits.refundGlobal(), mode: 'learn',
+    });
   }
 
   // ── A tap-to-answer button: send that choice as the reply ──
@@ -156,8 +187,14 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     const problem = lessonProblem(lesson, interaction.user.id);
     if (problem) return privately(interaction, problem);
     if (lessons.busy.has(lessonId)) return privately(interaction, 'Knox is still answering your last reply. One sec!');
-    if (!limits.reserveGlobal()) {
-      return privately(interaction, 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.');
+    const mode = lesson.mode || 'learn', userId = interaction.user.id;
+    const tier = await memberTier(interaction);
+    // An Ask Knox follow-up is a new question (like on the website); Learn replies are free.
+    const slot = mode === 'answer' ? limits.reserve(userId, tier !== 'free') : { ok: limits.reserveGlobal(), reason: 'global' };
+    if (!slot.ok) {
+      return privately(interaction, slot.reason === 'global'
+        ? 'Knox has answered all the questions it can for today. Try again tomorrow, or use https://knoxknowsapp.com.'
+        : `You've used your ${config.perUserLimit} questions for today. They reset at midnight UTC. Knox Plus members get unlimited questions.`);
     }
 
     lessons.busy.add(lessonId);
@@ -165,16 +202,18 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       await interaction.deferReply();
       const reply = readReply();
       const repliesLeft = (lesson.maxReplies || MAX_REPLIES) - lesson.replies - 1;
-      // Replies never use a daily question; Plus and Mega members just see their plan.
-      const label = PLAN_NAME[await memberTier(interaction)] || "Lesson reply · doesn't use a question";
+      // Learn replies never use a daily question; Plus and Mega members just see their plan.
+      const label = mode === 'answer'
+        ? (slot.remaining == null ? `${PLAN_NAME[tier] || 'Knox Plus'} · unlimited questions` : `${slot.remaining} of ${config.perUserLimit} questions left today`)
+        : PLAN_NAME[tier] || "Lesson reply · doesn't use a question";
       await answer(interaction, {
         question: reply, history: [...lesson.history], photo: lesson.photo, showPhoto: false,
         header: `<@${interaction.user.id}>\n${quote(reply)}`,
         footer: () => repliesLeft > 0
-          ? `-# ${label} · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`
-          : '-# That was the last reply in this lesson. Use /ask to start a new one.',
+          ? (mode === 'answer' ? `-# ${label}` : `-# ${label} · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`)
+          : '-# That was the last reply here. Use /ask or /learn to start a new one.',
         lessonIdFor: text => { lessons.addReply(lessonId, reply, text); return repliesLeft > 0 ? lessonId : null; },
-        onFail: () => limits.refundGlobal(),
+        onFail: () => mode === 'answer' ? limits.refund(userId) : limits.refundGlobal(), mode,
       });
     } finally {
       lessons.busy.delete(lessonId);
@@ -231,10 +270,10 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     await interaction.reply({
       content: [
         '**How to use Knox here** 🦊',
-        `• \`/ask\` in <#${config.studyChannelId}>: ask about any schoolwork. Knox guides you with hints so you learn it, instead of just giving answers.`,
-        '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` (with or without a question).',
-        '• **💬 Reply to Knox**: answer Knox\'s question to keep the lesson going. Replies are free. **🏁 End lesson** when you\'re done.',
-        `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC) and ${MAX_REPLIES} replies per lesson. Knox Plus: unlimited questions, ${REPLIES_BY_TIER.plus} replies per lesson. Mega Knox: unlimited questions, ${REPLIES_BY_TIER.mega} replies per lesson.`,
+        `• \`/ask\` in <#${config.studyChannelId}>: **Ask Knox**. A full step-by-step answer, with the answer at the end. **💬 Ask a follow-up** if something's unclear, or **🎓 Teach me this** to learn it as a lesson.`,
+        `• \`/learn\` in <#${config.studyChannelId}>: **Learn mode**. Knox teaches you step by step with hints and questions, so you can do it yourself. **💬 Reply to Knox** (or tap an answer button) to keep going; replies are free. **🏁 End lesson** when you're done.`,
+        '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` or `/learn` (with or without a question).',
+        `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC; an Ask Knox follow-up is a question) and ${MAX_REPLIES} replies per Learn lesson. Knox Plus: unlimited questions, ${REPLIES_BY_TIER.plus} replies per lesson. Mega Knox: unlimited questions, ${REPLIES_BY_TIER.mega} replies per lesson.`,
         '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
         '',
         'Knox won\'t help during a test or exam, but it\'ll gladly help you study for the next one. More at https://knoxknowsapp.com',
@@ -247,25 +286,25 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
   async function endLesson(interaction) {
     const lessonId = interaction.customId.slice('end:'.length);
     const lesson = lessons.get(lessonId);
-    if (!lesson) return privately(interaction, 'This lesson has already ended. Use /ask to start a new one.');
+    if (!lesson) return privately(interaction, 'This has already ended. Use /ask or /learn to start a new one.');
     if (lesson.ownerId !== interaction.user.id) return privately(interaction, 'Only the student who asked can end this lesson.');
     if (lessons.busy.has(lessonId)) return privately(interaction, 'Knox is still answering your last reply. One sec!');
     lessons.end(lessonId);
     await interaction.update({
-      content: `${interaction.message.content}\n-# 🏁 Lesson ended. Nice work! Use /ask to start a new one.`,
+      content: `${interaction.message.content}\n-# ${lesson.mode === 'answer' ? '✅ Done.' : '🏁 Lesson ended. Nice work!'} Use /ask or /learn to start a new one.`,
       components: [], allowedMentions: noPings,
     });
   }
 
-  return { ask, replyButtonClicked, replySubmitted, choiceClicked, endLesson, link, checkPlus, help };
+  return { ask, learn, replyButtonClicked, replySubmitted, choiceClicked, teachClicked, endLesson, link, checkPlus, help };
 }
 
 // Why a student can't reply to this lesson, or null if they can.
 function lessonProblem(lesson, userId) {
-  if (!lesson) return 'This lesson has ended (they last 2 hours). Use /ask to start a new one.';
-  if (lesson.ownerId !== userId) return 'Only the student who asked can reply to this lesson. Use /ask to start your own!';
+  if (!lesson) return 'This has ended (lessons and answers last 2 hours). Use /ask or /learn to start a new one.';
+  if (lesson.ownerId !== userId) return 'Only the student who asked can reply here. Use /ask or /learn to start your own!';
   const max = lesson.maxReplies || MAX_REPLIES;
-  if (lesson.replies >= max) return `This lesson has used all ${max} replies. Use /ask to start a new one.`;
+  if (lesson.replies >= max) return `This has used all ${max} replies. Use /ask or /learn to start a new one.`;
   return null;
 }
 

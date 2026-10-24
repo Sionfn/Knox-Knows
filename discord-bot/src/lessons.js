@@ -17,11 +17,12 @@ export class Lessons {
   }
 
   // photo: { url, contentType } for a photo question, so replies can show it to Knox again.
-  start(ownerId, question, answer, photo = null, maxReplies = MAX_REPLIES) {
+  // mode: 'learn' (/learn, a guided lesson) or 'answer' (/ask, Ask Knox with follow-ups).
+  start(ownerId, question, answer, photo = null, maxReplies = MAX_REPLIES, mode = 'learn') {
     this.prune();
     const id = randomUUID();
     this.lessons[id] = {
-      ownerId, startedAt: Date.now(), replies: 0, photo, maxReplies,
+      ownerId, startedAt: Date.now(), replies: 0, photo, maxReplies, mode,
       history: [{ role: 'user', content: question }, { role: 'assistant', content: answer }],
     };
     saveJson(this.file, this.lessons);

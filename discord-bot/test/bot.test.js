@@ -76,7 +76,7 @@ const buttonId = message => message.components?.[0]?.toJSON().components[0].cust
 test('/ask outside #study-help gets a private pointer and costs nothing', async () => {
   const bot = setup(() => assert.fail('must not call Knox'));
   const i = fake({ channelId: 'general' });
-  await bot.ask(i);
+  await bot.learn(i);
   assert.equal(i.sent[0].type, 'reply');
   assert.ok(i.sent[0].flags);
   assert.match(i.sent[0].content, /<#study>/);
@@ -87,7 +87,7 @@ test('/ask answers publicly, shows questions left, never pings, and offers a Rep
   let sentTo;
   const bot = setup(async args => { sentTo = args; return 'What two numbers multiply to 6 and add to 5?'; });
   const i = fake({ parentId: 'study', question: '@everyone factor x^2+5x+6' });
-  await bot.ask(i);
+  await bot.learn(i);
   assert.equal(sentTo.question, '@everyone factor x^2+5x+6');
   assert.deepEqual(i.sent.map(m => m.type), ['defer', 'edit']);
   assert.match(i.sent[1].content, /multiply to 6/);
@@ -98,20 +98,20 @@ test('/ask answers publicly, shows questions left, never pings, and offers a Rep
 
 test('/ask stops at the daily limit, but Plus members keep going', async () => {
   const bot = setup(async () => 'Hint.');
-  for (let n = 0; n < 2; n++) await bot.ask(fake());
+  for (let n = 0; n < 2; n++) await bot.learn(fake());
   const blocked = fake();
-  await bot.ask(blocked);
+  await bot.learn(blocked);
   assert.equal(blocked.sent[0].type, 'reply');
   assert.match(blocked.sent[0].content, /used your 2 questions/);
   const plus = fake({ roles: ['plus'] });
-  await bot.ask(plus);
+  await bot.learn(plus);
   assert.match(plus.sent.at(-1).content, /-# Knox Plus · unlimited questions$/);
 });
 
 test('/ask explains errors politely and refunds the question', async () => {
   const bot = setup(async () => { throw new KnoxError('Knox took too long to answer. Please try again in a minute.'); });
   const i = fake();
-  await bot.ask(i);
+  await bot.learn(i);
   assert.match(i.sent.at(-1).content, /took too long.*didn't count/);
   assert.equal(bot.limits.reserve('amy', false).remaining, 1);
 });
@@ -120,7 +120,7 @@ test('Reply continues the lesson with its history and does not use a question', 
   const calls = [];
   const bot = setup(async args => { calls.push(args); return calls.length === 1 ? 'What could you compare?' : 'Yes! Rise over run.'; }, { perUserLimit: 1 });
   const asked = fake({ question: 'How do I find slope?' });
-  await bot.ask(asked);
+  await bot.learn(asked);
   const id = buttonId(asked.sent.at(-1));
 
   const click = fake({ customId: id });
@@ -143,7 +143,7 @@ test('Reply continues the lesson with its history and does not use a question', 
 test('Only the asker can reply, and lessons stop after the reply limit', async () => {
   const bot = setup(async () => 'Hint.', { globalCap: 50 });
   const asked = fake();
-  await bot.ask(asked);
+  await bot.learn(asked);
   const id = buttonId(asked.sent.at(-1));
 
   const stranger = fake({ customId: id, userId: 'ben' });
@@ -155,7 +155,7 @@ test('Only the asker can reply, and lessons stop after the reply limit', async (
     last = fake({ customId: id.replace('reply:', 'answer:'), reply: 'idk' });
     await bot.replySubmitted(last);
   }
-  assert.match(last.sent.at(-1).content, /last reply in this lesson/);
+  assert.match(last.sent.at(-1).content, /last reply here/);
   assert.equal(buttonId(last.sent.at(-1)), undefined);
   const tooMany = fake({ customId: id });
   await bot.replyButtonClicked(tooMany);
@@ -165,7 +165,7 @@ test('Only the asker can reply, and lessons stop after the reply limit', async (
 test('Replies count toward the global cost cap', async () => {
   const bot = setup(async () => 'Hint.', { globalCap: 1 });
   const asked = fake();
-  await bot.ask(asked);
+  await bot.learn(asked);
   const submit = fake({ customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
   assert.match(submit.sent[0].content, /all the questions it can for today/);
@@ -288,7 +288,7 @@ test('/ask: a linked subscriber is unlimited and gets the role; an ended bot-giv
 
   const member = fakeMember('amy');
   const first = { ...fake(), member };
-  await handlers.ask(first);
+  await handlers.learn(first);
   assert.match(first.sent.at(-1).content, /unlimited/);
   await new Promise(r => setImmediate(r));
   assert.ok(member.roleSet.has('plus'));
@@ -296,7 +296,7 @@ test('/ask: a linked subscriber is unlimited and gets the role; an ended bot-giv
   statuses.amy = { linked: true, plus: false };
   plus.cache.clear();
   const second = { ...fake(), member };
-  await handlers.ask(second);
+  await handlers.learn(second);
   // Back to the free limit (today's question already used) and the role is gone.
   assert.match(second.sent.at(-1).content, /used your 1 questions/);
   await new Promise(r => setImmediate(r));
@@ -330,7 +330,7 @@ test('Ended lessons are deleted from disk', async () => {
 test('Plus members see "Knox Plus" on lesson replies too', async () => {
   const bot = setup(async () => 'Hint.');
   const asked = fake({ roles: ['plus'] });
-  await bot.ask(asked);
+  await bot.learn(asked);
   const submit = fake({ roles: ['plus'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
   assert.match(submit.sent.at(-1).content, /-# Knox Plus · 29 replies left in this lesson/); // 30 replies, like Learn on the website
@@ -339,7 +339,7 @@ test('Plus members see "Knox Plus" on lesson replies too', async () => {
 test('Mega Knox members get Mega on /ask and 50-reply lessons, like the website', async () => {
   const bot = setup(async () => 'Hint.');
   const asked = fake({ roles: ['mega'] });
-  await bot.ask(asked);
+  await bot.learn(asked);
   assert.match(asked.sent.at(-1).content, /-# Mega Knox · unlimited questions$/);
   const submit = fake({ roles: ['mega'], customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: 'ok' });
   await bot.replySubmitted(submit);
@@ -357,7 +357,7 @@ test('/ask with a photo sends it to Knox, shows it with the answer, and costs on
     downloadPhoto: async url => { assert.equal(url, 'https://cdn.discordapp.com/hw.png'); return Buffer.from('png-bytes'); },
   });
   const i = fake({ question: null, photo: { url: 'https://cdn.discordapp.com/hw.png', name: 'hw.png', contentType: 'image/png', size: 1000 } });
-  await handlers.ask(i);
+  await handlers.learn(i);
   assert.equal(sentTo.image, Buffer.from('png-bytes').toString('base64'));
   assert.equal(sentTo.imageType, 'image/png');
   assert.equal(sentTo.question, '');
@@ -378,7 +378,7 @@ test('/ask checks photos before using a question', async () => {
     [{ url: 'x', contentType: 'image/png', size: 5_000_000 }, /under 3 MB/],
   ]) {
     const i = fake({ question: null, photo });
-    await bot.ask(i);
+    await bot.learn(i);
     assert.match(i.sent[0].content, message);
   }
   assert.equal(bot.limits.reserve('amy', false).remaining, 1);
@@ -392,7 +392,7 @@ test('A photo that cannot be downloaded is refunded', async () => {
     downloadPhoto: async () => { throw new KnoxError("I couldn't open your photo. Please try attaching it again."); },
   });
   const i = fake({ photo: { url: 'x', contentType: 'image/jpeg', size: 10 } });
-  await handlers.ask(i);
+  await handlers.learn(i);
   assert.match(i.sent.at(-1).content, /couldn't open your photo.*didn't count/);
   assert.equal(limits.reserve('amy', false).remaining, 1);
 });
@@ -424,7 +424,7 @@ test('Replies in a photo lesson send the photo to Knox again, without reposting 
     downloadPhoto: async () => { downloads++; return Buffer.from('png-bytes'); },
   });
   const asked = fake({ question: null, photo: { url: 'https://cdn.discordapp.com/hw.png', name: 'hw.png', contentType: 'image/png', size: 1000 } });
-  await handlers.ask(asked);
+  await handlers.learn(asked);
   const submit = fake({ customId: buttonId(asked.sent.at(-1)).replace('reply:', 'answer:'), reply: '8' });
   await handlers.replySubmitted(submit);
   assert.equal(calls[1].question, '8');
@@ -449,7 +449,7 @@ test('Replies in a photo lesson send the photo to Knox again, without reposting 
 test('End lesson: only the asker can end it; it removes the buttons and closes the lesson', async () => {
   const bot = setup(async () => 'Hint.');
   const asked = fake();
-  await bot.ask(asked);
+  await bot.learn(asked);
   const posted = asked.sent.at(-1);
   const ids = posted.components[0].toJSON().components.map(c => c.custom_id);
   const lessonId = ids[0].slice('reply:'.length);
@@ -474,7 +474,7 @@ test('End lesson: only the asker can end it; it removes the buttons and closes t
 
   const replyAfter = fake({ customId: `reply:${lessonId}` });
   await bot.replyButtonClicked(replyAfter);
-  assert.match(replyAfter.sent[0].content, /lesson has ended/);
+  assert.match(replyAfter.sent[0].content, /has ended/);
   const again = clickEnd('amy');
   await bot.endLesson(again);
   assert.match(again.sent[0].content, /already ended/);
@@ -509,7 +509,7 @@ test('Learn marker lines become Discord formatting, and Choices become tap-to-an
   const calls = [];
   const bot = setup(async args => { calls.push(args); return calls.length === 1 ? 'What do you get first?\nChoices: 3x = 15 | 3x = 25' : 'Yes!'; });
   const asked = fake({ question: 'Solve 3x + 5 = 20' });
-  await bot.ask(asked);
+  await bot.learn(asked);
   const posted = asked.sent.at(-1);
   assert.doesNotMatch(posted.content, /Choices:/);
   const rows = posted.components.map(r => r.toJSON().components.map(c => c.custom_id));
@@ -520,4 +520,40 @@ test('Learn marker lines become Discord formatting, and Choices become tap-to-an
   await bot.choiceClicked(tap);
   assert.equal(calls[1].question, '3x = 25');
   assert.match(tap.sent.at(-1).content, /3x = 25[\s\S]*Yes!/);
+});
+
+test('/ask is Ask Knox: a full answer with the Answer line, follow-ups use a question, Teach me this starts a free Learn lesson', async () => {
+  const calls = [];
+  const replies = ['Subtract 5 from both sides to isolate the x-term: 3x = 15.\nDivide both sides by 3 to get x alone: x = 5.\n\nAnswer: **x = 5**', 'Because 3 × 5 = 15.', 'What is the first step?\nChoices: subtract 5 | divide by 3'];
+  const bot = setup(async args => { calls.push(args); return replies[calls.length - 1]; }, { perUserLimit: 2 });
+  const asked = fake({ question: 'Solve 3x + 5 = 20' });
+  await bot.ask(asked);
+  assert.equal(calls[0].learnMode, false, 'Ask Knox, not Learn');
+  const posted = asked.sent.at(-1);
+  assert.match(posted.content, /> ✅ \*\*Answer:\*\* x = 5/);
+  assert.match(posted.content, /1 of 2 questions left today · Follow-ups use a question/);
+  const ids = posted.components[0].toJSON().components.map(c => c.custom_id);
+  assert.match(ids[0], /^reply:/); assert.match(ids[1], /^teach:/); assert.match(ids[2], /^end:/);
+
+  // A follow-up is a new question (like the website) and keeps the conversation.
+  const click = fake({ customId: ids[0] });
+  await bot.replyButtonClicked(click);
+  assert.equal(click.sent[0].modal.title, 'Ask Knox a follow-up');
+  const followUp = fake({ customId: 'answer:' + ids[0].slice(6), reply: 'why 5?' });
+  await bot.replySubmitted(followUp);
+  assert.equal(calls[1].learnMode, false);
+  assert.deepEqual(calls[1].history.map(m => m.role), ['user', 'assistant']);
+  assert.match(followUp.sent.at(-1).content, /0 of 2 questions left today/);
+  assert.equal(bot.limits.reserve('amy', false).ok, false, 'both daily questions used');
+
+  // Teach me this: the same question as a Learn lesson, free (it was already paid for).
+  const teach = fake({ customId: ids[1] });
+  await bot.teachClicked(teach);
+  assert.equal(calls[2].learnMode, true);
+  assert.equal(calls[2].question, 'Solve 3x + 5 = 20');
+  assert.match(teach.sent.at(-1).content, /Teach me this[\s\S]*Replies to this lesson are free/);
+  assert.match(teach.sent.at(-1).components[0].toJSON().components[0].custom_id, /^choice:/);
+  const stranger = fake({ customId: ids[1], userId: 'bob' });
+  await bot.teachClicked(stranger);
+  assert.match(stranger.sent[0].content, /Only the student who asked/);
 });

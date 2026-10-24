@@ -1653,7 +1653,7 @@ test('Two plans: switching to a Mega Knox price makes the account Mega; a comped
   assert.equal(store.get('users/u1').plan, 'max', 'the Mega comp stays');
 });
 
-test('Discord bot: a valid key gets a Learn-mode answer without a Knox account', async () => {
+test('Discord bot: a valid key gets a Learn answer (/learn) or an Ask Knox answer (/ask) without a Knox account', async () => {
   const { db, store } = memoryDb();
   const botKey = 'k'.repeat(40);
   let systemPrompt;
@@ -1663,7 +1663,7 @@ test('Discord bot: a valid key gets a Learn-mode answer without a Knox account',
     return { ok: true, json: async () => ({ choices: [{ message: { content: body.model === 'gpt-4.1-mini' ? 'SUBSTANTIVE' : 'What multiplies to 6?' }, finish_reason: 'stop' }] }) };
   };
   const handler = await load('api/ask.js', { db, fetch, env: { KNOX_BOT_KEY: botKey }, token: null });
-  const bot = (headers, body = { question: 'How do I factor x^2+5x+6?', learnMode: false }) => {
+  const bot = (headers, body = { question: 'How do I factor x^2+5x+6?' }) => {
     const res = response();
     return handler({ method: 'POST', headers: { 'x-forwarded-for': '192.0.2.9', ...headers }, body }, res).then(() => res);
   };
@@ -1671,7 +1671,10 @@ test('Discord bot: a valid key gets a Learn-mode answer without a Knox account',
   const ok = await bot({ 'x-knox-bot-key': botKey });
   assert.equal(ok.code, 200);
   assert.equal(ok.body.answer, 'What multiplies to 6?');
-  assert.match(systemPrompt, /Learn mode/); // forced on, even though the body said false
+  assert.match(systemPrompt, /Learn mode \(this overrides/); // /learn (and older bots that send nothing) get Learn
+  const askKnox = await bot({ 'x-knox-bot-key': botKey }, { question: 'How do I factor x^2+5x+6?', learnMode: false });
+  assert.equal(askKnox.code, 200);
+  assert.doesNotMatch(systemPrompt, /Learn mode \(this overrides/, '/ask gets Ask Knox');
   assert.ok(![...store.keys()].some(key => key.startsWith('users/') || key.startsWith('guestUsage/')));
 
   assert.equal((await bot({ 'x-knox-bot-key': 'wrong' })).code, 401);
