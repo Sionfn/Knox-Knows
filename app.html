@@ -1417,7 +1417,6 @@
     .msg-knox-bubble {
       background: var(--surface);
       border: 2px solid var(--border);
-      border-left: 4px solid var(--orange);
       border-radius: 6px 20px 20px 20px;
       padding: 0;
       font-size: 15px; font-weight: 500;
@@ -1494,7 +1493,6 @@
       .learn-graph .lg-curves path { stroke-width: 4.5; }
     }
     /* Learn mode thinking: purple stripe (the dots keep Knox's colors) */
-    .learn-thinking .msg-knox-bubble { border-left-color: var(--purple); }
 
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
@@ -1594,14 +1592,17 @@
       display: flex; align-items: center; gap: 6px;
     }
     .knox-section-card strong { color: inherit; font-weight: 800; }
-    /* Key words are blue; step titles stay orange so the outline stands out. */
-    .msg-knox-bubble strong { color: var(--blue-dark); font-weight: 800; }
-    html[data-theme="dark"] .msg-knox-bubble strong { color: #74D4FF; }
+    /* Key words are fox brown (blue is the Answer box's); step titles stay
+       orange so the outline stands out. Seasonal sets data-theme="dark" on
+       cream cards, so it keeps the light-mode brown. */
+    .msg-knox-bubble strong { color: #9A4A1C; font-weight: 800; }
+    html[data-theme="dark"] .msg-knox-bubble strong { color: #E9A86E; }
+    html.knox-seasonal .msg-knox-bubble strong { color: #9A4A1C; }
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
-    /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
-    .msg-knox-bubble:has(> .knox-response-heading.learn) { border-left-color: var(--purple); }
+    /* Learn replies wear Learn's purple key words. */
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
     html[data-theme="dark"] .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple); }
+    html.knox-seasonal .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
 
     /* THINKING / TYPING */
     .thinking-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
