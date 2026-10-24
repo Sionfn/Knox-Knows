@@ -380,6 +380,30 @@
        is what looks right. The "keep it alive" (not-studied-today) state
        dims the whole pill slightly rather than filtering the flame. */
     #streakPill #streakFlame { font-size: 13px; line-height: 1; }
+    /* 🟢 Slime Flame (link your Discord): wobbles like slime and drips. */
+    .knox-flame.flame-slime { display: inline-flex; line-height: 1; }
+    .slime-flame { width: 1.05em; height: 1.4em; overflow: visible; vertical-align: -.3em; }
+    .slime-flame .slime-body { transform-box: fill-box; transform-origin: 50% 100%; animation: slimeWobble 1.8s ease-in-out infinite; }
+    .slime-flame .slime-drip { transform-box: fill-box; transform-origin: 50% 0; animation: slimeDrip 2.6s ease-in infinite; }
+    .slime-flame .slime-drip-2 { animation-delay: -1.3s; animation-duration: 3.1s; }
+    @keyframes slimeWobble {
+      0%, 100% { transform: scale(1, 1); }
+      20% { transform: scale(1.1, .9); }
+      40% { transform: scale(.93, 1.08); }
+      60% { transform: scale(1.05, .96); }
+      80% { transform: scale(.98, 1.02); }
+    }
+    @keyframes slimeDrip {
+      0%, 30% { transform: translateY(-2px) scale(.4); opacity: 0; }
+      45% { transform: translateY(1px) scale(1, 1.15); opacity: 1; }
+      80% { transform: translateY(5px) scale(.85, 1.25); opacity: 1; }
+      100% { transform: translateY(8px) scale(.5); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { .slime-flame .slime-body, .slime-flame .slime-drip { animation: none; } .slime-flame .slime-drip { opacity: 0; } }
+
+
+    #ddSlimeBtn .dd-slime-state { margin-left: auto; font-size: 11px; font-weight: 900; color: var(--text-light); }
+    #ddSlimeBtn.on .dd-slime-state { color: #2A8F22; }
     #streakPill.dim { opacity: 0.72; }
     /* Milestone celebration pulse */
     #streakPill.celebrate {
@@ -2632,7 +2656,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
         <span class="sidebar-control-label">Appearance</span>
       </button>
       <button id="streakPill" onclick="showStreakDetail()" title="Your study streak" style="display:none;">
-        <span id="streakFlame">🔥</span>
+        <span id="streakFlame" class="knox-flame">🔥</span>
         <span id="streakCount">0</span>
         <span class="sidebar-control-label">day streak</span>
       </button>
@@ -2671,6 +2695,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Account &amp; Plan
     </button>
+    <button class="app-dropdown-item" id="ddSlimeBtn" type="button" onclick="window.knoxToggleSlime()" hidden><span aria-hidden="true" class="knox-flame flame-slime" id="ddSlimeIcon"></span><span>Slime Flame</span><span class="dd-slime-state"></span></button>
     <div id="ddUpgradeRow" style="display:none;">
       <button class="app-dropdown-item" onclick="goToPricing(); closeUserDropdown()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -3911,11 +3936,51 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
       // A saved day ahead of today's local date (e.g. from a different
       // timezone or the old UTC days) means today is already counted.
       const studiedToday = !!lastDay && lastDay >= today;
+      window.knoxSlime = { linked: !!data.discordId, on: !!data.discordId && data.flameStyle === 'slime' };
       renderStreak(count, studiedToday);
+      window.knoxApplySlime?.();
       return { count, studiedToday };
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
+
+  // ── 🟢 Slime Flame (this week, before the Nov 1 update) ─────────────────
+  // Join the Knox Discord and type /link: linking unlocks it (api/discord-link.js).
+  // The profile menu turns it on or off; the streak flame wears it when it's on.
+  const SLIME_SVG = '<svg class="slime-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="slimeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9F86E"/><stop offset=".55" stop-color="#6FD83C"/><stop offset="1" stop-color="#33A52A"/></linearGradient></defs><ellipse class="slime-drip" cx="15.2" cy="23.5" rx="1.7" ry="2.1" fill="#5BCB34" stroke="#2A8F22" stroke-width=".8"/><ellipse class="slime-drip slime-drip-2" cx="8.6" cy="22.8" rx="1.3" ry="1.6" fill="#5BCB34" stroke="#2A8F22" stroke-width=".7"/><g class="slime-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#slimeFill)" stroke="#2A8F22" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="8.9" cy="16.2" rx="1.5" ry="2.7" fill="#fff" opacity=".6"/><circle cx="15.3" cy="19.4" r="1" fill="#fff" opacity=".45"/><circle cx="12.4" cy="13.2" r=".7" fill="#fff" opacity=".4"/></g></svg>';
+  let slimeCount = 0;
+  const slimeHtml = () => SLIME_SVG.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); // own gradient id per copy
+  window.knoxApplySlime = function () {
+    const s = window.currentUser ? (window.knoxSlime || {}) : {};
+    document.querySelectorAll('#streakFlame, #ddStreakBadge .knox-flame').forEach(el => {
+      el.classList.toggle('flame-slime', !!s.on);
+      if (s.on) { if (!el.querySelector('.slime-flame')) el.innerHTML = slimeHtml(); }
+      else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
+    });
+    const btn = document.getElementById('ddSlimeBtn'), icon = document.getElementById('ddSlimeIcon');
+    if (!btn) return;
+    btn.hidden = !window.currentUser;
+    if (icon && !icon.firstChild) icon.innerHTML = slimeHtml();
+    btn.classList.toggle('on', !!s.on);
+    btn.querySelector('.dd-slime-state').textContent = s.linked ? (s.on ? 'On' : 'Off') : '🔒 Unlock';
+    btn.title = s.linked ? 'Turn the Slime Flame ' + (s.on ? 'off' : 'on') + ' for your streak' : 'Join the Knox Discord and type /link to unlock the Slime Flame';
+  };
+  window.knoxToggleSlime = async function () {
+    const s = window.knoxSlime || {}, user = window.currentUser;
+    if (!user) return;
+    if (!s.linked) {
+      window.closeUserDropdown?.();
+      const go = confirm('🟢 Get the Slime Flame!\n\nJoin the Knox Knows Discord, then type /link and connect your account. The Slime Flame shows up on your streak right away.\n\nOpen the Discord now?');
+      if (go) window.open('https://discord.gg/34mMzXc5zG', '_blank', 'noopener');
+      return;
+    }
+    const want = s.on ? 'classic' : 'slime';
+    window.knoxSlime = { ...s, on: want === 'slime' }; window.knoxApplySlime();
+    try {
+      const res = await fetch('/api/discord-link', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + await user.getIdToken() }, body: JSON.stringify({ action: 'flame', style: want }) });
+      if (!res.ok) throw new Error();
+    } catch (e) { window.knoxSlime = s; window.knoxApplySlime(); }
+  };
 
   function renderStreak(count, studiedToday) {
     const pill  = document.getElementById('streakPill');
@@ -3925,7 +3990,7 @@ html.knox-halloween[data-theme="dark"] .app-loading-content {
     const badge = document.getElementById('ddStreakBadge');
     if (badge) {
       badge.style.display = window.currentUser && count > 0 ? '' : 'none';
-      if (count > 0) badge.textContent = `🔥 ${count}-day streak`;
+      if (count > 0) { badge.innerHTML = `<span class="knox-flame">🔥</span> ${count}-day streak`; window.knoxApplySlime?.(); }
     }
     if (!window.currentUser || count < 1) { pill.style.display = 'none'; return; }
     num.textContent = count;
@@ -6483,6 +6548,7 @@ if (savedQuestion) {
         message = data.plus
           ? 'Your Knox Plus now works in the Knox Knows Discord too. Head back to Discord and click \u201cCheck my Plus\u201d to get your role.'
           : 'Your Discord is linked to this account. Get Knox Plus and the bot will give you unlimited questions in Discord automatically.';
+        if (data.slime) { message += ' \uD83D\uDFE2 You also unlocked the Slime Flame \u2014 it\u2019s on your streak now! Turn it on or off from your profile menu.'; window.knoxSlime = { linked: true, on: true }; window.knoxApplySlime?.(); }
       } else {
         title = 'Couldn\u2019t connect Discord';
         message = data.error || 'Please run /link in Discord and try again.';

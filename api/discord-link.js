@@ -3,7 +3,10 @@
 //
 //   Student (signed in, from /app?discord=<code>):
 //     POST { code } with "Authorization: Bearer <Firebase ID token>"
-//     → links the Discord account in the code to this Knox account
+//     → links the Discord account in the code to this Knox account (a first
+//       link also unlocks the 🟢 Slime Flame for their streak)
+//     POST { action: 'flame', style: 'slime' | 'classic' } → turn the Slime Flame
+//       on or off (only with a linked Discord)
 //   Discord bot (X-Knox-Bot-Key, same key as /api/ask):
 //     POST { action: 'status', discordIds: [...] } → { results: { id: { linked, plus } } }
 //
@@ -77,11 +80,25 @@ export default async function handler(req, res) {
     try { uid = (await adminAuth.verifyIdToken(authHeader.slice(7))).uid; }
     catch { return res.status(401).json({ error: "Please sign in again." }); }
 
+    // 🟢 Slime Flame on/off (profile menu): only for an account with a linked Discord.
+    if (body.action === "flame") {
+      if (!["slime", "classic"].includes(body.style)) return res.status(400).json({ error: "Unknown flame." });
+      const userRef = db.collection("users").doc(uid);
+      const out = await db.runTransaction(async tx => {
+        const snap = await tx.get(userRef);
+        if (body.style === "slime" && !(snap.exists && snap.data().discordId)) return null;
+        tx.set(userRef, { flameStyle: body.style }, { merge: true });
+        return body.style;
+      });
+      if (!out) return res.status(403).json({ error: "Join the Knox Discord and type /link to unlock the Slime Flame." });
+      return res.status(200).json({ ok: true, flameStyle: out });
+    }
+
     const discordId = readLinkCode(body.code);
     if (!discordId) return res.status(400).json({ error: "This link has expired or isn't valid. Run /link in Discord to get a new one." });
-    const plus = await link(uid, discordId);
+    const { plus, slime } = await link(uid, discordId);
     console.log(`✓ Discord linked: uid=${uid} plus=${plus}`);
-    return res.status(200).json({ ok: true, plus });
+    return res.status(200).json({ ok: true, plus, slime });
   } catch (err) {
     console.error("Discord link error:", err);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
@@ -111,8 +128,10 @@ async function link(uid, discordId) {
     }
     // This Knox account was linked to a different Discord: drop that link.
     if (user.discordId && user.discordId !== discordId) tx.delete(db.collection("discordAccounts").doc(user.discordId));
-    tx.set(userRef, { discordId }, { merge: true });
+    // A first link unlocks the 🟢 Slime Flame and puts it on their streak right away.
+    const slime = !user.discordId;
+    tx.set(userRef, { discordId, ...(slime ? { flameStyle: "slime" } : {}) }, { merge: true });
     tx.set(accountRef, { uid, linkedAt: new Date().toISOString() });
-    return isPlus(user.plan);
+    return { plus: isPlus(user.plan), slime };
   });
 }

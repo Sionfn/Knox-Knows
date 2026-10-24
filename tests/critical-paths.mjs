@@ -1190,10 +1190,20 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   assert.equal((await asStudent({ code: sign(discordId, later).slice(0, -2) + 'xx' })).code, 400);       // forged
   assert.equal((await call({}, { code: sign(discordId, later) })).code, 401);                              // not signed in
 
+  assert.equal((await asStudent({ action: 'flame', style: 'slime' })).code, 403, 'no Slime Flame before linking Discord');
   const linked = await asStudent({ code: sign(discordId, later) });
   assert.equal(linked.code, 200);
   assert.equal(linked.body.plus, true);
   assert.equal(store.get('users/u1').discordId, discordId);
+  // 🟢 Slime Flame: the first link turns it on; the profile menu turns it off and on;
+  // without a linked Discord it can't be turned on.
+  assert.equal(linked.body.slime, true);
+  assert.equal(store.get('users/u1').flameStyle, 'slime');
+  assert.equal((await asStudent({ action: 'flame', style: 'classic' })).body.flameStyle, 'classic');
+  assert.equal(store.get('users/u1').flameStyle, 'classic');
+  assert.equal((await asStudent({ action: 'flame', style: 'slime' })).code, 200);
+  assert.equal((await asStudent({ action: 'flame', style: 'gold' })).code, 400);
+  assert.equal((await call({}, { action: 'flame', style: 'slime' })).code, 401);
   assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true });
 
   // Cancelling Plus shows up right away.
