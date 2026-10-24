@@ -28,7 +28,7 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
-  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame' };
+  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame' };
 
   // ── Data ────────────────────────────────────────────────────────────────
   let state = null, loading = false, error = '';
@@ -41,7 +41,7 @@
       { id: 'w4', name: 'Bonfire', start: '2026-11-22', end: '2026-11-28', need: 3, label: '🛡️ Flame Shield' },
       { id: 'month', name: 'Phoenix', start: '2026-11-01', end: '2026-11-30', need: 20, label: '7 days of Mega Knox + 🟡 Golden Flame' },
     ].map(r => ({ ...r, flames: days.filter(d => d >= r.start && d <= r.end).length }));
-    return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic'], plusUntil: 0, megaUntil: 0, giftCode: '', demo: true };
+    return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic', 'slime'], plusUntil: 0, megaUntil: 0, giftCode: '', demo: true };
   }
   async function api(method, body) {
     const user = window.currentUser;
@@ -229,12 +229,23 @@
     render();
   }
 
-  // ── Flame look on the streak pill (Blue / Golden) ───────────────────────
+  // ── Flame look on the streak pill (Purple / Blue / Golden / Slime) ──────
+  // The Slime Flame is drawn (not a recolored 🔥) so it can wobble and drip
+  // like slime; filters and animations on the emoji itself look broken.
+  const SLIME = '<svg class="slime-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="slimeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9F86E"/><stop offset=".55" stop-color="#6FD83C"/><stop offset="1" stop-color="#33A52A"/></linearGradient></defs><ellipse class="slime-drip" cx="15.2" cy="23.5" rx="1.7" ry="2.1" fill="#5BCB34" stroke="#2A8F22" stroke-width=".8"/><ellipse class="slime-drip slime-drip-2" cx="8.6" cy="22.8" rx="1.3" ry="1.6" fill="#5BCB34" stroke="#2A8F22" stroke-width=".7"/><g class="slime-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#slimeFill)" stroke="#2A8F22" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="8.9" cy="16.2" rx="1.5" ry="2.7" fill="#fff" opacity=".6"/><circle cx="15.3" cy="19.4" r="1" fill="#fff" opacity=".45"/><circle cx="12.4" cy="13.2" r=".7" fill="#fff" opacity=".4"/></g></svg>';
   function applyFlameStyle(style) {
     document.querySelectorAll('#streakFlame').forEach(el => {
-      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold');
-      if (['purple', 'blue', 'gold'].includes(style)) el.classList.add('flame-' + style);
+      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime');
+      if (['purple', 'blue', 'gold', 'slime'].includes(style)) el.classList.add('flame-' + style);
+      if (style === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME; }
+      else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
     });
+  }
+  // Clicking the Knox Discord card: say how to earn the Slime Flame (linking in
+  // the server unlocks it; see api/_discord-link.js).
+  function discordHint() {
+    if (document.querySelector('#streakFlame.flame-slime')) return;
+    note('🟢 Join, then type /link in the Knox Discord to unlock the Slime Flame!');
   }
 
   // ── Flashcards review → today's flame (and the streak) ──────────────────
@@ -294,5 +305,5 @@
   addEventListener('knox-auth-changed', whenReady);
   if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
 
-  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied };
+  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint };
 })();

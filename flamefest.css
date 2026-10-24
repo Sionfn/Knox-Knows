@@ -105,6 +105,27 @@ html .sidebar-promo-rotator > .sidebar-flame-card { box-shadow: 0 3px 0 color-mi
 html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rotator > .sidebar-flame-card:focus-visible, html .sidebar-flame-card:hover { box-shadow: 0 5px 0 var(--orange) !important; }
 .sidebar-flame-card .ff-card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--orange-light); }
 
+/* 🟢 Slime Flame (link your Discord): wobbles like slime and drips. */
+#streakFlame.flame-slime { display: inline-flex; line-height: 1; }
+.slime-flame { width: 1.05em; height: 1.4em; overflow: visible; vertical-align: -.3em; }
+.slime-flame .slime-body { transform-box: fill-box; transform-origin: 50% 100%; animation: slimeWobble 1.8s ease-in-out infinite; }
+.slime-flame .slime-drip { transform-box: fill-box; transform-origin: 50% 0; animation: slimeDrip 2.6s ease-in infinite; }
+.slime-flame .slime-drip-2 { animation-delay: -1.3s; animation-duration: 3.1s; }
+@keyframes slimeWobble {
+  0%, 100% { transform: scale(1, 1); }
+  20% { transform: scale(1.1, .9); }
+  40% { transform: scale(.93, 1.08); }
+  60% { transform: scale(1.05, .96); }
+  80% { transform: scale(.98, 1.02); }
+}
+@keyframes slimeDrip {
+  0%, 30% { transform: translateY(-2px) scale(.4); opacity: 0; }
+  45% { transform: translateY(1px) scale(1, 1.15); opacity: 1; }
+  80% { transform: translateY(5px) scale(.85, 1.25); opacity: 1; }
+  100% { transform: translateY(8px) scale(.5); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .slime-flame .slime-body, .slime-flame .slime-drip { animation: none; } .slime-flame .slime-drip { opacity: 0; } }
+
 /* Purple flame (Knox Plus Spark reward) */
 #streakFlame.flame-purple { filter: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
 

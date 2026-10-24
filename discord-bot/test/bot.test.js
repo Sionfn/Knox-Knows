@@ -479,3 +479,16 @@ test('End lesson: only the asker can end it; it removes the buttons and closes t
   await bot.endLesson(again);
   assert.match(again.sent[0].content, /already ended/);
 });
+
+test('/link only works inside the Knox server (linking unlocks the Slime Flame)', async () => {
+  const plus = new Plus({ config: plusConfig(), fetch: fakeSite({}).fetch });
+  const handlers = createHandlers({ config: { ...plusConfig(), guildId: 'knox' }, limits: null, lessons: null, askKnox: null, plus });
+  const elsewhere = { ...fake(), guildId: null };
+  await handlers.link(elsewhere);
+  assert.match(elsewhere.sent[0].content, /inside the Knox Knows server/);
+  assert.equal(elsewhere.sent[0].components, undefined, 'no link button outside the server');
+  const inServer = { ...fake(), guildId: 'knox' };
+  await handlers.link(inServer);
+  assert.match(inServer.sent[0].content, /Slime Flame/);
+  assert.ok(inServer.sent[0].components?.length, 'gets the Connect button');
+});

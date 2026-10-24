@@ -1250,6 +1250,13 @@ test('Flame Fest rewards: claim only when earned, once; bonus questions, shields
   assert.equal(u.flameStyle, 'gold');
   assert.deepEqual(plain(res.body.flameStyles), ['classic', 'blue', 'gold']);
   assert.equal((await call('POST', { style: 'classic' })).body.flameStyle, 'classic');
+  // 🟢 Slime Flame: only for a linked Discord account (linking happens in the Knox server).
+  assert.equal((await call('POST', { style: 'slime' })).code, 403, 'slime needs a linked Discord');
+  store.set('users/u1', { ...store.get('users/u1'), discordId: '123456789012345678' });
+  res = await call('POST', { style: 'slime' });
+  assert.equal(res.body.flameStyle, 'slime');
+  assert.ok(plain(res.body.flameStyles).includes('slime'));
+  await call('POST', { style: 'gold' });
   assert.deepEqual(plain(Object.keys(u.flameFest.claimed).sort()), ['month', 'w1', 'w3', 'w4']);
   assert.equal((await call('POST', { claim: 'nope' })).code, 400);
 
@@ -1739,6 +1746,13 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   assert.equal(linked.body.plus, true);
   assert.equal(store.get('users/u1').discordId, discordId);
   assert.deepEqual({ ...(await asBot([discordId])).body.results[discordId] }, { linked: true, plus: true, tier: 'plus' });
+  // The first link unlocks the 🟢 Slime Flame and shows it on the streak; linking again doesn't re-equip it.
+  assert.equal(linked.body.slime, true);
+  assert.equal(store.get('users/u1').flameStyle, 'slime');
+  store.set('users/u1', { ...store.get('users/u1'), flameStyle: 'classic' });
+  const again = await asStudent({ code: sign(discordId, later) });
+  assert.equal(again.body.slime, false);
+  assert.equal(store.get('users/u1').flameStyle, 'classic');
 
   // Mega Knox (plan 'max'), a comped Mega account and a Flame Fest Mega week all show as Mega to the bot.
   for (const data of [{ plan: 'max' }, { comped: true, compedTier: 'mega' }, { plan: 'free', megaUntil: Date.now() + 86400000 }]) {

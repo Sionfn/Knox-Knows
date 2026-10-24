@@ -83,9 +83,9 @@ export default async function handler(req, res) {
 
     const discordId = readLinkCode(body.code);
     if (!discordId) return res.status(400).json({ error: "This link has expired or isn't valid. Run /link in Discord to get a new one." });
-    const plus = await link(uid, discordId);
+    const { plus, slime } = await link(uid, discordId);
     console.log(`✓ Discord linked: uid=${uid} plus=${plus}`);
-    return res.status(200).json({ ok: true, plus });
+    return res.status(200).json({ ok: true, plus, slime });
   } catch (err) {
     console.error("Discord link error:", err);
     return res.status(500).json({ error: "Something went wrong. Please try again." });
@@ -116,8 +116,11 @@ async function link(uid, discordId) {
     }
     // This Knox account was linked to a different Discord: drop that link.
     if (user.discordId && user.discordId !== discordId) tx.delete(db.collection("discordAccounts").doc(user.discordId));
-    tx.set(userRef, { discordId }, { merge: true });
+    // A first link unlocks the 🟢 Slime Flame (a linked Discord counts as having
+    // it, see api/flame-fest.js) and puts it on their streak right away.
+    const slime = !user.discordId;
+    tx.set(userRef, { discordId, ...(slime ? { flameStyle: "slime" } : {}) }, { merge: true });
     tx.set(accountRef, { uid, linkedAt: new Date().toISOString() });
-    return planOf(user) !== "free";
+    return { plus: planOf(user) !== "free", slime };
   });
 }

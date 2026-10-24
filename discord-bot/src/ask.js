@@ -162,6 +162,9 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
 
   // ── /link: connect a Knox account ──
   async function link(interaction) {
+    // Only inside the Knox Knows server: linking here is what unlocks the
+    // 🟢 Slime Flame on the website, so it has to mean they joined.
+    if (config.guildId && interaction.guildId !== config.guildId) return privately(interaction, "Run `/link` inside the Knox Knows server to connect your account.");
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setLabel('Connect Knox Knows').setStyle(ButtonStyle.Link).setURL(plus.linkUrl(interaction.user.id)),
       new ButtonBuilder().setCustomId('checkplus').setLabel('Check my Plus').setEmoji('✅').setStyle(ButtonStyle.Secondary));
@@ -172,6 +175,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         '2. Come back here and click **Check my Plus**.',
         '',
         'Knox Plus and Mega Knox members get their plan here automatically: unlimited questions, longer lessons, and their role.',
+        'Everyone who connects also unlocks the 🟢 **Slime Flame** for their streak on Knox Knows.',
       ].join('\n'),
       components: [buttons], flags: MessageFlags.Ephemeral, allowedMentions: noPings,
     });

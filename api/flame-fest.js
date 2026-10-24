@@ -10,7 +10,8 @@
 //
 // GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
-// POST { style: 'classic' | 'purple' | 'blue' | 'gold' } → pick an unlocked flame look
+// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' } → pick an unlocked flame look
+//   (🟢 Slime Flame: anyone who links their Discord with /link in the Knox server)
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
 //
 // Tester (the ADMIN_UID account only, opened with ?flamefest=test): try every
@@ -70,7 +71,7 @@ const REWARDS = [
     mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" },
     test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 🟡 Golden Flame" },
 ];
-const STYLES = ["classic", "purple", "blue", "gold"];
+const STYLES = ["classic", "purple", "blue", "gold", "slime"];
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
 // Flame Fest week still gets the free-member prizes. Mega is plan 'max'.
@@ -103,7 +104,7 @@ function status(data, tester = false) {
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
     shields: Math.max(0, Math.floor(Number(data.flameShields) || 0)),
     flameStyle: STYLES.includes(data.flameStyle) ? data.flameStyle : "classic",
-    flameStyles: ["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : [])],
+    flameStyles: [...new Set(["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : []), ...(typeof data.discordId === "string" && data.discordId ? ["slime"] : [])])],
     plusUntil: Number(data.plusUntil) || 0,
     megaUntil: Number(data.megaUntil) || 0,
     giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",
