@@ -205,3 +205,9 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 .ff-claim:hover:not(:disabled), .ff-copy:hover { box-shadow: 0 6px 0 #CC5500; }
 .ff-claim:active:not(:disabled), .ff-copy:active { box-shadow: 0 1px 0 #CC5500; }
 .ff-pop-actions .ff-claim { min-height: 54px; padding: 15px 28px; border-radius: 16px; font-size: 17px; }
+
+/* Opening a Flame Fest window focuses the window itself (no ring); keyboard
+   focus on its buttons shows a Knox orange ring instead of the browser blue. */
+.ff-card:focus { outline: none; }
+.ff-card button:focus { outline: none; }
+.ff-card button:focus-visible { outline: 3px solid #FFB27A; outline-offset: 2px; }

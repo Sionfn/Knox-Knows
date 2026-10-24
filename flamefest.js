@@ -230,7 +230,7 @@
     });
     document.addEventListener('keydown', onKey, true);
     document.body.append(wrap);
-    wrap.querySelector('.ff-x').focus();
+    focusCard(wrap.querySelector('.ff-card'));
     if (!state || !demo) await load();
     render();
   }
@@ -294,8 +294,11 @@
     });
     document.addEventListener('keydown', esc_, true);
     document.body.append(m);
-    m.querySelector('[data-i="0"]').focus();
+    focusCard(m.querySelector('.ff-card'));
   }
+  // Focus the window, not its first button, so no focus ring shows on open;
+  // Tab still goes straight to the buttons (orange ring, see flamefest.css).
+  function focusCard(card) { card.tabIndex = -1; card.focus({ preventScroll: true }); }
   function intro() {
     if (!active() || today() > END) return; // not during the Dec 1–7 claim week
     const key = 'knoxFlameFestIntro2026';
