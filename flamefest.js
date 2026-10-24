@@ -29,6 +29,9 @@
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
   const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame' };
+  // In the flame picker each look shows its real flame instead of an emoji dot.
+  const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame' };
+  const flameOf = look => `<span class="knox-flame"${look ? ` data-look="${look}"` : ''} aria-hidden="true">🔥</span>`;
 
   // ── Data ────────────────────────────────────────────────────────────────
   let state = null, loading = false, error = '';
@@ -103,7 +106,7 @@
     const giftUrl = state.giftCode ? `${location.origin}/redeem?code=${state.giftCode}` : '';
     const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Mega Knox week to give</b><span>Send this link to a friend who doesn’t have Mega Knox — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.megaUntil > Date.now() ? `<div class="ff-note">💎 Your free Mega Knox week runs until ${new Date(state.megaUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
-    const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
+    const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${flameOf(s)}${STYLE_LABELS[s]}</button>`).join('')}</div>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 November event${state.tier === 'mega' ? ' · 💎 Mega Knox rewards' : state.plus ? ' · ⚡ Knox Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
@@ -122,7 +125,7 @@
   // The flame you're using, big, so you can really see it (and pick another).
   function myFlame(picker) {
     const tip = state.flameStyles.length > 1 ? '' : '<span class="ff-myflame-tip">Earn new flames from the rewards below — or link your Discord with /link for the 🟢 Slime Flame.</span>';
-    return `<div class="ff-myflame"><span class="knox-flame ff-myflame-icon" aria-hidden="true">🔥</span><div class="ff-myflame-copy"><span class="ff-myflame-label">Your flame</span><b>${STYLE_NAMES[state.flameStyle] || STYLE_NAMES.classic}</b>${tip}${picker}</div></div>`;
+    return `<div class="ff-myflame"><span class="knox-flame ff-myflame-icon" aria-hidden="true">🔥</span><div class="ff-myflame-copy"><span class="ff-myflame-label">Your flame</span><b>${STYLE_LABELS[state.flameStyle] || STYLE_LABELS.classic}</b>${tip}${picker}</div></div>`;
   }
   function testerPanel() {
     return `<div class="ff-tester"><b>🧪 Tester mode</b><span>Real rewards on your own account, so you can try everything before November. Only your admin account sees this.</span>
@@ -243,10 +246,11 @@
   function applyFlameStyle(style) {
     if (style) currentStyle = style;
     document.querySelectorAll('#streakFlame, .knox-flame').forEach(el => {
+      const look = el.dataset.look || currentStyle;
       el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime');
-      if (['purple', 'blue', 'gold', 'slime'].includes(currentStyle)) el.classList.add('flame-' + currentStyle);
+      if (['purple', 'blue', 'gold', 'slime'].includes(look)) el.classList.add('flame-' + look);
       // Each copy gets its own gradient id: a shared id breaks when the first copy is hidden.
-      if (currentStyle === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); }
+      if (look === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); }
       else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
     });
   }
