@@ -3850,7 +3850,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     const badge = document.getElementById('ddStreakBadge');
     if (badge) {
       badge.style.display = window.currentUser && count > 0 ? '' : 'none';
-      if (count > 0) badge.textContent = `🔥 ${count}-day streak`;
+      if (count > 0) { badge.innerHTML = `<span class="knox-flame">🔥</span> ${count}-day streak`; window.knoxFlameFest?.applyFlameStyle(); }
     }
     if (!window.currentUser || count < 1) { pill.style.display = 'none'; return; }
     num.textContent = count;

@@ -68,6 +68,15 @@
 .ff-left { font-size: 12px; font-weight: 800; color: var(--text-light); white-space: nowrap; }
 .ff-missed-tag { font-size: 12px; font-weight: 800; color: var(--text-light); opacity: .8; }
 
+/* "Your flame": the look you're using, big. */
+.ff-myflame { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; padding: 14px 18px; border-radius: 18px; border: 2px solid var(--border); background: var(--cream-warm); text-align: left; }
+.ff-myflame-icon { flex-shrink: 0; width: 72px; text-align: center; font-size: 56px; line-height: 1; }
+.ff-myflame-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ff-myflame-label { font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--text-light); }
+.ff-myflame-copy > b { font-size: 18px; font-weight: 900; color: var(--text); }
+.ff-myflame-tip { font-size: 12.5px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
+.ff-myflame .ff-styles { margin-top: 6px; }
+@media (max-width: 480px) { .ff-myflame { gap: 12px; padding: 12px 14px; } .ff-myflame-icon { width: 56px; font-size: 44px; } }
 .ff-styles { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 12px; font-size: 13px; font-weight: 800; color: var(--text-light); }
 .ff-style { padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border); background: var(--cream-warm); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
 .ff-style.on { border-color: var(--orange); color: var(--orange); }
@@ -94,8 +103,8 @@
 @media (prefers-reduced-motion: reduce) { .ff-day.lit .ff-mark, .ff-claim, .ff-burst span { animation: none !important; } }
 
 /* Blue / Golden flame on the 🔥 streak pill (Flame Fest rewards) */
-#streakFlame.flame-blue { filter: hue-rotate(190deg) saturate(1.5) brightness(1.1); }
-#streakFlame.flame-gold { filter: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15) drop-shadow(0 0 4px rgba(242,183,5,.8)); }
+:is(#streakFlame, .knox-flame).flame-blue { filter: hue-rotate(190deg) saturate(1.5) brightness(1.1); }
+:is(#streakFlame, .knox-flame).flame-gold { filter: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15) drop-shadow(0 0 4px rgba(242,183,5,.8)); }
 
 /* Sidebar Flame Fest card: warm orange, not the blue of the other cards. */
 html .sidebar-extension-card.sidebar-flame-card { border-color: var(--orange) !important; background: color-mix(in srgb, var(--orange) 10%, var(--surface)) !important; color: var(--text) !important; }
@@ -106,7 +115,7 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 .sidebar-flame-card .ff-card-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--orange-light); }
 
 /* 🟢 Slime Flame (link your Discord): wobbles like slime and drips. */
-#streakFlame.flame-slime { display: inline-flex; line-height: 1; }
+:is(#streakFlame, .knox-flame).flame-slime { display: inline-flex; line-height: 1; }
 .slime-flame { width: 1.05em; height: 1.4em; overflow: visible; vertical-align: -.3em; }
 .slime-flame .slime-body { transform-box: fill-box; transform-origin: 50% 100%; animation: slimeWobble 1.8s ease-in-out infinite; }
 .slime-flame .slime-drip { transform-box: fill-box; transform-origin: 50% 0; animation: slimeDrip 2.6s ease-in infinite; }
@@ -127,7 +136,7 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 @media (prefers-reduced-motion: reduce) { .slime-flame .slime-body, .slime-flame .slime-drip { animation: none; } .slime-flame .slime-drip { opacity: 0; } }
 
 /* Purple flame (Knox Plus Spark reward) */
-#streakFlame.flame-purple { filter: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
+:is(#streakFlame, .knox-flame).flame-purple { filter: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
 
 /* Gift link (Knox Plus grand prize) */
 .ff-gift { margin: 0 0 12px; padding: 12px; border-radius: 14px; border: 2px dashed #F2B705; background: linear-gradient(135deg, rgba(242,183,5,.14), rgba(255,107,0,.08)); text-align: left; }

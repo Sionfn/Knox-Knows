@@ -103,21 +103,26 @@
     const giftUrl = state.giftCode ? `${location.origin}/redeem?code=${state.giftCode}` : '';
     const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Mega Knox week to give</b><span>Send this link to a friend who doesn’t have Mega Knox — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.megaUntil > Date.now() ? `<div class="ff-note">💎 Your free Mega Knox week runs until ${new Date(state.megaUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
-    const styles = state.flameStyles.length > 1 ? `<div class="ff-styles"><span>Your flame:</span>${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
+    const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${STYLE_NAMES[s]}</button>`).join('')}</div>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 November event${state.tier === 'mega' ? ' · 💎 Mega Knox rewards' : state.plus ? ' · ⚡ Knox Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
         <p>${sub}</p>
         <div class="ff-stats"><div><b>${lit}</b><span>flames lit</span></div><div><b>${state.shields}</b><span>🛡️ shield${state.shields === 1 ? '' : 's'}</span></div><div><b>${Math.max(0, 20 - lit)}</b><span>to grand prize</span></div></div>
       </div>
+      ${myFlame(picker)}
       ${plus}${gift}
       <div class="ff-cal" role="grid" aria-label="November 2026">${grid}</div>
       <div class="ff-legend" aria-hidden="true"><span>🔥 studied</span><span>🛡️ saved by a shield</span><span class="ff-legend-today">today</span></div>
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
-      ${styles}
       ${state.tester ? testerPanel() : testMode && !demo ? testerOff() : ''}
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
+  }
+  // The flame you're using, big, so you can really see it (and pick another).
+  function myFlame(picker) {
+    const tip = state.flameStyles.length > 1 ? '' : '<span class="ff-myflame-tip">Earn new flames from the rewards below — or link your Discord with /link for the 🟢 Slime Flame.</span>';
+    return `<div class="ff-myflame"><span class="knox-flame ff-myflame-icon" aria-hidden="true">🔥</span><div class="ff-myflame-copy"><span class="ff-myflame-label">Your flame</span><b>${STYLE_NAMES[state.flameStyle] || STYLE_NAMES.classic}</b>${tip}${picker}</div></div>`;
   }
   function testerPanel() {
     return `<div class="ff-tester"><b>🧪 Tester mode</b><span>Real rewards on your own account, so you can try everything before November. Only your admin account sees this.</span>
@@ -149,6 +154,7 @@
     if (!wrap) return;
     wrap.querySelector('.ff-card').classList.toggle('ff-card-loading', !state);
     wrap.querySelector('.ff-body').innerHTML = html();
+    if (state) applyFlameStyle(state.flameStyle);
   }
   async function claim(id, btn) {
     btn.disabled = true; btn.textContent = 'Claiming…';
@@ -233,11 +239,14 @@
   // The Slime Flame is drawn (not a recolored 🔥) so it can wobble and drip
   // like slime; filters and animations on the emoji itself look broken.
   const SLIME = '<svg class="slime-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="slimeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9F86E"/><stop offset=".55" stop-color="#6FD83C"/><stop offset="1" stop-color="#33A52A"/></linearGradient></defs><ellipse class="slime-drip" cx="15.2" cy="23.5" rx="1.7" ry="2.1" fill="#5BCB34" stroke="#2A8F22" stroke-width=".8"/><ellipse class="slime-drip slime-drip-2" cx="8.6" cy="22.8" rx="1.3" ry="1.6" fill="#5BCB34" stroke="#2A8F22" stroke-width=".7"/><g class="slime-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#slimeFill)" stroke="#2A8F22" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="8.9" cy="16.2" rx="1.5" ry="2.7" fill="#fff" opacity=".6"/><circle cx="15.3" cy="19.4" r="1" fill="#fff" opacity=".45"/><circle cx="12.4" cy="13.2" r=".7" fill="#fff" opacity=".4"/></g></svg>';
+  let currentStyle = 'classic', slimeCount = 0;
   function applyFlameStyle(style) {
-    document.querySelectorAll('#streakFlame').forEach(el => {
+    if (style) currentStyle = style;
+    document.querySelectorAll('#streakFlame, .knox-flame').forEach(el => {
       el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime');
-      if (['purple', 'blue', 'gold', 'slime'].includes(style)) el.classList.add('flame-' + style);
-      if (style === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME; }
+      if (['purple', 'blue', 'gold', 'slime'].includes(currentStyle)) el.classList.add('flame-' + currentStyle);
+      // Each copy gets its own gradient id: a shared id breaks when the first copy is hidden.
+      if (currentStyle === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); }
       else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
     });
   }
