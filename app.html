@@ -1611,8 +1611,9 @@
       animation: bounce 1.2s infinite;
       will-change: transform, opacity; /* animate on the GPU: keeps bouncing even if the page is busy */
     }
-    /* Shown under the dots if a reply is slow (see the ask timers). */
-    .thinking-note { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
+    /* Shown beside the dots if a reply is slow (see the ask timers). */
+    .thinking-note { font-size: 13px; font-weight: 700; color: var(--text-light); margin-left: 6px; animation: thinkingNoteIn .25s ease-out; }
+    @keyframes thinkingNoteIn { from { opacity: 0; } }
     .thinking-dot:nth-child(1) { background: var(--orange); }
     .thinking-dot:nth-child(2) { background: var(--blue); animation-delay: 0.2s; }
     .thinking-dot:nth-child(3) { background: var(--green); animation-delay: 0.4s; }
@@ -5838,8 +5839,8 @@ window.appHandleAsk = async function() {
     setTimeout(() => {
       const row = document.querySelector('#' + thinkIdFor + ' .thinking-row');
       if (!row) return;
-      let note = row.parentElement.querySelector('.thinking-note');
-      if (!note) { note = document.createElement('div'); note.className = 'thinking-note'; note.setAttribute('role', 'status'); row.after(note); }
+      let note = row.querySelector('.thinking-note');
+      if (!note) { note = document.createElement('span'); note.className = 'thinking-note'; note.setAttribute('role', 'status'); row.append(note); }
       note.textContent = text;
     }, ms));
   const requestUser = window.currentUser;
