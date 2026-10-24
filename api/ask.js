@@ -210,17 +210,15 @@ const KNOX_BASE_PROMPT = `You are Knox, the AI study assistant for Knox Knows. H
 
 Choose the right response:
 - Direct solve: show only the necessary steps, check the result when useful, then finish with one standalone line: Answer: **<concise result>**. That line becomes the result box below the work. Do not repeat it afterward.
-- Word problems, probability and multi-step reasoning: say in plain words where each equation comes from (what each variable means and why the relationship holds), and show the key solving step that gets from the equations to the result — never jump from the setup straight to "solving gives…". A one-step problem like 2x + 3 = 11 stays short.
 - Multiple problems: use a short heading for each original problem number, then its work and its own Answer: line. Never combine different results into an ambiguous answer.
 - Explanation or definition: lead with the useful point, then explain why. Do not force an Answer: box, a list, or a long lecture.
-- How something works / walk me through (a process, cycle or system): always use the same shape so every answer reads alike: (1) one-sentence summary; (2) the key equation or formula on its own line in plain text, if the topic has one; (3) numbered steps, each starting with a short bold label and a colon; (4) one closing sentence that starts with "So,". No section headings for a single topic.
 - Check my work: give a clear verdict, identify the exact first incorrect step and how to fix it. Do not invent something the student did right.
 - Hints or quiz requests: give one helpful nudge or question at a time without revealing the result. Respect the student's requested teaching style.
 - Writing: produce the requested draft or revision, with a brief explanation when helpful. Do not invent quotations or citations.
 - Follow-ups: use the conversation, including the problem you already transcribed. Do not mistake a short reply such as "why?" or "0.5" for unrelated chat.
 
 Formatting:
-Use short paragraphs and numbered steps only for a real sequence. Bold short step labels and important terms sparingly. Never bold an equation, formula or chemical reaction: put it on its own line in plain text. Use headings to separate multiple problems or genuinely long topics. Use fenced code blocks with a language name for code, preserving indentation; use inline code for identifiers. Avoid Markdown tables; use concise bullets for comparisons.
+Use short paragraphs and numbered steps only for a real sequence. Bold short step labels and important terms sparingly. Use headings to separate multiple problems or genuinely long topics. Use fenced code blocks with a language name for code, preserving indentation; use inline code for identifiers. Avoid Markdown tables; use concise bullets for comparisons.
 Write math in readable plain text: ×, ÷, √, π, ≤, ≥, fractions as (numerator)/(denominator), and powers such as x² or x^(n+1). Do not use LaTeX commands or dollar math delimiters. Preserve decimal points, negative signs, units, domain restrictions, and exact fractions. Round only at the end and label approximations.
 Do not add video suggestions, internal markers, decorative filler, or "Great question!" introductions.
 
@@ -444,11 +442,6 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
 const TEXT_MODEL   = "gpt-6-luna"; // main homework and Learn model — same quality for free and paid
 const CASUAL_MODEL = "gpt-6-luna"; // casual conversation
 const IMAGE_MODEL  = "gpt-6-luna"; // photo questions and worksheet reading
-// How hard Luna thinks on homework (same for every plan). By default Knox lets
-// the model decide — in side-by-side tests "high" gave the same answers for
-// more cost. Set KNOX_REASONING_EFFORT in Vercel to "high", "medium" or "low"
-// to override it without a code change. Small talk always uses the default.
-const REASONING_EFFORT = (process.env.KNOX_REASONING_EFFORT || "default").trim().toLowerCase();
 
 // ── IP Rate Limiting ───────────────────────────────────────────────────────
 // In-memory store — resets on cold start, and isn't shared across concurrent
@@ -1203,9 +1196,7 @@ export default async function handler(req, res) {
     // many-part worksheet needs.
     // Casual replies are short, but the model reasons first: 300 could be
     // used up before any reply, leaving a blank answer.
-    // Room for careful (high-effort) thinking plus the answer; only what's
-    // used is billed, so easy questions cost the same as before.
-    const tokenLimit = image ? 16000 : doc ? 16000 : casual ? 1500 : 8000; // files can hold many problems, like photos
+    const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : 3000; // files can hold many problems, like photos
     const requestBody = {
       model:       modelToUse,
       messages,
@@ -1213,35 +1204,19 @@ export default async function handler(req, res) {
     if (isNewerModel) {
       requestBody.max_completion_tokens = tokenLimit;
       // temperature intentionally omitted for reasoning models
-      if (!casual && ["low", "medium", "high"].includes(REASONING_EFFORT)) requestBody.reasoning_effort = REASONING_EFFORT;
     } else {
       requestBody.max_tokens  = tokenLimit;
       requestBody.temperature = casual ? 1.0 : 0.7;
     }
 
-    const callModel = body => fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
       // Small talk is a one-liner: give up sooner so a slow moment never
       // leaves the thinking dots hanging (the student gets a 'try again').
-      // Careful thinking takes longer, so homework gets most of the
-      // function's 60 seconds.
-      signal: AbortSignal.timeout(Math.max(5000, Math.min(image || doc ? 50000 : casual ? 15000 : 45000, 57000 - (Date.now() - startedAt)))),
+      signal: AbortSignal.timeout(image || doc ? 50000 : casual ? 15000 : 25000),
     });
-    let response = await callModel(requestBody);
-    // If the model ever refuses the effort setting, answer without it rather
-    // than failing the student's question.
-    if (!response.ok && response.status === 400 && requestBody.reasoning_effort) {
-      const errText = await response.text();
-      if (/reasoning_effort/i.test(errText)) {
-        console.error("reasoning_effort rejected — retrying without it:", errText.slice(0, 200));
-        delete requestBody.reasoning_effort;
-        response = await callModel(requestBody);
-      } else {
-        response = { ok: false, status: 400, text: async () => errText };
-      }
-    }
 
     if (!response.ok) {
       await refundFailedAnswer();
@@ -1283,7 +1258,7 @@ export default async function handler(req, res) {
     if (learnMode && !casual && !answeringKnox && timeLeft > 12000 && learnReplyGaveItAway(answer)) {
       try {
         const retryBody = { ...requestBody, messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: LEARN_REWRITE }] };
-        if (retryBody.max_completion_tokens) retryBody.max_completion_tokens = 8000; else retryBody.max_tokens = 8000;
+        if (retryBody.max_completion_tokens) retryBody.max_completion_tokens = 3000; else retryBody.max_tokens = 3000;
         const retry = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
