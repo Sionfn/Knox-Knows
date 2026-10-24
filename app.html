@@ -1536,6 +1536,7 @@
       text-transform: uppercase;
     }
     html[data-theme="dark"] .knox-final-answer-label { color: #74D4FF; }
+    html.knox-seasonal .knox-final-answer-label { color: var(--blue-dark); }
     .knox-response-body { padding: 18px 20px 16px; }
     .knox-response-body > :first-child { margin-top: 0 !important; }
     .knox-response-body > :last-child { margin-bottom: 0 !important; }
@@ -2361,7 +2362,9 @@
 .knox-response-body ol, .knox-response-body ul { padding-left: 24px; }
 .knox-response-body code { font-family: monospace; }
 .knox-response-body .knox-final-answer { margin: 18px 0 24px; }
-.knox-final-answer strong { color: inherit; }
+/* The result keeps the box's text color, never the key-word blue (which is
+   pale in dark mode and unreadable on Seasonal's light box). */
+html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
 </style>
 <link rel="stylesheet" href="/logo-theme.css">
