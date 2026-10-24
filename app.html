@@ -484,65 +484,6 @@
     /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with a dark gold outline.
        The small badges match the plan cards. */
     .dd-badge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
-    /* Profile badges: game-style emblems (see knoxBadgeEmblem) */
-    .dd-earned { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    .dd-earned:empty { display: none; }
-    .kbadge { --kb-clip: circle(50%); position: relative; display: inline-flex; width: 30px; height: 34px; flex-shrink: 0; cursor: help; outline: none; border-radius: 8px; }
-    .kbadge:focus-visible { box-shadow: 0 0 0 3px #FFB27A; }
-    .kb-art { position: absolute; inset: 0; filter: drop-shadow(0 2px 0 rgba(0,0,0,.18)); transition: transform .15s; }
-    .kbadge:hover .kb-art, .kbadge:focus .kb-art { transform: translateY(-2px) scale(1.06); }
-    .kb-shape { position: absolute; inset: 0; background: var(--kb-edge); clip-path: var(--kb-clip); }
-    .kb-face { position: absolute; inset: 2.5px; background: linear-gradient(160deg, var(--kb-hi), var(--kb-lo)); clip-path: var(--kb-clip); display: flex; align-items: center; justify-content: center; }
-    .kb-face::after { content: ""; position: absolute; inset: 0 0 55% 0; background: linear-gradient(rgba(255,255,255,.45), rgba(255,255,255,0)); }
-    .kb-glyph { position: relative; z-index: 1; font-size: 14px; font-weight: 900; line-height: 1; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35), 0 0 3px rgba(0,0,0,.25); }
-    .kb-glyph.kb-long { font-size: 10px; letter-spacing: -.02em; }
-    .kb-shield { --kb-clip: polygon(50% 0, 100% 13%, 100% 58%, 50% 100%, 0 58%, 0 13%); }
-    .kb-shield .kb-glyph { margin-bottom: 3px; }
-    .kb-star { --kb-clip: polygon(50% 0%, 63% 33%, 99% 36%, 71% 59%, 81% 95%, 50% 75%, 19% 95%, 29% 59%, 1% 36%, 37% 33%); width: 34px; }
-    .kb-star .kb-face { inset: 3.5px; }
-    .kb-star .kb-glyph { font-size: 11px; margin-top: 3px; }
-    .kb-hex { --kb-clip: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); width: 34px; height: 32px; }
-    .kb-circle { width: 32px; height: 32px; }
-    .kb-bronze  { --kb-edge: #7A3F17; --kb-hi: #F2BB84; --kb-lo: #B4642B; }
-    .kb-silver  { --kb-edge: #5B6472; --kb-hi: #F4F6F8; --kb-lo: #98A2B0; }
-    .kb-gold    { --kb-edge: #9A5B00; --kb-hi: #FFE88A; --kb-lo: #E9A800; }
-    .kb-legend  { --kb-edge: #4C1D95; --kb-hi: #F0B6FF; --kb-lo: #7C3AED; }
-    .kb-blue    { --kb-edge: #075985; --kb-hi: #8EDBFF; --kb-lo: #0A85C2; }
-    .kb-blurple { --kb-edge: #313A9E; --kb-hi: #AEB4FF; --kb-lo: #5865F2; }
-    .kb-orange  { --kb-edge: #8F2F07; --kb-hi: #FFC27D; --kb-lo: #F06A10; }
-    .kb-locked  { --kb-edge: #9CA3AF; --kb-hi: #E5E7EB; --kb-lo: #C4C9D1; }
-    .kb-locked .kb-glyph { color: #F9FAFB; opacity: .9; filter: grayscale(1); }
-    .kb-lock { position: absolute; right: -4px; bottom: -3px; font-size: 11px; line-height: 1; filter: drop-shadow(0 1px 0 rgba(0,0,0,.2)); }
-    /* Hover / focus / tap: what it is and how to earn it */
-    .kb-tip { position: absolute; z-index: 60; top: calc(100% + 8px); left: 50%; transform: translate(-50%, -4px); width: 170px; padding: 9px 11px; border-radius: 12px; background: #2B2420; color: #fff; text-align: left; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s, transform .12s, visibility .12s; box-shadow: 0 8px 20px rgba(0,0,0,.22); }
-    .kb-tip::before { content: ""; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px; background: #2B2420; transform: translateX(-50%) rotate(45deg); }
-    .kbadge:hover .kb-tip, .kbadge:focus .kb-tip { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
-    .kb-tip b { display: block; font-size: 12.5px; font-weight: 900; }
-    .kb-tip small { display: block; margin-top: 2px; font-size: 11px; font-weight: 700; line-height: 1.35; color: #E8DDD3; }
-    .kb-tip em { display: block; margin-top: 5px; font-style: normal; font-size: 10.5px; font-weight: 900; color: #9BE27A; }
-    .kb-locked .kb-tip em { color: #C9BFB6; }
-    .dd-earned .kbadge:first-child .kb-tip { left: 0; transform: translate(-4px, -4px); }
-    .dd-earned .kbadge:first-child:hover .kb-tip, .dd-earned .kbadge:first-child:focus .kb-tip { transform: translate(-4px, 0); }
-    .dd-earned .kbadge:first-child .kb-tip::before { left: 19px; }
-    /* Bigger emblems in Account & Plan */
-    .kbadge.kb-big { width: 48px; height: 54px; }
-    .kbadge.kb-big.kb-star, .kbadge.kb-big.kb-hex { width: 54px; }
-    .kbadge.kb-big.kb-hex { height: 50px; }
-    .kbadge.kb-big.kb-circle { width: 50px; height: 50px; }
-    .kb-big .kb-face { inset: 3.5px; }
-    .kb-big.kb-star .kb-face { inset: 5px; }
-    .kb-big .kb-glyph { font-size: 22px; }
-    .kb-big .kb-glyph.kb-long { font-size: 15px; }
-    .kb-big.kb-star .kb-glyph { font-size: 17px; margin-top: 5px; }
-    .kb-big .kb-lock { font-size: 15px; }
-    .settings-badges { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
-    .settings-badges-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-    .settings-badges-count { font-size: 12px; font-weight: 800; color: var(--text-light); }
-    .settings-badges-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 8px; }
-    .knox-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-    .knox-badge > span:last-child { font-size: 11px; font-weight: 900; color: var(--text); line-height: 1.25; }
-    .knox-badge.locked > span:last-child { color: var(--text-light); }
-    @media (max-width: 380px) { .settings-badges-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.paid, #appAccountPlanBadge.paid, #drawerAccountBadge.paid) { color: var(--green); border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--surface)); }
     /* 💎 Mega Knox badge: gold, everywhere the plan shows */
     /* 💎 Mega Knox badge: gold with a dark gold outline (same on the landing page) */
@@ -2698,7 +2639,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <span id="ddAvatar">?</span>
         <div class="dd-identity-copy"><p class="dd-name" id="ddName">—</p><span class="dd-email" id="ddEmail">—</span></div>
       </div>
-      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div><div class="dd-earned" id="ddEarnedBadges"></div>
+      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
       <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
@@ -3892,47 +3833,14 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // unless they have enough Flame Shields to cover the missed days.
       if (lastDay && daysBetween(lastDay, today) - 1 > (data.flameShields || 0) && daysBetween(lastDay, today) > 1) count = 0;
       window.knoxFlameFest?.applyFlameStyle(data.flameStyle);
-      window.knoxUserDoc = data; // profile badges (renderProfileBadges)
       // A saved day ahead of today's local date (e.g. from a different
       // timezone or the old UTC days) means today is already counted.
       const studiedToday = !!lastDay && lastDay >= today;
       renderStreak(count, studiedToday);
-      renderProfileBadges();
       return { count, studiedToday };
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
-
-  // ── Profile badges ─────────────────────────────────────────────────────
-  // Earned from the account (join date) and server-only fields on the user doc
-  // (bestStreak, discordId, flameFest), so nobody can hand themselves one.
-  const BADGES = [
-    { id: 'joined', shape: 'circle', tier: 'blue', glyph: '🐣',  icon: '🐣', name: () => 'Joined ' + joinedLabel(), how: 'When you joined Knox Knows', earned: () => !!joinedAt() },
-    { id: 'founder', shape: 'star', tier: 'gold', glyph: '🦊', icon: '🌟', name: () => 'Founding Member', how: 'Joined before Knox Knows 2.0 (November 1, 2026)', earned: () => { const t = joinedAt(); return !!t && t < Date.parse('2026-11-01T00:00:00'); } },
-    { id: 's3', shape: 'shield', tier: 'bronze', glyph: '3',   icon: '🔥', name: () => '3-Day Streak',   how: 'Study 3 days in a row',   earned: () => best() >= 3 },
-    { id: 's7', shape: 'shield', tier: 'silver', glyph: '7',   icon: '📅', name: () => 'Week Warrior',   how: 'Study 7 days in a row',   earned: () => best() >= 7 },
-    { id: 's30', shape: 'shield', tier: 'gold', glyph: '30',  icon: '🏆', name: () => 'Monthly Master', how: 'Study 30 days in a row',  earned: () => best() >= 30 },
-    { id: 's100', shape: 'shield', tier: 'legend', glyph: '100', icon: '💯', name: () => '100-Day Legend', how: 'Study 100 days in a row', earned: () => best() >= 100 },
-    { id: 'discord', shape: 'hex', tier: 'blurple', glyph: '💬', icon: '💬', name: () => 'Discord Member', how: 'Link your Discord with /link in the Knox server', earned: () => !!window.knoxUserDoc?.discordId },
-    { id: 'flamefest', shape: 'hex', tier: 'orange', glyph: '🎃', icon: '🎃', name: () => 'Flame Fest 2026', how: 'Light a flame in Flame Fest (November 2026)', earned: () => (window.knoxUserDoc?.flameFest?.days || []).length > 0 },
-  ];
-  function joinedAt() { const t = Date.parse(window.currentUser?.metadata?.creationTime || ''); return Number.isFinite(t) ? t : 0; }
-  function joinedLabel() { const t = joinedAt(); return t ? new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''; }
-  function best() { const d = window.knoxUserDoc || {}; return Math.max(Number(d.bestStreak) || 0, Number(d.streakCount) || 0); }
-  window.knoxBadges = () => BADGES.map(b => ({ id: b.id, icon: b.icon, shape: b.shape, tier: b.tier, glyph: b.glyph, name: b.name(), how: b.how, earned: !!window.currentUser && b.earned() }));
-  // A badge emblem (shield, star, circle or hexagon in its tier color, like a
-  // game badge). Hover, focus or tap shows what it is and how to earn it.
-  window.knoxBadgeEmblem = (b, size = '') => `<span class="kbadge kb-${b.shape} kb-${b.earned ? b.tier : 'locked'}${size ? ' kb-' + size : ''}" tabindex="0" role="img" aria-label="${escHtml(b.name + ' — ' + (b.earned ? 'earned' : b.how))}"><span class="kb-art"><span class="kb-shape"><span class="kb-face"><span class="kb-glyph${b.glyph.length > 2 && /\d/.test(b.glyph) ? ' kb-long' : ''}">${escHtml(b.glyph)}</span></span></span>${b.earned ? '' : '<span class="kb-lock">🔒</span>'}</span><span class="kb-tip"><b>${escHtml(b.name)}</b><small>${escHtml(b.how)}</small><em>${b.earned ? '✓ Earned' : 'Locked'}</em></span></span>`;
-  // Profile menu: the join date, the top streak badge, and any others earned.
-  function renderProfileBadges() {
-    const box = document.getElementById('ddEarnedBadges');
-    if (!box) return;
-    const earned = window.knoxBadges().filter(b => b.earned);
-    const streak = earned.filter(b => /^s\d/.test(b.id)).pop();
-    const shown = earned.filter(b => !/^s\d/.test(b.id) || b === streak);
-    box.innerHTML = shown.map(b => window.knoxBadgeEmblem(b)).join('');
-  }
-  window.renderProfileBadges = renderProfileBadges;
 
   function renderStreak(count, studiedToday) {
     const pill  = document.getElementById('streakPill');
@@ -4879,19 +4787,6 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.className   = 'plan-badge badge-' + badgeClass;
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
-
-    // Badges: earned ones in color, locked ones say how to earn them.
-    const all = window.knoxBadges?.() || [];
-    if (all.length) {
-      const sec = document.createElement('div'); sec.className = 'settings-badges';
-      const head = document.createElement('div'); head.className = 'settings-badges-head';
-      head.innerHTML = '<span class="settings-label">Badges</span><span class="settings-badges-count"></span>';
-      head.lastChild.textContent = all.filter(b => b.earned).length + ' of ' + all.length + ' earned';
-      const grid = document.createElement('div'); grid.className = 'settings-badges-grid';
-      grid.innerHTML = all.map(b => '<div class="knox-badge' + (b.earned ? '' : ' locked') + '">' + window.knoxBadgeEmblem(b, 'big') + '<span>' + escHtml(b.name) + '</span></div>').join('');
-      sec.append(head, grid);
-      el.appendChild(sec);
-    }
 
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the
