@@ -93,7 +93,7 @@ Respond with JSON only, exactly this shape:
 // Short timeouts; any failure just means fewer pictures, never a failed deck.
 const WIKI_HEADERS = { "User-Agent": "KnoxKnows/1.0 (https://knoxknowsapp.com; support@knoxknowsapp.com)" };
 const WIKI_API = "https://en.wikipedia.org/w/api.php?action=query&format=json&redirects=1";
-const MAX_PICTURES = 20;
+const MAX_PICTURES = LIMITS.mega.deckCards; // every card, even a 40-card Mega deck
 // Wikipedia's interface art (logos, icons, flags, maps…), not pictures of the topic.
 const NOT_A_PICTURE = /logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
 const stripTags = s => String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
@@ -124,8 +124,10 @@ function pictureFor(card, pictures, used, common = new Set()) {
 }
 // Knox's article had nothing that fits ("Leg" → swimmers, an insect): look for
 // a better article from the card's own words ("lower leg tibia fibula" → "Human leg").
+// Knox's article leads the search so it stays on topic ("manzana apple" alone
+// found a painting, "Apple of Discord").
 async function betterArticle(card) {
-  const q = words([card.front, card.back].join(" ")).slice(0, 6).join(" ");
+  const q = [card.imageTitle, ...words([card.front, card.back].join(" ")).slice(0, 6)].filter(Boolean).join(" ");
   if (!q) return "";
   const found = await wiki(`${WIKI_API}&list=search&srlimit=1&srnamespace=0&srsearch=${encodeURIComponent(q)}`);
   return found.query?.search?.[0]?.title || "";
@@ -169,9 +171,12 @@ async function addPictures(cards) {
     const counts = new Map();
     for (const c of wanted) for (const w of new Set(words([c.front, c.back].join(" ")).flatMap(w => [w, stem(w)]))) counts.set(w, (counts.get(w) || 0) + 1);
     const common = new Set([...counts].filter(([, n]) => wanted.length >= 5 && n >= Math.max(3, wanted.length * 0.25)).map(([w]) => w));
-    // A card whose article has nothing that fits gets a second article from its own words.
+    // A card whose article has nothing that fits gets a second article from its
+    // own words. The main picture of Knox's article counts as a fit even when
+    // its file name doesn't say so (Apple → "Pink lady and cross section");
+    // it's only missing when there is none or it shows an unrelated animal.
     const retry = new Map(await Promise.all(wanted
-      .filter(c => pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common).score < 2) // < 2: nothing matched the card's words (the main picture alone scores 1.5)
+      .filter(c => { const b = pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common); return !b.pick?.main && b.score < 2; })
       .map(async c => { const t = await betterArticle(c); return [c, t && t !== c.imageTitle ? { title: t, ...(await articlePictures(t)) } : null]; })));
     for (const card of wanted) {
       let { title, pictures = [] } = found.get(card.imageTitle) || {};
