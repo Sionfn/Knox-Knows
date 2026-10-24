@@ -312,7 +312,9 @@ const shortPhrase=t=>{const w=picWords(t);return w.length&&w.length<=3?w.join(' 
 const wikiJson=url=>fetch(url,{signal:AbortSignal.timeout(8000)}).then(r=>r.ok?r.json():{});
 const stripHtml=t=>String(t||'').replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
 const NOT_A_PICTURE=/logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
-const picCredit=m=>['Wikimedia Commons',stripHtml(m?.Artist?.value).slice(0,80),stripHtml(m?.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
+// Just the creator's name: drop uploader notes, labels and stray symbols.
+const cleanArtist=s => String(s || '').replace(/\s+\.\s.*$|(?<=\p{L}{3})\.\s.*$/u, '').replace(/\b(when using|this image|derivative work|if you use|please credit|cited as)\b.*$/i, '').replace(/^(original|author|photo|image|by)\s*:\s*/i, '').replace(/[^\p{L}\p{N}\s.,:'’&()\/-]/gu, '').replace(/[\s.,;:-]+$/, '').trim().slice(0, 60);
+const picCredit=m=>['Wikimedia Commons',cleanArtist(stripHtml(m?.Artist?.value)),stripHtml(m?.LicenseShortName?.value).slice(0,40)].filter(Boolean).join(' · ');
 const fileName=t=>stripHtml(t).replace(/^File:/,'').replace(/\.[a-z]+$/i,'');
 const W='https://en.wikipedia.org/w/api.php?format=json&origin=*&action=query&redirects=1';
 const C='https://commons.wikimedia.org/w/api.php?format=json&origin=*&action=query';

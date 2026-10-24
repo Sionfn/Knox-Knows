@@ -97,6 +97,8 @@ const MAX_PICTURES = LIMITS.mega.deckCards; // every card, even a 40-card Mega d
 // Wikipedia's interface art (logos, icons, flags, maps…), not pictures of the topic.
 const NOT_A_PICTURE = /logo|icon|symbol|flag|bandera|coat[ _]of[ _]arms|question[ _]book|wiki(quote|source|species|books|versity|data|tionary|news)|commons-|padlock|edit-|ambox|portal|disambig|stub|pencil|nuvola|crystal[ _]clear|gnome|oojs|increase|decrease|steady|loudspeaker|sound|audio|\.(ogg|oga|webm|pdf|tif)|lock-|protection|map[ _]marker|location[ _]map|blank[ _]map|signature|folder|text-x|document-|emblem/i;
 const stripTags = s => String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+// Just the creator's name: drop uploader notes ("BruceBlaus. When using this image…"), labels and stray symbols.
+const cleanArtist = s => String(s || "").replace(/\s+\.\s.*$|(?<=\p{L}{3})\.\s.*$/u, "").replace(/\b(when using|this image|derivative work|if you use|please credit|cited as)\b.*$/i, "").replace(/^(original|author|photo|image|by)\s*:\s*/i, "").replace(/[^\p{L}\p{N}\s.,:'’&()\/-]/gu, "").replace(/[\s.,;:-]+$/, "").trim().slice(0, 60);
 // Ranking an article's pictures for one card: the main picture and files
 // whose names share the card's words come first; a picture of an animal is
 // skipped unless the card mentions that animal (the "Leg" article's main
@@ -156,7 +158,7 @@ async function articlePictures(title) {
     title: page && !("missing" in page) ? page.title : "",
     pictures: files.filter(p => !/\.(stl|webm|ogv|mid)$/i.test(p.title)).map(p => {
       const meta = p.imageinfo[0].extmetadata || {};
-      const credit = [stripTags(meta.Artist?.value).slice(0, 80), stripTags(meta.LicenseShortName?.value).slice(0, 40)].filter(Boolean).join(" · ");
+      const credit = [cleanArtist(stripTags(meta.Artist?.value)), stripTags(meta.LicenseShortName?.value).slice(0, 40)].filter(Boolean).join(" · ");
       return { name: p.title, main: p.title === main, src: p.imageinfo[0].thumburl.replace(/\?.*$/, ""), credit: ("Wikimedia Commons" + (credit ? " · " + credit : "")).slice(0, 200) };
     }),
   };
