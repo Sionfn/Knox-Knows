@@ -443,7 +443,26 @@ function study(){
     </div></button></div>
     <div class="fc-controls" id="fcControls">${controls()}</div>
     <p class="fc-tip">Again brings the card back in a few cards. Good and Easy schedule it for another day.</p>`,true);
+  evenCards(d);
 }
+// Every card in a session is as tall as the deck's tallest side, so the card
+// and the buttons under it stay put from one card to the next. Measured once
+// per session (and again if the width changes) on hidden copies of each side.
+function evenCards(d){
+  const card=panel.querySelector('.fc-card'),s=session;if(!card||!s)return;
+  const w=card.offsetWidth;
+  if(s.evenWidth!==w){
+    const box=document.createElement('div');
+    box.setAttribute('aria-hidden','true');
+    box.style.cssText='position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;width:'+w+'px';
+    box.innerHTML=d.cards.map(c=>`<div class="fc-face"><span class="fc-face-label">↻ Try again</span><p class="fc-face-text">${esc(c.front)}</p><span class="fc-face-hint">Think of the answer, then tap to flip · Space</span></div><div class="fc-face"><span class="fc-face-label">Answer</span>${fillBack(c).replace(' id="fcAnswerText"','')}${cleanImage(c).image?`<span class="fc-card-img" style="display:block"></span>${c.imageCredit?`<span class="fc-img-credit">${esc(c.imageCredit)}</span>`:''}`:''}<span class="fc-face-hint">How did you do? Tap to see the question again</span></div>`).join('');
+    card.parentElement.append(box);
+    s.evenHeight=Math.max(0,...[...box.children].map(f=>f.offsetHeight));s.evenWidth=w;
+    box.remove();
+  }
+  for(const f of card.querySelectorAll('.fc-face'))f.style.minHeight=s.evenHeight+'px';
+}
+addEventListener('resize',()=>{if(session&&!panel.hidden&&panel.querySelector('.fc-card'))evenCards(decks.find(d=>d.id===session.id));});
 // Flip in place so the card animates instead of being redrawn.
 function flip(){
   session.flipped=!session.flipped;
