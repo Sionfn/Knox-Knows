@@ -354,11 +354,11 @@ test('Legacy model flags never disclose provider errors', async () => {
   assert.equal(res.body.debug, undefined);
 });
 
-test('If Luna ever refuses the thinking-effort setting, Knox answers without it instead of failing', async () => {
+test('KNOX_REASONING_EFFORT turns on harder thinking for homework; if Luna refuses it, Knox answers without it', async () => {
   const { db } = memoryDb();
   const requests = [];
   const handler = await load('api/ask.js', {
-    db, adminEmail: 'owner@example.com',
+    db, adminEmail: 'owner@example.com', env: { KNOX_REASONING_EFFORT: 'high' },
     fetch: async (_, options) => {
       const body = JSON.parse(options.body);
       requests.push(body);
@@ -408,11 +408,9 @@ test('Text, photo, small talk and Learn all use GPT-6 Luna', async () => {
   assert.equal(learn.body.model, 'gpt-6-luna');
   assert.equal(answers[0].max_completion_tokens, 8000);
   assert.equal(answers[1].max_completion_tokens, 16000);
-  // Every plan gets Luna's most careful thinking on homework; small talk stays quick.
-  assert.equal(answers[0].reasoning_effort, 'high');
-  assert.equal(answers[1].reasoning_effort, 'high');
-  assert.equal(answers[2].reasoning_effort, undefined);
-  assert.equal(answers[3].reasoning_effort, 'high');
+  // Same strength for every plan: the model's own default effort unless
+  // KNOX_REASONING_EFFORT overrides it.
+  assert.ok(answers.every(request => request.reasoning_effort === undefined));
   assert.match(answers[1].messages[0].content, /solve every problem in the photo/);
   assert.match(answers[2].messages[0].content, /You're Knox/);
   assert.doesNotMatch(answers[1].messages[0].content, /ask where to start/);

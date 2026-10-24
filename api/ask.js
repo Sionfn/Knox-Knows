@@ -210,6 +210,7 @@ const KNOX_BASE_PROMPT = `You are Knox, the AI study assistant for Knox Knows. H
 
 Choose the right response:
 - Direct solve: show only the necessary steps, check the result when useful, then finish with one standalone line: Answer: **<concise result>**. That line becomes the result box below the work. Do not repeat it afterward.
+- Word problems, probability and multi-step reasoning: say in plain words where each equation comes from (what each variable means and why the relationship holds), and show the key solving step that gets from the equations to the result — never jump from the setup straight to "solving gives…". A one-step problem like 2x + 3 = 11 stays short.
 - Multiple problems: use a short heading for each original problem number, then its work and its own Answer: line. Never combine different results into an ambiguous answer.
 - Explanation or definition: lead with the useful point, then explain why. Do not force an Answer: box, a list, or a long lecture.
 - How something works / walk me through (a process, cycle or system): always use the same shape so every answer reads alike: (1) one-sentence summary; (2) the key equation or formula on its own line in plain text, if the topic has one; (3) numbered steps, each starting with a short bold label and a colon; (4) one closing sentence that starts with "So,". No section headings for a single topic.
@@ -443,11 +444,11 @@ Reply with exactly one word: CASUAL or SUBSTANTIVE.`,
 const TEXT_MODEL   = "gpt-6-luna"; // main homework and Learn model — same quality for free and paid
 const CASUAL_MODEL = "gpt-6-luna"; // casual conversation
 const IMAGE_MODEL  = "gpt-6-luna"; // photo questions and worksheet reading
-// How hard Luna thinks on real homework (same for every plan): "high" for the
-// most careful answers. Set KNOX_REASONING_EFFORT in Vercel to "medium" or
-// "low" to trade some care for speed, or "default" to let the model decide.
-// Small talk always uses the model's default so a "hi" stays instant.
-const REASONING_EFFORT = (process.env.KNOX_REASONING_EFFORT || "high").trim().toLowerCase();
+// How hard Luna thinks on homework (same for every plan). By default Knox lets
+// the model decide — in side-by-side tests "high" gave the same answers for
+// more cost. Set KNOX_REASONING_EFFORT in Vercel to "high", "medium" or "low"
+// to override it without a code change. Small talk always uses the default.
+const REASONING_EFFORT = (process.env.KNOX_REASONING_EFFORT || "default").trim().toLowerCase();
 
 // ── IP Rate Limiting ───────────────────────────────────────────────────────
 // In-memory store — resets on cold start, and isn't shared across concurrent
