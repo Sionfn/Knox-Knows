@@ -492,3 +492,32 @@ test('/link only works inside the Knox server (linking unlocks the Slime Flame)'
   assert.match(inServer.sent[0].content, /Slime Flame/);
   assert.ok(inServer.sent[0].components?.length, 'gets the Connect button');
 });
+
+test('Learn marker lines become Discord formatting, and Choices become tap-to-answer buttons', async () => {
+  const { formatLearn } = await import('../src/learn-format.js');
+  const f = formatLearn('Subtract 5 from both sides first.\n**Key idea:** Do the same thing to both sides.\nProgress: 2/4\nGraph: y = 3x + 5\nVideo: two step equations khan academy\n- **Choices:** 3x = 15 | 3x = 25 | x = 15');
+  assert.doesNotMatch(f.text, /Choices:|Progress:|Graph:|Video:|^Key idea:/m, 'no raw marker lines');
+  assert.match(f.text, /^-# Step 2 of 4  ●●○○/);
+  assert.match(f.text, /> 🧠 \*\*Key idea:\*\* Do the same thing to both sides\./);
+  assert.match(f.text, /📈 \*\*Try graphing:\*\* `y = 3x \+ 5`/);
+  assert.match(f.text, /youtube\.com\/results\?search_query=two%20step%20equations/);
+  assert.deepEqual(f.choices, ['3x = 15', '3x = 25', 'x = 15']);
+  const done = formatLearn('You solved it!\nRecap: Undo each step in reverse.\nWatch out: Do it to both sides.\nTopic: Two-step equations');
+  assert.match(done.text, /🎉 \*\*What you learned · Two-step equations\*\*\n> Undo each step in reverse\.\n⚠️ \*\*Watch out:\*\* Do it to both sides\./);
+
+  // In a lesson: choice buttons above Reply; tapping one sends it as the reply.
+  const calls = [];
+  const bot = setup(async args => { calls.push(args); return calls.length === 1 ? 'What do you get first?\nChoices: 3x = 15 | 3x = 25' : 'Yes!'; });
+  const asked = fake({ question: 'Solve 3x + 5 = 20' });
+  await bot.ask(asked);
+  const posted = asked.sent.at(-1);
+  assert.doesNotMatch(posted.content, /Choices:/);
+  const rows = posted.components.map(r => r.toJSON().components.map(c => c.custom_id));
+  assert.equal(rows.length, 2);
+  assert.match(rows[0][1], /^choice:.+:1$/);
+  assert.match(rows[1][0], /^reply:/);
+  const tap = fake({ customId: rows[0][1] });
+  await bot.choiceClicked(tap);
+  assert.equal(calls[1].question, '3x = 25');
+  assert.match(tap.sent.at(-1).content, /3x = 25[\s\S]*Yes!/);
+});

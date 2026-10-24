@@ -44,6 +44,7 @@ client.on(Events.InteractionCreate, async interaction => {
     else if (interaction.isChatInputCommand() && interaction.commandName === 'help') await handlers.help(interaction);
     else if (interaction.isButton() && interaction.customId === 'checkplus') await handlers.checkPlus(interaction);
     else if (interaction.isButton() && interaction.customId.startsWith('reply:')) await handlers.replyButtonClicked(interaction);
+    else if (interaction.isButton() && interaction.customId.startsWith('choice:')) await handlers.choiceClicked(interaction);
     else if (interaction.isButton() && interaction.customId.startsWith('end:')) await handlers.endLesson(interaction);
     else if (interaction.isModalSubmit() && interaction.customId.startsWith('answer:')) await handlers.replySubmitted(interaction);
   } catch (err) {

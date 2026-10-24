@@ -5,6 +5,7 @@ import {
 import { KnoxError, MAX_PHOTO_BYTES, PHOTO_TYPES, downloadPhoto as defaultDownloadPhoto } from './knox.js';
 import { MAX_REPLIES, REPLIES_BY_TIER } from './lessons.js';
 import { splitMessage } from './split.js';
+import { formatLearn, parseLearn } from './learn-format.js';
 
 // Never ping anyone from text a student typed (e.g. "@everyone").
 export const noPings = { parse: [] };
@@ -14,6 +15,9 @@ const quote = text => '> ' + text.slice(0, 300).replace(/\n/g, '\n> ') + (text.l
 const replyButton = lessonId => new ActionRowBuilder().addComponents(
   new ButtonBuilder().setCustomId(`reply:${lessonId}`).setLabel('Reply to Knox').setEmoji('💬').setStyle(ButtonStyle.Primary),
   new ButtonBuilder().setCustomId(`end:${lessonId}`).setLabel('End lesson').setEmoji('🏁').setStyle(ButtonStyle.Secondary));
+// Tap-to-answer options from a Learn reply's "Choices:" line (like the website's buttons).
+const choiceButtons = (lessonId, choices) => new ActionRowBuilder().addComponents(choices.map((c, i) =>
+  new ButtonBuilder().setCustomId(`choice:${lessonId}:${i}`).setLabel(c.replace(/\*\*|`/g, '').slice(0, 80)).setStyle(ButtonStyle.Secondary)));
 
 // Without a website connection (e.g. in tests), Plus comes from the role alone.
 const roleOnly = { isPlus: async () => null, tier: async () => null, syncRole: async () => 'kept', granted: new Set() };
@@ -62,8 +66,11 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
       return null;
     }
     const lessonId = lessonIdFor(text);
-    const parts = splitMessage(`${header}\n\n${text}\n\n${footer(lessonId)}`);
-    const button = lessonId ? { components: [replyButton(lessonId)] } : {};
+    // Learn marker lines become Discord formatting; choices become buttons.
+    const shown = formatLearn(text);
+    const options = shown.choices.length && !lessonId ? `\n\n**Options:** ${shown.choices.join(' · ')}` : '';
+    const parts = splitMessage(`${header}\n\n${shown.text}${options}\n\n${footer(lessonId)}`);
+    const button = lessonId ? { components: [...(shown.choices.length ? [choiceButtons(lessonId, shown.choices)] : []), replyButton(lessonId)] } : {};
     // Show the student's photo with the answer (Discord's own link to it expires).
     const files = photoBytes && showPhoto ? { files: [{ attachment: photoBytes, name: photo.name || 'homework.png' }] } : {};
     await interaction.editReply({ content: parts[0], allowedMentions: noPings, ...files, ...(parts.length === 1 ? button : {}) });
@@ -131,6 +138,20 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
   // ── Reply box submitted: continue the lesson ──
   async function replySubmitted(interaction) {
     const lessonId = interaction.customId.slice('answer:'.length);
+    return continueLesson(interaction, lessonId, () => interaction.fields.getTextInputValue('reply').trim());
+  }
+
+  // ── A tap-to-answer button: send that choice as the reply ──
+  async function choiceClicked(interaction) {
+    const [, lessonId, index] = interaction.customId.split(':');
+    const lesson = lessons.get(lessonId);
+    const last = [...(lesson?.history || [])].reverse().find(m => m.role === 'assistant')?.content;
+    const choice = parseLearn(last).choices[Number(index)];
+    if (lesson && !choice) return privately(interaction, 'Those options are from an earlier step. Use **Reply to Knox** to answer.');
+    return continueLesson(interaction, lessonId, () => choice);
+  }
+
+  async function continueLesson(interaction, lessonId, readReply) {
     const lesson = lessons.get(lessonId);
     const problem = lessonProblem(lesson, interaction.user.id);
     if (problem) return privately(interaction, problem);
@@ -142,7 +163,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     lessons.busy.add(lessonId);
     try {
       await interaction.deferReply();
-      const reply = interaction.fields.getTextInputValue('reply').trim();
+      const reply = readReply();
       const repliesLeft = (lesson.maxReplies || MAX_REPLIES) - lesson.replies - 1;
       // Replies never use a daily question; Plus and Mega members just see their plan.
       const label = PLAN_NAME[await memberTier(interaction)] || "Lesson reply · doesn't use a question";
@@ -236,7 +257,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     });
   }
 
-  return { ask, replyButtonClicked, replySubmitted, endLesson, link, checkPlus, help };
+  return { ask, replyButtonClicked, replySubmitted, choiceClicked, endLesson, link, checkPlus, help };
 }
 
 // Why a student can't reply to this lesson, or null if they can.
