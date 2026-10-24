@@ -42,7 +42,10 @@ export async function advanceStudyStreak(db, uid, clientDay) {
     const missed = gap >= 2 ? gap - 1 : 0;
     const shielded = missed > 0 && missed <= shields;
     const count = gap === 1 || shielded ? Math.min(10000, previous + 1) : 1;
-    const update = { streakLastDay: today, streakCount: count };
+    // bestStreak keeps the longest streak ever, so streak badges stay earned
+    // after a streak ends (shown on the profile).
+    const best = Math.max(Math.floor(Number(data.bestStreak) || 0), lastValid ? previous : 0, count);
+    const update = { streakLastDay: today, streakCount: count, bestStreak: best };
     if (shielded) update.flameShields = shields - missed;
     const savedDays = shielded ? Array.from({ length: missed }, (_, k) => addDays(last, k + 1)) : [];
     if (inFlameFest(today) || savedDays.some(inFlameFest)) {

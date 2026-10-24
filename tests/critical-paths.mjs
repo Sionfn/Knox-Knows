@@ -872,9 +872,11 @@ test('successful learning advances streak once per UTC day; future legacy dates 
   const handler = await load('api/ask.js', { db, fetch: askFetch() });
   for (let i = 0; i < 2; i++) { const res = response(); await handler(askRequest({ question: 'Solve 2x = 8' }), res); assert.equal(res.code, 200); }
   assert.equal(store.get('users/u1').streakCount, 5);
+  assert.equal(store.get('users/u1').bestStreak, 5, 'the longest streak is kept for badges');
   store.set('users/u1', { streakCount: 999, streakLastDay: '2099-01-01' });
   const res = response(); await handler(askRequest({ question: 'Solve 2x = 8' }), res);
   assert.equal(store.get('users/u1').streakCount, 1);
+  assert.equal(store.get('users/u1').bestStreak, 1, 'a bogus saved streak never counts as a best');
 });
 
 test('paused and non-entitled Stripe states revoke paid access but preserve comped access', async () => {

@@ -484,6 +484,28 @@
     /* One look per plan, everywhere (app + landing): ⚡ Knox Plus green, 💎 Mega Knox gold with a dark gold outline.
        The small badges match the plan cards. */
     .dd-badge.paid { color: var(--green-dark); border-color: var(--green-dark); background: var(--green-light); }
+    /* Earned profile badges (see renderProfileBadges) */
+    .dd-earned { display: contents; }
+    .dd-badge.achv { color: var(--orange-dark, #CC5500); border-color: color-mix(in srgb, var(--orange) 45%, var(--border)); background: color-mix(in srgb, var(--orange) 9%, var(--surface)); }
+    .dd-badge.achv-joined { color: var(--blue-dark); border-color: color-mix(in srgb, var(--blue) 45%, var(--border)); background: color-mix(in srgb, var(--blue) 9%, var(--surface)); }
+    .dd-badge.achv-discord { color: #4752C4; border-color: #A3A9F5; background: color-mix(in srgb, #5865F2 10%, var(--surface)); }
+    html[data-theme="dark"]:not(.knox-seasonal) .dd-badge.achv { color: #FF9A4D; }
+    html[data-theme="dark"]:not(.knox-seasonal) .dd-badge.achv-joined { color: #74D4FF; }
+    html[data-theme="dark"]:not(.knox-seasonal) .dd-badge.achv-discord { color: #A3A9FF; }
+    /* Account & Plan: every badge */
+    .settings-badges { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .settings-badges-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .settings-badges-count { font-size: 12px; font-weight: 800; color: var(--text-light); }
+    .settings-badges-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .knox-badge { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); text-align: left; }
+    .knox-badge.earned { border-color: color-mix(in srgb, var(--orange) 50%, var(--border)); background: color-mix(in srgb, var(--orange) 7%, var(--surface)); box-shadow: 0 2px 0 color-mix(in srgb, var(--orange) 35%, var(--border)); }
+    .knox-badge.locked { opacity: .62; }
+    .knox-badge-icon { font-size: 22px; line-height: 1; flex-shrink: 0; width: 28px; text-align: center; }
+    .knox-badge.locked .knox-badge-icon { filter: grayscale(1); }
+    .knox-badge-copy { display: flex; flex-direction: column; min-width: 0; }
+    .knox-badge-copy b { font-size: 13px; font-weight: 900; color: var(--text); }
+    .knox-badge-copy small { font-size: 11px; font-weight: 700; color: var(--text-light); line-height: 1.3; }
+    @media (max-width: 420px) { .settings-badges-grid { grid-template-columns: 1fr; } }
     html[data-theme="dark"]:not(.knox-seasonal) :is(.dd-badge.paid, #appAccountPlanBadge.paid, #drawerAccountBadge.paid) { color: var(--green); border-color: var(--green); background: color-mix(in srgb, var(--green) 14%, var(--surface)); }
     /* 💎 Mega Knox badge: gold, everywhere the plan shows */
     /* 💎 Mega Knox badge: gold with a dark gold outline (same on the landing page) */
@@ -2639,7 +2661,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <span id="ddAvatar">?</span>
         <div class="dd-identity-copy"><p class="dd-name" id="ddName">—</p><span class="dd-email" id="ddEmail">—</span></div>
       </div>
-      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
+      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span><span class="dd-earned" id="ddEarnedBadges"></span></div>
       <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
@@ -3833,14 +3855,44 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // unless they have enough Flame Shields to cover the missed days.
       if (lastDay && daysBetween(lastDay, today) - 1 > (data.flameShields || 0) && daysBetween(lastDay, today) > 1) count = 0;
       window.knoxFlameFest?.applyFlameStyle(data.flameStyle);
+      window.knoxUserDoc = data; // profile badges (renderProfileBadges)
       // A saved day ahead of today's local date (e.g. from a different
       // timezone or the old UTC days) means today is already counted.
       const studiedToday = !!lastDay && lastDay >= today;
       renderStreak(count, studiedToday);
+      renderProfileBadges();
       return { count, studiedToday };
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
+
+  // ── Profile badges ─────────────────────────────────────────────────────
+  // Earned from the account (join date) and server-only fields on the user doc
+  // (bestStreak, discordId, flameFest), so nobody can hand themselves one.
+  const BADGES = [
+    { id: 'joined',  icon: '🐣', name: () => 'Joined ' + joinedLabel(), how: 'When you joined Knox Knows', earned: () => !!joinedAt() },
+    { id: 'founder', icon: '🌟', name: () => 'Founding Member', how: 'Joined before Knox Knows 2.0 (November 1, 2026)', earned: () => { const t = joinedAt(); return !!t && t < Date.parse('2026-11-01T00:00:00'); } },
+    { id: 's3',   icon: '🔥', name: () => '3-Day Streak',   how: 'Study 3 days in a row',   earned: () => best() >= 3 },
+    { id: 's7',   icon: '📅', name: () => 'Week Warrior',   how: 'Study 7 days in a row',   earned: () => best() >= 7 },
+    { id: 's30',  icon: '🏆', name: () => 'Monthly Master', how: 'Study 30 days in a row',  earned: () => best() >= 30 },
+    { id: 's100', icon: '💯', name: () => '100-Day Legend', how: 'Study 100 days in a row', earned: () => best() >= 100 },
+    { id: 'discord', icon: '💬', name: () => 'Discord Member', how: 'Link your Discord with /link in the Knox server', earned: () => !!window.knoxUserDoc?.discordId },
+    { id: 'flamefest', icon: '🎃', name: () => 'Flame Fest 2026', how: 'Light a flame in Flame Fest (November 2026)', earned: () => (window.knoxUserDoc?.flameFest?.days || []).length > 0 },
+  ];
+  function joinedAt() { const t = Date.parse(window.currentUser?.metadata?.creationTime || ''); return Number.isFinite(t) ? t : 0; }
+  function joinedLabel() { const t = joinedAt(); return t ? new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''; }
+  function best() { const d = window.knoxUserDoc || {}; return Math.max(Number(d.bestStreak) || 0, Number(d.streakCount) || 0); }
+  window.knoxBadges = () => BADGES.map(b => ({ id: b.id, icon: b.icon, name: b.name(), how: b.how, earned: !!window.currentUser && b.earned() }));
+  // Profile menu: the join date, the top streak badge, and any others earned.
+  function renderProfileBadges() {
+    const box = document.getElementById('ddEarnedBadges');
+    if (!box) return;
+    const earned = window.knoxBadges().filter(b => b.earned);
+    const streak = earned.filter(b => /^s\d/.test(b.id)).pop();
+    const shown = earned.filter(b => !/^s\d/.test(b.id) || b === streak);
+    box.innerHTML = shown.map(b => `<span class="dd-badge achv achv-${b.id}" title="${escHtml(b.how)}">${b.icon} ${escHtml(b.name)}</span>`).join('');
+  }
+  window.renderProfileBadges = renderProfileBadges;
 
   function renderStreak(count, studiedToday) {
     const pill  = document.getElementById('streakPill');
@@ -4787,6 +4839,27 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.className   = 'plan-badge badge-' + badgeClass;
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
+
+    // Badges: earned ones in color, locked ones say how to earn them.
+    const all = window.knoxBadges?.() || [];
+    if (all.length) {
+      const sec = document.createElement('div'); sec.className = 'settings-badges';
+      const head = document.createElement('div'); head.className = 'settings-badges-head';
+      head.innerHTML = '<span class="settings-label">Badges</span><span class="settings-badges-count"></span>';
+      head.lastChild.textContent = all.filter(b => b.earned).length + ' of ' + all.length + ' earned';
+      const grid = document.createElement('div'); grid.className = 'settings-badges-grid';
+      for (const b of all) {
+        const card = document.createElement('div');
+        card.className = 'knox-badge' + (b.earned ? ' earned' : ' locked');
+        card.innerHTML = '<span class="knox-badge-icon" aria-hidden="true"></span><span class="knox-badge-copy"><b></b><small></small></span>';
+        card.querySelector('.knox-badge-icon').textContent = b.earned ? b.icon : '🔒';
+        card.querySelector('b').textContent = b.name;
+        card.querySelector('small').textContent = b.earned ? 'Earned' : b.how;
+        grid.appendChild(card);
+      }
+      sec.append(head, grid);
+      el.appendChild(sec);
+    }
 
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the
