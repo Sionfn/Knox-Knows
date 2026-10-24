@@ -117,6 +117,9 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 /* 🟢 Slime Flame (link your Discord): wobbles like slime and drips. */
 :is(#streakFlame, .knox-flame).flame-slime { display: inline-flex; line-height: 1; }
 .slime-flame { width: 1.05em; height: 1.4em; overflow: visible; vertical-align: -.3em; }
+/* Every flame look draws the same size as the Slime Flame: the Knox flame icon
+   (also the base of Purple, Blue and Golden) is drawn smaller inside its box. */
+:is(#streakFlame, .knox-flame) > .kk-flame { width: 1.5em; height: 1.5em; vertical-align: -.36em; margin: -.1em -.18em; }
 .slime-flame .slime-body { transform-box: fill-box; transform-origin: 50% 100%; animation: slimeWobble 1.8s ease-in-out infinite; }
 .slime-flame .slime-drip { transform-box: fill-box; transform-origin: 50% 0; animation: slimeDrip 2.6s ease-in infinite; }
 .slime-flame .slime-drip-2 { animation-delay: -1.3s; animation-duration: 3.1s; }
