@@ -2701,7 +2701,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       <div class="account-dock">
       <button id="appAccountBtn" onclick="toggleUserDropdown()" aria-label="Account menu">
         <span id="appAccountIcon">?</span>
-        <span class="account-identity"><span id="appAccountName"></span><span id="appAccountPlanBadge">🌱 Free plan</span></span>
+        <span class="account-identity"><span id="appAccountName"></span><span id="appAccountPlanBadge">🪙 Free plan</span></span>
       </button>
       </div>
       <div id="appGuestBtns">
@@ -2719,7 +2719,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <span id="ddAvatar">?</span>
         <div class="dd-identity-copy"><p class="dd-name" id="ddName">—</p><span class="dd-email" id="ddEmail">—</span></div>
       </div>
-      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🌱 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
+      <div class="dd-badges"><span class="dd-badge" id="ddTierBadge">🪙 Free plan</span><span class="dd-badge" id="ddStreakBadge" style="display:none;"></span></div>
       <div id="ddPlan"></div>
     </div>
     <button class="app-dropdown-item" onclick="openAppSettings(); closeUserDropdown()">
@@ -2951,7 +2951,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       <div class="drawer-footer">
         <button id="drawerAccountBtn" onclick="window.openAppSettings();closeMobileHistory();" aria-label="Account and plan">
           <span id="drawerAccountIcon">?</span>
-          <span class="drawer-identity"><span id="drawerAccountName">Your account</span><span id="drawerAccountBadge">🌱 Free plan</span></span>
+          <span class="drawer-identity"><span id="drawerAccountName">Your account</span><span id="drawerAccountBadge">🪙 Free plan</span></span>
           <svg class="drawer-account-gear" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
         </button>
         <div id="drawerGuestBtns">
@@ -3266,8 +3266,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   // How each plan is shown: the ⚡ Knox Plus and 💎 Mega Knox badges.
   const tierName = () => window.userTier === 'mega' ? 'Mega Knox' : window.userTier === 'plus' ? 'Knox Plus' : 'Free';
-  const tierBadge = () => window.userTier === 'mega' ? '💎 Mega Knox' : window.userTier === 'plus' ? '⚡ Knox Plus' : '🌱 Free plan';
+  const tierBadge = () => window.userTier === 'mega' ? '💎 Mega Knox' : window.userTier === 'plus' ? '⚡ Knox Plus' : '🪙 Free plan';
   window.knoxTierName = tierName;
+  window.knoxTierBadge = tierBadge;
   // Early access: new features can check this before Mega Knox members (and
   // Knox Ambassadors, who have Mega) see them first.
   window.knoxEarlyAccess = () => window.userTier === 'mega';
@@ -3348,7 +3349,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
           : planTier(plan) === 'paid'
           ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
-          : { cls: 'free',  icon: '🌱', name: 'Free',      tag: '5 free/day, up to 20 saved' };
+          : { cls: 'free',  icon: '🪙', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
         card.className = 'dd-plan-card dd-plan-' + cfg.cls;
@@ -5366,7 +5367,7 @@ window.openMobileHistory = function() {
     $('drawerAccountName').textContent = ($('appAccountName')?.textContent || '').trim()
       || window.currentUser.displayName || window.currentUser.email || 'Your account';
     const drawerBadge = $('drawerAccountBadge');
-    drawerBadge.textContent = (badge?.textContent || '').trim() || '🌱 Free plan';
+    drawerBadge.textContent = window.knoxTierBadge?.() || '🪙 Free plan';
     drawerBadge.classList.toggle('paid', !!badge?.classList.contains('paid'));
     drawerBadge.classList.toggle('mega', !!badge?.classList.contains('mega'));
   }

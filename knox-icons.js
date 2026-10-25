@@ -71,6 +71,8 @@
     flameBlue: flame('#2BA8F2', '#BDE8FF', '#0A78C2'),
     flameGold: flame('#F2B705', '#FFF1A8', '#B98500'),
     gem: FILL('<path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/>', 'kk-gem'),
+    // The credits coin: the same yellow as the credits dot, with a rim.
+    coin: FILL('<circle cx="12" cy="12" r="9.5" fill="#FFD900" stroke="#B38600" stroke-width="1.8"/><circle cx="12" cy="12" r="6" fill="none" stroke="#E0A100" stroke-width="1.4"/><path d="M12 8.6v6.8" stroke="#B38600" stroke-width="1.8" stroke-linecap="round"/><path d="M7.6 8.4a5.6 5.6 0 0 1 2.6-2.2" stroke="#FFF6B8" stroke-width="1.4" stroke-linecap="round" fill="none"/>', 'kk-coin'),
     bolt: FILL('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/>', 'kk-bolt'),
     shield: FILL('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" fill="#5CC8FA" stroke="#0A85C2" stroke-width="1.8" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>', 'kk-shield'),
     gift: FILL('<rect x="3" y="8" width="18" height="5" rx="1.5" fill="#FF8A2B" stroke="#CC5500" stroke-width="1.6"/><path d="M5 13h14v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5Z" fill="#FF6B00" stroke="#CC5500" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8v13" stroke="#FFD23F" stroke-width="2.4"/><path d="M12 8C10.5 5 8.8 3.5 7.5 3.5a2.2 2.2 0 0 0 0 4.5ZM12 8c1.5-3 3.2-4.5 4.5-4.5a2.2 2.2 0 0 1 0 4.5Z" fill="none" stroke="#CC5500" stroke-width="1.6" stroke-linejoin="round"/>', 'kk-gift'),
@@ -82,7 +84,7 @@
 
   // Emoji → icon name (a trailing variation selector is matched too).
   const MAP = {
-    '🔥': 'flame', '💜': 'flamePurple', '💙': 'flameBlue', '👑': 'crown', '🟡': 'flameGold', '💎': 'gem', '⚡': 'bolt',
+    '🔥': 'flame', '💜': 'flamePurple', '💙': 'flameBlue', '👑': 'crown', '🟡': 'flameGold', '💎': 'gem', '⚡': 'bolt', '🪙': 'coin',
     '🛡': 'shield', '🎁': 'gift', '🎄': 'gift', '🏆': 'trophy', '🌟': 'star', '⭐': 'star', '🎉': 'party',
     '🎓': 'cap', '👍': 'up', '👎': 'down', '📄': 'doc', '📷': 'camera', '📸': 'camera',
     '📐': 'math', '🌿': 'leaf', '🍂': 'leaf', '🍁': 'leaf', '🌍': 'globe', '⚠': 'warn', '🚀': 'rocket',
