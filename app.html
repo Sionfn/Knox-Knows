@@ -28,7 +28,7 @@
     (function() {
       try {
         var v = new URLSearchParams(location.search).get('open');
-        if (v === 'learn' || v === 'calculator' || v === 'flashcards') {
+        if (v === 'learn' || v === 'calculator' || v === 'flashcards' || v === 'notes') {
           var root = document.documentElement;
           root.classList.add('knox-restoring');
           setTimeout(function() { root.classList.remove('knox-restoring'); }, 5000);
@@ -6760,7 +6760,7 @@ if (window.knoxNativeApp) {
 // which would otherwise close it again) but before the loading screen lifts,
 // so the section is already showing when the page appears.
 const openTarget = new URLSearchParams(location.search).get('open');
-if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards') {
+if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards' || openTarget === 'notes') {
   let restored = false;
   window.knoxRestoreSection = async function() {
     if (restored) return;
@@ -6774,6 +6774,7 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
         if (!(await window.openConversation(resume.id))) window.openLearnMode?.();
       } else window.openLearnMode?.();
     }
+    else if (openTarget === 'notes') { if (window.openNotes) window.openNotes(); else window.__knoxOpenNotesWhenReady = true; }
     else if (window.openFlashcards) window.openFlashcards();
     else window.__knoxOpenFlashcardsWhenReady = true; // flashcards.js picks this up when it loads
     document.documentElement.classList.remove('knox-restoring');
@@ -6808,6 +6809,7 @@ window.addEventListener('pagehide', () => {
   const calc = $('calcModal');
   const current = () => {
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
+    if (document.body.classList.contains('knox-notes')) return 'notes';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
   };
@@ -6827,8 +6829,10 @@ window.addEventListener('pagehide', () => {
 
 </script>
 <link rel="stylesheet" href="/flashcards.css">
+<link rel="stylesheet" href="/notes.css">
 <script src="/doc-extract.js"></script>
 <script type="module" src="/flashcards.js"></script>
+<script type="module" src="/notes.js"></script>
 <link rel="stylesheet" href="/support-widget.css">
 <script src="/support-widget.js"></script>
 <script>

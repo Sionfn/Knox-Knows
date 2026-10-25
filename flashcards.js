@@ -592,16 +592,19 @@ function exportView(target){
 function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 function exportData(data){const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.closeCalc?.();/* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
+async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.closeCalc?.();window.closeNotes?.();/* Notes and Flashcards share the Binder: one shows at a time *//* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
  // Bring in decks from the account; redraw the deck list if still on it.
  pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
+// The Binder (notes.js) switches to Notes: close, asking first if a deck has unsaved edits.
+window.closeFlashcards=async()=>{if(dirty&&!(await confirmLeave()))return false;close();return true;};
 // From a finished Learn lesson: open Make with Knox with the lesson filled in.
 window.flashcardsMake=async request=>{if(!canSee())return false;await open();if(panel.hidden)return false;makeOpts.request=String(request||'').slice(0,4000);makeView();return true;};
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
 function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
-const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
-document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span>';b.addEventListener('click',open);nav.append(b);});
+// The sidebar's Binder button: Notes and Flashcards (notes.js picks the tab).
+const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M9 3v18"/><path d="M4 8h3M4 12h3M4 16h3"/><path d="M13 8h4M13 12h4"/></svg></span>';
+document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Binder: notes and flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Binder</span>';b.addEventListener('click',()=>window.openBinder?window.openBinder():open());nav.append(b);});
 // Visibility (see EVERYONE): if Flashcards is ever limited to Knox Plus again, the tab stays hidden until the plan is known to be Knox Plus,
 // and closes if the account changes to one without Knox Plus (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}
