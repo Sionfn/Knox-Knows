@@ -54,29 +54,24 @@ const REWARDS = [
   { id: "w1", name: "Spark",    start: "2026-11-01", end: "2026-11-07", need: 4,
     free: { gives: { bonus: 10 }, label: "+10 bonus questions" },
     plus: { gives: { style: "purple" }, label: "💜 Purple Flame" },
-    mega: { gives: { style: "purple", shields: 1 }, label: "💜 Purple Flame + 🛡️ Flame Shield" },
-    test: "+10 bonus questions + 💜 Purple Flame + 🛡️ Flame Shield" },
+    mega: { gives: { style: "purple", shields: 1 }, label: "💜 Purple Flame + 🛡️ Flame Shield" }, },
   { id: "w2", name: "Kindling", start: "2026-11-08", end: "2026-11-14", need: 4,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
     plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" },
-    mega: { gives: { shields: 2, style: "diamond" }, label: "🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame" },
-    test: "🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame" },
+    mega: { gives: { shields: 2, style: "diamond" }, label: "🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame" }, },
   { id: "w3", name: "Blaze",    start: "2026-11-15", end: "2026-11-21", need: 4,
     free: { gives: { bonus: 10, style: "blue" }, label: "+10 bonus questions + 💙 Blue Flame" },
     plus: { gives: { shields: 1, style: "blue" }, label: "🛡️ Flame Shield + 💙 Blue Flame" },
-    mega: { gives: { shields: 2, style: "blue" }, label: "🛡️🛡️ 2 Flame Shields + 💙 Blue Flame" },
-    test: "+10 bonus questions + 🛡️🛡️ 2 Flame Shields + 💙 Blue Flame" },
+    mega: { gives: { shields: 2, style: "blue" }, label: "🛡️🛡️ 2 Flame Shields + 💙 Blue Flame" }, },
   { id: "w4", name: "Bonfire",  start: "2026-11-22", end: "2026-11-28", need: 3,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
     plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" },
-    mega: { gives: { shields: 3 }, label: "🛡️🛡️🛡️ 3 Flame Shields" },
-    test: "🛡️🛡️🛡️ 3 Flame Shields" },
+    mega: { gives: { shields: 3 }, label: "🛡️🛡️🛡️ 3 Flame Shields" }, },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
     free: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 🟡 Golden Flame" },
     plus: { gives: { megaDays: 14, style: "gold" }, label: "14 days of Mega Knox + 🟡 Golden Flame" },
     // Mega Knox members already have Mega: a week to gift a friend instead.
-    mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" },
-    test: "14 days of Mega Knox + 🎁 a Mega Knox week to gift + 🟡 Golden Flame" },
+    mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" }, },
 ];
 const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond"];
 const GIFT_DAYS = 7;
@@ -105,7 +100,9 @@ function status(data, tester = false) {
     event: EVENT,
     plus,
     tier,
-    rewards: REWARDS.map(({ free, plus: p, mega, test, ...r }) => ({ ...r, label: tester ? test : pick({ free, plus: p, mega }, tier).label, flames: flamesIn(days, r) })),
+    // Always the prizes for the account's own plan — also for the tester, who
+    // switches plans on the preview to try each plan's prizes.
+    rewards: REWARDS.map(({ free, plus: p, mega, ...r }) => ({ ...r, label: pick({ free, plus: p, mega }, tier).label, flames: flamesIn(days, r) })),
     days,
     shielded: Array.isArray(fest.shielded) ? fest.shielded : [],
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
@@ -209,9 +206,9 @@ export default async function handler(req, res) {
       const flames = flamesIn(now.days, reward);
       if (flames < reward.need) return { error: `Light ${reward.need - flames} more flame${reward.need - flames === 1 ? "" : "s"} to unlock this reward.`, code: 403 };
 
-      // The tester gets both versions of every prize, so all of them can be tried.
-      const g = tester ? { ...reward.free.gives, ...reward.plus.gives, ...(reward.mega?.gives || {}) } : pick(reward, now.tier).gives;
-      if (tester && reward.free.gives.style && reward.plus.gives.style && reward.free.gives.style !== reward.plus.gives.style) g.styles = [reward.free.gives.style, reward.plus.gives.style];
+      // The prize for the account's own plan (the tester picks a plan on the
+      // preview to try each plan's prizes; tester mode only lifts the dates).
+      const g = { ...pick(reward, now.tier).gives };
       const fest = data.flameFest && typeof data.flameFest === "object" ? data.flameFest : {};
       const update = { flameFest: { ...fest, claimed: { ...now.claimed, [reward.id]: new Date().toISOString() } } };
       if (g.gift && taken?.exists) return { error: "Flame Fest is busy right now. Please try again.", code: 503 };

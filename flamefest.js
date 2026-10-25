@@ -310,7 +310,7 @@
     const startsToday = today() === START;
     popup(`<div class="ff-pop-flame" aria-hidden="true">🔥</div><h2 id="ffPopTitle">Flame Fest ${startsToday ? 'starts today!' : 'is on!'}</h2>
       <p>All November, every day you study with Knox lights a flame on your calendar.</p>
-      <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userTier === 'mega' ? ' — a Mega Knox week to gift a friend' : ' — a free week of Mega Knox'}</li></ul>`,
+      <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userTier === 'mega' ? ' — a Mega Knox week to gift a friend' : window.userTier === 'plus' ? ' — two free weeks of Mega Knox' : ' — a free week of Mega Knox'}</li></ul>`,
       [{ label: window.currentUser ? 'Open my calendar' : 'Sign in to join', run: () => window.currentUser ? open() : window.openAuthModal?.() }, { label: 'Later' }]);
   }
   let started = false;

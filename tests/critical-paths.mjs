@@ -1269,7 +1269,7 @@ test('Flame Fest rewards: claim only when earned, once; bonus questions, shields
   assert.equal(anon.code, 401);
 });
 
-test('Flame Fest tester mode: admin only; every reward for real before November; miss a day uses a shield', async () => {
+test('Flame Fest tester mode: admin only; their own plan rewards for real before November; miss a day uses a shield', async () => {
   const { db, store } = memoryDb();
   const date = fakeDate('2026-10-13T18:00:00Z');
   store.set('users/u1', { plan: 'free', streakCount: 5, streakLastDay: '2026-10-13' });
@@ -1287,10 +1287,11 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   assert.equal(res.body.days.length, 30);
   for (const id of ['w1', 'w2', 'w3', 'w4', 'month']) assert.equal((await call('POST', { claim: id })).code, 200, id);
   const u = store.get('users/u1');
-  assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'diamond', 'gold', 'purple']);
-  assert.equal(u.flameShields, 8, 'the tester gets the biggest shield prize each week: 1 + 2 + 2 + 3');
+  // On the Free plan the tester gets exactly the Free prizes (switch plans to try the others).
+  assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'gold']);
+  assert.equal(u.flameShields, 2, 'Free: one shield in week 2 and one in week 4');
   assert.ok(u.megaUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Mega Knox week');
-  assert.match(u.flameFest.giftCode, /^[A-Z0-9]{8}$/, 'a gift link too');
+  assert.ok(!u.flameFest.giftCode, 'no gift link on Free');
 
   res = await call('POST', { test: 'miss', localDay: '2026-10-13' });
   assert.equal(res.code, 200);
@@ -1298,13 +1299,22 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   const ask = await load('api/ask.js', { db, fetch: askFetch(), date });
   const r = response(); await ask(askRequest({ question: 'Solve 2x = 8', localDay: '2026-10-13' }), r);
   assert.equal(store.get('users/u1').streakCount, 6, 'the shield kept the streak');
-  assert.equal(store.get('users/u1').flameShields, 7, 'one of the 8 shields used');
+  assert.equal(store.get('users/u1').flameShields, 1, 'one of the 2 shields used');
 
   res = await call('POST', { test: 'reset' });
   assert.equal(res.body.days.length, 0);
   assert.equal(store.get('users/u1').flameShields, 0);
   assert.equal(store.get('users/u1').plusUntil, 0);
   assert.equal(store.get('users/u1').megaUntil, 0);
+
+  // Switching the tester's plan (the preview's plan picker) switches the prizes.
+  store.set('users/u1', { ...store.get('users/u1'), plan: 'max' });
+  res = await call('GET');
+  assert.equal(res.body.rewards.find(r => r.id === 'w2').label, '🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame');
+  await call('POST', { test: 'fill' });
+  res = await call('POST', { claim: 'w2' });
+  assert.equal(res.body.flameStyle, 'diamond');
+  assert.equal(res.body.shields, 2);
 });
 
 test('Flame Fest Plus week counts as Plus; bonus questions survive the daily refill', async () => {
