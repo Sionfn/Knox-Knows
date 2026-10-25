@@ -931,9 +931,10 @@
       #sidebarUpgradeCard .sidebar-extension-copy span, #sidebarUpgradeCard .sidebar-extension-arrow { color: #9A6B00; }
       html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-arrow { color: #FFD45C; }
       /* Knox Plus members: the Mega card takes a turn in the rotating slot instead
-         of its own row, so the chat history gets that room (see knoxSetMega). */
-      .sidebar-promo-rotator > .sidebar-mega-card { font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: #F2B705; background: color-mix(in srgb, #F2B705 14%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #F2B705 60%, transparent); }
-      .sidebar-promo-rotator > .sidebar-mega-card:hover, .sidebar-promo-rotator > .sidebar-mega-card:focus-visible { box-shadow: 0 5px 0 #C99404; }
+         of its own row, so the chat history gets that room (see knoxSetMega).
+         Same gold as the standalone card, also in Fall (harvest.css tints cards blue). */
+      html .sidebar-promo-rotator > .sidebar-mega-card.sidebar-extension-card { font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: #F2B705; background: color-mix(in srgb, #F2B705 14%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #F2B705 60%, transparent); }
+      html .sidebar-promo-rotator > .sidebar-mega-card.sidebar-extension-card:hover, html .sidebar-promo-rotator > .sidebar-mega-card.sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 #C99404; }
       .sidebar-mega-card .plus-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; background: linear-gradient(135deg, #FFD84D, #F2B705); box-shadow: 0 2px 0 #C99404; }
       .sidebar-mega-card .sidebar-extension-copy span, .sidebar-mega-card .sidebar-extension-arrow { color: #9A6B00; }
       html[data-theme="dark"]:not(.knox-seasonal) .sidebar-mega-card .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) .sidebar-mega-card .sidebar-extension-arrow { color: #FFD45C; }
