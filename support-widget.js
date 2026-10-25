@@ -18,9 +18,9 @@
     ['How do I move from Knox Plus to Mega Knox?', 'Tap your profile → <b>Account &amp; Plan</b> → <b>Upgrade to Mega Knox</b>, or open <a href="/about#pricing" target="_blank">Plans</a>.', 'upgrade switch plan plus mega'],
     ['How do I redeem a gift code?', 'Tap your profile → <b>Redeem a code</b>, or go to <a href="/redeem" target="_blank">knoxknowsapp.com/redeem</a>. Gift codes never renew and you’re never charged for them.', 'gift code redeem'],
     ['How do I give Knox as a gift?', 'Tap your profile → <b>Give a gift</b>. Pick Knox Plus or Mega Knox for 1, 3 or 12 months — it’s a one-time payment and the code arrives by email.', 'gift buy present'],
-    ['How many questions do I get on the free plan?', 'You start with 10 questions, and 5 more come back every day (you can save up to 20). A photo or file counts as 2. Knox Plus and Mega Knox are unlimited.', 'free questions limit credits'],
-    ['How does Learn mode work?', 'Learn teaches you step by step instead of handing over the answer: a small piece at a time, with tap-to-answer questions, hints, and a recap at the end. Learn is free with a Knox account.', 'learn mode lesson teach'],
-    ['How do I connect the Knox Discord?', 'Join from the Discord card in the sidebar, then type <b>/link</b> in the server to connect your Knox account — Knox Plus and Mega Knox members get their perks there automatically. Use <b>/ask</b> to ask Knox.', 'discord link server role'],
+    ['How many questions do I get on the free plan?', 'You start with 10 questions, and 5 more come back every day (you can save up to 20). A photo or file counts as 2. Flame Fest rewards can add bonus questions on top. Knox Plus and Mega Knox are unlimited.', 'free questions limit credits'],
+    ['How does Learn mode work?', 'Learn teaches you step by step instead of handing over the answer: a small piece at a time, with tap-to-answer questions, hints, and a recap at the end. On the free plan, starting a lesson uses 1 question and everything after that in the lesson is free. Lessons run up to 20 replies on Free, 30 on Knox Plus and 50 on Mega Knox.', 'learn mode lesson teach'],
+    ['How do I connect the Knox Discord?', 'Join from the Discord card in the sidebar, then type <b>/link</b> in the server to connect your Knox account — Knox Plus and Mega Knox members get their perks there automatically, and you unlock the Slime Flame for your streak. Use <b>/ask</b> to ask Knox or <b>/learn</b> for a step-by-step lesson.', 'discord link server role'],
     ['How do I get the Chrome extension?', 'Get <a href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener">Knox Knows for Chrome</a>, then sign in with the same account to ask Knox from any website.', 'chrome extension browser'],
     ['What is Flame Fest?', 'All November, every day you study lights a flame on your calendar. Hit each week’s goal for rewards and light 20 flames for a free week of Mega Knox. Open it from your 🔥 streak.', 'flame fest streak november rewards'],
     ['Does Knox save my chats?', 'Yes — when you’re signed in, your chats are saved in Recent chats on any device.', 'history chats saved'],
@@ -34,7 +34,7 @@
     ['🙋', 'Talk to a person', 'human'],
   ];
   const ICON = {
-    chat: '<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M4.2 2.6 8 5.3h8l3.8-2.7c.4-.3.9 0 .9.5V6A3.5 3.5 0 0 1 22 8.6v7.2a3.5 3.5 0 0 1-3.5 3.5h-8.3L5.6 22.6c-.5.4-1.1 0-1.1-.6v-2.8A3.5 3.5 0 0 1 2 15.8V8.6A3.5 3.5 0 0 1 3.3 6V3.1c0-.5.5-.8.9-.5z"/><circle cx="7.6" cy="12.3" r="1.55" fill="var(--orange)"/><circle cx="12" cy="12.3" r="1.55" fill="var(--orange)"/><circle cx="16.4" cy="12.3" r="1.55" fill="var(--orange)"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M12 2.8c-5.3 0-9.5 3.7-9.5 8.4 0 2.5 1.2 4.7 3.1 6.2-.2 1.3-.8 2.6-1.8 3.6-.3.3-.1.8.3.8 2 0 3.8-.7 5.1-1.7.9.2 1.8.4 2.8.4 5.3 0 9.5-3.7 9.5-8.3S17.3 2.8 12 2.8Z"/><circle cx="7.8" cy="11.3" r="1.5" fill="var(--orange)"/><circle cx="12" cy="11.3" r="1.5" fill="var(--orange)"/><circle cx="16.2" cy="11.3" r="1.5" fill="var(--orange)"/></svg>',
     down: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
     home: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8.5 15.5q3.5 2.5 7 0" stroke-linecap="round"/></svg>',
     msgs: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-6l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 9h8M8 12.5h5"/></svg>',
@@ -266,10 +266,10 @@
     st.chat = { ...c, messages: [...c.messages, { from: 'user', text, at: Date.now() }] };
     render();
     try {
-      const r = await call({ action: 'say', id: c.id, text });
+      // "Talk to a person" (kind 'human') goes straight to the Knox team.
+      const r = await call({ action: 'say', id: c.id, text, kind });
       if (epoch !== viewEpoch) return;
       st.chat = r.chat; st.action = r.action || null;
-      if (kind === 'human') { st.busy = false; return handoff('human'); }
     } catch (e) {
       if (e.stale || epoch !== viewEpoch) return;
       // Not sent: take the message back out of the thread and put it back in

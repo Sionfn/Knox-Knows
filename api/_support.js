@@ -37,13 +37,14 @@ What you can't do: refund, cancel, change a plan or see card details. Never say 
 
 Knox facts:
 - Plans: Free; Knox Plus $9.99/month or $79.99/year; Mega Knox $12.99/month or $99.99/year. Same AI on every plan. Mega Knox monthly has a 3-day free trial for first-time subscribers.
-- Free plan: starts with 10 questions, 5 more come back each day (save up to 20); a photo or file counts as 2. Plus and Mega are unlimited.
+- Free plan: starts with 10 questions, 5 more come back each day (save up to 20); a photo or file counts as 2. Flame Fest rewards can add bonus questions above 20. Plus and Mega are unlimited.
+- Learn mode: teaches step by step. On Free, starting a lesson uses 1 question and the rest of that lesson is free. Lessons run up to 20 replies on Free, 30 on Plus, 50 on Mega.
 - Cancel: profile → Account & Plan → Manage Billing → cancel. They keep their plan until the end of the time paid for. Cancelling during a free trial means no charge.
 - Refunds: full refund within 7 days of the first payment on a monthly plan, or 14 days on a yearly plan. Purchases made before November 1, 2026 keep a 30-day window. After the window, payments and renewals aren't refundable, but they can cancel anytime. Gift codes are refundable only if not redeemed yet.
 - Upgrade Plus → Mega: profile → Account & Plan → Upgrade to Mega Knox, or Plans on the site.
 - Plan not showing: sign in with the same email used to pay, then refresh; gift plans show after redeeming. If still missing, offer to send it to the team.
 - Gift codes: profile → Give a gift (1, 3 or 12 months, one-time) and profile → Redeem a code (or knoxknowsapp.com/redeem).
-- Discord: join from the Discord card in the sidebar, type /link to connect the account (Plus and Mega perks apply automatically), /ask to ask Knox.
+- Discord: join from the Discord card in the sidebar, type /link to connect the account (Plus and Mega perks apply automatically, and it unlocks the Slime Flame streak look), /ask to ask Knox, /learn for a lesson, /unlink to disconnect (or Account & Plan → Connections).
 - Chrome extension: "Knox Knows" on the Chrome Web Store; sign in with the same account.
 - Delete account: profile → Account & Plan → Delete my account.
 - Flame Fest (November): study each day to light flames; open it from the 🔥 streak.
@@ -87,6 +88,20 @@ async function notifyTeam(db, id, c, headline) {
       body: JSON.stringify({ content: `📬 **${headline}** — ${c.email || c.uid}\n> ${clip((c.messages || []).filter(m => m.from === "user").at(-1)?.text, 300).replace(/\n/g, "\n> ")}\n<${deskUrl}>` }),
     }).catch(() => {}) : null,
   ]);
+}
+
+// Hand a conversation to the Knox team: it waits for them, with a note in the thread.
+async function toTeam(db, ref, kind) {
+  const at = Date.now();
+  const c = await updateChat(db, ref, cur => ({
+    kind, status: "waiting", teamUnread: true, updatedAt: at, solvedAt: null, solvedBy: null,
+    messages: [...(cur.messages || []), { from: "knox", note: true, at,
+      text: kind === "refund"
+        ? "I've sent your refund request to the Knox team. They'll reply right here and by email, usually within a day."
+        : "I've sent this to the Knox team. A person will reply right here and by email, usually within a day." }].slice(-MAX_MESSAGES),
+  }));
+  await notifyTeam(db, ref.id, c, kind === "refund" ? "Refund request" : "Needs a person");
+  return c;
 }
 
 async function knoxReply(c) {
@@ -153,7 +168,9 @@ export default async function support(req, res) {
     const own = await ownChat(body.id);
     if (body.id && !own) return res.status(404).json({ error: "Conversation not found." });
     const withTeam = !!own && isWithTeam(own.c);
-    if (!(await countUse(db, user.uid, withTeam ? "sends" : "chats", withTeam ? SEND_LIMIT : CHAT_LIMIT))) {
+    // "Talk to a person": goes straight to the Knox team, no Knox Support reply.
+    const direct = body.kind === "human" && !withTeam;
+    if (!(await countUse(db, user.uid, withTeam || direct ? "sends" : "chats", withTeam || direct ? SEND_LIMIT : CHAT_LIMIT))) {
       return res.status(429).json({ error: withTeam ? "You've sent a lot of messages today — the Knox team will reply soon." : "That's a lot of messages today. Tap “Talk to the Knox team” and a person will help." });
     }
     const facts = await accountFacts(db, user.uid, user.email);
@@ -187,6 +204,7 @@ export default async function support(req, res) {
       if (own && own.c.status !== "waiting") await notifyTeam(db, ref.id, c, own.c.status === "closed" ? "Wrote again after it was solved" : "New message");
       return res.status(200).json({ chat: forStudent(ref.id, c) });
     }
+    if (direct) return res.status(200).json({ chat: forStudent(ref.id, await toTeam(db, ref, "human")) });
 
     let reply;
     try { reply = await knoxReply(c); }
@@ -205,16 +223,7 @@ export default async function support(req, res) {
     if (!own) return res.status(404).json({ error: "Conversation not found." });
     if (own.c.status === "waiting") return res.status(200).json({ chat: forStudent(own.ref.id, own.c) });
     if (!(await countUse(db, user.uid, "sends", SEND_LIMIT))) return res.status(429).json({ error: "You've sent a lot of messages today — the Knox team will reply soon." });
-    const at = Date.now();
-    const c = await updateChat(db, own.ref, cur => ({
-      kind, status: "waiting", teamUnread: true, updatedAt: at, solvedAt: null, solvedBy: null,
-      messages: [...(cur.messages || []), { from: "knox", note: true, at,
-        text: kind === "refund"
-          ? "I've sent your refund request to the Knox team. They'll reply right here and by email, usually within a day."
-          : "I've sent this to the Knox team. A person will reply right here and by email, usually within a day." }].slice(-MAX_MESSAGES),
-    }));
-    await notifyTeam(db, own.ref.id, c, kind === "refund" ? "Refund request" : "Needs a person");
-    return res.status(200).json({ chat: forStudent(own.ref.id, c) });
+    return res.status(200).json({ chat: forStudent(own.ref.id, await toTeam(db, own.ref, kind)) });
   }
 
   return res.status(400).json({ error: "Unknown action." });

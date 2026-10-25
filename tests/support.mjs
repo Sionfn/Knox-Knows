@@ -339,3 +339,16 @@ test('Knox Support failing still lets the student reach a person', async () => {
   assert.equal(r.body.action, 'human');
   assert.match(r.body.chat.messages.at(-1).text, /trouble/);
 });
+
+test('"Talk to a person" goes straight to the Knox team without a Knox Support reply', async () => {
+  const s = await setup();
+  let aiCalls = 0;
+  s.state.ai = () => { aiCalls++; return 'Hi!'; };
+  const r = await s.call(STUDENT, { action: 'say', text: 'Talk to a person', kind: 'human' });
+  assert.equal(r.code, 200);
+  assert.equal(aiCalls, 0);
+  assert.equal(r.body.chat.status, 'waiting');
+  assert.equal(s.chat(r.body.chat.id).kind, 'human');
+  assert.ok(r.body.chat.messages.at(-1).note);
+  assert.ok(s.state.emails.some(e => /Needs a person/.test(e.subject)));
+});
