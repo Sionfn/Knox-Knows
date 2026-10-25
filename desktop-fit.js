@@ -31,6 +31,8 @@
     window.knoxZoom = z;
     root.style.zoom = z === 1 ? '' : String(z);
     root.style.setProperty('--kz', String(z));
+    // Undoes the zoom for things that must draw at 1x (the thinking dots).
+    root.style.setProperty('--kz-inv', String(Math.round(1000 / z) / 1000));
     // Any scaled (short) desktop window: let pages tighten spacing so the
     // primary call-to-action stays on screen, in light mode too (the light
     // the Fall-mode tip adds height). Spacing only — never logo/text size.
