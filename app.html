@@ -323,20 +323,17 @@
     /* Only the collapsed desktop sidebar shows these (see its rules below);
        hidden everywhere else, including the phone and tablet header. */
     #headerUsageShort, .guest-avatar-btn { display: none; }
-    #headerUsage .usage-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--yellow);
-    }
-    #headerUsage.danger .usage-dot { background: var(--red); }
+    /* The credits coin (🪙, drawn by knox-icons.js) — the same coin as the Free plan. */
+    #headerUsage .usage-dot { display: inline-flex; flex-shrink: 0; line-height: 1; }
+    #headerUsage .usage-dot .kk-ic { width: 17px; height: 17px; }
     #headerUsage.unlimited {
       background: rgba(255,217,0,0.22);
       border-color: rgba(255,217,0,0.55);
     }
-    #headerUsage.unlimited .usage-dot {
-      background: var(--yellow);
-      box-shadow: 0 0 0 3px rgba(255,217,0,0.25);
-    }
+    #headerUsage.unlimited .usage-dot .kk-ic { filter: drop-shadow(0 0 3px rgba(255,217,0,.6)); }
     body.knox-mega #headerUsage.unlimited { color: #8A5A00; }
-    body.knox-mega #headerUsage.unlimited .usage-dot { background: #F2B705; box-shadow: 0 0 0 3px rgba(242,183,5,.3); }
+    body.app-sidebar-collapsed #headerUsage .usage-dot .kk-ic { width: 14px; height: 14px; }
+    #headerUsage.danger .usage-dot .kk-ic { filter: grayscale(1); opacity: .55; } /* almost out */
 
     /* ── Study streak pill ─────────────────────────────────── */
     #streakPill {
@@ -2692,7 +2689,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <span class="sidebar-control-label">day streak</span>
       </button>
       <button id="headerUsage" onclick="openUsageInfo()" title="Tap to see how questions work">
-        <span class="usage-dot"></span>
+        <span class="usage-dot" aria-hidden="true">🪙</span>
         <span id="headerUsageText">10 questions left</span>
         <span id="headerUsageShort" aria-hidden="true">10</span>
       </button>
