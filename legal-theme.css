@@ -87,8 +87,17 @@ html.knox-seasonal .page-hero { background-image:none; }
 html.knox-seasonal .page-hero h1 { text-shadow:none; }
 html.knox-seasonal .page-hero .badge { box-shadow:0 3px 0 #D7BE99; background:#FBE4C6; color:#873D28; border-color:#D99857; }
 html.knox-seasonal :is(.summary-card,.guarantee-card) { filter:none; }
-footer,html[data-theme="dark"] footer { background:var(--lg-hero); color:var(--lg-body); }
-footer :is(p,a),footer .ft-made,footer .ft-made + p,footer .footer-links a[aria-current="page"] { color:var(--lg-muted); }
+/* Footer matches the landing page's in every look: dark, Knox brand on top. */
+footer,html[data-theme="dark"] footer { background:#1a1a1a; color:#aaa; padding:40px 24px 30px; border-top:none; }
+footer .ft-brand { display:inline-flex; align-items:center; gap:10px; margin:0 0 20px; text-decoration:none; }
+footer .ft-brand img { width:40px; height:40px; border-radius:50%; border:2px solid rgba(255,255,255,.2); object-fit:cover; }
+footer .ft-brand span { font-size:18px; font-weight:900; color:#fff; }
+footer .footer-links { display:flex; flex-wrap:wrap; justify-content:center; gap:10px 22px; margin-bottom:0; }
+footer .footer-links a { margin:0; font-size:14px; font-weight:700; color:#aaa; transition:color .15s; }
+footer .footer-links a:hover { color:#fff; text-decoration:none; }
+footer .footer-links a[aria-current="page"] { color:#FF6B00; }
+footer .ft-made { color:#888; font-weight:700; max-width:1100px; margin:26px auto 6px; padding-top:22px; border-top:1px solid #333; }
+footer .ft-made + p { color:#555; }
 
 /* Key details read like Knox's answers in Ask Knox: bold Knox orange (#FF6B00,
    the same in every look). Labels (.highlight, <b>) are plain bold, no pill. */
