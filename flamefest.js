@@ -326,4 +326,6 @@
   if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
 
   window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint };
+  // Flames with a fixed look on the page (e.g. the Discord card's Slime Flame) draw right away.
+  applyFlameStyle();
 })();
