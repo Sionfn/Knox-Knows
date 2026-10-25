@@ -930,6 +930,13 @@
       #sidebarUpgradeCard .plus-icon { background: linear-gradient(135deg, #FFD84D, #F2B705); box-shadow: 0 2px 0 #C99404; }
       #sidebarUpgradeCard .sidebar-extension-copy span, #sidebarUpgradeCard .sidebar-extension-arrow { color: #9A6B00; }
       html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) #sidebarUpgradeCard .sidebar-extension-arrow { color: #FFD45C; }
+      /* Knox Plus members: the Mega card takes a turn in the rotating slot instead
+         of its own row, so the chat history gets that room (see knoxSetMega). */
+      .sidebar-promo-rotator > .sidebar-mega-card { font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: #F2B705; background: color-mix(in srgb, #F2B705 14%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #F2B705 60%, transparent); }
+      .sidebar-promo-rotator > .sidebar-mega-card:hover, .sidebar-promo-rotator > .sidebar-mega-card:focus-visible { box-shadow: 0 5px 0 #C99404; }
+      .sidebar-mega-card .plus-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; background: linear-gradient(135deg, #FFD84D, #F2B705); box-shadow: 0 2px 0 #C99404; }
+      .sidebar-mega-card .sidebar-extension-copy span, .sidebar-mega-card .sidebar-extension-arrow { color: #9A6B00; }
+      html[data-theme="dark"]:not(.knox-seasonal) .sidebar-mega-card .sidebar-extension-copy span, html[data-theme="dark"]:not(.knox-seasonal) .sidebar-mega-card .sidebar-extension-arrow { color: #FFD45C; }
       #sidebarControlsSlot .header-right { flex-direction: column; align-items: stretch; gap: 8px; }
       #sidebarControlsSlot .account-status-row { display: flex; align-items: stretch; gap: 5px; min-width: 0; }
       #sidebarControlsSlot .account-dock { display: flex; align-items: center; gap: 5px; min-width: 0; padding-top: 8px; border-top: 1px solid var(--border); }
@@ -2555,9 +2562,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
             var dot = rot.querySelector('.promo-dots button');
             if (dot) { dot.classList.add('is-active'); dot.setAttribute('aria-current', 'true'); }
           }
-          var cards = Array.prototype.slice.call(rot.querySelectorAll('.sidebar-extension-card'));
-          var dots = Array.prototype.slice.call(rot.querySelectorAll('.promo-dots button'));
-          var i = 0, timer = null;
+          var cards, dots, i = 0, timer = null;
+          function collect() {
+            cards = Array.prototype.slice.call(rot.querySelectorAll('.sidebar-extension-card'));
+            dots = Array.prototype.slice.call(rot.querySelectorAll('.promo-dots button'));
+          }
+          collect();
           function show(n) {
             if (n === i) return;
             var old = cards[i];
@@ -2574,12 +2584,42 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
             if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             timer = setInterval(function() { if (!document.hidden) show((i + 1) % cards.length); }, 6000);
           }
-          dots.forEach(function(d, k) { d.addEventListener('click', function() { show(k); start(); }); });
+          rot.querySelector('.promo-dots').addEventListener('click', function(e) { var k = dots.indexOf(e.target.closest('button')); if (k >= 0) { show(k); start(); } });
           rot.addEventListener('mouseenter', stop);
           rot.addEventListener('mouseleave', start);
           rot.addEventListener('focusin', stop);
           rot.addEventListener('focusout', start);
           rot.knoxShow = show;
+          // Knox Plus members: a Mega Knox card joins the rotation (pitch from
+          // knoxMegaPitch); null takes it out again.
+          rot.knoxSetMega = function(pitch) {
+            var card = rot.querySelector('.sidebar-mega-card'), dot = rot.querySelector('.mega-dot');
+            if (!pitch) {
+              if (!card) return;
+              var wasActive = cards.indexOf(card) === i;
+              card.remove(); dot && dot.remove(); collect();
+              if (wasActive || i >= cards.length) {
+                i = 0;
+                cards.forEach(function(c, k) { c.classList.toggle('is-active', k === 0); c.tabIndex = k === 0 ? 0 : -1; c.setAttribute('aria-hidden', k === 0 ? 'false' : 'true'); });
+                dots.forEach(function(d, k) { d.classList.toggle('is-active', k === 0); d.setAttribute('aria-current', k === 0 ? 'true' : 'false'); });
+              }
+              return;
+            }
+            if (!card) {
+              card = document.createElement('button');
+              card.type = 'button'; card.className = 'sidebar-extension-card sidebar-mega-card'; card.tabIndex = -1; card.setAttribute('aria-hidden', 'true');
+              card.onclick = function() { window.goToPricing && window.goToPricing(); };
+              card.innerHTML = '<span class="plus-icon" aria-hidden="true">💎</span><span class="sidebar-extension-copy"><strong></strong><span></span></span><span class="sidebar-extension-arrow" aria-hidden="true">→</span>';
+              rot.insertBefore(card, rot.querySelector('.promo-dots'));
+              dot = document.createElement('button');
+              dot.type = 'button'; dot.className = 'mega-dot'; dot.setAttribute('aria-label', 'Show the Mega Knox card'); dot.setAttribute('aria-current', 'false');
+              rot.querySelector('.promo-dots').appendChild(dot);
+              collect();
+            }
+            card.querySelector('strong').textContent = pitch.title;
+            card.querySelector('.sidebar-extension-copy span').textContent = pitch.sub;
+            card.setAttribute('aria-label', pitch.title + ' — ' + pitch.sub);
+          };
           start();
         })();
       </script>
@@ -3404,8 +3444,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // users already have what it's selling.
     // Free and Knox Plus members see Mega Knox; the 3-day trial is mentioned
     // only to people who have never subscribed (the trial is first-time only).
+    // Knox Plus members get the Mega card in the rotating slot instead, so
+    // their chat history keeps the room.
+    const inRotation = !!window.currentUser && window.userTier === 'plus';
+    document.getElementById('sidebarPromoRotator')?.knoxSetMega?.(inRotation ? window.knoxMegaPitch() : null);
     if (upgradeCard) {
-      const pitch = window.knoxMegaPitch();
+      const pitch = inRotation ? null : window.knoxMegaPitch();
       upgradeCard.style.display = pitch ? 'block' : 'none';
       if (pitch) {
         document.getElementById('upgradeCardTitle').textContent = pitch.title;
