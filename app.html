@@ -1622,6 +1622,12 @@
     .thinking-dot:nth-child(1) { background: var(--orange); }
     .thinking-dot:nth-child(2) { background: var(--blue); animation-delay: 0.2s; }
     .thinking-dot:nth-child(3) { background: var(--green); animation-delay: 0.4s; }
+    /* Animations turned off on the device (Windows "Animation effects", macOS
+       "Reduce motion"): the dots fade in and out instead of bouncing. */
+    @media (prefers-reduced-motion: reduce) {
+      .thinking-dot { animation-name: thinkingFade; animation-duration: 1.6s !important; animation-iteration-count: infinite !important; animation-timing-function: ease-in-out; }
+      @keyframes thinkingFade { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+    }
     @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
       30% { transform: translateY(calc(-8px * var(--kz, 1))); opacity: 1; }
@@ -2333,9 +2339,11 @@
       #appGuestBtns .header-signup-btn { padding: 8px 11px; font-size: 12px; letter-spacing: 0.02em; }
     }
 
-    /* Reduce motion if requested */
+    /* Reduce motion if requested. Play each animation once: without the
+       iteration count, a looping animation (the thinking dots) shrunk to 0.01ms
+       flickered as fast as the screen redraws on PCs with animations turned off. */
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     }
     /* First paint and account transitions stay covered until auth and the
        account-dependent UI have settled. Never show the guest app briefly. */
