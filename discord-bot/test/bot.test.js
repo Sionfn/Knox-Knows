@@ -557,3 +557,21 @@ test('/ask is Ask Knox: a full answer with the Answer line, follow-ups use a que
   await bot.teachClicked(stranger);
   assert.match(stranger.sent[0].content, /Only the student who asked/);
 });
+
+test('/unlink disconnects the Knox account and takes back the plan roles the bot gave', async () => {
+  const calls = [];
+  const fetch = async (url, options) => { const body = JSON.parse(options.body); calls.push(body); return { ok: true, json: async () => body.action === 'unlink' ? { ok: true, wasLinked: body.discordId === 'amy' } : { results: {} } }; };
+  const plus = new Plus({ config: plusConfig(), fetch });
+  const removed = [];
+  plus.syncRole = async (member, on) => removed.push(['plus', member.id, on]);
+  plus.syncMegaRole = async (member, on) => removed.push(['mega', member.id, on]);
+  const handlers = createHandlers({ config: plusConfig(), limits: null, lessons: null, askKnox: null, plus });
+  const amy = { ...fake({ userId: 'amy' }), member: fakeMember('amy', ['plus']) };
+  await handlers.unlink(amy);
+  assert.deepEqual(calls.at(-1), { action: 'unlink', discordId: 'amy' });
+  assert.match(amy.sent.at(-1).content, /Disconnected/);
+  assert.deepEqual(removed, [['plus', 'amy', false], ['mega', 'amy', false]]);
+  const bob = { ...fake({ userId: 'bob' }), member: fakeMember('bob') };
+  await handlers.unlink(bob);
+  assert.match(bob.sent.at(-1).content, /isn't connected/);
+});

@@ -241,6 +241,18 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     });
   }
 
+  // ── /unlink: disconnect the Knox account ──
+  async function unlink(interaction) {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    let wasLinked;
+    try { wasLinked = await plus.unlink(interaction.user.id); }
+    catch (err) { console.error(err.message); return interaction.editReply("I couldn't reach Knox Knows just now. Please try again in a minute."); }
+    if (!wasLinked) return interaction.editReply("Your Discord isn't connected to a Knox Knows account. Use `/link` to connect one.");
+    // Their plan no longer counts here: take back the roles the bot gave.
+    if (interaction.member) { await plus.syncRole?.(interaction.member, false); await plus.syncMegaRole?.(interaction.member, false); }
+    return interaction.editReply('Disconnected. Your Knox Knows account is no longer linked to this Discord, so your plan perks here and the 🟢 Slime Flame are off. Use `/link` any time to connect again.');
+  }
+
   // ── Check my Plus button ──
   async function checkPlus(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -274,7 +286,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         `• \`/learn\` in <#${config.studyChannelId}>: **Learn mode**. Knox teaches you step by step with hints and questions, so you can do it yourself. **💬 Reply to Knox** (or tap an answer button) to keep going; replies are free. **🏁 End lesson** when you're done.`,
         '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` or `/learn` (with or without a question).',
         `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC; an Ask Knox follow-up is a question) and ${MAX_REPLIES} replies per Learn lesson. Knox Plus: unlimited questions, ${REPLIES_BY_TIER.plus} replies per lesson. Mega Knox: unlimited questions, ${REPLIES_BY_TIER.mega} replies per lesson.`,
-        '• `/link`: connect your Knox Knows account to get your Knox Plus perks here.',
+        '• `/link`: connect your Knox Knows account to get your Knox Plus perks here (and the 🟢 Slime Flame). `/unlink` disconnects it.',
         '',
         'Knox won\'t help during a test or exam, but it\'ll gladly help you study for the next one. More at https://knoxknowsapp.com',
       ].join('\n'),
@@ -296,7 +308,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     });
   }
 
-  return { ask, learn, replyButtonClicked, replySubmitted, choiceClicked, teachClicked, endLesson, link, checkPlus, help };
+  return { ask, learn, replyButtonClicked, replySubmitted, choiceClicked, teachClicked, endLesson, link, unlink, checkPlus, help };
 }
 
 // Why a student can't reply to this lesson, or null if they can.

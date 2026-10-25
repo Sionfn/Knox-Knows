@@ -42,6 +42,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (interaction.isChatInputCommand() && interaction.commandName === 'ask') await handlers.ask(interaction);
     else if (interaction.isChatInputCommand() && interaction.commandName === 'learn') await handlers.learn(interaction);
     else if (interaction.isChatInputCommand() && interaction.commandName === 'link') await handlers.link(interaction);
+    else if (interaction.isChatInputCommand() && interaction.commandName === 'unlink') await handlers.unlink(interaction);
     else if (interaction.isChatInputCommand() && interaction.commandName === 'help') await handlers.help(interaction);
     else if (interaction.isButton() && interaction.customId === 'checkplus') await handlers.checkPlus(interaction);
     else if (interaction.isButton() && interaction.customId.startsWith('reply:')) await handlers.replyButtonClicked(interaction);

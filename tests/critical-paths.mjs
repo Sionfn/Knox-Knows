@@ -1758,6 +1758,25 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
   const again = await asStudent({ code: sign(discordId, later) });
   assert.equal(again.body.slime, false);
   assert.equal(store.get('users/u1').flameStyle, 'classic');
+  // Disconnect from Account & Plan: the link goes both ways, the Slime Flame goes back to classic.
+  store.set('users/u1', { ...store.get('users/u1'), flameStyle: 'slime' });
+  const unlinked = await asStudent({ action: 'unlink' });
+  assert.equal(unlinked.code, 200);
+  assert.ok(!store.get('users/u1').discordId, 'discordId removed');
+  assert.equal(store.get('users/u1').flameStyle, 'classic');
+  assert.equal(store.has('discordAccounts/' + discordId), false);
+  assert.equal((await asBot([discordId])).body.results[discordId].linked, false);
+  assert.equal((await asStudent({ action: 'unlink' })).code, 200, 'unlinking twice is fine');
+  assert.equal((await call({}, { action: 'unlink' })).code, 401);
+  // /unlink in Discord (the bot, with its key) disconnects that Discord account.
+  await asStudent({ code: sign(discordId, later) });
+  const viaBot = await call({ 'x-knox-bot-key': botKey }, { action: 'unlink', discordId });
+  assert.equal(viaBot.body.wasLinked, true);
+  assert.ok(!store.get('users/u1').discordId);
+  assert.equal((await call({ 'x-knox-bot-key': botKey }, { action: 'unlink', discordId })).body.wasLinked, false);
+  assert.equal((await call({ 'x-knox-bot-key': 'wrong' }, { action: 'unlink', discordId })).code, 401);
+  // Link again for the checks below.
+  await asStudent({ code: sign(discordId, later) });
 
   // Mega Knox (plan 'max'), a comped Mega account and a Flame Fest Mega week all show as Mega to the bot.
   for (const data of [{ plan: 'max' }, { comped: true, compedTier: 'mega' }, { plan: 'free', megaUntil: Date.now() + 86400000 }]) {

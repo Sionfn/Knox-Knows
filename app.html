@@ -471,6 +471,20 @@
     #ddAvatar img { width: 100%; height: 100%; object-fit: cover; }
     .dd-identity-copy { min-width: 0; }
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    /* Account & Plan → Connections */
+    .settings-connections { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .conn-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
+    .settings-connections.linked .conn-row { border-color: #A3A9F5; background: color-mix(in srgb, #5865F2 8%, var(--surface)); }
+    .conn-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; background: #5865F2; box-shadow: 0 2px 0 #3C45A5; }
+    .conn-copy { display: flex; flex-direction: column; min-width: 0; flex: 1; text-align: left; }
+    .conn-copy b { font-size: 14px; font-weight: 900; color: var(--text); }
+    .conn-copy small { font-size: 11.5px; font-weight: 700; color: var(--text-light); line-height: 1.35; }
+    .settings-connections.linked .conn-copy small { color: #3F49C0; }
+    html[data-theme="dark"]:not(.knox-seasonal) .settings-connections.linked .conn-copy small { color: #A3A9FF; }
+    .conn-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 var(--border); }
+    .conn-btn:not(.danger) { border-color: #5865F2; background: #5865F2; color: #fff; box-shadow: 0 2px 0 #3C45A5; }
+    .conn-btn.danger:hover { color: var(--red); border-color: var(--danger-border); background: var(--danger-bg); }
+    .conn-btn:disabled { opacity: .6; cursor: default; }
     /* View as (owner only): preview the app as Free / Plus / Mega */
     #ddViewAs { margin: 4px 8px 6px; padding: 10px; border: 2px dashed var(--border); border-radius: 14px; }
     .dd-viewas-title { font-size: 12px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
@@ -4883,6 +4897,31 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.className   = 'plan-badge badge-' + badgeClass;
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
+
+    // Connections: Discord (linked with /link in the Knox server). Shows whether
+    // it's connected and lets the student disconnect or connect it here.
+    const conn = document.createElement('div'); conn.className = 'settings-connections';
+    conn.innerHTML = '<span class="settings-label">Connections</span><div class="conn-row"><span class="conn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span><span class="conn-copy"><b>Discord</b><small class="conn-status">Checking…</small></span><button type="button" class="conn-btn" disabled>…</button></div>';
+    el.appendChild(conn);
+    const connStatus = conn.querySelector('.conn-status'), connBtn = conn.querySelector('.conn-btn');
+    const showConn = linked => {
+      conn.classList.toggle('linked', linked);
+      connStatus.textContent = linked ? '✓ Connected — Discord perks and the 🟢 Slime Flame are on' : 'Not connected — join the Knox Discord and type /link';
+      connBtn.disabled = false;
+      connBtn.textContent = linked ? 'Disconnect' : 'Connect';
+      connBtn.classList.toggle('danger', linked);
+      connBtn.onclick = linked ? async () => {
+        if (!confirm('Disconnect your Discord?\n\nKnox Knows perks in Discord (your plan, its role and unlimited questions) and the 🟢 Slime Flame stop until you type /link in the Knox Discord again.')) return;
+        connBtn.disabled = true; connBtn.textContent = 'Disconnecting…';
+        try {
+          const res = await fetch('/api/discord-link', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + await u.getIdToken() }, body: JSON.stringify({ action: 'unlink' }) });
+          if (!res.ok) throw new Error();
+          showConn(false);
+          window.loadStreak?.(u.uid); // the streak flame goes back to classic
+        } catch (e) { showConn(true); connStatus.textContent = 'Couldn\u2019t disconnect. Please try again.'; }
+      } : () => window.open('https://discord.gg/34mMzXc5zG', '_blank', 'noopener');
+    };
+    getDoc(doc(db, 'users', u.uid)).then(snap => { if (window.currentUser?.uid === u.uid) showConn(!!snap.data()?.discordId); }).catch(() => showConn(false));
 
     // A Stripe customer record is created as soon as someone opens checkout,
     // so free users can have one too: give them billing access AND keep the

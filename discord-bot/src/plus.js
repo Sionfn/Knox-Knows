@@ -53,6 +53,19 @@ export class Plus {
     return results;
   }
 
+  // /unlink: disconnect this Discord account from its Knox account.
+  async unlink(discordId) {
+    const res = await this.fetch(this.statusUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Knox-Bot-Key': this.config.knoxBotKey },
+      body: JSON.stringify({ action: 'unlink', discordId }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) throw new Error(`Unlink failed (${res.status})`);
+    this.cache.delete(discordId);
+    return (await res.json()).wasLinked === true;
+  }
+
   // Website Plus for one person, or null if the website couldn't be reached.
   async isPlus(discordId, options) {
     try { return (await this.statuses([discordId], options))[discordId]?.plus === true; }

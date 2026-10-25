@@ -25,6 +25,9 @@ export const commands = [
     .setName('link')
     .setDescription('Connect your Knox Knows account to get your Knox Plus perks here'),
   new SlashCommandBuilder()
+    .setName('unlink')
+    .setDescription('Disconnect your Knox Knows account from Discord'),
+  new SlashCommandBuilder()
     .setName('help')
     .setDescription('How to use Knox in this server'),
 ].map(command => command.toJSON());

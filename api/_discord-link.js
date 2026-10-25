@@ -6,8 +6,10 @@
 //   Student (signed in, from /app?discord=<code>):
 //     POST { code } with "Authorization: Bearer <Firebase ID token>"
 //     → links the Discord account in the code to this Knox account
+//     POST { action: 'unlink' } → disconnects this account's Discord (and its Slime Flame)
 //   Discord bot (X-Knox-Bot-Key, same key as /api/ask):
 //     POST { action: 'status', discordIds: [...] } → { results: { id: { linked, plus, tier } } }
+//     POST { action: 'unlink', discordId } → /unlink: disconnects that Discord account
 //
 // The bot makes the code: "<discordId>.<expiry seconds>.<signature>", signed
 // with KNOX_BOT_KEY, so nobody can forge a link for someone else's Discord.
@@ -67,6 +69,14 @@ export default async function handler(req, res) {
   try {
     if (req.headers["x-knox-bot-key"] != null) {
       if (!isValidBotKey(req.headers["x-knox-bot-key"])) return res.status(401).json({ error: "Unauthorized" });
+      // /unlink in Discord: the bot disconnects the Discord account that ran it.
+      if (body.action === "unlink") {
+        const id = String(body.discordId || "");
+        if (!DISCORD_ID.test(id)) return res.status(400).json({ error: "Send one Discord ID." });
+        const account = await db.collection("discordAccounts").doc(id).get();
+        if (account.exists) await unlink(account.data().uid, id);
+        return res.status(200).json({ ok: true, wasLinked: account.exists });
+      }
       if (body.action !== "status") return res.status(400).json({ error: "Unknown action." });
       const ids = Array.isArray(body.discordIds) ? body.discordIds : [];
       if (!ids.length || ids.length > 100 || !ids.every(id => DISCORD_ID.test(String(id)))) {
@@ -80,6 +90,14 @@ export default async function handler(req, res) {
     let uid;
     try { uid = (await adminAuth.verifyIdToken(authHeader.slice(7))).uid; }
     catch { return res.status(401).json({ error: "Please sign in again." }); }
+
+    // Disconnect (Account & Plan → Connections): removes the link both ways.
+    // The 🟢 Slime Flame comes from a linked Discord, so it goes back to classic.
+    if (body.action === "unlink") {
+      await unlink(uid);
+      console.log(`✓ Discord unlinked: uid=${uid}`);
+      return res.status(200).json({ ok: true, linked: false });
+    }
 
     const discordId = readLinkCode(body.code);
     if (!discordId) return res.status(400).json({ error: "This link has expired or isn't valid. Run /link in Discord to get a new one." });
@@ -101,6 +119,19 @@ async function status(discordId) {
   if (!user.exists || user.data().discordId !== discordId) return { linked: false, plus: false, tier: "free" };
   const tier = planOf(user.data());
   return { linked: true, plus: tier !== "free", tier };
+}
+
+async function unlink(uid, onlyDiscordId = null) {
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(userRef);
+    const user = snap.exists ? snap.data() : {};
+    if (!user.discordId || (onlyDiscordId && user.discordId !== onlyDiscordId)) return;
+    const accountRef = db.collection("discordAccounts").doc(user.discordId);
+    const account = await tx.get(accountRef);
+    if (account.exists && account.data().uid === uid) tx.delete(accountRef);
+    tx.set(userRef, { discordId: FieldValue.delete(), ...(user.flameStyle === "slime" ? { flameStyle: "classic" } : {}) }, { merge: true });
+  });
 }
 
 async function link(uid, discordId) {
