@@ -11,7 +11,6 @@ import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import discordLink from "./_discord-link.js";
 import testerPlan from "./_tester-plan.js";
 import support from "./_support.js";
-import notes from "./_notes.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -89,8 +88,6 @@ export default async function handler(req, res) {
   if (req.query?.route === "tester-plan") return testerPlan(req, res);
   // Knox Support chat + the team's inbox (see api/_support.js).
   if (req.query?.route === "support") return support(req, res);
-  // The Binder's notes (see api/_notes.js).
-  if (req.query?.route === "notes") return notes(req, res);
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");
