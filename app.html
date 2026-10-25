@@ -1508,12 +1508,16 @@
     .msg-knox-bubble strong { color: var(--orange); font-weight: 800; }
 
     /* THINKING / TYPING */
-    .thinking-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+    /* On short Windows laptops the whole page is zoomed (desktop-fit.js), and
+       Chrome on Windows redraws a bouncing dot under a fractional zoom badly
+       (the dots flicker and smear). The row cancels the zoom so the dots draw
+       at 1x like on a MacBook; sizes times --kz keep them in proportion. */
+    .thinking-row { display: flex; align-items: center; zoom: var(--kz-inv, 1); gap: calc(8px * var(--kz, 1)); padding: calc(8px * var(--kz, 1)) 0; }
+    .msg-knox-bubble > .thinking-row { margin: calc(18px * var(--kz, 1)) calc(20px * var(--kz, 1)); }
     .thinking-dot {
-      width: 10px; height: 10px;
+      width: calc(10px * var(--kz, 1)); height: calc(10px * var(--kz, 1));
       border-radius: 50%;
       animation: bounce 1.2s infinite;
-      will-change: transform, opacity; /* animate on the GPU: keeps bouncing even if the page is busy */
     }
     /* Shown under the dots if a reply is slow (see the ask timers). */
     .thinking-note { font-size: 12.5px; font-weight: 700; color: var(--text-light); margin-top: 2px; }
@@ -1522,7 +1526,7 @@
     .thinking-dot:nth-child(3) { background: var(--green); animation-delay: 0.4s; }
     @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-      30% { transform: translateY(-8px); opacity: 1; }
+      30% { transform: translateY(calc(-8px * var(--kz, 1))); opacity: 1; }
     }
 
     /* FEEDBACK BAR */
