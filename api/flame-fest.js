@@ -10,7 +10,7 @@
 //
 // GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
-// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' } → pick an unlocked flame look
+// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' | 'diamond' } → pick an unlocked flame look
 //   (🟢 Slime Flame: anyone who links their Discord with /link in the Knox server)
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
 //
@@ -47,31 +47,38 @@ const db        = getFirestore();
 
 const EVENT = { name: "Flame Fest", start: FLAME_FEST_START, end: FLAME_FEST_END, claimUntil: "2026-12-07" };
 // free / plus: what each kind of member gets for the same goal.
+// What each plan gets for the same goal: Free gets bonus questions (Plus and
+// Mega are already unlimited), Plus and Mega get more Flame Shields and flame
+// looks, and Mega gets the exclusive 💎 Diamond Flame.
 const REWARDS = [
   { id: "w1", name: "Spark",    start: "2026-11-01", end: "2026-11-07", need: 4,
     free: { gives: { bonus: 10 }, label: "+10 bonus questions" },
     plus: { gives: { style: "purple" }, label: "💜 Purple Flame" },
-    test: "+10 bonus questions + 💜 Purple Flame" },
+    mega: { gives: { style: "purple", shields: 1 }, label: "💜 Purple Flame + 🛡️ Flame Shield" },
+    test: "+10 bonus questions + 💜 Purple Flame + 🛡️ Flame Shield" },
   { id: "w2", name: "Kindling", start: "2026-11-08", end: "2026-11-14", need: 4,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    test: "🛡️ Flame Shield" },
+    plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" },
+    mega: { gives: { shields: 2, style: "diamond" }, label: "🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame" },
+    test: "🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame" },
   { id: "w3", name: "Blaze",    start: "2026-11-15", end: "2026-11-21", need: 4,
     free: { gives: { bonus: 10, style: "blue" }, label: "+10 bonus questions + 💙 Blue Flame" },
     plus: { gives: { shields: 1, style: "blue" }, label: "🛡️ Flame Shield + 💙 Blue Flame" },
-    test: "+10 bonus questions + 🛡️ Flame Shield + 💙 Blue Flame" },
+    mega: { gives: { shields: 2, style: "blue" }, label: "🛡️🛡️ 2 Flame Shields + 💙 Blue Flame" },
+    test: "+10 bonus questions + 🛡️🛡️ 2 Flame Shields + 💙 Blue Flame" },
   { id: "w4", name: "Bonfire",  start: "2026-11-22", end: "2026-11-28", need: 3,
     free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" },
-    test: "🛡️ Flame Shield" },
+    plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" },
+    mega: { gives: { shields: 3 }, label: "🛡️🛡️🛡️ 3 Flame Shields" },
+    test: "🛡️🛡️🛡️ 3 Flame Shields" },
   { id: "month", name: "Phoenix", start: "2026-11-01", end: "2026-11-30", need: 20,
     free: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 🟡 Golden Flame" },
-    plus: { gives: { megaDays: 7, style: "gold" }, label: "7 days of Mega Knox + 🟡 Golden Flame" },
+    plus: { gives: { megaDays: 14, style: "gold" }, label: "14 days of Mega Knox + 🟡 Golden Flame" },
     // Mega Knox members already have Mega: a week to gift a friend instead.
     mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" },
-    test: "7 days of Mega Knox + 🎁 a Mega Knox week to gift + 🟡 Golden Flame" },
+    test: "14 days of Mega Knox + 🎁 a Mega Knox week to gift + 🟡 Golden Flame" },
 ];
-const STYLES = ["classic", "purple", "blue", "gold", "slime"];
+const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond"];
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
 // Flame Fest week still gets the free-member prizes. Mega is plan 'max'.

@@ -28,9 +28,9 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
-  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame' };
+  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame', diamond: '💎 Diamond Flame' };
   // In the flame picker each look shows its real flame instead of an emoji dot.
-  const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame' };
+  const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame', diamond: 'Diamond Flame' };
   const flameOf = look => `<span class="knox-flame"${look ? ` data-look="${look}"` : ''} aria-hidden="true">🔥</span>`;
 
   // ── Data ────────────────────────────────────────────────────────────────
@@ -247,8 +247,8 @@
     if (style) currentStyle = style;
     document.querySelectorAll('#streakFlame, .knox-flame').forEach(el => {
       const look = el.dataset.look || currentStyle;
-      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime');
-      if (['purple', 'blue', 'gold', 'slime'].includes(look)) el.classList.add('flame-' + look);
+      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime', 'flame-diamond');
+      if (['purple', 'blue', 'gold', 'slime', 'diamond'].includes(look)) el.classList.add('flame-' + look);
       // Each copy gets its own gradient id: a shared id breaks when the first copy is hidden.
       if (look === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); }
       else if (el.querySelector('.slime-flame')) el.textContent = '🔥';

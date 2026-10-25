@@ -1287,8 +1287,8 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   assert.equal(res.body.days.length, 30);
   for (const id of ['w1', 'w2', 'w3', 'w4', 'month']) assert.equal((await call('POST', { claim: id })).code, 200, id);
   const u = store.get('users/u1');
-  assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'gold', 'purple']);
-  assert.equal(u.flameShields, 3);
+  assert.deepEqual(plain(u.flameStyles).sort(), ['blue', 'diamond', 'gold', 'purple']);
+  assert.equal(u.flameShields, 8, 'the tester gets the biggest shield prize each week: 1 + 2 + 2 + 3');
   assert.ok(u.megaUntil > Date.parse('2026-10-19T00:00:00Z'), 'a Mega Knox week');
   assert.match(u.flameFest.giftCode, /^[A-Z0-9]{8}$/, 'a gift link too');
 
@@ -1298,7 +1298,7 @@ test('Flame Fest tester mode: admin only; every reward for real before November;
   const ask = await load('api/ask.js', { db, fetch: askFetch(), date });
   const r = response(); await ask(askRequest({ question: 'Solve 2x = 8', localDay: '2026-10-13' }), r);
   assert.equal(store.get('users/u1').streakCount, 6, 'the shield kept the streak');
-  assert.equal(store.get('users/u1').flameShields, 2);
+  assert.equal(store.get('users/u1').flameShields, 7, 'one of the 8 shields used');
 
   res = await call('POST', { test: 'reset' });
   assert.equal(res.body.days.length, 0);
@@ -1323,7 +1323,7 @@ test('Flame Fest Plus week counts as Plus; bonus questions survive the daily ref
   assert.equal(store.get('users/u1/usage/bank').balance, 29, 'a refill never trims bonus questions down to 20');
 });
 
-test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-time link that gives a friend a free Mega week', async () => {
+test('Flame Fest for paid members: each plan has its own prizes — Plus wins two Mega Knox weeks; Mega gets more shields, the Diamond Flame and a week to gift', async () => {
   const { db, store } = memoryDb();
   const now = Date.parse('2026-11-29T12:00:00Z');
   const date = fakeDate('2026-11-29T12:00:00Z');
@@ -1335,7 +1335,8 @@ test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-t
 
   let res = await call(mine);
   assert.equal(res.body.plus, true);
-  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '7 days of Mega Knox + 🟡 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'month').label, '14 days of Mega Knox + 🟡 Golden Flame');
+  assert.equal(res.body.rewards.find(r => r.id === 'w2').label, '🛡️🛡️ 2 Flame Shields');
   res = await call(mine, { claim: 'w1' });
   assert.equal(res.body.flameStyle, 'purple', 'Plus Spark: Purple Flame');
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'no bonus questions for Plus');
@@ -1343,7 +1344,7 @@ test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-t
   assert.equal(res.body.shields, 1, 'Plus Blaze: a Flame Shield instead of questions');
   res = await call(mine, { claim: 'month' });
   assert.equal(res.code, 200);
-  assert.equal(store.get('users/u1').megaUntil, now + 7 * 86400000, 'Plus members try Mega Knox for a week');
+  assert.equal(store.get('users/u1').megaUntil, now + 14 * 86400000, 'Plus members try Mega Knox for two weeks');
   assert.equal(res.body.giftCode, '');
 
   // Mega Knox members (plan 'max') get a week to gift instead.
@@ -1352,6 +1353,12 @@ test('Flame Fest for paid members: Plus wins a Mega Knox week; Mega gets a one-t
   res = await call(mega);
   assert.equal(res.body.tier, 'mega');
   assert.equal(res.body.rewards.find(r => r.id === 'month').label, '🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame');
+  // Mega's own weekly prizes: more shields than Plus, and the exclusive Diamond Flame.
+  assert.equal((await call(mega, { claim: 'w1' })).body.shields, 1, 'Mega Spark: Purple Flame + a shield');
+  res = await call(mega, { claim: 'w2' });
+  assert.equal(res.body.shields, 3);
+  assert.equal(res.body.flameStyle, 'diamond', 'Mega Kindling: the Diamond Flame');
+  assert.equal((await call(mega, { claim: 'w4' })).body.shields, 6, 'Mega Bonfire: 3 shields');
   res = await call(mega, { claim: 'month' });
   const code = res.body.giftCode;
   assert.match(code, /^[A-Z0-9]{8}$/);

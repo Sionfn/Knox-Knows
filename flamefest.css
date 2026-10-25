@@ -138,6 +138,9 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 }
 @media (prefers-reduced-motion: reduce) { .slime-flame .slime-body, .slime-flame .slime-drip { animation: none; } .slime-flame .slime-drip { opacity: 0; } }
 
+/* 💎 Diamond Flame (Mega Knox, Flame Fest week 2): icy, bright and glowing */
+:is(#streakFlame, .knox-flame).flame-diamond { filter: hue-rotate(165deg) saturate(.75) brightness(1.45) contrast(1.05) drop-shadow(0 0 3px rgba(170, 235, 255, .95)) drop-shadow(0 0 1px #fff); }
+
 /* Purple flame (Knox Plus Spark reward) */
 :is(#streakFlame, .knox-flame).flame-purple { filter: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
 
