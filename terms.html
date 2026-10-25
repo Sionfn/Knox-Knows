@@ -59,7 +59,26 @@
 <link rel="stylesheet" href="/hover-steady.css">
 <link rel="stylesheet" href="/legal-theme.css">
 </head>
-<body>
+<body class="page-loading">
+<noscript><style>body.page-loading > * { visibility:visible !important; } #pageLoading { display:none !important; } body.page-loading { overflow:auto; }</style></noscript>
+<div id="pageLoading" role="status" aria-live="polite">
+  <div class="page-loading-content">
+    <img class="page-loading-logo" src="/knox-logo-square.jpg" alt="" aria-hidden="true">
+    <div class="page-loading-title">Knox Knows</div>
+    <div class="page-loading-spinner" aria-hidden="true"></div>
+    <p class="page-loading-status">Getting your study space ready…</p>
+  </div>
+</div>
+<script>
+  // Same as the landing page: the loading screen stays up until the page has
+  // loaded, and for at least 1 second so it doesn't flash on and off.
+  (function () {
+    var t0 = performance.now(), hide = function () { document.body.classList.remove('page-loading'); };
+    var done = function () { setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); };
+    if (document.readyState === 'complete') done(); else window.addEventListener('load', done);
+    setTimeout(hide, 8000); // never stuck behind a slow image or font
+  })();
+</script>
 
 <header>
   <a href="/about" class="logo-link">
