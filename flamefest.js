@@ -73,6 +73,10 @@
     const label = `November ${n}: ${lit ? 'flame lit' : shielded ? 'saved by a Flame Shield' : key < t ? 'no flame' : key === t ? 'today — study to light it' : 'coming up'}`;
     return `<div class="ff-day ${cls}${key === t ? ' is-today' : ''}" role="gridcell" aria-label="${label}"><span class="ff-num">${n}</span><span class="ff-mark" aria-hidden="true">${lit ? '🔥' : shielded ? '🛡️' : ''}</span></div>`;
   }
+  // A prize's flame shows as that flame (the same look the streak would wear),
+  // not as an emoji: "💎 Diamond Flame" → the Diamond Flame itself.
+  const FLAME_EMOJI = { '💜': 'purple', '💙': 'blue', '🟡': 'gold', '💎': 'diamond', '🟢': 'slime' };
+  const giftHtml = label => esc(label).replace(/(💜|💙|🟡|💎|🟢)\s*((?:Purple|Blue|Golden|Diamond|Slime) Flame)/gu, (_, e, name) => flameOf(FLAME_EMOJI[e]) + ' ' + name);
   function rewardRow(r) {
     const claimed = !!state.claimed[r.id], ready = r.flames >= r.need;
     const t = today(), over = r.id !== 'month' && t > r.end && !ready;
@@ -84,7 +88,7 @@
     const when = r.id === 'month' ? 'Light 20 flames in November' : `${r.id === 'w4' ? 'Thanksgiving week · ' : ''}Nov ${Number(r.start.slice(8))}–${Number(r.end.slice(8))} · ${r.need} flames`;
     return `<div class="ff-reward${r.id === 'month' ? ' grand' : ''}${claimed ? ' is-claimed' : ready ? ' is-ready' : ''}">
       <span class="ff-reward-icon" aria-hidden="true">${ICONS[r.id]}</span>
-      <div class="ff-reward-body"><b>${esc(r.name)}${r.id === 'month' ? ' · Grand prize' : ''}</b><span class="ff-reward-gift">${esc(r.label)}</span>
+      <div class="ff-reward-body"><b>${esc(r.name)}${r.id === 'month' ? ' · Grand prize' : ''}</b><span class="ff-reward-gift">${giftHtml(r.label)}</span>
         <span class="ff-reward-when">${when}</span>
         <div class="ff-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${r.need}" aria-valuenow="${Math.min(r.flames, r.need)}" aria-label="${esc(r.name)} progress"><span style="width:${pct}%"></span></div></div>
       <div class="ff-reward-action"><span class="ff-count">${Math.min(r.flames, r.need)}/${r.need}</span>${action}</div>
@@ -116,7 +120,7 @@
       ${myFlame(picker)}
       ${plus}${gift}
       <div class="ff-cal" role="grid" aria-label="November 2026">${grid}</div>
-      <div class="ff-legend" aria-hidden="true"><span>🔥 studied</span><span>🛡️ saved by a shield</span><span class="ff-legend-today">today</span></div>
+      <div class="ff-legend" aria-hidden="true"><span><i class="ff-legend-ic">🔥</i>studied</span><span><i class="ff-legend-ic">🛡️</i>saved by a shield</span><span><i class="ff-legend-today"></i>today</span></div>
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
       ${state.tester ? testerPanel() : testMode && !demo ? testerOff() : ''}
