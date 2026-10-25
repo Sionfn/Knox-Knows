@@ -1026,7 +1026,10 @@
          number, or "Knox Plus") above the profile picture, and give the picture
          the same 34px size as the full sidebar. */
       body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row { display: flex !important; flex-direction: column; align-items: center; width: 100%; }
-      body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row #streakPill { display: none !important; }
+      /* …and the 🔥 streak (with its Flame Fest look) just above it, same size,
+         showing the day count. Only when there's a streak (renderStreak). */
+      body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot .account-status-row #streakPill { order: -1; width: 46px; flex: 0 0 auto; height: 30px; gap: 3px; padding: 0 5px; }
+      body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot #streakCount { display: inline; font-size: 11px; font-weight: 900; line-height: 1; }
       body.app-sidebar-collapsed #sidebarControlsSlot #headerUsage { width: 46px; flex: 0 0 auto; height: 30px; gap: 4px; padding: 0 5px; }
       body.app-sidebar-collapsed #headerUsageShort { display: inline; font-size: 11px; font-weight: 900; line-height: 1; }
       body.app-sidebar-collapsed #sidebarControlsSlot #appAccountBtn { width: 46px; flex: 0 0 52px; height: 52px; padding: 5px; } /* column here: flex-basis is the height */
