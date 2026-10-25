@@ -849,6 +849,10 @@
     .sidebar-history-item .shi-rename + .shi-delete { margin-left: 0; }
     .sidebar-history-item .shi-rename-input { flex: 1; min-width: 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--text); background: var(--surface); border: 2px solid var(--orange); border-radius: 8px; padding: 3px 6px; outline: none; }
     .sidebar-history-item.shi-renaming .shi-delete { display: none; }
+    /* Learn chats: their buttons and rename box wear Learn's purple. */
+    .sidebar-history-item.shi-learn .shi-delete:hover { background: var(--purple-light); color: var(--purple-dark); }
+    html[data-theme="dark"]:not(.knox-seasonal) .sidebar-history-item.shi-learn .shi-delete:hover { color: var(--purple-on-tint); }
+    .sidebar-history-item.shi-learn .shi-rename-input { border-color: var(--purple); }
     /* Touch devices have no hover — show delete buttons by default */
     @media (hover: none) {
       .sidebar-history-item .shi-delete { opacity: 0.6; width: 28px; height: 28px; }
