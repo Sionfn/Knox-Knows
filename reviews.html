@@ -4,7 +4,7 @@
   <script>
     // Same theme as the landing page and app (localStorage 'knoxTheme'), set
     // before first paint so dark-mode users don't get a white flash.
-    (function(){try{var t=localStorage.getItem('knoxTheme'),mo=new Date().getMonth();if(t==='seasonal'&&(mo<8||mo>10))t='light';if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('knoxTheme'),mo=new Date().getMonth();if(t==='seasonal'&&(mo<8||mo>10))t='light';if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');document.documentElement.style.backgroundColor=t==='seasonal'?'#FBF3E5':t==='dark'?'#120E17':'#FFF9F1';}catch(e){}})();
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +26,8 @@
     .logo-text { font-weight:900; font-size:18px; color:white; letter-spacing:-0.01em; }
     .back-btn { display:inline-flex; align-items:center; gap:7px; background:white; border:none; border-radius:12px; padding:9px 18px; font-size:13px; font-weight:800; color:#FF6B00; text-decoration:none; box-shadow:0 3px 0 #CC5500; transition:all 0.15s; font-family:inherit; cursor:pointer; }
     .back-btn:hover { transform:translateY(-2px); box-shadow:0 5px 0 #CC5500; }
-    .page-hero { background:#1a1a1a; padding:56px 24px 48px; text-align:center; border-bottom:4px solid #FF6B00; }
+    /* No dark banner while legal-theme.css loads: the page color (set by the theme script) shows instead. */
+    .page-hero { background:transparent; padding:56px 24px 48px; text-align:center; border-bottom:4px solid #FF6B00; }
     .page-hero .badge { display:inline-flex; align-items:center; gap:7px; background:rgba(255,107,0,0.15); border:2px solid #FF6B00; border-radius:999px; padding:6px 16px; font-size:13px; font-weight:800; color:#FF6B00; margin-bottom:18px; }
     .page-hero h1 { font-size:clamp(30px,5.5vw,52px); font-weight:900; color:white; letter-spacing:-0.02em; line-height:1.1; }
     .page-hero h1 span { color:#FF6B00; }
