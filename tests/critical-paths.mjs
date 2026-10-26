@@ -414,7 +414,10 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /must not contain the result or the full explanation/);
   // The app's Learn buttons: choices, step progress and the end-of-lesson recap.
   assert.match(system, /Choices: option \| option \| option/);
-  assert.match(system, /Progress: 2\/4/);
+  assert.match(system, /Progress: 1\/3/);
+  assert.match(system, /Hints, retries and explanations stay in the same part/);
+  assert.match(system, /ask exactly 3, one at a time/);
+  assert.match(system, /Never add compulsory bonus questions/);
   assert.match(system, /Recap: what they learned/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
   const userText = requests[0].messages.findLast(m => m.role === 'user').content.find(part => part.type === 'text').text;

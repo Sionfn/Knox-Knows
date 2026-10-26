@@ -88,7 +88,7 @@ test('Learn extras: choice buttons, step dots and help chips; the marker lines a
   const html = context.renderAnswerHtml('Leaves are green because of a pigment. Do you know its name?\nProgress: 1/3\nChoices: chlorophyll | melanin | carotene', 'learn');
   assert.equal((html.match(/class="learn-choice"/g) || []).length, 3);
   assert.match(html, /data-learn-send="chlorophyll"/);
-  assert.match(html, /aria-label="Step 1 of 3"/);
+  assert.match(html, /aria-label="Part 1 of 3\. A part can include a question and hints\."/);
   assert.match(html, /Your turn/, 'the label still sees the question at the end');
   // Help fits the question: a tap-to-answer question gets just a hint ...
   assert.match(html, /Hint/);
@@ -118,6 +118,16 @@ test('Learn recap: lesson-complete card with practice, flashcards and new-topic 
   assert.match(html, /data-learn-new/);
   assert.doesNotMatch(html, /Recap:|Watch out: The|Topic:/);
   assert.doesNotMatch(html, /I’m stuck/, 'no help chips once the lesson is done');
+});
+
+test('Learn completion removes numeric progress and leaves extra practice optional', () => {
+  const html = context.renderAnswerHtml('Yes, you finished the three questions.\nProgress: 3/3\nRecap: You can solve two-step equations.\nTopic: Equations', 'learn');
+  assert.match(html, /Lesson complete/);
+  assert.doesNotMatch(html, /learn-progress|Part 3\/3|Your turn/);
+  assert.match(html, /Practice 3 more/);
+  const retry = context.renderAnswerHtml('Not quite. What is 11 minus 3?\nProgress: 1/3', 'learn');
+  assert.match(retry, /Part 1 of 3/);
+  assert.match(retry, /Not quite/);
 });
 
 test('Learn buttons keep quotes inside their attribute (no injected handlers)', () => {

@@ -2,7 +2,7 @@
 // cards (see renderAnswerHtml in app.html). Discord can't show those, so this
 // turns them into Discord formatting instead of leaving them as raw text:
 //   Choices: a | b | c   → tap-to-answer buttons (returned as `choices`)
-//   Progress: 2/4        → "Step 2 of 4 ●●○○"
+//   Progress: 2/4        → "Part 2 of 4 ●●○○" (lesson parts, like the website; hidden once it's finished)
 //   Key idea: …          → a 🧠 quote block
 //   Recap / Watch out / Topic → a 🎉 "What you learned" section
 //   Video: …             → a YouTube search link
@@ -40,7 +40,7 @@ const blockquote = s => '> ' + s.replace(/\n/g, '\n> ');
 export function formatLearn(raw) {
   const x = parseLearn(raw);
   const parts = [];
-  if (x.progress) parts.push(`-# Step ${x.progress.n} of ${x.progress.total}  ${'●'.repeat(x.progress.n)}${'○'.repeat(x.progress.total - x.progress.n)}`);
+  if (x.progress && !x.recap) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${'●'.repeat(x.progress.n)}${'○'.repeat(x.progress.total - x.progress.n)}`);
   if (x.body) parts.push(x.body);
   if (x.keyIdea) parts.push(blockquote(`🧠 **Key idea:** ${x.keyIdea}`));
   if (x.graph) parts.push(`📈 **Try graphing:** \`${x.graph.replace(/`/g, '')}\``);

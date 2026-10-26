@@ -1447,9 +1447,10 @@
     }
 
     .msg-knox-bubble {
+      position: relative;
       background: var(--surface);
       border: 2px solid var(--border);
-      border-left: 4px solid var(--orange);
+      --knox-stripe: var(--orange);
       border-radius: 6px 20px 20px 20px;
       padding: 0;
       font-size: 15px; font-weight: 500;
@@ -1458,6 +1459,16 @@
       box-shadow: 0 4px 0 var(--border);
       word-wrap: break-word;
       overflow-wrap: break-word;
+    }
+    .msg-knox-bubble::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      /* This layer sits INSIDE the 2px border: its radii must be 2px
+         smaller, or the different curves leave a surface-colored seam. */
+      border-radius: 4px 18px 18px 18px;
+      box-shadow: inset 4px 0 0 var(--knox-stripe);
+      pointer-events: none;
     }
     .msg-knox-bubble > .thinking-row,
     .msg-knox-bubble > p,
@@ -1526,7 +1537,7 @@
       .learn-graph .lg-curves path { stroke-width: 4.5; }
     }
     /* Learn mode thinking: purple stripe (the dots keep Knox's colors) */
-    .learn-thinking .msg-knox-bubble { border-left-color: var(--purple); }
+    .learn-thinking .msg-knox-bubble { --knox-stripe: var(--purple); }
 
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
@@ -1632,7 +1643,7 @@
     html[data-theme="dark"] .msg-knox-bubble strong { color: #74D4FF; }
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
-    .msg-knox-bubble:has(> .knox-response-heading.learn) { border-left-color: var(--purple); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
     html[data-theme="dark"] .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple); }
 
@@ -5968,6 +5979,33 @@ if (_ci) {
 }
 
 // ── Ask Knox ─────────────────────────────────────────────────
+// Keep the opening goal and teaching plan in long Learn lessons, even after
+// the rolling chat window drops them. Stored only for this tab/account/session.
+function buildStudyHistory(conversation, uid, sessionId, learn, storage) {
+  const valid = m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string' && m.content.length <= 24000;
+  let anchor = [];
+  if (learn && uid && sessionId) {
+    try {
+      const saved = JSON.parse(storage.getItem('knoxLearnOutline') || 'null');
+      if (saved?.uid === uid && saved?.sessionId === sessionId && Array.isArray(saved.messages)) anchor = saved.messages.filter(valid).slice(0, 2);
+      if (!anchor.length && conversation.length >= 2 && conversation[0]?.role === 'user' && conversation[1]?.role === 'assistant' && conversation.slice(0, 2).every(valid)) {
+        anchor = conversation.slice(0, 2).map(({ role, content }) => ({ role, content }));
+        storage.setItem('knoxLearnOutline', JSON.stringify({ uid, sessionId, messages: anchor }));
+      }
+    } catch { /* Storage being unavailable must not block a lesson. */ }
+  }
+  const history = [];
+  let chars = anchor.reduce((n, m) => n + m.content.length, 0);
+  const includesOpening = anchor.length && anchor.every((a, i) => conversation[i]?.role === a.role && conversation[i]?.content === a.content);
+  const recent = includesOpening ? conversation.slice(anchor.length) : conversation;
+  for (const m of recent.slice(-(30 - anchor.length)).reverse()) {
+    if (!valid(m)) continue;
+    if (chars + m.content.length > 120000) break;
+    history.unshift({ role: m.role, content: m.content }); chars += m.content.length;
+  }
+  return [...anchor, ...history];
+}
+
 window.appHandleAsk = async function() {
   if (window._appAskBusy) return;
   const input = $('appChatInput');
@@ -6011,20 +6049,9 @@ window.appHandleAsk = async function() {
   // "Keep going · 1 credit" after a Learn session ran out (see learnKeepGoing).
   const renewLearn = window._appRenewLearn === true;
   window._appRenewLearn = false;
-  const requestHistory = [];
-  let historyChars = 0;
-  // Walk newest→oldest, keep everything that still fits.
-  // Previously `break` on any oversize condition — including a single
-  // message over 24k chars — silently dropped ALL older context after
-  // hitting one long paste. `continue` instead so a single long message
-  // is skipped but earlier smaller messages still make it into the
-  // request, and Knox keeps its conversation memory.
-  for (const m of window._conversation.slice(-30).reverse()) {
-    if (m.content.length > 24000) continue;
-    if (historyChars + m.content.length > 120000) break;
-    requestHistory.unshift({ role: m.role, content: m.content });
-    historyChars += m.content.length;
-  }
+  let lessonStorage;
+  try { lessonStorage = sessionStorage; } catch { lessonStorage = { getItem() {}, setItem() {} }; }
+  const requestHistory = buildStudyHistory(window._conversation, requestUid, requestLearnSessionId, requestLearnMode, lessonStorage);
 
   const sendBtn = $('appSendBtn');
   if (sendBtn) sendBtn.disabled = true;
@@ -6515,9 +6542,9 @@ function learnHeadingHtml(text, progress, finished) {
   } else if (/\?\s*$/.test(t)) {
     icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
-  const dots = progress ? '<span class="learn-progress" role="img" aria-label="Step ' + progress.n + ' of ' + progress.total + '">' +
+  const dots = progress && !finished ? '<span class="learn-progress" role="img" aria-label="Part ' + progress.n + ' of ' + progress.total + '. A part can include a question and hints.">' +
     Array.from({ length: progress.total }, (_, i) => '<i class="' + (i < progress.n - 1 ? 'done' : i === progress.n - 1 ? 'now' : '') + '"></i>').join('') +
-    '<b>' + progress.n + '/' + progress.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
+    '<b>Part ' + progress.n + '/' + progress.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
   return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + dots + '</div>';
 }
 

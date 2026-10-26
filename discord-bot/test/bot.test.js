@@ -497,7 +497,7 @@ test('Learn marker lines become Discord formatting, and Choices become tap-to-an
   const { formatLearn } = await import('../src/learn-format.js');
   const f = formatLearn('Subtract 5 from both sides first.\n**Key idea:** Do the same thing to both sides.\nProgress: 2/4\nGraph: y = 3x + 5\nVideo: two step equations khan academy\n- **Choices:** 3x = 15 | 3x = 25 | x = 15');
   assert.doesNotMatch(f.text, /Choices:|Progress:|Graph:|Video:|^Key idea:/m, 'no raw marker lines');
-  assert.match(f.text, /^-# Step 2 of 4  ●●○○/);
+  assert.match(f.text, /^-# Part 2 of 4  ●●○○/);
   assert.match(f.text, /> 🧠 \*\*Key idea:\*\* Do the same thing to both sides\./);
   assert.match(f.text, /📈 \*\*Try graphing:\*\* `y = 3x \+ 5`/);
   assert.match(f.text, /youtube\.com\/results\?search_query=two%20step%20equations/);
