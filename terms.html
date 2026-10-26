@@ -88,13 +88,8 @@
       if (url.origin !== location.origin || (url.pathname === location.pathname && url.hash)) return;
       document.body.classList.add('page-loading');
     });
-    // Coming back with the browser's Back button: the loading screen again, for
-    // at least 1 second, like a normal visit.
-    window.addEventListener('pageshow', function (e) {
-      if (!e.persisted) return;
-      document.body.classList.add('page-loading');
-      setTimeout(hide, 1000);
-    });
+    // Coming back with the browser's Back button shows the page, not the loader.
+    window.addEventListener('pageshow', function (e) { if (e.persisted) hide(); });
   })();
 </script>
 
