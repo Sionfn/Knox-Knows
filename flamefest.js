@@ -136,6 +136,7 @@
       <div class="ff-tester-row">
         <button type="button" class="ff-claim" data-test="fill">🔥 Light every flame</button>
         <button type="button" class="ff-pop-later" data-test="miss"${state.shields ? '' : ' disabled title="Claim a reward with a Flame Shield first"'}>🛡️ Miss a day</button>
+        <button type="button" class="ff-pop-later" data-test="slime"${(state.flameStyles || []).includes('slime') ? ' disabled title="You already have the Slime Flame"' : ''}>${flameOf('slime')} Slime Flame</button>
         <button type="button" class="ff-pop-later" data-test="reset">↺ Reset</button>
       </div>
       <span class="ff-tester-tip">Miss a day pretends you skipped yesterday — ask Knox anything and watch a shield save your streak.</span></div>`;
@@ -154,6 +155,7 @@
       window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid);
       toast(kind === 'fill' ? '🔥 Every flame is lit — claim your rewards!'
         : kind === 'miss' ? '🛡️ Yesterday is now “missed”. Ask Knox something to use a shield.'
+        : kind === 'slime' ? 'Slime Flame unlocked and on — like linking Discord.'
         : '↺ Flame Fest reset.');
     } catch (e) { btn.disabled = false; toast(e.message); }
   }

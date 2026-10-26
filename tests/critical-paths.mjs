@@ -1301,6 +1301,11 @@ test('Flame Fest tester mode: admin only; their own plan rewards for real before
   assert.equal(store.get('users/u1').streakCount, 6, 'the shield kept the streak');
   assert.equal(store.get('users/u1').flameShields, 1, 'one of the 2 shields used');
 
+  // The preview's test accounts can't /link Discord: the tester unlocks the Slime Flame directly.
+  res = await call('POST', { test: 'slime' });
+  assert.ok(res.body.flameStyles.includes('slime'));
+  assert.equal(res.body.flameStyle, 'slime');
+
   res = await call('POST', { test: 'reset' });
   assert.equal(res.body.days.length, 0);
   assert.equal(store.get('users/u1').flameShields, 0);

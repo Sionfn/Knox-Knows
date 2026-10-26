@@ -165,6 +165,10 @@ export default async function handler(req, res) {
           // Last studied two days ago → yesterday was missed. The next question
           // (or Flashcards review) spends one shield and keeps the streak.
           update = { streakLastDay: addDays(today, -2), streakCount: Math.max(1, Number(data.streakCount) || 0) };
+        } else if (body.test === "slime") {
+          // The Slime Flame without Discord (the preview's test accounts can't
+          // /link): unlock it and turn it on, like linking does.
+          update = { flameStyles: [...new Set([...(Array.isArray(data.flameStyles) ? data.flameStyles : []), "slime"])], flameStyle: "slime" };
         } else if (body.test === "reset") {
           update = { flameFest: {}, flameShields: 0, flameStyles: [], flameStyle: "classic", plusUntil: 0, megaUntil: 0 };
         } else return { error: "Unknown test." };
