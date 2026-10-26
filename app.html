@@ -905,9 +905,14 @@
     .sidebar-discord-card:hover, .sidebar-discord-card:focus-visible { box-shadow: 0 3px 0 var(--discord); }
     .sidebar-discord-card .discord-icon { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--discord); color: #fff; box-shadow: 0 2px 0 #3C45A5; }
     .sidebar-discord-card .sidebar-extension-copy span, .sidebar-discord-card .sidebar-extension-arrow { color: var(--discord); }
-    .sidebar-discord-card .knox-flame { vertical-align: -.35em; }
+    /* "Free Slime Flame" badge on the Discord card's top edge, like the plans' savings badges. */
+    .sidebar-discord-card { position: relative; }
+    .discord-slime-badge { position: absolute; top: -12px; right: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 5px; border-radius: 999px; background: linear-gradient(135deg, #7BE33A, #46A302); color: #fff; border: 2px solid var(--surface); box-shadow: 0 2px 0 #2F7A00; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; pointer-events: none; animation: slimeBadgeBob 2.4s ease-in-out infinite; }
+    .discord-slime-badge .knox-flame { font-size: 12px; line-height: 1; }
+    @keyframes slimeBadgeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    @media (prefers-reduced-motion: reduce) { .discord-slime-badge { animation: none; } }
     html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-copy span, html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-arrow { color: #8C95FF; }
-    #mobileHistoryDrawer .sidebar-discord-card { margin-bottom: 0; }
+    #mobileHistoryDrawer .sidebar-discord-card { margin-bottom: 0; margin-top: 18px; }
     .sidebar-control-label { display: none; }
     .account-status-row, .account-dock { display: contents; }
     #sidebarSettingsBtn, #appAccountPlanBadge { display: none; }
@@ -925,7 +930,7 @@
       .sidebar-promo-rotator > .sidebar-extension-card:hover, .sidebar-promo-rotator > .sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 var(--blue); }
       .sidebar-promo-rotator > .sidebar-discord-card:hover, .sidebar-promo-rotator > .sidebar-discord-card:focus-visible { box-shadow: 0 5px 0 var(--discord); }
       /* One slot, two cards stacked; the active one slides up into place. */
-      .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 0 10px 7px; }
+      .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 12px 10px 7px; } /* room for the Discord card's badge */
       .sidebar-promo-rotator > .sidebar-extension-card { position: absolute; top: 0; left: 0; right: 0; margin: 0; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .15s; }
       .sidebar-promo-rotator > .sidebar-extension-card.is-active { opacity: 1; transform: none; pointer-events: auto; }
       .sidebar-promo-rotator > .sidebar-extension-card.is-leaving { opacity: 0; transform: translateY(-12px); }
@@ -1446,29 +1451,22 @@
       text-transform: uppercase; letter-spacing: 0.06em;
     }
 
+    /* Knox's replies are outlined in their section's color all the way
+       around — orange in Ask Knox, purple in Learn — with a darker ledge. */
     .msg-knox-bubble {
+      --knox-stripe: var(--orange);
+      --knox-ledge: var(--orange-dark);
       position: relative;
       background: var(--surface);
-      border: 2px solid var(--border);
-      --knox-stripe: var(--orange);
+      border: 2px solid var(--knox-stripe);
       border-radius: 6px 20px 20px 20px;
       padding: 0;
       font-size: 15px; font-weight: 500;
       line-height: 1.65;
       color: var(--text);
-      box-shadow: 0 4px 0 var(--border);
+      box-shadow: 0 4px 0 var(--knox-ledge);
       word-wrap: break-word;
       overflow-wrap: break-word;
-    }
-    .msg-knox-bubble::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      /* This layer sits INSIDE the 2px border: its radii must be 2px
-         smaller, or the different curves leave a surface-colored seam. */
-      border-radius: 4px 18px 18px 18px;
-      box-shadow: inset 4px 0 0 var(--knox-stripe);
-      pointer-events: none;
     }
     .msg-knox-bubble > .thinking-row,
     .msg-knox-bubble > p,
@@ -1526,7 +1524,9 @@
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-dark); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
-    .learn-question code { padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--purple) 10%, var(--surface)); color: var(--purple-dark); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+    .learn-question code { padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--purple) 10%, var(--surface)); color: var(--purple-dark); box-decoration-break: clone; -webkit-box-decoration-break: clone;
+      /* Equations in Knox's own font, like Ask Knox — not a code font. */
+      font-family: inherit; font-size: 1em; font-weight: 800; letter-spacing: 0; }
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
     html[data-theme="dark"]:not(.knox-seasonal) .learn-question code { color: var(--purple-on-tint); }
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
@@ -1551,7 +1551,7 @@
       .learn-graph .lg-curves path { stroke-width: 4.5; }
     }
     /* Learn mode thinking: purple stripe (the dots keep Knox's colors) */
-    .learn-thinking .msg-knox-bubble { --knox-stripe: var(--purple); }
+    .learn-thinking .msg-knox-bubble { --knox-stripe: var(--purple); --knox-ledge: var(--purple-dark); }
 
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
@@ -1657,7 +1657,7 @@
     html[data-theme="dark"] .msg-knox-bubble strong { color: #74D4FF; }
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
-    .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); --knox-ledge: var(--purple-dark); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-on-tint); }
 
@@ -2574,7 +2574,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         </button>
         <a class="sidebar-extension-card sidebar-discord-card" tabindex="-1" aria-hidden="true" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — get the free Slime Flame and become a Knox Ambassador" onclick="window.knoxFlameFest?.discordHint()">
           <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
-          <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Get the free <span class="knox-flame" data-look="slime" aria-hidden="true">🔥</span> Slime Flame</span></span>
+          <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Join, then type /link to unlock it</span></span><span class="discord-slime-badge"><span class="knox-flame" data-look="slime" aria-hidden="true">🔥</span>Free Slime Flame</span>
           <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
         </a>
         <a class="sidebar-extension-card" tabindex="-1" aria-hidden="true" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
@@ -2963,7 +2963,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       <script>if (!window.knoxFlameFestWindow()) document.getElementById('mobileFlameCard')?.remove();</script>
             <a class="sidebar-extension-card sidebar-discord-card" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer" aria-label="Join the Knox Discord — get the free Slime Flame and become a Knox Ambassador" onclick="window.knoxFlameFest?.discordHint()">
         <span class="discord-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg></span>
-        <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Get the free <span class="knox-flame" data-look="slime" aria-hidden="true">🔥</span> Slime Flame</span></span>
+        <span class="sidebar-extension-copy"><strong>Join the Knox Discord</strong><span>Join, then type /link to unlock it</span></span><span class="discord-slime-badge"><span class="knox-flame" data-look="slime" aria-hidden="true">🔥</span>Free Slime Flame</span>
         <span class="sidebar-extension-arrow" aria-hidden="true">↗</span>
       </a>
       <a class="sidebar-extension-card" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer" aria-label="Get the Knox Knows Chrome extension from the Chrome Web Store">
