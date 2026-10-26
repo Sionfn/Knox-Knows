@@ -1794,7 +1794,10 @@
     }
     .usage-info-next strong { color: var(--orange); }
     .usage-info-card > p { font-size: 14px; font-weight: 600; color: var(--text-light); line-height: 1.55; margin-bottom: 10px; }
-    .usage-info-fine { font-size: 12.5px !important; color: var(--text-light) !important; }
+    .usage-info-fine { font-size: 12.5px !important; color: var(--text-light) !important; margin: 14px 0 0 !important; line-height: 1.45 !important; }
+    /* The gold gem would vanish into the gold button: give it a white face. */
+    .usage-info-upgrade.mega .kk-gem path:first-child { fill: #FFFFFF; }
+    .usage-info-upgrade.mega .kk-ic { width: 1.25em; height: 1.25em; vertical-align: -0.25em; margin-right: 2px; }
     .usage-info-divider { height: 1.5px; background: var(--border); margin: 16px 0; }
     .usage-info-card ul {
       text-align: left;
