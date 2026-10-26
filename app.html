@@ -1447,18 +1447,29 @@
     }
 
     .msg-knox-bubble {
+      --knox-stripe: var(--orange);
+      position: relative;
       background: var(--surface);
       border: 2px solid var(--border);
-      border-left: 4px solid var(--orange);
+      border-left: 4px solid var(--knox-stripe);
       border-radius: 6px 20px 20px 20px;
       padding: 0;
       font-size: 15px; font-weight: 500;
       line-height: 1.65;
       color: var(--text);
-      box-shadow: 0 4px 0 var(--border);
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
+    /* The ledge under the bubble: beige, with the left stripe's color running
+       down into its corner (a box-shadow can only be one color). */
+    .msg-knox-bubble::before {
+      content: ''; position: absolute; z-index: -1; pointer-events: none;
+      top: -2px; right: -2px; bottom: -6px; left: -4px;
+      border-radius: inherit;
+      background: linear-gradient(to right, var(--knox-stripe) 4px, var(--border) 4px);
+    }
+    /* The ledge sits behind the bubble but in front of the chat background. */
+    :has(> .msg-knox-bubble) { isolation: isolate; }
     .msg-knox-bubble > .thinking-row,
     .msg-knox-bubble > p,
     .msg-knox-bubble > .limit-card { margin: 18px 20px; }
@@ -1526,7 +1537,7 @@
       .learn-graph .lg-curves path { stroke-width: 4.5; }
     }
     /* Learn mode thinking: purple stripe (the dots keep Knox's colors) */
-    .learn-thinking .msg-knox-bubble { border-left-color: var(--purple); }
+    .learn-thinking .msg-knox-bubble { --knox-stripe: var(--purple); }
 
     .learn-help, .learn-recap-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
     .learn-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border);
@@ -1632,7 +1643,7 @@
     html[data-theme="dark"] .msg-knox-bubble strong { color: #74D4FF; }
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
-    .msg-knox-bubble:has(> .knox-response-heading.learn) { border-left-color: var(--purple); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
     html[data-theme="dark"] .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple); }
 
