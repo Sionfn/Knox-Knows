@@ -9,10 +9,10 @@
 //   Graph: …             → the equation to graph (Discord can't draw it)
 
 // Same marker rule as the website: a line may be bolded or a bullet ("- **Choices:** …").
-const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video)\s*:\s*(.*)$/i;
+const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i;
 
 export function parseLearn(text) {
-  const out = { body: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '' };
+  const out = { body: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = MARKER.exec(line.replace(/\*\*/g, ''));
@@ -24,13 +24,14 @@ export function parseLearn(text) {
     else if (key === 'watch out') out.watch = value;
     else if (key === 'topic') out.topic = value.slice(0, 80);
     else if (key === 'key idea') out.keyIdea = value.slice(0, 400);
+    else if (key === 'your turn') out.question = value.slice(0, 1000);
     else if (key === 'graph') out.graph = value.slice(0, 200);
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
   out.body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not the end (website rule).
-  if (out.recap && /\?/.test(out.body)) { out.recap = ''; out.watch = ''; }
+  if (out.recap && (/\?/.test(out.body) || out.question)) { out.recap = ''; out.watch = ''; }
   return out;
 }
 
@@ -43,6 +44,7 @@ export function formatLearn(raw) {
   if (x.progress && !x.recap) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${'●'.repeat(x.progress.n)}${'○'.repeat(x.progress.total - x.progress.n)}`);
   if (x.body) parts.push(x.body);
   if (x.keyIdea) parts.push(blockquote(`🧠 **Key idea:** ${x.keyIdea}`));
+  if (x.question) parts.push(`**Your turn:** ${x.question}`);
   if (x.graph) parts.push(`📈 **Try graphing:** \`${x.graph.replace(/`/g, '')}\``);
   if (x.video) parts.push(`🎥 **Watch a short lesson:** <https://www.youtube.com/results?search_query=${encodeURIComponent(x.video)}>`);
   if (x.recap) parts.push(`🎉 **What you learned${x.topic ? ' · ' + x.topic : ''}**\n${blockquote(x.recap)}` + (x.watch ? `\n⚠️ **Watch out:** ${x.watch}` : ''));

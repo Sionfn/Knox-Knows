@@ -418,6 +418,15 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /Hints, retries and explanations stay in the same part/);
   assert.match(system, /ask exactly 3, one at a time/);
   assert.match(system, /Never add compulsory bonus questions/);
+  assert.match(system, /valid but unhelpful/);
+  assert.match(system, /student must provide the final numerical result/);
+  assert.match(system, /do not insert another worked example/);
+  assert.match(system, /Never alternate formats just to alternate/);
+  assert.match(system, /Bold only 1–3 important terms/);
+  assert.match(system, /Your turn: <the question>/);
+  assert.match(system, /default for solving math problems and practice sets/);
+  assert.match(system, /temporary support after they are stuck/);
+  assert.doesNotMatch(system, /About half should be|alternate tap-to-answer|never more than two of the same kind/);
   assert.match(system, /Recap: what they learned/);
   assert.doesNotMatch(system, /solve every problem in the photo/);
   const userText = requests[0].messages.findLast(m => m.role === 'user').content.find(part => part.type === 'text').text;

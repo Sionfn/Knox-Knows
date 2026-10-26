@@ -149,7 +149,7 @@ function makeView(){
   if(!mega){if(['fill','tf'].includes(makeOpts.style))makeOpts.style='qa';makeOpts.difficulty='mixed';}
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
-   `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
+   `<div class="fc-topbar fc-make-top">${learnReturn?.uid===window.currentUser?.uid?btn('← Learn lesson','learn-return',{cls:'ghost'}):''}${btn('← Decks','back',{cls:'ghost'})}</div>
     <div class="fc-make">
       <label class="fc-field-label" for="fcMakeReq">What are you studying?</label>
       <textarea class="fc-textarea" id="fcMakeReq" rows="4" maxlength="4000" placeholder="I’m a sophomore in physics learning Newton’s laws of motion">${esc(makeOpts.request)}</textarea>
@@ -597,7 +597,32 @@ async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))retu
  pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 // From a finished Learn lesson: open Make with Knox with the lesson filled in.
-window.flashcardsMake=async request=>{if(!canSee())return false;await open();if(panel.hidden)return false;makeOpts.request=String(request||'').slice(0,4000);makeView();return true;};
+let learnReturn=null;
+window.flashcardsMake=async (request,fromLearn=false)=>{
+ if(!canSee())return false;
+ const origin=fromLearn&&window.currentUser&&window._currentConversationId?{uid:window.currentUser.uid,id:window._currentConversationId}:null;
+ const lessonUrl=new URL(location.href);lessonUrl.searchParams.set('open','learn');
+ await open();if(panel.hidden)return false;
+ learnReturn=origin;makeOpts.request=String(request||'').slice(0,4000);
+ if(origin){
+  history.replaceState({...history.state,knoxLearnLesson:origin},'',lessonUrl.pathname+lessonUrl.search+lessonUrl.hash);
+  const next=new URL(lessonUrl);next.searchParams.set('open','flashcards');
+  history.pushState({knoxLearnFlashcards:origin,request:makeOpts.request},'',next.pathname+next.search+next.hash);
+ }
+ makeView();return true;
+};
+async function returnToLesson(target){
+ if(!target||target.uid!==window.currentUser?.uid)return;
+ close();learnReturn=null;
+ await window.openConversation?.(target.id);
+}
+window.addEventListener('popstate',async e=>{
+ if(e.state?.knoxLearnLesson){
+  if(dirty&&!(await confirmLeave())){history.forward();return;}
+  await returnToLesson(e.state.knoxLearnLesson);
+ }
+ else if(e.state?.knoxLearnFlashcards?.uid===window.currentUser?.uid){await open();learnReturn=e.state.knoxLearnFlashcards;makeOpts.request=String(e.state.request||'').slice(0,4000);makeView();}
+});
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
 function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
@@ -686,6 +711,7 @@ window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.return
 panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;if(e.target.dataset.field==='front')delete c.imageTopic;}});
 panel.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const action=b.dataset.action,id=b.dataset.id;
+ if(action==='learn-return'){if(!dirty||await confirmLeave()){dirty=false;if(history.state?.knoxLearnFlashcards)history.back();else await returnToLesson(learnReturn);}return;}
  if(identity!==key()){load();home();return;}
  try{
  if(action==='create')editor();

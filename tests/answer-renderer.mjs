@@ -9,6 +9,22 @@ const renderer = source.slice(source.indexOf('// ── Learn extras'), source.i
 const context = { window: {}, document: { addEventListener() {}, querySelectorAll: () => [] } };
 runInNewContext(`${helpers}\n${renderer}`, context);
 
+test('Learn separates highlighted teaching, key idea and the student task safely', () => {
+  const raw='Use **inverse operations**.\n\n`3x + 5 = 20`\nKey idea: Do the same thing to both sides.\nYour turn: What remains after subtracting **5** from both sides?\nProgress: 1/2';
+  const html=context.renderAnswerHtml(raw,'learn');
+  assert.match(html,/<strong>inverse operations<\/strong>/);
+  assert.match(html,/<code>3x \+ 5 = 20<\/code>/);
+  assert.match(html,/class="learn-key"/);assert.match(html,/class="learn-question" role="group" aria-label="Your turn"/);
+  assert.equal((html.match(/What remains after subtracting/g)||[]).length,1);
+  assert.match(html,/Hint/);assert.match(html,/I’m stuck/);
+  assert.match(context.window.knoxLearnClean(raw),/What remains after subtracting/);
+  assert.doesNotMatch(context.window.knoxLearnClean(raw),/Your turn:|Progress:/);
+  const unsafe=context.renderAnswerHtml('Your turn: <img src=x onerror=alert(1)>?','learn');
+  assert.doesNotMatch(unsafe,/<img/);assert.match(unsafe,/&lt;img/);
+  const premature=context.renderAnswerHtml('Great.\nRecap: Finished\nYour turn: Calculate the result.','learn');
+  assert.doesNotMatch(premature,/Lesson complete|learn-recap/);
+});
+
 test('Worksheet answers, headings, decimals and inline code stay distinct', () => {
   const html = context.renderAnswerHtml('### Problem 32\n1. **Compute:**\n0.55 × 80 = 44\nAnswer: **44**\n### Problem 33\n1. Next\nAnswer: **7**');
   assert.equal((html.match(/knox-final-answer-label/g) || []).length, 2);

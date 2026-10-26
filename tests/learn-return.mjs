@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+const s=readFileSync(new URL('../flashcards.js',import.meta.url),'utf8');
+const code=s.slice(s.indexOf('let learnReturn=null;'),s.indexOf('if(window.__knoxOpenFlashcardsWhenReady)'));
+test('Learn flashcards creates a real Back entry and restores only its account lesson',async()=>{
+ const events={},entries=[],opened=[];let closed=0,draws=0;
+ const history={state:null,replaceState(state,_,url){this.state=state;entries.push(['replace',state,url]);},pushState(state,_,url){this.state=state;entries.push(['push',state,url]);}};
+ const window={currentUser:{uid:'u1'},_currentConversationId:'lesson1',addEventListener:(name,fn)=>events[name]=fn,openConversation:async id=>opened.push(id)};
+ let forwards=0;history.forward=()=>forwards++;
+ const ctx={window,history,dirty:false,confirmLeave:async()=>false,location:{href:'https://example.com/app?open=learn'},URL,canSee:()=>true,open:async()=>{},panel:{hidden:false},makeOpts:{},makeView:()=>draws++,close:()=>closed++};
+ runInNewContext(code,ctx);
+ assert.equal(await window.flashcardsMake('equations',true),true);
+ assert.equal(entries[0][2],'/app?open=learn');assert.equal(entries[1][2],'/app?open=flashcards');
+ await events.popstate({state:entries[0][1]});assert.deepEqual(opened,['lesson1']);assert.equal(closed,1);
+ await events.popstate({state:entries[1][1]});assert.equal(ctx.makeOpts.request,'equations');assert.equal(draws,2);
+ ctx.dirty=true;await events.popstate({state:entries[0][1]});assert.equal(closed,1);assert.equal(forwards,1);ctx.dirty=false;
+ window.currentUser={uid:'someone-else'};await events.popstate({state:entries[0][1]});assert.equal(closed,1);
+});

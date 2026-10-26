@@ -1517,6 +1517,20 @@
     .learn-key-title { font-size: 12.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: var(--blue-dark); margin-bottom: 4px; }
     html[data-theme="dark"]:not(.knox-seasonal) .learn-key-title { color: var(--blue); }
     .learn-key p { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
+    .learn-question { margin: 0 18px 16px; padding: 12px 16px; border: 2px solid var(--purple); border-radius: 16px; background: color-mix(in srgb, var(--purple) 8%, var(--surface)); }
+    .learn-question-title { margin-bottom: 5px; color: var(--purple-dark); font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+    .learn-question p { margin: 0; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .learn-question strong { color: var(--purple-dark); }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-question-title,
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble .learn-question strong { color: var(--purple-on-tint); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-dark); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
+    .learn-question code { padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--purple) 10%, var(--surface)); color: var(--purple-dark); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-question code { color: var(--purple-on-tint); }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-on-tint); }
     .learn-graph { max-width: 600px; padding: 10px 10px 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); }
     .learn-graph svg { display: block; width: 100%; height: auto; }
     .learn-graph .lg-grid line { stroke: var(--border); stroke-width: 1; opacity: .7; }
@@ -1645,7 +1659,7 @@
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
     .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
-    html[data-theme="dark"] .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple); }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-on-tint); }
 
     /* THINKING / TYPING */
     /* On short Windows laptops the whole page is zoomed (desktop-fit.js), and
@@ -6370,9 +6384,9 @@ function renderLimitCard(data, isSignedIn) {
 //   Graph: y = x^2 - 4 | y = 2x + 1, x from -5 to 5 → a graph drawn in the app
 //   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
-const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video)\s*:\s*(.*)$/i; // may come as a bullet
+const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
 function parseLearnExtras(text) {
-  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '' };
+  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = LEARN_MARKER.exec(line.replace(/\*\*/g, ''));
@@ -6386,16 +6400,17 @@ function parseLearnExtras(text) {
     else if (key === 'watch out') out.watch = value;
     else if (key === 'topic') out.topic = value.slice(0, 80);
     else if (key === 'key idea') out.keyIdea = value.slice(0, 400);
+    else if (key === 'your turn') out.question = value.slice(0, 1000);
     else if (key === 'graph') out.graph = value.slice(0, 200);
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
   out.clean = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not completion.
-  if (out.recap && /\?/.test(out.clean)) { out.recap=''; out.watch=''; }
+  if (out.recap && (/\?/.test(out.clean) || out.question)) { out.recap=''; out.watch=''; }
   return out;
 }
-window.knoxLearnClean = text => parseLearnExtras(text).clean;
+window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.question].filter(Boolean).join('\n\n'); };
 const LEARN_HELP = {
   hint:    ['💡', 'Hint', 'Can I get a hint?'],
   stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
@@ -6408,7 +6423,7 @@ const LEARN_HELP = {
 function learnHelpFor(x, tone) {
   if (tone === 'retry') return ['hint', 'example', 'another'];
   if (x.choices.length) return ['hint'];
-  if (/\?/.test(x.clean)) return ['hint', 'stuck', 'example'];
+  if (x.question || /\?/.test(x.clean)) return ['hint', 'stuck', 'example'];
   return [];
 }
 
@@ -6470,7 +6485,8 @@ function learnTeachHtml(x) {
   return (x.keyIdea ? '<div class="learn-key"><div class="learn-key-title">🧠 Key idea</div><p>' + formatInline(x.keyIdea) + '</p></div>' : '') +
     learnGraphHtml(x.graph) +
     (x.video ? '<a class="learn-video" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.video) + '" target="_blank" rel="noopener noreferrer">' +
-      '<span class="learn-video-play" aria-hidden="true">▶</span><span><b>Watch a short video</b><small>' + escHtml(x.video) + ' · YouTube</small></span></a>' : '');
+      '<span class="learn-video-play" aria-hidden="true">▶</span><span><b>Watch a short video</b><small>' + escHtml(x.video) + ' · YouTube</small></span></a>' : '') +
+    (x.question ? '<div class="learn-question" role="group" aria-label="Your turn"><div class="learn-question-title">Your turn</div><p>' + formatInline(x.question) + '</p></div>' : '');
 }
 
 function learnExtrasHtml(x, tone) {
@@ -6507,7 +6523,7 @@ document.addEventListener('click', e => {
   if (b.hasAttribute('data-learn-new')) { window.openLearnMode?.(); return; }
   if (b.hasAttribute('data-learn-flash')) {
     const topic = b.getAttribute('data-learn-flash');
-    if (window.flashcardsMake) window.flashcardsMake('Flashcards for what I just learned: ' + topic);
+    if (window.flashcardsMake) window.flashcardsMake('Flashcards for what I just learned: ' + topic, true);
     else window.appSetQuestion?.('Make me flashcards about: ' + topic);
     return;
   }
@@ -6551,7 +6567,7 @@ function learnHeadingHtml(text, progress, finished) {
 function renderAnswerHtml(text, kind = 'answer') {
   if (!text) return '';
   const learnX = kind === 'learn' ? parseLearnExtras(text) : null;
-  if (learnX) text = learnX.clean || text;
+  if (learnX) text = learnX.clean;
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   let html = '', paragraphs = [], list = '', inItem = false;
   const flush = () => {
