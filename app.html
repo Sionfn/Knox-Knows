@@ -4031,6 +4031,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   let historyHasMore = true;
   let historyLoading = false;
   const historyDeletions = new Set();
+  // Chat renames per conversation: the newest attempt, the last name that
+  // saved, and whether the list is showing that saved name after a failure.
+  const renameStates = {};
   const deletedHistory = new Set();
 
   async function loadSidebarHistory() {
@@ -4292,10 +4295,20 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           input.replaceWith(text); row.classList.remove('shi-renaming');
           if (!save || !name || name === (row.title || qText)) return;
           const before = row.title || qText;
+          // Saves can finish out of order: only the newest attempt may roll the
+          // name back, and a late success still shows if that newest one failed.
+          const st = renameStates[convId] = renameStates[convId] || { latest: 0, saved: before, savedVer: 0, showingSaved: false };
+          const ver = ++st.latest; st.showingSaved = false;
           const apply = t => { document.querySelectorAll('.sidebar-history-item').forEach(r => { if (r.dataset.conversationId !== convId) return; const tx = r.querySelector('.shi-text'); if (tx) tx.textContent = t; r.title = t; r.setAttribute('aria-label', 'Open conversation: ' + t); r.dataset.rowKey = t + '|' + (d.type || 'chat') + '|false'; }); };
           apply(name);
-          try { await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', convId), { title: name }); }
-          catch (err) { apply(before); showStreakToast('Could not rename that chat. Please try again.'); }
+          try {
+            await updateDoc(doc(db, 'users', window.currentUser.uid, 'conversations', convId), { title: name });
+            if (ver > st.savedVer) { st.saved = name; st.savedVer = ver; if (st.showingSaved) apply(name); }
+          } catch (err) {
+            if (ver !== st.latest) return;
+            st.showingSaved = true; apply(st.saved);
+            showStreakToast('Could not rename that chat. Please try again.');
+          }
         };
         input.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') { ev.preventDefault(); finish(true); } else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); } });
         input.addEventListener('click', ev => ev.stopPropagation());

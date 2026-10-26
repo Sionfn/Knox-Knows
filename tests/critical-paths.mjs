@@ -1381,6 +1381,17 @@ test('Flame Fest for paid members: each plan has its own prizes — Plus wins tw
   assert.equal(store.get('giftCodes/' + code).tier, 'mega');
   assert.equal(store.get('giftCodes/' + code).source, 'flamefest');
 
+  // A paying Knox Plus subscriber comped to Mega keeps plan 'super' (compedTier 'mega') and gets Mega's prizes.
+  store.set('users/c1', { plan: 'super', comped: true, compedTier: 'mega', flameFest: { days } });
+  const comped = await load('api/flame-fest.js', { db, date, token: { uid: 'c1', email: 'c@example.com', email_verified: true } });
+  res = await call(comped);
+  assert.equal(res.body.tier, 'mega');
+  assert.equal(res.body.rewards.find(r => r.id === 'w2').label, '🛡️🛡️ 2 Flame Shields + 💎 Diamond Flame');
+  // A Plus comp is still Plus.
+  store.set('users/c2', { plan: 'free', comped: true, compedTier: 'plus', flameFest: { days } });
+  const plusComp = await load('api/flame-fest.js', { db, date, token: { uid: 'c2', email: 'c2@example.com', email_verified: true } });
+  assert.equal((await call(plusComp)).body.rewards.find(r => r.id === 'w2').label, '🛡️🛡️ 2 Flame Shields');
+
   const redeem = async (uid, value) => { const h = await load('api/redeem.js', { db, date, token: { uid } }); const r = response(); await h(ffReq('POST', { code: value }), r); return r; };
   assert.equal((await redeem('m1', code)).code, 400, "can't redeem your own gift");
   store.set('users/u2', { plan: 'free' });

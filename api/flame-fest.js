@@ -76,8 +76,9 @@ const REWARDS = [
 const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond"];
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
-// Flame Fest week still gets the free-member prizes. Mega is plan 'max'.
-const prizeTier = d => d?.plan === MEGA_PLAN ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
+// Flame Fest week still gets the free-member prizes. Mega is plan 'max', or a
+// Mega comp (a paying Plus subscriber keeps plan 'super' with compedTier 'mega').
+const prizeTier = d => d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
 const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
 const DAY_MS = 86400000;
