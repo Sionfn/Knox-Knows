@@ -1418,9 +1418,9 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-    /* In Learn, your messages are purple too (deep enough for white text). */
-    body.knox-learn-mode .msg-user-bubble { background: var(--purple-dark); box-shadow: 0 3px 0 #5B21B6; }
-    html.knox-seasonal body.knox-learn-mode .msg-user-bubble { background: #8E4BA6; box-shadow: 0 3px 0 #6B3480; }
+    /* In Learn, your messages use Learn's purple — the same pair as Ask Knox's
+       orange: the main color with its darker shade as the ledge. */
+    body.knox-learn-mode .msg-user-bubble { background: var(--purple); box-shadow: 0 3px 0 var(--purple-dark); }
     .msg-user-img {
       max-width: 220px;
       max-height: 220px;
