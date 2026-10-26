@@ -1461,12 +1461,12 @@
       overflow-wrap: break-word;
     }
     /* The ledge under the bubble: beige, with the left stripe's color running
-       down into its corner (a box-shadow can only be one color). */
+       down into its corner and along the curve (a box-shadow can only be one color). */
     .msg-knox-bubble::before {
       content: ''; position: absolute; z-index: -1; pointer-events: none;
       top: -2px; right: -2px; bottom: -6px; left: -4px;
       border-radius: inherit;
-      background: linear-gradient(to right, var(--knox-stripe) 4px, var(--border) 4px);
+      background: linear-gradient(to right, var(--knox-stripe) 24px, var(--border) 24px); /* past the 20px rounded corner, so the color never changes on the curve */
     }
     /* The ledge sits behind the bubble but in front of the chat background. */
     :has(> .msg-knox-bubble) { isolation: isolate; }
