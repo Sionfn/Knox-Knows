@@ -33,7 +33,7 @@
     const url = new URL(a.href, location.href);
     if (url.origin !== location.origin || !legal.test(url.pathname)) return;
     try { sessionStorage.setItem(KEY, JSON.stringify({ url: location.pathname+location.search+location.hash, y: scrollY, at: Date.now() })); } catch (_) {}
-    window.showLandingLoading();
+    // Opening a legal article is immediate; retain loading only on return.
   }, true);
   window.addEventListener('pageshow', e => {
     if (!e.persisted) return;

@@ -60,7 +60,7 @@
 <link rel="stylesheet" href="/hover-steady.css">
 <link rel="stylesheet" href="/legal-theme.css">
 </head>
-<body class="page-loading">
+<body>
 <noscript><style>body.page-loading > * { visibility:visible !important; } #pageLoading { display:none !important; } body.page-loading { overflow:auto; }</style></noscript>
 <div id="pageLoading" role="status" aria-live="polite">
   <div class="page-loading-content">
@@ -71,13 +71,9 @@
   </div>
 </div>
 <script>
-  // Same as the landing page: the loading screen stays up until the page has
-  // loaded, and for at least 1 second so it doesn't flash on and off.
+  // Open the article immediately. The normal loader is used only on exit.
   (function () {
-    var t0 = performance.now(), hide = function () { document.body.classList.remove('page-loading'); };
-    var done = function () { setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); };
-    if (document.readyState === 'complete') done(); else window.addEventListener('load', done);
-    setTimeout(hide, 8000); // never stuck behind a slow image or font
+    var hide = function () { document.body.classList.remove('page-loading'); };
     // Leaving for another Knox page: show the loading screen right away, so it
     // runs straight into the next page's loading screen.
     document.addEventListener('click', function (e) {

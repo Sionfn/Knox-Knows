@@ -53,6 +53,7 @@ test('landing departure records exact position and bfcache return restarts norma
  const h=setup();runInNewContext(read('landing-return.js'),h.ctx);
  h.docEvents.click({button:0,target:{closest:()=>({href:'https://knox.test/privacy',hasAttribute:()=>false})}});
  assert.equal(JSON.parse(h.values.get('knoxLandingReturn')).y,1650);
+ assert.equal(h.state().shown,0,'opening legal pages must not cover the landing page');
  h.values.set('knoxLandingReturnPending','1');h.events.pageshow({persisted:true});
  assert.equal(h.ctx._landingLoadingShownAt,500);
  assert.equal(h.state().scrolled,1650);assert.equal(h.state().finished,1);
@@ -62,4 +63,13 @@ test('only one theme-controlled loader remains, with no OS-dark override or dupl
  assert.match(read('legal-theme.css'),/--loader-page:#FFF8F0/);
  assert.match(read('legal-theme.css'),/--loader-page:#FBF3E5/);
  assert.match(read('index.html'),/src="\/landing-return.js"/);
+});
+test('legal articles have no entry loader but retain their exit loader',()=>{
+ for(const file of ['privacy.html','terms.html','refund.html']) {
+  const page=read(file);
+  assert.doesNotMatch(page,/<body class="page-loading">/);
+  assert.doesNotMatch(page,/1000 - \(performance.now\(\) - t0\)/);
+  assert.match(page,/document.body.classList.add\('page-loading'\)/);
+  assert.match(page,/src="\/legal-navigation.js"/);
+ }
 });
