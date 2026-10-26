@@ -40,10 +40,10 @@ test('legal navigation defaults to landing and restores previous landing entry',
   // we can invoke the /about handler under test.
   const stubEl=()=>({classList:{add(){},remove(){},contains:()=>false},setAttribute(){},appendChild(){},innerHTML:'',textContent:''});
   const doc={referrer:ref,head:stubEl(),body:stubEl(),
-    querySelectorAll:sel=>sel==='a[href="/about"]'?[{addEventListener:(_,fn)=>handler=fn}]:[],
+    querySelectorAll:sel=>sel==='a[href="/about"]'?[{hasAttribute:()=>false,addEventListener:(_,fn)=>handler=fn}]:[],
     createElement:()=>stubEl(),addEventListener(){}};
   const win={URL,location:{origin:'https://knox.test',href:'https://knox.test/privacy'},
-    history:{length:3,back(){back=true;}},document:doc,addEventListener(){}};
+    history:{length:3,back(){back=true;}},document:doc,addEventListener(){},requestAnimationFrame:fn=>fn(),clearTimeout(){},setTimeout:()=>0};
   runInNewContext(script,{...win,window:win});
   handler({button:0,preventDefault(){prevent=true;}});assert.equal(back,expected);assert.equal(prevent,expected);
  }

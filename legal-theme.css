@@ -121,3 +121,13 @@ body.page-loading #pageLoading { display:flex; }
 .page-loading-spinner { width:26px; height:26px; border:3px solid var(--lg-border); border-top-color:#FF6B00; border-radius:50%; animation:pageLoadingSpin .8s linear infinite; }
 @keyframes pageLoadingSpin { to { transform:rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .page-loading-spinner { animation:none; border-color:#FF6B00; } }
+
+/* Match the LANDING loader exactly, not the legal article's darker palette.
+   Explicit site theme only: a dark OS must never recolor a light/fall return. */
+#pageLoading { --loader-page:#FFF8F0; --loader-card:#FFFFFF; --loader-border:#E5E5E5; --loader-text:#3C3C3C; --loader-muted:#777; background:var(--loader-page); color:var(--loader-text); }
+html[data-theme="dark"] #pageLoading { --loader-page:#101013; --loader-card:#29292E; --loader-border:#34343D; --loader-text:#EDEDED; --loader-muted:#9B9BA3; }
+html.knox-seasonal[data-theme="dark"] #pageLoading { --loader-page:#FBF3E5; --loader-card:#FFF9EF; --loader-border:#D7BE99; --loader-text:#38291F; --loader-muted:#78604B; }
+#pageLoading .page-loading-content { background:var(--loader-card); border-color:var(--loader-border); box-shadow:0 6px 0 var(--loader-border),0 0 40px rgba(255,107,0,.08); }
+#pageLoading .page-loading-status { color:var(--loader-muted); }
+#pageLoading .page-loading-spinner { border-color:var(--loader-border); border-top-color:#FF6B00; }
+@media (prefers-reduced-motion: reduce) { #pageLoading .page-loading-spinner { border-color:#FF6B00; } }
