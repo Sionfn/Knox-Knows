@@ -907,12 +907,10 @@
     .sidebar-discord-card .sidebar-extension-copy span, .sidebar-discord-card .sidebar-extension-arrow { color: var(--discord); }
     /* "Free Slime Flame" badge on the Discord card's top edge, like the plans' savings badges. */
     .sidebar-discord-card { position: relative; }
-    .discord-slime-badge { position: absolute; top: -12px; right: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 5px; border-radius: 999px; background: linear-gradient(135deg, #7BE33A, #46A302); color: #fff; border: 2px solid var(--surface); box-shadow: 0 2px 0 #2F7A00; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; pointer-events: none; animation: slimeBadgeBob 2.4s ease-in-out infinite; }
+    .discord-slime-badge { position: absolute; top: -16px; right: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 5px; border-radius: 999px; background: linear-gradient(135deg, #7BE33A, #46A302); color: #fff; border: 2px solid var(--surface); box-shadow: 0 2px 0 #2F7A00; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; pointer-events: none; }
     .discord-slime-badge .knox-flame { font-size: 12px; line-height: 1; }
-    @keyframes slimeBadgeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-    @media (prefers-reduced-motion: reduce) { .discord-slime-badge { animation: none; } }
     html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-copy span, html[data-theme="dark"] .sidebar-discord-card .sidebar-extension-arrow { color: #8C95FF; }
-    #mobileHistoryDrawer .sidebar-discord-card { margin-bottom: 0; margin-top: 18px; }
+    #mobileHistoryDrawer .sidebar-discord-card { margin-bottom: 0; margin-top: 22px; }
     .sidebar-control-label { display: none; }
     .account-status-row, .account-dock { display: contents; }
     #sidebarSettingsBtn, #appAccountPlanBadge { display: none; }
@@ -930,7 +928,7 @@
       .sidebar-promo-rotator > .sidebar-extension-card:hover, .sidebar-promo-rotator > .sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 var(--blue); }
       .sidebar-promo-rotator > .sidebar-discord-card:hover, .sidebar-promo-rotator > .sidebar-discord-card:focus-visible { box-shadow: 0 5px 0 var(--discord); }
       /* One slot, two cards stacked; the active one slides up into place. */
-      .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 12px 10px 7px; } /* room for the Discord card's badge */
+      .sidebar-promo-rotator { position: relative; flex-shrink: 0; height: 75px; margin: 16px 10px 7px; } /* room for the Discord card's badge */
       .sidebar-promo-rotator > .sidebar-extension-card { position: absolute; top: 0; left: 0; right: 0; margin: 0; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .15s; }
       .sidebar-promo-rotator > .sidebar-extension-card.is-active { opacity: 1; transform: none; pointer-events: auto; }
       .sidebar-promo-rotator > .sidebar-extension-card.is-leaving { opacity: 0; transform: translateY(-12px); }
