@@ -104,6 +104,18 @@
     var done = function () { setTimeout(hide, Math.max(0, 1000 - (performance.now() - t0))); };
     if (document.readyState === 'complete') done(); else window.addEventListener('load', done);
     setTimeout(hide, 8000); // never stuck behind a slow image or font
+    // Leaving for another Knox page: show the loading screen right away, so it
+    // runs straight into the next page's loading screen.
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.target && a.target !== '_self' || a.hasAttribute('download')) return;
+      var url = new URL(a.href, location.href);
+      if (url.origin !== location.origin || (url.pathname === location.pathname && url.hash)) return;
+      document.body.classList.add('page-loading');
+    });
+    // Coming back with the browser's Back button shows the page, not the loader.
+    window.addEventListener('pageshow', function (e) { if (e.persisted) hide(); });
   })();
 </script>
 
