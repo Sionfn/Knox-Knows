@@ -6262,7 +6262,7 @@ window.appHandleAsk = async function() {
     }
 
     const answer = data.answer || '';
-    // Small talk in Learn mode isn't a lesson step: no "Study hint" heading.
+    // Small talk in Learn mode isn't a lesson step: no "Lesson" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer, mode: requestLearnMode ? 'learn' : 'ask' };
@@ -6542,7 +6542,7 @@ function learnHeadingHtml(text, progress, finished) {
   const t = String(text || '').trim();
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
   const tone = learnTone(t);
-  let cls = '', icon = '◆', label = 'Study hint';
+  let cls = '', icon = '◆', label = 'Lesson'; // a teaching step (not feedback on an answer)
   if (finished) { cls = ' good'; icon = '<span class="no-ki">🎉</span>'; label = 'Lesson complete'; }
   else if (tone === 'retry') {
     cls = ' retry'; icon = '↺'; label = 'Not quite';

@@ -44,7 +44,7 @@ test('Knox answer and Learn hint use a stable, escaped response box', () => {
   assert.doesNotMatch(answer, /<img/);
   const hint = context.renderAnswerHtml('Try dividing both sides by 2.', 'learn');
   assert.match(hint, /knox-response-heading learn/);
-  assert.match(hint, /Study hint/);
+  assert.match(hint, />Lesson</);
 });
 
 test('Knox keeps code indentation and work-check labels inside the response box', () => {
@@ -95,7 +95,7 @@ test('Learn replies get a heading that matches the message', () => {
   assert.equal(heading('I read the worksheet as naming the planets.'), "Let's start");
   assert.equal(heading('Here’s how to do it:\n1. Find the Sun\n2. Count outward'), 'Worked example');
   assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Your turn', 'Knox asked: the student answers next');
-  assert.equal(heading('Think about which planets are closest to the Sun first.'), 'Study hint');
+  assert.equal(heading('Think about which planets are closest to the Sun first.'), 'Lesson');
   assert.equal(heading('Great question! Do you know what the green pigment is called?'), 'Your turn', '"Great question" is not praise for an answer');
   assert.doesNotMatch(context.renderAnswerHtml('Yes', 'answer'), /knox-response-heading/);
 });
