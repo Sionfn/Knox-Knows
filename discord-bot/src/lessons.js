@@ -56,3 +56,22 @@ export class Lessons {
     saveJson(this.file, this.lessons);
   }
 }
+
+// What a lesson sends to Knox: the opening question and Knox's plan (so a long
+// lesson keeps to it), then the newest messages, inside the website's limits
+// (40 messages, 24k characters each, 120k in all). Same idea as the website.
+export function historyForKnox(history, maxMessages = 30, maxChars = 120000) {
+  const valid = m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.length <= 24000;
+  const all = (history || []).filter(valid);
+  if (all.length <= maxMessages && all.reduce((n, m) => n + m.content.length, 0) <= maxChars) return all;
+  const anchor = all.slice(0, 2);
+  const recent = [];
+  let chars = anchor.reduce((n, m) => n + m.content.length, 0);
+  for (const m of all.slice(2).slice(-(maxMessages - anchor.length)).reverse()) {
+    if (chars + m.content.length > maxChars) break;
+    recent.unshift(m); chars += m.content.length;
+  }
+  // Keep turns in order: the recent part starts with the student.
+  while (recent.length && recent[0].role !== 'user') recent.shift();
+  return [...anchor, ...recent];
+}

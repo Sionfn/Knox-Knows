@@ -575,3 +575,19 @@ test('/unlink disconnects the Knox account and takes back the plan roles the bot
   await handlers.unlink(bob);
   assert.match(bob.sent.at(-1).content, /isn't connected/);
 });
+
+test('a long lesson (Mega: 50 replies) stays inside the website’s history limits and keeps its opening plan', async () => {
+  const { historyForKnox } = await import('../src/lessons.js');
+  const history = [{ role: 'user', content: 'Teach me 3x + 5 = 20' }, { role: 'assistant', content: 'Plan: Part 1 undo +5, Part 2 divide by 3.' }];
+  for (let i = 1; i < 50; i++) history.push({ role: 'user', content: 'reply ' + i }, { role: 'assistant', content: 'answer ' + i });
+  const sent = historyForKnox(history);
+  assert.ok(sent.length <= 30, 'no more than 30 messages (the website rejects over 40)');
+  assert.deepEqual(sent.slice(0, 2), history.slice(0, 2), 'opening question and plan kept');
+  assert.equal(sent.at(-1).content, 'answer 49', 'newest messages kept');
+  for (let i = 1; i < sent.length; i++) assert.notEqual(sent[i].role, sent[i - 1].role, 'turns stay in order');
+  // Short lessons are sent as they are.
+  assert.deepEqual(historyForKnox(history.slice(0, 6)), history.slice(0, 6));
+  // Very long messages are left out instead of breaking the request.
+  const big = historyForKnox([...history.slice(0, 2), { role: 'user', content: 'x'.repeat(30000) }, { role: 'assistant', content: 'ok' }]);
+  assert.ok(big.every(m => m.content.length <= 24000));
+});

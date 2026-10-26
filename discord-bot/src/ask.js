@@ -3,7 +3,7 @@ import {
   ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle,
 } from 'discord.js';
 import { KnoxError, MAX_PHOTO_BYTES, PHOTO_TYPES, downloadPhoto as defaultDownloadPhoto } from './knox.js';
-import { MAX_REPLIES, REPLIES_BY_TIER } from './lessons.js';
+import { MAX_REPLIES, REPLIES_BY_TIER, historyForKnox } from './lessons.js';
 import { splitMessage } from './split.js';
 import { formatLearn, parseLearn } from './learn-format.js';
 
@@ -207,7 +207,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         ? (slot.remaining == null ? `${PLAN_NAME[tier] || 'Knox Plus'} · unlimited questions` : `${slot.remaining} of ${config.perUserLimit} questions left today`)
         : PLAN_NAME[tier] || "Lesson reply · doesn't use a question";
       await answer(interaction, {
-        question: reply, history: [...lesson.history], photo: lesson.photo, showPhoto: false,
+        question: reply, history: historyForKnox(lesson.history), photo: lesson.photo, showPhoto: false,
         header: `<@${interaction.user.id}>\n${quote(reply)}`,
         footer: () => repliesLeft > 0
           ? (mode === 'answer' ? `-# ${label}` : `-# ${label} · ${repliesLeft} ${repliesLeft === 1 ? 'reply' : 'replies'} left in this lesson`)
