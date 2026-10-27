@@ -1486,8 +1486,8 @@
     html[data-theme="dark"] .knox-response-heading.learn { color: var(--purple-on-tint); }
     .knox-response-heading.learn.good  { color: var(--green-dark); }
     .knox-response-heading.learn.retry { color: var(--orange-dark); }
-    html[data-theme="dark"] .knox-response-heading.learn.good  { color: var(--green); }
-    html[data-theme="dark"] .knox-response-heading.learn.retry { color: var(--orange); }
+    html[data-theme="dark"]:not(.knox-seasonal) .knox-response-heading.learn.good  { color: var(--green); }
+    html[data-theme="dark"]:not(.knox-seasonal) .knox-response-heading.learn.retry { color: var(--orange); }
     /* Learn extras: step dots, tap-to-answer, help chips, lesson recap */
     .learn-progress { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
     .learn-progress i { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
@@ -1516,6 +1516,8 @@
     .learn-key-title { font-size: 12.5px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; color: var(--blue-dark); margin-bottom: 4px; }
     html[data-theme="dark"]:not(.knox-seasonal) .learn-key-title { color: var(--blue); }
     .learn-key p { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .learn-key strong { color: var(--blue-dark); }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .learn-key strong { color: #74D4FF; }
     .learn-question { margin: 0 18px 16px; padding: 12px 16px; border: 2px solid var(--purple); border-radius: 16px; background: color-mix(in srgb, var(--purple) 8%, var(--surface)); }
     .learn-question-title { margin-bottom: 5px; color: var(--purple-dark); font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
     .learn-question p { margin: 0; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
@@ -6386,6 +6388,12 @@ function renderLimitCard(data, isSignedIn) {
 //   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
 const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
+function shouldSeparateLearnQuestion(body) {
+  const plain = String(body || '').replace(/\*\*|`/g, '').trim();
+  const steps = (plain.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length;
+  const paragraphs = plain.split(/\n\s*\n/).filter(Boolean).length;
+  return plain.length >= 420 || (steps >= 2 && plain.length >= 120) || (paragraphs >= 3 && plain.length >= 220);
+}
 function parseLearnExtras(text) {
   const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
@@ -6406,12 +6414,16 @@ function parseLearnExtras(text) {
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
-  out.clean = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  const body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not completion.
-  if (out.recap && (/\?/.test(out.clean) || out.question)) { out.recap=''; out.watch=''; }
+  if (out.recap && (/\?/.test(body) || out.question)) { out.recap=''; out.watch=''; }
+  const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
+  if (out.question.length > 3 && normalized(body).endsWith(normalized(out.question))) out.question = '';
+  out.separateQuestion = !!out.question && shouldSeparateLearnQuestion(body);
+  out.clean = [body, out.separateQuestion ? '' : out.question].filter(Boolean).join('\n\n');
   return out;
 }
-window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.question].filter(Boolean).join('\n\n'); };
+window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.separateQuestion ? x.question : ''].filter(Boolean).join('\n\n'); };
 const LEARN_HELP = {
   hint:    ['💡', 'Hint', 'Can I get a hint?'],
   stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
@@ -6487,7 +6499,7 @@ function learnTeachHtml(x) {
     learnGraphHtml(x.graph) +
     (x.video ? '<a class="learn-video" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.video) + '" target="_blank" rel="noopener noreferrer">' +
       '<span class="learn-video-play" aria-hidden="true">▶</span><span><b>Watch a short video</b><small>' + escHtml(x.video) + ' · YouTube</small></span></a>' : '') +
-    (x.question ? '<div class="learn-question" role="group" aria-label="Your turn"><div class="learn-question-title">Your turn</div><p>' + formatInline(x.question) + '</p></div>' : '');
+    (x.separateQuestion ? '<div class="learn-question" role="group" aria-label="Your turn"><div class="learn-question-title">Your turn</div><p>' + formatInline(x.question) + '</p></div>' : '');
 }
 
 function learnExtrasHtml(x, tone) {

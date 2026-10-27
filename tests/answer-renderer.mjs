@@ -9,12 +9,12 @@ const renderer = source.slice(source.indexOf('// ── Learn extras'), source.i
 const context = { window: {}, document: { addEventListener() {}, querySelectorAll: () => [] } };
 runInNewContext(`${helpers}\n${renderer}`, context);
 
-test('Learn separates highlighted teaching, key idea and the student task safely', () => {
+test('restored Learn keeps old metadata questions in the normal reply without duplication', () => {
   const raw='Use **inverse operations**.\n\n`3x + 5 = 20`\nKey idea: Do the same thing to both sides.\nYour turn: What remains after subtracting **5** from both sides?\nProgress: 1/2';
   const html=context.renderAnswerHtml(raw,'learn');
   assert.match(html,/<strong>inverse operations<\/strong>/);
   assert.match(html,/<code>3x \+ 5 = 20<\/code>/);
-  assert.match(html,/class="learn-key"/);assert.match(html,/class="learn-question" role="group" aria-label="Your turn"/);
+  assert.match(html,/class="learn-key"/);assert.doesNotMatch(html,/class="learn-question"/);
   assert.equal((html.match(/What remains after subtracting/g)||[]).length,1);
   assert.match(html,/Hint/);assert.match(html,/I’m stuck/);
   assert.match(context.window.knoxLearnClean(raw),/What remains after subtracting/);
@@ -23,6 +23,23 @@ test('Learn separates highlighted teaching, key idea and the student task safely
   assert.doesNotMatch(unsafe,/<img/);assert.match(unsafe,/&lt;img/);
   const premature=context.renderAnswerHtml('Great.\nRecap: Finished\nYour turn: Calculate the result.','learn');
   assert.doesNotMatch(premature,/Lesson complete|learn-recap/);
+});
+
+test('long worked examples separate one question while short replies stay inline', () => {
+  const body='Use **inverse operations** to isolate the variable.\n\nFor example, solve `2a + 4 = 12` by undoing each operation in reverse order.\n1. **Subtract 4** from both sides to leave `2a = 8`.\n2. **Divide by 2** on both sides to get `a = 4`.';
+  const question='What remains after subtracting 5 from both sides of `3x + 5 = 20`?';
+  const raw=body+'\nYour turn: '+question+'\nKey idea: Keep both sides balanced.';
+  const html=context.renderAnswerHtml(raw,'learn');
+  assert.match(html,/class="learn-question" role="group" aria-label="Your turn"/);
+  assert.equal((html.match(/What remains after subtracting/g)||[]).length,1);
+  assert.match(html,/I’m stuck/);
+  assert.equal((context.window.knoxLearnClean(raw).match(/What remains after subtracting/g)||[]).length,1);
+  const brief=context.renderAnswerHtml('Correct.\nYour turn: What is 21 divided by 3?','learn');
+  assert.doesNotMatch(brief,/class="learn-question"/);assert.match(brief,/What is 21 divided by 3/);
+  const duplicate=context.renderAnswerHtml('Try it. What is **21** divided by 3?\nYour turn: What is 21 divided by 3?','learn');
+  assert.equal((duplicate.match(/divided by 3/g)||[]).length,1);
+  const longUnsafe=context.renderAnswerHtml(body+'\nYour turn: <img src=x onerror=alert(1)>?','learn');
+  assert.doesNotMatch(longUnsafe,/<img/);assert.match(longUnsafe,/&lt;img/);
 });
 
 test('Worksheet answers, headings, decimals and inline code stay distinct', () => {

@@ -422,8 +422,8 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /student must provide the final numerical result/);
   assert.match(system, /do not insert another worked example/);
   assert.match(system, /Never alternate formats just to alternate/);
-  assert.match(system, /Bold only 1–3 important terms/);
-  assert.match(system, /Your turn: <the question>/);
+  assert.match(system, /keeps short questions inline/);
+  assert.match(system, /Do not add examples or length just to use formatting/);
   assert.match(system, /default for solving math problems and practice sets/);
   assert.match(system, /temporary support after they are stuck/);
   assert.doesNotMatch(system, /About half should be|alternate tap-to-answer|never more than two of the same kind/);

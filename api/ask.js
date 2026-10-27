@@ -4,6 +4,7 @@ import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { advanceStudyStreak } from "./_streak.js";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
+import { requestedPracticeCount, honestLearnProgress } from "./_learn-progress.js";
 import crypto from "crypto";
 
 if (!getApps().length) {
@@ -243,8 +244,8 @@ const LEARN_PROMPT = KNOX_BASE_PROMPT + `
 Learn mode (this overrides the response types above): you are a patient, encouraging tutor. The student learns by doing the thinking themselves, so you guide and they work it out. This applies to EVERY kind of request — math problems, science and history "why/how/what" questions, definitions, reading, essays and writing, vocabulary, and test review — not just problems with a numeric answer. Never write an Answer: line in Learn mode.
 
 How every Learn reply works:
-- Make the explanation easy to scan, like a compact tutor card. Bold only 1–3 important terms, operations or values, never whole paragraphs. Use short paragraphs separated by blank lines. When an equation is central, put it on its own line in inline code (wrap just the equation in backticks), with a brief plain-language explanation next to it. For a worked example with multiple operations, use a short numbered list with a bold action label on each step. Do not force a heading or list into a one-sentence reply.
-- Put the one question or action for the student on a final metadata line: "Your turn: <the question>". The app displays it in a separate purple card below the explanation and Key idea. Do not repeat that question in the explanation, don't include its answer in Key idea, and never emit Your turn on a completed recap. Keep this layout even when the student is typing rather than using choices. A direct short follow-up can have only a sentence of feedback and the Your turn line.
+- Keep the current short tutoring flow. Highlight just 1–3 key terms, actions or values in bold when they help the student scan a teaching explanation; never bold whole sentences or paragraphs. Use short paragraphs. When a worked example genuinely needs multiple operations, use a short numbered list with bold action labels; a simple hint or correct-answer confirmation should stay plain and brief. Do not add examples or length just to use formatting. Prefer a standalone equation in backticks when it makes the current example clearer.
+- Put the student's ONE question or action on a final "Your turn: ..." line, without repeating it in the explanation. The app keeps short questions inline and only gives them a separate card after a longer explanation or worked example. This is presentation only: do not add more questions, extra required checks, or numbered lesson parts. Do not emit Your turn on a completed recap or put the answer to the current question in Key idea.
 - Short: usually 2–4 sentences — a teaching reply with a worked example can run a few short steps longer. One small idea per reply, and end with exactly one clear question for the student.
 - Your first reply to anything new never gives the answer or the full explanation. Start with a concrete, easy-to-answer question or a tiny hint that gets them thinking.
 - Use the student's level and what is on the page (given numbers, word banks, labels, diagrams). Avoid roundabout riddles — every hint should make the next step easier.
@@ -1173,6 +1174,10 @@ export default async function handler(req, res) {
       : 'Teaching preference: QUIZ ME. Start with a diagnostic question. Keep explanations brief unless the student asks for help or makes a mistake.') +
     '\nProgress counts planned lesson parts, not messages. Name a small, finite plan first; keep its total fixed. Hints/retries stay in the current part. After a correct answer, advance without repeating the check. The final planned question IS the final understanding check: when answered correctly, finish with Recap:, not another required question. Respect explicit practice counts exactly. If there is no honest bounded plan, omit numeric progress and do not promise a count.' +
     '\nCompletion rule overrides the requirement to always ask a question: ask the final understanding check BEFORE completion. In math the student must give the final value, not just name an operation; ask for their calculation without supplying the answer if it is still missing. A correct full solution needs a brief confirmation, not a fresh worked example. A reply containing Recap: must contain no further question, request to explain, or new exercise. Confirm success and recap only after the student answers that check.' });
+  const practiceTotal = learnMode ? requestedPracticeCount(history, trimmedQuestion) : 0;
+  if (learnMode && !casual) messages[messages.length - 1].content += '\n' + (practiceTotal
+    ? `The student requested ${practiceTotal} practice questions. Keep Progress: n/${practiceTotal} tied to those questions, not hints or messages, and finish after that set.`
+    : 'Do not announce a numbered lesson plan or emit numeric Progress: lines for this lesson. Teach one manageable idea at a time, keeping an internal short plan and a clear finish. Numeric progress is reserved for a practice set with a count explicitly requested by the student.');
 
   try {
     // Text, casual, Learn, and photo questions all run on GPT-6 Luna.
@@ -1285,6 +1290,7 @@ export default async function handler(req, res) {
       } catch (err) { console.error('Learn rewrite skipped:', err?.message); }
     }
 
+    if (learnMode && !casual) answer = honestLearnProgress(answer, practiceTotal);
     // Legacy marker compatibility: never show internal video signals.
     answer = answer.replace(/^VIDEO_SUGGEST:.*$/gmi, '').trim();
     const video = null;
