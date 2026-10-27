@@ -112,7 +112,7 @@ function btn(label,action,{cls='',attrs=''}={}){return `<button type="button" cl
 const badge=(normal,fall)=>`<span class="fc-badge"><span class="season-hide">${normal}</span><span class="season-only">${fall}</span></span>`;
 // center: sit in the middle of the screen when the content is short (like the
 // Ask Knox welcome screen); long content still starts at the top and scrolls.
-// Which way-in screen this is (make → orange, create → blue, import → green),
+// Which way-in screen this is (make → orange, create → green, import → blue),
 // so its buttons wear that card's color; other screens are Flashcards green.
 let nextWay='';
 function frame(head,body,center=false){
@@ -243,8 +243,8 @@ function home(query=''){
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
    `<div class="fc-ways${decks.length?' has-decks':''}">
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
-      ${way('create','blue','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
-      ${way('import','green','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
+      ${way('create','green','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
+      ${way('import','blue','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
     <div class="fc-toolbar fc-toolbar-quiet">${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>

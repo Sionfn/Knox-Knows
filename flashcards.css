@@ -8,10 +8,10 @@
    (.fc-scroll) on top, so the art stays put while decks scroll. */
 #flashcardsPanel { flex:1; min-height:0; position:relative; overflow:hidden; color:var(--text); background:var(--cream); }
 /* Accent color: Flashcards green, or the color of the way-in card you picked
-   (Make with Knox orange, Create your own blue, Import green). */
+   (Make with Knox orange, Create your own green, Import blue). */
 #flashcardsPanel { --fc-acc:var(--green); --fc-acc-dark:var(--green-dark); --fc-acc-light:var(--green-light); }
 #flashcardsPanel[data-way="make"] { --fc-acc:var(--orange); --fc-acc-dark:var(--orange-dark); --fc-acc-light:var(--orange-light); }
-#flashcardsPanel[data-way="create"] { --fc-acc:var(--blue); --fc-acc-dark:var(--blue-dark); --fc-acc-light:var(--blue-light); }
+#flashcardsPanel[data-way="import"] { --fc-acc:var(--blue); --fc-acc-dark:var(--blue-dark); --fc-acc-light:var(--blue-light); }
 .fc-scroll { position:relative; z-index:1; height:100%; overflow:auto; overscroll-behavior:contain; display:flex; flex-direction:column; padding:clamp(18px,3vw,40px) clamp(16px,3vw,40px) 48px; }
 .fc-decor { position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
 #flashcardsPanel[hidden] { display:none; }
