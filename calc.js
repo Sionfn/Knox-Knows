@@ -199,8 +199,8 @@
         </div>
         <div class="kc-actions">
           <button type="button" class="kc-act" data-k="copy" disabled>📋 Copy</button>
-          <button type="button" class="kc-act" data-k="send" disabled>➤ Send to Knox</button>
-          <button type="button" class="kc-act kc-act-main" data-k="explain" disabled>💡 Explain it</button>
+          <button type="button" class="kc-act kc-act-ask" data-k="send" disabled title="Put this answer in Ask Knox">➤ Send to Knox</button>
+          <button type="button" class="kc-act kc-act-main kc-act-learn" data-k="explain" disabled title="Learn how to work it out, step by step">💡 Explain it</button>
         </div>
       </section>
       <aside class="kc-history" aria-label="History">
@@ -229,9 +229,14 @@
     const answer = M.format(st.done.value), line = `${st.done.expr} = ${answer}`;
     if (k === 'copy') { navigator.clipboard?.writeText(answer).then(() => toast('Copied ' + answer), () => toast('Couldn’t copy — select the answer instead')); return; }
     const text = k === 'send' ? line : `Can you explain how to work out ${st.done.expr}? I got ${answer}.`;
+    // Each button goes where its color says: Explain it → Learn (purple) teaches
+    // the steps, Send to Knox → Ask Knox (orange). Already there? Stay in that chat.
+    const switching = k === 'explain' ? !window._learnModeActive : !!window._learnModeActive;
+    if (switching) (k === 'explain' ? window.openLearnMode : window.appStartNewChat)?.();
     const ta = document.getElementById('appChatInput');
     if (ta) {
-      ta.value = ta.value && k === 'send' ? ta.value + ' ' + text : text;
+      // A new section starts with just this; staying put adds to what you were typing.
+      ta.value = ta.value && k === 'send' && !switching ? ta.value + ' ' + text : text;
       ta.style.height = 'auto';
       ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
     }

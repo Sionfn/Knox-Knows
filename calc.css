@@ -221,3 +221,8 @@ html[data-theme="dark"]:not(.knox-seasonal) .kc-op { color:var(--blue); }
 .kc-link { color:var(--blue-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) .kc-link { color:var(--blue); }
 .kc-hist-item:hover { border-color:var(--blue); }
+/* Explain it opens Learn (solid purple, the main action); Send to Knox goes to
+   Ask Knox (white with orange, a secondary action); Copy stays plain. */
+.kc-act-learn { background:var(--purple); border-color:var(--purple-dark); color:#fff; box-shadow:0 3px 0 var(--purple-dark); }
+.kc-act-ask { color:var(--orange-dark); border-color:color-mix(in srgb,var(--orange) 55%,var(--border)); box-shadow:0 3px 0 color-mix(in srgb,var(--orange) 55%,var(--border)); }
+html[data-theme="dark"]:not(.knox-seasonal) .kc-act-ask { color:var(--orange); }
