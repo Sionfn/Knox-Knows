@@ -70,6 +70,12 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-badge { color:var(--green); }
 .fc-pill { font-size:11.5px; font-weight:900; padding:3px 9px; border-radius:999px; background:var(--cream); border:1.5px solid var(--border); color:var(--text-light); }
 .fc-pill.due { background:var(--orange-cream); border-color:var(--orange-light); color:var(--orange); }
 .fc-pill.done { background:var(--green-light); border-color:var(--green); color:var(--green-dark); }
+/* Inside a deck, its main button and due count wear the deck's own color. */
+.fc-deck .fc-btn.primary { background:var(--chip); border-color:var(--chip-ledge); box-shadow:0 4px 0 var(--chip-ledge); }
+.fc-deck .fc-btn.primary:hover { box-shadow:0 6px 0 var(--chip-ledge); }
+.fc-deck .fc-btn.primary:active { box-shadow:0 1px 0 var(--chip-ledge); }
+.fc-deck .fc-pill.due { background:var(--chip-tint); border-color:var(--chip); color:var(--chip-ledge); }
+html[data-theme="dark"]:not(.knox-seasonal) .fc-deck .fc-pill.due { color:var(--chip); }
 .fc-deck-actions { display:flex; gap:8px; }
 .fc-deck-actions .fc-btn { flex:1; }
 .fc-deck-more { display:flex; justify-content:flex-end; gap:2px; margin-top:-6px; }
