@@ -152,7 +152,7 @@ function makeView(){
   if(!mega){if(['fill','tf'].includes(makeOpts.style))makeOpts.style='qa';makeOpts.difficulty='mixed';}
   frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
-   `<div class="fc-topbar fc-make-top">${learnReturn?.uid===window.currentUser?.uid?btn('← Learn lesson','learn-return',{cls:'ghost'}):''}${btn('← Decks','back',{cls:'ghost'})}</div>
+   `<div class="fc-topbar fc-make-top">${learnReturn&&learnReturn.uid===window.currentUser?.uid?btn('← Learn lesson','learn-return',{cls:'ghost'}):''}${btn('← Decks','back',{cls:'ghost'})}</div>
     <div class="fc-make">
       <label class="fc-field-label" for="fcMakeReq">What are you studying?</label>
       <textarea class="fc-textarea" id="fcMakeReq" rows="4" maxlength="4000" placeholder="I’m a sophomore in physics learning Newton’s laws of motion">${esc(makeOpts.request)}</textarea>
@@ -528,7 +528,7 @@ function importView(){
       <label class="fc-field-label" for="fcPaste" style="margin-top:20px;display:block">Or paste your cards</label>
       <textarea class="fc-textarea" id="fcPaste" rows="5" placeholder="mitochondria	powerhouse of the cell&#10;osmosis - water moving across a membrane&#10;atom: the smallest unit of an element"></textarea>
       <p class="fc-doc-hint">One card per line — question, then answer, separated by a Tab, “ - ” or “: ”.</p>
-      <div class="fc-toolbar" style="margin-top:12px">${btn('Use these cards','import-paste',{cls:'primary blue small'})}</div>
+      <div class="fc-toolbar" style="margin-top:12px">${btn('Use these cards','import-paste',{cls:'primary small'})}</div>
     </div>`,true);
 }
 const forMake=f=>window.knoxIsPhoto?.(f)||window.knoxIsDocument?.(f);

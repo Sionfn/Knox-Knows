@@ -2070,6 +2070,11 @@
     #appSendBtn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
     #appSendBtn:active { transform: translateY(2px);  box-shadow: none; }
     #appSendBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
+    /* In Learn the send button is purple, like your messages there. */
+    body.knox-learn-mode #appSendBtn { background: var(--purple); box-shadow: 0 4px 0 var(--purple-dark); }
+    body.knox-learn-mode #appSendBtn:hover { box-shadow: 0 6px 0 var(--purple-dark); }
+    body.knox-learn-mode #appSendBtn:active { box-shadow: none; }
+    body.knox-learn-mode #appSendBtn:disabled { box-shadow: 0 4px 0 var(--purple-dark); }
 
     /* ═══ MODALS ═══════════════════════════════════════════ */
     .modal-backdrop {
