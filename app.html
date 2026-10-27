@@ -2492,6 +2492,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <script src="/pumpkin-patch.js" defer></script>
 <link rel="stylesheet" href="/flamefest.css">
 <script src="/flamefest.js" defer></script>
+<link rel="stylesheet" href="/tour.css">
+<script src="/tour.js" defer></script>
 <link rel="stylesheet" href="/gift.css">
 <script src="/gift.js" defer></script>
 <script src="/payment-status.js" defer></script>
@@ -2808,6 +2810,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     <button class="app-dropdown-item" onclick="window.knoxGifts?.openBuy(); closeUserDropdown()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2zM12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
       Give a gift
+    </button>
+    <button class="app-dropdown-item" onclick="closeUserDropdown(); window.knoxTour?.start()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+      Show me around
     </button>
     <button class="app-dropdown-item" onclick="window.openHelp?.(); closeUserDropdown()">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
@@ -4915,6 +4921,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.showPaymentSuccessModal = showPaymentSuccessModal;
 
   function showWelcomeModal(name) {
+    // New accounts get the "Show me around" tour (tour.js), which starts with the welcome.
+    if (window.knoxTour) { window.knoxTour.start({ name, welcomeEmail: true }); return; }
     const firstName = (name || '').split(' ')[0] || 'friend';
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';

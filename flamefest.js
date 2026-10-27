@@ -286,12 +286,15 @@
     document.body.append(peek);
     applyFlameStyle();
     // Beside the flame when there's room (the sidebar), otherwise above or below it.
-    const r = host.getBoundingClientRect(), w = peek.offsetWidth, h = peek.offsetHeight, gap = 12;
+    // Short laptops zoom the whole page (desktop-fit.js): work in its CSS pixels.
+    const z = parseFloat(getComputedStyle(document.documentElement).zoom) || 1, b = host.getBoundingClientRect();
+    const r = { left: b.left / z, top: b.top / z, right: b.right / z, bottom: b.bottom / z, width: b.width / z, height: b.height / z };
+    const W = innerWidth / z, H = innerHeight / z, w = peek.offsetWidth, h = peek.offsetHeight, gap = 12;
     let x, y;
-    if (r.right + gap + w <= innerWidth - 8) { x = r.right + gap; y = r.top + r.height / 2 - h / 2; }
+    if (r.right + gap + w <= W - 8) { x = r.right + gap; y = r.top + r.height / 2 - h / 2; }
     else { x = r.left + r.width / 2 - w / 2; y = r.top - gap - h >= 8 ? r.top - gap - h : r.bottom + gap; }
-    peek.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
-    peek.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+    peek.style.left = Math.max(8, Math.min(x, W - w - 8)) + 'px';
+    peek.style.top = Math.max(8, Math.min(y, H - h - 8)) + 'px';
     // The native "Your study streak" tooltip would sit on top of it.
     if (host.title) { host.dataset.peekTitle = host.title; host.removeAttribute('title'); }
     peekFor = host;
@@ -373,6 +376,8 @@
   // Tab still goes straight to the buttons (orange ring, see flamefest.css).
   function focusCard(card) { card.tabIndex = -1; card.focus({ preventScroll: true }); }
   function intro() {
+    // A new account's tour goes first; the popup follows when it's done.
+    if (window.knoxTour?.pending()) { addEventListener('knox-tour-done', () => setTimeout(intro, 600), { once: true }); return; }
     if (!active() || today() > END) return; // not during the Dec 1–7 claim week
     const key = 'knoxFlameFestIntro2026';
     try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
