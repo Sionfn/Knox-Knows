@@ -63,7 +63,8 @@
     mammothPromise ||= new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = MAMMOTH_URL;
-      s.onload = () => window.mammoth ? resolve(window.mammoth) : reject(new Error('Word reader unavailable'));
+      // Loaded but unusable: forget it so the next try loads it again.
+      s.onload = () => window.mammoth ? resolve(window.mammoth) : (mammothPromise = null, reject(new Error('Word reader unavailable')));
       s.onerror = () => { mammothPromise = null; reject(new Error('Word reader unavailable')); };
       document.head.appendChild(s);
     });
@@ -74,12 +75,13 @@
   // show them as normal text ("Unit 7 – Bones.pdf").
   const niceName = name => {
     const raw = String(name || 'Document');
-    if (!/%[0-9A-Fa-f]{2}/.test(raw)) return raw;
-    try { return decodeURIComponent(raw); } catch { return raw; }
+    if (!/%[0-9A-Fa-f]{2}/.test(raw)) return raw.slice(0, 200);
+    try { return decodeURIComponent(raw).slice(0, 200); } catch { return raw.slice(0, 200); }
   };
 
   const tidy = text => String(text || '')
     .replace(/\u0000/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -101,7 +103,9 @@
     const pages = Math.min(doc.numPages, MAX_PAGES);
     const parts = [];
     const scannedPages = [];
-    let length = 0;
+    let length = 0, pagesRead = 0;
+    // Each page is cleaned up after reading and the document is closed at the end.
+    try {
     for (let i = 1; i <= pages && length < textLimit(); i++) {
       const page = await doc.getPage(i);
       const content = await page.getTextContent();
@@ -110,7 +114,8 @@
       for (const item of content.items) {
         const y = item.transform?.[5];
         if (lastY !== null && y !== undefined && Math.abs(y - lastY) > 2) { lines.push(line); line = ''; }
-        line += item.str + (item.hasEOL ? '\n' : '');
+        // A space between pieces of text, so words on one line don't run together.
+        line += item.str + (item.hasEOL ? '\n' : ' ');
         lastY = y;
       }
       lines.push(line);
@@ -118,6 +123,8 @@
       if (text.replace(/\s/g, '').length < SCANNED_BELOW) scannedPages.push(i);
       parts.push(`— Page ${i} —\n${text}`);
       length += text.length;
+      pagesRead = i;
+      page.cleanup?.();
     }
     const realChars = parts.join('').replace(/— Page \d+ —|\s/g, '').length;
     if (realChars < SCANNED_BELOW) {
@@ -137,7 +144,9 @@
       return { kind: 'image', name: file.name, file: new File([blob], name, { type: 'image/jpeg' }) };
     }
     if (scannedPages.length) throw new Error(`Knox couldn't read the text on PDF page${scannedPages.length === 1 ? '' : 's'} ${scannedPages.join(', ')}. Those pages may be scanned pictures. Upload photos of those pages, or export a searchable PDF, so no notes are left out.`);
-    return finish(file.name, parts.join('\n\n'), pages, doc.numPages > MAX_PAGES);
+    // Cut off when Knox stopped before the last page (page or text limit).
+    return finish(file.name, parts.join('\n\n'), pagesRead, doc.numPages > pagesRead);
+    } finally { await doc.destroy?.(); }
   }
 
   async function readDocx(file) {

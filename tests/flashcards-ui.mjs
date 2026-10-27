@@ -15,7 +15,7 @@ function harness(){
   function element(){return {hidden:false,className:'',innerHTML:'',classList:{add(){},remove(){},toggle(){}},setAttribute(){},append(){},addEventListener(n,fn){handlers[n]=fn;},querySelector(s){return s==='#fcMakeReq'?topic:s==='.fc-card'?card:s==='#fcControls'?controls:null;},querySelectorAll(){return [];}};}
   const window={currentUser:{uid:'a',getIdToken:async()=> 'token-a'},userPlan:'super',addEventListener(n,fn){listeners[n]=fn;}};
   const context=vm.createContext({window,document:{createElement:element,querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){},contains(){return false;}}}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch:()=>{requests++;return new Promise(r=>resolveFetch=r);},AbortSignal,validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toTabText,cleanImage,setTimeout:()=>0,clearTimeout(){},crypto:{randomUUID:()=> 'deck'},structuredClone,console,Blob,URL});
-  vm.runInContext(source+'\nwindow.testAPI={state:()=>({identity,editing,request:makeOpts.request}),makeDeck,close,home,flip,setupStudy:()=>{decks=[{id:"d",cards:[{front:"Question",back:"Secret answer"}]}];session={id:"d",queue:[0],flipped:false};}};',context);
+  vm.runInContext(source+'\nwindow.testAPI={state:()=>({identity,editing,request:makeOpts.request,files:makeOpts.files,reading:makeOpts.reading}),takeFiles,makeDeck,close,home,flip,setupStudy:()=>{decks=[{id:"d",cards:[{front:"Question",back:"Secret answer"}]}];session={id:"d",queue:[0],flipped:false};}};',context);
   return {window,listeners,handlers,topic,front,back,api:window.testAPI,requests:()=>requests,resolve:()=>resolveFetch({ok:true,json:async()=>({title:'Private deck',cards:[{front:'Question',back:'Secret answer'}]})})};
 }
 test('generated content is discarded after account switches, including switching back',async()=>{
@@ -90,4 +90,25 @@ test('decks sync with the account: newer copy wins, deletions travel, local pict
   remote.set('d1', { deleted: true, updatedAt: Date.now() + 60000 });
   await t.pullDecks();
   assert.equal(t.decks().length, 0);
+});
+
+// From Codex's Oct 12 review: a file still being read when the account changes (even
+// switching back) or Flashcards closes must not land in the new draft.
+test('pending file reads are dropped after account switches (even back) and after leaving',async()=>{
+  for(const leave of ['switch','switch-back','close']){
+    const h=harness();let finish;
+    h.window.knoxIsDocument=()=>true;h.window.knoxReadDocument=()=>new Promise(r=>finish=r);
+    const pending=h.api.takeFiles([{name:'private.pdf',type:'application/pdf'}]);
+    if(leave==='close')h.api.close();
+    else{h.window.currentUser={uid:'b',getIdToken:async()=>'b'};h.listeners['knox-auth-changed']();
+      if(leave==='switch-back'){h.window.currentUser={uid:'a',getIdToken:async()=>'a'};h.listeners['knox-auth-changed']();}}
+    finish({kind:'text',name:'private.pdf',text:'private study notes',truncated:false});await pending;
+    assert.equal(h.api.state().files.length,0,leave);assert.equal(h.api.state().reading,false,leave);
+  }
+});
+test('a file read normally is added to the deck draft',async()=>{
+  const h=harness();h.window.knoxIsDocument=()=>true;
+  h.window.knoxReadDocument=async()=>({kind:'text',name:'notes.pdf',text:'Cells are living units.',truncated:false});
+  await h.api.takeFiles([{name:'notes.pdf',type:'application/pdf'}]);
+  assert.equal(h.api.state().files.length,1);assert.equal(h.api.state().files[0].name,'notes.pdf');assert.equal(h.api.state().reading,false);
 });

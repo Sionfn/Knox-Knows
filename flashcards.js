@@ -18,6 +18,9 @@ const announce=t=>{announcer.textContent='';setTimeout(()=>{announcer.textConten
 panel.append(decor,view,toast,announcer);
 let decks=[], identity='', session=null, editing=null, dirty=false;
 let generationVersion=0;
+// Bumped when the account changes or Flashcards closes, so a file still being read
+// then (even if you switch back to the same account) is dropped.
+let documentReadVersion=0;
 const key=()=>`knox.flashcards.v1.${window.currentUser?.uid || 'guest'}`;
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Deck stickers cycle through the same four colors as the topic chips.
@@ -624,7 +627,7 @@ window.addEventListener('popstate',async e=>{
  else if(e.state?.knoxLearnFlashcards?.uid===window.currentUser?.uid){await open();learnReturn=e.state.knoxLearnFlashcards;makeOpts.request=String(e.state.request||'').slice(0,4000);makeView();}
 });
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
-function close(){generationVersion++;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
+function close(){generationVersion++;documentReadVersion++;makeOpts.reading=false;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span>';b.addEventListener('click',open);nav.append(b);});
 // Visibility (see EVERYONE): if Flashcards is ever limited to Knox Plus again, the tab stays hidden until the plan is known to be Knox Plus,
@@ -642,7 +645,7 @@ async function takeFiles(list){
   if(!files.length)return;
   makeOpts.request=(panel.querySelector('#fcMakeReq')?.value??makeOpts.request??'');
   makeOpts.reading=true;makeView();
-  const owner=key();
+  const owner=key(),version=++documentReadVersion,stale=()=>owner!==key()||version!==documentReadVersion;
   const addPhoto=(p,name)=>{
     if(makeOpts.files.filter(f=>f.kind==='photo').length>=PHOTO_LIMIT[tierNow()])throw Error(`Knox can use up to ${PHOTO_LIMIT[tierNow()]} photos per deck${tierNow()==='mega'?'':' — Mega Knox takes up to 10'}.`);
     makeOpts.files.push({kind:'photo',name:name||p.name,type:p.type,data:p.data});
@@ -651,16 +654,16 @@ async function takeFiles(list){
     for(const file of files){
       if(makeOpts.files.length>=MAX_MAKE_FILES){message(`That’s plenty for one deck — up to ${MAX_MAKE_FILES} files.`);break;}
       try{
-        if(window.knoxIsPhoto?.(file)&&!window.knoxIsDocument?.(file)){const p=await window.knoxShrinkPhoto(file);if(owner!==key())return;addPhoto(p);continue;}
+        if(window.knoxIsPhoto?.(file)&&!window.knoxIsDocument?.(file)){const p=await window.knoxShrinkPhoto(file);if(stale())return;addPhoto(p);continue;}
         const doc=await window.knoxReadDocument(file);
-        if(owner!==key())return;
+        if(stale())return;
         if(doc.kind==='image'){addPhoto(await window.knoxShrinkPhoto(doc.file),doc.name+' (page 1)');continue;} // scanned PDF
         const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_CHARS[tierNow()]-used-doc.name.length-8;
         if(room<500)throw Error(`That’s a lot of reading for one deck — make this one, then another with ${doc.name}.`);
         makeOpts.files.push({kind:'text',name:doc.name,text:doc.text.slice(0,room),truncated:doc.truncated||doc.text.length>room});
-      }catch(err){message(err.message||'Knox couldn’t read that file.');}
+      }catch(err){if(stale())return;message(err.message||'Knox couldn’t read that file.');}
     }
-  }finally{makeOpts.reading=false;if(owner===key()&&panel.querySelector('#fcMakeReq'))makeView();}
+  }finally{if(!stale()){makeOpts.reading=false;if(panel.querySelector('#fcMakeReq'))makeView();}}
 }
 // Shrink a picked photo so decks stay small in browser storage (~60 KB each;
 // a browser keeps about 5 MB for all of a student's decks).
@@ -706,7 +709,7 @@ window.flashcardsTakeDrop=files=>{
   importFiles(list).catch(err=>message(err.message||'Knox couldn’t import that file.'));
   return true;
 };
-window.addEventListener('knox-auth-changed',()=>{generationVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',difficulty:'mixed',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
+window.addEventListener('knox-auth-changed',()=>{generationVersion++;documentReadVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',difficulty:'mixed',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
 panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;if(e.target.dataset.field==='front')delete c.imageTopic;}});
 panel.addEventListener('click',async e=>{
