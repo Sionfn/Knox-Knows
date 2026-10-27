@@ -9,17 +9,20 @@
 //   Graph: …             → the equation to graph (Discord can't draw it)
 
 // Same marker rule as the website: a line may be bolded or a bullet ("- **Choices:** …").
-const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i;
+const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i;
 
 export function parseLearn(text) {
-  const out = { body: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
+  const out = { body: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = MARKER.exec(line.replace(/\*\*/g, ''));
     if (!m) { keep.push(line); continue; }
-    const key = m[1].toLowerCase(), value = line.slice(line.indexOf(':') + 1).replace(/^\s*\*\*/, '').trim();
+    const key = m[1].toLowerCase(), label = line.slice(0, line.indexOf(':'));
+    const labelClosesAfterColon = /^\s*(?:[-*•]\s+)?\*\*/.test(label) && !label.trim().endsWith('**');
+    const value = line.slice(line.indexOf(':') + 1).replace(labelClosesAfterColon ? /^\s*\*\*/ : /^\s*/, '').trim();
     if (key === 'choices') out.choices = value.split('|').map(c => c.trim()).filter(Boolean).slice(0, 4);
-    else if (key === 'progress') { const p = /^(\d{1,2})\s*\/\s*(\d{1,2})/.exec(value); if (p && +p[2] >= 2 && +p[2] <= 12 && +p[1] >= 1) out.progress = { n: Math.min(+p[1], +p[2]), total: +p[2] }; }
+    else if (key === 'progress' || key === 'practice') { const p = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(value); if (p && +p[2] >= 1 && +p[2] <= 12 && +p[1] >= 1 && +p[1] <= +p[2]) out[key] = { n: +p[1], total: +p[2] }; }
+    else if (key === 'lesson plan') { const titles = value.split('|').map(s=>s.trim()); if (titles.length <= 6 && titles.every(s=>s.length >= 3 && s.length <= 64)) out.lessonPlan = titles; }
     else if (key === 'recap') out.recap = value;
     else if (key === 'watch out') out.watch = value;
     else if (key === 'topic') out.topic = value.slice(0, 80);
@@ -31,7 +34,7 @@ export function parseLearn(text) {
   if (out.choices.length < 2) out.choices = [];
   out.body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not the end (website rule).
-  if (out.recap && (/\?/.test(out.body) || out.question)) { out.recap = ''; out.watch = ''; }
+  if (out.recap && (/\?/.test(out.body) || out.question || out.choices.length)) { out.recap = ''; out.watch = ''; }
   // The same question already ends the message: don't repeat it (website rule).
   const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
   if (out.question.length > 3 && normalized(out.body).endsWith(normalized(out.question))) out.question = '';
@@ -45,6 +48,8 @@ export function formatLearn(raw) {
   const x = parseLearn(raw);
   const parts = [];
   if (x.progress && !x.recap) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${'●'.repeat(x.progress.n)}${'○'.repeat(x.progress.total - x.progress.n)}`);
+  if (x.lessonPlan.length === x.progress?.total && !x.recap) parts.push(`**${x.lessonPlan[x.progress.n - 1]}**`);
+  if (x.practice && !x.recap) parts.push(`-# Practice question ${x.practice.n} of ${x.practice.total}`);
   if (x.body) parts.push(x.body);
   if (x.keyIdea) parts.push(blockquote(`🧠 **Key idea:** ${x.keyIdea}`));
   if (x.question) parts.push(`**Your turn:** ${x.question}`);

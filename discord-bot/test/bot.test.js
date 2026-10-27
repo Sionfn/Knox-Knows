@@ -522,6 +522,14 @@ test('Learn marker lines become Discord formatting, and Choices become tap-to-an
   assert.match(tap.sent.at(-1).content, /3x = 25[\s\S]*Yes!/);
 });
 
+test('Discord separates lesson goals from counted practice and preserves bold key terms',async()=>{
+ const {formatLearn}=await import('../src/learn-format.js');
+ const f=formatLearn('Try.\nKey idea: **Balance** matters.\nYour turn: What next?\nLesson plan: Keep balance | Solve independently\nProgress: 1/2\nPractice: 2/4');
+ assert.match(f.text,/Part 1 of 2/);assert.match(f.text,/\*\*Keep balance\*\*/);
+ assert.match(f.text,/Practice question 2 of 4/);assert.match(f.text,/\*\*Balance\*\*/);
+ assert.doesNotMatch(f.text,/Lesson plan:|Progress:|Practice:/);
+});
+
 test('/ask is Ask Knox: a full answer with the Answer line, follow-ups use a question, Teach me this starts a free Learn lesson', async () => {
   const calls = [];
   const replies = ['Subtract 5 from both sides to isolate the x-term: 3x = 15.\nDivide both sides by 3 to get x alone: x = 5.\n\nAnswer: **x = 5**', 'Because 3 × 5 = 15.', 'What is the first step?\nChoices: subtract 5 | divide by 3'];

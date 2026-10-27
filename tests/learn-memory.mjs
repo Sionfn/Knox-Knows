@@ -24,3 +24,14 @@ test('Ask history and blocked storage remain usable and bounded', () => {
   const huge=[{role:'user',content:'x'.repeat(24001)},...opening];
   assert.equal(fn(huge,null,null,false,store).length,2);
 });
+test('a greeting cannot replace the actual task in long lesson memory',()=>{
+ const store=memory();
+ const start=[{role:'user',content:'hi'},{role:'assistant',content:'Hello!'},
+  {role:'user',content:'Teach me the causes of World War 1'},
+  {role:'assistant',content:'Start with alliances.\nLesson plan: Connect alliances | Explain the trigger\nProgress: 1/2'}];
+ const first=fn(start,'u','s',true,store);
+ assert.equal(first[0].content,'Teach me the causes of World War 1');assert.equal(first.length,2);
+ const later=Array.from({length:50},(_,i)=>({role:i%2?'assistant':'user',content:'later '+i}));
+ const restored=fn(later,'u','s',true,store);
+ assert.equal(restored[0].content,start[2].content);assert.match(restored[1].content,/Lesson plan:/);
+});

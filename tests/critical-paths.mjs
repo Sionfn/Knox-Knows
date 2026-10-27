@@ -414,9 +414,10 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /must not contain the result or the full explanation/);
   // The app's Learn buttons: choices, step progress and the end-of-lesson recap.
   assert.match(system, /Choices: option \| option \| option/);
-  assert.match(system, /Progress: 1\/3/);
+  assert.match(system, /Lesson plan: concrete short learning goal/);
   assert.match(system, /Hints, retries and explanations stay in the same part/);
   assert.match(system, /ask exactly 3, one at a time/);
+  assert.match(system, /several questions can develop one goal/);
   assert.match(system, /Never add compulsory bonus questions/);
   assert.match(system, /valid but unhelpful/);
   assert.match(system, /student must provide the final numerical result/);
@@ -1014,11 +1015,28 @@ test('Learn mode guides even simple arithmetic instead of answering it', async (
   const res = response();
   await handler(askRequest({ question: '2 x 4', history: [{ role: 'user', content: 'hey' }, { role: 'assistant', content: "Hey! What's up?" }], learnMode: true }), res);
   const prompt = ai.calls.find(call => !isSmallTalkCheck(call)).messages[0].content;
-  assert.match(prompt, /Your first reply to anything new never gives the answer/);
+  assert.match(prompt, /Your first reply never solves the student's own task/);
   assert.match(prompt, /even very simple ones like 2 x 4/);
   assert.match(prompt, /Never write an Answer: line in Learn mode/);
   assert.match(prompt, /Final check before every Learn reply.*ask a guiding question instead.*not a quick fact to state\.$/s, 'the reminder is the last thing in the Learn instructions');
   assert.doesNotMatch(prompt, /Bare math:/);
+});
+
+test('Learn repairs an early practice recap before saving it; failed repairs refund the request',async()=>{
+ const history=[{role:'user',content:'Give me 3 practice questions on equations.'},{role:'assistant',content:'Solve 5x + 6 = 26.\nLesson plan: Solve equations\nProgress: 1/1\nPractice: 1/3'}];
+ const premature='Correct.\nRecap: All done.\nLesson plan: Solve equations\nProgress: 1/1\nPractice: 3/3';
+ for(const repairWorks of [true,false]){
+  const {db,store}=memoryDb();store.set('users/u1/usage/bank',{balance:7,lastRegenAt:Date.now()});let calls=0;
+  const handler=await load('api/ask.js',{db,fetch:async(url,options)=>{
+   const b=JSON.parse(options.body),classifier=/Classify the LATEST/.test(b.messages?.[0]?.content || '');
+   const content=classifier?'SUBSTANTIVE':++calls===1 || !repairWorks?premature:'Correct.\nYour turn: Solve 3x − 4 = 17.\nLesson plan: Solve equations\nProgress: 1/1\nPractice: 2/3';
+   return {ok:true,json:async()=>({choices:[{message:{content},finish_reason:'stop'}]})};
+  }});
+  const res=response();await handler(askRequest({question:'x = 4',history,learnMode:true}),res);
+  assert.equal(calls,2);
+  if(repairWorks){assert.equal(res.code,200);assert.match(res.body.answer,/Practice: 2\/3/);assert.doesNotMatch(res.body.answer,/Recap:/);}
+  else {assert.equal(res.code,500);assert.equal(store.get('users/u1/usage/bank').balance,7);}
+ }
 });
 
 test('/api/me tells a signed-out visitor whether the server will let them ask', async () => {

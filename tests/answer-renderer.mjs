@@ -9,6 +9,40 @@ const renderer = source.slice(source.indexOf('// ── Learn extras'), source.i
 const context = { window: {}, document: { addEventListener() {}, querySelectorAll: () => [] } };
 runInNewContext(`${helpers}\n${renderer}`, context);
 
+test('lesson map names the current goal and separates practice questions from parts',()=>{
+ const raw='Try it.\nYour turn: What is the result?\nLesson plan: Understand balance | Solve independently\nProgress: 2/2\nPractice: 3/5';
+ const html=context.renderAnswerHtml(raw,'learn');
+ assert.match(html,/Part 2\/2/);assert.match(html,/Practice question 3 of 5/);
+ assert.match(html,/<summary>Solve independently · Lesson plan<\/summary>/);
+ assert.match(html,/aria-current="step">Solve independently — current/);
+ assert.match(html,/Understand balance — completed/);
+ assert.doesNotMatch(context.window.knoxLearnClean(raw),/Lesson plan:|Progress:|Practice:/);
+ const single=context.renderAnswerHtml(raw.replace('Understand balance | Solve independently','Solve independently').replace('2/2','1/1'),'learn');
+ assert.match(single,/Part 1\/1/);
+ const unsafe=context.renderAnswerHtml(raw.replace('Solve independently','<img src=x onerror=alert(1)>'),'learn');
+ assert.doesNotMatch(unsafe,/<img/);
+ const done=context.renderAnswerHtml('Correct.\nRecap: All done.\nLesson plan: Read fractions\nProgress: 1/1','learn');
+ assert.doesNotMatch(done,/learn-map|learn-progress|learn-practice/);
+ assert.match(context.window.knoxLearnClean('Correct.\nRecap: All done.\nWatch out: Keep balance.'),/What you learned: All done/);
+});
+test('metadata formatting keeps the first bold keyword intact',()=>{
+ for (const prefix of ['Key idea: ','**Key idea:** ','**Key idea**: ']) {
+  const html=context.renderAnswerHtml('Try.\n'+prefix+'**Balance** matters.\nYour turn: Why?','learn');
+  assert.match(html,/<strong>Balance<\/strong>/);
+ }
+});
+test('only the latest actual reply can own active Learn buttons, including imperative prompts',()=>{
+ const imperative=context.renderAnswerHtml('Solve 3x − 4 = 17. Show your steps.\nLesson plan: Solve equations\nProgress: 1/1','learn');
+ assert.match(imperative,/I’m stuck/);
+ const old={disabled:false},current={disabled:false};
+ const document=context.document;
+ context.document={querySelectorAll:selector=>selector.endsWith('.msg-knox-bubble')?[{contains:b=>b===old},{contains:b=>b===current}]:[old,current]};
+ context.settleLearnActions();assert.equal(old.disabled,true);assert.equal(current.disabled,false);
+ context.document={querySelectorAll:selector=>selector.endsWith('.msg-knox-bubble')?[{contains:()=>false}]:[old,current]};
+ context.settleLearnActions();assert.equal(old.disabled,true);assert.equal(current.disabled,true);
+ context.document=document;
+});
+
 test('restored Learn keeps old metadata questions in the normal reply without duplication', () => {
   const raw='Use **inverse operations**.\n\n`3x + 5 = 20`\nKey idea: Do the same thing to both sides.\nYour turn: What remains after subtracting **5** from both sides?\nProgress: 1/2';
   const html=context.renderAnswerHtml(raw,'learn');
@@ -121,7 +155,7 @@ test('Learn extras: choice buttons, step dots and help chips; the marker lines a
   const html = context.renderAnswerHtml('Leaves are green because of a pigment. Do you know its name?\nProgress: 1/3\nChoices: chlorophyll | melanin | carotene', 'learn');
   assert.equal((html.match(/class="learn-choice"/g) || []).length, 3);
   assert.match(html, /data-learn-send="chlorophyll"/);
-  assert.match(html, /aria-label="Part 1 of 3\. A part can include a question and hints\."/);
+  assert.match(html, /aria-label="Part 1 of 3\. A learning goal can include several questions, examples and hints\."/);
   assert.match(html, /Your turn/, 'the label still sees the question at the end');
   // Help fits the question: a tap-to-answer question gets just a hint ...
   assert.match(html, /Hint/);

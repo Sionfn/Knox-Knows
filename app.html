@@ -1494,6 +1494,16 @@
     .learn-progress i.done { background: var(--green); }
     .learn-progress i.now { background: var(--purple); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 25%, transparent); }
     .learn-progress b { margin-left: 4px; font-size: 11px; color: var(--text-light); letter-spacing: 0; }
+    .learn-map { margin: 0 18px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
+    .learn-map summary { padding: 10px 12px; cursor: pointer; font-weight: 800; color: var(--purple-dark); overflow-wrap: anywhere; }
+    .learn-map summary:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px; border-radius: 10px; }
+    .learn-map ol { margin: 0 12px 10px 32px; padding: 0; color: var(--text-light); }
+    .learn-map li { padding: 4px 0; overflow-wrap: anywhere; }
+    .learn-map li[aria-current="step"] { color: var(--text); font-weight: 800; }
+    .learn-map p { margin: 8px 12px 12px; color: var(--text-light); line-height: 1.5; }
+    .learn-practice { margin: -4px 18px 14px; font-size: 12px; font-weight: 800; color: var(--text-light); }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-map summary { color: var(--purple-on-tint); }
+    @media (max-width: 480px) { .learn-progress { gap: 3px; } .learn-progress i { width: 6px; height: 6px; } .learn-map { margin-inline: 12px; } }
     .learn-status { margin-left:auto; font-size:11px; color:var(--text-light); letter-spacing:0; }
     .learn-actions { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
     .learn-choices { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -1657,7 +1667,7 @@
     .knox-section-card strong { color: inherit; font-weight: 800; }
     /* Key words are blue; step titles stay orange so the outline stands out. */
     .msg-knox-bubble strong { color: var(--blue-dark); font-weight: 800; }
-    html[data-theme="dark"] .msg-knox-bubble strong { color: #74D4FF; }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble strong { color: #74D4FF; }
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
     .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); --knox-ledge: var(--purple-dark); }
@@ -6003,6 +6013,19 @@ function buildStudyHistory(conversation, uid, sessionId, learn, storage) {
     try {
       const saved = JSON.parse(storage.getItem('knoxLearnOutline') || 'null');
       if (saved?.uid === uid && saved?.sessionId === sessionId && Array.isArray(saved.messages)) anchor = saved.messages.filter(valid).slice(0, 2);
+      // A greeting is not the lesson goal. Anchor the actual start of the
+      // newest named plan, retaining the original task through long sessions.
+      const planOf = m => m?.role === 'assistant' && /^\s*Lesson plan:\s*(.+)$/mi.exec(m.content || '')?.[1];
+      let previousPlan = planOf(anchor[1]) || '', candidate = null;
+      for (let i = 1; i < conversation.length; i++) {
+        const plan = planOf(conversation[i]);
+        if (plan && plan !== previousPlan && conversation[i-1]?.role === 'user' && conversation.slice(i-1,i+1).every(valid)) candidate = conversation.slice(i-1,i+1);
+        if (plan) previousPlan = plan;
+      }
+      if (candidate) {
+        anchor = candidate.map(({role,content})=>({role,content}));
+        storage.setItem('knoxLearnOutline', JSON.stringify({uid,sessionId,messages:anchor}));
+      }
       if (!anchor.length && conversation.length >= 2 && conversation[0]?.role === 'user' && conversation[1]?.role === 'assistant' && conversation.slice(0, 2).every(valid)) {
         anchor = conversation.slice(0, 2).map(({ role, content }) => ({ role, content }));
         storage.setItem('knoxLearnOutline', JSON.stringify({ uid, sessionId, messages: anchor }));
@@ -6011,8 +6034,8 @@ function buildStudyHistory(conversation, uid, sessionId, learn, storage) {
   }
   const history = [];
   let chars = anchor.reduce((n, m) => n + m.content.length, 0);
-  const includesOpening = anchor.length && anchor.every((a, i) => conversation[i]?.role === a.role && conversation[i]?.content === a.content);
-  const recent = includesOpening ? conversation.slice(anchor.length) : conversation;
+  const anchorIndex = anchor.length ? conversation.findIndex((m,i)=>anchor.every((a,j)=>conversation[i+j]?.role===a.role && conversation[i+j]?.content===a.content)) : -1;
+  const recent = anchorIndex >= 0 ? conversation.slice(anchorIndex + anchor.length) : conversation;
   for (const m of recent.slice(-(30 - anchor.length)).reverse()) {
     if (!valid(m)) continue;
     if (chars + m.content.length > 120000) break;
@@ -6385,7 +6408,7 @@ function renderLimitCard(data, isSignedIn) {
 //   Graph: y = x^2 - 4 | y = 2x + 1, x from -5 to 5 → a graph drawn in the app
 //   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
-const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
+const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
 function shouldSeparateLearnQuestion(body) {
   const plain = String(body || '').replace(/\*\*|`/g, '').trim();
   const steps = (plain.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length;
@@ -6393,16 +6416,19 @@ function shouldSeparateLearnQuestion(body) {
   return plain.length >= 420 || (steps >= 2 && plain.length >= 120) || (paragraphs >= 3 && plain.length >= 220);
 }
 function parseLearnExtras(text) {
-  const out = { clean: '', choices: [], progress: null, recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
+  const out = { clean: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = LEARN_MARKER.exec(line.replace(/\*\*/g, ''));
     if (!m) { keep.push(line); continue; }
     // The value comes from the real line, so **bold** inside it stays bold
     // (only a bolded label like "**Recap:**" loses its stars).
-    const key = m[1].toLowerCase(), value = line.slice(line.indexOf(':') + 1).replace(/^\s*\*\*/, '').trim();
+    const key = m[1].toLowerCase(), label = line.slice(0, line.indexOf(':'));
+    const labelClosesAfterColon = /^\s*(?:[-*•]\s+)?\*\*/.test(label) && !label.trim().endsWith('**');
+    const value = line.slice(line.indexOf(':') + 1).replace(labelClosesAfterColon ? /^\s*\*\*/ : /^\s*/, '').trim();
     if (key === 'choices') out.choices = value.split('|').map(c => c.trim()).filter(Boolean).slice(0, 4);
-    else if (key === 'progress') { const p = /^(\d{1,2})\s*\/\s*(\d{1,2})/.exec(value); if (p && +p[2] >= 2 && +p[2] <= 12 && +p[1] >= 1) out.progress = { n: Math.min(+p[1], +p[2]), total: +p[2] }; }
+    else if (key === 'progress' || key === 'practice') { const p = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(value); if (p && +p[2] >= 1 && +p[2] <= 12 && +p[1] >= 1 && +p[1] <= +p[2]) out[key] = { n: +p[1], total: +p[2] }; }
+    else if (key === 'lesson plan') { const titles = value.split('|').map(s=>s.trim()); if (titles.length <= 6 && titles.every(s=>s.length >= 3 && s.length <= 64)) out.lessonPlan = titles; }
     else if (key === 'recap') out.recap = value;
     else if (key === 'watch out') out.watch = value;
     else if (key === 'topic') out.topic = value.slice(0, 80);
@@ -6414,14 +6440,15 @@ function parseLearnExtras(text) {
   if (out.choices.length < 2) out.choices = [];
   const body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not completion.
-  if (out.recap && (/\?/.test(body) || out.question)) { out.recap=''; out.watch=''; }
+  if (out.recap && (/\?/.test(body) || out.question || out.choices.length)) { out.recap=''; out.watch=''; }
+  if (!out.progress || out.lessonPlan.length !== out.progress.total) out.lessonPlan = [];
   const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
   if (out.question.length > 3 && normalized(body).endsWith(normalized(out.question))) out.question = '';
   out.separateQuestion = !!out.question && shouldSeparateLearnQuestion(body);
   out.clean = [body, out.separateQuestion ? '' : out.question].filter(Boolean).join('\n\n');
   return out;
 }
-window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.separateQuestion ? x.question : ''].filter(Boolean).join('\n\n'); };
+window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
 const LEARN_HELP = {
   hint:    ['💡', 'Hint', 'Can I get a hint?'],
   stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
@@ -6434,7 +6461,7 @@ const LEARN_HELP = {
 function learnHelpFor(x, tone) {
   if (tone === 'retry') return ['hint', 'example', 'another'];
   if (x.choices.length) return ['hint'];
-  if (x.question || /\?/.test(x.clean)) return ['hint', 'stuck', 'example'];
+  if (x.question || /\?/.test(x.clean) || x.progress) return ['hint', 'stuck', 'example'];
   return [];
 }
 
@@ -6524,8 +6551,9 @@ function learnExtrasHtml(x, tone) {
 }
 // Only the newest Learn reply's buttons can be used; older ones go quiet.
 function settleLearnActions() {
-  const groups = [...document.querySelectorAll('#chatThread .learn-actions')];
-  groups.forEach((g, i) => g.querySelectorAll('button').forEach(b => { b.disabled = i !== groups.length - 1; }));
+  const replies = [...document.querySelectorAll('#chatThread .msg-knox-bubble')];
+  const latest = replies[replies.length - 1];
+  document.querySelectorAll('#chatThread .learn-actions button').forEach(b => { b.disabled = !latest?.contains(b); });
 }
 window.settleLearnActions = settleLearnActions;
 document.addEventListener('click', e => {
@@ -6569,10 +6597,17 @@ function learnHeadingHtml(text, progress, finished) {
   } else if (/\?\s*$/.test(t)) {
     icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
-  const dots = progress && !finished ? '<span class="learn-progress" role="img" aria-label="Part ' + progress.n + ' of ' + progress.total + '. A part can include a question and hints.">' +
+  const dots = progress && !finished ? '<span class="learn-progress" role="img" aria-label="Part ' + progress.n + ' of ' + progress.total + '. A learning goal can include several questions, examples and hints.">' +
     Array.from({ length: progress.total }, (_, i) => '<i class="' + (i < progress.n - 1 ? 'done' : i === progress.n - 1 ? 'now' : '') + '"></i>').join('') +
     '<b>Part ' + progress.n + '/' + progress.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
   return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + dots + '</div>';
+}
+
+function learnPlanHtml(x) {
+  if (!x.lessonPlan.length || x.recap) return '';
+  return '<details class="learn-map"><summary>' + escHtml(x.lessonPlan[x.progress.n - 1]) + ' · Lesson plan</summary><ol>' +
+    x.lessonPlan.map((title,i)=>'<li' + (i === x.progress.n-1 ? ' aria-current="step"' : '') + '>' + escHtml(title) + (i < x.progress.n-1 ? ' — completed' : i === x.progress.n-1 ? ' — current' : '') + '</li>').join('') +
+    '</ol><p>Each part is a learning goal and may include several questions. Hints and retries stay in the same part.</p></details>';
 }
 
 function renderAnswerHtml(text, kind = 'answer') {
@@ -6641,7 +6676,8 @@ function renderAnswerHtml(text, kind = 'answer') {
   }
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
-  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap) : '') +
+  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap) + learnPlanHtml(learnX) +
+    (learnX.practice && !learnX.recap ? '<div class="learn-practice">Practice question ' + learnX.practice.n + ' of ' + learnX.practice.total + '</div>' : '') : '') +
     '<div class="knox-response-body">' + html + '</div>' +
     (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean)) : '');
 }
