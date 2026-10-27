@@ -205,11 +205,13 @@ html.knox-seasonal .kc-const { color:var(--green-dark); }
  .kc-is-sci .kc-pads { gap:10px; }
  .kc-is-sci .kc-actions { margin-top:12px; }
 }
-/* The calculator's keys wear its blue too: operators like the function keys,
-   = solid blue. AC stays red; "Back" keeps the color of where you came from. */
-.kc-op { background:var(--blue-light); border-color:color-mix(in srgb,var(--blue) 45%,transparent); color:var(--blue-dark); box-shadow:0 4px 0 color-mix(in srgb,var(--blue) 45%,transparent); }
-.kc-op:hover { box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 45%,transparent); }
-.kc-op:active, .kc-op.kc-pressed { box-shadow:0 1px 0 color-mix(in srgb,var(--blue) 45%,transparent); }
+/* The calculator's keys follow the same rule as every section: everyday keys
+   white (operators with a blue symbol and light blue outline, like Learn's answer
+   buttons), the main key (=) solid blue. AC stays red; "Back" keeps the color of
+   where you came from. */
+.kc-op { background:var(--surface); border-color:color-mix(in srgb,var(--blue) 40%,var(--border)); color:var(--blue-dark); box-shadow:0 4px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
+.kc-op:hover { box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
+.kc-op:active, .kc-op.kc-pressed { box-shadow:0 1px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
 html[data-theme="dark"]:not(.knox-seasonal) .kc-op { color:var(--blue); }
 .kc-eq { background:var(--blue); border-color:var(--blue-dark); box-shadow:0 4px 0 var(--blue-dark); }
 .kc-eq:hover { box-shadow:0 5px 0 var(--blue-dark); }
