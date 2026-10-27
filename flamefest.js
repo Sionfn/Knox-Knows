@@ -375,13 +375,17 @@
   // Focus the window, not its first button, so no focus ring shows on open;
   // Tab still goes straight to the buttons (orange ring, see flamefest.css).
   function focusCard(card) { card.tabIndex = -1; card.focus({ preventScroll: true }); }
-  function intro() {
-    // A new account's tour goes first; the popup follows when it's done.
-    if (window.knoxTour?.pending()) { addEventListener('knox-tour-done', () => setTimeout(intro, 600), { once: true }); return; }
-    if (!active() || today() > END) return; // not during the Dec 1–7 claim week
-    const key = 'knoxFlameFestIntro2026';
-    try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
-    const startsToday = today() === START;
+  // preview: show the Nov 1 version now, whatever the date (the admin's
+  // "Preview Nov 1 popup" button in the profile menu); nothing is saved.
+  function intro(preview) {
+    if (preview !== true) {
+      // A new account's tour goes first; the popup follows when it's done.
+      if (window.knoxTour?.pending()) { addEventListener('knox-tour-done', () => setTimeout(intro, 600), { once: true }); return; }
+      if (!active() || today() > END) return; // not during the Dec 1–7 claim week
+      const key = 'knoxFlameFestIntro2026';
+      try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
+    }
+    const startsToday = preview === true || today() === START;
     popup(`<div class="ff-pop-flame" aria-hidden="true">🔥</div><h2 id="ffPopTitle">Flame Fest ${startsToday ? 'starts today!' : 'is on!'}</h2>
       <p>All November, every day you study with Knox lights a flame on your calendar.</p>
       <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userTier === 'mega' ? ' — a Mega Knox week to gift a friend' : window.userTier === 'plus' ? ' — two free weeks of Mega Knox' : ' — a free week of Mega Knox'}</li></ul>`,
@@ -395,7 +399,7 @@
   addEventListener('knox-auth-changed', whenReady);
   if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
 
-  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint };
+  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true) };
   // Flames with a fixed look on the page (e.g. the Discord card's Slime Flame) draw right away.
   applyFlameStyle();
 })();
