@@ -2079,6 +2079,9 @@
     #appSendBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
     /* In Learn the send button is purple, like your messages there. */
     body.knox-learn-mode #appSendBtn { background: var(--purple); box-shadow: 0 4px 0 var(--purple-dark); }
+    /* …and the line above the message bar is purple in Learn too (plum in the fall look). */
+    body.knox-learn-mode #inputOuter { border-top-color: var(--purple); }
+    html.knox-seasonal body.knox-learn-mode #inputOuter { border-color: #B583C6; }
     body.knox-learn-mode #appSendBtn:hover { box-shadow: 0 6px 0 var(--purple-dark); }
     body.knox-learn-mode #appSendBtn:active { box-shadow: none; }
     body.knox-learn-mode #appSendBtn:disabled { box-shadow: 0 4px 0 var(--purple-dark); }
@@ -5247,7 +5250,7 @@ window.openLearnMode = function() {
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
   if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand." +
-    (window.currentUser ? '' : ' Free with a Knox account.');
+    (window.currentUser ? '' : ' Sign up free to start a lesson.');
   updateSuggestionChipsForMode(true);
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
