@@ -97,7 +97,7 @@
         <div class="kt-head"><span class="kt-icon">${s.icon || ''}</span><h2 id="ktTitle">${s.title}</h2></div>
         <p>${esc(s.text)}</p>
         ${i === 0 && opts.welcomeEmail ? '<p class="kt-fine">We also sent a welcome email from support@knoxknowsapp.com.</p>' : ''}
-        <div class="kt-foot"><div class="kt-dots" aria-label="Step ${i + 1} of ${list.length}">${dots}</div>
+        <div class="kt-foot${s.next ? ' kt-wide' : ''}"><div class="kt-dots" aria-label="Step ${i + 1} of ${list.length}">${dots}</div>
           <div class="kt-btns">${s.skip ? `<button type="button" class="kt-btn kt-ghost" data-act="end">${s.skip}</button>` : i > 0 && !last ? '<button type="button" class="kt-btn kt-ghost" data-act="back">Back</button>' : ''}
           <button type="button" class="kt-btn kt-main" data-act="${last ? 'finish' : 'next'}">${s.next || 'Next'}</button></div></div>`;
       place();

@@ -31,5 +31,10 @@
 .kt-main:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--kt-dark); }
 .kt-ghost { border: 2px solid var(--border); background: var(--surface); color: var(--text); box-shadow: 0 3px 0 var(--border); }
 .kt-btn:focus-visible, .kt-x:focus-visible { outline: 3px solid color-mix(in srgb, var(--kt) 60%, transparent); outline-offset: 2px; }
+/* Steps with longer button labels (welcome, all set): dots on top, buttons share a full row. */
+.kt-foot.kt-wide { flex-direction: column; align-items: stretch; gap: 12px; }
+.kt-foot.kt-wide .kt-dots { justify-content: center; }
+.kt-foot.kt-wide .kt-btns { width: 100%; margin-left: 0; }
+.kt-foot.kt-wide .kt-btn { flex: 1; }
 @media (max-width: 420px) { .kt-foot { flex-wrap: wrap; } .kt-btns { width: 100%; } .kt-btns .kt-btn { flex: 1; } }
 @media (prefers-reduced-motion: reduce) { .kt-spot, .kt-card { animation: none; transition: none; } }
