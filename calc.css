@@ -154,7 +154,7 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
 .kc-modes { padding:4px; border-radius:14px; }
 .kc-mode { min-height:38px; }
 .kc-mode.on { background:var(--blue); box-shadow:0 3px 0 var(--blue-dark); }
-.kc-screen { height:auto; min-height:116px; max-height:220px; overflow:auto; padding:16px 18px; border-radius:16px; background:var(--blue-light); border-color:color-mix(in srgb,var(--blue) 40%,var(--border)); margin-bottom:18px; }
+.kc-screen { height:auto; min-height:116px; max-height:220px; overflow:auto; padding:16px 18px; border-radius:16px; background:var(--cream-warm); border-color:var(--border); margin-bottom:18px; }
 .kc-result { font-variant-numeric:tabular-nums; }
 .kc-big { color:var(--text); }
 .kc-keys { gap:10px; }
@@ -207,12 +207,11 @@ html.knox-seasonal .kc-const { color:var(--green-dark); }
  .kc-is-sci .kc-actions { margin-top:12px; }
 }
 /* The calculator's keys follow the same rule as every section: everyday keys
-   white (operators with a blue symbol and light blue outline, like Learn's answer
-   buttons), the main key (=) solid blue. AC stays red; "Back" keeps the color of
+   white (operators only get a blue symbol), the main key (=) solid blue. AC stays red; "Back" keeps the color of
    where you came from. */
-.kc-op { background:var(--surface); border-color:color-mix(in srgb,var(--blue) 40%,var(--border)); color:var(--blue-dark); box-shadow:0 4px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
-.kc-op:hover { box-shadow:0 5px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
-.kc-op:active, .kc-op.kc-pressed { box-shadow:0 1px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
+.kc-op { background:var(--surface); border-color:var(--border); color:var(--blue-dark); box-shadow:0 4px 0 var(--border); }
+.kc-op:hover { box-shadow:0 5px 0 var(--border); }
+.kc-op:active, .kc-op.kc-pressed { box-shadow:0 1px 0 var(--border); }
 html[data-theme="dark"]:not(.knox-seasonal) .kc-op { color:var(--blue); }
 .kc-eq { background:var(--blue); border-color:var(--blue-dark); box-shadow:0 4px 0 var(--blue-dark); }
 .kc-eq:hover { box-shadow:0 5px 0 var(--blue-dark); }
