@@ -260,9 +260,9 @@
       else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
     });
   }
-  // ── Flame peek: hover (or keyboard focus) on a flame shows it big, alive and
-  // turning in 3D. Layers stacked in depth give it thickness as it sways.
-  // Mouse/keyboard only — a tap on phones still opens the streak window.
+  // ── Flame peek: press and hold a flame (mouse or finger) to see it big,
+  // alive and turning in 3D; letting go hides it. Layers stacked in depth give
+  // it thickness as it sways. A normal click/tap still does what it did.
   const GLOW = { classic: '#FF6B00', purple: '#A35BFF', blue: '#2E9BFF', gold: '#F2B705', slime: '#6FD83C', diamond: '#8FE3FF' };
   const PEEK_AT = '#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style';
   let peek = null, peekFor = null, peekTimer = 0;
@@ -303,17 +303,24 @@
     peekFor = null;
     if (peek) { const old = peek; peek = null; old.classList.remove('open'); setTimeout(() => old.remove(), 180); }
   }
-  const canHover = () => matchMedia('(hover: hover) and (pointer: fine)').matches;
-  document.addEventListener('mouseover', e => {
-    const host = e.target.closest?.(PEEK_AT);
-    if (host === peekFor) return;
-    clearTimeout(peekTimer);
-    if (!host || !canHover()) { if (peekFor) hidePeek(); return; }
-    peekTimer = setTimeout(() => showPeek(host), 180);
+  const HOLD_MS = 1500;
+  let charging = null, swallowClick = false;
+  function stopCharge() { clearTimeout(peekTimer); if (charging) charging.classList.remove('fp-charging'); charging = null; }
+  document.addEventListener('pointerdown', e => {
+    const host = e.button === 0 && e.target.closest?.(PEEK_AT);
+    if (!host) return;
+    stopCharge(); swallowClick = false;
+    charging = host; host.classList.add('fp-charging');
+    peekTimer = setTimeout(() => { stopCharge(); swallowClick = true; showPeek(host); }, HOLD_MS);
   });
-  document.addEventListener('focusin', e => { const host = e.target.closest?.(PEEK_AT); if (host && e.target.matches(':focus-visible')) showPeek(host); else if (peekFor) hidePeek(); });
-  document.addEventListener('focusout', () => { if (peekFor && !peekFor.matches(':hover')) hidePeek(); });
-  ['click', 'scroll', 'resize', 'blur'].forEach(t => addEventListener(t, () => { if (peekFor) hidePeek(); }, true));
+  // Letting go (or moving off / scrolling) ends it.
+  ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { stopCharge(); if (peekFor) hidePeek(); }, true));
+  document.addEventListener('pointerout', e => { if (charging && !charging.contains(e.relatedTarget)) stopCharge(); });
+  // The click that ends a hold shouldn't also open the streak window or pick a look.
+  addEventListener('click', e => { if (swallowClick) { swallowClick = false; e.preventDefault(); e.stopPropagation(); } }, true);
+  // A long press on phones would otherwise open the browser's menu.
+  document.addEventListener('contextmenu', e => { if (e.target.closest?.(PEEK_AT)) e.preventDefault(); });
+  ['scroll', 'resize', 'blur'].forEach(t => addEventListener(t, () => { stopCharge(); if (peekFor) hidePeek(); }, true));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && peekFor) hidePeek(); });
 
   // Clicking the Knox Discord card: say how to earn the Slime Flame (linking in

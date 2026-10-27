@@ -264,3 +264,8 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
   .fp-embers { display: none; }
   .flame-peek { transition: opacity .16s ease; transform: none; }
 }
+/* Holding a flame: it swells until the peek opens (scale, so the looks' own filters keep running). */
+:is(#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style) { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+:is(#streakPill, .discord-slime-badge, .ff-style) .knox-flame, #streakFlame, .ff-myflame-icon { display: inline-block; transition: scale .2s ease-out; }
+.fp-charging :is(#streakFlame, .knox-flame), .fp-charging:is(.knox-flame) { scale: 1.45; transition: scale 1.5s ease-in; }
+@media (prefers-reduced-motion: reduce) { .fp-charging :is(#streakFlame, .knox-flame), .fp-charging:is(.knox-flame) { scale: 1; } }
