@@ -12,13 +12,15 @@ runInNewContext(`${helpers}\n${renderer}`, context);
 test('lesson map names the current goal and separates practice questions from parts',()=>{
  const raw='Try it.\nYour turn: What is the result?\nLesson plan: Understand balance | Solve independently\nProgress: 2/2\nPractice: 3/5';
  const html=context.renderAnswerHtml(raw,'learn');
- assert.match(html,/Part 2\/2/);assert.match(html,/Practice question 3 of 5/);
- assert.match(html,/<summary>Solve independently · Lesson plan<\/summary>/);
- assert.match(html,/aria-current="step">Solve independently — current/);
- assert.match(html,/Understand balance — completed/);
+ // While practising, the heading counts practice questions; the lesson map shows the current goal.
+ assert.match(html,/<b>Practice 3\/5<\/b>/);assert.doesNotMatch(html,/Part 2\/2/);
+ assert.match(html,/class="learn-map-label">Lesson plan<\/span><span class="learn-map-now">Solve independently<\/span>/);
+ assert.match(html,/aria-current="step"><span class="lm-dot" aria-hidden="true"><\/span>Solve independently<span class="sr-only"> — current/);
+ assert.match(html,/Understand balance<span class="sr-only"> — completed/);
  assert.doesNotMatch(context.window.knoxLearnClean(raw),/Lesson plan:|Progress:|Practice:/);
  const single=context.renderAnswerHtml(raw.replace('Understand balance | Solve independently','Solve independently').replace('2/2','1/1'),'learn');
- assert.match(single,/Part 1\/1/);
+ // A one-goal lesson: no part counter and no map (practice still counts).
+ assert.doesNotMatch(single,/Part 1\/1|learn-map/);assert.match(single,/Practice 3\/5/);
  const unsafe=context.renderAnswerHtml(raw.replace('Solve independently','<img src=x onerror=alert(1)>'),'learn');
  assert.doesNotMatch(unsafe,/<img/);
  const done=context.renderAnswerHtml('Correct.\nRecap: All done.\nLesson plan: Read fractions\nProgress: 1/1','learn');

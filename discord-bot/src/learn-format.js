@@ -47,9 +47,12 @@ const blockquote = s => '> ' + s.replace(/\n/g, '\n> ');
 export function formatLearn(raw) {
   const x = parseLearn(raw);
   const parts = [];
-  if (x.progress && !x.recap) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${'●'.repeat(x.progress.n)}${'○'.repeat(x.progress.total - x.progress.n)}`);
-  if (x.lessonPlan.length === x.progress?.total && !x.recap) parts.push(`**${x.lessonPlan[x.progress.n - 1]}**`);
-  if (x.practice && !x.recap) parts.push(`-# Practice question ${x.practice.n} of ${x.practice.total}`);
+  // One counter, like the website: practice questions while practising, otherwise
+  // the lesson's goals (only when there are 2+), with the current goal's name.
+  const dots = c => '●'.repeat(c.n) + '○'.repeat(c.total - c.n);
+  const goal = x.lessonPlan.length >= 2 && x.lessonPlan.length === x.progress?.total ? x.lessonPlan[x.progress.n - 1] : '';
+  if (!x.recap && x.practice) parts.push(`-# Practice ${x.practice.n} of ${x.practice.total}  ${dots(x.practice)}${goal ? ` · ${goal}` : ''}`);
+  else if (!x.recap && x.progress && x.progress.total >= 2) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${dots(x.progress)}${goal ? ` · ${goal}` : ''}`);
   if (x.body) parts.push(x.body);
   if (x.keyIdea) parts.push(blockquote(`🧠 **Key idea:** ${x.keyIdea}`));
   if (x.question) parts.push(`**Your turn:** ${x.question}`);

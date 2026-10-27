@@ -525,8 +525,11 @@ test('Learn marker lines become Discord formatting, and Choices become tap-to-an
 test('Discord separates lesson goals from counted practice and preserves bold key terms',async()=>{
  const {formatLearn}=await import('../src/learn-format.js');
  const f=formatLearn('Try.\nKey idea: **Balance** matters.\nYour turn: What next?\nLesson plan: Keep balance | Solve independently\nProgress: 1/2\nPractice: 2/4');
- assert.match(f.text,/Part 1 of 2/);assert.match(f.text,/\*\*Keep balance\*\*/);
- assert.match(f.text,/Practice question 2 of 4/);assert.match(f.text,/\*\*Balance\*\*/);
+ // One counter like the website: practice while practising, with the current goal's name.
+ assert.match(f.text,/-# Practice 2 of 4  ●●○○ · Keep balance/);assert.doesNotMatch(f.text,/Part 1 of 2/);
+ assert.match(f.text,/\*\*Balance\*\*/);
+ assert.match(formatLearn('Next.\nLesson plan: Keep balance | Solve independently\nProgress: 2/2').text,/-# Part 2 of 2  ●● · Solve independently/);
+ assert.doesNotMatch(formatLearn('Go.\nLesson plan: Solve it\nProgress: 1/1').text,/Part 1 of 1/);
  assert.doesNotMatch(f.text,/Lesson plan:|Progress:|Practice:/);
 });
 

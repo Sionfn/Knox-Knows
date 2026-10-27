@@ -1494,15 +1494,23 @@
     .learn-progress i.done { background: var(--green); }
     .learn-progress i.now { background: var(--purple); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 25%, transparent); }
     .learn-progress b { margin-left: 4px; font-size: 11px; color: var(--text-light); letter-spacing: 0; }
-    .learn-map { margin: 0 18px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; }
-    .learn-map summary { padding: 10px 12px; cursor: pointer; font-weight: 800; color: var(--purple-dark); overflow-wrap: anywhere; }
-    .learn-map summary:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px; border-radius: 10px; }
-    .learn-map ol { margin: 0 12px 10px 32px; padding: 0; color: var(--text-light); }
-    .learn-map li { padding: 4px 0; overflow-wrap: anywhere; }
-    .learn-map li[aria-current="step"] { color: var(--text); font-weight: 800; }
-    .learn-map p { margin: 8px 12px 12px; color: var(--text-light); line-height: 1.5; }
-    .learn-practice { margin: -4px 18px 14px; font-size: 12px; font-weight: 800; color: var(--text-light); }
-    html[data-theme="dark"]:not(.knox-seasonal) .learn-map summary { color: var(--purple-on-tint); }
+    /* Lesson map: a small Knox card that opens to show the lesson's goals. */
+    .learn-map { margin: 0 18px 14px; border: 2px solid color-mix(in srgb, var(--purple) 45%, var(--border)); border-radius: 14px; background: color-mix(in srgb, var(--purple) 6%, var(--surface)); box-shadow: 0 2px 0 color-mix(in srgb, var(--purple) 30%, var(--border)); font-size: 13.5px; }
+    .learn-map summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; font-weight: 800; color: var(--text); min-width: 0; }
+    .learn-map summary::-webkit-details-marker { display: none; }
+    .learn-map summary:focus-visible { outline: 3px solid var(--purple); outline-offset: 2px; border-radius: 12px; }
+    .learn-map-label { flex-shrink: 0; font-size: 11px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; color: var(--purple-dark); }
+    .learn-map-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .learn-map-chev { flex-shrink: 0; color: var(--purple-dark); transition: transform .15s; }
+    .learn-map[open] .learn-map-chev { transform: rotate(180deg); }
+    .learn-map ol { list-style: none; margin: 0; padding: 0 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+    .learn-map li { display: flex; align-items: center; gap: 9px; color: var(--text-light); font-weight: 700; overflow-wrap: anywhere; }
+    .learn-map li.lm-now { color: var(--text); font-weight: 800; }
+    .lm-dot { width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #fff; border: 2px solid var(--border); background: var(--surface); }
+    .lm-done .lm-dot { background: var(--green); border-color: var(--green-dark); }
+    .lm-now .lm-dot { background: var(--purple); border-color: var(--purple-dark); box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 25%, transparent); }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    html[data-theme="dark"]:not(.knox-seasonal) :is(.learn-map-label, .learn-map-chev) { color: var(--purple-on-tint); }
     @media (max-width: 480px) { .learn-progress { gap: 3px; } .learn-progress i { width: 6px; height: 6px; } .learn-map { margin-inline: 12px; } }
     .learn-status { margin-left:auto; font-size:11px; color:var(--text-light); letter-spacing:0; }
     .learn-actions { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -6579,7 +6587,7 @@ function learnTone(text) {
   if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) return 'good';
   return '';
 }
-function learnHeadingHtml(text, progress, finished) {
+function learnHeadingHtml(text, progress, finished, practice) {
   const t = String(text || '').trim();
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
   const tone = learnTone(t);
@@ -6597,17 +6605,27 @@ function learnHeadingHtml(text, progress, finished) {
   } else if (/\?\s*$/.test(t)) {
     icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
-  const dots = progress && !finished ? '<span class="learn-progress" role="img" aria-label="Part ' + progress.n + ' of ' + progress.total + '. A learning goal can include several questions, examples and hints.">' +
-    Array.from({ length: progress.total }, (_, i) => '<i class="' + (i < progress.n - 1 ? 'done' : i === progress.n - 1 ? 'now' : '') + '"></i>').join('') +
-    '<b>Part ' + progress.n + '/' + progress.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
+  // One counter on the right: practice questions while practising, otherwise the
+  // lesson's goals (only when there are 2+), like the step dots everywhere in Knox.
+  const counter = finished ? null : practice ? { n: practice.n, total: practice.total, word: 'Practice' }
+    : progress && progress.total >= 2 ? { n: progress.n, total: progress.total, word: 'Part' } : null;
+  const dots = counter ? '<span class="learn-progress" role="img" aria-label="' + counter.word + ' ' + counter.n + ' of ' + counter.total + (counter.word === 'Part' ? '. A learning goal can include several questions, examples and hints.' : '') + '">' +
+    Array.from({ length: counter.total }, (_, i) => '<i class="' + (i < counter.n - 1 ? 'done' : i === counter.n - 1 ? 'now' : '') + '"></i>').join('') +
+    '<b>' + counter.word + ' ' + counter.n + '/' + counter.total + '</b></span>' : (finished ? '' : '<span class="learn-status">In progress</span>');
   return '<div class="knox-response-heading learn' + cls + '"><span aria-hidden="true">' + icon + '</span>' + label + dots + '</div>';
 }
 
 function learnPlanHtml(x) {
-  if (!x.lessonPlan.length || x.recap) return '';
-  return '<details class="learn-map"><summary>' + escHtml(x.lessonPlan[x.progress.n - 1]) + ' · Lesson plan</summary><ol>' +
-    x.lessonPlan.map((title,i)=>'<li' + (i === x.progress.n-1 ? ' aria-current="step"' : '') + '>' + escHtml(title) + (i < x.progress.n-1 ? ' — completed' : i === x.progress.n-1 ? ' — current' : '') + '</li>').join('') +
-    '</ol><p>Each part is a learning goal and may include several questions. Hints and retries stay in the same part.</p></details>';
+  // Only worth a map when the lesson has 2+ goals; the heading already says where you are.
+  if (x.lessonPlan.length < 2 || x.recap) return '';
+  const now = x.progress.n - 1;
+  return '<details class="learn-map"><summary><span class="learn-map-label">Lesson plan</span><span class="learn-map-now">' + escHtml(x.lessonPlan[now]) + '</span>' +
+    '<svg class="learn-map-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ol>' +
+    x.lessonPlan.map((title, i) => {
+      const state = i < now ? 'done' : i === now ? 'now' : 'next';
+      return '<li class="lm-' + state + '"' + (i === now ? ' aria-current="step"' : '') + '><span class="lm-dot" aria-hidden="true">' + (state === 'done' ? '✓' : '') + '</span>' + escHtml(title) +
+        '<span class="sr-only">' + (state === 'done' ? ' — completed' : state === 'now' ? ' — current' : '') + '</span></li>';
+    }).join('') + '</ol></details>';
 }
 
 function renderAnswerHtml(text, kind = 'answer') {
@@ -6676,8 +6694,7 @@ function renderAnswerHtml(text, kind = 'answer') {
   }
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
-  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap) + learnPlanHtml(learnX) +
-    (learnX.practice && !learnX.recap ? '<div class="learn-practice">Practice question ' + learnX.practice.n + ' of ' + learnX.practice.total + '</div>' : '') : '') +
+  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap, learnX.practice) + learnPlanHtml(learnX) : '') +
     '<div class="knox-response-body">' + html + '</div>' +
     (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean)) : '');
 }
