@@ -609,3 +609,10 @@ test('Learn in Discord: a Your turn question the message already ends with is no
   assert.equal((f.text.match(/What do you get\?/g) || []).length, 1);
   assert.match(formatLearn('Here is the idea.\nYour turn: What is 20 − 5?').text, /\*\*Your turn:\*\* What is 20 − 5\?/);
 });
+
+test('Learn in Discord: the question Knox ends with gets its own Your turn line (never from a numbered step)', async () => {
+  const { formatLearn } = await import('../src/learn-format.js');
+  const f = formatLearn('Adding 5 gives 6x = 36. What do you get when you divide both sides by 6?');
+  assert.match(f.text, /^Adding 5 gives 6x = 36\.\n\n\*\*Your turn:\*\* What do you get when you divide both sides by 6\?$/);
+  assert.doesNotMatch(formatLearn('Steps:\n1. Is it even?').text, /Your turn/);
+});

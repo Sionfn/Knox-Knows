@@ -1483,9 +1483,12 @@
       font-size: 12px; font-weight: 900;
       letter-spacing: .07em; text-transform: uppercase;
     }
-    html[data-theme="dark"] .knox-response-heading.learn { color: var(--purple-on-tint); }
-    .knox-response-heading.learn.good  { color: var(--green-dark); }
-    .knox-response-heading.learn.retry { color: var(--orange-dark); }
+    /* Learn titles: neutral for teaching steps (Lesson, Worked example, Let's
+       start) — the purple outline already says Learn — green for Nice work /
+       Lesson complete, orange for Not quite. Same in every look. */
+    html .knox-response-heading.learn { color: var(--text-light); }
+    html .knox-response-heading.learn.good  { color: var(--green-dark); }
+    html .knox-response-heading.learn.retry { color: var(--orange-dark); }
     html[data-theme="dark"]:not(.knox-seasonal) .knox-response-heading.learn.good  { color: var(--green); }
     html[data-theme="dark"]:not(.knox-seasonal) .knox-response-heading.learn.retry { color: var(--orange); }
     /* Learn extras: step dots, tap-to-answer, help chips, lesson recap */
@@ -6417,11 +6420,18 @@ function renderLimitCard(data, isSignedIn) {
 //   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
 const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
-function shouldSeparateLearnQuestion(body) {
-  const plain = String(body || '').replace(/\*\*|`/g, '').trim();
-  const steps = (plain.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length;
-  const paragraphs = plain.split(/\n\s*\n/).filter(Boolean).length;
-  return plain.length >= 420 || (steps >= 2 && plain.length >= 120) || (paragraphs >= 3 && plain.length >= 220);
+// The question sentence a reply ends with ("…both sides. What do you get?" →
+// "What do you get?"), and the text before it. Never taken from a list step.
+function trailingLearnQuestion(body) {
+  const text = String(body || '').trimEnd();
+  if (!/\?(\*\*)?\s*$/.test(text)) return null;
+  const nl = text.lastIndexOf('\n'), lastLine = text.slice(nl + 1);
+  if (/^\s*(?:\d{1,2}[.)]|[-*•])\s/.test(lastLine)) return null;
+  const starts = [...lastLine.matchAll(/[.!:]\s+(?=\**[A-Z“"(¿¡0-9])/g)].map(m => m.index + m[0].length);
+  const cut = starts.length ? starts[starts.length - 1] : 0;
+  const question = lastLine.slice(cut).trim();
+  if (question.length < 4) return null;
+  return { question, body: (text.slice(0, nl + 1) + lastLine.slice(0, cut)).trim() };
 }
 function parseLearnExtras(text) {
   const out = { clean: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
@@ -6446,14 +6456,17 @@ function parseLearnExtras(text) {
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
-  const body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  let body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not completion.
   if (out.recap && (/\?/.test(body) || out.question || out.choices.length)) { out.recap=''; out.watch=''; }
   if (!out.progress || out.lessonPlan.length !== out.progress.total) out.lessonPlan = [];
   const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
   if (out.question.length > 3 && normalized(body).endsWith(normalized(out.question))) out.question = '';
-  out.separateQuestion = !!out.question && shouldSeparateLearnQuestion(body);
-  out.clean = [body, out.separateQuestion ? '' : out.question].filter(Boolean).join('\n\n');
+  // The question being asked always gets the Your turn card, so it's easy to
+  // spot. A question Knox wrote at the end of its text moves into the card too.
+  if (!out.question) { const q = trailingLearnQuestion(body); if (q) { out.question = q.question; body = q.body; } }
+  out.separateQuestion = !!out.question;
+  out.clean = body;
   return out;
 }
 window.knoxLearnClean = text => { const x = parseLearnExtras(text); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
@@ -6602,9 +6615,8 @@ function learnHeadingHtml(text, progress, finished, practice) {
   } else if (/^(here's how|here is how|let's work through|let me show|worked example)/.test(opening) ||
              (t.match(/^\s*\d{1,2}[.)]\s+/gm) || []).length >= 2) {
     icon = '◆'; label = 'Worked example';
-  } else if (/\?\s*$/.test(t)) {
-    icon = '✎'; label = 'Your turn'; // Knox asked a question: the student answers next
   }
+  // (No "Your turn" title here: the question has its own Your turn card.)
   // One counter on the right: practice questions while practising, otherwise the
   // lesson's goals (only when there are 2+), like the step dots everywhere in Knox.
   const counter = finished ? null : practice ? { n: practice.n, total: practice.total, word: 'Practice' }

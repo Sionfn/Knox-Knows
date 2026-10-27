@@ -11,6 +11,19 @@
 // Same marker rule as the website: a line may be bolded or a bullet ("- **Choices:** …").
 const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i;
 
+// The question sentence a reply ends with ("…both sides. What do you get?" →
+// "What do you get?"), and the text before it. Never taken from a list step.
+function trailingQuestion(body) {
+  const text = String(body || '').trimEnd();
+  if (!/\?(\*\*)?\s*$/.test(text)) return null;
+  const nl = text.lastIndexOf('\n'), lastLine = text.slice(nl + 1);
+  if (/^\s*(?:\d{1,2}[.)]|[-*•])\s/.test(lastLine)) return null;
+  const starts = [...lastLine.matchAll(/[.!:]\s+(?=\**[A-Z“"(¿¡0-9])/g)].map(m => m.index + m[0].length);
+  const cut = starts.length ? starts[starts.length - 1] : 0;
+  const question = lastLine.slice(cut).trim();
+  if (question.length < 4) return null;
+  return { question, body: (text.slice(0, nl + 1) + lastLine.slice(0, cut)).trim() };
+}
 export function parseLearn(text) {
   const out = { body: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
   const keep = [];
@@ -38,6 +51,8 @@ export function parseLearn(text) {
   // The same question already ends the message: don't repeat it (website rule).
   const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
   if (out.question.length > 3 && normalized(out.body).endsWith(normalized(out.question))) out.question = '';
+  // The question being asked gets its own bold Your turn line, so it's easy to spot (website rule).
+  if (!out.question) { const q = trailingQuestion(out.body); if (q) { out.question = q.question; out.body = q.body; } }
   return out;
 }
 

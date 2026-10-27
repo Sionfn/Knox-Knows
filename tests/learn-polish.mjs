@@ -8,7 +8,7 @@ vm.runInContext(source.slice(source.indexOf('const LEARN_MARKER ='),source.index
 const parse=text=>vm.runInContext('parseLearnExtras('+JSON.stringify(text)+')',ctx);
 test('a final understanding question cannot prematurely complete a lesson',()=>{
  const p=parse('Correct. Why did you divide by two?\nRecap: Undo operations.\nWatch out: Both sides.\nTopic: Algebra');
- assert.equal(p.recap,''); assert.match(p.clean,/Why did you/);
+ assert.equal(p.recap,''); assert.match(p.question,/Why did you/);
 });
 test('completed lesson without another question retains its recap',()=>{
  const p=parse('Exactly. You have finished!\nRecap: Undo operations.\nWatch out: Both sides.\nTopic: Algebra');

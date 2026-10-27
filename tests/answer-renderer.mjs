@@ -45,12 +45,12 @@ test('only the latest actual reply can own active Learn buttons, including imper
  context.document=document;
 });
 
-test('restored Learn keeps old metadata questions in the normal reply without duplication', () => {
+test('the question Knox asks is always in the Your turn card, once', () => {
   const raw='Use **inverse operations**.\n\n`3x + 5 = 20`\nKey idea: Do the same thing to both sides.\nYour turn: What remains after subtracting **5** from both sides?\nProgress: 1/2';
   const html=context.renderAnswerHtml(raw,'learn');
   assert.match(html,/<strong>inverse operations<\/strong>/);
   assert.match(html,/<code>3x \+ 5 = 20<\/code>/);
-  assert.match(html,/class="learn-key"/);assert.doesNotMatch(html,/class="learn-question"/);
+  assert.match(html,/class="learn-key"/);assert.match(html,/class="learn-question"/);
   assert.equal((html.match(/What remains after subtracting/g)||[]).length,1);
   assert.match(html,/Hint/);assert.match(html,/I’m stuck/);
   assert.match(context.window.knoxLearnClean(raw),/What remains after subtracting/);
@@ -61,7 +61,7 @@ test('restored Learn keeps old metadata questions in the normal reply without du
   assert.doesNotMatch(premature,/Lesson complete|learn-recap/);
 });
 
-test('long worked examples separate one question while short replies stay inline', () => {
+test('long and short replies both put their question in the Your turn card', () => {
   const body='Use **inverse operations** to isolate the variable.\n\nFor example, solve `2a + 4 = 12` by undoing each operation in reverse order.\n1. **Subtract 4** from both sides to leave `2a = 8`.\n2. **Divide by 2** on both sides to get `a = 4`.';
   const question='What remains after subtracting 5 from both sides of `3x + 5 = 20`?';
   const raw=body+'\nYour turn: '+question+'\nKey idea: Keep both sides balanced.';
@@ -71,7 +71,12 @@ test('long worked examples separate one question while short replies stay inline
   assert.match(html,/I’m stuck/);
   assert.equal((context.window.knoxLearnClean(raw).match(/What remains after subtracting/g)||[]).length,1);
   const brief=context.renderAnswerHtml('Correct.\nYour turn: What is 21 divided by 3?','learn');
-  assert.doesNotMatch(brief,/class="learn-question"/);assert.match(brief,/What is 21 divided by 3/);
+  assert.match(brief,/class="learn-question"[\s\S]*What is 21 divided by 3/);
+  // A question written at the end of the text moves into the card too — never one from a numbered step.
+  const inline=context.renderAnswerHtml('Subtract 5 from both sides. What do you get?','learn');
+  assert.match(inline,/<p>Subtract 5 from both sides\.<\/p>[\s\S]*class="learn-question"[\s\S]*What do you get\?/);
+  assert.equal((inline.match(/What do you get/g)||[]).length,1);
+  assert.doesNotMatch(context.renderAnswerHtml('Steps:\n1. Is it even?','learn'),/class="learn-question"/);
   const duplicate=context.renderAnswerHtml('Try it. What is **21** divided by 3?\nYour turn: What is 21 divided by 3?','learn');
   assert.equal((duplicate.match(/divided by 3/g)||[]).length,1);
   const longUnsafe=context.renderAnswerHtml(body+'\nYour turn: <img src=x onerror=alert(1)>?','learn');
@@ -147,9 +152,10 @@ test('Learn replies get a heading that matches the message', () => {
   assert.equal(heading('Yes, that’s right! Neptune is the farthest.'), 'Nice work');
   assert.equal(heading('I read the worksheet as naming the planets.'), "Let's start");
   assert.equal(heading('Here’s how to do it:\n1. Find the Sun\n2. Count outward'), 'Worked example');
-  assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Your turn', 'Knox asked: the student answers next');
+  // A question goes in the Your turn card, so the title just says Lesson.
+  assert.equal(heading('Which planet in the word bank is farthest from the Sun?'), 'Lesson');
   assert.equal(heading('Think about which planets are closest to the Sun first.'), 'Lesson');
-  assert.equal(heading('Great question! Do you know what the green pigment is called?'), 'Your turn', '"Great question" is not praise for an answer');
+  assert.equal(heading('Great question! Do you know what the green pigment is called?'), 'Lesson', '"Great question" is not praise for an answer');
   assert.doesNotMatch(context.renderAnswerHtml('Yes', 'answer'), /knox-response-heading/);
 });
 
