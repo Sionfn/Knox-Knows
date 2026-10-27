@@ -4005,7 +4005,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       badge.style.display = window.currentUser && count > 0 ? '' : 'none';
       if (count > 0) { badge.innerHTML = `<span class="knox-flame">🔥</span> ${count}-day streak`; window.knoxFlameFest?.applyFlameStyle(); }
     }
-    if (!window.currentUser || count < 1) { pill.style.display = 'none'; return; }
+    // The flame always shows for signed-in students, even at 0 (dimmed until they study).
+    if (!window.currentUser) { pill.style.display = 'none'; return; }
     num.textContent = count;
     pill.style.display = 'flex';
     // No filter on the flame emoji — the old grayscale+opacity filter was
@@ -4013,7 +4014,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // (below) signals the "keep it alive" state instead, leaving the emoji
     // rendering clean and normal.
     if (flame) flame.style.filter = '';
-    if (studiedToday) {
+    if (count < 1) {
+      pill.classList.remove('active');
+      pill.classList.add('dim');
+      pill.title = 'Start a streak — study today to light your flame!';
+    } else if (studiedToday) {
       pill.classList.add('active');
       pill.classList.remove('dim');
       pill.title = `${count}-day streak — you studied today! 🔥`;
