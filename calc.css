@@ -139,7 +139,7 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
 }
 @media (prefers-reduced-motion: reduce) { .kc-caret, .kc-pop { animation: none; } }
 
-/* Shared Flashcards card language: blue calculator, purple history,
+/* Shared Flashcards card language: blue calculator, light-blue history,
    comfortable keys, and layout based on available panel width. */
 #calcModal { container-type:inline-size; align-items:flex-start; padding:20px 24px; overscroll-behavior:none; overflow-anchor:none; }
 #calcModal .kc-wrap { max-width:1040px; margin:0 auto; min-width:0; }
@@ -162,7 +162,8 @@ html[data-theme="dark"] .kc-const { color: var(--green); }
 .kc-sci .kc-key { min-height:44px; }
 .kc-actions { margin-top:18px; gap:10px; }
 .kc-act { min-height:46px; padding:8px 6px; }
-.kc-history { height:auto; min-height:0; max-height:550px; padding:18px; border:2px solid var(--purple); border-radius:20px; box-shadow:0 4px 0 var(--purple-dark); }
+/* History: a secondary card in the calculator's light blue (purple is Learn's color). */
+.kc-history { height:auto; min-height:0; max-height:550px; padding:18px; border:2px solid color-mix(in srgb,var(--blue) 40%,var(--border)); border-radius:20px; box-shadow:0 4px 0 color-mix(in srgb,var(--blue) 40%,var(--border)); }
 .kc-history-top { padding-bottom:12px; border-bottom:2px solid var(--border); gap:8px; }
 .kc-history-top b { color:var(--text); font-size:14px; }
 .kc-history-body { max-height:440px; }
@@ -219,4 +220,4 @@ html[data-theme="dark"]:not(.knox-seasonal) .kc-op { color:var(--blue); }
 .kc-caret { background:var(--blue); }
 .kc-link { color:var(--blue-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) .kc-link { color:var(--blue); }
-.kc-hist-item:hover { border-color:var(--purple); }
+.kc-hist-item:hover { border-color:var(--blue); }
