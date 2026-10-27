@@ -103,7 +103,7 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-deck .fc-deck-more .fc-btn.ghost
 .fc-deck-title-field { max-width:560px; margin:0 auto 20px; }
 .fc-row { background:var(--surface); border:2px solid var(--border); border-radius:20px; box-shadow:0 4px 0 var(--border); padding:16px; margin-bottom:14px; }
 .fc-row-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.fc-num { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border-radius:10px; background:var(--fc-acc); color:#fff; font-size:13px; font-weight:900; box-shadow:0 2px 0 var(--orange-dark); }
+.fc-num { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border-radius:10px; background:var(--fc-acc); color:#fff; font-size:13px; font-weight:900; box-shadow:0 2px 0 var(--fc-acc-dark); }
 .fc-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .fc-bulk { margin-top:18px; background:var(--surface); border:2px dashed var(--border); border-radius:18px; padding:14px 16px; }
 .fc-bulk summary { cursor:pointer; font-weight:900; color:var(--text); }
@@ -245,7 +245,7 @@ body.app-sidebar-collapsed .fc-beta { display:none; }
 
 /* Make with Knox: attach a PDF or Word doc */
 .fc-doc-row { margin:10px 0 2px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-.fc-doc-chip { display:inline-flex; align-items:center; gap:8px; max-width:100%; padding:6px 8px 6px 12px; border-radius:12px; background:var(--fc-acc-light); border:2px solid var(--fc-acc); color:var(--orange); font-weight:800; font-size:13px; }
+.fc-doc-chip { display:inline-flex; align-items:center; gap:8px; max-width:100%; padding:6px 8px 6px 12px; border-radius:12px; background:var(--fc-acc-light); border:2px solid var(--fc-acc); color:var(--fc-acc-dark); font-weight:800; font-size:13px; }
 .fc-doc-chip > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .fc-doc-x { background:none; border:0; color:var(--fc-acc-dark); font-weight:900; font-size:15px; cursor:pointer; padding:0 4px; }
 
