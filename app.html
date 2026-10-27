@@ -1521,17 +1521,17 @@
     .learn-question { margin: 0 18px 16px; padding: 12px 16px; border: 2px solid var(--purple); border-radius: 16px; background: color-mix(in srgb, var(--purple) 8%, var(--surface)); }
     .learn-question-title { margin-bottom: 5px; color: var(--purple-dark); font-size: 12px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
     .learn-question p { margin: 0; font-weight: 700; line-height: 1.6; overflow-wrap: anywhere; }
-    .msg-knox-bubble:has(> .knox-response-heading.learn) .learn-question strong { color: var(--purple-dark); }
-    html[data-theme="dark"]:not(.knox-seasonal) .learn-question-title,
-    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble .learn-question strong { color: var(--purple-on-tint); }
+    .msg-knox-bubble:has(> .knox-response-heading.learn) .learn-question strong { color: var(--blue-dark); }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-question-title { color: var(--purple-on-tint); }
+    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble .learn-question strong { color: #74D4FF; }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-dark); }
     .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
-    .learn-question code { padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--purple) 10%, var(--surface)); color: var(--purple-dark); box-decoration-break: clone; -webkit-box-decoration-break: clone;
-      /* Equations in Knox's own font, like Ask Knox — not a code font. */
+    .learn-question code { padding: 0; border-radius: 0; background: none; color: inherit;
+      /* Equations read like Ask Knox's: bold, in Knox's own font — no pills. */
       font-family: inherit; font-size: 1em; font-weight: 800; letter-spacing: 0; }
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body code,
-    html[data-theme="dark"]:not(.knox-seasonal) .learn-question code { color: var(--purple-on-tint); }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-question code { color: inherit; }
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body h3,
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-on-tint); }
     .learn-graph { max-width: 600px; padding: 10px 10px 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); }
@@ -1661,8 +1661,6 @@
     .msg-knox-bubble li > strong:first-child { color: var(--orange); }
     /* Learn replies wear Learn's purple (stripe and key words); Ask Knox stays orange. */
     .msg-knox-bubble:has(> .knox-response-heading.learn) { --knox-stripe: var(--purple); --knox-ledge: var(--purple-dark); }
-    .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-dark); }
-    html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body strong { color: var(--purple-on-tint); }
 
     /* THINKING / TYPING */
     /* On short Windows laptops the whole page is zoomed (desktop-fit.js), and

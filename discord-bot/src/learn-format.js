@@ -32,6 +32,9 @@ export function parseLearn(text) {
   out.body = keep.join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // A check-for-understanding question is still a lesson step, not the end (website rule).
   if (out.recap && (/\?/.test(out.body) || out.question)) { out.recap = ''; out.watch = ''; }
+  // The same question already ends the message: don't repeat it (website rule).
+  const normalized = s => s.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim();
+  if (out.question.length > 3 && normalized(out.body).endsWith(normalized(out.question))) out.question = '';
   return out;
 }
 

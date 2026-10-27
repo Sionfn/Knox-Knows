@@ -591,3 +591,10 @@ test('a long lesson (Mega: 50 replies) stays inside the website’s history limi
   const big = historyForKnox([...history.slice(0, 2), { role: 'user', content: 'x'.repeat(30000) }, { role: 'assistant', content: 'ok' }]);
   assert.ok(big.every(m => m.content.length <= 24000));
 });
+
+test('Learn in Discord: a Your turn question the message already ends with is not repeated', async () => {
+  const { formatLearn } = await import('../src/learn-format.js');
+  const f = formatLearn('Subtract 5 from both sides. What do you get?\nYour turn: What do you get?');
+  assert.equal((f.text.match(/What do you get\?/g) || []).length, 1);
+  assert.match(formatLearn('Here is the idea.\nYour turn: What is 20 − 5?').text, /\*\*Your turn:\*\* What is 20 − 5\?/);
+});
