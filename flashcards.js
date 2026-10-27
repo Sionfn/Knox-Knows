@@ -112,8 +112,12 @@ function btn(label,action,{cls='',attrs=''}={}){return `<button type="button" cl
 const badge=(normal,fall)=>`<span class="fc-badge"><span class="season-hide">${normal}</span><span class="season-only">${fall}</span></span>`;
 // center: sit in the middle of the screen when the content is short (like the
 // Ask Knox welcome screen); long content still starts at the top and scrolls.
+// Which way-in screen this is (make → orange, create → blue, import → green),
+// so its buttons wear that card's color; other screens are Flashcards green.
+let nextWay='';
 function frame(head,body,center=false){
   hideToast();
+  panel.dataset.way=nextWay;nextWay='';
   view.innerHTML=`<div class="fc-wrap${center?' center':''}">${head?`<header class="fc-head">
     <div class="fc-badges">${head.badge||''}</div>
     <h1 class="fc-title" tabindex="-1">${head.title}</h1>${head.sub?`<p class="fc-sub">${head.sub}</p>`:''}</header>`:''}${body}</div>`;
@@ -150,7 +154,7 @@ function makeView(){
   const plus=isPlus(), tier=tierNow(), mega=tier==='mega';
   if(makeOpts.count>MAX_CARDS[tier])makeOpts.count=MAX_CARDS[tier];
   if(!mega){if(['fill','tf'].includes(makeOpts.style))makeOpts.style='qa';makeOpts.difficulty='mixed';}
-  frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
+  nextWay='make';frame({badge:'<span class="fc-badge">✨ Make with Knox</span>',title:'Tell Knox what <span class="accent">you’re studying.</span>',
     sub:'Say your grade or class and the topic. Knox writes the cards at your level — you can edit them before you save.'},
    `<div class="fc-topbar fc-make-top">${learnReturn&&learnReturn.uid===window.currentUser?.uid?btn('← Learn lesson','learn-return',{cls:'ghost'}):''}${btn('← Decks','back',{cls:'ghost'})}</div>
     <div class="fc-make">
@@ -183,7 +187,7 @@ async function sampleDeck(){
   if(!user?.getIdToken){message('Sign in to try a sample deck.');window.openAuthModal?.();return;}
   const owner=key(),version=++generationVersion;
   const options={request:pick(SAMPLE_TOPICS),count:pick([10,15,20]),style:pick(['qa','term']),pictures:Math.random()<0.5};
-  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is picking a surprise deck…</h2><p class="fc-sub">A random topic, ${options.count} cards${options.pictures?', with pictures':''}. This takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','back',{cls:'ghost small'})}</div></div>`,true);
+  nextWay='make';frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is picking a surprise deck…</h2><p class="fc-sub">A random topic, ${options.count} cards${options.pictures?', with pictures':''}. This takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','back',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{
     const token=await user.getIdToken();
@@ -214,7 +218,7 @@ async function makeDeck(){
   const options={request,count:makeOpts.count,style:makeOpts.style,difficulty:makeOpts.difficulty,pictures:autoPictures(),
     ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_CHARS[tierNow()])}}:{}),
     ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
-  frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes 10–30 seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
+  nextWay='make';frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your cards…</h2><p class="fc-sub">${photos.length||texts.length?'Reading your notes — this can take up to a minute.':'This usually takes 10–30 seconds.'}</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','make-cancel',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{
     const token=await user.getIdToken();
@@ -393,7 +397,7 @@ function renderRows(){
 function renderEditor(){
   picker=null; // a fresh editor (or reload) starts with the picture picker closed
   const n=editing.cards.length;
-  frame({badge:badge('✏️ Deck editor','🍂 Deck editor'),title:'Make it <span class="accent">memorable.</span>',
+  nextWay='create';frame({badge:badge('✏️ Deck editor','🍂 Deck editor'),title:'Make it <span class="accent">memorable.</span>',
     sub:'One clear question per card, one focused answer. Short cards are easier to remember.'},
    `<div class="fc-topbar">${btn('← Decks','back',{cls:'ghost'})}<div class="fc-topbar-right"><span class="fc-pill" id="fcCount">${n} card${n===1?'':'s'}</span>${btn('Save','save',{cls:'primary small'})}</div></div>
     <div class="fc-deck-title-field"><label class="fc-field-label" for="fcTitle">Deck title</label><input class="fc-input" id="fcTitle" maxlength="100" value="${esc(editing.title)}" placeholder="Biology · Cell structures"></div>
@@ -515,7 +519,7 @@ function importView(){
   generationVersion++;session=null;editing=null;dirty=false;
   const row=(icon,title,types,text)=>`<div class="fc-format"><span class="fc-format-icon" aria-hidden="true">${icon}</span><div><b>${title}</b> <span class="fc-format-types">${types}</span><p>${text}</p></div></div>`;
   const note=importNote?.files?.length?`<div class="fc-import-note" role="status"><p>📝 <b>${esc(importNote.files.length===1?importNote.files[0].name:importNote.files.length+' files')}</b> ${importNote.files.length===1?'looks':'look'} like notes or photos, not finished cards. Import brings in cards you already have — Make with Knox turns notes into cards.</p><div class="fc-toolbar">${btn('✨ Make cards from '+(importNote.files.length===1?'it':'them'),'import-to-make',{cls:'primary small'})}${btn('Never mind','import-note-x',{cls:'ghost small'})}</div></div>`:'';
-  frame({badge:'<span class="fc-badge">📥 Import</span>',title:'Bring your <span class="accent">cards in.</span>',sub:'Already made cards somewhere else? Bring them here. Nothing is saved until you look it over.'},
+  nextWay='import';frame({badge:'<span class="fc-badge">📥 Import</span>',title:'Bring your <span class="accent">cards in.</span>',sub:'Already made cards somewhere else? Bring them here. Nothing is saved until you look it over.'},
    `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
     <div class="fc-make">
       ${note}
