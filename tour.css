@@ -1,8 +1,8 @@
 /* "Show me around" tour (tour.js): one part of the app lit up at a time, in its section's color. */
-.kt-layer { position: fixed; inset: 0; z-index: 10080; --kt: var(--orange); --kt-dark: var(--orange-dark); }
-.kt-layer[data-color="purple"] { --kt: var(--purple); --kt-dark: var(--purple-dark); }
-.kt-layer[data-color="green"] { --kt: var(--green); --kt-dark: var(--green-dark); }
-.kt-layer[data-color="blue"] { --kt: var(--blue); --kt-dark: var(--blue-dark); }
+.kt-layer { position: fixed; inset: 0; z-index: 10080; --kt: var(--orange); --kt-dark: var(--orange-dark); --kt-light: var(--orange-light); }
+.kt-layer[data-color="purple"] { --kt: var(--purple); --kt-dark: var(--purple-dark); --kt-light: var(--purple-light); }
+.kt-layer[data-color="green"] { --kt: var(--green); --kt-dark: var(--green-dark); --kt-light: var(--green-light); }
+.kt-layer[data-color="blue"] { --kt: var(--blue); --kt-dark: var(--blue-dark); --kt-light: var(--blue-light); }
 .kt-layer.kt-dim { background: rgba(20,12,4,.55); }
 .kt-spot { position: absolute; border-radius: 16px; box-shadow: 0 0 0 4px var(--kt), 0 0 0 9999px rgba(20,12,4,.55); pointer-events: none; transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease; animation: ktPulse 1.8s ease-in-out infinite; }
 @keyframes ktPulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--kt) 55%, transparent), 0 0 0 9999px rgba(20,12,4,.55); } }
@@ -13,7 +13,10 @@
 .kt-head { display: flex; align-items: center; gap: 11px; margin: 0 26px 8px 0; }
 .kt-icon { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--kt) 14%, var(--surface)); overflow: hidden; }
 .kt-icon img { width: 100%; height: 100%; object-fit: cover; }
-.kt-icon .sq-icon { margin: 0; }
+/* Section steps: the same icon tile as the sidebar, a bit bigger (the sidebar's sizing is scoped to it). */
+.kt-icon:has(.sq-icon) { background: none; overflow: visible; }
+.kt-icon .sq-icon { width: 40px; height: 40px; margin: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--kt); color: var(--kt); background: var(--kt-light); box-shadow: 0 3px 0 var(--kt-dark); }
+.kt-icon .sq-icon svg { width: 24px; height: 24px; }
 .kt-emoji { font-size: 22px; line-height: 1; }
 .kt-card h2 { margin: 0; font-size: 19px; font-weight: 900; line-height: 1.2; color: var(--text); }
 .kt-card p { margin: 0; font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--text-light); }
