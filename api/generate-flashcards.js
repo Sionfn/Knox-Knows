@@ -81,8 +81,10 @@ Write exactly ${count} flashcards for what the student describes in <student_req
 ${pictures ? `
 - Pictures: give every card an "image": the exact title of the English Wikipedia article most specifically about what that card tests, so its photos and diagrams show it (e.g. "Osteon", "Lacuna (histology)", "Mitochondrion", "Treaty of Versailles", "Supply and demand"). Prefer the specific thing over the broad subject ("Femur", not "Bone"). For the human body, always use the human article ("Human leg", "Human eye", "Tibia"), never the general one ("Leg", "Eye"), which can show animals. For an abstract idea or a formula, use the article about that concept ("Kinetic energy"). Prefer an article whose lead picture shows the thing itself — for an institution, the one about its building or a photo of it ("United States Capitol" for Congress) — and for government, law or history, the article for the student's country ("Separation of powers under the United States Constitution", not "Separation of powers"; assume the United States unless the deck says otherwise).` : ""}
 
+${pictures ? '- Add "imageAlternatives": one or two DIFFERENT, closely related Wikipedia article titles as backups for each card. Think of a useful diagram or a concrete example for an abstract idea, instead of leaving its picture suggestion empty. Prefer a diagram explaining the tested mechanism, not merely a stock photo of something named in the question. Match the application and scale: a question about weight near Earth should use "Weight" or "Gravitational acceleration", not a broad "Gravity" article that may show galaxies. Each backup must directly illustrate this card, not just the broad course or a scientist\'s portrait. For example: "Osteocyte" can use "Bone tissue" or "Osteon"; an opportunity-cost card can use "Production–possibility frontier". Do not invent titles or change a card\'s educational content just to add a picture.' : ''}
+
 Respond with JSON only, exactly this shape:
-{"title": "<short deck title, max 60 characters>", "cards": [{"front": "...", "back": "..."${pictures ? ', "image": "<optional Wikipedia article title>"' : ""}}]}`;
+{"title": "<short deck title, max 60 characters>", "cards": [{"front": "...", "back": "..."${pictures ? ', "image": "<Wikipedia article title>", "imageAlternatives": ["<related visual article>"]' : ""}}]}`;
 }
 
 // ── Card pictures ───────────────────────────────────────────────────────────
@@ -104,6 +106,7 @@ const cleanArtist = s => String(s || "").replace(/^\s*file:.*?\.(?:jpe?g|png|svg
 // skipped unless the card mentions that animal (the "Leg" article's main
 // picture is an insect leg).
 const ANIMALS = /\b(insects?|bugs?|beetles?|ants?|bees?|spiders?|crabs?|lobsters?|shrimps?|mammoths?|elephants?|dinosaurs?|dogs?|cats?|horses?|cows?|cattle|pigs?|sheep|goats?|birds?|chickens?|ducks?|fish|sharks?|whales?|dolphins?|frogs?|toads?|snakes?|lizards?|turtles?|monkeys?|apes?|gorillas?|chimpanzees?|mice|mouse|rats?|rabbits?|bats?|deer|bears?|lions?|tigers?|wolf|wolves|octopus|squid|worms?|snails?|krill|fly|flies|hawks?|eagles?|owls?|bison|mantis|shrimp)\b/;
+const DEEP_SPACE = /\b(galax(?:y|ies)|nebulae?|ugc|ngc|hubble|andromeda|supernovae?)\b/;
 const stem = w => w.length > 4 ? w.replace(/(ing|es|ed|s)$/, "") : w; // focuses/focusing → focus
 const FILLER = new Set("the and for with from that this what which who whom how why when where are was were did does has have had its into about than then their there these those your you can could would should will not but all any each other some such only also more most very just one two three four five six seven eight nine ten first second third part parts type types kind main called name known used use make made give gives between during after before over under view english version file".split(" "));
 const words = t => [...new Set(String(t || "").replace(/^File:/, "").replace(/\.[a-z0-9]+$/i, "").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2 && !FILLER.has(w)))];
@@ -125,6 +128,9 @@ function pictureFor(card, pictures, used, common = new Set()) {
     const name = words(p.name);
     const animal = name.join(" ").match(ANIMALS);
     if (animal && !text.includes(animal[1].replace(/s$/, ""))) continue;
+    // A broad Gravity article can lead with a galaxy photo; that does not
+    // illustrate a school question about weight near Earth's surface.
+    if (DEEP_SPACE.test(name.join(' ')) && !DEEP_SPACE.test([card.front,card.back].join(' ').toLowerCase())) continue;
     // A long caption-like name ("Locomotora de vapor Kitson-Meyer, año 1909, del
     // Museo Ferroviario de Santiago de Chile") is mostly about something else, so
     // its matches count half; a short one ("Blausen 0608 LegBones") is all about them.
@@ -138,19 +144,19 @@ function pictureFor(card, pictures, used, common = new Set()) {
 // a better article from the card's own words ("lower leg tibia fibula" → "Human leg").
 // Knox's article leads the search so it stays on topic ("manzana apple" alone
 // found a painting, "Apple of Discord").
-async function betterArticle(card) {
+async function betterArticle(card, deadline) {
   const q = [card.imageTitle, ...words([card.front, card.back].join(" ")).slice(0, 6)].filter(Boolean).join(" ");
-  if (!q) return "";
-  const found = await wiki(`${WIKI_API}&list=search&srlimit=1&srnamespace=0&srsearch=${encodeURIComponent(q)}`);
-  return found.query?.search?.[0]?.title || "";
+  if (!q) return [];
+  const found = await wiki(`${WIKI_API}&list=search&srlimit=3&srnamespace=0&srsearch=${encodeURIComponent(q)}`, deadline);
+  return (found.query?.search || []).map(p=>p.title).filter(Boolean);
 }
-const wiki = url => fetch(url, { headers: WIKI_HEADERS, signal: AbortSignal.timeout(5000) }).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+const wiki = (url, deadline = Date.now() + 5000) => Date.now() >= deadline ? Promise.resolve({}) : fetch(url, { headers: WIKI_HEADERS, signal: AbortSignal.timeout(Math.max(1, Math.min(5000, deadline - Date.now()))) }).then(r => r.ok ? r.json() : {}).catch(() => ({}));
 const isWikimediaImage = src => /^https:\/\/(upload|thumb)\.wikimedia\.org\/[^\s"'<>]+$/.test(src || "");
 // One article's pictures, best first: [{src, credit}], plus its real title.
-async function articlePictures(title) {
+async function articlePictures(title, deadline) {
   const [lead, images] = await Promise.all([
-    wiki(`${WIKI_API}&prop=pageimages&piprop=name&titles=${encodeURIComponent(title)}`),
-    wiki(`${WIKI_API}&generator=images&gimlimit=40&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=640&titles=${encodeURIComponent(title)}`),
+    wiki(`${WIKI_API}&prop=pageimages&piprop=name&titles=${encodeURIComponent(title)}`, deadline),
+    wiki(`${WIKI_API}&generator=images&gimlimit=40&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=640&titles=${encodeURIComponent(title)}`, deadline),
   ]);
   const page = Object.values(lead.query?.pages || {})[0];
   const main = page?.pageimage ? "File:" + page.pageimage.replace(/_/g, " ") : "";
@@ -158,7 +164,7 @@ async function articlePictures(title) {
   // Files come back A–Z, so on a long article the main picture can be past the
   // first 40: look it up on its own.
   if (main && !all.some(p => p.title === main)) {
-    const info = await wiki(`${WIKI_API}&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=640&titles=${encodeURIComponent(main)}`);
+    const info = await wiki(`${WIKI_API}&prop=imageinfo&iiprop=url%7Cextmetadata%7Csize&iiurlwidth=640&titles=${encodeURIComponent(main)}`, deadline);
     all = [...Object.values(info.query?.pages || {}), ...all];
   }
   const files = all
@@ -173,35 +179,76 @@ async function articlePictures(title) {
     }),
   };
 }
-async function addPictures(cards) {
+async function pictureMap(items, run) {
+  let next = 0;
+  const results = new Array(items.length);
+  await Promise.all(Array.from({length:Math.min(4,items.length)},async()=>{
+    while (next < items.length) { const index = next++; results[index] = await run(items[index]); }
+  }));
+  return results;
+}
+async function addPictures(cards, deadline = Date.now() + 12000) {
   try {
+    for (const c of cards) if (!c.imageTitle && c.imageAlternatives?.length) c.imageTitle = c.imageAlternatives[0];
     const wanted = cards.filter(c => c.imageTitle).slice(0, MAX_PICTURES);
     const titles = [...new Set(wanted.map(c => c.imageTitle))];
-    const found = new Map(await Promise.all(titles.map(async t => [t, await articlePictures(t)])));
+    const cache = new Map();
+    const lookup = title => {
+      const key = title.trim().replace(/_/g,' ').toLowerCase();
+      if (!cache.has(key)) cache.set(key, articlePictures(title, deadline));
+      return cache.get(key);
+    };
+    const found = new Map(await pictureMap(titles, async t => [t, await lookup(t)]));
     const used = new Set();
     // Words in at least a quarter of the cards (3+) are the deck’s topic, not a card’s.
     const counts = new Map();
     for (const c of wanted) for (const w of new Set(words([c.front, c.back].join(" ")).flatMap(w => [w, stem(w)]))) counts.set(w, (counts.get(w) || 0) + 1);
     const common = new Set([...counts].filter(([, n]) => wanted.length >= 5 && n >= Math.max(3, wanted.length * 0.25)).map(([w]) => w));
-    // A card whose article has nothing that fits gets a second article from its
-    // own words. The main picture of Knox's article counts as a fit even when
+    // Only cards without a usable primary illustration need fallback work.
+    // Keep already-good pictures stable. The main picture counts as a fit when
     // its file name doesn't say so (Apple → "Pink lady and cross section");
     // it's only missing when there is none or it shows an unrelated animal.
-    const retry = new Map(await Promise.all(wanted
-      .filter(c => { const b = pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common); return !b.pick?.main && b.score < 2; })
-      .map(async c => { const t = await betterArticle(c); return [c, t && t !== c.imageTitle ? { title: t, ...(await articlePictures(t)) } : null]; })));
+    const retry = new Map(await pictureMap(wanted
+      .filter(c => pictureFor(c, found.get(c.imageTitle)?.pictures || [], new Set(), common).score < 1)
+      , async c => {
+        const options = [...new Set(c.imageAlternatives || [])].filter(t=>t!==c.imageTitle).slice(0,2);
+        const candidates = [];
+        for (const t of options) {
+          if (Date.now() >= deadline) break;
+          const result = await lookup(t);
+          // Model-chosen backups describe this card even when the filenames
+          // are opaque (e.g. Gray1240). Still apply the animal/file filters.
+          if (result.pictures.length) candidates.push({...result, suggested:true});
+        }
+        if (!candidates.some(a=>pictureFor(c,a.pictures,new Set(),common).score>=1) && Date.now()<deadline) {
+          for (const t of await betterArticle(c, deadline)) {
+            if (t===c.imageTitle || Date.now()>=deadline) continue;
+            const result = await lookup(t);
+            if (result.pictures.length) candidates.push(result);
+            if (candidates.length>=3) break;
+          }
+        }
+        return [c, candidates];
+      }));
     for (const card of wanted) {
       let { title, pictures = [] } = found.get(card.imageTitle) || {};
       let best = pictureFor(card, pictures, used, common);
-      const other = retry.get(card);
       // A search can return an unrelated article (a celebrity for "Newton's third
       // law"): only use it if its title shares a real word with the card.
       const cardText = new Set(words([card.front, card.back].join(" ")).flatMap(w => [w, stem(w)]));
-      if (other?.pictures?.length && words(other.title).some(w => cardText.has(w) || cardText.has(stem(w)))) {
+      for (const other of retry.get(card) || []) if (other?.pictures?.length && (other.suggested || words(other.title).some(w => cardText.has(w) || cardText.has(stem(w))))) {
         const alt = pictureFor(card, other.pictures, used, common);
         if (alt.score > best.score) { best = alt; title = other.title; }
       }
-      if (!best.pick && pictures.length) best = pictureFor(card, pictures, new Set(), common); // all used: allow a repeat
+      // Exhausting the relevant unique pictures must not leave a blank just
+      // because unrelated unused files remain. Reuse an accurate illustration.
+      if (!best.pick || best.score < 1) {
+        for (const source of [found.get(card.imageTitle), ...(retry.get(card) || [])].filter(Boolean)) {
+          if (!source.suggested && source.title !== found.get(card.imageTitle)?.title && !words(source.title).some(w=>cardText.has(w)||cardText.has(stem(w)))) continue;
+          const repeat = pictureFor(card, source.pictures, new Set(), common);
+          if (repeat.score > best.score) { best = repeat; title = source.title; }
+        }
+      }
       if (title) card.imageTopic = title; // the picture picker searches this later
       // Score 0: nothing about the file matches the card (a singer's Walk of Fame
       // star on a Newton's third law card) — no picture beats a wrong one.
@@ -210,11 +257,12 @@ async function addPictures(cards) {
   } catch (err) {
     console.error("Card pictures skipped:", err?.message);
   } finally {
-    for (const c of cards) delete c.imageTitle;
+    for (const c of cards) { delete c.imageTitle; delete c.imageAlternatives; }
   }
 }
 
 export default async function handler(req, res) {
+  const startedAt = Date.now();
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -362,7 +410,7 @@ export default async function handler(req, res) {
   // (Picture suggestions are kept as Wikipedia titles until looked up below.)
   const seen = new Set();
   const cards = (Array.isArray(parsed?.cards) ? parsed.cards : [])
-    .map(c => ({ front: clean(c?.front, MAX_FRONT), back: clean(c?.back, MAX_BACK), imageTitle: clean(c?.image, 120) }))
+    .map(c => ({ front: clean(c?.front, MAX_FRONT), back: clean(c?.back, MAX_BACK), imageTitle: clean(c?.image, 120), imageAlternatives: Array.isArray(c?.imageAlternatives) ? [...new Set(c.imageAlternatives.filter(t=>typeof t==='string').map(t=>clean(t,120)).filter(Boolean))].slice(0,2) : [] }))
     .filter(c => c.front && c.back && !seen.has(c.front.toLowerCase()) && seen.add(c.front.toLowerCase()))
     .slice(0, count);
   if (cards.length < Math.min(3, count)) {
@@ -371,7 +419,7 @@ export default async function handler(req, res) {
   }
 
   const title = clean(parsed.title, MAX_TITLE) || clean(request.split(/[.\n]/)[0], 60) || "My Knox deck";
-  if (pictures) await addPictures(cards);
-  else for (const c of cards) { if (c.imageTitle) c.imageTopic = c.imageTitle; delete c.imageTitle; }
+  if (pictures) await addPictures(cards, Math.min(Date.now()+12000, startedAt+55000));
+  else for (const c of cards) { if (c.imageTitle) c.imageTopic = c.imageTitle; delete c.imageTitle; delete c.imageAlternatives; }
   return res.status(200).json({ title, cards, ...(charge.kind === "free" ? { creditsLeft: charge.remaining, creditCost: DECK_CREDIT_COST } : {}) });
 }
