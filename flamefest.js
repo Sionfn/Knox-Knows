@@ -260,6 +260,62 @@
       else if (el.querySelector('.slime-flame')) el.textContent = '🔥';
     });
   }
+  // ── Flame peek: hover (or keyboard focus) on a flame shows it big, alive and
+  // turning in 3D. Layers stacked in depth give it thickness as it sways.
+  // Mouse/keyboard only — a tap on phones still opens the streak window.
+  const GLOW = { classic: '#FF6B00', purple: '#A35BFF', blue: '#2E9BFF', gold: '#F2B705', slime: '#6FD83C', diamond: '#8FE3FF' };
+  const PEEK_AT = '#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style';
+  let peek = null, peekFor = null, peekTimer = 0;
+  function peekLook(host) {
+    const own = host.matches('.knox-flame') ? host : host.querySelector('.knox-flame[data-look], .knox-flame, #streakFlame');
+    return (own && own.dataset.look) || currentStyle;
+  }
+  function showPeek(host) {
+    if (peekFor === host) return;
+    hidePeek();
+    const look = peekLook(host);
+    const streak = host.id === 'streakPill' ? Number(document.getElementById('streakCount')?.textContent) || 0 : null;
+    const layers = [6, 5, 4, 3, 2, 1, 0].map(z => `<span class="fp-layer${z ? ' fp-depth' : ''}" style="--z:${z}">${flameOf(look)}</span>`).join('');
+    const embers = Array.from({ length: 7 }, (_, i) => `<i style="--x:${(i * 37) % 70 - 35}px;--d:${(i * 0.43).toFixed(2)}s;--s:${3 + (i % 3)}px"></i>`).join('');
+    peek = document.createElement('div');
+    peek.className = 'flame-peek';
+    peek.setAttribute('aria-hidden', 'true');
+    peek.style.setProperty('--fp-glow', GLOW[look] || GLOW.classic);
+    peek.innerHTML = `<div class="fp-stage"><div class="fp-halo"></div><div class="fp-embers">${embers}</div><div class="fp-rotor">${layers}</div><div class="fp-floor"></div></div>
+      <b>${esc(STYLE_LABELS[look] || STYLE_LABELS.classic)}</b>${streak !== null ? `<span>${streak}-day streak</span>` : ''}`;
+    document.body.append(peek);
+    applyFlameStyle();
+    // Beside the flame when there's room (the sidebar), otherwise above or below it.
+    const r = host.getBoundingClientRect(), w = peek.offsetWidth, h = peek.offsetHeight, gap = 12;
+    let x, y;
+    if (r.right + gap + w <= innerWidth - 8) { x = r.right + gap; y = r.top + r.height / 2 - h / 2; }
+    else { x = r.left + r.width / 2 - w / 2; y = r.top - gap - h >= 8 ? r.top - gap - h : r.bottom + gap; }
+    peek.style.left = Math.max(8, Math.min(x, innerWidth - w - 8)) + 'px';
+    peek.style.top = Math.max(8, Math.min(y, innerHeight - h - 8)) + 'px';
+    // The native "Your study streak" tooltip would sit on top of it.
+    if (host.title) { host.dataset.peekTitle = host.title; host.removeAttribute('title'); }
+    peekFor = host;
+    peek.classList.add('open'); // after the size read above, so it still animates in
+  }
+  function hidePeek() {
+    clearTimeout(peekTimer);
+    if (peekFor && peekFor.dataset.peekTitle) { peekFor.title = peekFor.dataset.peekTitle; delete peekFor.dataset.peekTitle; }
+    peekFor = null;
+    if (peek) { const old = peek; peek = null; old.classList.remove('open'); setTimeout(() => old.remove(), 180); }
+  }
+  const canHover = () => matchMedia('(hover: hover) and (pointer: fine)').matches;
+  document.addEventListener('mouseover', e => {
+    const host = e.target.closest?.(PEEK_AT);
+    if (host === peekFor) return;
+    clearTimeout(peekTimer);
+    if (!host || !canHover()) { if (peekFor) hidePeek(); return; }
+    peekTimer = setTimeout(() => showPeek(host), 180);
+  });
+  document.addEventListener('focusin', e => { const host = e.target.closest?.(PEEK_AT); if (host && e.target.matches(':focus-visible')) showPeek(host); else if (peekFor) hidePeek(); });
+  document.addEventListener('focusout', () => { if (peekFor && !peekFor.matches(':hover')) hidePeek(); });
+  ['click', 'scroll', 'resize', 'blur'].forEach(t => addEventListener(t, () => { if (peekFor) hidePeek(); }, true));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && peekFor) hidePeek(); });
+
   // Clicking the Knox Discord card: say how to earn the Slime Flame (linking in
   // the server unlocks it; see api/_discord-link.js).
   function discordHint() {
