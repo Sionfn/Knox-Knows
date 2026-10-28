@@ -1597,7 +1597,10 @@
     .learn-recap-title { font-size: 13px; font-weight: 900; color: var(--green-dark); margin-bottom: 6px; }
     html[data-theme="dark"] .learn-recap-title { color: var(--green); }
     .learn-recap p { margin: 0 0 6px; font-size: 14.5px; line-height: 1.5; }
-    .learn-recap-watch { color: var(--text-light); font-size: 13.5px !important; }
+    /* Watch out: an orange warning strip (orange = warnings), full-size readable text. */
+    .learn-recap .learn-recap-watch { margin: 10px 0 0; padding: 9px 12px; border-radius: 12px; border: 2px solid color-mix(in srgb, var(--orange) 40%, var(--border)); background: color-mix(in srgb, var(--orange) 10%, var(--surface)); color: var(--text); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+    .learn-recap .learn-recap-watch b { color: var(--orange-dark); }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-recap .learn-recap-watch b { color: #FF9A4D; }
     .learn-recap-buttons { margin-top: 10px; }
     @media (max-width: 600px) { .learn-actions { padding: 0 14px 14px; } .learn-choice { flex: 1 1 100%; text-align: left; } }
     .knox-final-answer {
@@ -1705,7 +1708,11 @@
       animation: bounce 1.2s infinite;
     }
     /* Shown beside the dots if a reply is slow (see the ask timers). */
-    .thinking-note { font-size: calc(13px * var(--kz, 1)); font-weight: 700; color: var(--text-light); margin-left: calc(6px * var(--kz, 1)); animation: thinkingNoteIn .25s ease-out; }
+    .thinking-note { display: inline-flex; align-items: center; gap: calc(5px * var(--kz, 1)); white-space: nowrap; font-size: calc(13px * var(--kz, 1)); font-weight: 800; color: var(--orange-dark); background: color-mix(in srgb, var(--orange) 12%, var(--surface)); border: 2px solid color-mix(in srgb, var(--orange) 35%, var(--border)); border-radius: 999px; padding: calc(3px * var(--kz, 1)) calc(11px * var(--kz, 1)); margin-left: calc(4px * var(--kz, 1)); animation: thinkingNoteIn .25s ease-out; }
+    .learn-thinking .thinking-note { color: var(--purple-dark); background: color-mix(in srgb, var(--purple) 10%, var(--surface)); border-color: color-mix(in srgb, var(--purple) 35%, var(--border)); }
+    html[data-theme="dark"]:not(.knox-seasonal) .thinking-note { color: #FF9A4D; }
+    html[data-theme="dark"]:not(.knox-seasonal) .learn-thinking .thinking-note { color: var(--purple-on-tint); }
+    .msg-knox-bubble > .thinking-row { flex-wrap: wrap; row-gap: calc(8px * var(--kz, 1)); }
     @keyframes thinkingNoteIn { from { opacity: 0; } }
     .thinking-dot:nth-child(1) { background: var(--orange); }
     .thinking-dot:nth-child(2) { background: var(--blue); animation-delay: 0.2s; }
@@ -4623,6 +4630,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
       if (window._learnModeActive && materials.source) {
         const note = document.createElement('p');
+        note.className = 'learn-source-note';
         note.setAttribute('role', 'status');
         note.textContent = materials.source.kind === 'document'
           ? 'Original lesson file restored: ' + materials.source.name
@@ -4631,6 +4639,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       }
       if (window._learnModeActive && !materials.source && (materials.failed || snaps.docs.some(s => /^(?:📄|📷|\[image\])/.test(s.data().question || '')))) {
         const notice = document.createElement('p');
+        notice.className = 'learn-source-note warn';
         notice.setAttribute('role', 'status');
         notice.textContent = materials.failed
           ? 'The original lesson file could not be loaded. Reopen this lesson or reattach the file before asking about it.'
@@ -6168,7 +6177,7 @@ window.appHandleAsk = async function() {
   const thinkIdFor = 'think_' + Date.now();
   // If a reply is slow, say so under the thinking dots instead of leaving
   // them bouncing with no sign anything is happening.
-  const slowNotes = [[10000, 'Still thinking…'], [25000, 'Taking longer than usual — hang tight.']].map(([ms, text]) =>
+  const slowNotes = [[10000, '🦊 Knox is working it out…'], [25000, '🦊 Big one! Almost there…']].map(([ms, text]) =>
     setTimeout(() => {
       const row = document.querySelector('#' + thinkIdFor + ' .thinking-row');
       if (!row) return;

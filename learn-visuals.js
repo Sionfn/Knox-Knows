@@ -12,7 +12,7 @@
       return '<figure class="learn-visual"><figcaption>Equal-part model</figcaption><svg viewBox="0 0 360 68" role="img" aria-label="'+d+' equal parts, '+n+' shaded">'+cells+'</svg></figure>';
     }
     if (kind.toLowerCase() === 'process' && parts.length >= 2 && parts.length <= 5 && parts.every(s=>s.length>0&&s.length<=60)) {
-      return '<figure class="learn-visual"><figcaption>Process at a glance</figcaption><ol class="lv-flow">'+parts.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol></figure>';
+      return '<figure class="learn-visual"><figcaption>Process at a glance</figcaption><ol class="lv-flow">'+parts.map(s=>'<li><span>'+esc(s)+'</span></li>').join('')+'</ol></figure>';
     }
     return '';
   };
