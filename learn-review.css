@@ -14,6 +14,14 @@
 @media (prefers-reduced-motion: reduce) { #learnReviewPanel .lr-loading summary > span:last-child { animation: none; } }
 #learnReviewPanel summary::after { content: ''; margin-left: auto; width: 8px; height: 8px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; }
 #learnReviewPanel details[open] summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+/* The panel after ×: one small pill, centered where the card was. */
+#learnReviewPanel:has(> .lr-peek) { display: flex; justify-content: center; }
+.lr-peek { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px 5px 6px; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--purple) 45%, var(--border)); background: var(--surface); color: var(--purple-on-tint); font: inherit; font-size: 13px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 color-mix(in srgb, var(--purple) 35%, var(--border)); transition: transform .12s, box-shadow .12s; }
+.lr-peek:hover { transform: translateY(-1px); box-shadow: 0 4px 0 color-mix(in srgb, var(--purple) 50%, var(--border)); }
+.lr-peek:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--purple) 35%, var(--border)); }
+.lr-peek:focus-visible { outline: 3px solid color-mix(in srgb, var(--purple) 60%, transparent); outline-offset: 3px; }
+#learnReviewPanel .lr-peek .lr-icon { width: 26px; height: 26px; border-radius: 50%; box-shadow: none; }
+#learnReviewPanel .lr-peek .lr-icon svg { width: 15px; height: 15px; }
 .lr-close { flex: 0 0 auto; order: 10; width: 30px; height: 30px; margin-left: 2px; border: 0; border-radius: 50%; background: transparent; color: var(--text-light); font: inherit; font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; }
 .lr-close:hover { color: var(--text); background: var(--cream-warm, var(--gray)); }
 .lr-close:focus-visible { outline: 3px solid color-mix(in srgb, var(--purple) 60%, transparent); outline-offset: 1px; }

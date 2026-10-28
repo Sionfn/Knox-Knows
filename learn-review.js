@@ -59,11 +59,29 @@
     summary.append(icon(), Object.assign(document.createElement('span'), { textContent: 'Review from your lessons' }));
     details.append(summary); p.append(details);
   }
+  // Hidden with ×: a small pill in the same spot brings the panel back (open).
+  function peek(data, user, view, rev) {
+    const p = panel(); if (!p) return;
+    p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review');
+    const n = data.items.length;
+    if (!n) { p.hidden = true; return; }
+    p.hidden = false;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'lr-peek';
+    b.setAttribute('aria-label', 'Show Review from your lessons');
+    b.append(icon(), Object.assign(document.createElement('span'), { textContent: n + (n === 1 ? ' review topic' : ' review topics') }));
+    b.onclick = () => {
+      if (!same(user.uid, view, rev)) return;
+      try { localStorage.removeItem(hideKey(user.uid)); } catch {}
+      render(data, user, view, rev, true);
+      panel()?.querySelector('summary')?.focus({ preventScroll: true });
+    };
+    p.append(b);
+  }
   function render(data, user, view, rev, open = false) {
     cache.set(user.uid, data);
     const {items,enabled}=data;
     const p = panel(); if (!p || !same(user.uid, view, rev)) return;
-    if (hiddenFor(user.uid, items)) { p.hidden = true; p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review'); return; }
+    if (hiddenFor(user.uid, items)) { peek(data, user, view, rev); return; }
     p.replaceChildren(); p.hidden = false;
     document.getElementById('welcomeScreen')?.classList.add('has-learn-review');
     const details = document.createElement('details'); details.open = open;
@@ -73,11 +91,12 @@
     summary.append(icon(), Object.assign(document.createElement('span'), { className: 'lr-title', textContent: 'Review from your lessons' }));
     if (count.textContent) summary.append(count);
     const close = document.createElement('button'); close.type = 'button'; close.className = 'lr-close';
-    close.textContent = '×'; close.title = 'Hide until there’s a new topic'; close.setAttribute('aria-label', 'Hide Review from your lessons');
+    close.textContent = '×'; close.title = 'Make this smaller'; close.setAttribute('aria-label', 'Hide Review from your lessons');
     close.onclick = e => {
       e.preventDefault(); e.stopPropagation(); // don't open/close the card
       try { localStorage.setItem(hideKey(user.uid), topicsSig(items)); } catch {}
-      p.hidden = true; p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review');
+      peek(data, user, view, rev);
+      p.querySelector('.lr-peek')?.focus({ preventScroll: true });
     };
     summary.append(close);
     const intro = document.createElement('p'); intro.className = 'lr-intro';
