@@ -9,7 +9,7 @@
 //   Graph: …             → the equation to graph (Discord can't draw it)
 
 // Same marker rule as the website: a line may be bolded or a bullet ("- **Choices:** …").
-const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i;
+const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|visual|your turn|assessment|review focus)\s*:\s*(.*)$/i;
 
 // The question sentence a reply ends with ("…both sides. What do you get?" →
 // "What do you get?"), and the text before it. Never taken from a list step.

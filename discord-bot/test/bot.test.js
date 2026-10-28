@@ -616,3 +616,9 @@ test('Learn in Discord: the question Knox ends with gets its own Your turn line 
   assert.match(f.text, /^Adding 5 gives 6x = 36\.\n\n\*\*Your turn:\*\* What do you get when you divide both sides by 6\?$/);
   assert.doesNotMatch(formatLearn('Steps:\n1. Is it even?').text, /Your turn/);
 });
+test('Learn in Discord hides private assessment and review metadata from lesson text',async()=>{
+ const {formatLearn}=await import('../src/learn-format.js');
+ const reply=formatLearn('Try again.\nYour turn: Which piece is larger?\nVisual: fraction | 3/4\nAssessment: partial\nReview focus: Compare equal-sized pieces.');
+ assert.doesNotMatch(reply.text,/Assessment:|Review focus:|Visual:/);
+ assert.match(reply.text,/Which piece is larger/);
+});

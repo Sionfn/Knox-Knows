@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {learnLessonContext as context, learnLessonReminder as reminder, normalizeLearnLesson as normalize} from '../api/_learn-progress.js';
+import { requestedPracticeCount } from '../api/_learn-progress.js';
+test('counted sets recognize topic words without counting quantities inside word problems',()=>{
+ for(const request of ['Give me exactly 3 practice addition problems with answers within 20.','Ask me three easy fraction questions.','I want 3 mixed biology review questions.','Let us practice three multiplication problems.','Give me 3 more practice equations problems.']) {
+  assert.equal(requestedPracticeCount([],request),3,request);
+ }
+ for(const request of ['Help me solve: give 3 apples to each student. How many are left?','Solve this: I have 3 apples and then ask questions.','Give me 30 addition problems.','Teach me fractions.'])assert.equal(requestedPracticeCount([],request),0,request);
+});
 const turn = (n=1,extra='') => ({role:'assistant',content:`Try this.\nYour turn: What changes?\nLesson plan: Understand balance | Solve independently\nProgress: ${n}/2${extra}`});
 test('parts are fixed named goals and can contain several different questions',()=>{
  const state=context([turn()],'Subtract five from both sides');

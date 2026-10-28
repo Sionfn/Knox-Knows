@@ -10,7 +10,8 @@ test('deletion batches messages and resets only the deleted active account/threa
   const c={window:{currentUser:{uid:'u1'},_currentConversationId:'c1',appStartNewChat(){reset++;}},db:{},
     deletedHistory:new Set(),updateDoc:async()=>{},
     doc:(_, ...parts)=>parts.join('/'),collection:(parent,name)=>parent+'/'+name,query:x=>x,limit:()=>400,
-    getDocs:async()=>({docs:Array.from({length:pages.shift()},(_,i)=>({ref:'message'+i}))}),
+    SOURCE_CHUNKS:6,
+    getDocs:async path=>({docs:Array.from({length:path.endsWith('/sourceMaterials')?0:pages.shift()},(_,i)=>({ref:'message'+i}))}),
     writeBatch:()=>{const refs=[];return {delete:r=>refs.push(r),commit:async()=>commits.push(refs)};}};
   runInNewContext(deletion,c);await c.deleteConversation('c1');
   assert.equal(commits[0].length,400);assert.equal(commits[1].length,3);
@@ -18,7 +19,7 @@ test('deletion batches messages and resets only the deleted active account/threa
 });
 test('failed deletion propagates for retry without resetting active chat',async()=>{
  const c={window:{currentUser:{uid:'u1'},_currentConversationId:'c1',appStartNewChat(){throw Error('must not reset');}},db:{},doc:()=>'',collection:()=>'',query:x=>x,limit:()=>400,getDocs:async()=>({docs:[]}),writeBatch:()=>({delete(){},commit:async()=>{throw Error('offline');}})};
- c.updateDoc=async()=>{};c.deletedHistory=new Set();
+ c.updateDoc=async()=>{};c.deletedHistory=new Set();c.SOURCE_CHUNKS=6;
  runInNewContext(deletion,c);await assert.rejects(c.deleteConversation('c1'),/offline/);
  assert.equal(c.deletedHistory.size,0,'unfinished deletion remains visible for retry');
  c.writeBatch=()=>({delete(){},commit:async()=>{}});

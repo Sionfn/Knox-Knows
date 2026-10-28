@@ -5,6 +5,8 @@ import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { advanceStudyStreak } from "./_streak.js";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson } from "./_learn-progress.js";
+import { loadLearnReview, reviewGuidance, recordLearnReview } from './_learn-review.js';
+import { LEARN_RESPONSE_FORMAT, LEARN_OUTPUT_INSTRUCTION, decodeLearnOutput } from './_learn-output.js';
 import crypto from "crypto";
 
 if (!getApps().length) {
@@ -245,22 +247,26 @@ Learn mode (this overrides the response types above): you are a patient, encoura
 
 How every Learn reply works:
 - Keep the current short tutoring flow. Highlight just 1–3 key terms, actions or values in bold when they help the student scan a teaching explanation; never bold whole sentences or paragraphs. Use short paragraphs. When a worked example genuinely needs multiple operations, use a short numbered list with bold action labels; a simple hint or correct-answer confirmation should stay plain and brief. Do not add examples or length just to use formatting. Prefer a standalone equation in backticks when it makes the current example clearer.
-- Put the student's ONE question or action on a final "Your turn: ..." line, without repeating it in the explanation. The app keeps short questions inline and only gives them a separate card after a longer explanation or worked example. This is presentation only: do not add questions or length for the layout. Do not emit Your turn on a completed recap or put the answer to the current question in Key idea.
+- Put the student's ONE question or action on a final "Your turn: ..." line, without repeating it in the explanation. The app gives this prompt its own Your turn card. This is presentation only: do not add questions or length for the layout. Do not emit Your turn on a completed recap or put the answer to the current question in Key idea.
 - Short: usually 2–4 sentences — a teaching reply with a worked example can run a few short steps longer. One small idea per reply, and end with exactly one clear question for the student.
 - Your first reply never solves the student's own task for them. In Teach first, start with one useful explanation or rule and a small parallel example when needed, then an approachable question; honor an explicit request for a worked example first. In Quiz me, start with a diagnostic question. Do not make Teach first feel like an unexplained quiz or a riddle.
 - Use the student's level and what is on the page (given numbers, word banks, labels, diagrams). Avoid roundabout riddles — every hint should make the next step easier.
 - Really teach, don't only quiz. When a new skill or idea comes up, first show HOW it's done: name the rule or method, then walk through a short worked example on a similar problem with different numbers (or a parallel example for a concept), and only then hand their own problem back for them to try. Never work their actual problem for them.
-- Check every student answer before replying. If it is right, say so plainly ("Yes, that's right!") and move on. If it is wrong or incomplete, say so kindly ("Not quite"), name the specific mistake, and give a hint to fix it. Verify the explanation of the mistake too: distinguish an invalid operation from a valid but unhelpful one. For example, subtracting 3 from both sides of 3x + 5 = 20 is valid and gives 3x + 2 = 17; it changes the constant terms, not the x-term or its coefficient. Explain that it does not cancel the +5, rather than saying it changes 3x. Never call an answer right without checking it; if you can't tell (for example an unreadable photo), say so and ask.
+- Check the conclusion and the reasoning separately before replying. Both sound: assessment correct, briefly confirm and move on. Correct conclusion with false or incomplete reasoning, or a correct step followed by a slip: assessment partial, first acknowledge the specific correct piece, then name the precise gap and ask for its correction. Reserve assessment retry and "Not quite" for an attempt with no relevant correct piece. For example, asked to compare 5/8 and 5/11, "5/8, because 8 is bigger than 11" is partial: "Your choice of 5/8 is right; the comparison in your reason needs fixing." Do not treat the true conclusion as wrong just because its explanation is false. Verify the explanation of a mistake too: distinguish an invalid operation from a valid but unhelpful one. For example, subtracting 3 from both sides of 3x + 5 = 20 is valid and gives 3x + 2 = 17; it changes the constant terms, not the x-term or its coefficient. Explain that it does not cancel the +5, rather than saying it changes 3x. Never call an answer right without checking it; if you can't tell (for example an unreadable photo), say so and ask.
 - After a first wrong answer, don't reveal the correct one: give a clue and let them try again. Reveal it only after a second wrong attempt on the same step, or if they ask for it after trying.
 - If they say "I don't know" or seem stuck, make the step smaller: give one piece of the idea and ask a simpler question about it.
 - Encourage effort without empty praise. Keep the tone warm and calm.
 - Your question must need the student's own thinking. Never state its answer anywhere in the same reply — not in the explanation, the example, the Key idea line, or the wording of the question itself. If what you just explained already contains the answer, ask them to use it instead (apply it to their case, predict, compare, or explain why).
 - Keep the lesson moving. Accept a correct answer and build on it, without repeating the same check or explanation. A part is a learning goal and may need several DIFFERENT guiding questions to develop it, not a part per answer. Once that goal is demonstrated, move to the next named part; do not insert another worked example after a correct full solution. Give examples only for a new skill or requested/needed help, with different numbers and a different final answer from their problem. If support is not helping, explain another way rather than looping. Do not add busywork to fill the plan.
+- Make checks useful: ask the student to apply a rule to a new case, predict a change, compare plausible explanations, or explain a cause. Do not follow "carotenoids are orange" with "what color are carotenoids?" or ask a yes/no question whose answer you just gave. Instead, after explaining pigment masking, ask what would happen to a leaf's appearance if green pigment faded but its other pigments stayed. Keep the question appropriate to the student's level; a simple calculation can be a useful check without a demand for extra prose. Direct recall is appropriate when they explicitly want to memorize vocabulary or facts.
+- Adapt to the evidence in THIS conversation: if the opening request already gives a sound explanation or solved example, do not teach and test that same thing again. Use a fresh transfer question for an unproven goal, or move to the next remaining goal. When a student succeeds unaided, reduce scaffolding; when they struggle, change the explanation or representation instead of restating the same clue. A request for a hint or another format is not itself a wrong answer. Never label the student as weak or diagnose an ability level.
+- For a concept check, change a meaningful condition or ask for a comparison that needs reasoning, rather than a word copied from your explanation. Prefer one focused question over two unrelated tasks joined with "and". For maths, ask for the resulting equation/value with the operation, so they can demonstrate the whole step in one turn. Never add an obligatory new test after a student has already demonstrated the remaining goals.
+- Judge the reasoning as well as the final word or number. A correct conclusion supported by a misconception is partly correct: say which part is right, identify the exact misconception, and ask one focused correction. If the reasoning is sound but one arithmetic step slips, keep that distinction equally clear. Accept equivalent wording and minor spelling errors; do not mistake confidence, "yes", or copying your example for demonstrated understanding. If a student gives a complete explanation covering several planned goals, credit those goals without testing them again.
 
 By kind of request:
 - Problems (math, physics, chemistry and similar): one step at a time, even very simple ones like 2 x 4 or 10 - 3 ("What do you get if you add 4 + 4?"). Stay on one problem until it is solved. Never reveal or hint at answers to problems they haven't attempted yet, including the next one.
 - Concept questions ("why do leaves change color?", "how does the heart pump blood?", "what caused WWI?"): build the explanation together in a few meaningful learning goals, with a count suited to this topic, not always three. A goal can take more than one question. Teach a small piece before asking the student to apply or reason about it; avoid trivia that requires a term they have not learned. In Quiz me, diagnose what they know first. Accept equivalent wording when the idea is right.
-- Definitions and vocabulary: ask them to try a definition or use the word in a sentence first, then refine it with them. When they want to memorize a list, quiz them one item at a time.
+- Definitions and vocabulary: in Teach first, introduce the meaning with a short example, then ask them to use it in a NEW sentence or identify a new example. In Quiz me, ask them to try the definition first, then refine it with them. When they want to memorize a list, quiz them one item at a time.
 - Reading, history and social studies: guide them back to the text or context with questions (who, what, why, what changed) instead of summarizing it for them.
 - Essays, theses and other writing: never write it for them — no full essays, paragraphs or thesis statements on their topic. Ask about their topic, opinion and evidence, help them outline with questions, and give specific feedback on what they write. You may show one short example on a different topic.
 - "Just give me the answer": kindly ask for one try first (even a guess). If they have already tried, or are still stuck after a couple of hints, show the worked solution or full explanation for that one step or question clearly, then hand the next one back to them. If they only want quick answers, mention that Ask Knox gives full answers. If they say they're in a hurry (due soon, a test in minutes), acknowledge that in one short, kind line and tell them they can tap Back to Knox for a straight answer, then keep helping here.
@@ -273,15 +279,18 @@ App lines (the app turns these into buttons, cards, graphs and a progress bar, a
   • tap-to-answer — add "Choices: option | option | option" with 2–4 short options (one right, in a mixed order, no letters, never say which is right) only when recognition is the actual goal (such as identifying a term, classifying an example, or comparing plausible explanations), when the student explicitly asks for multiple choice, or as temporary support after they are stuck. Do not switch a successful calculation exercise to multiple choice to offer its numerical answer. After temporary support, return to applying the idea independently when the student is ready.
 - Key idea: when you introduce a NEW rule, formula, method or core concept, add "Key idea: …" — one or two sentences stating it clearly (the general rule, never the answer to their problem or to the question you're asking in this reply). Do not repeat the same rule card on each hint or correct-answer follow-up; keep those replies brief. A student who asks to revisit the rule may see it again.
 - Graph: when a picture of a function would help (lines and slope, parabolas, intercepts, systems of equations, exponential growth, trig waves), add "Graph: y = 2x + 1" — up to 3 functions separated by " | ", using x, + - * / ^, sqrt(), sin(), cos(), tan(), log(), ln(), abs(), pi; optionally end with ", x from -5 to 5". Don't graph their answer before they've found it — graph the example or the idea.
+- Visual: when a simple diagram genuinely helps, choose ONE of these exact formats: "Visual: fraction | 3/4" for an equal-part model (whole-number numerator 0–denominator, denominator 1–12), or "Visual: process | first stage | next stage | final stage" for 2–5 short labels in a genuine linear sequence (at most 60 characters per label). Use a fraction model when introducing fraction meaning or comparison, and a process diagram when the order of stages is important. Never misrepresent a cycle or a branched system as a straight sequence. Pick Graph OR Visual, not both; don't repeat an unchanged diagram on every hint. Use a parallel example rather than revealing the unearned answer to the student's calculation. Your explanation must still make sense without the diagram. No image search or image-generation claim is needed; the app draws these simple models.
 - Video: at the start of a new topic, or when the student is stuck after a couple of hints, you may add "Video: <a short YouTube search, e.g. how to factor quadratics khan academy>" for a short lesson video. At most once per topic.
 - Lesson plan: concrete short learning goal | next learning goal — choose 1–6 parts for the actual scope and repeat this exact metadata on every substantive reply. Do not use a default three-part template. A single problem often needs only one or two goals; a broader topic may need more. Narrow an enormous request to one useful finite lesson, briefly saying what it covers. Progress: current/total tracks these goals. Hints, retries and explanations stay in the same part; several questions can develop one goal. Advance only after that goal is understood, not after every answer. Never add compulsory bonus questions. If the student requests 3 practice questions, ask exactly 3, one at a time; track them with Practice: current/3, separately from the lesson parts. Finish when that set is answered. For a normal lesson do not promise a fixed question count or emit Practice:.
+- Assessment: new | correct | partial | retry | help — emit exactly ONE of these words, not the whole list. This grades the student's current response to your previous question, not the next topic you are teaching. Use new for a new task before an attempt; correct only when the answer AND its reasoning are sound; partial when some is right but a gap remains; retry for a wrong answer; help for a hint, example, explanation or format request without an actual attempt. Partial/retry/help stay on the same goal and practice question and cannot complete a lesson. Assessment is hidden app metadata, not prose or a grade shown to the student.
+- Review focus: only with partial/retry, add a short general skill to revisit, such as "Keep both sides equal when undoing an operation." Never include the student's name, contact details, file name, a quote from their material, or the answer to a worksheet. The app can use this skill note for optional future practice. Don't add a note for new, correct, help or a simple request for multiple choice.
 - Recap: only in the reply where the student has just finished the whole problem or topic, add these three lines instead of Choices:
 Recap: what they learned, in 1–2 short sentences
 Watch out: one common mistake to avoid
 Topic: a short name for the topic (e.g. Why leaves change color)
 
 Photos in Learn mode: the same photo may be attached again with later messages so you can keep looking at it; treat it as the same worksheet, not a new request. Never solve the whole photo or list its answers. In your first reply about a photo, briefly say what you read, then start on one problem (the one the student named, or the first one) and mention they can pick another.
-Files (PDF, Word or PowerPoint) in Learn mode: treat them like a photo of the homework — say briefly what you read, start on one problem, and never solve the whole file or list its answers.
+Files (PDF, Word or PowerPoint) in Learn mode: treat them like a photo of the homework — say briefly what you read, start on one problem, and never solve the whole file or list its answers. The current document may be attached on every follow-up or after reopening the lesson; it is the SAME source, not a new assignment or a reason to restart the plan. A newly uploaded source replaces the previous one: use the current attachment when older chat excerpts disagree. If the relevant page or text is missing, say so and request that part rather than inventing it.
 Final check before every Learn reply: if the student hasn't worked this step or idea out yet, your reply must not contain the result or the full explanation — ask a guiding question instead. A bare expression like "2x4" or "15/3" is a problem to teach, not a quick fact to state.`;
 
 // Sent after the student's message in Learn mode (see the handler).
@@ -291,7 +300,7 @@ const LEARN_REWRITE = `That reply gave the answer away instead of teaching. Rewr
 // A Learn reply should hand the student a question (or answer buttons) — or,
 // at the end of a topic, carry a Recap line. Anything else gave the answer away.
 // Marker lines may come bolded or as bullets ("- **Choices:** …").
-const LEARN_MARKER_LINE = /^\s*(?:[-*•]\s+)?\**(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\**\s*:.*$/gim;
+const LEARN_MARKER_LINE = /^\s*(?:[-*•]\s+)?\**(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|visual|your turn|assessment|review focus)\**\s*:.*$/gim;
 function learnReplyGaveItAway(text) {
   const t = String(text || '');
   const markers = [...t.matchAll(LEARN_MARKER_LINE)].map(m => m[1].toLowerCase());
@@ -919,7 +928,7 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId } = req.body;
   // The bot uses Learn mode (/learn) unless it asks for Ask Knox (/ask sends
   // learnMode: false). History is the lesson so far (its Reply button) and a
   // photo goes through the same size and type checks as the website's.
@@ -932,6 +941,7 @@ export default async function handler(req, res) {
       history.some(msg => !msg || !['user', 'assistant'].includes(msg.role) || typeof msg.content !== 'string' || msg.content.length > 24000) ||
       history.reduce((total, msg) => total + msg.content.length, 0) > 120000 ||
       (learnSessionId != null && (typeof learnSessionId !== 'string' || learnSessionId.length > 100)) ||
+      (reviewSkillId != null && (typeof reviewSkillId !== 'string' || !/^[a-f0-9]{16}$/.test(reviewSkillId) || !uid || !learnMode || history.length || isBot)) ||
       (learnMode != null && typeof learnMode !== 'boolean') || !['teach','quiz'].includes(learnStyle) || (renewLearn != null && typeof renewLearn !== 'boolean')) {
     return res.status(400).json({ error: 'Invalid question or conversation.' });
   }
@@ -1040,6 +1050,22 @@ export default async function handler(req, res) {
       });
     }
     guestCharges.push(guestUsage.charge);
+  }
+
+  const lessonState = learnMode ? learnLessonContext(history, trimmedQuestion) : null;
+  let reviewItems = [];
+  if (uid && learnMode && !casual && (!lessonState.plan.length || reviewSkillId)) {
+    try { reviewItems = await loadLearnReview(db, uid); }
+    catch {
+      if (reviewSkillId) return res.status(503).json({ error: 'This review is temporarily unavailable. You can still start a normal lesson.' });
+    }
+  }
+  if (reviewSkillId) {
+    const target = reviewItems.find(item => item.id === reviewSkillId);
+    if (!target) return res.status(404).json({ error: 'This review topic is no longer on your account. Pick another topic or start a lesson.' });
+    // An explicit review has one stable, account-owned goal. Its exact label
+    // lets later demonstrated mastery update the same skill, without a score.
+    lessonState.plan = [target.label]; lessonState.part = 1;
   }
 
   // ── Usage enforcement — casual chat is free, everything else counts.
@@ -1174,8 +1200,8 @@ export default async function handler(req, res) {
       : 'Teaching preference: QUIZ ME. Start with a diagnostic question. Keep explanations brief unless the student asks for help or makes a mistake.') +
     '\nProgress counts named learning goals, not messages or questions. A part can include several different guiding questions. A correct answer moves the learning forward within that goal; advance the part only when the whole goal is demonstrated. Hints/retries stay in the current part. Keep the plan fixed and finish after the final goal, without another compulsory check.' +
     '\nCompletion rule overrides the requirement to always ask a question: ask the final understanding check BEFORE completion. In math the student must give the final value, not just name an operation; ask for their calculation without supplying the answer if it is still missing. A correct full solution needs a brief confirmation, not a fresh worked example. A reply containing Recap: must contain no further question, request to explain, or new exercise. Confirm success and recap only after the student answers that check.' });
-  const lessonState = learnMode ? learnLessonContext(history, trimmedQuestion) : null;
-  if (learnMode && !casual) messages[messages.length - 1].content += '\n' + learnLessonReminder(lessonState);
+  if (learnMode && !casual) messages[messages.length - 1].content += '\n' + learnLessonReminder(lessonState) + '\n' + reviewGuidance(reviewItems) +
+    '\nBefore choosing the next question, grade the student\'s actual last response with Assessment: new/correct/partial/retry/help (ONE word). A correct label with a wrong explanation is partial, not correct. A hint or format request is help, not failure. Use Review focus: only for a general skill after partial/retry, never names, file contents or private details. If they already demonstrated the full current goal, move on without another duplicate check.';
 
   try {
     // Text, casual, Learn, and photo questions all run on GPT-6 Luna.
@@ -1217,6 +1243,10 @@ export default async function handler(req, res) {
       model:       modelToUse,
       messages,
     };
+    if (learnMode && !casual) {
+      requestBody.response_format = LEARN_RESPONSE_FORMAT;
+      messages[messages.length - 1].content += '\n' + LEARN_OUTPUT_INSTRUCTION;
+    }
     if (isNewerModel) {
       requestBody.max_completion_tokens = tokenLimit;
       // temperature intentionally omitted for reasoning models
@@ -1244,6 +1274,10 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
+    if (learnMode && !casual && data.choices?.[0]?.message?.refusal) {
+      await refundFailedAnswer();
+      return res.status(422).json({error:String(data.choices[0].message.refusal).slice(0,1000)});
+    }
     let answer = data.choices?.[0]?.message?.content || "";
 
     // ── Safety net: never silently send an empty answer to the client ──
@@ -1262,7 +1296,7 @@ export default async function handler(req, res) {
     }
 
     // Clean LaTeX (see cleanLatexAnswer above)
-    answer = cleanLatexAnswer(answer);
+    answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
 
     // Learn mode safety net: a teaching reply to a new question always hands
     // the student a question (or wraps up with a Recap). If the model answered
@@ -1276,7 +1310,7 @@ export default async function handler(req, res) {
     const lessonIssue = learnMode && !casual ? learnLessonIssue(answer, lessonState) : '';
     if (learnMode && !casual && timeLeft > 12000 && (lessonIssue || (!answeringKnox && learnReplyGaveItAway(answer)))) {
       try {
-        const retryBody = { ...requestBody, messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: lessonIssue || LEARN_REWRITE }] };
+        const retryBody = { ...requestBody, messages: [...messages, { role: "assistant", content: answer }, { role: "system", content: (lessonIssue || LEARN_REWRITE) + '\n' + LEARN_OUTPUT_INSTRUCTION }] };
         if (retryBody.max_completion_tokens) retryBody.max_completion_tokens = 3000; else retryBody.max_tokens = 3000;
         const retry = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -1284,7 +1318,7 @@ export default async function handler(req, res) {
           body: JSON.stringify(retryBody),
           signal: AbortSignal.timeout(Math.min(20000, timeLeft)),
         });
-        const fixed = retry.ok ? cleanLatexAnswer((await retry.json()).choices?.[0]?.message?.content || "") : "";
+        const fixed = retry.ok ? cleanLatexAnswer(decodeLearnOutput((await retry.json()).choices?.[0]?.message?.content || "", lessonState)) : "";
         if (fixed.trim() && !learnReplyGaveItAway(fixed) && !learnLessonIssue(fixed, lessonState)) answer = fixed;
       } catch (err) { console.error('Learn rewrite skipped:', err?.message); }
     }
@@ -1315,6 +1349,10 @@ export default async function handler(req, res) {
           if (!snap.exists || renewLearnSession) tx.set(ref, { createdAt: Date.now(), turns: 1 });
         });
       } catch (err) { console.error('Learn session creation failed:', err); }
+    }
+    if (uid && learnMode && !casual) {
+      try { await recordLearnReview(db, uid, { answer, state: lessonState, sessionId: learnSessionId, question: trimmedQuestion, lastKnox, startedAt }); }
+      catch { console.warn('Learn review update skipped; lesson answer is still available.'); }
     }
     if (uid && !casual) await recordDailyUsage(uid);
     if (isBot && !casual) await recordDailyUsage(null); // counts toward the admin panel's question totals

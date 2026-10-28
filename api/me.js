@@ -11,6 +11,7 @@ import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import discordLink from "./_discord-link.js";
 import testerPlan from "./_tester-plan.js";
 import support from "./_support.js";
+import { learnReviewRoute } from "./_learn-review.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -82,6 +83,7 @@ function daysBetween(aKey, bKey) {
 }
 
 export default async function handler(req, res) {
+  if (req.query?.route === 'learn-review') return learnReviewRoute(req, res, { db, auth: adminAuth });
   // /api/discord-link is rewritten here (see api/_discord-link.js).
   if (req.query?.route === "discord-link") return discordLink(req, res);
   // Preview site only: testers pick their own plan (see api/_tester-plan.js).

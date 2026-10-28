@@ -4,6 +4,48 @@ import { SourceTextModule, SyntheticModule, createContext } from 'node:vm';
 import crypto from 'node:crypto';
 import { Readable } from 'node:stream';
 import test from 'node:test';
+import { skillKey } from '../api/_learn-review.js';
+
+test('Learn requests use structured output and translate it before rendering; refusals refund the normal credit',async()=>{
+ const {db,store}=memoryDb();store.set('users/u1/usage/bank',{balance:7,lastRegenAt:Date.now()});let refusal=false;const calls=[];
+ const value={body:'Equal pieces make a fair comparison.',question:'Which is larger?',choices:[],goals:['Compare fractions'],part:1,practiceIndex:0,assessment:'new',reviewFocus:'',keyIdea:'Use equal wholes.',graph:'',visual:'fraction | 2/3',video:'',recap:'',watchOut:'',topic:''};
+ const fetch=async(_,options)=>{const body=JSON.parse(options.body);calls.push(body);return {ok:true,json:async()=>({choices:[{message:refusal?{refusal:'I cannot help with that request.',content:null}:{content:/Classify the LATEST/.test(body.messages[0].content)?'SUBSTANTIVE':JSON.stringify(value)},finish_reason:'stop'}]})};};
+ const handler=await load('api/ask.js',{db,fetch});let r=response();
+ await handler(askRequest({question:'Teach me how to compare fractions.',learnMode:true,history:[],learnSessionId:crypto.randomUUID()}),r);
+ assert.equal(r.code,200);assert.match(r.body.answer,/Visual: fraction \| 2\/3/);assert.doesNotMatch(r.body.answer,/"body"/);assert.equal(calls.at(-1).response_format.json_schema.strict,true);assert.equal(store.get('users/u1/usage/bank').balance,6);
+ refusal=true;r=response();await handler(askRequest({question:'Teach me a new fraction lesson.',learnMode:true,history:[],learnSessionId:crypto.randomUUID()}),r);
+ assert.equal(r.code,422);assert.equal(store.get('users/u1/usage/bank').balance,6,'refused lesson refunded');
+});
+
+test('Learn assessed feedback updates an owner-only review topic without storing the student wording',async()=>{
+ const {db,store}=memoryDb();store.set('users/u1',{plan:'super'});
+ const history=[{role:'user',content:'Teach me fractions.'},{role:'assistant',content:'Try a comparison.\nYour turn: Which fraction is larger?\nLesson plan: Compare fractions\nProgress: 1/1'}];
+ const reply='You kept the same numerator, but equal-sized pieces matter.\nYour turn: What happens to piece size?\nLesson plan: Compare fractions\nProgress: 1/1\nAssessment: partial\nReview focus: Compare piece sizes when numerators match.';
+ const handler=await load('api/ask.js',{db,fetch:async()=>({ok:true,json:async()=>({choices:[{message:{content:reply},finish_reason:'stop'}]})})});
+ const r=response();await handler(askRequest({question:'unique student attempt',history,learnMode:true,learnSessionId:crypto.randomUUID()}),r);
+ assert.equal(r.code,200);const profile=store.get('users/u1/learning/review');assert.equal(profile.items[0].label,'Compare fractions');assert.doesNotMatch(JSON.stringify(profile),/unique student attempt/);
+ const me=await load('api/me.js',{db});const read=response();await me({method:'GET',headers:{authorization:'Bearer test'},query:{route:'learn-review',uid:'other'}},read);
+ assert.equal(read.code,200);assert.equal(read.body.items[0].label,'Compare fractions');assert.equal(store.has('users/other/learning/review'),false);
+});
+test('an explicit review validates ownership before charging, keeps one canonical goal, and costs a normal Learn credit',async()=>{
+ const {db,store}=memoryDb();store.set('users/u1/usage/bank',{balance:7,lastRegenAt:Date.now()});
+ const label='Compare fractions',id=skillKey(label);store.set('users/u1/learning/review',{items:[{id,label,focus:'Compare equal-sized pieces.',dueAt:1,updatedAt:1,pending:true,stage:0}]});
+ const requests=[];const fetch=async(_,options)=>{const body=JSON.parse(options.body);requests.push(body);return {ok:true,json:async()=>({choices:[{message:{content:/Classify the LATEST/.test(body.messages[0].content)?'SUBSTANTIVE':'Try a comparison.\nYour turn: Which is larger: 3/5 or 3/8?\nLesson plan: Wrong goal\nProgress: 1/1\nAssessment: new'},finish_reason:'stop'}]})};};
+ const handler=await load('api/ask.js',{db,fetch});let r=response();
+ await handler(askRequest({question:'Help me review how to compare fractions.',learnMode:true,reviewSkillId:'f'.repeat(16),history:[],learnSessionId:crypto.randomUUID()}),r);
+ assert.equal(r.code,404);assert.equal(store.get('users/u1/usage/bank').balance,7);
+ r=response();await handler(askRequest({question:'Help me review how to compare fractions.',learnMode:true,reviewSkillId:id,history:[],learnSessionId:crypto.randomUUID()}),r);
+ assert.equal(r.code,200);assert.match(r.body.answer,/Lesson plan: Compare fractions/);assert.doesNotMatch(r.body.answer,/Wrong goal/);assert.equal(store.get('users/u1/usage/bank').balance,6);
+ assert.match(requests.at(-1).messages.at(-1).content,/not a diagnosis or proof/);
+});
+test('a review-storage failure does not discard a successful tutoring answer',async()=>{
+ const {db,store}=memoryDb();store.set('users/u1',{plan:'super'});
+ const broken={...db,runTransaction:callback=>db.runTransaction(tx=>callback({...tx,get:ref=>{if(ref.path.endsWith('/learning/review'))throw Error('review storage offline');return tx.get(ref);}}))};
+ const reply='Try again.\nYour turn: What operation balances it?\nLesson plan: Balance equations\nProgress: 1/1\nAssessment: retry\nReview focus: Preserve equality.';
+ const handler=await load('api/ask.js',{db:broken,fetch:async()=>({ok:true,json:async()=>({choices:[{message:{content:reply},finish_reason:'stop'}]})})});
+ const r=response();await handler(askRequest({question:'subtract the wrong amount',learnMode:true,learnSessionId:crypto.randomUUID(),history:[{role:'assistant',content:'Try.\nYour turn: What next?\nLesson plan: Balance equations\nProgress: 1/1'}]}),r);
+ assert.equal(r.code,200);assert.match(r.body.answer,/What operation balances it/);
+});
 
 function memoryDb() {
   const store = new Map();
@@ -423,7 +465,7 @@ test('Learn mode photos get teaching instructions, not the solve-everything rule
   assert.match(system, /student must provide the final numerical result/);
   assert.match(system, /do not insert another worked example/);
   assert.match(system, /Never alternate formats just to alternate/);
-  assert.match(system, /keeps short questions inline/);
+  assert.match(system, /its own Your turn card/);
   assert.match(system, /Do not add examples or length just to use formatting/);
   assert.match(system, /default for solving math problems and practice sets/);
   assert.match(system, /temporary support after they are stuck/);

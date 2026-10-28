@@ -7,7 +7,23 @@ const source = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
 const helpers = source.slice(source.indexOf('function escHtml('), source.indexOf('function showChatThread('));
 const renderer = source.slice(source.indexOf('// ── Learn extras'), source.indexOf('// ── Render a video suggestion card'));
 const context = { window: {}, document: { addEventListener() {}, querySelectorAll: () => [] } };
+runInNewContext(readFileSync(new URL('../learn-visuals.js',import.meta.url),'utf8'),context);
 runInNewContext(`${helpers}\n${renderer}`, context);
+
+test('assessment metadata gives honest partial/help headings and stays out of displayed/copy text',()=>{
+ const raw='You chose the right color, but the cause needs fixing.\nYour turn: Try the cause again.\nLesson plan: Explain pigments\nProgress: 1/1\nAssessment: partial\nReview focus: Distinguish new and existing pigments.';
+ const html=context.renderAnswerHtml(raw,'learn');assert.match(html,/Partly right/);assert.doesNotMatch(html,/Nice work|Assessment:|Review focus:/);
+ assert.doesNotMatch(context.window.knoxLearnClean(raw),/Assessment:|Review focus:/);
+ assert.doesNotMatch(context.renderAnswerHtml('Yes, I can help.\nYour turn: What next?\nAssessment: help','learn'),/Nice work/);
+});
+test('fraction/process visuals have bounded geometry, accessible labels and escaped content',()=>{
+ const fraction=context.window.renderLearnVisual('fraction | 3/4');
+ assert.equal((fraction.match(/class="lv-filled"/g)||[]).length,3);assert.equal((fraction.match(/<rect/g)||[]).length,4);assert.match(fraction,/4 equal parts, 3 shaded/);
+ for(const spec of ['fraction | 4/3','fraction | 1/0','fraction | 1/13','fraction | -1/3','fraction | 0.5/2','process | one | two | three | four | five | six','process | '+ 'x'.repeat(61)+' | two'])assert.equal(context.window.renderLearnVisual(spec),'',spec);
+ const unsafe=context.window.renderLearnVisual('process | <img src=x onerror=alert(1)> | Next step');assert.doesNotMatch(unsafe,/<img|onerror="/);assert.match(unsafe,/&lt;img/);
+ const html=context.renderAnswerHtml('Here is a parallel model.\nVisual: fraction | 2/5\nYour turn: How could you compare sizes?\nAssessment: new','learn');
+ assert.match(html,/Equal-part model/);assert.doesNotMatch(html,/Visual:|Assessment:/);assert.doesNotMatch(context.window.knoxLearnClean('Try.\nVisual: fraction | 2/5\nAssessment: new'),/Visual:|Assessment:/);
+});
 
 test('lesson map names the current goal and separates practice questions from parts',()=>{
  const raw='Try it.\nYour turn: What is the result?\nLesson plan: Understand balance | Solve independently\nProgress: 2/2\nPractice: 3/5';
@@ -32,6 +48,14 @@ test('metadata formatting keeps the first bold keyword intact',()=>{
   const html=context.renderAnswerHtml('Try.\n'+prefix+'**Balance** matters.\nYour turn: Why?','learn');
   assert.match(html,/<strong>Balance<\/strong>/);
  }
+});
+test('an inline Your turn label moves with its question rather than leaving an empty label',()=>{
+ const raw='To undo subtraction, add the same number to both sides. Your turn: What should you add, and what equation do you get?\nKey idea: Keep both sides equal.';
+ const html=context.renderAnswerHtml(raw,'learn');
+ assert.equal((html.match(/What should you add/g)||[]).length,1);
+ assert.doesNotMatch(html,/Your turn:/);
+ assert.doesNotMatch(context.window.knoxLearnClean(raw),/Your turn:/);
+ assert.match(html,/To undo subtraction, add the same number/);
 });
 test('only the latest actual reply can own active Learn buttons, including imperative prompts',()=>{
  const imperative=context.renderAnswerHtml('Solve 3x − 4 = 17. Show your steps.\nLesson plan: Solve equations\nProgress: 1/1','learn');

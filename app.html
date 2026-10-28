@@ -1980,11 +1980,15 @@
       display: block;
     }
     #appImagePillName {
+      display: block;
       max-width: 160px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .lesson-file-details { min-width: 0; }
+    .lesson-file-retention { display: none; font-size: 11px; font-weight: 700; color: var(--text-light); }
+    body.knox-learn-mode .lesson-file-retention { display: block; }
     #appImagePill button {
       background: none; border: none; color: var(--orange);
       font-size: 16px; font-weight: 900; line-height: 1;
@@ -2496,6 +2500,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <script src="/flamefest.js" defer></script>
 <link rel="stylesheet" href="/tour.css">
 <script src="/tour.js" defer></script>
+<link rel="stylesheet" href="/learn-review.css">
+<script src="/learn-review.js" defer></script>
+<script src="/learn-visuals.js" defer></script>
 <link rel="stylesheet" href="/gift.css">
 <script src="/gift.js" defer></script>
 <script src="/payment-status.js" defer></script>
@@ -2904,6 +2911,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
                 </div>
               </button>
             </div>
+            <section id="learnReviewPanel" aria-label="Review from your lessons" hidden></section>
           </div>
 
           <!-- CHAT THREAD -->
@@ -2932,7 +2940,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           <div id="appImagePill">
             <img id="appImagePillThumb" alt="">
             <span id="appDocPillIcon" aria-hidden="true">📄</span>
-            <span id="appImagePillName">Image attached</span>
+            <div class="lesson-file-details">
+              <span id="appImagePillName">Image attached</span>
+              <small class="lesson-file-retention">Saves with your lesson · delete the chat to remove</small>
+            </div>
             <button onclick="appClearImage()" aria-label="Remove attachment">✕</button>
           </div>
 
@@ -3166,6 +3177,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
 <!-- ═══════ FIREBASE + AUTH (module) ═══════════════════════════ -->
 <script type="module">
+  import { SOURCE_CHUNKS, encodeLearnSource, decodeLearnSource, selectLearnSource } from '/learn-source.js';
+  window.selectLearnSource = selectLearnSource;
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import {
     getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
@@ -3852,6 +3865,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window._conversation = [];
       window._currentConversationId = null;
       window._learnSessionId = null;
+      window._learnSource = null;
       for (const id of ['sidebarHistoryList', 'mobileHistoryList']) {
         document.getElementById(id)?.querySelectorAll('.sidebar-history-item').forEach(el => el.remove());
       }
@@ -4439,6 +4453,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const conversationId = context.savedConversationId;
       const convRef = doc(db, 'users', uid, 'conversations', conversationId);
       const messageRef = doc(collection(convRef, 'messages'), context.messageId);
+      const sourceChunks = isLearn && context.source ? encodeLearnSource(context.source, context.messageId) : null;
       const message = {
         question: String(question || ''),
         answer: String(answer || ''),
@@ -4461,6 +4476,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         });
         else tx.update(convRef, { updatedAt: now });
         tx.set(messageRef, message);
+        // The message and newest worksheet commit together. Replace all fixed
+        // chunk slots so a smaller replacement cannot leave old photo data.
+        if (sourceChunks) for (let i = 0; i < SOURCE_CHUNKS; i++) {
+          const ref = doc(collection(convRef, 'sourceMaterials'), String(i));
+          if (sourceChunks[i]) tx.set(ref, sourceChunks[i]);
+          else tx.delete(ref);
+        }
       });
       if (window.currentUser?.uid === uid && (context.viewVersion === undefined || context.viewVersion === window._appViewVersion)) window._currentConversationId = conversationId;
       loadSidebarHistory();
@@ -4506,7 +4528,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         collection(convRef, 'messages'),
         orderBy('ts', 'asc')
       );
-      const [convSnap, snaps] = await Promise.all([getDoc(convRef), getDocs(q)]);
+      const [convSnap, snaps, materials] = await Promise.all([
+        getDoc(convRef), getDocs(q),
+        getDocs(query(collection(convRef, 'sourceMaterials'), limit(SOURCE_CHUNKS + 1)))
+          .then(result => ({ source: decodeLearnSource(result.docs.map(s => s.data())) }))
+          .catch(() => ({ source: null, failed: true })),
+      ]);
       if (window._appViewVersion !== viewVersion || window.currentUser?.uid !== uid) return;
       if (!convSnap.exists() || convSnap.data().deleting) { highlightNav(priorNav); return false; }
 
@@ -4542,6 +4569,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       } else {
         window._learnSessionId = null;
       }
+      window._learnSource = window._learnModeActive && materials.source
+        ? { uid, sessionId: window._learnSessionId, source: materials.source } : null;
       document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
       const lb = document.getElementById('learnModeBar');
       if (window._learnModeActive) {
@@ -4592,6 +4621,22 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         window._conversation.push({ role: 'assistant', content: d.answer   || '' });
       });
       if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
+      if (window._learnModeActive && materials.source) {
+        const note = document.createElement('p');
+        note.setAttribute('role', 'status');
+        note.textContent = materials.source.kind === 'document'
+          ? 'Original lesson file restored: ' + materials.source.name
+          : 'Original lesson photo restored.';
+        thread.appendChild(note);
+      }
+      if (window._learnModeActive && !materials.source && (materials.failed || snaps.docs.some(s => /^(?:📄|📷|\[image\])/.test(s.data().question || '')))) {
+        const notice = document.createElement('p');
+        notice.setAttribute('role', 'status');
+        notice.textContent = materials.failed
+          ? 'The original lesson file could not be loaded. Reopen this lesson or reattach the file before asking about it.'
+          : 'This older lesson did not save its original file. Reattach it to keep working from the source.';
+        thread.appendChild(notice);
+      }
       window.settleLearnActions?.();
 
       window.showChatThread();
@@ -4612,6 +4657,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     const parent = doc(db, 'users', uid, 'conversations', conversationId);
     // Block new message writes in every tab before draining children.
     await updateDoc(parent, { deleting: true });
+    const materials = await getDocs(query(collection(parent, 'sourceMaterials'), limit(SOURCE_CHUNKS + 1)));
+    if (materials.docs.length) {
+      const batch = writeBatch(db);
+      materials.docs.forEach(material => batch.delete(material.ref));
+      await batch.commit();
+    }
     const messagesRef = collection(parent, 'messages');
     // Bounded batches avoid hundreds of simultaneous requests. Normal threads
     // and their parent are removed atomically; larger ones drain in chunks.
@@ -5225,6 +5276,7 @@ window.appStartNewChat = function() {
   window._learnModeActive = false;
   document.body.classList.toggle('knox-learn-mode', !!window._learnModeActive); // purple Learn welcome
   window._learnSessionId = null;
+  window._learnSource = null;
   const lb = $('learnModeBar'); if (lb) lb.style.display = 'none';
   resetWelcomeCopy();
   // Clear every nav tab's active state, then highlight "Ask Knox" as the
@@ -5244,6 +5296,8 @@ window.openLearnMode = function() {
   // Guests can open Learn and look around; starting a lesson asks them to
   // sign up (free) — see learnNeedsAccount() in appHandleAsk.
   window._appViewVersion++;
+  window.learnReviewUI?.hide();
+  window._learnStyle = 'teach';
   if (document.getElementById('calcModal')?.classList.contains('open')) {
     window.closeCalc();
   }
@@ -5268,6 +5322,7 @@ window.openLearnMode = function() {
   if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand." +
     (window.currentUser ? '' : ' Sign up free to start a lesson.');
   updateSuggestionChipsForMode(true);
+  window.learnReviewUI?.refresh();
 
   document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.remove('sidebar-nav-active'));
   const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
@@ -5285,13 +5340,14 @@ function learnNeedsAccount() {
   window.closeMobileHistory?.();
   window.openAuthModal?.('signup');
   const sub = $('authHeaderSubtitle');
-  if (sub) sub.textContent = 'Learn lessons are free with an account — sign up to start yours.';
+  if (sub) sub.textContent = 'Create a free account to start a Learn lesson.';
   return true;
 }
 
 // Restores the normal welcome copy — called whenever a Learn session ends
 // (New Chat, Home, or opening a different saved conversation).
 function resetWelcomeCopy() {
+  window.learnReviewUI?.hide();
   window._learnStyle = 'teach'; // an old Quiz chat's style doesn't carry into the next session
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
@@ -6126,6 +6182,7 @@ window.appHandleAsk = async function() {
   const requestConversationId = window._currentConversationId;
   const requestLearnMode = !!window._learnModeActive;
   const requestLearnSessionId = window._learnSessionId;
+  const requestReviewSkillId = window.learnReviewUI?.targetFor(q, requestUid, requestLearnSessionId);
   // "Keep going · 1 credit" after a Learn session ran out (see learnKeepGoing).
   const renewLearn = window._appRenewLearn === true;
   window._appRenewLearn = false;
@@ -6198,9 +6255,11 @@ window.appHandleAsk = async function() {
   // Learn follow-ups re-attach the session's homework photo (not shown again)
   // so Knox can keep checking answers against it. Signed-in only: Learn
   // follow-ups are free for them, but a guest photo would use their quota.
-  const learnPhoto = window._learnPhoto;
-  const sendImage = image || (requestLearnMode && requestUser && learnPhoto &&
-    learnPhoto.sessionId === requestLearnSessionId ? learnPhoto : null);
+  const source = window.selectLearnSource({ image, document: doc, cached: window._learnSource,
+    uid: requestUid, sessionId: requestLearnSessionId, learn: requestLearnMode });
+  const sendImage = source?.kind === 'image' ? source : null;
+  const sendDocument = source?.kind === 'document' ? source : null;
+  const newLessonSource = requestLearnMode && (image || doc) ? source : null;
   const clearedImageVersion = imageSelectionVersion;
   function restoreFailedDraft() {
     if (window._appViewVersion !== requestView || (window.currentUser?.uid || null) !== requestUid) return;
@@ -6247,11 +6306,12 @@ window.appHandleAsk = async function() {
         question:  q,
         image:     sendImage?.data,
         imageType: sendImage?.type,
-        document:  doc ? { name: doc.name, text: doc.text } : undefined,
+        document:  sendDocument ? { name: sendDocument.name, text: sendDocument.text } : undefined,
         history,
         learnMode: requestLearnMode,
         learnStyle: window._learnStyle || 'teach',
         learnSessionId: requestLearnSessionId,
+        reviewSkillId: requestReviewSkillId,
         renewLearn: renewLearn || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
@@ -6265,12 +6325,14 @@ window.appHandleAsk = async function() {
           uid: requestUid, conversationId: requestConversationId,
           learnMode: requestLearnMode, sessionId: requestLearnSessionId,
           viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
+          source: newLessonSource,
         });
       }
       return;
     }
 
     if (!res.ok) {
+      if (requestReviewSkillId && res.status === 404) window.learnReviewUI?.used(requestReviewSkillId, requestUid, requestLearnSessionId);
       restoreFailedDraft();
       // Rich rate-limit handling — show upgrade card on quota errors
       if (data.limitReached) {
@@ -6298,11 +6360,12 @@ window.appHandleAsk = async function() {
     }
 
     // Successful answer — increment guest count
+    if (requestReviewSkillId) window.learnReviewUI?.used(requestReviewSkillId, requestUid, requestLearnSessionId);
     if (!window.currentUser && !data.isCasual) window._incGuestCount();
 
-    // Remember this Learn session's newest photo for later follow-ups.
-    if (requestLearnMode && image && requestLearnSessionId && requestLearnSessionId === window._learnSessionId) {
-      window._learnPhoto = { sessionId: requestLearnSessionId, data: image.data, type: image.type };
+    // One source per account/session; a new document replaces a previous photo.
+    if (newLessonSource && requestUid && window.currentUser?.uid === requestUid && requestLearnSessionId === window._learnSessionId) {
+      window._learnSource = { uid: requestUid, sessionId: requestLearnSessionId, source: newLessonSource };
     }
 
     // Advance the study streak (logged-in users only). Fires on any
@@ -6323,6 +6386,7 @@ window.appHandleAsk = async function() {
             uid: requestUid, conversationId: requestConversationId,
             learnMode: requestLearnMode, sessionId: requestLearnSessionId,
             viewVersion: requestView, model: 'knox-chat',
+            source: newLessonSource,
           });
         }
         return;
@@ -6355,6 +6419,7 @@ window.appHandleAsk = async function() {
         uid: requestUid, conversationId: requestConversationId,
         learnMode: requestLearnMode, sessionId: requestLearnSessionId,
         viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
+        source: newLessonSource,
       });
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();
@@ -6450,7 +6515,7 @@ function renderLimitCard(data, isSignedIn) {
 //   Graph: y = x^2 - 4 | y = 2x + 1, x from -5 to 5 → a graph drawn in the app
 //   Video: how to factor quadratics              → a "watch a short video" card
 // The lines are hidden from the message itself (and from Copy).
-const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|your turn)\s*:\s*(.*)$/i; // may come as a bullet
+const LEARN_MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|visual|your turn|assessment|review focus)\s*:\s*(.*)$/i; // may come as a bullet
 // The question sentence a reply ends with ("…both sides. What do you get?" →
 // "What do you get?"), and the text before it. Never taken from a list step.
 function trailingLearnQuestion(body) {
@@ -6465,7 +6530,7 @@ function trailingLearnQuestion(body) {
   return { question, body: (text.slice(0, nl + 1) + lastLine.slice(0, cut)).trim() };
 }
 function parseLearnExtras(text) {
-  const out = { clean: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
+  const out = { clean: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', visual: '', question: '', assessment: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = LEARN_MARKER.exec(line.replace(/\*\*/g, ''));
@@ -6483,7 +6548,9 @@ function parseLearnExtras(text) {
     else if (key === 'topic') out.topic = value.slice(0, 80);
     else if (key === 'key idea') out.keyIdea = value.slice(0, 400);
     else if (key === 'your turn') out.question = value.slice(0, 1000);
+    else if (key === 'assessment' && /^(new|correct|partial|retry|help)$/i.test(value)) out.assessment = value.toLowerCase();
     else if (key === 'graph') out.graph = value.slice(0, 200);
+    else if (key === 'visual') out.visual = value.slice(0, 361);
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
@@ -6496,6 +6563,9 @@ function parseLearnExtras(text) {
   // The question being asked always gets the Your turn card, so it's easy to
   // spot. A question Knox wrote at the end of its text moves into the card too.
   if (!out.question) { const q = trailingLearnQuestion(body); if (q) { out.question = q.question; body = q.body; } }
+  // A provider may put "Your turn:" after the explanation on the same line.
+  // Once its question is in the card, don't leave an empty label in the prose.
+  if (out.question) body = body.replace(/(?:\*\*)?\bYour turn(?:\*\*)?\s*:\s*(?:\*\*)?\s*$/i, '').trim();
   out.separateQuestion = !!out.question;
   out.clean = body;
   return out;
@@ -6574,6 +6644,7 @@ window.learnGraphHtml = learnGraphHtml;
 function learnTeachHtml(x) {
   return (x.keyIdea ? '<div class="learn-key"><div class="learn-key-title">🧠 Key idea</div><p>' + formatInline(x.keyIdea) + '</p></div>' : '') +
     learnGraphHtml(x.graph) +
+    (window.renderLearnVisual?.(x.visual) || '') +
     (x.video ? '<a class="learn-video" href="https://www.youtube.com/results?search_query=' + encodeURIComponent(x.video) + '" target="_blank" rel="noopener noreferrer">' +
       '<span class="learn-video-play" aria-hidden="true">▶</span><span><b>Watch a short video</b><small>' + escHtml(x.video) + ' · YouTube</small></span></a>' : '') +
     (x.separateQuestion ? '<div class="learn-question" role="group" aria-label="Your turn"><div class="learn-question-title">Your turn</div><p>' + formatInline(x.question) + '</p></div>' : '');
@@ -6625,20 +6696,23 @@ document.addEventListener('click', e => {
 });
 
 // How a Learn reply opens: checking a wrong answer ('retry'), a right one ('good').
-function learnTone(text) {
+function learnTone(text, assessment = '') {
   const opening = String(text || '').trim().slice(0, 80).toLowerCase().replace(/[’]/g, "'");
   if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening)) return 'retry';
+  if (assessment === 'partial' || assessment === 'retry') return 'retry';
+  if (assessment === 'help' || assessment === 'new') return '';
+  if (assessment === 'correct') return 'good';
   if (/^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) return 'good';
   return '';
 }
-function learnHeadingHtml(text, progress, finished, practice) {
+function learnHeadingHtml(text, progress, finished, practice, assessment = '') {
   const t = String(text || '').trim();
   const opening = t.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
-  const tone = learnTone(t);
+  const tone = learnTone(t, assessment);
   let cls = '', icon = '◆', label = 'Lesson'; // a teaching step (not feedback on an answer)
   if (finished) { cls = ' good'; icon = '<span class="no-ki">🎉</span>'; label = 'Lesson complete'; }
   else if (tone === 'retry') {
-    cls = ' retry'; icon = '↺'; label = 'Not quite';
+    cls = ' retry'; icon = '↺'; label = assessment === 'partial' ? 'Partly right' : 'Not quite';
   } else if (tone === 'good') {
     cls = ' good'; icon = '✓'; label = 'Nice work';
   } else if (/^(i read|i can see|i see |looks like|this worksheet|your worksheet|from your photo|from the photo|the worksheet|this photo)/.test(opening)) {
@@ -6737,9 +6811,9 @@ function renderAnswerHtml(text, kind = 'answer') {
   }
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
-  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap, learnX.practice) + learnPlanHtml(learnX) : '') +
+  return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap, learnX.practice, learnX.assessment) + learnPlanHtml(learnX) : '') +
     '<div class="knox-response-body">' + html + '</div>' +
-    (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean)) : '');
+    (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean, learnX.assessment)) : '');
 }
 
 // ── Render a video suggestion card (visual-learner topics) ─────

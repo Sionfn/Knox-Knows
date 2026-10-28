@@ -49,6 +49,23 @@ service cloud.firestore {
                         && request.resource.data.answer.size() <= 100000;
           allow update: if false;
         }
+        // Original Learn material is private to its conversation owner.
+        // Fixed chunk IDs bound each conversation to one current source.
+        match /sourceMaterials/{chunkId} {
+          allow read, delete: if owner(userId);
+          allow create, update: if owner(userId)
+            && getAfter(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)).data.type == 'learn'
+            && getAfter(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)).data.get('deleting', false) == false
+            && request.resource.data.keys().hasOnly(['materialId', 'index', 'total', 'data'])
+            && request.resource.data.materialId is string
+            && request.resource.data.materialId.matches('^[A-Za-z0-9-]{1,80}$')
+            && request.resource.data.index is int && request.resource.data.index >= 0 && request.resource.data.index < 6
+            && chunkId == ['0', '1', '2', '3', '4', '5'][request.resource.data.index]
+            && request.resource.data.total is int && request.resource.data.total >= 1 && request.resource.data.total <= 6
+            && request.resource.data.index < request.resource.data.total
+            && request.resource.data.data is string && request.resource.data.data.size() > 0
+            && request.resource.data.data.size() <= 700000;
+        }
       }
 
       match /history/{docId} {
