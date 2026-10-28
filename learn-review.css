@@ -14,6 +14,9 @@
 @media (prefers-reduced-motion: reduce) { #learnReviewPanel .lr-loading summary > span:last-child { animation: none; } }
 #learnReviewPanel summary::after { content: ''; margin-left: auto; width: 8px; height: 8px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; }
 #learnReviewPanel details[open] summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+.lr-close { flex: 0 0 auto; order: 10; width: 30px; height: 30px; margin-left: 2px; border: 0; border-radius: 50%; background: transparent; color: var(--text-light); font: inherit; font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; }
+.lr-close:hover { color: var(--text); background: var(--cream-warm, var(--gray)); }
+.lr-close:focus-visible { outline: 3px solid color-mix(in srgb, var(--purple) 60%, transparent); outline-offset: 1px; }
 #learnReviewPanel summary:hover { background: color-mix(in srgb, var(--purple) 6%, var(--surface)); }
 #learnReviewPanel summary:focus-visible { outline: 3px solid color-mix(in srgb, var(--purple) 55%, transparent); outline-offset: -3px; border-radius: 16px; }
 .lr-title { flex: 1 1 auto; min-width: 0; }

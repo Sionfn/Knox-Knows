@@ -3,6 +3,10 @@
   // Last answer per account: the panel shows at once when Learn opens, then
   // quietly updates when the server answers (no late pop-in).
   const cache = new Map();
+  // × hides the panel until a new topic shows up (per account, this device).
+  const hideKey = uid => 'knoxReviewHidden.' + uid;
+  const topicsSig = items => items.map(i => i.id).sort().join(',') || 'none';
+  const hiddenFor = (uid, items) => { try { return localStorage.getItem(hideKey(uid)) === topicsSig(items); } catch { return false; } };
   const panel = () => document.getElementById('learnReviewPanel');
   const field = () => document.getElementById('appChatInput');
   function hide() {
@@ -43,6 +47,7 @@
     cache.set(user.uid, data);
     const {items,enabled}=data;
     const p = panel(); if (!p || !same(user.uid, view, rev)) return;
+    if (hiddenFor(user.uid, items)) { p.hidden = true; p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review'); return; }
     p.replaceChildren(); p.hidden = false;
     document.getElementById('welcomeScreen')?.classList.add('has-learn-review');
     const details = document.createElement('details'); details.open = open;
@@ -51,6 +56,14 @@
     count.textContent = items.length ? items.length + (items.length === 1 ? ' topic' : ' topics') : enabled ? '' : 'Off';
     summary.append(icon(), Object.assign(document.createElement('span'), { className: 'lr-title', textContent: 'Review from your lessons' }));
     if (count.textContent) summary.append(count);
+    const close = document.createElement('button'); close.type = 'button'; close.className = 'lr-close';
+    close.textContent = '×'; close.title = 'Hide until there’s a new topic'; close.setAttribute('aria-label', 'Hide Review from your lessons');
+    close.onclick = e => {
+      e.preventDefault(); e.stopPropagation(); // don't open/close the card
+      try { localStorage.setItem(hideKey(user.uid), topicsSig(items)); } catch {}
+      p.hidden = true; p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review');
+    };
+    summary.append(close);
     const intro = document.createElement('p'); intro.className = 'lr-intro';
     intro.textContent = !enabled ? 'Review memory is off. Learn still works normally.' : items.length
       ? 'Skills that were tricky last time. Knox asks you a fresh question on one.'
@@ -101,7 +114,7 @@
     const user = window.currentUser, view = window._appViewVersion, rev = ++revision;
     if (!user || !window._learnModeActive) { hide(); return; }
     const known = cache.get(user.uid);
-    if (known) render(known, user, view, rev); else placeholder(user, view, rev);
+    if (known) render(known, user, view, rev); else { let hid = false; try { hid = !!localStorage.getItem(hideKey(user.uid)); } catch {} if (!hid) placeholder(user, view, rev); }
     const wasOpen = () => !!panel()?.querySelector('details[open]');
     try { const data = await request(user); render(data, user, view, rev, wasOpen()); }
     catch { if (same(user.uid,view,rev)) { const p=panel(); if(p) p.hidden=true; document.getElementById('welcomeScreen')?.classList.remove('has-learn-review'); } }
