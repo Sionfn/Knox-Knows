@@ -414,6 +414,8 @@
       line-height: 1;
     }
     #appAccountIcon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* A profile photo gets a clear orange ring (same as the Chrome extension). */
+    #appAccountIcon:has(img), #ddAvatar:has(img) { box-shadow: 0 0 0 2px var(--orange); }
     #appAccountName {
       max-width: 90px;
       overflow: hidden;
