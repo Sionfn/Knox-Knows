@@ -226,7 +226,7 @@
     const fall = root.classList.contains('knox-seasonal');
     document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(l => {
       if (!l.dataset.normal) l.dataset.normal = l.getAttribute('href');
-      const fallHref = l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png?v=2' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png?v=2' : '/favicon-fall-32.png?v=2';
+      const fallHref = l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png?v=3' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png?v=3' : '/favicon-fall-32.png?v=3';
       l.setAttribute('href', fall ? fallHref : l.dataset.normal);
     });
   }
