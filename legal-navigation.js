@@ -1,5 +1,12 @@
 // One site-themed loader: never let the OS color scheme choose a second screen.
 (function () {
+  // Fall mode: the browser tab shows Knox's fall face (same as theme.js on the app and landing page).
+  // Never let this stop the navigation code below.
+  try {
+    if (document.documentElement?.classList?.contains('knox-seasonal')) document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(l => {
+      l.setAttribute('href', l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png' : '/favicon-fall-32.png');
+    });
+  } catch (e) { /* best effort */ }
   const KEY = 'knoxLandingReturn', PENDING = 'knoxLandingReturnPending';
   const validClick = (e, a) => a && !e.defaultPrevented && e.button === 0 &&
     !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey &&

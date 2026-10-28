@@ -32,6 +32,7 @@
     root.classList.toggle('knox-seasonal', mode === 'seasonal');
     try { localStorage.setItem('knoxTheme', mode); } catch (e) { /* best effort */ }
     syncIcons();
+    syncFavicon();
     syncMenu();
     void root.offsetHeight;
     setTimeout(() => root.classList.remove('knox-theme-switching'), 60);
@@ -220,6 +221,15 @@
     document.body.appendChild(n);
     setTimeout(() => n.remove(), 7000);
   }
-  function ready() { fallResting(); syncIcons(); decorate(); arrangeHarvest(); if (fallSeason()) tip(); }
+  // Browser tab icon: Knox's fall face while fall mode is on (legal-navigation.js does the same on the legal pages).
+  function syncFavicon() {
+    const fall = root.classList.contains('knox-seasonal');
+    document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(l => {
+      if (!l.dataset.normal) l.dataset.normal = l.getAttribute('href');
+      const fallHref = l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png' : '/favicon-fall-32.png';
+      l.setAttribute('href', fall ? fallHref : l.dataset.normal);
+    });
+  }
+  function ready() { fallResting(); syncIcons(); syncFavicon(); decorate(); arrangeHarvest(); if (fallSeason()) tip(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();
 })();

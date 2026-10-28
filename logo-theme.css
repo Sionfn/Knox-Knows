@@ -19,3 +19,11 @@ html[data-theme="dark"] img[src*="knox-logo"] {
   object-fit:cover !important;
   object-position:center !important;
 }
+
+/* Fall mode: Knox's fall art (hat, scarf and the autumn farm) everywhere the
+   logo shows. Last, so it wins over the dark rule fall mode also matches. */
+html.knox-seasonal img[src*="knox-logo"] {
+  content:url('/knox-logo-fall.jpg?v=2');
+  object-fit:cover !important;
+  object-position:center !important;
+}
