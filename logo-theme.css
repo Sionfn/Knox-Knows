@@ -28,15 +28,13 @@ html.knox-seasonal img[src*="knox-logo"] {
   object-position:center !important;
   border-radius:50% !important; /* the art is round: round frames, no corners showing */
 }
-/* Orange outlines vanish against the orange fall art: small logos get a
-   chestnut outline, and the big ones (landing page, loading screens) a cream
-   mat with a chestnut ring and ledge, like a framed badge. */
+/* Orange outlines vanish against the orange fall art. Small logos get a
+   chestnut outline; the big ones (landing page and loading screens) one shared
+   look: a clean white ring and a soft warm shadow, scaled to their size. */
 html.knox-seasonal img[src*="knox-logo"] { border-color:#873D28 !important; }
-html.knox-seasonal img.hero-mascot {
-  border:6px solid #FFF9EF !important;
-  box-shadow:0 0 0 3px #873D28, 0 9px 0 3px #5E2A1B;
+html.knox-seasonal img:is(.hero-mascot, .landing-loading-logo, .page-loading-logo) {
+  border:7px solid #FFFFFF !important;
+  box-shadow:0 8px 22px rgba(135, 61, 40, .28) !important;
+  filter:none !important;
 }
-html.knox-seasonal img:is(.landing-loading-logo, .page-loading-logo) {
-  border:4px solid #FFF9EF !important;
-  box-shadow:0 0 0 3px #873D28, 0 6px 0 3px #5E2A1B !important;
-}
+html.knox-seasonal img:is(.landing-loading-logo, .page-loading-logo) { border-width:3px !important; box-shadow:0 4px 10px rgba(135, 61, 40, .28) !important; }
