@@ -224,8 +224,22 @@
       ? [...parse(await zip.file('xl/sharedStrings.xml').async('string')).getElementsByTagName('si')]
           .map(si => [...si.getElementsByTagName('t')].map(t => t.textContent).join(''))
       : [];
-    const sheetPath = Object.keys(zip.files).filter(p => /^xl\/worksheets\/sheet\d+\.xml$/.test(p))
+    let sheetPath = Object.keys(zip.files).filter(p => /^xl\/worksheets\/sheet\d+\.xml$/.test(p))
       .sort((a, b) => Number(a.match(/(\d+)\.xml$/)[1]) - Number(b.match(/(\d+)\.xml$/)[1]))[0];
+    // Use the visible worksheet order shown in Excel, rather than numeric ZIP filenames.
+    if(zip.file('xl/workbook.xml')&&zip.file('xl/_rels/workbook.xml.rels')){
+      const book=parse(await zip.file('xl/workbook.xml').async('string'));
+      const rels=[...parse(await zip.file('xl/_rels/workbook.xml.rels').async('string')).getElementsByTagName('Relationship')];
+      sheetPath=null;
+      for(const sheet of book.getElementsByTagName('sheet')){
+        if(['hidden','veryHidden'].includes(sheet.getAttribute('state')))continue;
+        const rid=sheet.getAttribute('r:id'),rel=rels.find(r=>r.getAttribute('Id')===rid&&/\/worksheet$/.test(r.getAttribute('Type')||''));
+        if(!rel||rel.getAttribute('TargetMode')==='External')continue;
+        const target=rel.getAttribute('Target')||'',parts=[];
+        for(const part of (target.startsWith('/')?target.slice(1):'xl/'+target).split('/')){if(part==='..')parts.pop();else if(part&&part!=='.')parts.push(part);}
+        const candidate=parts.join('/');if(/^xl\/worksheets\/[^/]+\.xml$/.test(candidate)&&zip.file(candidate)){sheetPath=candidate;break;}
+      }
+    }
     if (!sheetPath) throw new Error('That Excel file has no sheets Knox can read.');
     const col = ref => [...String(ref || '').replace(/\d+/g, '')].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
     const rows = [];
