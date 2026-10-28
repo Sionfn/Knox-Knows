@@ -622,3 +622,16 @@ test('Learn in Discord hides private assessment and review metadata from lesson 
  assert.doesNotMatch(reply.text,/Assessment:|Review focus:|Visual:/);
  assert.match(reply.text,/Which piece is larger/);
 });
+
+test('Learn titles and visuals match the website (as Discord text)', async () => {
+  const { formatLearn } = await import('../src/learn-format.js');
+  const partial = formatLearn('You picked 3/4, which is right, but the reason is backwards.\nVisual: fraction | 3/4\nYour turn: Why is 3/4 bigger?\nLesson plan: Compare fractions | Explain why\nProgress: 1/2\nAssessment: partial\nReview focus: unlike denominators');
+  assert.match(partial.text, /^\*\*↺ Partly right\*\*/);
+  assert.match(partial.text, /▰▰▰▱  \*\*3\/4\*\*/);
+  assert.doesNotMatch(partial.text, /Assessment|Review focus|Visual:/);
+  const flow = formatLearn('Food moves in order.\nVisual: process | Mouth | Esophagus | Stomach\nYour turn: What pushes it?\nAssessment: new');
+  assert.match(flow.text, /\*\*Mouth\*\* → \*\*Esophagus\*\* → \*\*Stomach\*\*/);
+  assert.doesNotMatch(flow.text, /Nice work|Not quite/);
+  assert.match(formatLearn('Exactly right.\nYour turn: Next?\nAssessment: correct').text, /^\*\*✓ Nice work\*\*/);
+  assert.doesNotMatch(formatLearn('You solved it!\nRecap: Undo each step.\nAssessment: correct').text, /Nice work/);
+});

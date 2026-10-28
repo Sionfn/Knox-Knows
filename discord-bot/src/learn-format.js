@@ -7,6 +7,8 @@
 //   Recap / Watch out / Topic → a 🎉 "What you learned" section
 //   Video: …             → a YouTube search link
 //   Graph: …             → the equation to graph (Discord can't draw it)
+//   Visual: …            → the website's diagram as text (▰▰▰▱ 3/4, A → B → C)
+//   Assessment: …        → the website's title (✓ Nice work, ↺ Partly right, ↺ Not quite)
 
 // Same marker rule as the website: a line may be bolded or a bullet ("- **Choices:** …").
 const MARKER = /^\s*(?:[-*•]\s+)?(choices|progress|practice|lesson plan|recap|watch out|topic|key idea|graph|video|visual|your turn|assessment|review focus)\s*:\s*(.*)$/i;
@@ -25,7 +27,7 @@ function trailingQuestion(body) {
   return { question, body: (text.slice(0, nl + 1) + lastLine.slice(0, cut)).trim() };
 }
 export function parseLearn(text) {
-  const out = { body: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', question: '' };
+  const out = { body: '', choices: [], progress: null, practice: null, lessonPlan: [], recap: '', watch: '', topic: '', keyIdea: '', graph: '', video: '', visual: '', assessment: '', question: '' };
   const keep = [];
   for (const line of String(text || '').replace(/\r\n?/g, '\n').split('\n')) {
     const m = MARKER.exec(line.replace(/\*\*/g, ''));
@@ -42,6 +44,8 @@ export function parseLearn(text) {
     else if (key === 'key idea') out.keyIdea = value.slice(0, 400);
     else if (key === 'your turn') out.question = value.slice(0, 1000);
     else if (key === 'graph') out.graph = value.slice(0, 200);
+    else if (key === 'visual') out.visual = value.slice(0, 361);
+    else if (key === 'assessment' && /^(new|correct|partial|retry|help)$/i.test(value)) out.assessment = value.toLowerCase();
     else if (key === 'video') out.video = value.replace(/^["“]|["”]$/g, '').slice(0, 80);
   }
   if (out.choices.length < 2) out.choices = [];
@@ -58,10 +62,35 @@ export function parseLearn(text) {
 
 const blockquote = s => '> ' + s.replace(/\n/g, '\n> ');
 
+// The website draws these; Discord gets the same idea as text.
+function visualText(spec) {
+  const [kind = '', ...parts] = String(spec || '').split('|').map(s => s.trim());
+  if (kind.toLowerCase() === 'fraction' && parts.length === 1) {
+    const m = /^(\d{1,2})\s*\/\s*(\d{1,2})$/.exec(parts[0]);
+    if (!m || +m[2] < 1 || +m[2] > 12 || +m[1] > +m[2]) return '';
+    return `📊 ${'▰'.repeat(+m[1])}${'▱'.repeat(+m[2] - +m[1])}  **${m[1]}/${m[2]}**`;
+  }
+  if (kind.toLowerCase() === 'process' && parts.length >= 2 && parts.length <= 5 && parts.every(s => s && s.length <= 60))
+    return '🔁 ' + parts.map(s => `**${s.replace(/\*/g, '')}**`).join(' → ');
+  return '';
+}
+// Same titles as the website's Learn replies (only feedback on an answer gets one).
+function learnTitle(x) {
+  if (x.recap) return '';
+  const opening = x.body.slice(0, 80).toLowerCase().replace(/[’]/g, "'");
+  if (/^(not quite|almost|close,|close!|not yet|that's not|that isn't|that is not|careful|oops)/.test(opening) || x.assessment === 'retry') return '**↺ Not quite**';
+  if (x.assessment === 'partial') return '**↺ Partly right**';
+  if (x.assessment === 'help' || x.assessment === 'new') return '';
+  if (x.assessment === 'correct' || /^(yes|yep|yeah|correct|exactly|that's right|that's correct|right[,!.]|great(?! question)|nice(?! question)|perfect|well done|you got it|good job|awesome(?! question))/.test(opening)) return '**✓ Nice work**';
+  return '';
+}
+
 // → { text, choices }: the message for Discord, and the tap-to-answer options.
 export function formatLearn(raw) {
   const x = parseLearn(raw);
   const parts = [];
+  const title = learnTitle(x);
+  if (title) parts.push(title);
   // One counter, like the website: practice questions while practising, otherwise
   // the lesson's goals (only when there are 2+), with the current goal's name.
   const dots = c => '●'.repeat(c.n) + '○'.repeat(c.total - c.n);
@@ -70,6 +99,8 @@ export function formatLearn(raw) {
   else if (!x.recap && x.progress && x.progress.total >= 2) parts.push(`-# Part ${x.progress.n} of ${x.progress.total}  ${dots(x.progress)}${goal ? ` · ${goal}` : ''}`);
   if (x.body) parts.push(x.body);
   if (x.keyIdea) parts.push(blockquote(`🧠 **Key idea:** ${x.keyIdea}`));
+  const visual = visualText(x.visual);
+  if (visual) parts.push(visual);
   if (x.question) parts.push(`**Your turn:** ${x.question}`);
   if (x.graph) parts.push(`📈 **Try graphing:** \`${x.graph.replace(/`/g, '')}\``);
   if (x.video) parts.push(`🎥 **Watch a short lesson:** <https://www.youtube.com/results?search_query=${encodeURIComponent(x.video)}>`);
