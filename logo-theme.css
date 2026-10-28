@@ -28,3 +28,8 @@ html.knox-seasonal img[src*="knox-logo"] {
   object-position:center !important;
   border-radius:50% !important; /* the art is round: round frames, no corners showing */
 }
+/* The big landing-page logo gets the same orange ring and ledge as the loading screen's. */
+html.knox-seasonal img.hero-mascot {
+  border:6px solid var(--orange, #FF6B00) !important;
+  box-shadow:0 7px 0 #CC5500;
+}
