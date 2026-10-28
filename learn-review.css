@@ -24,7 +24,7 @@
 #learnReviewPanel summary::after { margin-left: 4px; }
 .lr-intro { padding: 0 16px; margin: 0 0 12px; color: var(--text-light); font-size: 13.5px; font-weight: 700; line-height: 1.5; }
 /* Each topic is a chunky card, like the topic cards on the welcome screen. */
-.lr-items { padding: 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.lr-items { padding: 4px 14px 6px; display: flex; flex-direction: column; gap: 10px; max-height: min(300px, 34vh); overflow-y: auto; overscroll-behavior: contain; } /* long lists scroll inside the card, not the page */
 .lr-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 40px 12px 12px; border-radius: 16px; border: 2px solid color-mix(in srgb, var(--purple) 40%, var(--border)); background: var(--surface); box-shadow: 0 3px 0 color-mix(in srgb, var(--purple) 40%, var(--border)); transition: transform .15s, box-shadow .15s; }
 .lr-item:hover { transform: translateY(-1px); box-shadow: 0 4px 0 color-mix(in srgb, var(--purple) 55%, var(--border)); }
 .lr-item-icon { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: var(--purple); background: var(--purple-light); border: 2px solid var(--purple); }
