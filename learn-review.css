@@ -1,4 +1,4 @@
-#learnReviewPanel { width: min(100%, 660px); margin: 20px auto 0; text-align: left; flex-shrink: 0; }
+#learnReviewPanel { position: relative; z-index: 2; width: min(100%, 660px); margin: 20px auto 0; text-align: left; flex-shrink: 0; } /* above the fall pumpkin patch */
 #learnReviewPanel[hidden], body:not(.knox-learn-mode) #learnReviewPanel { display: none; }
 #welcomeScreen.has-learn-review { overflow-y: auto; }
 #learnReviewPanel details { border: 2px solid color-mix(in srgb, var(--purple) 45%, var(--border)); border-radius: 18px; background: var(--surface); box-shadow: 0 4px 0 color-mix(in srgb, var(--purple) 35%, var(--border)); overflow: hidden; }

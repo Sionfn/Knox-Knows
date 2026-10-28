@@ -84,3 +84,7 @@ html.knox-seasonal .harvest-sun{width:220px;height:220px;background:#F4D28C55;bo
  html.knox-seasonal .knox-learn-mode .patch-planted{scale:.55;transform-origin:center bottom}
  html.knox-seasonal .knox-learn-mode .pumpkin-patch .harvest-turkey{width:50px;height:43px}
 }
+/* Learn's banner and the Review panel make the welcome screen taller than Ask
+   Knox's. Keep the patch resting on the input bar either way: it sticks to the
+   bottom, and anything taller scrolls above it instead of pushing it down. */
+html.knox-seasonal #welcomeScreen>.pumpkin-patch{position:sticky!important;bottom:0}
