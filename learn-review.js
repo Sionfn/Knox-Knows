@@ -3,6 +3,22 @@
   // Last answer per account: the panel shows at once when Learn opens, then
   // quietly updates when the server answers (no late pop-in).
   const cache = new Map();
+  // Each topic wears an icon for its subject (knox-icons.js), checked in order.
+  const SUBJECTS = [
+    [/essay|\bthesis\b|writing|paragraph|grammar|sentence|punctuation|citation|spelling/i, 'pencil'],
+    [/reading|novel|poem|poetry|story|character|theme|literature|shakespeare|author|vocab/i, 'book'],
+    [/\b(dna|genes?|genetic|heredity|chromosome|cells?|mitosis)\b/i, 'dna'],
+    [/circuit|electric|current|voltage|batter|bulb|magnet|energy|force|motion|physics|gravity|wave/i, 'bulb'],
+    [/\bmaps?\b|continent|countr|climate|weather|water cycle|evapor|condens|precipit|geograph|earth|ocean|region/i, 'globe'],
+    [/atom|molecule|chemical|reaction|element|compound|acid|chem|\bions?\b/i, 'flask'],
+    [/planet|space|solar|\bstars?\b|orbit|galax/i, 'rocket'],
+    [/plant|photosynth|ecosystem|biolog|animal|organism|food (chain|web)|habitat/i, 'leaf'],
+    [/heart|human body|body system|digest|organs?\b|blood|muscle|lung|health|nutrition/i, 'heart'],
+    [/\bwars?\b|history|revolution|empire|ancient|government|constitution|civil|president|amendment|treaty|colon/i, 'columns'],
+    [/\bdata\b|statistic|mean|median|mode\b|survey|probab/i, 'chart'],
+    [/fraction|denominator|numerator|equation|algebra|math|number|percent|ratio|decimal|geometr|angle|triangle|area|slope|integer|multipl|divi|exponent|calculus|derivative|graph/i, 'math'],
+  ];
+  const topicIcon = item => (SUBJECTS.find(([re]) => re.test(item.label + ' ' + item.focus)) || [, 'brain'])[1];
   // × hides the panel until a new topic shows up (per account, this device).
   const hideKey = uid => 'knoxReviewHidden.' + uid;
   const topicsSig = items => items.map(i => i.id).sort().join(',') || 'none';
@@ -79,7 +95,7 @@
       when.textContent = due ? 'Ready now' : 'Next review ' + new Date(item.dueAt).toLocaleDateString(undefined, {month:'short',day:'numeric'});
       copy.append(title,focus,when);
       const badge = document.createElement('span'); badge.className = 'lr-item-icon'; badge.setAttribute('aria-hidden','true');
-      badge.innerHTML = window.KI ? window.KI('target') : '';
+      badge.innerHTML = window.KI ? window.KI(topicIcon(item), { tint: false }) : '';
       const actions = document.createElement('div'); actions.className = 'lr-actions';
       const review = document.createElement('button'); review.type = 'button'; review.className = 'lr-start'; review.textContent = 'Review →'; review.setAttribute('aria-label','Review ' + item.label);
       review.onclick = () => {
@@ -102,7 +118,7 @@
       actions.append(review); row.append(badge,copy,actions,remove); list.append(row);
     }
     const status = document.createElement('p'); status.className = 'lr-status'; status.setAttribute('role','status');
-    const toggle=document.createElement('button');toggle.type='button';toggle.className='lr-toggle';toggle.textContent=enabled?'Turn off review memory':'Turn on review memory';
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='lr-toggle';toggle.innerHTML=(window.KI?window.KI(enabled?'xcircle':'refresh',{tint:false}):'')+'<span>'+(enabled?'Turn off review memory':'Turn on review memory')+'</span>';
     toggle.onclick=async()=>{
       if(!same(user.uid,view,rev))return;toggle.disabled=true;
       try{render(await request(user,{enabled:!enabled}),user,view,rev,true);}
