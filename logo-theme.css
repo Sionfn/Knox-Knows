@@ -28,8 +28,15 @@ html.knox-seasonal img[src*="knox-logo"] {
   object-position:center !important;
   border-radius:50% !important; /* the art is round: round frames, no corners showing */
 }
-/* The big landing-page logo gets the same orange ring and ledge as the loading screen's. */
+/* Orange outlines vanish against the orange fall art: small logos get a
+   chestnut outline, and the big ones (landing page, loading screens) a cream
+   mat with a chestnut ring and ledge, like a framed badge. */
+html.knox-seasonal img[src*="knox-logo"] { border-color:#873D28 !important; }
 html.knox-seasonal img.hero-mascot {
-  border:6px solid var(--orange, #FF6B00) !important;
-  box-shadow:0 7px 0 #CC5500;
+  border:6px solid #FFF9EF !important;
+  box-shadow:0 0 0 3px #873D28, 0 9px 0 3px #5E2A1B;
+}
+html.knox-seasonal img:is(.landing-loading-logo, .page-loading-logo) {
+  border:4px solid #FFF9EF !important;
+  box-shadow:0 0 0 3px #873D28, 0 6px 0 3px #5E2A1B !important;
 }
