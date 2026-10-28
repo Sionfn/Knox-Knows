@@ -23,7 +23,16 @@ html[data-theme="dark"] img[src*="knox-logo"] {
 /* Fall mode: Knox's full fall art (round, see-through corners) everywhere the
    logo shows. Last, so it wins over the dark rule fall mode also matches. */
 html.knox-seasonal img[src*="knox-logo"] {
-  content:url('/knox-logo-fall.webp?v=3');
+  content:url('/knox-logo-fall.webp?v=4');
   object-fit:cover !important;
   object-position:center !important;
 }
+
+/* Fall mode loading screens (landing + legal pages): the fall banner, which
+   already says "Knox Knows" and the tagline, in place of the small logo. */
+html.knox-seasonal :is(#landingLoading, #pageLoading) img:is(.landing-loading-logo, .page-loading-logo) {
+  content:url('/knox-banner-fall.webp?v=1');
+  width:min(460px, 78vw); height:auto; aspect-ratio:3 / 1;
+  border:3px solid #D99857; border-radius:18px; box-shadow:0 5px 0 #873D28;
+}
+html.knox-seasonal :is(.landing-loading-title, .page-loading-title) { display:none; }
