@@ -1602,6 +1602,15 @@
     .learn-recap .learn-recap-watch b { color: var(--orange-dark); }
     html[data-theme="dark"]:not(.knox-seasonal) .learn-recap .learn-recap-watch b { color: #FF9A4D; }
     .learn-recap-buttons { margin-top: 10px; }
+    /* End-of-lesson actions are real Knox buttons (rounded, with a ledge), not
+       the little help chips; the main one is solid purple with a white icon. */
+    .learn-recap-buttons .learn-chip { border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 900; color: var(--text); background: var(--surface); border-color: var(--border); box-shadow: 0 3px 0 var(--border); transition: transform .12s, box-shadow .12s, border-color .12s; }
+    .learn-recap-buttons .learn-chip:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 0 var(--border); border-color: var(--border); }
+    .learn-recap-buttons .learn-chip:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+    .learn-recap-buttons .learn-chip.primary { background: var(--purple); border-color: var(--purple-dark); color: #fff; box-shadow: 0 3px 0 var(--purple-dark); }
+    .learn-recap-buttons .learn-chip.primary:hover:not(:disabled) { box-shadow: 0 4px 0 var(--purple-dark); border-color: var(--purple-dark); }
+    .learn-recap-buttons .learn-chip.primary:active:not(:disabled) { box-shadow: 0 1px 0 var(--purple-dark); }
+    .learn-recap-buttons .learn-chip.primary .kk-line { color: inherit !important; }
     @media (max-width: 600px) { .learn-actions { padding: 0 14px 14px; } .learn-choice { flex: 1 1 100%; text-align: left; } }
     .knox-final-answer {
       display: flex;
@@ -6667,7 +6676,7 @@ function learnExtrasHtml(x, tone) {
       '<p>' + formatInline(x.recap) + '</p>' +
       (x.watch ? '<p class="learn-recap-watch"><b>Watch out:</b> ' + formatInline(x.watch) + '</p>' : '') +
       '<div class="learn-recap-buttons">' +
-        btn('learn-chip primary', 'data-learn-send="Give me 3 more practice questions like this — one at a time."', '🎯 Practice 3 more') +
+        btn('learn-chip primary', 'data-learn-send="Give me 3 more practice questions like this — one at a time."', '📝 Practice 3 more') +
         btn('learn-chip', 'data-learn-flash="' + escHtml(((x.topic ? x.topic + '. ' : '') + x.recap).replace(/\*\*/g, '')) + '"', '📇 Make flashcards') +
         btn('learn-chip', 'data-learn-new', '✨ New topic') +
       '</div></div></div>';
