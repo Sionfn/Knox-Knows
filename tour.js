@@ -1,4 +1,6 @@
-// tour.js — "Show me around": a short guided tour for new accounts.
+// tour.js — "Show me around": a short guided tour for new accounts, and a
+// one-time "What's new" walkthrough of the November 1 update for everyone
+// who already had an account (shown once, Nov 1–30).
 //
 // Starts on its own the first time a new account (made in the last 3 days)
 // opens the app, and replaces the old one-card welcome after sign-up. Each
@@ -8,6 +10,7 @@
 //   window.knoxTour.start()   — run the tour now
 //   window.knoxTour.pending() — true while a tour is waiting or running
 //                               (Flame Fest's popup waits for it)
+//   window.knoxTour.whatsNew() — run the Nov 1 "What's new" walkthrough now
 //   ?tour=1                   — always run it (for trying it out)
 (function () {
   if (window.knoxTour) return;
@@ -16,7 +19,13 @@
   const seenKey = () => 'knoxTour.' + (window.currentUser?.uid || 'guest');
   const seen = () => { try { return localStorage.getItem(seenKey()) === '1'; } catch (e) { return false; } };
   const markSeen = () => { try { localStorage.setItem(seenKey(), '1'); } catch (e) {} };
-  let waiting = false, running = false;
+  const newsKey = () => 'knoxWhatsNewNov2026.' + (window.currentUser?.uid || 'guest');
+  const newsSeen = () => { try { return localStorage.getItem(newsKey()) === '1'; } catch (e) { return false; } };
+  const pad2 = n => String(n).padStart(2, '0');
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+  // checked: sign-in is known and we've decided whether to show anything, so
+  // Flame Fest's popup (which waits on pending()) never jumps in first.
+  let waiting = false, running = false, checked = false;
 
   const visible = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth && getComputedStyle(el).visibility !== 'hidden'; };
   const pick = sel => [...document.querySelectorAll(sel)].find(visible) || null;
@@ -47,11 +56,42 @@
     ];
   }
 
+  // The November 1 update, for students who already use Knox.
+  function whatsNewSteps(name) {
+    const tier = window.userTier;
+    const fest = !!window.knoxFlameFest?.active?.();
+    const mega = tier === 'mega'
+      ? { text: 'You’re on Mega Knox. Thanks for being one of the first! Your private Mega lounge on Discord is open, and you get 40-card flashcard decks and the highest limits.' }
+      : { text: 'A new plan above Knox Plus: 40-card flashcard decks you can customize, the highest limits, early access to new features and a private Mega lounge on Discord.' + (tier === 'plus' || tier === 'paid' ? '' : ' Try it free for 3 days.'),
+          extra: { label: 'See Mega Knox', run: () => window.goToPricing?.() } };
+    return [
+      { color: 'orange', icon: '<img src="/knox-logo-square.jpg" alt="">', title: name === 'there' ? 'Big update!' : `Big update, ${esc(name)}!`,
+        text: 'Knox Knows just got a lot better. Here’s what’s new for November. It takes about 30 seconds.',
+        next: 'Show me', skip: 'Later' },
+      { color: 'gold', target: '#appUpgradeBtn, #appAccountBtn', icon: '<span class="kt-emoji" aria-hidden="true">💎</span>', title: 'Meet Mega Knox', ...mega },
+      { color: 'purple', target: '.sidebar-quicknav-link[data-nav="learn"]', icon: navIcon('[data-nav="learn"]'), title: 'Learn got smarter',
+        text: 'Every lesson has a plan you can follow, Knox gives credit for the parts you got right, simple diagrams show the idea, and Review from your lessons brings back skills that were tricky.' },
+      { color: 'green', target: '.sidebar-quicknav-link.fc-nav', icon: navIcon('.fc-nav'), title: 'Flashcards for everyone',
+        text: 'On every plan now. Knox can make a deck from a topic, your notes, slides or photos, or you can build or import your own. Your decks follow you to any device.' },
+      { color: 'orange', target: '#inputOuter', icon: navIcon('[data-nav="chat"]'), title: 'Bring your files',
+        text: 'Upload a PDF, Word doc, PowerPoint or photo in Ask Knox and Learn, and Knox reads it with you.' },
+      fest
+        ? { id: 'fest', color: 'orange', target: '#streakPill', icon: '<span class="kt-emoji" aria-hidden="true">🔥</span>', title: 'Flame Fest is on!',
+            text: 'All November, every day you study lights a flame on your calendar. Hit each week’s goal for rewards, and light 20 flames for the grand prize.',
+            next: 'Open my calendar', skip: 'Done', finish: () => window.knoxFlameFest?.open() }
+        : { color: 'orange', icon: '<span class="kt-emoji" aria-hidden="true">🎉</span>', title: 'That’s the big stuff!',
+            text: 'There’s more, like gift codes and better answers in Ask Knox. See the full list any time on the What’s new page.',
+            next: 'See everything new', skip: 'Done', finish: () => { location.href = '/updates'; } },
+    ];
+  }
+
   function start(opts = {}) {
     if (running) return;
-    running = true; waiting = false; markSeen();
+    running = true; waiting = false;
     const first = (opts.name || window.currentUser?.displayName || '').split(' ')[0] || 'there';
-    const list = steps(first);
+    const news = opts.kind === 'news';
+    if (news) { try { localStorage.setItem(newsKey(), '1'); } catch (e) {} } else markSeen();
+    const list = news ? whatsNewSteps(first) : steps(first);
     let i = 0, spot = null;
     const layer = document.createElement('div');
     layer.className = 'kt-layer';
@@ -98,10 +138,12 @@
         <p>${esc(s.text)}</p>
         ${i === 0 && opts.welcomeEmail ? '<p class="kt-fine">We also sent a welcome email from support@knoxknowsapp.com.</p>' : ''}
         <div class="kt-foot${s.next ? ' kt-wide' : ''}"><div class="kt-dots" aria-label="Step ${i + 1} of ${list.length}">${dots}</div>
-          <div class="kt-btns">${s.skip ? `<button type="button" class="kt-btn kt-ghost" data-act="end">${s.skip}</button>` : i > 0 && !last ? '<button type="button" class="kt-btn kt-ghost" data-act="back">Back</button>' : ''}
+          <div class="kt-btns">${s.skip ? `<button type="button" class="kt-btn kt-ghost" data-act="end">${s.skip}</button>` : s.extra ? `<button type="button" class="kt-btn kt-ghost" data-act="extra">${esc(s.extra.label)}</button>` : i > 0 && !last ? '<button type="button" class="kt-btn kt-ghost" data-act="back">Back</button>' : ''}
           <button type="button" class="kt-btn kt-main" data-act="${last ? 'finish' : 'next'}">${s.next || 'Next'}</button></div></div>`;
       place();
       card.focus({ preventScroll: true });
+      // Reached the Flame Fest step: the separate Flame Fest popup would repeat it.
+      if (s.id === 'fest') { try { localStorage.setItem('knoxFlameFestIntro2026', '1'); } catch (e) {} }
     }
     function end(finish) {
       removeEventListener('resize', place);
@@ -110,7 +152,8 @@
       document.body.classList.remove('kt-open');
       running = false;
       dispatchEvent(new Event('knox-tour-done'));
-      if (finish) { window.appStartNewChat?.(); setTimeout(() => document.getElementById('appChatInput')?.focus({ preventScroll: true }), 60); }
+      if (typeof finish === 'function') finish();
+      else if (finish) { window.appStartNewChat?.(); setTimeout(() => document.getElementById('appChatInput')?.focus({ preventScroll: true }), 60); }
     }
     function key(e) {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); end(false); }
@@ -127,7 +170,8 @@
       if (b.classList.contains('kt-x') || b.dataset.act === 'end') end(false);
       else if (b.dataset.act === 'back') { i--; render(); }
       else if (b.dataset.act === 'next') { i++; render(); }
-      else if (b.dataset.act === 'finish') end(true);
+      else if (b.dataset.act === 'extra') end(list[i].extra.run);
+      else if (b.dataset.act === 'finish') end(list[i].finish || true);
     });
     addEventListener('resize', place);
     document.addEventListener('keydown', key, true);
@@ -139,19 +183,25 @@
   function maybeStart() {
     const u = window.currentUser;
     const forced = /[?&]tour=1\b/.test(location.search);
-    if (!u || running || waiting || (seen() && !forced)) return;
+    if (!u || running || waiting) return;
     const made = Date.parse(u.metadata?.creationTime || '');
-    if (!forced && !(made && Date.now() - made < 3 * DAY)) return;
+    const isNew = forced || (made && Date.now() - made < 3 * DAY && !seen());
+    // Older accounts: once, during November, the "What's new" walkthrough instead.
+    const news = !forced && !(made && Date.now() - made < 3 * DAY) && today() >= '2026-11-01' && today() <= '2026-11-30' && !newsSeen();
+    if (!isNew && !news) return;
     if (!forced && /[?&]open=/.test(location.search)) return; // came here for something specific
     waiting = true;
     let tries = 0;
     (function check() {
       if (!waiting) return;
-      if (!busy()) return start();
-      if (++tries < 40) setTimeout(check, 500); else waiting = false;
+      if (!busy()) return start(news ? { kind: 'news' } : {});
+      if (++tries < 40) setTimeout(check, 500); else { waiting = false; dispatchEvent(new Event('knox-tour-done')); }
     })();
   }
-  addEventListener('knox-auth-changed', () => setTimeout(maybeStart, 900));
+  addEventListener('knox-auth-changed', () => setTimeout(() => {
+    maybeStart(); checked = true;
+    if (!waiting && !running) dispatchEvent(new Event('knox-tour-done'));
+  }, 900));
 
-  window.knoxTour = { start, pending: () => waiting || running };
+  window.knoxTour = { start, whatsNew: () => start({ kind: 'news' }), pending: () => !checked || waiting || running };
 })();

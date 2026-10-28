@@ -3,6 +3,9 @@
 .kt-layer[data-color="purple"] { --kt: var(--purple); --kt-dark: var(--purple-dark); --kt-light: var(--purple-light); }
 .kt-layer[data-color="green"] { --kt: var(--green); --kt-dark: var(--green-dark); --kt-light: var(--green-light); }
 .kt-layer[data-color="blue"] { --kt: var(--blue); --kt-dark: var(--blue-dark); --kt-light: var(--blue-light); }
+/* Mega Knox steps: Mega's gold, with dark text on the gold button. */
+.kt-layer[data-color="gold"] { --kt: #F2B705; --kt-dark: #B38600; --kt-light: #FFF3C4; }
+.kt-layer[data-color="gold"] .kt-main { color: #4A3400; }
 .kt-layer.kt-dim { background: rgba(20,12,4,.55); }
 .kt-spot { position: absolute; border-radius: 16px; box-shadow: 0 0 0 4px var(--kt), 0 0 0 9999px rgba(20,12,4,.55); pointer-events: none; transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease; animation: ktPulse 1.8s ease-in-out infinite; }
 @keyframes ktPulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--kt) 55%, transparent), 0 0 0 9999px rgba(20,12,4,.55); } }
