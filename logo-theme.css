@@ -28,3 +28,8 @@ html.knox-seasonal img[src*="knox-logo"] {
   object-fit:cover !important;
   object-position:center !important;
 }
+/* The big landing-page logo: no outline, a soft golden glow behind it like the
+   sunset in the art, so it lifts off the cream page. */
+html.knox-seasonal #home img.hero-mascot {
+  filter:drop-shadow(0 0 16px rgba(255, 176, 72, .9)) drop-shadow(0 0 34px rgba(255, 150, 50, .55)) drop-shadow(0 12px 22px rgba(196, 98, 30, .3)) !important;
+}
