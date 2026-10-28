@@ -28,13 +28,19 @@ html.knox-seasonal img[src*="knox-logo"] {
   object-position:center !important;
   border-radius:50% !important; /* the art is round: round frames, no corners showing */
 }
-/* Orange outlines vanish against the orange fall art. Small logos get a
-   chestnut outline; the big ones (landing page and loading screens) one shared
-   look: a clean white ring and a soft warm shadow, scaled to their size. */
-html.knox-seasonal img[src*="knox-logo"] { border-color:#873D28 !important; }
-html.knox-seasonal img:is(.hero-mascot, .landing-loading-logo, .page-loading-logo) {
-  border:7px solid #FFFFFF !important;
+/* Orange outlines vanish against the orange fall art, so every fall logo
+   wears the same frame: a white ring and a soft warm shadow, scaled to its
+   size (thin on small logos, thicker on the landing page and loading screens). */
+html.knox-seasonal img[src*="knox-logo"] {
+  border:2px solid #FFFFFF !important;
+  box-shadow:0 2px 6px rgba(135, 61, 40, .28) !important;
+}
+html.knox-seasonal img:is(.landing-loading-logo, .page-loading-logo, .app-loading-logo) {
+  border-width:3px !important;
+  box-shadow:0 4px 10px rgba(135, 61, 40, .28) !important;
+}
+html.knox-seasonal img.hero-mascot {
+  border-width:7px !important;
   box-shadow:0 8px 22px rgba(135, 61, 40, .28) !important;
   filter:none !important;
 }
-html.knox-seasonal img:is(.landing-loading-logo, .page-loading-logo) { border-width:3px !important; box-shadow:0 4px 10px rgba(135, 61, 40, .28) !important; }
