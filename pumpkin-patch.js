@@ -48,13 +48,15 @@
     if(!footer||footer.classList.contains('pumpkin-patch'))return;
     footer.classList.add('pumpkin-patch');
     host.querySelectorAll('.harvest-trunk,.harvest-tree-branches,.harvest-truck,.fall-harvest,.harvest-wheat').forEach(el=>el.remove());
+    // Rear pumpkins at 17% and 84% duplicated the field planting behind the fence.
+    // Keep pumpkins in the field layer; the distant layer supplies hay and flowers.
     footer.insertAdjacentHTML('afterbegin',svg('patch-land','0 0 1200 180',`
       <path d="M0 70Q170 4 380 70T800 62T1200 38V180H0Z" fill="#D8B974"/>
       <path d="M0 106Q220 54 485 98T1200 83V180H0Z" fill="#C3AA67"/>
       <path d="M0 128Q340 105 610 135T1200 119V180H0Z" fill="#B88B55"/>
       <path d="M0 162Q240 136 500 160T1200 154V180H0Z" fill="#CDA46B"/>
       <g fill="none" stroke="#A57647" stroke-width="2" opacity=".4"><path d="M50 180q105-28 230-26m145 26q125-20 225-12m180 9q135-34 290-19"/></g>
-      <g opacity=".9">${bale(132,70,.42)}${pumpkin(207,97,.22,'#E6AA49','#B77B35')}${bale(1025,57,.4)}${pumpkin(1008,88,.25)}${sunflower(1100,87,.36)}${sunflower(1120,91,.28)}</g>`));
+      <g opacity=".9">${bale(132,70,.42)}${bale(1025,57,.4)}${sunflower(1100,87,.36)}${sunflower(1120,91,.28)}</g>`));
     footer.querySelector('.patch-land').setAttribute('preserveAspectRatio','none');
     // The fence keeps its size and is lowered onto the ground the pumpkins sit on, so it isn't floating.
     // Everything stands on one ground line (y≈208): fence posts, hay bales, the
