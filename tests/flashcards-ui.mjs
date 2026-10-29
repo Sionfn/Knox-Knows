@@ -6,7 +6,7 @@ import {validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parseP
 const source=readFileSync(new URL('../flashcards.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/,'');
 
 function harness(){
-  const listeners={}, handlers={}, storage=new Map(); let resolveFetch, requests=0;
+  const listeners={}, handlers={}, storage=new Map(); let resolveFetch, requests=0,showMake=false;
   const topic={value:'Private study topic',focus(){}};
   const face=()=>({attrs:{},setAttribute(k,v){this.attrs[k]=v;}});
   const front=face(),back=face();
@@ -14,9 +14,9 @@ function harness(){
   const controls={innerHTML:''};
   function element(){return {hidden:false,className:'',innerHTML:'',dataset:{},classList:{add(){},remove(){},toggle(){}},setAttribute(){},append(){},addEventListener(n,fn){handlers[n]=fn;},querySelector(s){return s==='#fcMakeReq'?topic:s==='.fc-card'?card:s==='#fcControls'?controls:null;},querySelectorAll(){return [];}};}
   const window={currentUser:{uid:'a',getIdToken:async()=> 'token-a'},userPlan:'super',addEventListener(n,fn){listeners[n]=fn;}};
-  const context=vm.createContext({window,document:{createElement:element,querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){},contains(){return false;}}}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch:()=>{requests++;return new Promise(r=>resolveFetch=r);},AbortSignal,validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toTabText,cleanImage,setTimeout:()=>0,clearTimeout(){},crypto:{randomUUID:()=> 'deck'},structuredClone,console,Blob,URL});
-  vm.runInContext(source+'\nwindow.testAPI={state:()=>({identity,editing,request:makeOpts.request,files:makeOpts.files,reading:makeOpts.reading}),takeFiles,makeDeck,close,home,flip,setupStudy:()=>{decks=[{id:"d",cards:[{front:"Question",back:"Secret answer"}]}];session={id:"d",queue:[0],flipped:false};}};',context);
-  return {window,listeners,handlers,topic,front,back,api:window.testAPI,requests:()=>requests,resolve:()=>resolveFetch({ok:true,json:async()=>({title:'Private deck',cards:[{front:'Question',back:'Secret answer'}]})})};
+  const context=vm.createContext({window,document:{createElement:element,querySelector:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){},contains(){return showMake;}}}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},fetch:()=>{requests++;return new Promise(r=>resolveFetch=r);},AbortSignal,validateDeck,schedule,studyQueue,parseTable,rowsToCards,parseList,parsePasted,toCsv,toTabText,cleanImage,setTimeout:()=>0,clearTimeout(){},crypto:{randomUUID:()=> 'deck'},structuredClone,console,Blob,URL});
+  vm.runInContext(source+'\nwindow.testAPI={makeView:()=>{panel.hidden=false;makeView();},rendered:()=>view.innerHTML,state:()=>({identity,editing,request:makeOpts.request,files:makeOpts.files,reading:makeOpts.reading}),takeFiles,makeDeck,close,home,flip,setupStudy:()=>{decks=[{id:"d",cards:[{front:"Question",back:"Secret answer"}]}];session={id:"d",queue:[0],flipped:false};}};',context);
+  return {window,listeners,handlers,topic,front,back,api:window.testAPI,showMake:()=>{showMake=true;},requests:()=>requests,resolve:()=>resolveFetch({ok:true,json:async()=>({title:'Private deck',cards:[{front:'Question',back:'Secret answer'}]})})};
 }
 test('generated content is discarded after account switches, including switching back',async()=>{
   for(const backToA of [false,true]){
@@ -111,4 +111,16 @@ test('a file read normally is added to the deck draft',async()=>{
   h.window.knoxReadDocument=async()=>({kind:'text',name:'notes.pdf',text:'Cells are living units.',truncated:false});
   await h.api.takeFiles([{name:'notes.pdf',type:'application/pdf'}]);
   assert.equal(h.api.state().files.length,1);assert.equal(h.api.state().files[0].name,'notes.pdf');assert.equal(h.api.state().reading,false);
+});
+
+test('open Make form refreshes pricing and limits on plan changes without losing the draft',()=>{
+ const h=harness();h.showMake();h.window.userTier='mega';h.api.makeView();h.topic.value='My unsent topic';assert.match(h.api.rendered(),/Mega Knox — unlimited decks/);
+ h.window.userTier='free';h.window.userPlan='free';h.listeners['knox-plan-changed']();
+ assert.equal(h.api.state().request,'My unsent topic');assert.match(h.api.rendered(),/Make my deck · 2 credits/);assert.match(h.api.rendered(),/up to 10 cards/);assert.doesNotMatch(h.api.rendered(),/Mega Knox — unlimited decks/);assert.equal(h.requests(),0);
+});
+
+test('downgrade keeps attached photos but refuses excess photos before generation or credits',async()=>{
+ const h=harness();h.window.userTier='free';h.window.userPlan='free';
+ h.api.state().files.push(...Array.from({length:6},(_,i)=>({kind:'photo',name:'photo'+i,type:'image/jpeg',data:'AAAA'})));
+ await h.api.makeDeck();assert.equal(h.requests(),0);assert.equal(h.api.state().files.length,6);
 });

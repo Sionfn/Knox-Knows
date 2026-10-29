@@ -114,13 +114,55 @@ export default async function handler(req, res) {
       // the existing subscription's price — never a second subscription.
       // Stripe prorates: the difference is charged or credited.
       const currentPrice = currentSubscription.items?.data?.[0];
-      if (['active', 'trialing'].includes(currentSubscription.status) && currentPrice && currentPrice.price?.id !== priceId) {
-        await stripe.subscriptions.update(currentSubscription.id, {
-          items: [{ id: currentPrice.id, price: priceId }],
-          proration_behavior: 'create_prorations',
-          cancel_at_period_end: false,
-          metadata: { ...(currentSubscription.metadata || {}), plan, billing, uid: verifiedUid },
-        }, { idempotencyKey: `knox-switch-${currentSubscription.id}-${priceId}` });
+      const priorSwitch = (await checkoutRef.get()).data()?.switchAttempt;
+      const active = ['active', 'trialing'].includes(currentSubscription.status);
+      // Recover an update that Stripe applied before a response/Firestore failure.
+      if (priorSwitch?.subscriptionId === subscriptionId && active && currentPrice?.price?.id === priorSwitch.priceId) {
+        await checkoutRef.set({ switchAttempt: null }, { merge: true });
+        if (priorSwitch.priceId === priceId && priorSwitch.billing === billing) {
+          return res.status(200).json({ switched: true, plan, billing });
+        }
+      }
+      // A cancelled subscription cannot receive the pending update; let the
+      // normal replacement-checkout reconciliation proceed without that intent.
+      if (priorSwitch?.subscriptionId === subscriptionId && ['canceled', 'incomplete_expired'].includes(currentSubscription.status)) {
+        await checkoutRef.set({ switchAttempt: null }, { merge: true });
+      }
+      const pendingSwitch = (await checkoutRef.get()).data()?.switchAttempt;
+      if (pendingSwitch && (pendingSwitch.subscriptionId !== subscriptionId || pendingSwitch.priceId !== priceId || pendingSwitch.billing !== billing)) {
+        return res.status(409).json({ error: 'Your previous plan change is still being confirmed. Retry that selection before choosing another plan.' });
+      }
+      if (active && currentPrice && currentPrice.price?.id !== priceId) {
+        // Persist the exact request so a timed-out retry uses both the same key
+        // and the same parameters. A later, genuine switch gets a new UUID.
+        const attempt = pendingSwitch || {
+          id: randomUUID(), subscriptionId, priceId, billing,
+          params: {
+            items: [{ id: currentPrice.id, price: priceId }],
+            proration_behavior: 'create_prorations', cancel_at_period_end: false,
+            metadata: { ...(currentSubscription.metadata || {}), plan, billing, uid: verifiedUid },
+          },
+        };
+        if (!pendingSwitch) await checkoutRef.set({ switchAttempt: attempt }, { merge: true });
+        let updated;
+        try {
+          updated = await stripe.subscriptions.update(subscriptionId, attempt.params,
+            { idempotencyKey: `knox-switch-${subscriptionId}-${attempt.id}` });
+        } catch (err) {
+          // Stripe definitely refused it (a 4xx, e.g. an invalid price or a declined
+          // card), so nothing changed: forget the attempt, or the student could
+          // never pick another plan. Timeouts, 5xx, 409 and 429 stay pending, since
+          // the outcome is unknown or a retry with the same key is the safe move.
+          const code = err?.statusCode;
+          if (code >= 400 && code < 500 && code !== 409 && code !== 429) {
+            await checkoutRef.set({ switchAttempt: null }, { merge: true });
+          }
+          throw err;
+        }
+        if (updated?.items?.data?.[0]?.price?.id !== priceId) {
+          throw new Error('Stripe did not confirm the requested subscription price');
+        }
+        await checkoutRef.set({ switchAttempt: null }, { merge: true });
         return res.status(200).json({ switched: true, plan, billing });
       }
       if (['active', 'trialing', 'past_due', 'unpaid'].includes(currentSubscription.status)) {

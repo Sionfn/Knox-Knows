@@ -215,6 +215,7 @@ async function makeDeck(){
   if(!user?.getIdToken){message('Sign in to make decks with Knox.');window.openAuthModal?.();return;}
   const owner=key(), version=++generationVersion;
   const texts=makeOpts.files.filter(f=>f.kind==='text'),photos=makeOpts.files.filter(f=>f.kind==='photo');
+  if(photos.length>PHOTO_LIMIT[tierNow()]){message(`Your current plan allows ${PHOTO_LIMIT[tierNow()]} photos. Remove some photos before making this deck.`);return;}
   const options={request,count:makeOpts.count,style:makeOpts.style,difficulty:makeOpts.difficulty,pictures:autoPictures(),
     ...(texts.length?{document:{name:texts.map(f=>f.name).join(', ').slice(0,200),text:(texts.length===1?texts[0].text:texts.map(f=>`— ${f.name} —\n${f.text}`).join('\n\n')).slice(0,DOC_CHARS[tierNow()])}}:{}),
     ...(photos.length?{images:photos.map(({type,data})=>({type,data}))}:{})};
@@ -637,7 +638,24 @@ document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.cr
 // Visibility (see EVERYONE): if Flashcards is ever limited to Knox Plus again, the tab stays hidden until the plan is known to be Knox Plus,
 // and closes if the account changes to one without Knox Plus (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}
-syncAccess();window.addEventListener('knox-plan-changed',syncAccess);
+syncAccess();
+let accessTier=tierNow();
+function refreshPlanAccess(){
+ const tier=tierNow(),changed=tier!==accessTier;accessTier=tier;
+ syncAccess();
+ if(!changed)return;
+ // Only rebuild the request form, never an editor or an in-flight generation.
+ const field=panel.querySelector('#fcMakeReq');
+ if(panel.hidden||!document.body.classList.contains('knox-flashcards')||!field)return;
+ const focused=document.activeElement===field,start=field.selectionStart,end=field.selectionEnd,scroll=view.scrollTop;
+ makeOpts.request=field.value;
+ makeView();
+ view.scrollTop=scroll;
+ const next=panel.querySelector('#fcMakeReq');
+ if(focused&&next){next.focus({preventScroll:true});next.setSelectionRange?.(start,end);}
+ message('Your plan changed. These options and the generation cost now match your current plan.');
+}
+window.addEventListener('knox-plan-changed',refreshPlanAccess);
 // Leaving Flashcards from the sidebar: ask first if a deck has unsaved edits,
 // then replay the click so the sidebar does what was asked.
 document.addEventListener('click',async e=>{if(!document.body.classList.contains('knox-flashcards'))return;const nav=e.target.closest('.sidebar-quicknav-link:not(.fc-nav),.sidebar-new-btn,.sidebar-history-item');if(!nav)return;if(!dirty){close();return;}e.preventDefault();e.stopImmediatePropagation();if(await confirmLeave()){close();nav.click();}},true);

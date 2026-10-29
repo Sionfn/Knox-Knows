@@ -30,7 +30,7 @@ const db        = getFirestore();
 const DAY_MS = 86400000;
 const TRIES_PER_HOUR = 10; // stops anyone guessing codes
 // The plan someone pays for (or was comped) — gift time doesn't count here.
-const ownTier = d => d?.plan === MEGA_PLAN ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
+const ownTier = d => d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
