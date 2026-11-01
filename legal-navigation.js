@@ -4,7 +4,7 @@
   // Never let this stop the navigation code below.
   try {
     if (document.documentElement?.classList?.contains('knox-seasonal')) document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]').forEach(l => {
-      l.setAttribute('href', l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png?v=4' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png?v=4' : '/favicon-fall-32.png?v=4');
+      l.setAttribute('href', l.rel === 'apple-touch-icon' ? '/apple-touch-icon-fall.png?v=5' : /16/.test(l.sizes?.value || '') ? '/favicon-fall-16.png?v=5' : '/favicon-fall-32.png?v=5');
     });
   } catch (e) { /* best effort */ }
   const KEY = 'knoxLandingReturn', PENDING = 'knoxLandingReturnPending';
