@@ -143,7 +143,7 @@
       place();
       card.focus({ preventScroll: true });
       // Reached the Flame Fest step: the separate Flame Fest popup would repeat it.
-      if (s.id === 'fest') { try { localStorage.setItem('knoxFlameFestIntro2026', '1'); } catch (e) {} }
+      if (s.id === 'fest') { try { localStorage.setItem('knoxFlameFestIntro2026.' + (window.currentUser?.uid || 'guest'), '1'); } catch (e) {} }
     }
     function end(finish) {
       removeEventListener('resize', place);
@@ -179,7 +179,8 @@
   }
 
   // New accounts: wait until the app is on screen with nothing else open.
-  function busy() { return [...document.querySelectorAll('.modal-backdrop, .ff-modal')].some(el => getComputedStyle(el).display !== 'none') || document.body.classList.contains('knox-flashcards'); }
+  // Includes the account loading screen: starting under it showed the tour on a blank page.
+  function busy() { return document.body.classList.contains('app-auth-pending') || [...document.querySelectorAll('.modal-backdrop, .ff-modal')].some(el => getComputedStyle(el).display !== 'none') || document.body.classList.contains('knox-flashcards'); }
   function maybeStart() {
     const u = window.currentUser;
     const forced = /[?&]tour=1\b/.test(location.search);

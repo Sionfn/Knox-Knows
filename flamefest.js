@@ -396,9 +396,9 @@
       // Never on top of signing in or up: wait until that box is closed (a new
       // account then gets its tour first, and this popup after it).
       const auth = document.getElementById('authModal');
-      if (auth && getComputedStyle(auth).display !== 'none') { setTimeout(intro, 1500); return; }
+      if ((auth && getComputedStyle(auth).display !== 'none') || document.body.classList.contains('app-auth-pending')) { setTimeout(intro, 1500); return; }
       if (!active() || today() > END) return; // not during the Dec 1–7 claim week
-      const key = 'knoxFlameFestIntro2026';
+      const key = 'knoxFlameFestIntro2026.' + window.currentUser.uid; // once per account, not per browser
       try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
     }
     const startsToday = preview === true || today() === START;
