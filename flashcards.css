@@ -361,3 +361,13 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-plus-tag.mega { color:#FFD45C; }
   .fc-controls { margin-top:14px; }
   .fc-tip { margin-top:10px; }
 }
+
+/* Every card in a review is the same size: it fills the space above the
+   buttons. A long question or answer scrolls inside the card (it stays centered
+   when it fits), so the buttons never move. */
+.fc-face { --fc-h:clamp(240px, calc(100dvh / var(--kz, 1) - 380px), 520px); height:var(--fc-h); min-height:0; justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.fc-face > :first-child { margin-top:auto; }
+.fc-face > :last-child { margin-bottom:auto; }
+.fc-face > * { flex-shrink:0; }
+/* The iPhone app and home-screen version also have a header and tab bar. */
+html.native-app .fc-face { --fc-h:clamp(220px, calc(100dvh - 470px), 480px); }
