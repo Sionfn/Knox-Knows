@@ -3917,6 +3917,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     }
     window.currentUser = user || null;
     window.dispatchEvent(new Event('knox-auth-changed'));
+    // Only Firebase's restored authenticated identity may unlock local decks.
+    // Do not wait for server-only plan/history reads when launching offline.
+    if (window.knoxNativeApp && navigator.onLine === false) {
+      window.userPlan = 'free'; window.userTier = 'free';
+      updatePlanUI(); resolvedAuthUid = user?.uid || null;
+      await window.knoxRestoreSection?.(); window.finishAppLoading(); return;
+    }
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
       // free...") has its own fixed div (#guestCta) that used to only get
@@ -4628,6 +4635,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   //    reads exactly like Claude's history: the full thread, not just the
   //    question re-typed into the box. ──
   window.openConversation = async function(conversationId) {
+  window.knoxMobileReveal?.();
     if (!window.currentUser) return;
     window.closeCalc?.();
     const viewVersion = ++window._appViewVersion;
@@ -5289,6 +5297,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
                );
     del.style.cssText = 'display:block;text-align:center;padding:10px;font-size:12px;font-weight:700;color:#9CA3AF;text-decoration:none;';
     del.textContent = 'Delete my account';
+    if (window.knoxNativeApp) { del.href = '#'; del.onclick = e => { e.preventDefault(); window.knoxRequestAccountDeletion?.(); }; }
     delWrap.appendChild(del);
     el.appendChild(delWrap);
 
@@ -5364,7 +5373,7 @@ function showChatThread() {
 // One set of account/theme controls: sidebar on desktop, compact header on mobile.
 function placeAppControls() {
   const controls = document.querySelector('.header-right');
-  const destination = window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
+  const destination = !window.knoxNativeApp && window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
   if (controls && destination && controls.parentElement !== destination) {
     destination.appendChild(controls);
     window.closeUserDropdown?.();
@@ -5378,7 +5387,7 @@ function placeAppControls() {
     // profile button). Desktop guests: no dock is shown, so keep the toggle
     // in the status row on the same line as the credit pill. Mobile: status row.
     const isGuest = document.body.classList.contains('app-guest');
-    const themeDestination = (window.innerWidth > 900 && !isGuest) ? dock : status;
+    const themeDestination = (!window.knoxNativeApp && window.innerWidth > 900 && !isGuest) ? dock : status;
     if (theme && themeDestination && theme.parentElement !== themeDestination) themeDestination.appendChild(theme);
     if (settings && status && settings.parentElement !== status) status.appendChild(settings);
   }
@@ -5415,6 +5424,7 @@ window.showLearnBar = function() {
 };
 
 window.appStartNewChat = function() {
+  window.knoxMobileReveal?.();
   window._appViewVersion++;
   // Close the calculator if it's open — otherwise clicking Ask Knox while
   // the calculator is up left the calc modal covering the (reset) chat,
@@ -5451,6 +5461,7 @@ window.appStartNewChat = function() {
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
 window.openLearnMode = function() {
+  window.knoxMobileReveal?.();
   // Guests can open Learn and look around; starting a lesson asks them to
   // sign up (free) — see learnNeedsAccount() in appHandleAsk.
   window._appViewVersion++;
@@ -7014,6 +7025,7 @@ document.addEventListener('keydown', (e) => {
 
 // ═══════ CALCULATOR ═══════════════════════════════════════════
 window.openCalc = function() {
+  window.knoxMobileReveal?.();
 
   // Remember which view was showing (welcome vs. an active chat) so
   // "Back to chat" can restore the right one, then swap to the calculator
@@ -7210,6 +7222,8 @@ window.addEventListener('pagehide', () => {
   const nav = document.querySelector('.sidebar-body .sidebar-quicknav');
   const calc = $('calcModal');
   const current = () => {
+    if (window.knoxNativeApp && document.body.classList.contains('knox-mobile-home')) return 'home';
+    if (window.knoxNativeApp && document.body.classList.contains('knox-mobile-account')) return 'account';
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';

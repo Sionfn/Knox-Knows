@@ -138,6 +138,33 @@ export default async function support(req, res) {
   // ── Knox team (Support Desk) ──
   if (action.startsWith("desk-")) return desk(req, res, { user, db, body });
 
+  // In-app initiation; manual processing, not a claim of completed deletion.
+  // One ticket per authenticated account makes concurrent/retried requests safe.
+  if (action === 'request-account-deletion') {
+    if (body.confirmation !== 'DELETE' || Object.keys(body).some(k => !['action','confirmation'].includes(k))) {
+      return res.status(400).json({ error: 'Type DELETE to confirm your own account deletion request.' });
+    }
+    const userRef=db.collection('accountDeletionRequests').doc(user.uid);
+    const ticket=await db.runTransaction(async tx => {
+      const account=(await tx.get(userRef)).data() || {};
+      if(account.requestId){
+        const ref=chats.doc(account.requestId), stored=await tx.get(ref);
+        if(stored.exists && stored.data().uid===user.uid)return {id:ref.id,chat:stored.data(),created:false};
+      }
+      const ref=chats.doc();
+      const chat={uid:user.uid,email:user.email||null,name:clip(user.name,80),
+        title:'Account deletion request',kind:'human',status:'waiting',createdAt:now,updatedAt:now,teamUnread:true,userUnread:0,
+        accountDeletion:{status:'requested',requestedAt:now},
+        messages:[{from:'user',text:'I confirm: delete my Knox account and associated personal data.',at:now},
+          {from:'knox',note:true,text:'Your deletion request is saved for the Knox team. Your account remains active until processing is complete. The team will confirm completion here and by email. Subscription cancellation and any legally required payment records will be handled separately.',at:now}],
+        notes:[{text:'Account deletion requested in app by authenticated owner. Process associated data and Apple token revocation if applicable; address subscription cancellation and required retention; confirm completion. Do not mark solved as a substitute for deletion.',system:true,at:now,by:'Knox'}]};
+      tx.set(ref,chat);tx.set(userRef,{requestId:ref.id,requestedAt:now,status:'requested'});
+      return {id:ref.id,chat,created:true};
+    });
+    if(ticket.created)await notifyTeam(db,ticket.id,ticket.chat,'Account deletion request').catch(e=>console.error('Deletion notification deferred:',e?.message));
+    return res.status(202).json({requestId:ticket.id,status:'requested'});
+  }
+
   // ── Student ──
   if (action === "list") {
     await flushEmails(db, user.uid);

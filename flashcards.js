@@ -31,7 +31,7 @@ const flavorOf=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))
 let pendingMessage='';
 
 function load(){ identity=key(); session=null; editing=null; dirty=false; try{const raw=JSON.parse(localStorage.getItem(identity)||'[]'); if(!Array.isArray(raw))throw Error(); decks=raw.filter(d=>{try{validateDeck(d);return typeof d.id==='string';}catch{return false;}});}catch{decks=[];pendingMessage='Saved decks could not be read. Import a backup to recover them.';} }
-function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
+function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();if(window.knoxNativeApp)window.dispatchEvent(new Event('knox-mobile-data'));return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
 
 // ── Decks in the student's account (window.knoxDeckStore in app.html) ──
 // This browser keeps the decks (fast, works offline). Every change is
@@ -597,10 +597,10 @@ function exportView(target){
       <button type="button" class="fc-format fc-format-btn" data-action="export-text"><span class="fc-format-icon" aria-hidden="true">📋</span><div><b>Copy as text</b> <span class="fc-format-types">copy &amp; paste</span><p>Copies your cards, one per line — paste them into a doc, a spreadsheet or another study app.</p></div></button>
     </div>`,true);
 }
-function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function exportCsv(data){if(window.knoxNativeExport)return window.knoxNativeExport('\uFEFF'+toCsv(data),(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv');const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
-function exportData(data){const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.closeCalc?.();/* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
+async function exportData(data){if(window.knoxNativeExport)return window.knoxNativeExport(JSON.stringify({version:1,decks:data},null,2),'knox-flashcards.json');const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.knoxMobileReveal?.();window.closeCalc?.();/* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
  // Bring in decks from the account; redraw the deck list if still on it.
  pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
@@ -762,8 +762,8 @@ panel.addEventListener('click',async e=>{
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
  if(action==='export')exportView(decks.filter(d=>d.id===id));
  if(action==='export-all')exportView(decks);
- if(action==='export-json'&&exportTarget){exportData(exportTarget);message('Saved a Knox backup (.json).','ok');}
- if(action==='export-csv'&&exportTarget){exportCsv(exportTarget);message('Saved a spreadsheet (.csv).','ok');}
+ if(action==='export-json'&&exportTarget){const ok=await exportData(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a Knox backup (.json).','ok');}
+ if(action==='export-csv'&&exportTarget){const ok=await exportCsv(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a spreadsheet (.csv).','ok');}
  if(action==='export-text'&&exportTarget){try{await navigator.clipboard.writeText(toTabText(exportTarget));message(`Copied ${exportTarget.reduce((n,d)=>n+d.cards.length,0)} cards — paste them anywhere.`,'ok');}catch{message('Your browser blocked copying. Use the Spreadsheet option instead.');}}
  if(action==='import-paste'){const cards=parsePasted(panel.querySelector('#fcPaste')?.value);openCards(cards,'Pasted cards');}
  if(action==='import-to-make'&&importNote){const files=importNote.files;importNote=null;makeView();await takeFiles(files);}
@@ -781,3 +781,19 @@ panel.addEventListener('click',async e=>{
 // already turns Space into a click, so leave that to the browser.
 document.addEventListener('keydown',e=>{if(e.target?.id==='fcMakeReq'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();panel.querySelector('[data-action="make-go"]')?.click();return;}if(!panel.hidden&&session&&e.key==='Escape'){e.preventDefault();home();return;}if(panel.hidden||!session||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'&&e.target.tagName==='BUTTON')return;const action=e.code==='Space'?'flip':({'1':'again','2':'good','3':'easy'}[e.key]);const b=action&&panel.querySelector(`[data-action="${action}"]`);if(b){e.preventDefault();b.click();}});
 load();
+
+// Native tabs suspend the panel without discarding an editor, files or review.
+if(window.knoxNativeApp){
+ let mobileOpened=false;
+ window.knoxFlashcardsMobile={
+  async show(){if(!canSee())return false;if(!mobileOpened || identity!==key()){await open();mobileOpened=!panel.hidden;}else{document.body.classList.add('knox-flashcards');panel.hidden=false;}return !panel.hidden;},
+  hide(){if(!panel.hidden)mobileOpened=true;document.body.classList.remove('knox-flashcards');panel.hidden=true;},
+  addFiles:takeFiles,
+  summary(){const uid=syncUid()||'guest';return {uid,decks:identity!==key()?[]:decks.map(d=>({id:d.id,title:d.title,count:d.cards.length,due:studyQueue(d.cards,true).length}))};},
+  async refreshSummary(){const uid=syncUid();if(identity!==key())load();if(uid&&!editing&&!session&&!makeOpts.reading&&!panel.querySelector('.fc-loading'))await pullDecks();return window.knoxFlashcardsMobile.summary();},
+  async review(id){if(!canSee())return false;if(identity!==key())load();if(!decks.some(d=>d.id===id))return false;await open();if(panel.hidden)return false;const deck=decks.find(d=>d.id===id);if(!deck)return false;start(id,studyQueue(deck.cards,true).length>0);return true;}
+ };
+ window.addEventListener('knox-auth-changed',()=>{mobileOpened=false;});
+ window.addEventListener('online',()=>{if(syncUid()){pushDecks();pullDecks();}});
+ window.dispatchEvent(new Event('knox-mobile-data'));
+}

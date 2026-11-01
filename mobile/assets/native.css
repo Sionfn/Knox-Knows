@@ -1,0 +1,279 @@
+html.native-app { --mobile-tabs:74px; --mobile-safe:env(safe-area-inset-bottom,0px); zoom:1!important; }
+html.native-app,html.native-app body { height:100%; overflow:hidden; overscroll-behavior:none; }
+html.native-app #rightSidebar { display:none!important; }
+html.native-app #mainColumn { width:100%; min-width:0; }
+html.native-app #appShell { height:100%; }
+html.native-app #mainColumn { padding-bottom:calc(var(--mobile-tabs) + var(--mobile-safe)); }
+html.native-app #appHeader { display:flex!important; padding:10px 14px; min-height:64px; flex-shrink:0; }
+html.native-app #appHeader { padding-top:10px!important; height:64px!important; }
+html.native-app #statusTint { display:none!important; }
+html.native-app .app-logo-text { font-size:18px; }
+html.native-app .header-right { margin-left:auto; }
+html.native-app #mobileHistoryBtn { display:flex!important; min-width:44px; min-height:44px; }
+html.native-app #sidebarPromoRotator,html.native-app a[href*="chromewebstore"],
+html.native-app #mobileHistoryDrawer .sidebar-quicknav,html.native-app [onclick*="knoxGifts"],
+html.native-app [onclick*="openGift"],html.native-app [onclick*="goToPricing"],
+html.native-app [data-action="upgrade"] { display:none!important; }
+html.native-app #mobileHistoryDrawer .drawer-panel { width:min(90vw,420px); }
+html.native-app #appChatInput,html.native-app input,html.native-app textarea { font-size:16px; }
+html.native-app #inputOuter { padding-bottom:10px; }
+html.native-app .input-disclaimer { font-size:11px; }
+html.native-app #chatAndInput { min-height:0; }
+html.native-app #calcModal { padding-bottom:16px; }
+.knox-app-tabs { position:fixed; z-index:110; bottom:0; left:0; right:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; height:calc(var(--mobile-tabs) + var(--mobile-safe)); padding:7px max(8px,env(safe-area-inset-left)) calc(7px + var(--mobile-safe)); background:var(--surface); border-top:2px solid var(--border); }
+.knox-app-tabs button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; border:0; border-radius:14px; min-width:0; min-height:48px; color:var(--text-light); background:transparent; font:800 11px Nunito,sans-serif; }
+.knox-app-tabs svg { width:23px; height:23px; }
+.knox-app-tabs button[aria-current="page"] { background:var(--orange-light); color:var(--orange-dark); }
+.knox-app-tabs button[data-tab="learn"][aria-current="page"] { background:var(--purple-light); color:var(--purple-on-tint); }
+.knox-app-tabs button[data-tab="flashcards"][aria-current="page"] { background:var(--green-light); color:var(--green-dark); }
+.knox-app-tabs button[data-tab="calculator"][aria-current="page"] { background:var(--blue-light); color:var(--blue-dark); }
+html.native-app.native-keyboard { --mobile-tabs:0px; --mobile-safe:0px; }
+html.native-app.native-keyboard .knox-app-tabs { display:none; }
+.knox-native-note { position:fixed; z-index:5000; bottom:calc(86px + env(safe-area-inset-bottom)); left:16px; right:16px; max-width:500px; margin:auto; padding:12px 16px; background:var(--surface); color:var(--text); border:2px solid var(--border); border-radius:16px; font-weight:800; box-shadow:0 4px 0 var(--border); }
+.knox-offline { flex:none; padding:8px 14px; font-size:12px; font-weight:800; background:var(--yellow-light,#fff0c0); color:#654d15; text-align:center; }
+.knox-native-dialog { border:2px solid var(--border); border-radius:24px; width:calc(100% - 32px); max-width:430px; max-height:85dvh; overflow:auto; margin:auto; padding:24px; background:var(--surface); color:var(--text); font:700 16px Nunito,sans-serif; }
+.knox-native-dialog::backdrop { background:rgba(20,14,10,.5); }
+.knox-native-dialog h2 { font-weight:900; font-size:24px; margin-bottom:12px; }
+.knox-native-dialog p { line-height:1.6; margin-bottom:16px; }
+.knox-native-dialog button,.knox-native-dialog input { display:block; width:100%; min-height:48px; padding:12px; border:2px solid var(--border); border-radius:14px; font:800 16px Nunito,sans-serif; color:var(--text); background:var(--cream); margin-top:10px; }
+.knox-native-dialog button.primary { color:white; background:var(--orange); border-color:var(--orange-dark); }
+.knox-native-dialog button.danger { color:var(--red); border-color:var(--danger-border); background:var(--danger-bg); }
+.knox-native-dialog button:disabled { opacity:.55; }
+.knox-native-dialog [hidden],.knox-app-tabs [hidden] { display:none!important; }
+.knox-native-dialog :focus-visible,.knox-app-tabs :focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+@media (min-width:901px) { html.native-app #mainColumn { margin-left:0; } html.native-app #chatAndInput { margin-left:0; } }
+@media (prefers-reduced-motion:reduce) { .knox-app-tabs * { transition:none!important; } }
+
+html.native-app .app-logo-link { display:flex!important; }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="chat"][aria-current="page"] { color:var(--orange); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="learn"][aria-current="page"] { color:var(--purple); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="flashcards"][aria-current="page"] { color:var(--green); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="calculator"][aria-current="page"] { color:var(--blue); }
+
+/* A quiet app shell: pages own their headings; no persistent website header. */
+html.native-app #appHeader,html.native-app #appAccountDropdown { display:none!important; }
+html.native-app .knox-app-tabs { grid-template-columns:repeat(5,minmax(0,1fr)); }
+html.native-app .knox-app-tabs button { font-size:11px; }
+html.native-app .knox-app-tabs button[data-tab="home"][aria-current="page"],html.native-app .knox-app-tabs button[data-tab="account"][aria-current="page"] { background:var(--orange-light);color:var(--orange-dark); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="home"][aria-current="page"],html.native-app[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="account"][aria-current="page"] { color:var(--orange); }
+html.native-app body.knox-mobile-home #chatAndInput,html.native-app body.knox-mobile-account #chatAndInput { display:none!important; }
+.knox-mobile-page { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; background:var(--cream); color:var(--text); padding:30px 20px 32px; }
+.knox-mobile-page[hidden] { display:none!important; }
+.km-page-wrap { max-width:780px; margin:0 auto; }
+.km-heading { margin:0 0 28px; }
+.km-eyebrow { display:block; font-size:10px; font-weight:900; letter-spacing:.14em; color:var(--text-light); line-height:1.6; }
+.km-heading h1 { font-size:clamp(34px,8.5vw,46px); line-height:1.1; letter-spacing:-.045em; font-weight:900; margin:10px 0; }
+.km-heading h1 span { color:var(--orange); }
+html.knox-seasonal .km-heading h1 span { color:#B65028; }
+.km-heading p { color:var(--text-light); font-size:14px; line-height:1.6; font-weight:700; }
+.km-section-heading { display:flex; gap:12px; align-items:center; justify-content:space-between; margin:28px 0 13px; }
+.km-section-heading h2 { font-size:18px; font-weight:900; line-height:1.35; letter-spacing:-.025em; }
+.km-text-button,.km-inline-action { border:0; background:transparent; color:var(--orange-dark); font:900 13px Nunito,sans-serif; min-height:44px; cursor:pointer; flex-shrink:0; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-text-button,html[data-theme="dark"]:not(.knox-seasonal) .km-inline-action { color:var(--orange); }
+.km-tools { display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; }
+.km-tool { text-align:left; border:2px solid var(--orange); border-radius:22px; background:var(--surface); color:var(--text); padding:17px 15px; display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; box-shadow:0 4px 0 var(--orange-dark); font-family:inherit; }
+.km-tool-icon { width:42px; height:42px; border-radius:13px; background:var(--orange-light); color:var(--orange-dark); display:grid; place-items:center; margin-bottom:7px; }
+.km-tool svg { width:24px; height:24px; }
+.km-tool b { font-size:16px; font-weight:900; }
+.km-tool > span:last-child { font-size:12px; line-height:1.5; color:var(--text-light); font-weight:700; }
+.km-tool[data-color="learn"] { border-color:var(--purple);box-shadow:0 4px 0 var(--purple-dark); }
+.km-tool[data-color="learn"] .km-tool-icon { background:var(--purple-light);color:var(--purple-on-tint); }
+.km-tool[data-color="flashcards"] { border-color:var(--green);box-shadow:0 4px 0 var(--green-dark); }
+.km-tool[data-color="flashcards"] .km-tool-icon { background:var(--green-light);color:var(--green-dark); }
+.km-tool[data-color="calculator"] { border-color:var(--blue);box-shadow:0 4px 0 var(--blue-dark); }
+.km-tool[data-color="calculator"] .km-tool-icon { background:var(--blue-light);color:var(--blue-dark); }
+.km-resume { width:100%; text-align:left; padding:21px; border:2px solid var(--purple); border-radius:24px; background:var(--surface); color:var(--text); box-shadow:0 4px 0 var(--purple-dark); font-family:inherit; }
+.km-resume .km-eyebrow { color:var(--purple-on-tint); }
+.km-resume h2 { font-size:22px; line-height:1.3; font-weight:900; margin:10px 0 18px; overflow-wrap:anywhere; }
+.km-resume-cta { display:inline-flex; align-items:center; gap:22px; padding:10px 14px; border-radius:12px; background:var(--purple-light); color:var(--purple-on-tint); font-size:13px; font-weight:900; }
+.km-empty { border:2px dashed var(--border); border-radius:22px; padding:20px; display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+.km-empty-icon { width:36px; height:36px; color:var(--green-dark); }
+.km-empty svg { width:30px; height:30px; }
+.km-empty b { font-size:16px; font-weight:900; }
+.km-empty p { font-size:13px; line-height:1.65; color:var(--text-light); font-weight:700; }
+.km-review-summary { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.km-review-summary b { font-size:17px; font-weight:900; }
+.km-review-summary > span { font-size:12px;color:var(--text-light);font-weight:700; }
+.km-deck-list,.km-recent-list { display:grid;gap:10px; }
+.km-deck,.km-recent { display:flex; align-items:center; gap:12px; width:100%; border:2px solid var(--border); border-radius:18px; padding:14px; background:var(--surface); color:var(--text); font-family:inherit; text-align:left; min-height:68px; }
+.km-deck > span:nth-child(2),.km-recent > span:nth-child(2) { flex:1; min-width:0; }
+.km-deck b,.km-recent b { font-size:14px; font-weight:900; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.km-deck small,.km-recent small { display:block; font-size:12px; line-height:1.5; color:var(--text-light); margin-top:3px; font-weight:700; }
+.km-deck-icon,.km-recent-icon { flex-shrink:0; width:36px; height:36px; display:grid; place-items:center; border-radius:11px; background:var(--green-light); color:var(--green-dark); }
+.km-recent-icon { background:var(--orange-light);color:var(--orange-dark); }
+.km-recent-icon[data-kind="learn"] { background:var(--purple-light);color:var(--purple-on-tint); }
+.km-recent svg,.km-deck svg { width:21px;height:21px; }
+.km-plan-discovery { margin:28px 0 0; display:flex; align-items:center; gap:12px; padding:18px; width:100%; border:2px solid var(--orange); border-radius:22px; background:var(--surface); color:var(--text); font-family:inherit; text-align:left; }
+.km-plan-discovery[data-tier="mega"] { border-color:#B98500; }
+.km-plan-symbol { width:40px; height:40px; flex-shrink:0; border-radius:12px; background:var(--yellow);color:#6A4900;display:grid;place-items:center;font-weight:900;font-size:24px; }
+.km-plan-discovery > span:nth-child(2) { flex:1;min-width:0; }
+.km-plan-discovery small { display:block;font-size:9px;letter-spacing:.07em;color:var(--text-light);font-weight:900; }
+.km-plan-discovery b { display:block;font-size:18px;font-weight:900;margin:4px 0; }
+.km-plan-discovery span span { font-size:12px;color:var(--text-light);font-weight:700; }
+.km-identity { display:flex;gap:14px;align-items:center;margin:12px 0 24px; }
+.km-avatar { display:grid;place-items:center;width:64px;height:64px;flex-shrink:0;border-radius:22px;border:2px solid var(--orange);background:var(--orange-light);color:var(--orange-dark);font-size:26px;font-weight:900; }
+.km-identity > span:last-child { min-width:0; }
+.km-identity h2 { font-size:21px;font-weight:900;overflow-wrap:anywhere; }
+.km-identity p { font-size:12px;color:var(--text-light);font-weight:700;margin:4px 0 8px;overflow-wrap:anywhere; }
+.km-tier { display:inline-block;font-size:10px;line-height:1.5;font-weight:900;padding:4px 9px;border:1.5px solid var(--border);background:var(--surface);border-radius:9px; }
+.km-tier[data-tier="plus"] { color:var(--green-dark);border-color:var(--green-dark);background:var(--green-light); }
+.km-tier[data-tier="mega"] { color:#6A4900;border-color:#B98500;background:#FFD900; }
+.km-current-plan { padding:21px;border:2px solid var(--border);border-radius:22px;box-shadow:0 4px 0 var(--border);background:var(--surface); }
+.km-current-plan[data-tier="plus"] { border-color:var(--green);box-shadow:0 4px 0 var(--green-dark); }
+.km-current-plan[data-tier="mega"] { border-color:#B98500;box-shadow:0 4px 0 #8A6200; }
+.km-current-plan h3 { font-size:25px;font-weight:900;margin:5px 0; }
+.km-current-plan p { font-size:13px;color:var(--text-light);font-weight:700; }
+.km-streak-card { display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:20px;border:2px solid var(--orange);border-radius:22px;background:var(--surface);color:var(--text);font-family:inherit; }
+.km-streak-card > span:first-child { font-size:34px; }
+.km-streak-card > span:nth-child(2) { flex:1;min-width:0; }
+.km-streak-card b { display:block;font-size:18px;font-weight:900; }
+.km-streak-card small { display:block;font-size:12px;line-height:1.6;margin-top:3px;color:var(--text-light);font-weight:700; }
+.km-looks { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px; }
+.km-looks button { border:2px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text);display:flex;flex-direction:column;align-items:center;gap:5px;padding:15px 8px 12px;font-family:inherit;min-height:105px; }
+.km-looks button > span { font-size:24px;height:30px; }
+.km-looks b { font-size:13px;font-weight:900; }
+.km-looks small { font-size:10px;font-weight:900;min-height:14px; }
+.km-looks button[aria-pressed="true"] { border-color:var(--orange);box-shadow:0 3px 0 var(--orange-dark);background:var(--orange-light); }
+.km-menu-list { border:2px solid var(--border);border-radius:22px;overflow:hidden; }
+.km-menu-list button { width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:70px;padding:15px 16px;text-align:left;border:0;border-bottom:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:900; }
+.km-menu-list button:last-child { border-bottom:0; }
+.km-menu-list small { display:block;font-size:11px;font-weight:700;color:var(--text-light);line-height:1.6;margin-top:3px; }
+.km-legal { display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:27px; }
+.km-legal a { font-size:12px;min-height:44px;display:flex;align-items:center;color:var(--text-light);font-weight:800; }
+.km-signout { background:transparent;border:0;min-height:44px;width:100%;color:var(--red);font:900 14px Nunito,sans-serif; }
+.km-solid-button { padding:14px 18px;min-height:48px;width:100%;border:2px solid var(--orange-dark);border-radius:15px;background:var(--orange);color:white;font:900 15px Nunito,sans-serif; }
+.km-footer-note { text-align:center;font-size:11px;line-height:1.6;font-weight:700;color:var(--text-light);margin:26px 0 0; }
+.km-plan-list { display:grid;gap:14px; }
+.km-plan-option { border:2px solid var(--border);border-radius:18px;padding:17px; }
+.km-plan-option[data-tier="plus"] { border-color:var(--green); }
+.km-plan-option[data-tier="mega"] { border-color:#B98500; }
+.km-plan-option h3 { margin:9px 0;font-size:22px;font-weight:900; }
+.km-plan-option ul { padding-left:18px; }
+.km-plan-option li { font-size:13px;line-height:1.6;margin:7px 0; }
+.km-plan-note { font-size:12px;line-height:1.6;color:var(--text-light);margin-top:18px; }
+.knox-mobile-page :focus-visible { outline:3px solid var(--blue);outline-offset:3px; }
+.knox-mobile-page [hidden] { display:none!important; }
+@media (min-width:700px){.knox-mobile-page{padding:40px 32px}.km-tools{grid-template-columns:repeat(4,minmax(0,1fr))}.km-tool{min-height:170px}.km-heading{margin-bottom:30px}}
+@media (max-width:350px){.knox-mobile-page{padding-left:15px;padding-right:15px}.km-tool{padding:15px 12px}.km-tool b{font-size:15px}.km-looks{gap:7px}.km-heading h1{font-size:34px}}
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-avatar,html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-tool-icon,html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-recent-icon { color:var(--orange); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) [data-color="learn"] .km-tool-icon,html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-recent-icon[data-kind="learn"] { color:var(--purple); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) [data-color="flashcards"] .km-tool-icon,html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-deck-icon,html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-empty-icon { color:var(--green); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) [data-color="calculator"] .km-tool-icon { color:var(--blue); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) .km-tier[data-tier="plus"] { color:var(--green); }
+
+/* ─── Knox look (matches the website): logo header, sticker icon tiles,
+   chunky cards with a ledge, Knox orange, the website's hero. ─── */
+.km-tile { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark);
+  flex-shrink:0; width:44px; height:44px; border-radius:14px; display:grid; place-items:center;
+  color:var(--c); background:var(--c-light); border:1.5px solid var(--c); box-shadow:0 3px 0 var(--c-dark); }
+.km-tile svg { width:24px; height:24px; }
+.km-tile.sm { width:36px; height:36px; border-radius:12px; }
+.km-tile.sm svg { width:20px; height:20px; }
+[data-color="learn"] > .km-tile, .km-tile[data-color="learn"] { --c:var(--purple); --c-light:var(--purple-light); --c-dark:var(--purple-dark); }
+[data-color="flashcards"] > .km-tile, .km-tile[data-color="flashcards"] { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
+[data-color="calculator"] > .km-tile, .km-tile[data-color="calculator"] { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
+.km-tile[data-color="grey"] { --c:#7A7A7A; --c-light:#EFEFEF; --c-dark:#555; }
+.km-tile[data-color="gold"] { --c:#C99404; --c-light:#FFF3C4; --c-dark:#9A6B00; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-tile[data-color="grey"] { --c:#B5B5B5; --c-light:#2E2A33; --c-dark:#1A171E; }
+
+/* Pressable things sink onto their ledge, like the website's buttons. */
+.km-press { transition:transform .12s, box-shadow .12s; -webkit-tap-highlight-color:transparent; }
+.km-press:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ledge, var(--border)) !important; }
+
+/* Top bar: the Knox logo and name, streak flame and profile. */
+.knox-mobile-page { padding-top:max(14px, env(safe-area-inset-top)); }
+.km-topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 22px; }
+.km-brand { display:flex; align-items:center; gap:10px; min-width:0; }
+.km-logo { width:40px; height:40px; border-radius:12px; border:2.5px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark); object-fit:cover; background:var(--orange-light); }
+.km-brand b { font-size:20px; font-weight:900; letter-spacing:-.02em; white-space:nowrap; }
+.km-top-right { display:flex; align-items:center; gap:8px; }
+.km-flame-pill { --ledge:var(--border); display:inline-flex; align-items:center; gap:4px; height:38px; padding:0 12px 0 9px; border-radius:12px; border:2px solid var(--border); background:var(--surface); color:var(--text); font:900 15px Nunito,sans-serif; box-shadow:0 3px 0 var(--border); }
+.km-flame-pill .knox-flame { font-size:19px; line-height:1; }
+.km-flame-pill.dim .knox-flame { opacity:.45; }
+.km-top-avatar { --ledge:var(--orange-dark); width:40px; height:40px; padding:0; border-radius:12px; border:2px solid var(--orange); background:var(--orange-light); color:var(--orange-dark); font:900 17px Nunito,sans-serif; overflow:hidden; box-shadow:0 3px 0 var(--orange-dark); display:grid; place-items:center; }
+.km-top-avatar img, .km-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* Hero, as on the website: chip, big greeting, orange second line. */
+.km-heading { margin-bottom:20px; }
+.km-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px; border:2px solid var(--orange); background:var(--orange-light); color:var(--orange-dark); font-size:12px; font-weight:900; box-shadow:0 2px 0 var(--orange-dark); }
+.km-heading h1 { margin:14px 0 6px; font-size:clamp(30px,8vw,42px); line-height:1.08; }
+.km-heading h1 span, html.knox-seasonal .km-heading h1 span { color:var(--orange); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-chip { color:var(--orange); }
+
+/* "Ask Knox anything…" — the website's composer, one tap away. */
+.km-askbar { --ledge:var(--orange-dark); display:flex; align-items:center; gap:10px; width:100%; min-height:58px; margin:0 0 24px; padding:8px 8px 8px 18px; border:2.5px solid var(--orange); border-radius:18px; background:var(--surface); color:var(--text-light); font:800 16px Nunito,sans-serif; text-align:left; box-shadow:0 4px 0 var(--orange-dark); }
+.km-askbar > span:first-child { flex:1; min-width:0; }
+.km-askbar-cam, .km-askbar-go { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex-shrink:0; }
+.km-askbar-cam { color:var(--orange); background:var(--orange-light); border:1.5px solid var(--orange); }
+.km-askbar-go { color:#fff; background:var(--orange); box-shadow:0 3px 0 var(--orange-dark); }
+.km-askbar svg { width:21px; height:21px; }
+
+/* Tool cards: colored border + ledge, sticker tile, like the website's topic cards. */
+.km-tools { gap:14px 12px; }
+.km-tool { --ledge:var(--orange-dark); border-width:2.5px; padding:16px 14px 15px; gap:4px; box-shadow:0 5px 0 var(--orange-dark); }
+.km-tool[data-color="learn"] { --ledge:var(--purple-dark); box-shadow:0 5px 0 var(--purple-dark); }
+.km-tool[data-color="flashcards"] { --ledge:var(--green-dark); box-shadow:0 5px 0 var(--green-dark); }
+.km-tool[data-color="calculator"] { --ledge:var(--blue-dark); box-shadow:0 5px 0 var(--blue-dark); }
+.km-tool .km-tile { margin-bottom:10px; }
+.km-tool b { font-size:17px; }
+
+/* Continue your lesson: Learn purple, with Knox. */
+.km-resume { --ledge:var(--purple-dark); position:relative; display:flex; align-items:center; gap:14px; border-width:2.5px; box-shadow:0 5px 0 var(--purple-dark); background:linear-gradient(135deg, color-mix(in srgb, var(--purple) 12%, var(--surface)), var(--surface) 60%); }
+.km-resume > span:nth-child(2) { flex:1; min-width:0; }
+.km-resume .km-eyebrow { color:var(--purple-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-resume .km-eyebrow { color:var(--purple); }
+.km-resume h2 { margin:6px 0 12px; font-size:20px; }
+.km-resume-cta { gap:8px; padding:9px 14px; border-radius:12px; background:var(--purple); color:#fff; border:2px solid var(--purple-dark); box-shadow:0 3px 0 var(--purple-dark); }
+.km-resume-knox { width:62px; height:62px; border-radius:18px; border:2.5px solid var(--purple); box-shadow:0 3px 0 var(--purple-dark); object-fit:cover; flex-shrink:0; }
+
+/* Rows (decks, recent work, menu): white cards with a soft ledge. */
+.km-deck, .km-recent { --ledge:var(--border); border-width:2px; box-shadow:0 3px 0 var(--border); }
+.km-deck > span:last-child, .km-recent > span:last-child { color:var(--text-light); font-weight:900; }
+.km-empty { background:var(--surface); }
+.km-review-summary b { font-size:16px; }
+
+/* Plan card on Home: the plan's own colors. */
+.km-plan-discovery { --ledge:var(--orange-dark); border-width:2.5px; box-shadow:0 5px 0 var(--orange-dark); }
+.km-plan-discovery[data-tier="mega"] { --ledge:#9A6B00; border-color:#F2B705; box-shadow:0 5px 0 #C99404; background:linear-gradient(135deg, #FFF3C4, var(--surface) 65%); }
+.km-plan-discovery[data-tier="plus"] { --ledge:var(--green-dark); border-color:var(--green); box-shadow:0 5px 0 var(--green-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-plan-discovery[data-tier="mega"] { background:linear-gradient(135deg, rgba(242,183,5,.16), transparent 65%), var(--surface); }
+.km-plan-symbol { background:none; width:auto; height:auto; }
+
+/* You: profile card, plan badge, streak, looks, menu. */
+.km-identity { padding:16px; border:2px solid var(--border); border-radius:22px; background:var(--surface); box-shadow:0 4px 0 var(--border); }
+.km-avatar { overflow:hidden; border-width:2.5px; box-shadow:0 3px 0 var(--orange-dark); border-radius:20px; }
+.km-tier { border-radius:999px; padding:4px 10px; font-size:11px; border-width:2px; }
+.km-tier[data-tier="free"] { color:var(--orange-dark); border-color:var(--orange); background:var(--orange-light); }
+.km-tier[data-tier="mega"] { color:#6A4900; border-color:#F2B705; background:#FFF3C4; }
+.km-current-plan { border-width:2.5px; }
+.km-current-plan[data-tier="mega"] { border-color:#F2B705; box-shadow:0 5px 0 #C99404; background:linear-gradient(135deg, #FFF3C4, var(--surface) 65%); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-current-plan[data-tier="mega"] { background:linear-gradient(135deg, rgba(242,183,5,.16), transparent 65%), var(--surface); }
+.km-current-plan[data-tier="free"] { border-color:var(--orange); box-shadow:0 5px 0 var(--orange-dark); }
+.km-streak-card { --ledge:var(--orange-dark); border-width:2.5px; box-shadow:0 5px 0 var(--orange-dark); background:linear-gradient(135deg, var(--orange-cream, #FFF8F0), var(--surface)); }
+.km-streak-card > span:first-child { width:56px; height:56px; border-radius:16px; display:grid; place-items:center; background:var(--orange-light); border:1.5px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark); font-size:30px; }
+.km-streak-card > span:first-child .knox-flame { font-size:32px; line-height:1; }
+.km-looks button { --ledge:var(--border); border-width:2px; box-shadow:0 3px 0 var(--border); }
+.km-looks button[aria-pressed="true"] { --ledge:var(--orange-dark); border-width:2.5px; }
+.km-menu-list { display:grid; gap:10px; border:0; border-radius:0; overflow:visible; }
+.km-menu-list button { --ledge:var(--border); gap:12px; justify-content:flex-start; min-height:64px; border:2px solid var(--border); border-radius:18px; box-shadow:0 3px 0 var(--border); }
+.km-menu-list button:last-child { border-bottom:2px solid var(--border); }
+.km-menu-list button > span:nth-child(2) { flex:1; min-width:0; }
+.km-menu-list button > span:last-child { color:var(--text-light); font-size:20px; }
+.km-signout { --ledge:#C53030; margin-top:18px; border:2px solid var(--red); border-radius:16px; background:var(--surface); box-shadow:0 3px 0 #C53030; min-height:50px; }
+
+/* Dialogs: Knox cards. */
+.knox-native-dialog { border-width:2.5px; border-color:var(--orange); box-shadow:0 6px 0 var(--orange-dark); }
+.knox-native-dialog button { box-shadow:0 3px 0 var(--border); }
+.knox-native-dialog button.primary { box-shadow:0 3px 0 var(--orange-dark); }
+
+/* Tab bar: the active tab's icon sits on its sticker tile, in its color. */
+.knox-app-tabs { --mobile-tabs:74px; height:calc(74px + var(--mobile-safe)); padding-top:6px; border-top:2.5px solid var(--border); box-shadow:0 -4px 14px rgba(0,0,0,.05); }
+html.native-app .knox-app-tabs button, html.native-app .knox-app-tabs button[aria-current="page"] { background:transparent !important; gap:4px; color:var(--text-light); font-size:11px; }
+.km-tab-tile { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark); width:44px; height:32px; border-radius:11px; display:grid; place-items:center; border:1.5px solid transparent; transition:background .15s, border-color .15s, box-shadow .15s, transform .15s; }
+.km-tab-tile svg { width:22px; height:22px; }
+.knox-app-tabs button[aria-current="page"] .km-tab-tile { color:var(--c); background:var(--c-light); border-color:var(--c); box-shadow:0 3px 0 var(--c-dark); transform:translateY(-2px); }
+html.native-app .knox-app-tabs button[aria-current="page"] { color:var(--text) !important; }
+.knox-app-tabs button[data-tab="learn"] .km-tab-tile { --c:var(--purple); --c-light:var(--purple-light); --c-dark:var(--purple-dark); }
+.knox-app-tabs button[data-tab="flashcards"] .km-tab-tile { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
+.knox-app-tabs button[data-tab="account"] .km-tab-tile { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
+@media (prefers-reduced-motion:reduce) { .km-press, .km-tab-tile { transition:none; } .km-press:active { transform:none; } }
