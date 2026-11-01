@@ -25,7 +25,7 @@ html[data-theme="dark"] .kb-perks { background: color-mix(in srgb, var(--kb) 16%
 @media (prefers-reduced-motion: reduce) { .kb-card, .kb-spin { animation: none; } }
 `;
 const KNOX_PERKS = {
-  plus: ['⚡ Way more questions every day', '🎓 Full Learn lessons', '🃏 Bigger flashcard decks'],
+  plus: ['⚡ Unlimited questions', '🎓 Full Learn lessons', '🃏 Bigger flashcard decks'],
   mega: ['💎 The highest limits on everything', '🃏 40-card decks you can customize', '🚀 Early access + the Mega Discord lounge'],
 };
 window.showKnoxBillingStatus = function () {
