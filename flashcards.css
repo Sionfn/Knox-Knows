@@ -349,3 +349,15 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-plus-tag.mega { color:#FFD45C; }
 /* Knox icons inside the round tiles take the tile's darker color. */
 .fc-way-icon, .fc-deck-icon { color:var(--chip-ledge); }
 .fc-way-icon .kk-line, .fc-deck-icon .kk-line { color:inherit !important; }
+
+/* Short screens (most laptops): a more compact card so the card and its
+   Show answer / grade buttons fit together without scrolling. */
+@media (max-height: 860px) {
+  .fc-progress { margin-bottom:12px; }
+  .fc-study-top { margin-bottom:10px; }
+  .fc-face { min-height:200px; gap:10px; padding:22px 22px; }
+  .fc-face-text { font-size:clamp(18px,2.4vw,24px); }
+  .fc-card-img { height:clamp(84px,14vh,130px); }
+  .fc-controls { margin-top:14px; }
+  .fc-tip { margin-top:10px; }
+}

@@ -117,11 +117,14 @@ const badge=(normal,fall)=>`<span class="fc-badge"><span class="season-hide">${n
 let nextWay='';
 function frame(head,body,center=false){
   hideToast();
+  // Between cards (and when flipping) the review keeps your place instead of
+  // jumping back to the top, so the buttons stay where your eyes are.
+  const studying=!!session&&!!view.querySelector('.fc-stage'), keep=view.scrollTop;
   panel.dataset.way=nextWay;nextWay='';
   view.innerHTML=`<div class="fc-wrap${center?' center':''}">${head?`<header class="fc-head">
     <div class="fc-badges">${head.badge||''}</div>
     <h1 class="fc-title" tabindex="-1">${head.title}</h1>${head.sub?`<p class="fc-sub">${head.sub}</p>`:''}</header>`:''}${body}</div>`;
-  view.scrollTop=0;
+  view.scrollTop=studying&&session&&view.querySelector('.fc-stage')?keep:0;
 }
 
 // ── Make with Knox (AI-written decks) ───────────────────────────────────────
