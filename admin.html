@@ -36,7 +36,7 @@
     }
     html, body {
       font-family: 'Nunito', system-ui, -apple-system, sans-serif;
-      background: var(--gray);
+      background: var(--cream);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
@@ -220,6 +220,7 @@
     .bar-fill.blue   { background: linear-gradient(90deg, var(--blue),   #5AC8FA); }
     .bar-fill.purple { background: linear-gradient(90deg, var(--purple), #DEA6FF); }
     .bar-fill.red    { background: linear-gradient(90deg, var(--red),    #FF7878); }
+    .bar-fill.gold   { background: linear-gradient(90deg, #F2B705, #FFD54F); }
 
     /* ─── SIGNUP MINI-CHART ────────────────────────────── */
     .spark-wrap {
@@ -530,6 +531,52 @@
     .tag-failed     { background: var(--red-light);    color: var(--red); }
     .tag-cancelled  { background: var(--gray);         color: var(--text-light); border: 1.5px solid var(--border); }
     @media (max-width: 600px) { .trial-dates { text-align: left; flex-basis: 100%; } }
+
+    /* ─── PICKERS (gift codes, comped plans): Knox-style choice buttons ─── */
+    .pick-form { display: grid; gap: 16px; }
+    .pick-row { display: grid; gap: 8px; }
+    .pick-label { font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: .08em; }
+    .choices { display: flex; gap: 8px; flex-wrap: wrap; }
+    .choice {
+      --c: var(--orange); --c-light: var(--orange-light); --c-dark: var(--orange-dark);
+      display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 14px;
+      border: 2px solid var(--border); background: white; color: var(--text); font: inherit; font-size: 14px; font-weight: 900;
+      box-shadow: 0 3px 0 var(--border); cursor: pointer; transition: transform .12s, box-shadow .12s, background .12s;
+    }
+    .choice small { font-size: 12px; font-weight: 800; color: var(--text-light); }
+    .choice:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--border); }
+    .choice:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+    .choice[aria-pressed="true"] { border-color: var(--c); background: var(--c-light); color: var(--c-dark); box-shadow: 0 3px 0 var(--c); }
+    .choice[aria-pressed="true"] small { color: var(--c-dark); }
+    .choice.mega { --c: #F2B705; --c-light: #FFF3C4; --c-dark: #8A5A00; }
+    .choice.amb  { --c: var(--purple-dark, #7C3AED); --c-light: var(--purple-light); --c-dark: #5B21B6; }
+    .choice:focus-visible { outline: 3px solid color-mix(in srgb, var(--c) 55%, transparent); outline-offset: 2px; }
+    .pick-inputs { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+    .pick-inputs input[type="email"], .pick-inputs input[type="text"] {
+      flex: 1 1 220px; min-width: 0; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--border);
+      font: inherit; font-weight: 700; color: var(--text); background: white;
+    }
+    .pick-inputs input:focus { outline: none; border-color: var(--orange); }
+    .stepper { display: inline-flex; align-items: center; border: 2px solid var(--border); border-radius: 14px; background: white; box-shadow: 0 3px 0 var(--border); overflow: hidden; }
+    .stepper button { width: 42px; height: 44px; border: 0; background: transparent; font: inherit; font-size: 20px; font-weight: 900; color: var(--orange); cursor: pointer; }
+    .stepper button:hover { background: var(--orange-cream); }
+    .stepper button:disabled { color: var(--border); cursor: default; background: transparent; }
+    .stepper input { width: 52px; height: 44px; border: 0; border-inline: 2px solid var(--border); text-align: center; font: inherit; font-size: 16px; font-weight: 900; color: var(--text); -moz-appearance: textfield; }
+    .stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .pick-summary { font-size: 13px; font-weight: 800; color: var(--text-light); }
+    .pick-summary b { color: var(--text); }
+    .pick-go { padding: 13px 22px; border-radius: 14px; border: 2px solid var(--orange-dark); background: var(--orange); color: white; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 var(--orange-dark); transition: transform .12s, box-shadow .12s; justify-self: start; }
+    .pick-go:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--orange-dark); }
+    .pick-go:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--orange-dark); }
+    .pick-go:disabled { opacity: .6; cursor: default; transform: none; }
+    .pick-go.mega { background: #F2B705; border-color: #B38600; color: #4A3400; box-shadow: 0 4px 0 #B38600; }
+    .code-box { margin-top: 16px; padding: 14px; border-radius: 16px; background: var(--orange-cream); border: 2px dashed var(--orange-light); }
+    .code-box-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .code-box-head b { font-size: 14px; font-weight: 900; }
+    .code-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .code-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-radius: 12px; background: white; border: 2px solid var(--border); font-family: ui-monospace, Menlo, monospace; font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+    .code-copy { padding: 5px 10px; border-radius: 9px; border: 2px solid var(--border); background: white; font: inherit; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900; color: var(--orange); cursor: pointer; letter-spacing: 0; }
+    .code-copy.done { color: var(--green-dark); border-color: var(--green-light); }
   </style>
 <link rel="stylesheet" href="/logo-theme.css">
 <link rel="stylesheet" href="/hover-steady.css">
@@ -748,6 +795,37 @@
     el.className = 'comp-msg ' + (ok ? 'ok' : 'err');
   }
 
+  // Picker helpers (gift codes and comped plans).
+  const GIFT_PRICES = { '1m': [9.99, 12.99], '3m': [29.99, 36.99], '12m': [79.99, 99.99] };
+  function picked(name) { return document.querySelector(`[data-pick="${name}"] .choice[aria-pressed="true"]`)?.dataset.value || ''; }
+  function giftCountValue() { const n = Math.round(Number(document.getElementById('giftCount')?.value)); return Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 1; }
+  function giftKey() { return (picked('giftPlan') === 'mega' ? 'mega-' : '') + (picked('giftLen') || '1m'); }
+  function syncPickers() {
+    const mega = picked('giftPlan') === 'mega', len = picked('giftLen') || '1m', n = giftCountValue();
+    const lenText = { '1m': '1 month', '3m': '3 months', '12m': '12 months' }[len];
+    const each = GIFT_PRICES[len][mega ? 1 : 0];
+    const summary = document.getElementById('giftSummary');
+    if (summary) summary.innerHTML = `${n} code${n === 1 ? '' : 's'} for <b>${lenText} of ${mega ? '💎 Mega Knox' : '⚡ Knox Plus'}</b> · worth $${each.toFixed(2)} each`;
+    const go = document.getElementById('giftSubmit');
+    if (go) { go.textContent = `Make ${n} code${n === 1 ? '' : 's'}`; go.classList.toggle('mega', mega); }
+    const tier = picked('compTier'), give = document.getElementById('compSubmit');
+    if (give) {
+      give.textContent = tier === 'mega' ? 'Give free Mega Knox' : tier === 'ambassador' ? 'Make them a Knox Ambassador' : 'Give free Knox Plus';
+      give.classList.toggle('mega', tier !== 'plus');
+    }
+    document.querySelectorAll('#giftForm [data-step]').forEach(b => { b.disabled = b.dataset.step === '-1' ? n <= 1 : n >= 50; });
+  }
+  function showGiftCodes(box, codes, label) {
+    box.hidden = false;
+    box.innerHTML = `<div class="code-box-head"><b>🎁 ${escHtml(label)}</b><button type="button" class="code-copy" data-copy-all>Copy all</button></div>
+      <div class="code-list">${codes.map(c => `<span class="code-pill">${escHtml(c)}<button type="button" class="code-copy" data-copy="${escHtml(c)}">Copy</button></span>`).join('')}</div>`;
+    box.onclick = async e => {
+      const b = e.target.closest('.code-copy'); if (!b) return;
+      try { await navigator.clipboard.writeText(b.hasAttribute('data-copy-all') ? codes.join('\n') : b.dataset.copy); b.textContent = 'Copied ✓'; b.classList.add('done'); }
+      catch (_) { b.textContent = 'Select & copy'; }
+    };
+  }
+
   function renderCompPanel() {
     const panel = document.getElementById('compPanel');
     panel.innerHTML = `
@@ -759,11 +837,20 @@
           Knox Ambassadors get Mega Knox. Pick a different plan for someone already comped to change it.
           If they also pay for a plan, removing the comp keeps the plan they pay for.
         </p>
-        <form class="comp-form" id="compForm" autocomplete="off">
-          <input id="compEmail" type="email" placeholder="their@email.com" required maxlength="254">
-          <select id="compTier" aria-label="Plan to give"><option value="plus">⚡ Knox Plus</option><option value="mega">💎 Mega Knox</option><option value="ambassador">🦊 Knox Ambassador (Mega)</option></select>
-          <input id="compNote" type="text" placeholder="Note (optional), e.g. beta tester" maxlength="200">
-          <button class="comp-btn" id="compSubmit" type="submit">Give free plan</button>
+        <form class="pick-form" id="compForm" autocomplete="off">
+          <div class="pick-row">
+            <span class="pick-label" id="compTierLabel">Plan</span>
+            <div class="choices" role="group" aria-labelledby="compTierLabel" data-pick="compTier">
+              <button type="button" class="choice" data-value="plus" aria-pressed="true">⚡ Knox Plus</button>
+              <button type="button" class="choice mega" data-value="mega" aria-pressed="false">💎 Mega Knox</button>
+              <button type="button" class="choice amb" data-value="ambassador" aria-pressed="false">🦊 Knox Ambassador <small>Mega</small></button>
+            </div>
+          </div>
+          <div class="pick-inputs">
+            <input id="compEmail" type="email" placeholder="their@email.com" required maxlength="254" aria-label="Their email">
+            <input id="compNote" type="text" placeholder="Note (optional), e.g. beta tester" maxlength="200" aria-label="Note">
+          </div>
+          <button class="pick-go" id="compSubmit" type="submit">Give free Knox Plus</button>
         </form>
         <div class="comp-msg" id="compMsg"></div>
         <div class="comp-list" id="compList"><div class="comp-empty">Loading…</div></div>
@@ -775,14 +862,41 @@
           For giveaways and contests. Each code works once and never expires — anyone enters it at knoxknowsapp.com/redeem.
           It's time-limited Knox Plus or Mega Knox, not a subscription.
         </p>
-        <form class="comp-form" id="giftForm" autocomplete="off">
-          <select id="giftLength" aria-label="Gift"><option value="1m">⚡ Plus · 1 month</option><option value="3m">⚡ Plus · 3 months</option><option value="12m">⚡ Plus · 12 months</option><option value="mega-1m">💎 Mega · 1 month</option><option value="mega-3m">💎 Mega · 3 months</option><option value="mega-12m">💎 Mega · 12 months</option></select>
-          <input id="giftCount" type="number" min="1" max="50" value="1" aria-label="How many codes">
-          <input id="giftNote" type="text" placeholder="Note (optional), e.g. Discord giveaway" maxlength="200">
-          <button class="comp-btn" id="giftSubmit" type="submit">Make codes</button>
+        <form class="pick-form" id="giftForm" autocomplete="off">
+          <div class="pick-row">
+            <span class="pick-label" id="giftPlanLabel">Plan</span>
+            <div class="choices" role="group" aria-labelledby="giftPlanLabel" data-pick="giftPlan">
+              <button type="button" class="choice" data-value="plus" aria-pressed="true">⚡ Knox Plus</button>
+              <button type="button" class="choice mega" data-value="mega" aria-pressed="false">💎 Mega Knox</button>
+            </div>
+          </div>
+          <div class="pick-row">
+            <span class="pick-label" id="giftLenLabel">How long</span>
+            <div class="choices" role="group" aria-labelledby="giftLenLabel" data-pick="giftLen">
+              <button type="button" class="choice" data-value="1m" aria-pressed="true">1 month</button>
+              <button type="button" class="choice" data-value="3m" aria-pressed="false">3 months</button>
+              <button type="button" class="choice" data-value="12m" aria-pressed="false">12 months</button>
+            </div>
+          </div>
+          <div class="pick-inputs">
+            <div class="pick-row" style="gap:6px">
+              <span class="pick-label" id="giftCountLabel">How many</span>
+              <div class="stepper">
+                <button type="button" data-step="-1" aria-label="One fewer">−</button>
+                <input id="giftCount" type="number" min="1" max="50" value="1" aria-labelledby="giftCountLabel">
+                <button type="button" data-step="1" aria-label="One more">+</button>
+              </div>
+            </div>
+            <div class="pick-row" style="gap:6px;flex:1 1 240px">
+              <span class="pick-label">Note <span style="text-transform:none;letter-spacing:0">(optional)</span></span>
+              <input id="giftNote" type="text" placeholder="e.g. Discord giveaway" maxlength="200" aria-label="Note" style="flex:1 1 auto">
+            </div>
+          </div>
+          <div class="pick-summary" id="giftSummary"></div>
+          <button class="pick-go" id="giftSubmit" type="submit">Make 1 code</button>
         </form>
         <div class="comp-msg" id="giftMsg"></div>
-        <textarea id="giftCodes" readonly rows="4" style="display:none;width:100%;margin-top:10px;font-family:monospace;font-size:14px;padding:10px;border-radius:10px;" aria-label="New gift codes"></textarea>
+        <div class="code-box" id="giftCodes" hidden></div>
       </div>`;
 
     document.getElementById('compForm').addEventListener('submit', async (e) => {
@@ -794,7 +908,7 @@
       btn.disabled = true;
       compMessage('', true);
       try {
-        const tier = document.getElementById('compTier').value;
+        const tier = picked('compTier');
         const name = tier === 'plus' ? 'Knox Plus' : tier === 'mega' ? 'Mega Knox' : 'Knox Ambassador (Mega Knox)';
         const r = await compFetch('POST', { action: 'grant', email, note, tier });
         compMessage(r.already ? `${r.email} already has comped ${name}.` : `Gave free ${name} to ${r.email}.`, true);
@@ -813,24 +927,37 @@
       const btn = document.getElementById('giftSubmit'), msg = document.getElementById('giftMsg'), out = document.getElementById('giftCodes');
       btn.disabled = true; msg.textContent = '';
       try {
-        const r = await compFetch('POST', { action: 'gift-codes', gift: document.getElementById('giftLength').value, count: document.getElementById('giftCount').value, note: document.getElementById('giftNote').value.trim() });
-        out.value = r.codes.join('\n'); out.style.display = 'block'; out.select();
-        msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'} for ${r.label} of Knox Plus — copy them now.`; msg.className = 'comp-msg ok';
+        const r = await compFetch('POST', { action: 'gift-codes', gift: giftKey(), count: giftCountValue(), note: document.getElementById('giftNote').value.trim() });
+        showGiftCodes(out, r.codes, r.label);
+        msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'}: ${r.label}. Copy them now; they aren't shown again.`; msg.className = 'comp-msg ok';
       } catch (err) { msg.textContent = err.message; msg.className = 'comp-msg err'; }
       finally { btn.disabled = false; }
     });
 
+    // Choice buttons: one pressed per group; the summaries and buttons follow.
+    document.querySelectorAll('#compPanel .choices').forEach(group => group.addEventListener('click', e => {
+      const b = e.target.closest('.choice'); if (!b) return;
+      group.querySelectorAll('.choice').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
+      syncPickers();
+    }));
+    document.querySelectorAll('#giftForm [data-step]').forEach(b => b.addEventListener('click', () => {
+      document.getElementById('giftCount').value = Math.min(50, Math.max(1, giftCountValue() + Number(b.dataset.step)));
+      syncPickers();
+    }));
+    document.getElementById('giftCount').addEventListener('input', syncPickers);
+    syncPickers();
+
     document.getElementById('compList').addEventListener('click', async (e) => {
       const btn = e.target.closest('.comp-remove');
       if (!btn) return;
-      const who = btn.dataset.label || 'this user';
-      if (!confirm(`Remove free Knox Plus from ${who}?`)) return;
+      const who = btn.dataset.label || 'this user', plan = btn.dataset.plan || 'Knox Plus';
+      if (!confirm(`Remove free ${plan} from ${who}?`)) return;
       btn.disabled = true;
       try {
         const r = await compFetch('POST', { action: 'revoke', uid: btn.dataset.uid });
         compMessage(r.result === 'kept-paid'
-          ? `Removed the comp from ${who}. They keep Knox Plus because they pay for it.`
-          : `Removed free Knox Plus from ${who}.`, true);
+          ? `Removed the comp from ${who}. They keep the plan they pay for.`
+          : `Removed free ${plan} from ${who}.`, true);
         await loadComped();
       } catch (err) {
         compMessage(err.message, false);
@@ -845,7 +972,7 @@
     try {
       const { comped } = await compFetch('GET');
       if (!comped.length) {
-        list.innerHTML = '<div class="comp-empty">Nobody has Comped Knox Plus yet.</div>';
+        list.innerHTML = '<div class="comp-empty">Nobody has a comped plan yet.</div>';
         return;
       }
       list.innerHTML = comped.map(c => {
@@ -859,11 +986,11 @@
             </div>
             <span class="comp-tag" style="${c.tier === 'mega' ? 'background:#FFF3C4;color:#8A5A00;border-color:#F2B705;' : ''}">${c.ambassador ? '🦊 Ambassador' : c.tier === 'mega' ? '💎 Mega' : '⚡ Plus'}</span>
             ${c.alsoPaying ? '<span class="comp-tag">Also paying</span>' : ''}
-            <button class="comp-remove" type="button" data-uid="${escHtml(c.uid)}" data-label="${escHtml(label)}">Remove</button>
+            <button class="comp-remove" type="button" data-uid="${escHtml(c.uid)}" data-label="${escHtml(label)}" data-plan="${c.tier === 'mega' ? 'Mega Knox' : 'Knox Plus'}">Remove</button>
           </div>`;
       }).join('');
     } catch (err) {
-      list.innerHTML = '<div class="comp-empty">Could not load Comped Knox Plus users: ' + escHtml(err.message) + '</div>';
+      list.innerHTML = '<div class="comp-empty">Could not load comped plans: ' + escHtml(err.message) + '</div>';
     }
   }
 
@@ -973,7 +1100,7 @@
         <div class="metric-card purple">
           <div class="metric-label">All-time trials</div>
           <div class="metric-value">${fmt(trials.list.length)}</div>
-          <div class="metric-sub">Every Knox Plus trial started</div>
+          <div class="metric-sub">Every Mega Knox trial started</div>
         </div>
       </div>
       <div class="card-lg card" style="margin-top:16px;">
@@ -1036,10 +1163,10 @@
           <div style="margin-top:14px;">
             ${planBar('Free',      users.byPlan.free, users.total, 'orange')}
             ${planBar('⚡ Knox Plus (paying)', users.byPlan.super || 0, users.total, 'green')}
-            ${planBar('💎 Mega Knox (paying)', users.byPlan.max || 0, users.total, 'orange')}
+            ${planBar('💎 Mega Knox (paying)', users.byPlan.max || 0, users.total, 'gold')}
             ${planBar('Free trial (Mega Knox)', users.byPlan.trial || 0, users.total, 'purple')}
-            ${planBar('Comped Knox Plus', users.byPlan.comped || 0, users.total, 'blue')}
-            ${planBar('Comped Mega Knox' + (users.byPlan.ambassadors ? ` (${users.byPlan.ambassadors} Ambassador${users.byPlan.ambassadors === 1 ? '' : 's'})` : ''), users.byPlan.compedMega || 0, users.total, 'blue')}
+            ${planBar('⚡ Comped Knox Plus', users.byPlan.comped || 0, users.total, 'blue')}
+            ${planBar('💎 Comped Mega Knox' + (users.byPlan.ambassadors ? ` (${users.byPlan.ambassadors} Ambassador${users.byPlan.ambassadors === 1 ? '' : 's'})` : ''), users.byPlan.compedMega || 0, users.total, 'blue')}
           </div>
         </div>
       </div>
@@ -1093,10 +1220,11 @@
           <div class="metric-label">Satisfaction by plan</div>
           <div style="margin-top:14px;">
             ${modeBar('Free',      feedback.byPlan.free, 'orange')}
-            ${modeBar('Knox Plus', {
-              up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.max?.up   || 0) + (feedback.byPlan.plus?.up   || 0),
-              down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.max?.down || 0) + (feedback.byPlan.plus?.down || 0),
+            ${modeBar('⚡ Knox Plus', {
+              up:   (feedback.byPlan.super?.up   || 0) + (feedback.byPlan.plus?.up   || 0),
+              down: (feedback.byPlan.super?.down || 0) + (feedback.byPlan.plus?.down || 0),
             }, 'green')}
+            ${modeBar('💎 Mega Knox', feedback.byPlan.max || { up: 0, down: 0 }, 'gold')}
           </div>
         </div>
       </div>
@@ -1286,8 +1414,8 @@
     const items = [
       ['⚡ Knox Plus Monthly', byPlan.super_monthly || 0, 'green'],
       ['⚡ Knox Plus Yearly',  byPlan.super_yearly  || 0, 'green'],
-      ['💎 Mega Knox Monthly', byPlan.max_monthly   || 0, 'orange'],
-      ['💎 Mega Knox Yearly',  byPlan.max_yearly    || 0, 'orange'],
+      ['💎 Mega Knox Monthly', byPlan.max_monthly   || 0, 'gold'],
+      ['💎 Mega Knox Yearly',  byPlan.max_yearly    || 0, 'gold'],
     ];
     const total = items.reduce((s, [, n]) => s + n, 0) || 1;
     return items.map(([label, n, c]) => `
