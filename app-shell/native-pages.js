@@ -2,7 +2,7 @@
    signed-in history/deck stores; never invent progress, credits or streaks. */
 window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const $=id=>document.getElementById(id),w=window;
- const model=import('/assets/home-model.js');
+ const model=import((w.knoxShellBase||'/assets/')+'home-model.js');
  const home=document.createElement('section'),account=document.createElement('section');
  home.id='knoxMobileHome';account.id='knoxMobileAccount';home.className=account.className='knox-mobile-page';home.hidden=account.hidden=true;
  home.setAttribute('aria-label','Home');account.setAttribute('aria-label','You');
@@ -44,7 +44,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   </div></section>
   <div class="km-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund">Refund policy</a></div>
   <button type="button" class="km-signout km-press" data-action="signout">Sign out</button>
-  <p class="km-footer-note">Knox Knows · ${w.knoxMobileConfig.version}</p>
+  <p class="km-footer-note">Knox Knows${w.knoxMobileConfig?.version&&w.knoxMobileConfig.version!=='web'?' · '+w.knoxMobileConfig.version:''}</p>
  </div>`;
  let historyOwner=w.currentUser?.uid||'guest',renderVersion=0,refreshAt=0,refreshOwner='',refreshing=false;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -86,7 +86,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   const {planDetails}=await model,plan=planDetails(w.userTier);
   const d=dialog('Find your kind of Knox.','Your current plan follows your account on every device.');
   const wrap=document.createElement('div');wrap.className='km-plan-list';wrap.innerHTML=plan.plans.map(p=>`<article data-tier="${p.id}" class="km-plan-option"><span class="km-tier" data-tier="${p.id}">${p.id===plan.current.id?'Your plan':esc(p.label)}</span><h3>${esc(p.name)}</h3><ul>${p.features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></article>`).join('');d.append(wrap);
-  const explain=document.createElement('p');explain.className='km-plan-note';explain.textContent='Your existing subscription works here. Plan purchases aren’t available inside the app yet.';d.append(explain);button(d,'Done',()=>d.close());d.showModal();const heading=d.querySelector('h2');heading.tabIndex=-1;heading.focus({preventScroll:true});d.scrollTop=0;
+  const explain=document.createElement('p');explain.className='km-plan-note';explain.textContent=w.knoxNativeApp?'Your existing subscription works here. Plan purchases aren’t available inside the app yet.':'Manage your plan any time from Account & settings.';d.append(explain);button(d,'Done',()=>d.close());d.showModal();const heading=d.querySelector('h2');heading.tabIndex=-1;heading.focus({preventScroll:true});d.scrollTop=0;
  }
  async function action(e){
   const b=e.target.closest('button');if(!b)return;
@@ -97,7 +97,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   switch(b.dataset.action){
    case 'history':if(!w.currentUser){w.openAuthModal?.();break;}w.openMobileHistory?.();break;
    case 'signin':w.openAuthModal?.();break;
-   case 'plans':plans();break;
+   case 'plans':if(!w.knoxNativeApp&&w.currentUser?.uid&&w.userTier!=='mega'){location.href='/about#pricing';break;}plans();break;
    case 'settings':w.openAppSettings?.();break;
    case 'credits':w.openUsageInfo?.();break;
    case 'streak':{

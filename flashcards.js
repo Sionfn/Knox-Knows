@@ -31,7 +31,7 @@ const flavorOf=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))
 let pendingMessage='';
 
 function load(){ identity=key(); session=null; editing=null; dirty=false; try{const raw=JSON.parse(localStorage.getItem(identity)||'[]'); if(!Array.isArray(raw))throw Error(); decks=raw.filter(d=>{try{validateDeck(d);return typeof d.id==='string';}catch{return false;}});}catch{decks=[];pendingMessage='Saved decks could not be read. Import a backup to recover them.';} }
-function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();if(window.knoxNativeApp)window.dispatchEvent(new Event('knox-mobile-data'));return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
+function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();if(window.knoxAppShell)window.dispatchEvent(new Event('knox-mobile-data'));return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
 
 // ── Decks in the student's account (window.knoxDeckStore in app.html) ──
 // This browser keeps the decks (fast, works offline). Every change is
@@ -782,8 +782,8 @@ panel.addEventListener('click',async e=>{
 document.addEventListener('keydown',e=>{if(e.target?.id==='fcMakeReq'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();panel.querySelector('[data-action="make-go"]')?.click();return;}if(!panel.hidden&&session&&e.key==='Escape'){e.preventDefault();home();return;}if(panel.hidden||!session||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'&&e.target.tagName==='BUTTON')return;const action=e.code==='Space'?'flip':({'1':'again','2':'good','3':'easy'}[e.key]);const b=action&&panel.querySelector(`[data-action="${action}"]`);if(b){e.preventDefault();b.click();}});
 load();
 
-// Native tabs suspend the panel without discarding an editor, files or review.
-if(window.knoxNativeApp){
+// App tabs (iPhone app and home-screen version) suspend the panel without discarding an editor, files or review.
+if(window.knoxAppShell){
  let mobileOpened=false;
  window.knoxFlashcardsMobile={
   async show(){if(!canSee())return false;if(!mobileOpened || identity!==key()){await open();mobileOpened=!panel.hidden;}else{document.body.classList.add('knox-flashcards');panel.hidden=false;}return !panel.hidden;},

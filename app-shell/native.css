@@ -11,9 +11,10 @@ html.native-app .app-logo-text { font-size:18px; }
 html.native-app .header-right { margin-left:auto; }
 html.native-app #mobileHistoryBtn { display:flex!important; min-width:44px; min-height:44px; }
 html.native-app #sidebarPromoRotator,html.native-app a[href*="chromewebstore"],
-html.native-app #mobileHistoryDrawer .sidebar-quicknav,html.native-app [onclick*="knoxGifts"],
-html.native-app [onclick*="openGift"],html.native-app [onclick*="goToPricing"],
-html.native-app [data-action="upgrade"] { display:none!important; }
+html.native-app #mobileHistoryDrawer .sidebar-quicknav { display:none!important; }
+/* App Store rules: no purchase paths inside the iPhone app (the website's home-screen version keeps them). */
+html.native-app:not(.web-shell) [onclick*="knoxGifts"],html.native-app:not(.web-shell) [onclick*="openGift"],
+html.native-app:not(.web-shell) [onclick*="goToPricing"],html.native-app:not(.web-shell) [data-action="upgrade"] { display:none!important; }
 html.native-app #mobileHistoryDrawer .drawer-panel { width:min(90vw,420px); }
 html.native-app #appChatInput,html.native-app input,html.native-app textarea { font-size:16px; }
 html.native-app #inputOuter { padding-bottom:10px; }
@@ -277,3 +278,8 @@ html.native-app .knox-app-tabs button[aria-current="page"] { color:var(--text) !
 .knox-app-tabs button[data-tab="flashcards"] .km-tab-tile { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
 .knox-app-tabs button[data-tab="account"] .km-tab-tile { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
 @media (prefers-reduced-motion:reduce) { .km-press, .km-tab-tile { transition:none; } .km-press:active { transform:none; } }
+
+/* Website home-screen version: iOS paints the status strip from a fixed element
+   at the very top, so give it the page's color instead of the website's orange. */
+html.web-shell #statusTint { display:block!important; position:fixed; top:0; left:0; right:0; height:6px; z-index:120; pointer-events:none; background:var(--cream); }
+html.web-shell .knox-mobile-page { padding-top:18px; }

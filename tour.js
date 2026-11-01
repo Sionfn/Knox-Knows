@@ -92,6 +92,20 @@
     const news = opts.kind === 'news';
     if (news) { try { localStorage.setItem(newsKey(), '1'); } catch (e) {} } else markSeen();
     const list = news ? whatsNewSteps(first) : steps(first);
+    // The app (and the website's home-screen version) has a tab bar instead of the sidebar.
+    if (window.knoxAppShell) for (const step of list) {
+      if (step.target?.includes('data-nav="learn"')) step.target = '.knox-app-tabs [data-tab="learn"]';
+      if (step.target?.includes('.fc-nav')) step.target = '.knox-app-tabs [data-tab="flashcards"]';
+      if (step.target?.includes('data-nav="calculator"')) { step.target = '.knox-app-tabs [data-tab="home"]'; step.text = 'Calculator lives on Home and beside your typing area. Work out the numbers, then tap Explain it to learn why.'; }
+      if (step.target === '#inputOuter') step.target = '.knox-app-tabs [data-tab="chat"]';
+      if (step.target?.includes('#sidebarControlsSlot') || step.target?.includes('#appUpgradeBtn')) { step.target = '.knox-app-tabs [data-tab="account"]'; if (step.title !== 'Meet Mega Knox') step.text = 'Open You for your account, plan, questions, streak and calendar. Choose your favorite appearance there too.'; }
+      if (step.title === 'You’re all set!') step.text = 'Open You for settings, your streak, appearance and Help & support. Home keeps your recent work and study tools together.';
+      if (window.knoxNativeApp) {
+        delete step.extra;
+        if (step.title === 'Meet Mega Knox') step.text = 'Your Knox plan follows your account. Sign in with the same account you use on your other devices.';
+        if (step.finish && step.id !== 'fest') step.finish = () => window.Capacitor.Plugins.Browser.open({ url: 'https://www.knoxknowsapp.com/updates' });
+      }
+    }
     let i = 0, spot = null;
     const layer = document.createElement('div');
     layer.className = 'kt-layer';

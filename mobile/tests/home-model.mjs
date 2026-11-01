@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {homeSummary,planDetails,escapeHtml} from '../assets/home-model.js';
+import {homeSummary,planDetails,escapeHtml} from '../../app-shell/home-model.js';
 const own={uid:'alice',sourceUid:'alice',decks:[{id:'a',title:'Fractions',count:10,due:3},{id:'b',title:'Biology',count:15,due:7}],history:[{id:'lesson',title:'Adding fractions',kind:'learn'},{id:'question',title:'What is a cell?',kind:'chat'}]};
 test('Home shows real deck counts/due counts and the latest available lesson',()=>{
  const result=homeSummary(own);assert.equal(result.due,10);assert.equal(result.totalCards,25);assert.equal(result.decks[0].id,'b');assert.equal(result.recentLesson.id,'lesson');assert.equal(result.history.length,2);

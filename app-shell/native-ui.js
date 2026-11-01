@@ -1,8 +1,20 @@
-/* App-only navigation and platform integrations. Website behavior stays shared. */
+/* App-only navigation and platform integrations. Website behavior stays shared.
+   Runs in the iPhone app (Capacitor) and in the website's home-screen version
+   (window.knoxAppShell, see app-shell.js), where web stand-ins replace plugins. */
 (function(){
-if(!window.Capacitor?.isNativePlatform?.())return;
+const native=!!window.Capacitor?.isNativePlatform?.();
+if(!native && !window.knoxAppShell)return;
 const $=id=>document.getElementById(id), cap=window.Capacitor;
-const plugin=name=>cap.Plugins?.[name] || cap.registerPlugin(name);
+const noop=async()=>{}, listen=async()=>({remove(){}});
+const WEB={
+ Share:{share:o=>navigator.share?navigator.share(o):Promise.reject(Error('cancel'))},
+ Filesystem:{writeFile:noop,deleteFile:noop}, Camera:{getPhoto:()=>Promise.reject(Error('cancel'))},
+ Keyboard:{addListener:listen,setStyle:noop}, StatusBar:{setStyle:noop}, SplashScreen:{hide:noop}, Haptics:{selectionChanged:noop},
+ Browser:{open:async({url})=>{window.open(url,'_blank','noopener');}},
+ Network:{getStatus:async()=>({connected:navigator.onLine}),addListener:listen},
+ App:{addListener:async(event,fn)=>{if(event==='appStateChange')document.addEventListener('visibilitychange',()=>fn({isActive:document.visibilityState==='visible'}));return{remove(){}};}},
+};
+const plugin=name=>native?(cap.Plugins?.[name] || cap.registerPlugin(name)):WEB[name];
 const p={share:plugin('Share'),files:plugin('Filesystem'),keyboard:plugin('Keyboard'),
  browser:plugin('Browser'),camera:plugin('Camera'),network:plugin('Network'),
  app:plugin('App'),haptics:plugin('Haptics'),splash:plugin('SplashScreen')};
@@ -15,7 +27,7 @@ function button(el,label,fn,cls=''){const b=document.createElement('button');b.t
 // Cache temporary exports only until the share sheet closes; never put private
 // decks in a public documents folder without the student's explicit Save choice.
 let exporting=false;
-window.knoxNativeExport=async(text,filename)=>{
+if(native)window.knoxNativeExport=async(text,filename)=>{
  if(exporting)return false;exporting=true;let path;
  try{
   path='knox-export-'+crypto.randomUUID()+'/'+filename.replace(/[^\w .-]/g,'').slice(0,100);
@@ -47,7 +59,8 @@ function attachments(intoCards=false){
  button(d,'Choose file',()=>{d.close();$(intoCards?'fcDocInput':'appFileInput')?.click();});
  button(d,'Cancel',()=>d.close());d.showModal();
 }
-document.addEventListener('click',e=>{
+// On the website, iPhone's own file menu already offers Take Photo / Photo Library.
+if(native)document.addEventListener('click',e=>{
  const target=e.target.closest('button[onclick*="appFileInput"],button[data-action="doc-pick"]');
  if(target){e.preventDefault();e.stopImmediatePropagation();attachments(target.dataset.action==='doc-pick');}
 },true);
@@ -123,13 +136,18 @@ const offline=document.createElement('div');offline.className='knox-offline';off
 const connection=({connected})=>{offline.hidden=!!connected;if(connected)window.dispatchEvent(new Event('online'));};
 quiet(p.network.getStatus().then(connection));quiet(p.network.addListener('networkStatusChange',connection));
 window.addEventListener('offline',()=>{offline.hidden=false;});window.addEventListener('online',()=>{offline.hidden=true;window.knoxRefreshPlan?.();});
+if(!native){
+ const typing=e=>e.target.matches?.('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]),textarea,[contenteditable="true"]');
+ document.addEventListener('focusin',e=>{if(typing(e))document.documentElement.classList.add('native-keyboard');});
+ document.addEventListener('focusout',e=>{if(typing(e))setTimeout(()=>{if(!typing({target:document.activeElement}))document.documentElement.classList.remove('native-keyboard');},60);});
+}
 for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>document.documentElement.classList.add('native-keyboard')));
 quiet(p.keyboard.addListener('keyboardWillHide',()=>document.documentElement.classList.remove('native-keyboard')));
 function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:'DARK'}));}
 new MutationObserver(chrome).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});chrome();
 quiet(p.app.addListener('appStateChange',({isActive})=>{if(isActive){quiet(p.network.getStatus().then(connection));window.updateUsageIndicator?.();}else $('appChatInput')?.dispatchEvent(new Event('change'));}));
 // Keep external web pages outside the trusted local app webview.
-document.addEventListener('click',e=>{
+if(native)document.addEventListener('click',e=>{
  const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href),local=new URL(location.href),isLocal=u.protocol===local.protocol&&u.host===local.host;
  if(isLocal && ['/app','/app.html','/index.html','/'].includes(u.pathname)){e.preventDefault();return;}
  if(u.protocol==='https:' || (isLocal && /\/(privacy|terms|refund|reviews|updates)(\.html)?$/.test(u.pathname))){
@@ -138,7 +156,7 @@ document.addEventListener('click',e=>{
 },true);
 // The account stays active until the team processes the authenticated request.
 // Do not label a queued request as a completed deletion.
-window.knoxRequestAccountDeletion=function(){
+if(native)window.knoxRequestAccountDeletion=function(){
  const user=window.currentUser;if(!user)return;
  const d=dialog('Delete your account','This requests deletion of your Knox account and associated personal data. The Knox team processes it manually; it is not instant. Required payment records may be retained. A subscription must also be cancelled to stop future charges. Type DELETE to confirm.');
  const label=document.createElement('label');label.textContent='Confirmation';label.htmlFor='knoxDeleteConfirm';const input=document.createElement('input');input.id='knoxDeleteConfirm';input.autocomplete='off';input.spellcheck=false;label.append(input);d.append(label);

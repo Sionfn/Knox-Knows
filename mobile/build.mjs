@@ -12,6 +12,10 @@ for(const entry of await readdir(root,{withFileTypes:true})) {
   if(!entry.isFile() || !/\.(?:js|css|png|jpg|jpeg|svg|webp|ico)$/.test(entry.name)) continue;
   await copyFile(path.join(root,entry.name),path.join(out,entry.name));
 }
+// The app's Home/You screens and tab bar are shared with the website's
+// home-screen version (/app-shell/), so both stay identical.
+await mkdir(path.join(out,'assets'),{recursive:true});
+for(const f of await readdir(path.join(root,'app-shell'))) await copyFile(path.join(root,'app-shell',f),path.join(out,'assets',f));
 for(const dir of ['assets','vendor','fonts']) {
   const base=path.join(mobile,dir); await mkdir(path.join(out,dir),{recursive:true});
   for(const f of await readdir(base)) await copyFile(path.join(base,f),path.join(out,dir,f));
@@ -35,23 +39,8 @@ await writeFile(path.join(out,'doc-extract.js'),reader);
 let cards=await readFile(path.join(out,'flashcards.js'),'utf8');
 cards=cards.replaceAll('This browser keeps an offline copy.','This app keeps an offline copy.').replaceAll('Guest decks stay in this browser.','Guest decks stay on this device.');
 await writeFile(path.join(out,'flashcards.js'),cards);
-let tour=await readFile(path.join(out,'tour.js'),'utf8');
-const tourAnchor='const list = news ? whatsNewSteps(first) : steps(first);';
-if(!tour.includes(tourAnchor))throw Error('Tour changed upstream; review native navigation anchors before packaging.');
-tour=tour.replace(tourAnchor,tourAnchor+`
-    if(window.knoxNativeApp)for(const step of list){
-      if(step.target?.includes('data-nav="learn"'))step.target='.knox-app-tabs [data-tab="learn"]';
-      if(step.target?.includes('.fc-nav'))step.target='.knox-app-tabs [data-tab="flashcards"]';
-      if(step.target?.includes('data-nav="calculator"')){step.target='.knox-app-tabs [data-tab="home"]';step.text='Calculator lives on Home and beside your typing area. Work out the numbers, then tap Explain it to learn why.';}
-      if(step.target==='#inputOuter')step.target='.knox-app-tabs [data-tab="chat"]';
-      if(step.target?.includes('#sidebarControlsSlot')||step.target?.includes('#appUpgradeBtn')){step.target='.knox-app-tabs [data-tab="account"]';if(step.title!=='Meet Mega Knox')step.text='Open You for your account, plan, questions, streak and calendar. Choose your favorite appearance there too.';}
-      delete step.extra;
-      if(step.title==='You’re all set!')step.text='Open You for settings, your streak, appearance and Help & support. Home keeps your recent work and study tools together.';
-      if(step.title==='Meet Mega Knox')step.text='Your Knox plan follows your account. Sign in with the same account you use on your other devices.';
-      if(step.finish && step.id!=='fest')step.finish=()=>window.Capacitor.Plugins.Browser.open({url:'https://www.knoxknowsapp.com/updates'});
-    }
-`);
-await writeFile(path.join(out,'tour.js'),tour);
+// tour.js points its steps at the app tabs itself when window.knoxAppShell is set.
+if(!(await readFile(path.join(out,'tour.js'),'utf8')).includes('window.knoxAppShell'))throw Error('tour.js lost its app-tab steps; review before packaging.');
 let support=await readFile(path.join(out,'support-widget.js'),'utf8');
 const supportAnchor="  const LOGO = '<img";
 if(!support.includes(supportAnchor))throw Error('Support changed upstream; review native help navigation.');
