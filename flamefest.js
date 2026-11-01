@@ -389,6 +389,8 @@
   // "Preview Nov 1 popup" button in the profile menu); nothing is saved.
   function intro(preview) {
     if (preview !== true) {
+      // Only for signed-in students, right after they log in, never for visitors.
+      if (!window.currentUser) return;
       // A new account's tour goes first; the popup follows when it's done.
       if (window.knoxTour?.pending()) { addEventListener('knox-tour-done', () => setTimeout(intro, 600), { once: true }); return; }
       // Never on top of signing in or up: wait until that box is closed (a new
@@ -405,13 +407,11 @@
       <ul class="ff-pop-list"><li>🎁 Hit each week’s goal for a reward</li><li>🛡️ Win Flame Shields that save your streak</li><li>👑 Light 20 flames for the grand prize${window.userTier === 'mega' ? ' — a Mega Knox week to gift a friend' : window.userTier === 'plus' ? ' — two free weeks of Mega Knox' : ' — a free week of Mega Knox'}</li></ul>`,
       [{ label: window.currentUser ? 'Open my calendar' : 'Sign in to join', run: () => window.currentUser ? open() : window.openAuthModal?.() }, { label: 'Later' }]);
   }
-  let started = false;
-  function whenReady() {
-    if (started) return; started = true;
-    setTimeout(intro, 1500);
-  }
-  addEventListener('knox-auth-changed', whenReady);
-  if (document.readyState === 'complete') whenReady(); else addEventListener('load', () => setTimeout(whenReady, 1500));
+  // Each time someone signs in (or the page opens already signed in), try the
+  // popup; it shows once per browser (see the key above) and skips visitors.
+  let introTimer = 0;
+  addEventListener('knox-auth-changed', () => { clearTimeout(introTimer); introTimer = setTimeout(intro, 1500); });
+  if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 
   window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true) };
   // Flames with a fixed look on the page (e.g. the Discord card's Slime Flame) draw right away.
