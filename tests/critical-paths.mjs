@@ -1984,3 +1984,24 @@ test('cancelled subscriptions discard their unresolved switch before a replaceme
  mock.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'canceled',items:{data:[{id:'si_a',price:{id:'price_plus'}}]}});
  const handler=await load('api/create-checkout-session.js',{db,stripe:mock.stripe,env:{STRIPE_PRICE_MEGA_MONTHLY:'price_mega'}});const r=response();await handler(askRequest({plan:'max',billing:'monthly'}),r);assert.equal(r.code,200);assert.ok(r.body.url);assert.equal(store.get('checkoutLocks/u1').switchAttempt,null);
 });
+
+test("an upgrade opens Stripe's confirm page (charge now, only Knox prices); the portal settings are made once", async () => {
+  const f = switchFixture(), sessions = [], configs = [];
+  f.stripe.prices = { retrieve: async id => ({ id, product: id === 'price_mega' ? 'prod_mega' : 'prod_plus' }) };
+  f.stripe.billingPortal = {
+    configurations: { create: async params => { configs.push(plain(params)); return { id: 'bpc_1' }; } },
+    sessions: { create: async params => { sessions.push(plain(params)); return { url: 'https://billing.stripe.com/p/session/test' }; } },
+  };
+  const handler = await switchHandler(f);
+  for (let i = 0; i < 2; i++) {
+    const r = response(); await handler(askRequest({ plan: 'max', billing: 'monthly' }), r);
+    assert.equal(r.code, 200); assert.equal(r.body.url, 'https://billing.stripe.com/p/session/test');
+  }
+  assert.equal(configs.length, 1, 'settings reused');
+  assert.equal(configs[0].features.subscription_update.proration_behavior, 'always_invoice');
+  assert.equal(sessions[0].configuration, 'bpc_1');
+  assert.equal(sessions[0].flow_data.type, 'subscription_update_confirm');
+  assert.deepEqual(sessions[0].flow_data.subscription_update_confirm.items, [{ id: 'si_a', price: 'price_mega', quantity: 1 }]);
+  assert.match(sessions[0].flow_data.after_completion.redirect.return_url, /payment=success&switched=max$/);
+  assert.equal(f.info().calls.length, 0, 'Knox itself changes nothing; Stripe does on confirm');
+});

@@ -53,6 +53,38 @@ const PRICES = {
   get max() { return megaPrices(); },          // Mega Knox $12.99/mo, $99.99/yr
 };
 
+// Stripe portal settings for upgrades: charge the difference right away and
+// offer only Knox's current prices. Made once, then reused (saved in Firestore).
+const UPGRADE_PORTAL_VERSION = 1;
+async function upgradePortalConfig(stripe) {
+  const ref = db.collection('billingConfig').doc('upgradePortal');
+  const saved = (await ref.get()).data();
+  if (saved?.id && saved.version === UPGRADE_PORTAL_VERSION) return saved.id;
+  const priceIds = [PRICES.super.monthly, PRICES.super.yearly, PRICES.max.monthly, PRICES.max.yearly].filter(Boolean);
+  const byProduct = new Map();
+  for (const id of priceIds) {
+    const price = await stripe.prices.retrieve(id);
+    const product = typeof price.product === 'string' ? price.product : price.product?.id;
+    byProduct.set(product, [...(byProduct.get(product) || []), id]);
+  }
+  const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
+  const config = await stripe.billingPortal.configurations.create({
+    business_profile: { headline: 'Upgrade your Knox Knows plan', privacy_policy_url: `${baseUrl}/privacy`, terms_of_service_url: `${baseUrl}/terms` },
+    default_return_url: `${baseUrl}/app`,
+    features: {
+      subscription_update: {
+        enabled: true, default_allowed_updates: ['price'], proration_behavior: 'always_invoice',
+        products: [...byProduct].map(([product, prices]) => ({ product, prices })),
+      },
+      payment_method_update: { enabled: true },
+      invoice_history: { enabled: true },
+    },
+    metadata: { knox: 'upgrade', version: String(UPGRADE_PORTAL_VERSION) },
+  }, { idempotencyKey: `knox-upgrade-portal-v${UPGRADE_PORTAL_VERSION}` });
+  await ref.set({ id: config.id, version: UPGRADE_PORTAL_VERSION });
+  return config.id;
+}
+
 // Which plan a subscription price is: tier 1 = Knox Plus, 2 = Mega Knox.
 function planOfPrice(priceId) {
   for (const [key, tier] of [['super', 1], ['max', 2]]) {
@@ -154,8 +186,28 @@ export default async function handler(req, res) {
         if (currentSubscription.cancel_at_period_end) {
           return res.status(409).json({ error: 'Your plan is set to end. Resume it in Manage billing first, then upgrade.' });
         }
-        // First ask: show the student exactly what Stripe will charge today (the
-        // difference for the rest of this billing period) before changing anything.
+        // First ask: Stripe's own "confirm your plan change" page shows what it
+        // charges today (the difference for the rest of this period) and takes
+        // the payment; its webhook then moves the account to the new plan.
+        if (!req.body?.confirm) {
+          try {
+            const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
+            const session = await stripe.billingPortal.sessions.create({
+              customer: currentSubscription.customer,
+              configuration: await upgradePortalConfig(stripe),
+              return_url: `${baseUrl}/about#pricing`,
+              flow_data: {
+                type: 'subscription_update_confirm',
+                subscription_update_confirm: { subscription: subscriptionId, items: [{ id: currentPrice.id, price: priceId, quantity: 1 }] },
+                after_completion: { type: 'redirect', redirect: { return_url: `${baseUrl}/app?payment=success&switched=${plan === 'max' ? 'max' : 'plus'}` } },
+              },
+            });
+            if (session?.url) return res.status(200).json({ url: session.url, plan, billing });
+          } catch (err) {
+            console.error('Upgrade page unavailable, using the in-app confirm:', err.message);
+          }
+        }
+        // Backup: show the amount in Knox's own box, then switch here.
         if (!req.body?.confirm) {
           const prorationDate = Math.floor(Date.now() / 1000);
           const upcoming = await stripe.invoices.retrieveUpcoming({

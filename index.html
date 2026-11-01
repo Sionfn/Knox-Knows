@@ -4364,7 +4364,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         window.location.href = '/app?payment=success&switched=' + (planKey === 'max' ? 'max' : 'plus');
         return;
       }
-      if (!data.url || new URL(data.url).origin !== 'https://checkout.stripe.com') throw new Error('Invalid checkout link. Please contact support.');
+      // Checkout for new plans; Stripe's billing page to confirm an upgrade.
+      if (!data.url || !['https://checkout.stripe.com', 'https://billing.stripe.com'].includes(new URL(data.url).origin)) throw new Error('Invalid checkout link. Please contact support.');
       window._pendingCheckout = null;
       try { sessionStorage.removeItem('pendingCheckout'); } catch (_) {}
 
