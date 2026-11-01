@@ -4805,7 +4805,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // Firestore does not cascade-delete. Drain every photo batch; a failed
     // query must leave the deleting parent in place so the user can retry.
     while (true) {
-      const photos = await getDocs(query(collection(parent, 'photos'), limit(400)));
+      // permission-denied means the photos rule isn't published, so no photos
+      // could have been saved; any other failure stops here for a retry.
+      const photos = await getDocs(query(collection(parent, 'photos'), limit(400)))
+        .catch(e => { if (e?.code === 'permission-denied') return { docs: [] }; throw e; });
       if (!photos.docs.length) break;
       const batch = writeBatch(db);
       photos.docs.forEach(photo => batch.delete(photo.ref));
