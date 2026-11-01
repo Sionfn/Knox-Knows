@@ -4612,6 +4612,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         if (chatNav) chatNav.classList.add('sidebar-nav-active');
       }
 
+      const userBubbles = []; // to put a Learn lesson's saved photo/file back in its message
       snaps.forEach(s => {
         const d = s.data();
         // User bubble
@@ -4623,6 +4624,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const userInner = document.createElement('div');
         userInner.className = 'msg-user-bubble';
         userInner.appendChild(span);
+        userBubbles.push({ q: d.question || '', inner: userInner, span });
         const userBubble = document.createElement('div');
         userBubble.className = 'msg-user';
         userBubble.appendChild(userInner);
@@ -4650,14 +4652,27 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         window._conversation.push({ role: 'assistant', content: d.answer   || '' });
       });
       if (window._conversation.length > 60) window._conversation = window._conversation.slice(-60);
-      if (window._learnModeActive && materials.source) {
-        const note = document.createElement('p');
-        note.className = 'learn-source-note';
-        note.setAttribute('role', 'status');
-        note.textContent = materials.source.kind === 'document'
-          ? 'Original lesson file restored: ' + materials.source.name
-          : 'Original lesson photo restored.';
-        thread.appendChild(note);
+      // The lesson's saved photo or file goes back into the message that sent it
+      // (marked 📷 / 📄; older saves without a mark: the lesson's first message).
+      if (window._learnModeActive && materials.source && userBubbles.length) {
+        const src = materials.source, isDoc = src.kind === 'document';
+        const marked = userBubbles.filter(b => isDoc ? b.q.startsWith('📄') : /^(?:📷|\[image\])/.test(b.q));
+        const target = marked[marked.length - 1] || userBubbles[0];
+        if (isDoc) {
+          const m = /^📄 .*? — ([\s\S]*)$/.exec(target.q);
+          if (m) target.span.textContent = m[1]; else if (target.q.startsWith('📄')) target.span.remove();
+          const chip = document.createElement('div'); chip.className = 'msg-user-doc';
+          const icon = document.createElement('span'); icon.textContent = '📄';
+          const label = document.createElement('span'); label.textContent = src.name; // textContent → no XSS
+          chip.append(icon, label); target.inner.appendChild(chip);
+        } else {
+          if (/^(?:📷 Photo|\[image\])$/.test(target.q)) target.span.remove();
+          else if (target.q.startsWith('📷 ')) target.span.textContent = target.q.slice(2).trim();
+          const img = document.createElement('img');
+          img.className = 'msg-user-img'; img.alt = 'Attached image';
+          img.src = 'data:' + src.type + ';base64,' + src.data; // type and data are checked in learn-source.js
+          target.inner.appendChild(img);
+        }
       }
       if (window._learnModeActive && !materials.source && (materials.failed || snaps.docs.some(s => /^(?:📄|📷|\[image\])/.test(s.data().question || '')))) {
         const notice = document.createElement('p');
@@ -6282,7 +6297,8 @@ window.appHandleAsk = async function() {
   // What this message is called in history and the sidebar.
   const askLabel = q || (doc ? '📄 ' + doc.name : '📷 Photo');
   if (requestUid) window.knoxHistoryPending?.(askLabel, requestConversationId, requestLearnMode);
-  const savedQuestion = (doc ? '📄 ' + doc.name + (q ? ' — ' + q : '') : askLabel).slice(0, 8000);
+  // A photo sent with text is saved as "📷 text", so a reopened lesson knows where its photo goes.
+  const savedQuestion = (doc ? '📄 ' + doc.name + (q ? ' — ' + q : '') : image && q ? '📷 ' + q : askLabel).slice(0, 8000);
   // Learn follow-ups re-attach the session's homework photo (not shown again)
   // so Knox can keep checking answers against it. Signed-in only: Learn
   // follow-ups are free for them, but a guest photo would use their quota.
