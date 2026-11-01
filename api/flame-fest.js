@@ -128,7 +128,10 @@ export default async function handler(req, res) {
   try { decoded = await adminAuth.verifyIdToken(authHeader.slice(7)); }
   catch { return res.status(401).json({ error: "Please sign in again." }); }
   const uid = decoded.uid;
-  const tester = isTester(decoded);
+  // Tester mode only when the page asks for it (?flamefest=test sends this
+  // header), so the admin account is a normal account everywhere else,
+  // including the Chrome extension.
+  const tester = isTester(decoded) && String(req.headers["x-knox-flame-test"] || "") === "1";
   const userRef = db.collection("users").doc(uid);
   // testerReady: false when this deployment has no ADMIN_UID (so ?flamefest=test
   // can say why tester mode is missing).

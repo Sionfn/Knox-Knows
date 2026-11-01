@@ -50,7 +50,7 @@
     const user = window.currentUser;
     if (!user?.getIdToken) throw new Error('Sign in to join Flame Fest.');
     const r = await fetch('/api/flame-fest', {
-      method, headers: { 'Authorization': 'Bearer ' + await user.getIdToken(), ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      method, headers: { 'Authorization': 'Bearer ' + await user.getIdToken(), ...(testMode && !demo ? { 'X-Knox-Flame-Test': '1' } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000),
     });
     const data = await r.json().catch(() => ({}));
@@ -181,11 +181,21 @@
       if (!demo) { window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
     } catch (e) { btn.disabled = false; btn.textContent = 'Claim'; toast(e.message); }
   }
+  // The new flame shows at once and saves in the background; if saving fails it
+  // switches back. Quick taps: only the last one's answer counts.
+  let styleSeq = 0;
   async function pickStyle(style) {
+    if (!state || state.flameStyle === style) return;
+    const before = state.flameStyle, seq = ++styleSeq;
+    state.flameStyle = style; render(); applyFlameStyle(style);
+    if (demo) return;
     try {
-      if (demo) state.flameStyle = style; else state = await api('POST', { style });
-      render(); applyFlameStyle(state.flameStyle);
-    } catch (e) { toast(e.message); }
+      const saved = await api('POST', { style });
+      if (seq === styleSeq) { state = saved; render(); applyFlameStyle(state.flameStyle); }
+    } catch (e) {
+      if (seq !== styleSeq) return;
+      state.flameStyle = before; render(); applyFlameStyle(before); toast(e.message);
+    }
   }
   function celebrate(r) {
     const box = wrap?.querySelector('.ff-card');
@@ -381,6 +391,10 @@
     if (preview !== true) {
       // A new account's tour goes first; the popup follows when it's done.
       if (window.knoxTour?.pending()) { addEventListener('knox-tour-done', () => setTimeout(intro, 600), { once: true }); return; }
+      // Never on top of signing in or up: wait until that box is closed (a new
+      // account then gets its tour first, and this popup after it).
+      const auth = document.getElementById('authModal');
+      if (auth && getComputedStyle(auth).display !== 'none') { setTimeout(intro, 1500); return; }
       if (!active() || today() > END) return; // not during the Dec 1–7 claim week
       const key = 'knoxFlameFestIntro2026';
       try { if (!demo && localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}

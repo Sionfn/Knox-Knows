@@ -1352,7 +1352,13 @@ test('Flame Fest tester mode: admin only; their own plan rewards for real before
   assert.equal(plainGet.body.tester, undefined);
 
   const handler = await load('api/flame-fest.js', { db, date, adminUid: 'u1' });
-  const call = async (method, body) => { const res = response(); await handler(ffReq(method, body), res); return res; };
+  // The admin account is a normal account unless the page asks for tester mode
+  // (?flamefest=test sends X-Knox-Flame-Test), e.g. in the Chrome extension.
+  const normal = response(); await handler(ffReq('GET'), normal);
+  assert.equal(normal.body.tester, undefined, 'admin without tester mode looks normal');
+  const blocked = response(); await handler(ffReq('POST', { test: 'fill' }), blocked);
+  assert.equal(blocked.code, 403, 'tester actions need tester mode');
+  const call = async (method, body) => { const res = response(); const req = ffReq(method, body); req.headers['x-knox-flame-test'] = '1'; await handler(req, res); return res; };
   assert.equal((await call('POST', { test: 'miss', localDay: '2026-10-13' })).code, 400, 'needs a shield first');
   let res = await call('POST', { test: 'fill' });
   assert.equal(res.body.tester, true);
