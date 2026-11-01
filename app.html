@@ -1823,7 +1823,7 @@
     .usage-info-plan.mega { color: #8A5A00; background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #F2B705; }
     html[data-theme="dark"]:not(.knox-seasonal) .usage-info-plan.mega { color: #FFD45C; background: rgba(242,183,5,.16); }
     .usage-info-card.mega { background: linear-gradient(180deg, #FFF3C4 0%, var(--surface) 42%); border-color: #F2B705; box-shadow: 0 6px 0 #C99404, 0 20px 50px rgba(0,0,0,.18); }
-    html[data-theme="dark"]:not(.knox-seasonal) .usage-info-card.mega { background: linear-gradient(180deg, rgba(242,183,5,.16) 0%, var(--surface) 42%); }
+    html[data-theme="dark"]:not(.knox-seasonal) .usage-info-card.mega { background: linear-gradient(180deg, rgba(242,183,5,.16) 0%, transparent 42%), var(--surface); } /* tint over a solid card, never see-through */
     .usage-info-card.mega ul li strong { color: #9A6B00; }
     html[data-theme="dark"]:not(.knox-seasonal) .usage-info-card.mega ul li strong { color: #FFD45C; }
     .usage-info-card ul li a { color: inherit; font-weight: 800; text-decoration: underline; }
