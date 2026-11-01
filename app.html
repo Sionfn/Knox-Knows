@@ -5081,7 +5081,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   function showWelcomeModal(name) {
     // New accounts get the "Show me around" tour (tour.js), which starts with the welcome.
-    if (window.knoxTour) { window.knoxTour.start({ name, welcomeEmail: true }); return; }
+    if (window.knoxTour) { window.knoxTour.welcome({ name, welcomeEmail: true }); return; }
     const firstName = (name || '').split(' ')[0] || 'friend';
     const modal = document.createElement('div');
     modal.className = 'modal-backdrop';

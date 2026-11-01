@@ -191,11 +191,18 @@
     const news = !forced && !(made && Date.now() - made < 3 * DAY) && today() >= '2026-11-01' && today() <= '2026-11-30' && !newsSeen();
     if (!isNew && !news) return;
     if (!forced && /[?&]open=/.test(location.search)) return; // came here for something specific
+    whenReady(news ? { kind: 'news' } : {});
+  }
+  // Start once the app is on screen (not under the loading screen or sign-in box).
+  let readyGen = 0;
+  function whenReady(opts) {
+    if (running) return;
     waiting = true;
+    const gen = ++readyGen; // a newer request replaces this one
     let tries = 0;
     (function check() {
-      if (!waiting) return;
-      if (!busy()) return start(news ? { kind: 'news' } : {});
+      if (!waiting || gen !== readyGen) return;
+      if (!busy()) return start(opts);
       if (++tries < 40) setTimeout(check, 500); else { waiting = false; dispatchEvent(new Event('knox-tour-done')); }
     })();
   }
@@ -204,5 +211,6 @@
     if (!waiting && !running) dispatchEvent(new Event('knox-tour-done'));
   }, 900));
 
-  window.knoxTour = { start, whatsNew: () => start({ kind: 'news' }), pending: () => !checked || waiting || running };
+  // welcome: a brand-new sign-up (the welcome email note), replacing any check already waiting.
+  window.knoxTour = { start, welcome: opts => whenReady(opts), whatsNew: () => start({ kind: 'news' }), pending: () => !checked || waiting || running };
 })();
