@@ -53,6 +53,16 @@ const PRICES = {
   get max() { return megaPrices(); },          // Mega Knox $12.99/mo, $99.99/yr
 };
 
+// Which plan a subscription price is: tier 1 = Knox Plus, 2 = Mega Knox.
+function planOfPrice(priceId) {
+  for (const [key, tier] of [['super', 1], ['max', 2]]) {
+    const prices = PRICES[key];
+    if (priceId && priceId === prices.monthly) return { tier, yearly: false };
+    if (priceId && priceId === prices.yearly) return { tier, yearly: true };
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   // Preview shares the production Stripe keys but cannot receive production
@@ -132,15 +142,44 @@ export default async function handler(req, res) {
       if (pendingSwitch && (pendingSwitch.subscriptionId !== subscriptionId || pendingSwitch.priceId !== priceId || pendingSwitch.billing !== billing)) {
         return res.status(409).json({ error: 'Your previous plan change is still being confirmed. Retry that selection before choosing another plan.' });
       }
+      if (active && currentPrice && currentPrice.price?.id !== priceId && !pendingSwitch) {
+        // Upgrades only (Plus → Mega, monthly → yearly). Mega already includes
+        // everything in Plus, and moving down mid-period would refund paid time.
+        const from = planOfPrice(currentPrice.price?.id), to = { tier: plan === 'max' ? 2 : 1, yearly: billing === 'yearly' };
+        if (from && (to.tier < from.tier || (to.tier === from.tier && from.yearly && !to.yearly))) {
+          return res.status(409).json({ error: from.tier === 2 && to.tier === 1
+            ? "You're on Mega Knox, which already includes everything in Knox Plus."
+            : "You can't switch to a shorter billing period. Manage your plan in Manage billing." });
+        }
+        if (currentSubscription.cancel_at_period_end) {
+          return res.status(409).json({ error: 'Your plan is set to end. Resume it in Manage billing first, then upgrade.' });
+        }
+        // First ask: show the student exactly what Stripe will charge today (the
+        // difference for the rest of this billing period) before changing anything.
+        if (!req.body?.confirm) {
+          const prorationDate = Math.floor(Date.now() / 1000);
+          const upcoming = await stripe.invoices.retrieveUpcoming({
+            customer: currentSubscription.customer, subscription: subscriptionId,
+            subscription_items: [{ id: currentPrice.id, price: priceId }],
+            subscription_proration_behavior: 'always_invoice', subscription_proration_date: prorationDate,
+          });
+          const amountNow = Math.max(0, (upcoming.lines?.data || []).filter(line => line.proration).reduce((sum, line) => sum + line.amount, 0));
+          return res.status(200).json({ confirm: true, plan, billing, amountNow, currency: upcoming.currency || 'usd', prorationDate, periodEnd: currentSubscription.current_period_end || null });
+        }
+      }
       if (active && currentPrice && currentPrice.price?.id !== priceId) {
+        // The time the student saw the price for, so the charge matches it (≤ 15 min old).
+        const seen = Number(req.body?.confirm?.prorationDate), nowSec = Math.floor(Date.now() / 1000);
+        const prorationDate = Number.isInteger(seen) && seen <= nowSec && nowSec - seen <= 900 ? seen : nowSec;
         // Persist the exact request so a timed-out retry uses both the same key
         // and the same parameters. A later, genuine switch gets a new UUID.
         const attempt = pendingSwitch || {
           id: randomUUID(), subscriptionId, priceId, billing,
           params: {
             items: [{ id: currentPrice.id, price: priceId }],
-            proration_behavior: 'create_prorations', cancel_at_period_end: false,
-            metadata: { ...(currentSubscription.metadata || {}), plan, billing, uid: verifiedUid },
+            // Charge the difference now; if the card fails, the plan stays as it was.
+            proration_behavior: 'always_invoice', proration_date: prorationDate,
+            payment_behavior: 'pending_if_incomplete',
           },
         };
         if (!pendingSwitch) await checkoutRef.set({ switchAttempt: attempt }, { merge: true });
@@ -158,6 +197,10 @@ export default async function handler(req, res) {
             await checkoutRef.set({ switchAttempt: null }, { merge: true });
           }
           throw err;
+        }
+        if (updated?.pending_update && updated?.items?.data?.[0]?.price?.id !== priceId) {
+          await checkoutRef.set({ switchAttempt: null }, { merge: true });
+          return res.status(402).json({ error: "Your card didn't go through, so your plan didn't change. Update your card in Manage billing and try again." });
         }
         if (updated?.items?.data?.[0]?.price?.id !== priceId) {
           throw new Error('Stripe did not confirm the requested subscription price');

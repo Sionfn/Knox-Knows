@@ -119,3 +119,56 @@ window.showKnoxBillingStatus = function () {
     }
   })();
 };
+
+// Before an upgrade on an existing subscription: what Stripe will charge today.
+// Resolves true when the student confirms, false when they back out.
+window.knoxConfirmUpgrade = function ({ planName, mega, amountNow, currency, periodEnd, renewal }) {
+  if (!document.getElementById('knoxBillingCss')) {
+    const css = document.createElement('style');
+    css.id = 'knoxBillingCss'; css.textContent = KNOX_BILLING_CSS;
+    document.head.append(css);
+  }
+  return new Promise(resolve => {
+    document.getElementById('knoxBillingStatus')?.remove();
+    const money = cents => new Intl.NumberFormat(undefined, { style: 'currency', currency: (currency || 'usd').toUpperCase() }).format(cents / 100);
+    const until = periodEnd ? new Date(periodEnd * 1000).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) : '';
+    const overlay = document.createElement('div');
+    overlay.id = 'knoxBillingStatus';
+    overlay.className = 'modal-backdrop' + (mega ? ' kb-mega' : '');
+    const panel = document.createElement('section');
+    panel.className = 'kb-card';
+    panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); panel.setAttribute('aria-labelledby', 'knoxBillingHeading');
+    const icon = document.createElement('div'); icon.className = 'kb-icon'; icon.textContent = mega ? '💎' : '⚡';
+    const title = document.createElement('h2'); title.id = 'knoxBillingHeading'; title.textContent = 'Upgrade to ' + planName;
+    const text = document.createElement('p');
+    text.textContent = amountNow > 0
+      ? 'You only pay the difference for the rest of this billing period' + (until ? ' (until ' + until + ')' : '') + '.'
+      : 'Nothing extra to pay today.';
+    const lines = document.createElement('ul'); lines.className = 'kb-perks';
+    for (const [label, value] of [['Due today', money(amountNow)], ...(renewal ? [['Then', renewal + (until ? ' from ' + until : '')]] : [])]) {
+      const li = document.createElement('li'); li.style.cssText = 'display:flex;justify-content:space-between;gap:12px';
+      const a = document.createElement('span'); a.textContent = label; const b = document.createElement('span'); b.textContent = value;
+      li.append(a, b); lines.append(li);
+    }
+    const yes = document.createElement('button'); yes.type = 'button'; yes.className = 'kb-btn';
+    yes.textContent = amountNow > 0 ? 'Pay ' + money(amountNow) + ' and upgrade' : 'Upgrade now';
+    const no = document.createElement('button'); no.type = 'button'; no.className = 'kb-btn';
+    no.style.cssText = 'margin-top:10px;background:var(--surface,#fff);color:var(--text,#222);border-color:var(--border,#E5DCD0);box-shadow:0 3px 0 var(--border,#E5DCD0)';
+    no.textContent = 'Not now';
+    const fine = document.createElement('p'); fine.style.cssText = 'margin-top:12px;font-size:12px';
+    fine.textContent = 'Charged by Stripe to your card on file. You’ll get a receipt by email.';
+    panel.append(icon, title, text, lines, yes, no, fine);
+    overlay.append(panel);
+    const previousFocus = document.activeElement;
+    const finish = ok => { overlay.remove(); previousFocus?.focus?.(); resolve(ok); };
+    yes.onclick = () => finish(true);
+    no.onclick = () => finish(false);
+    overlay.onclick = e => { if (e.target === overlay) finish(false); };
+    overlay.onkeydown = e => {
+      if (e.key === 'Escape') finish(false);
+      if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === yes ? no : yes).focus(); }
+    };
+    document.body.append(overlay);
+    yes.focus();
+  });
+};

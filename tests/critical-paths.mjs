@@ -1684,7 +1684,7 @@ test('Two plans: a Knox Plus subscriber moving to Mega Knox switches the same su
   mock.stripe.subscriptions.retrieve = async () => ({ id: 'sub_1', status: 'active', metadata: {}, items: { data: [{ id: 'si_1', price: { id: 'price_1UBcoACqlxC7aoKRR3DFKNhJ' } }] } });
   mock.stripe.subscriptions.update = async (id, params) => { updates.push([id, params]); return {items:{data:[{price:{id:params.items[0].price}}]}}; };
   const handler = await load('api/create-checkout-session.js', { db, stripe: mock.stripe, env: MEGA_ENV });
-  let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly' }), res);
+  let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly', confirm: { prorationDate: Math.floor(Date.now() / 1000) } }), res);
   assert.equal(res.code, 200); assert.equal(res.body.switched, true);
   assert.equal(updates[0][0], 'sub_1');
   assert.deepEqual(plain(updates[0][1].items), [{ id: 'si_1', price: 'price_mega_m' }]);
@@ -1912,27 +1912,47 @@ test('Discord link: a signed code links the account, and the bot sees Plus', asy
 });
 
 // Release regressions: Stripe's response cache must not swallow later intents.
-function switchFixture({timeoutBefore=false,timeoutAfter=false,wrongReply=false,refusedOnce=false}={}){
+function switchFixture({timeoutBefore=false,timeoutAfter=false,wrongReply=false,refusedOnce=false,declined=false}={}){
  const {db,store}=memoryDb();store.set('users/u1',{plan:'super',stripeSubscription:'sub_a'});
  let price='price_1UBcoACqlxC7aoKRR3DFKNhJ',metadata={},calls=[],mutations=0,fail=timeoutBefore||timeoutAfter;
  const cache=new Map();
- const stripe={subscriptions:{retrieve:async()=>({id:'sub_a',status:'active',metadata,items:{data:[{id:'si_a',price:{id:price}}]}}),update:async(id,params,opt)=>{
+ const previews=[];
+ const stripe={invoices:{retrieveUpcoming:async p=>{previews.push(plain(p));return {currency:'usd',lines:{data:[{proration:true,amount:-999},{proration:true,amount:1299},{proration:false,amount:1299}]}};}},
+ subscriptions:{retrieve:async()=>({id:'sub_a',customer:'cus_a',status:'active',current_period_end:1796083200,metadata,items:{data:[{id:'si_a',price:{id:price}}]}}),update:async(id,params,opt)=>{
    calls.push({key:opt.idempotencyKey,params:plain(params)});
    if(refusedOnce){refusedOnce=false;const e=Error('No such price');e.statusCode=400;throw e;}
    if(timeoutBefore&&fail){fail=false;metadata={portalNote:'changed between attempts'};throw Error('network timeout');}
    if(cache.has(opt.idempotencyKey)){assert.deepEqual(plain(params),cache.get(opt.idempotencyKey).params);return cache.get(opt.idempotencyKey).reply;}
-   price=params.items[0].price;metadata=plain(params.metadata);mutations++;
+   price=params.items[0].price;metadata=plain(params.metadata||metadata);mutations++;
+   if(declined){declined=false;const reply={pending_update:{subscription_items:params.items},items:{data:[{price:{id:'price_1UBcoACqlxC7aoKRR3DFKNhJ'}}]}};price='price_1UBcoACqlxC7aoKRR3DFKNhJ';mutations--;cache.set(opt.idempotencyKey,{params:plain(params),reply});return reply;}
    const reply={items:{data:[{price:{id:wrongReply?'unexpected':price}}]}};cache.set(opt.idempotencyKey,{params:plain(params),reply});
    if(timeoutAfter&&fail){fail=false;throw Error('response lost');}return reply;
  }}};
- return{db,store,stripe,info:()=>({price,calls,mutations})};
+ return{db,store,stripe,info:()=>({price,calls,mutations,previews})};
 }
 const switchHandler=f=>load('api/create-checkout-session.js',{db:f.db,stripe:f.stripe,env:{STRIPE_PRICE_MEGA_MONTHLY:'price_mega'}});
-const switchRequest=plan=>askRequest({plan,billing:'monthly'});
-test('plan cycles execute every new intent instead of replaying an old destination',async()=>{
+const switchRequest=plan=>askRequest({plan,billing:'monthly',confirm:{prorationDate:Math.floor(Date.now()/1000)}});
+test('upgrades only: Plus → Mega switches; Mega → Plus is refused without touching Stripe',async()=>{
  const f=switchFixture(),handler=await switchHandler(f);
- for(const plan of ['max','super','max']){const r=response();await handler(switchRequest(plan),r);assert.equal(r.code,200);assert.equal(r.body.switched,true);}
- assert.equal(f.info().price,'price_mega');assert.equal(f.info().mutations,3);assert.equal(new Set(f.info().calls.map(c=>c.key)).size,3);
+ let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(r.body.switched,true);
+ for(const req of [switchRequest('super'),askRequest({plan:'super',billing:'monthly'})]){r=response();await handler(req,r);assert.equal(r.code,409);assert.match(r.body.error,/already includes everything/);}
+ assert.equal(f.info().price,'price_mega');assert.equal(f.info().mutations,1);
+});
+test('an upgrade first shows the amount due today and changes nothing; confirming charges it now',async()=>{
+ const f=switchFixture(),handler=await switchHandler(f);
+ let r=response();await handler(askRequest({plan:'max',billing:'monthly'}),r);
+ assert.equal(r.code,200);assert.equal(r.body.confirm,true);assert.equal(r.body.amountNow,300,'only the proration lines: -9.99 + 12.99');
+ assert.equal(f.info().calls.length,0);assert.equal(f.info().previews[0].subscription_proration_behavior,'always_invoice');
+ const seen=r.body.prorationDate;r=response();await handler(askRequest({plan:'max',billing:'monthly',confirm:{prorationDate:seen}}),r);
+ assert.equal(r.code,200);assert.equal(r.body.switched,true);
+ const params=f.info().calls[0].params;assert.equal(params.proration_behavior,'always_invoice');assert.equal(params.payment_behavior,'pending_if_incomplete');
+ assert.equal(params.proration_date,f.info().previews[0].subscription_proration_date,'charged for the moment the student saw');
+});
+test('a declined upgrade leaves the plan as it was and is not left pending',async()=>{
+ const f=switchFixture({declined:true}),handler=await switchHandler(f);
+ let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,402);assert.match(r.body.error,/didn't go through/);
+ assert.equal(f.store.get('checkoutLocks/u1').switchAttempt,null);assert.equal(f.info().price,'price_1UBcoACqlxC7aoKRR3DFKNhJ');
+ r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(f.info().price,'price_mega');
 });
 test('plan update timeout before execution reuses exact persisted request and key',async()=>{
  const f=switchFixture({timeoutBefore:true}),handler=await switchHandler(f);let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,500);
