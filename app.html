@@ -3259,6 +3259,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   const KNOX_OWNER = 'sion22comp@gmail.com';
   window.knoxIsOwner = () => !!window.currentUser && window.currentUser.emailVerified === true && (window.currentUser.email || '').toLowerCase() === KNOX_OWNER;
   window.knoxViewAsChoice = () => { try { const v = localStorage.getItem('knoxViewAs'); return ['free', 'plus', 'mega'].includes(v) ? v : null; } catch { return null; } };
+  // On the live site the owner tools (View as, the preview buttons) stay off so
+  // the owner account looks like a normal one. ?owner-tools=1 turns them on for
+  // this tab; ?owner-tools=0 turns them off again.
+  (() => { try { const v = new URLSearchParams(location.search).get('owner-tools'); if (v === '1') sessionStorage.setItem('knoxOwnerTools', '1'); else if (v === '0') sessionStorage.removeItem('knoxOwnerTools'); } catch {} })();
+  window.knoxOwnerTools = () => { try { return window.knoxIsOwner() && sessionStorage.getItem('knoxOwnerTools') === '1'; } catch { return false; } };
   // On the preview site every tester can really switch their test account's
   // plan (the server allows it only there — api/_tester-plan.js).
   window._testerPlans = false;
@@ -3272,7 +3277,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   function syncViewAs() {
     const box = document.getElementById('ddViewAs');
     if (!box) return;
-    box.hidden = !window.currentUser || !(window._testerPlans || window.knoxIsOwner());
+    box.hidden = !window.currentUser || !(window._testerPlans || window.knoxOwnerTools());
     if (box.hidden) return;
     document.getElementById('ddViewAsTitle').innerHTML = window._testerPlans
       ? '🧪 Pick your plan <span>preview only</span>' : '👀 View as <span>only you see this</span>';
@@ -3291,7 +3296,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   }
   document.addEventListener('click', async e => {
     const b = e.target.closest('#ddViewAs [data-view-as]');
-    if (!b || !window.currentUser || !(window._testerPlans || window.knoxIsOwner())) return;
+    if (!b || !window.currentUser || !(window._testerPlans || window.knoxOwnerTools())) return;
     e.stopPropagation(); // keep the menu open to see the change
     if (window._testerPlans) {
       // Preview: really switch this test account's plan, then reload it.
@@ -3329,7 +3334,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window.userTierReal = realTier;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.
-      window._viewAs = !window._testerPlans && window.knoxIsOwner?.() ? window.knoxViewAsChoice?.() : null;
+      window._viewAs = !window._testerPlans && window.knoxOwnerTools?.() ? window.knoxViewAsChoice?.() : null;
       const tier = window._viewAs || realTier;
       window.userTier = tier;
       window.userPlan = tier === 'mega' ? 'max' : tier === 'plus' ? (planTier(d.plan) === 'paid' ? d.plan : 'plus') : 'free';

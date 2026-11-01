@@ -123,7 +123,7 @@
       <div class="ff-legend" aria-hidden="true"><span><i class="ff-legend-ic">🔥</i>studied</span><span><i class="ff-legend-ic">🛡️</i>saved by a shield</span><span><i class="ff-legend-today"></i>today</span></div>
       <h3 class="ff-h3">Rewards</h3>
       <div class="ff-rewards">${state.rewards.map(rewardRow).join('')}</div>
-      ${state.tester ? testerPanel() : testMode && !demo ? testerOff() : ''}
+      ${state.tester && testMode ? testerPanel() : testMode && !demo ? testerOff() : ''}
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
   }
   // The flame you're using, big, so you can really see it (and pick another).
