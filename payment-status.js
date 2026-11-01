@@ -4,6 +4,7 @@ const KNOX_BILLING_CSS = `
 #knoxBillingStatus { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(20,12,4,.55); --kb: var(--orange,#FF6B00); --kb-dark: var(--orange-dark,#D45500); --kb-light: var(--orange-light,#FFE8D6); }
 #knoxBillingStatus.kb-mega { --kb: #F2B705; --kb-dark: #B38600; --kb-light: #FFF3C4; }
 #knoxBillingStatus.kb-wait { --kb: var(--border,#E5DCD0); --kb-dark: var(--border,#E5DCD0); }
+.kb-hold .kb-card { visibility: hidden; }
 .kb-card { position: relative; width: min(380px, 100%); padding: 26px 22px 20px; border-radius: 24px; background: var(--surface,#fff); color: var(--text,#222); border: 2px solid var(--kb); box-shadow: 0 6px 0 var(--kb-dark), 0 18px 40px rgba(0,0,0,.25); text-align: center; animation: kbIn .25s cubic-bezier(.34,1.56,.64,1); }
 @keyframes kbIn { from { opacity: 0; transform: translateY(8px) scale(.95); } }
 .kb-icon { width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 18px; display: grid; place-items: center; font-size: 32px; background: var(--kb-light, #FFF3E8); border: 2px solid var(--kb); box-shadow: 0 4px 0 var(--kb-dark); }
@@ -41,7 +42,10 @@ window.showKnoxBillingStatus = function () {
   }
   const overlay = document.createElement('div');
   overlay.id = 'knoxBillingStatus';
-  overlay.className = 'modal-backdrop kb-wait';
+  // The "Checking…" step only shows if the check takes a while; a quick answer
+  // goes straight to the welcome, with no half-second flash before it.
+  overlay.className = 'modal-backdrop kb-wait kb-hold';
+  const reveal = setTimeout(() => overlay.classList.remove('kb-hold'), 1500);
   const panel = document.createElement('section');
   panel.className = 'kb-card';
   panel.setAttribute('role', 'dialog');
@@ -64,7 +68,7 @@ window.showKnoxBillingStatus = function () {
   overlay.append(panel);
   const previousFocus = document.activeElement;
   const controller = new AbortController();
-  function dismiss() { controller.abort(); overlay.remove(); previousFocus?.focus?.(); }
+  function dismiss() { clearTimeout(reveal); controller.abort(); overlay.remove(); previousFocus?.focus?.(); }
   close.onclick = dismiss;
   overlay.onclick = e => { if (e.target === overlay) dismiss(); };
   overlay.onkeydown = e => {
@@ -76,6 +80,7 @@ window.showKnoxBillingStatus = function () {
   (async () => {
     const user = window.currentUser;
     if (!user) {
+      clearTimeout(reveal); overlay.classList.remove('kb-hold');
       title.textContent = 'Sign in to see your plan';
       status.textContent = 'Sign in with the account you used at checkout, then open Account & Plan.';
       icon.textContent = '🔑';
@@ -90,7 +95,8 @@ window.showKnoxBillingStatus = function () {
         if (window.currentUser?.uid !== user.uid || !overlay.isConnected) return;
         if (response.ok && ['super', 'plus', 'max'].includes(data.plan) && wanted.includes(data.plan)) {
           const mega = data.plan === 'max', planName = mega ? 'Mega Knox' : 'Knox Plus';
-          overlay.classList.remove('kb-wait');
+          clearTimeout(reveal);
+          overlay.classList.remove('kb-wait', 'kb-hold');
           overlay.classList.toggle('kb-mega', mega);
           icon.textContent = mega ? '💎' : '⚡';
           title.textContent = data.planStatus === 'trialing' ? 'Your ' + planName + ' trial is on!' : 'Welcome to ' + planName + '!';
@@ -106,6 +112,7 @@ window.showKnoxBillingStatus = function () {
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
     if (overlay.isConnected) {
+      clearTimeout(reveal); overlay.classList.remove('kb-hold');
       icon.textContent = '⏳';
       title.textContent = 'Almost there';
       status.textContent = 'Your upgrade is not confirmed yet. It may still be setting up, so check Account & Plan in a minute. If it stays Free after you paid, email support@knoxknowsapp.com and don’t pay again.';
