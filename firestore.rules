@@ -66,6 +66,18 @@ service cloud.firestore {
             && request.resource.data.data is string && request.resource.data.data.size() > 0
             && request.resource.data.data.size() <= 700000;
         }
+        // A smaller copy of each photo the student sent, keyed by its message.
+        match /photos/{messageId} {
+          allow read, delete: if owner(userId);
+          allow create: if owner(userId)
+            && exists(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)/messages/$(messageId))
+            && get(/databases/$(database)/documents/users/$(userId)/conversations/$(conversationId)).data.get('deleting', false) == false
+            && request.resource.data.keys().hasOnly(['type', 'data'])
+            && request.resource.data.type == 'image/jpeg'
+            && request.resource.data.data is string && request.resource.data.data.size() > 0
+            && request.resource.data.data.size() <= 900000;
+          allow update: if false;
+        }
       }
 
       match /history/{docId} {

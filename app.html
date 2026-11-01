@@ -4469,6 +4469,24 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   //    First message of a fresh chat creates the conversation doc; every
   //    later message in the same session appends to its messages
   //    subcollection and bumps updatedAt so it sorts to the top. ──
+  // A JPEG copy of a sent photo for history: one Firestore doc (under 1 MB).
+  window.knoxHistoryPhoto = async dataUrl => {
+    try {
+      const img = new Image(); img.src = dataUrl; await img.decode();
+      for (const [max, quality] of [[1280, .82], [960, .72], [640, .6]]) {
+        const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); // transparent PNGs → white, not black
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const data = canvas.toDataURL('image/jpeg', quality).split(',')[1] || '';
+        if (data && data.length <= 900000) return { type: 'image/jpeg', data };
+      }
+    } catch {}
+    return null;
+  };
   async function saveHistory(question, answer, context = {}) {
     const uid = context.uid || window.currentUser?.uid;
     if (!uid || window.currentUser?.uid !== uid) return false;
@@ -4514,6 +4532,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         }
       });
       if (window.currentUser?.uid === uid && (context.viewVersion === undefined || context.viewVersion === window._appViewVersion)) window._currentConversationId = conversationId;
+      // Every photo sent keeps a smaller copy, so a reopened chat shows all of them.
+      if (context.photo) Promise.resolve(context.photo).then(photo => photo &&
+        setDoc(doc(collection(convRef, 'photos'), context.messageId), photo)).catch(() => {});
       loadSidebarHistory();
       return true;
     } catch (e) {
@@ -4557,11 +4578,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         collection(convRef, 'messages'),
         orderBy('ts', 'asc')
       );
-      const [convSnap, snaps, materials] = await Promise.all([
+      const [convSnap, snaps, materials, photoSnaps] = await Promise.all([
         getDoc(convRef), getDocs(q),
         getDocs(query(collection(convRef, 'sourceMaterials'), limit(SOURCE_CHUNKS + 1)))
           .then(result => ({ source: decodeLearnSource(result.docs.map(s => s.data())) }))
           .catch(() => ({ source: null, failed: true })),
+        getDocs(collection(convRef, 'photos')).catch(() => ({ docs: [] })),
       ]);
       if (window._appViewVersion !== viewVersion || window.currentUser?.uid !== uid) return;
       if (!convSnap.exists() || convSnap.data().deleting) { highlightNav(priorNav); return false; }
@@ -4613,6 +4635,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       }
 
       const userBubbles = []; // to put a Learn lesson's saved photo/file back in its message
+      const photos = new Map(photoSnaps.docs.map(p => [p.id, p.data()]));
       snaps.forEach(s => {
         const d = s.data();
         // User bubble
@@ -4624,7 +4647,16 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const userInner = document.createElement('div');
         userInner.className = 'msg-user-bubble';
         userInner.appendChild(span);
-        userBubbles.push({ q: d.question || '', inner: userInner, span });
+        const photo = photos.get(s.id);
+        if (photo?.type === 'image/jpeg' && /^[A-Za-z0-9+/]+={0,2}$/.test(photo.data || '')) {
+          if (/^(?:📷 Photo|\[image\])$/.test(d.question || '')) span.remove();
+          else if ((d.question || '').startsWith('📷 ')) span.textContent = d.question.slice(2).trim();
+          const img = document.createElement('img');
+          img.className = 'msg-user-img'; img.alt = 'Attached image';
+          img.src = 'data:image/jpeg;base64,' + photo.data;
+          userInner.appendChild(img);
+        }
+        userBubbles.push({ q: d.question || '', inner: userInner, span, hasPhoto: photos.has(s.id) });
         const userBubble = document.createElement('div');
         userBubble.className = 'msg-user';
         userBubble.appendChild(userInner);
@@ -4658,7 +4690,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const src = materials.source, isDoc = src.kind === 'document';
         const marked = userBubbles.filter(b => isDoc ? b.q.startsWith('📄') : /^(?:📷|\[image\])/.test(b.q));
         const target = marked[marked.length - 1] || userBubbles[0];
-        if (isDoc) {
+        if (!isDoc && target.hasPhoto) { /* already shown from its own saved copy */ }
+        else if (isDoc) {
           const m = /^📄 .*? — ([\s\S]*)$/.exec(target.q);
           if (m) target.span.textContent = m[1]; else if (target.q.startsWith('📄')) target.span.remove();
           const chip = document.createElement('div'); chip.className = 'msg-user-doc';
@@ -4704,9 +4737,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // Block new message writes in every tab before draining children.
     await updateDoc(parent, { deleting: true });
     const materials = await getDocs(query(collection(parent, 'sourceMaterials'), limit(SOURCE_CHUNKS + 1)));
-    if (materials.docs.length) {
+    const photos = await getDocs(query(collection(parent, 'photos'), limit(400))).catch(() => ({ docs: [] }));
+    if (materials.docs.length || photos.docs.length) {
       const batch = writeBatch(db);
-      materials.docs.forEach(material => batch.delete(material.ref));
+      [...materials.docs, ...photos.docs].forEach(material => batch.delete(material.ref));
       await batch.commit();
     }
     const messagesRef = collection(parent, 'messages');
@@ -6293,6 +6327,7 @@ window.appHandleAsk = async function() {
 
   const image = window._appImage;
   const doc = window._appDoc;
+  const historyPhoto = image?.dataUrl && requestUid ? window.knoxHistoryPhoto(image.dataUrl) : null;
   window.appClearImage();
   // What this message is called in history and the sidebar.
   const askLabel = q || (doc ? '📄 ' + doc.name : '📷 Photo');
@@ -6372,7 +6407,7 @@ window.appHandleAsk = async function() {
           uid: requestUid, conversationId: requestConversationId,
           learnMode: requestLearnMode, sessionId: requestLearnSessionId,
           viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
-          source: newLessonSource,
+          source: newLessonSource, photo: historyPhoto,
         });
       }
       return;
@@ -6433,7 +6468,7 @@ window.appHandleAsk = async function() {
             uid: requestUid, conversationId: requestConversationId,
             learnMode: requestLearnMode, sessionId: requestLearnSessionId,
             viewVersion: requestView, model: 'knox-chat',
-            source: newLessonSource,
+            source: newLessonSource, photo: historyPhoto,
           });
         }
         return;
@@ -6466,7 +6501,7 @@ window.appHandleAsk = async function() {
         uid: requestUid, conversationId: requestConversationId,
         learnMode: requestLearnMode, sessionId: requestLearnSessionId,
         viewVersion: requestView, model: data.isCasual ? 'knox-chat' : data.model,
-        source: newLessonSource,
+        source: newLessonSource, photo: historyPhoto,
       });
     }
     if (window.updateUsageIndicator) window.updateUsageIndicator();

@@ -11,7 +11,7 @@ test('deletion batches messages and resets only the deleted active account/threa
     deletedHistory:new Set(),updateDoc:async()=>{},
     doc:(_, ...parts)=>parts.join('/'),collection:(parent,name)=>parent+'/'+name,query:x=>x,limit:()=>400,
     SOURCE_CHUNKS:6,
-    getDocs:async path=>({docs:Array.from({length:path.endsWith('/sourceMaterials')?0:pages.shift()},(_,i)=>({ref:'message'+i}))}),
+    getDocs:async path=>({docs:Array.from({length:/\/(sourceMaterials|photos)$/.test(path)?0:pages.shift()},(_,i)=>({ref:'message'+i}))}),
     writeBatch:()=>{const refs=[];return {delete:r=>refs.push(r),commit:async()=>commits.push(refs)};}};
   runInNewContext(deletion,c);await c.deleteConversation('c1');
   assert.equal(commits[0].length,400);assert.equal(commits[1].length,3);
