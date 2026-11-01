@@ -46,22 +46,35 @@
     ].map(r => ({ ...r, flames: days.filter(d => d >= r.start && d <= r.end).length }));
     return { event: { start: START, end: END, claimUntil: CLAIM_UNTIL }, plus: false, rewards, days, shielded: ['2026-11-10'], claimed: { w1: 'demo' }, shields: 1, flameStyle: 'classic', flameStyles: ['classic', 'slime'], plusUntil: 0, megaUntil: 0, giftCode: '', demo: true };
   }
+  let accountGeneration = 0;
+  const staleAccount = () => Object.assign(new Error('Account changed.'), { name: 'AbortError' });
   async function api(method, body) {
     const user = window.currentUser;
     if (!user?.getIdToken) throw new Error('Sign in to join Flame Fest.');
+    const generation = accountGeneration;
+    try {
+    const token = await user.getIdToken();
+    if (generation !== accountGeneration || window.currentUser?.uid !== user.uid) throw staleAccount();
     const r = await fetch('/api/flame-fest', {
-      method, headers: { 'Authorization': 'Bearer ' + await user.getIdToken(), ...(testMode && !demo ? { 'X-Knox-Flame-Test': '1' } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      method, headers: { 'Authorization': 'Bearer ' + token, ...(testMode && !demo ? { 'X-Knox-Flame-Test': '1' } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(15000),
     });
     const data = await r.json().catch(() => ({}));
+    if (generation !== accountGeneration || window.currentUser?.uid !== user.uid) throw staleAccount();
     if (!r.ok) throw new Error(data.error || 'Flame Fest is busy right now. Please try again.');
     return data;
+    } catch (error) {
+      if (generation !== accountGeneration || window.currentUser?.uid !== user.uid) throw staleAccount();
+      throw error;
+    }
   }
   async function load() {
     if (demo) { state = state || demoState(); return; }
+    const generation = accountGeneration;
     loading = true; error = ''; render();
-    try { state = await api('GET'); } catch (e) { error = e.message; }
-    loading = false;
+    try { const saved = await api('GET'); if (generation === accountGeneration) state = saved; }
+    catch (e) { if (generation === accountGeneration && e.name !== 'AbortError') error = e.message; }
+    if (generation === accountGeneration) loading = false;
   }
 
   // ── Calendar ────────────────────────────────────────────────────────────
@@ -157,7 +170,7 @@
         : kind === 'miss' ? '🛡️ Yesterday is now “missed”. Ask Knox something to use a shield.'
         : kind === 'slime' ? 'Slime Flame unlocked and on — like linking Discord.'
         : '↺ Flame Fest reset.');
-    } catch (e) { btn.disabled = false; toast(e.message); }
+    } catch (e) { if (e.name === 'AbortError') return; btn.disabled = false; toast(e.message); }
   }
   function render() {
     if (!wrap) return;
@@ -179,7 +192,7 @@
       celebrate(r);
       applyFlameStyle(state.flameStyle);
       if (!demo) { window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
-    } catch (e) { btn.disabled = false; btn.textContent = 'Claim'; toast(e.message); }
+    } catch (e) { if (e.name === 'AbortError') return; btn.disabled = false; btn.textContent = 'Claim'; toast(e.message); }
   }
   // The new flame shows at once and saves in the background; if saving fails it
   // switches back. Quick taps: only the last one's answer counts.
@@ -193,7 +206,7 @@
       const saved = await api('POST', { style });
       if (seq === styleSeq) { state = saved; render(); applyFlameStyle(state.flameStyle); }
     } catch (e) {
-      if (seq !== styleSeq) return;
+      if (seq !== styleSeq || e.name === 'AbortError') return;
       state.flameStyle = before; render(); applyFlameStyle(before); toast(e.message);
     }
   }
@@ -344,13 +357,15 @@
   }
 
   // ── Flashcards review → today's flame (and the streak) ──────────────────
-  const studiedKey = () => `knoxStudied.${window.currentUser?.uid}.${localDay()}`;
+  const studiedKey = (uid = window.currentUser?.uid) => `knoxStudied.${uid}.${localDay()}`;
   async function studied() {
     if (!window.currentUser || demo) return;
-    try { if (localStorage.getItem(studiedKey())) return; } catch (e) {}
+    const uid = window.currentUser.uid;
+    try { if (localStorage.getItem(studiedKey(uid))) return; } catch (e) {}
     try {
       const s = await api('POST', { studied: 'flashcards', localDay: localDay() });
-      try { localStorage.setItem(studiedKey(), '1'); } catch (e) {}
+      if (window.currentUser?.uid !== uid) return;
+      try { localStorage.setItem(studiedKey(uid), '1'); } catch (e) {}
       const lit = s.days?.includes(localDay());
       if (state && !state.demo) state = s;
       window.loadStreak?.(window.currentUser.uid);
@@ -414,7 +429,7 @@
   let introTimer = 0;
   // A different account (or signing out) drops the last one's Flame Fest and
   // starts on the classic flame; the next streak read paints its own look.
-  addEventListener('knox-auth-changed', () => { state = null; error = ''; loading = false; styleSeq++; close(); applyFlameStyle('classic'); });
+  addEventListener('knox-auth-changed', () => { accountGeneration++; state = null; error = ''; loading = false; styleSeq++; close(); applyFlameStyle('classic'); });
   addEventListener('knox-auth-changed', () => { clearTimeout(introTimer); introTimer = setTimeout(intro, 1500); });
   if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 

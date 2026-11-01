@@ -174,91 +174,42 @@ export default async function handler(req, res) {
       if (pendingSwitch && (pendingSwitch.subscriptionId !== subscriptionId || pendingSwitch.priceId !== priceId || pendingSwitch.billing !== billing)) {
         return res.status(409).json({ error: 'Your previous plan change is still being confirmed. Retry that selection before choosing another plan.' });
       }
-      if (active && currentPrice && currentPrice.price?.id !== priceId && !pendingSwitch) {
-        // Upgrades only (Plus → Mega, monthly → yearly). Mega already includes
-        // everything in Plus, and moving down mid-period would refund paid time.
-        const from = planOfPrice(currentPrice.price?.id), to = { tier: plan === 'max' ? 2 : 1, yearly: billing === 'yearly' };
-        if (from && (to.tier < from.tier || (to.tier === from.tier && from.yearly && !to.yearly))) {
-          return res.status(409).json({ error: from.tier === 2 && to.tier === 1
+      if (active && currentPrice && currentPrice.price?.id !== priceId) {
+        // Reconcile historical direct-update intents above, but never re-charge
+        // an unresolved one or accept a browser-supplied confirmation as a quote.
+        if (pendingSwitch) return res.status(409).json({ error: 'A previous plan change is still being confirmed. Check Manage billing or contact support before trying again.' });
+        const from = planOfPrice(currentPrice.price?.id);
+        const to = { tier: plan === 'max' ? 2 : 1, yearly: billing === 'yearly' };
+        if (!from) return res.status(409).json({ error: 'This older subscription needs to be changed in Manage billing. Please contact support if you need help.' });
+        if (to.tier < from.tier || (from.yearly && !to.yearly)) {
+          return res.status(409).json({ error: to.tier < from.tier
             ? "You're on Mega Knox, which already includes everything in Knox Plus."
             : "You can't switch to a shorter billing period. Manage your plan in Manage billing." });
         }
-        if (currentSubscription.cancel_at_period_end) {
+        if (currentSubscription.cancel_at_period_end || currentSubscription.cancel_at) {
           return res.status(409).json({ error: 'Your plan is set to end. Resume it in Manage billing first, then upgrade.' });
         }
-        // First ask: Stripe's own "confirm your plan change" page shows what it
-        // charges today (the difference for the rest of this period) and takes
-        // the payment; its webhook then moves the account to the new plan.
-        if (!req.body?.confirm) {
-          try {
-            const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
-            const session = await stripe.billingPortal.sessions.create({
-              customer: currentSubscription.customer,
-              configuration: await upgradePortalConfig(stripe),
-              return_url: `${baseUrl}/about#pricing`,
-              flow_data: {
-                type: 'subscription_update_confirm',
-                subscription_update_confirm: { subscription: subscriptionId, items: [{ id: currentPrice.id, price: priceId, quantity: 1 }] },
-                after_completion: { type: 'redirect', redirect: { return_url: `${baseUrl}/app?payment=success&switched=${plan === 'max' ? 'max' : 'plus'}` } },
-              },
-            });
-            if (session?.url) return res.status(200).json({ url: session.url, plan, billing });
-          } catch (err) {
-            console.error('Upgrade page unavailable, using the in-app confirm:', err.message);
-          }
-        }
-        // Backup: show the amount in Knox's own box, then switch here.
-        if (!req.body?.confirm) {
-          const prorationDate = Math.floor(Date.now() / 1000);
-          const upcoming = await stripe.invoices.retrieveUpcoming({
-            customer: currentSubscription.customer, subscription: subscriptionId,
-            subscription_items: [{ id: currentPrice.id, price: priceId }],
-            subscription_proration_behavior: 'always_invoice', subscription_proration_date: prorationDate,
-          });
-          const amountNow = Math.max(0, (upcoming.lines?.data || []).filter(line => line.proration).reduce((sum, line) => sum + line.amount, 0));
-          return res.status(200).json({ confirm: true, plan, billing, amountNow, currency: upcoming.currency || 'usd', prorationDate, periodEnd: currentSubscription.current_period_end || null });
-        }
-      }
-      if (active && currentPrice && currentPrice.price?.id !== priceId) {
-        // The time the student saw the price for, so the charge matches it (≤ 15 min old).
-        const seen = Number(req.body?.confirm?.prorationDate), nowSec = Math.floor(Date.now() / 1000);
-        const prorationDate = Number.isInteger(seen) && seen <= nowSec && nowSec - seen <= 900 ? seen : nowSec;
-        // Persist the exact request so a timed-out retry uses both the same key
-        // and the same parameters. A later, genuine switch gets a new UUID.
-        const attempt = pendingSwitch || {
-          id: randomUUID(), subscriptionId, priceId, billing,
-          params: {
-            items: [{ id: currentPrice.id, price: priceId }],
-            // Charge the difference now; if the card fails, the plan stays as it was.
-            proration_behavior: 'always_invoice', proration_date: prorationDate,
-            payment_behavior: 'pending_if_incomplete',
-          },
-        };
-        if (!pendingSwitch) await checkoutRef.set({ switchAttempt: attempt }, { merge: true });
-        let updated;
+        // Stripe owns the exact invoice, tax/credits, billing-cycle reset, card
+        // authentication and payment confirmation. Never estimate or charge a
+        // backup amount in Knox if the hosted confirmation is unavailable.
         try {
-          updated = await stripe.subscriptions.update(subscriptionId, attempt.params,
-            { idempotencyKey: `knox-switch-${subscriptionId}-${attempt.id}` });
+          const baseUrl = (process.env.APP_URL || 'https://knoxknowsapp.com').replace(/\/$/, '');
+          const session = await stripe.billingPortal.sessions.create({
+            customer: currentSubscription.customer,
+            configuration: await upgradePortalConfig(stripe),
+            return_url: `${baseUrl}/about#pricing`,
+            flow_data: {
+              type: 'subscription_update_confirm',
+              subscription_update_confirm: { subscription: subscriptionId, items: [{ id: currentPrice.id, price: priceId, quantity: currentPrice.quantity || 1 }] },
+              after_completion: { type: 'redirect', redirect: { return_url: `${baseUrl}/app?payment=success&switched=${plan === 'max' ? 'max' : 'plus'}` } },
+            },
+          });
+          if (session?.url && new URL(session.url).origin === 'https://billing.stripe.com') return res.status(200).json({ url: session.url, plan, billing });
+          throw new Error('Invalid Stripe confirmation URL');
         } catch (err) {
-          // Stripe definitely refused it (a 4xx, e.g. an invalid price or a declined
-          // card), so nothing changed: forget the attempt, or the student could
-          // never pick another plan. Timeouts, 5xx, 409 and 429 stay pending, since
-          // the outcome is unknown or a retry with the same key is the safe move.
-          const code = err?.statusCode;
-          if (code >= 400 && code < 500 && code !== 409 && code !== 429) {
-            await checkoutRef.set({ switchAttempt: null }, { merge: true });
-          }
-          throw err;
+          console.error('Upgrade confirmation unavailable:', err.message);
+          return res.status(503).json({ error: 'Stripe could not open your upgrade confirmation. No upgrade was requested by Knox. Please try again, or use Manage billing.' });
         }
-        if (updated?.pending_update && updated?.items?.data?.[0]?.price?.id !== priceId) {
-          await checkoutRef.set({ switchAttempt: null }, { merge: true });
-          return res.status(402).json({ error: "Your card didn't go through, so your plan didn't change. Update your card in Manage billing and try again." });
-        }
-        if (updated?.items?.data?.[0]?.price?.id !== priceId) {
-          throw new Error('Stripe did not confirm the requested subscription price');
-        }
-        await checkoutRef.set({ switchAttempt: null }, { merge: true });
-        return res.status(200).json({ switched: true, plan, billing });
       }
       if (['active', 'trialing', 'past_due', 'unpaid'].includes(currentSubscription.status)) {
         return res.status(409).json({ error: currentPrice?.price?.id === priceId ? "You're already on this plan." : 'You already have a subscription. Use Manage Billing to change it.' });

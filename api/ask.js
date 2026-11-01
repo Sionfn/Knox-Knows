@@ -4,7 +4,7 @@ import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { advanceStudyStreak } from "./_streak.js";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
-import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson } from "./_learn-progress.js";
+import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson, correctedLessonState } from "./_learn-progress.js";
 import { loadLearnReview, reviewGuidance, recordLearnReview } from './_learn-review.js';
 import { LEARN_RESPONSE_FORMAT, LEARN_OUTPUT_INSTRUCTION, decodeLearnOutput } from './_learn-output.js';
 import crypto from "crypto";
@@ -1297,6 +1297,8 @@ export default async function handler(req, res) {
 
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
+
+    if (learnMode && !casual) Object.assign(lessonState, correctedLessonState(answer, lessonState));
 
     // Learn mode safety net: a teaching reply to a new question always hands
     // the student a question (or wraps up with a Recap). If the model answered

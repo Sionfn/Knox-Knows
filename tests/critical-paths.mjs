@@ -90,7 +90,7 @@ async function load(file, { db, fetch, stripe, adminEmail, adminUid, env = {}, a
   const context = createContext({
     process: { env: { FIREBASE_PROJECT_ID: 'test', FIREBASE_CLIENT_EMAIL: 'test@example.com', OPENAI_API_KEY: 'test', STRIPE_SECRET_KEY: 'test', STRIPE_WEBHOOK_SECRET: 'test', ADMIN_EMAIL: adminEmail, ADMIN_UID: adminUid, ...env } },
     console: { ...console, error() {}, warn() {}, log() {} },
-    fetch, setInterval() {}, AbortSignal, Date: date || Date, URLSearchParams, Buffer,
+    fetch, setInterval() {}, AbortSignal, Date: date || Date, URL, URLSearchParams, Buffer,
   });
   const module = new SourceTextModule(readFileSync(file, 'utf8'), { context, identifier: file });
   const modules = new Map();
@@ -1677,20 +1677,12 @@ test('Two plans: Mega Knox checkout uses its prices and is the only plan with a 
   assert.equal(res.code, 503);
 });
 
-test('Two plans: a Knox Plus subscriber moving to Mega Knox switches the same subscription', async () => {
-  const { db, store } = memoryDb(); const mock = checkoutStripe();
-  store.set('users/u1', { plan: 'super', stripeCustomerId: 'cus_one', stripeSubscription: 'sub_1' });
-  const updates = [];
-  mock.stripe.subscriptions.retrieve = async () => ({ id: 'sub_1', status: 'active', metadata: {}, items: { data: [{ id: 'si_1', price: { id: 'price_1UBcoACqlxC7aoKRR3DFKNhJ' } }] } });
-  mock.stripe.subscriptions.update = async (id, params) => { updates.push([id, params]); return {items:{data:[{price:{id:params.items[0].price}}]}}; };
-  const handler = await load('api/create-checkout-session.js', { db, stripe: mock.stripe, env: MEGA_ENV });
-  let res = response(); await handler(askRequest({ plan: 'max', billing: 'monthly', confirm: { prorationDate: Math.floor(Date.now() / 1000) } }), res);
-  assert.equal(res.code, 200); assert.equal(res.body.switched, true);
-  assert.equal(updates[0][0], 'sub_1');
-  assert.deepEqual(plain(updates[0][1].items), [{ id: 'si_1', price: 'price_mega_m' }]);
-  assert.equal(mock.counts().sessionCount, 0, 'no second subscription');
-  res = response(); await handler(askRequest({ plan: 'super', billing: 'monthly' }), res);
-  assert.equal(res.code, 409, 'already on that plan');
+test('Plus to Mega opens a confirmation for the same subscription without mutating it', async () => {
+ const f=switchFixture();hosted(f);const handler=await switchHandler(f),res=response();
+ await handler(askRequest({plan:'max',billing:'monthly'}),res);
+ assert.equal(res.code,200);assert.match(res.body.url,/billing.stripe.com/);
+ assert.equal(f.hosted[0].flow_data.subscription_update_confirm.subscription,'sub_a');
+ assert.equal(f.info().mutations,0);
 });
 
 test('Two plans: the webhook maps Mega prices to Mega Knox, and Mega features follow the plan, comps and gift time', async () => {
@@ -1932,53 +1924,60 @@ function switchFixture({timeoutBefore=false,timeoutAfter=false,wrongReply=false,
 }
 const switchHandler=f=>load('api/create-checkout-session.js',{db:f.db,stripe:f.stripe,env:{STRIPE_PRICE_MEGA_MONTHLY:'price_mega'}});
 const switchRequest=plan=>askRequest({plan,billing:'monthly',confirm:{prorationDate:Math.floor(Date.now()/1000)}});
-test('upgrades only: Plus → Mega switches; Mega → Plus is refused without touching Stripe',async()=>{
- const f=switchFixture(),handler=await switchHandler(f);
- let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(r.body.switched,true);
- for(const req of [switchRequest('super'),askRequest({plan:'super',billing:'monthly'})]){r=response();await handler(req,r);assert.equal(r.code,409);assert.match(r.body.error,/already includes everything/);}
- assert.equal(f.info().price,'price_mega');assert.equal(f.info().mutations,1);
+function hosted(f) {
+ f.hosted=[];
+ f.stripe.prices={retrieve:async id=>({id,product:id.includes('mega')?'prod_mega':'prod_plus'})};
+ f.stripe.billingPortal={configurations:{create:async()=>({id:'bpc_1'})},sessions:{create:async params=>{f.hosted.push(plain(params));return {url:'https://billing.stripe.com/p/session/test'};}}};
+}
+test('Stripe confirmation is required even for a forged or old client confirm body',async()=>{
+ const f=switchFixture();hosted(f);const handler=await switchHandler(f);
+ for(const confirm of [undefined,true,{prorationDate:1,amountNow:0}]) {
+  const r=response();await handler(askRequest({plan:'max',billing:'monthly',confirm}),r);
+  assert.equal(r.code,200);assert.match(r.body.url,/billing.stripe.com/);assert.equal(r.body.amountNow,undefined);
+ }
+ assert.equal(f.info().calls.length,0);assert.equal(f.info().previews.length,0);
 });
-test('an upgrade first shows the amount due today and changes nothing; confirming charges it now',async()=>{
- const f=switchFixture(),handler=await switchHandler(f);
- let r=response();await handler(askRequest({plan:'max',billing:'monthly'}),r);
- assert.equal(r.code,200);assert.equal(r.body.confirm,true);assert.equal(r.body.amountNow,300,'only the proration lines: -9.99 + 12.99');
- assert.equal(f.info().calls.length,0);assert.equal(f.info().previews[0].subscription_proration_behavior,'always_invoice');
- const seen=r.body.prorationDate;r=response();await handler(askRequest({plan:'max',billing:'monthly',confirm:{prorationDate:seen}}),r);
- assert.equal(r.code,200);assert.equal(r.body.switched,true);
- const params=f.info().calls[0].params;assert.equal(params.proration_behavior,'always_invoice');assert.equal(params.payment_behavior,'pending_if_incomplete');
- assert.equal(params.proration_date,f.info().previews[0].subscription_proration_date,'charged for the moment the student saw');
+test('Stripe confirmation failures do not create estimated quotes or request a charge; retry is safe',async()=>{
+ const f=switchFixture();hosted(f);const create=f.stripe.billingPortal.sessions.create;
+ f.stripe.billingPortal.sessions.create=async()=>{throw Error('Stripe temporarily unavailable');};
+ const handler=await switchHandler(f);let r=response();await handler(switchRequest('max'),r);
+ assert.equal(r.code,503);assert.equal(r.body.amountNow,undefined);assert.equal(f.info().mutations,0);
+ f.stripe.billingPortal.sessions.create=create;r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(f.info().mutations,0);
 });
-test('a declined upgrade leaves the plan as it was and is not left pending',async()=>{
- const f=switchFixture({declined:true}),handler=await switchHandler(f);
- let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,402);assert.match(r.body.error,/didn't go through/);
- assert.equal(f.store.get('checkoutLocks/u1').switchAttempt,null);assert.equal(f.info().price,'price_1UBcoACqlxC7aoKRR3DFKNhJ');
- r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(f.info().price,'price_mega');
+test('annual Plus to monthly Mega and tier downgrades are refused before Stripe sessions',async()=>{
+ const f=switchFixture();hosted(f);
+ f.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'active',items:{data:[{id:'si_a',price:{id:'price_1UBcpYCqlxC7aoKR7FUFZ0e2'}}]}});
+ const handler=await switchHandler(f),r=response();await handler(switchRequest('max'),r);assert.equal(r.code,409);assert.match(r.body.error,/shorter billing/);assert.equal(f.hosted.length,0);
+ f.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'active',items:{data:[{id:'si_a',price:{id:'price_mega'}}]}});
+ const down=response();await handler(switchRequest('super'),down);assert.equal(down.code,409);assert.equal(f.hosted.length,0);
 });
-test('plan update timeout before execution reuses exact persisted request and key',async()=>{
- const f=switchFixture({timeoutBefore:true}),handler=await switchHandler(f);let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,500);
- assert.ok(f.store.get('checkoutLocks/u1').switchAttempt);r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);
- assert.equal(f.info().calls[0].key,f.info().calls[1].key);assert.deepEqual(f.info().calls[0].params,f.info().calls[1].params);assert.equal(f.info().mutations,1);assert.equal(f.store.get('checkoutLocks/u1').switchAttempt,null);
+test('annual upgrades are quoted only by Stripe and do not use the unsafe invoice-line estimate',async()=>{
+ const f=switchFixture();hosted(f);const h=await load('api/create-checkout-session.js',{db:f.db,stripe:f.stripe,env:{STRIPE_PRICE_MEGA_YEARLY:'price_mega_y'}}),r=response();
+ await h(askRequest({plan:'max',billing:'yearly'}),r);assert.equal(r.code,200);assert.equal(f.hosted[0].flow_data.subscription_update_confirm.items[0].price,'price_mega_y');assert.equal(f.info().previews.length,0);assert.equal(f.info().calls.length,0);
 });
-test('plan update timeout after execution confirms existing result without a second proration',async()=>{
- const f=switchFixture({timeoutAfter:true}),handler=await switchHandler(f);let r=response();await handler(switchRequest('max'),r);assert.equal(r.code,500);
- r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(r.body.switched,true);assert.equal(f.info().calls.length,1);assert.equal(f.info().mutations,1);
+test('a legacy lost-response switch is reconciled by reading its actual Stripe result',async()=>{
+ const f=switchFixture();f.store.set('checkoutLocks/u1',{switchAttempt:{id:'old',subscriptionId:'sub_a',priceId:'price_mega',billing:'monthly'}});
+ f.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'active',items:{data:[{price:{id:'price_mega'}}]}});
+ const h=await switchHandler(f),r=response();await h(switchRequest('max'),r);assert.equal(r.body.switched,true);assert.equal(f.info().mutations,0);assert.equal(f.store.get('checkoutLocks/u1').switchAttempt,null);
 });
-test('an uncertain plan request cannot be replaced before it is confirmed',async()=>{
- const f=switchFixture({timeoutBefore:true}),handler=await switchHandler(f);await handler(switchRequest('max'),response());const r=response();await handler(switchRequest('super'),r);assert.equal(r.code,409);assert.equal(f.info().calls.length,1);
+test('an unresolved historical direct switch cannot trigger another charge or be silently replaced',async()=>{
+ const f=switchFixture();hosted(f);f.store.set('checkoutLocks/u1',{switchAttempt:{id:'old',subscriptionId:'sub_a',priceId:'price_mega',billing:'monthly'}});
+ const h=await switchHandler(f);
+ for(const plan of ['max','super']){const r=response();await h(switchRequest(plan),r);assert.equal(r.code,409);}
+ assert.equal(f.info().mutations,0);assert.equal(f.hosted.length,0);
 });
-test('plan change does not report success when Stripe returns another price',async()=>{
- const f=switchFixture({wrongReply:true}),handler=await switchHandler(f),r=response();await handler(switchRequest('max'),r);assert.equal(r.code,500);assert.ok(f.store.get('checkoutLocks/u1').switchAttempt);
+test('scheduled cancellation or an unknown legacy price requires Manage billing first',async()=>{
+ const f=switchFixture();hosted(f);const h=await switchHandler(f);
+ for(const extra of [{cancel_at:1796000000},{cancel_at_period_end:true},{legacy:true}]) {
+  f.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'active',...extra,items:{data:[{id:'si_a',price:{id:extra.legacy?'unknown':'price_1UBcoACqlxC7aoKRR3DFKNhJ'}}]}});
+  const r=response();await h(switchRequest('max'),r);assert.equal(r.code,409);
+ }
+ assert.equal(f.hosted.length,0);
 });
 test('Mega comp on a Plus subscription cannot consume a redundant Mega gift',async()=>{
  const {db,store}=memoryDb();store.set('users/u1',{plan:'super',comped:true,compedTier:'mega'});store.set('giftCodes/ABCDEFGHJKLM',{source:'admin',tier:'mega',days:31,redeemedBy:null});const handler=await load('api/redeem.js',{db});const r=response();await handler(askRequest({code:'ABCDEFGHJKLM'}),r);assert.equal(r.code,409);assert.equal(store.get('giftCodes/ABCDEFGHJKLM').redeemedBy,null);assert.equal(store.get('users/u1').megaUntil,undefined);
 });
 
-test('a switch Stripe refuses (4xx) is not left pending, so the student can pick another plan',async()=>{
- const f=switchFixture({refusedOnce:true}),handler=await switchHandler(f);let r=response();
- await handler(switchRequest('max'),r);assert.equal(r.code,500);assert.equal(f.store.get('checkoutLocks/u1').switchAttempt,null);
- r=response();await handler(askRequest({plan:'super',billing:'yearly'}),r);assert.notEqual(r.code,409);
- r=response();await handler(switchRequest('max'),r);assert.equal(r.code,200);assert.equal(r.body.switched,true);assert.equal(f.info().price,'price_mega');
-});
 test('cancelled subscriptions discard their unresolved switch before a replacement checkout',async()=>{
  const {db,store}=memoryDb(),mock=checkoutStripe();store.set('users/u1',{plan:'super',stripeSubscription:'sub_a'});store.set('checkoutLocks/u1',{switchAttempt:{id:'old',subscriptionId:'sub_a',priceId:'price_mega',billing:'monthly'}});
  mock.stripe.subscriptions.retrieve=async()=>({id:'sub_a',status:'canceled',items:{data:[{id:'si_a',price:{id:'price_plus'}}]}});
@@ -2004,4 +2003,13 @@ test("an upgrade opens Stripe's confirm page (charge now, only Knox prices); the
   assert.deepEqual(sessions[0].flow_data.subscription_update_confirm.items, [{ id: 'si_a', price: 'price_mega', quantity: 1 }]);
   assert.match(sessions[0].flow_data.after_completion.redirect.return_url, /payment=success&switched=max$/);
   assert.equal(f.info().calls.length, 0, 'Knox itself changes nothing; Stripe does on confirm');
+});
+
+test('Learn corrects its saved goal map when Knox discovers it misread the photo',async()=>{
+ const {db,store}=memoryDb();store.set('users/u1',{plan:'super'});
+ const history=[{role:'user',content:'📷 Photo'},{role:'assistant',content:'Try rewriting n choose 4.\nYour turn: What factorials go in the denominator?\nLesson plan: Rewrite binomial coefficients | Simplify factorials\nProgress: 1/2'}];
+ const reply={body:'Sorry—I misread it before. This is an order-of-operations problem.',question:'What is 1+2?',choices:[],goals:['Evaluate parentheses','Multiply and divide'],part:1,practiceIndex:0,assessment:'new',reviewFocus:'',keyIdea:'Parentheses first.',graph:'',visual:'',video:'',recap:'',watchOut:'',topic:''};
+ const handler=await load('api/ask.js',{db,fetch:async()=>({ok:true,json:async()=>({choices:[{message:{content:JSON.stringify(reply)},finish_reason:'stop'}]})})});
+ const r=response();await handler(askRequest({question:'Read this photo again',image:'aGVsbG8=',imageType:'image/png',learnMode:true,learnSessionId:crypto.randomUUID(),history}),r);
+ assert.equal(r.code,200);assert.match(r.body.answer,/Lesson plan: Evaluate parentheses \| Multiply and divide/);assert.doesNotMatch(r.body.answer,/Lesson plan: Rewrite binomial/);
 });

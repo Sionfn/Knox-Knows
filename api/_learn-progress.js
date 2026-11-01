@@ -60,17 +60,29 @@ export function learnLessonContext(history = [], question = '') {
   const prior = readLesson(last?.content);
   const requested = requestedPracticeCount([], question);
   const newTopic = /\b(?:new topic|change (?:the )?topic|switch (?:to|topics)|instead.{0,20}(?:teach|learn|study)|now (?:teach|help) me (?:about|with))\b/i.test(question);
-  const fresh = prior.complete || newTopic || !!requested;
+  // A correction of the task itself needs a new map. Ordinary wrong answers,
+  // hints and retries keep their current goal.
+  const correctedTask = /\b(?:you\s+(?:misread|misidentified|misunderstood)\s+(?:the\s+)?(?:photo|image|problem|question|worksheet)|(?:that(?:'s| is)|this is)\s+(?:the\s+)?wrong\s+(?:photo|problem|question|worksheet)|(?:the\s+)?(?:photo|image|worksheet)\s+actually\s+(?:says|shows|is about))\b/i.test(question);
+  const fresh = prior.complete || newTopic || correctedTask || !!requested;
   // The newest canonical reply is sufficient even after the opening scrolls
   // out of the model's context. Do not resurrect an old practice count.
   const practiceTotal = requested || (!fresh ? prior.practice?.total || 0 : 0);
   return { plan: fresh ? [] : prior.plan, part: fresh ? 1 : prior.part, practiceTotal,
     practiceN: fresh ? 1 : prior.practice?.n || 1, question };
 }
+// A model may discover that it read a worksheet as the wrong task. A new
+// assessment, an explicit admission and a different valid map are all required.
+export function correctedLessonState(answer, state) {
+  const proposed = readLesson(answer);
+  const correction = /\bI\s+(?:misread|misidentified|misunderstood)\s+(?:the\s+)?(?:photo|image|worksheet|problem|question|it)\b/i.test(answer);
+  const changed = state.plan.length && proposed.plan.length && proposed.plan.join('|') !== state.plan.join('|');
+  return correction && changed && learningAssessment(answer) === 'new'
+    ? { ...state, plan: [], part: 1, practiceTotal: 0, practiceN: 1 } : state;
+}
 export function learnLessonReminder(state) {
-  const format = 'End each substantive reply with Lesson plan: short goal | next goal (1–6 distinct titles, at most 64 characters each) and Progress: current/total. Repeat the same exact plan on later replies; it is hidden metadata displayed as a lesson map. A short task can have one part, a broader task can have two, four, five or six; never default to three. Parts are learning goals, not messages, individual operations or questions. Several guiding questions, attempts and examples may belong to ONE part. Move forward only when the student has demonstrated that goal. Hints, wrong/incomplete answers and help requests stay in the same part. Do not add parts or surprise compulsory checks. If the student already demonstrates the remaining goals, accept that and finish without redundant testing. On completing the last goal, confirm and Recap with no new question.';
+  const format = 'End each substantive reply with Lesson plan: short goal | next goal (1–6 distinct titles, at most 64 characters each) and Progress: current/total. Repeat the same exact plan on later replies; it is hidden metadata displayed as a lesson map. A short task can have one part, a broader task can have two, four, five or six; never default to three. If you discover you misread the worksheet or identified the wrong task, explicitly acknowledge the misreading, use Assessment: new and replace the unrelated goals with a fresh minimal map for the actual task. Do not do this for a student mistake or hint. Parts are learning goals, not messages, individual operations or questions. Several guiding questions, attempts and examples may belong to ONE part. Move forward only when the student has demonstrated that goal. Hints, wrong/incomplete answers and help requests stay in the same part. Do not add parts or surprise compulsory checks. If the student already demonstrates the remaining goals, accept that and finish without redundant testing. On completing the last goal, confirm and Recap with no new question.';
   const current = state.plan.length
-    ? `Keep this lesson map fixed: ${state.plan.join(' | ')}. Current part ${state.part}/${state.plan.length}: ${state.plan[state.part - 1]}. Stay here while developing this goal; do not advance simply because one answer was correct.`
+    ? `Keep this lesson map fixed for the current task, except when explicitly correcting your own misreading of the worksheet with Assessment: new: ${state.plan.join(' | ')}. Current part ${state.part}/${state.plan.length}: ${state.plan[state.part - 1]}. Stay here while developing this goal; do not advance simply because one answer was correct.`
     : 'Choose the smallest useful finite lesson map for THIS request now. Use concrete student-facing goal titles, not generic Introduction/Practice/Conclusion. If continuing an older lesson without a map, plan only its remaining goals; do not restart work already mastered. Do not spend a turn asking the student to choose a plan. Start teaching immediately and keep the plan in metadata, not a repeated numbered outline in the explanation.';
   const practice = state.practiceTotal
     ? `This is an explicitly requested set of ${state.practiceTotal} questions. Add Practice: ${state.practiceN}/${state.practiceTotal} for the current question. This is a QUESTION counter separate from the lesson parts. Keep the current question through its steps/hints/retries, advance it only after the whole question is answered, and ask exactly that many questions. Worked examples are not counted. A focused practice set usually needs one goal/part, not one part per question. After the final answer recap without another question. Never supply the next question's answer.`

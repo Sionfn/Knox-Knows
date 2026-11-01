@@ -4337,24 +4337,6 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
       if (window.currentUser !== requestUser) throw new Error('Account changed. Please try again.');
-      // Upgrading an existing plan: show what Stripe charges today, then do it.
-      if (data.confirm) {
-        const mega = planKey === 'max';
-        const ok = await window.knoxConfirmUpgrade({
-          planName: mega ? 'Mega Knox' : 'Knox Plus', mega, amountNow: data.amountNow, currency: data.currency, periodEnd: data.periodEnd,
-          renewal: (mega ? (billingPeriod === 'yearly' ? '$99.99/yr' : '$12.99/mo') : (billingPeriod === 'yearly' ? '$79.99/yr' : '$9.99/mo')),
-        });
-        if (!ok) { if (btn) { btn.textContent = originalText; btn.disabled = false; } return; }
-        if (window.currentUser !== requestUser) throw new Error('Account changed. Please try again.');
-        if (btn) btn.textContent = 'Upgrading...';
-        const confirmed = await fetch('/api/create-checkout-session', {
-          method: 'POST', signal: AbortSignal.timeout(25000),
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await requestUser.getIdToken()}` },
-          body: JSON.stringify({ plan: planKey, billing: billingPeriod, confirm: { prorationDate: data.prorationDate } }),
-        });
-        data = await confirmed.json();
-        if (!confirmed.ok) throw new Error(data.error || 'Something went wrong');
-      }
       // Already subscribed: the server switched the plan on the same
       // subscription (Stripe charges or credits the difference).
       if (data.switched) {

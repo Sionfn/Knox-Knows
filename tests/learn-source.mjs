@@ -79,17 +79,29 @@ test('conversation deletion drains source material before deleting the parent an
     writeBatch:()=>{const refs=[];return {delete:r=>refs.push(r),commit:async()=>commits.push(refs)};}};
   const code=app.slice(app.indexOf('async function deleteConversation('),app.indexOf('window.deleteConversation ='));
   runInNewContext(code,context);await context.deleteConversation('c');
-  assert.deepEqual(commits,[['source0','source1','photo0'],['message','users/u1/conversations/c']]);assert.equal(reset,1);
+  assert.deepEqual(commits,[['source0','source1'],['photo0'],['message','users/u1/conversations/c']]);assert.equal(reset,1);
   context.getDocs=async()=>{throw Error('offline');};
   await assert.rejects(context.deleteConversation('c2'),/offline/);assert.equal(reset,1);
 });
-test('each sent photo also saves its own copy, after the message, without failing history', async () => {
+test('each sent photo saves its own immutable copy after its message', async () => {
   const {context,store}=historyHarness();
-  const saved=[];context.setDoc=async(ref,data)=>{assert.ok(store.has('users/u1/conversations/c1/messages/m1'),'message first');saved.push([ref,data]);};
   const photo={type:'image/jpeg',data:'abc='};
-  assert.equal(await context.saveHistory('📷 Photo','ok',{uid:'u1',conversationId:null,savedConversationId:'c1',messageId:'m1',viewVersion:1,photo:Promise.resolve(photo)}),true);
+  const opts={uid:'u1',conversationId:null,savedConversationId:'c1',messageId:'m1',viewVersion:1,photo:Promise.resolve(photo)};
+  assert.equal(await context.saveHistory('📷 Photo','ok',opts),true);
   await new Promise(r=>setTimeout(r));
-  assert.deepEqual(saved,[['users/u1/conversations/c1/photos/m1',photo]]);
-  context.setDoc=async()=>{throw Error('rules');};
-  assert.equal(await context.saveHistory('📷 Photo','ok',{uid:'u1',conversationId:null,savedConversationId:'c2',messageId:'m2',viewVersion:1,photo}),true);
+  assert.deepEqual(store.get('users/u1/conversations/c1/photos/m1'),photo);
+  assert.equal(await context.saveHistory('📷 Photo','ok',opts),true);
+  await new Promise(r=>setTimeout(r));
+  assert.deepEqual(store.get('users/u1/conversations/c1/photos/m1'),photo);
+});
+test('a failed photo save shows a retry without claiming the saved answer is lost', async () => {
+  const {context,store}=historyHarness();let notice;
+  context.document={createElement:()=>({children:[],setAttribute(){},appendChild(x){this.children.push(x)},remove(){this.removed=true}}),getElementById:()=>({appendChild(n){notice=n}})};
+  const transaction=context.runTransaction;let failPhoto=true;
+  context.runTransaction=async(db,fn)=>transaction(db,tx=>fn({...tx,get:async ref=>{if(ref.includes('/photos/')&&failPhoto)throw Error('offline');return tx.get(ref);}}));
+  const photo={type:'image/jpeg',data:'abc='};
+  assert.equal(await context.saveHistory('📷 Photo','ok',{uid:'u1',conversationId:null,savedConversationId:'c1',messageId:'m1',viewVersion:1,photo}),true);
+  await new Promise(r=>setTimeout(r));assert.match(notice.textContent,/answer is saved, but its photo is not/);
+  failPhoto=false;notice.children[0].onclick();await new Promise(r=>setTimeout(r));
+  assert.equal(notice.removed,true);assert.deepEqual(store.get('users/u1/conversations/c1/photos/m1'),photo);
 });

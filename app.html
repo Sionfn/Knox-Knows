@@ -39,7 +39,7 @@
   <style>
     html.knox-restoring #chatAndInput { visibility: hidden; }
     html.knox-restoring .sidebar-quicknav-link.sidebar-nav-active { background: transparent; color: var(--text-light); }
-  </style>
+    </style>
   <meta charset="UTF-8">
 <script src="/desktop-fit.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2536,6 +2536,15 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   <link rel="stylesheet" href="/harvest.css">
   <link rel="stylesheet" href="/pumpkin-patch.css">
 <link rel="stylesheet" href="/hover-steady.css">
+
+<style>
+@media (max-width: 360px) {
+  #appHeader { padding-left: 8px; padding-right: 8px; gap: 4px; }
+  #appHeader .header-right, #appHeader .account-status-row { gap: 3px; min-width: 0; }
+  #appHeader #headerUsage { padding-left: 6px; padding-right: 6px; font-size: 10px; }
+  #appHeader #appGuestBtns .header-signup-btn { padding-left: 9px; padding-right: 9px; font-size: 10px; }
+}
+</style>
 </head>
 <body class="app-auth-pending">
 <div id="statusTint" aria-hidden="true"></div>
@@ -3355,17 +3364,18 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   }
 
   // Re-read the plan and question count (e.g. after a Flame Fest reward).
-  window.knoxRefreshPlan = () => { if (window.currentUser) fetchPlan(window.currentUser.uid); };
+  window.knoxRefreshPlan = () => window.currentUser ? fetchPlan(window.currentUser.uid) : Promise.resolve();
 
   // Poll for plan after payment success — webhook may not be done yet.
   // Tries 5 times over ~10 seconds, stops as soon as plan upgrades.
-  async function pollForPlanUpdate(uid) {
+  async function pollForPlanUpdate(uid, targetPlan = '') {
+    const wanted = targetPlan === 'max' ? ['max'] : targetPlan === 'plus' ? ['super', 'plus'] : ['super', 'plus', 'max'];
     for (let i = 0; i < 5; i++) {
       try {
         const snap = await getDoc(doc(db, 'users', uid));
         if (window.currentUser?.uid !== uid) return;
         const plan = (snap.exists() && snap.data().plan) ? snap.data().plan : 'free';
-        if (planTier(plan) === 'paid') {
+        if (wanted.includes(plan)) {
           await fetchPlan(uid); // works out Plus vs Mega Knox
           return;
         }
@@ -3932,7 +3942,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         if (params.get('payment') === 'success') {
           showPaymentSuccessModal();
           // Poll for the webhook to finish writing the new plan
-          pollForPlanUpdate(user.uid);
+          pollForPlanUpdate(user.uid, params.get('switched') || '');
           try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
         }
       }
@@ -4553,8 +4563,38 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       });
       if (window.currentUser?.uid === uid && (context.viewVersion === undefined || context.viewVersion === window._appViewVersion)) window._currentConversationId = conversationId;
       // Every photo sent keeps a smaller copy, so a reopened chat shows all of them.
-      if (context.photo) Promise.resolve(context.photo).then(photo => photo &&
-        setDoc(doc(collection(convRef, 'photos'), context.messageId), photo)).catch(() => {});
+      if (context.photo) {
+        const savePhoto = async () => {
+          let notice;
+          try {
+            const photo = await context.photo;
+            if (window.currentUser?.uid !== uid || deletedHistory.has(uid + '/' + conversationId)) return;
+            if (!photo) throw new Error('Photo could not be prepared.');
+            const photoRef = doc(collection(convRef, 'photos'), context.messageId);
+            // A timed-out successful write can be retried without trying to
+            // update an immutable photo document.
+            await runTransaction(db, async tx => {
+              const saved = await tx.get(photoRef);
+              if (window.currentUser?.uid !== uid || deletedHistory.has(uid + '/' + conversationId)) throw new Error('Account or conversation changed.');
+              if (saved.exists()) {
+                if (saved.data().type !== photo.type || saved.data().data !== photo.data) throw new Error('Saved photo differs.');
+                return;
+              }
+              tx.set(photoRef, photo);
+            });
+          } catch (error) {
+            if (window.currentUser?.uid !== uid || deletedHistory.has(uid + '/' + conversationId) ||
+                window._currentConversationId !== conversationId) return;
+            notice = document.createElement('div');
+            notice.setAttribute('role', 'status');
+            notice.textContent = 'Your answer is saved, but its photo is not. Retry saving the photo, or reattach it before leaving this page. ';
+            const retry = document.createElement('button'); retry.textContent = 'Retry photo';
+            retry.onclick = () => { notice.remove(); void savePhoto(); };
+            notice.appendChild(retry); document.getElementById('chatThread')?.appendChild(notice);
+          }
+        };
+        void savePhoto();
+      }
       loadSidebarHistory();
       return true;
     } catch (e) {
@@ -4757,11 +4797,20 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // Block new message writes in every tab before draining children.
     await updateDoc(parent, { deleting: true });
     const materials = await getDocs(query(collection(parent, 'sourceMaterials'), limit(SOURCE_CHUNKS + 1)));
-    const photos = await getDocs(query(collection(parent, 'photos'), limit(400))).catch(() => ({ docs: [] }));
-    if (materials.docs.length || photos.docs.length) {
+    if (materials.docs.length) {
       const batch = writeBatch(db);
-      [...materials.docs, ...photos.docs].forEach(material => batch.delete(material.ref));
+      materials.docs.forEach(material => batch.delete(material.ref));
       await batch.commit();
+    }
+    // Firestore does not cascade-delete. Drain every photo batch; a failed
+    // query must leave the deleting parent in place so the user can retry.
+    while (true) {
+      const photos = await getDocs(query(collection(parent, 'photos'), limit(400)));
+      if (!photos.docs.length) break;
+      const batch = writeBatch(db);
+      photos.docs.forEach(photo => batch.delete(photo.ref));
+      await batch.commit();
+      if (photos.docs.length < 400) break;
     }
     const messagesRef = collection(parent, 'messages');
     // Bounded batches avoid hundreds of simultaneous requests. Normal threads
