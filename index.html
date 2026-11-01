@@ -4342,9 +4342,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       if (data.switched) {
         window._pendingCheckout = null;
         try { sessionStorage.removeItem('pendingCheckout'); } catch (_) {}
-        const name = planKey === 'max' ? 'Mega Knox' : 'Knox Plus';
-        alert(`You're on ${name} now! 🎉 Stripe will adjust your next bill for the change.`);
-        window.location.href = '/app?payment=success';
+        // The app's plan popup says it (in Knox style, not a browser alert).
+        window.location.href = '/app?payment=success&switched=' + (planKey === 'max' ? 'max' : 'plus');
         return;
       }
       if (!data.url || new URL(data.url).origin !== 'https://checkout.stripe.com') throw new Error('Invalid checkout link. Please contact support.');
