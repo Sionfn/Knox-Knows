@@ -2726,6 +2726,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <div class="pt-sub" id="megaSubline">Everything Knox has · cancel anytime</div>
         <div class="pt-space"></div>
         <button class="pt-btn" onclick="handlePurchase('Mega')" id="megaCTABtn">Start Free Trial</button>
+        <div id="megaTrialFine" style="margin-top:8px;font-size:12px;font-weight:700;opacity:.75;text-align:center;">One free trial per person.</div>
       </div>
 
     </div>
@@ -2797,7 +2798,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <span class="knox-faq-icon" aria-hidden="true">+</span>
         </summary>
         <div class="knox-faq-body">
-          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 3 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees.
+          Yes — unless you cancel before the trial ends. The free trial on Mega Knox Monthly gives you 3 days of full access. After that, $12.99/month is charged automatically. (Knox Plus has no trial — it starts at $9.99/month.) You can cancel anytime from your account page (we'll show you how), and you'll keep access until the period you paid for ends. No surprise fees. There's one free trial per person: a card that already had a trial won't start another one (and isn't charged).
         </div>
       </details>
 
@@ -3349,7 +3350,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         window.userComped = data.comped === true;
         // The Mega trial is for first-time subscribers (same check as
         // api/create-checkout-session.js), so don't advertise it once it's used.
-        window.megaTrialUsed = !!(data.planActivatedAt || data.stripeSubscription);
+        window.megaTrialUsed = !!(data.planActivatedAt || data.stripeSubscription || data.trialDenied);
+        // One free trial per device (see megaTrialAvailable).
+        if (data.planStatus === 'trialing' || data.trialDenied) { try { localStorage.setItem('knoxMegaTrialDevice', '1'); } catch (e) {} }
         userPlan = plan;
       } else {
         window.userPlan = "free";
@@ -4583,6 +4586,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   // the server switches the same subscription and charges the difference. Signed out / free: normal
   // buttons for the chosen billing.
   function megaTrialAvailable() {
+    // One free trial per person: a browser where an account already trialed
+    // isn't offered it again (the server also refuses a card that trialed).
+    let deviceTrial = false;
+    try { deviceTrial = localStorage.getItem('knoxMegaTrialDevice') === '1'; } catch (e) {}
+    if (deviceTrial) return false;
     if (!window.currentUser) return true;
     return (window.userTier || 'free') === 'free' && !window.megaTrialUsed;
   }
@@ -4615,6 +4623,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     // Paid members never get the trial, so their Mega badge shows no trial either.
     const megaTrial = document.getElementById('megaTrialBadge');
     if (megaTrial && !yearly && !megaTrialAvailable()) megaTrial.style.display = 'none';
+    const trialFine = document.getElementById('megaTrialFine');
+    if (trialFine) trialFine.style.display = !yearly && megaTrialAvailable() ? '' : 'none';
     if (!fromBilling && tier === 'free') setBilling(billing || 'monthly');
   }
   window.updatePricingButtons = updatePricingButtons;

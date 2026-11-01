@@ -2013,3 +2013,33 @@ test('Learn corrects its saved goal map when Knox discovers it misread the photo
  const r=response();await handler(askRequest({question:'Read this photo again',image:'aGVsbG8=',imageType:'image/png',learnMode:true,learnSessionId:crypto.randomUUID(),history}),r);
  assert.equal(r.code,200);assert.match(r.body.answer,/Lesson plan: Evaluate parentheses \| Multiply and divide/);assert.doesNotMatch(r.body.answer,/Lesson plan: Rewrite binomial/);
 });
+
+test('one free trial per card: the same card trialing on a second account is cancelled, not charged', async () => {
+  const { db, store } = memoryDb();
+  const megaPrice = 'price_mega_m';
+  const cancelled = [];
+  let event;
+  const subs = {
+    sub_a: { id: 'sub_a', customer: 'cus_a', status: 'trialing', items: { data: [{ price: { id: megaPrice } }] }, default_payment_method: { card: { fingerprint: 'fp_card' } } },
+    sub_b: { id: 'sub_b', customer: 'cus_b', status: 'trialing', items: { data: [{ price: { id: megaPrice } }] }, default_payment_method: { card: { fingerprint: 'fp_card' } } },
+  };
+  const stripe = {
+    webhooks: { constructEvent: () => event },
+    subscriptions: { retrieve: async id => subs[id], cancel: async id => { cancelled.push(id); return { id, status: 'canceled' }; } },
+    customers: { retrieve: async id => ({ email: id + '@example.com', metadata: {} }) },
+  };
+  const handler = await load('api/webhook.js', { db, stripe, env: { ...MEGA_ENV, RESEND_API_KEY: 'test' }, fetch: async () => ({ ok: true, text: async () => '' }) });
+  for (const [uid, sub] of [['u1', 'sub_a'], ['u2', 'sub_b']]) {
+    event = { id: 'evt_' + sub, type: 'checkout.session.completed', data: { object: { id: 'cs_' + sub, subscription: sub, metadata: { uid } } } };
+    const res = response(); await handler(webhookRequest(event), res); assert.equal(res.code, 200);
+  }
+  assert.equal(store.get('users/u1').stripeSubscription, 'sub_a', 'first trial goes ahead');
+  assert.deepEqual(cancelled, ['sub_b'], 'the repeat trial is cancelled');
+  assert.equal(store.get('users/u2').stripeSubscription, undefined);
+  assert.ok(store.get('users/u2').trialDenied);
+  assert.equal(store.get('trialCards/fp_card').uid, 'u1');
+  // The same account coming back (e.g. a retried event) is not treated as a repeat.
+  event = { id: 'evt_sub_a_again', type: 'checkout.session.completed', data: { object: { id: 'cs_sub_a', subscription: 'sub_a', metadata: { uid: 'u1' } } } };
+  await handler(webhookRequest(event), response());
+  assert.deepEqual(cancelled, ['sub_b']);
+});

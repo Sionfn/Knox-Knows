@@ -193,6 +193,7 @@ export default async function handler(req, res) {
       plan,
       tier: planTierName, // 'free' | 'plus' | 'mega'
       planStatus: userData.planStatus || "none",
+      trialDenied: userData.trialDenied || null, // a repeat free trial was refused (see webhook.js)
       usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" },
       streak,
       studiedToday,

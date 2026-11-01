@@ -309,7 +309,7 @@ export default async function handler(req, res) {
       // for another free trial, indefinitely. A subscription that never got
       // past a failed first payment (incomplete) doesn't count as a trial used.
       const userData = userSnap.exists ? userSnap.data() : {};
-      let hadSubscription = !!(userData.planActivatedAt || userData.stripeSubscription);
+      let hadSubscription = !!(userData.planActivatedAt || userData.stripeSubscription || userData.trialDenied);
       if (!hadSubscription) hadSubscription = subscriptions.some(sub => !['incomplete', 'incomplete_expired'].includes(sub.status));
       if (!hadSubscription) subscriptionData.trial_period_days = 3;
     }

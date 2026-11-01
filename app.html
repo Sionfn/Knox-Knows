@@ -3352,6 +3352,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window.userAmbassador = d.ambassador === true;
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
       window.userComped = !!(snap.exists() && snap.data().comped === true);
+      // One free trial per device: once an account here trialed (or was refused
+      // a repeat trial), no account on this browser is offered the trial again.
+      window.megaTrialUsed = !!(d.planActivatedAt || d.stripeSubscription || d.trialDenied);
+      if (d.planStatus === 'trialing' || d.trialDenied) { try { localStorage.setItem('knoxMegaTrialDevice', '1'); } catch (e) {} }
     } catch (e) {
       if (window.currentUser?.uid !== uid) return;
       window.userPlan = 'free';
@@ -3575,7 +3579,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.knoxMegaPitch = function () {
     if (window.userTier === 'mega') return null;
     if (window.userTier === 'plus') return { title: 'Go Mega Knox', sub: '40-card decks & early access', button: '💎 Upgrade to Mega Knox' };
-    return window.hasBillingAccount
+    let deviceTrial = false;
+    try { deviceTrial = localStorage.getItem('knoxMegaTrialDevice') === '1'; } catch (e) {}
+    return window.hasBillingAccount || window.megaTrialUsed || deviceTrial
       ? { title: 'Get Mega Knox', sub: 'Everything Knox has', button: '💎 Get Mega Knox — everything Knox has' }
       : { title: 'Try Mega Knox free', sub: '3-day free trial', button: '💎 Try Mega Knox free for 3 days' };
   };

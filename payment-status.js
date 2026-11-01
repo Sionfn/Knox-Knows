@@ -93,6 +93,17 @@ window.showKnoxBillingStatus = function () {
         const response = await fetch('/api/me', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(8000)]) });
         const data = await response.json();
         if (window.currentUser?.uid !== user.uid || !overlay.isConnected) return;
+        // A repeat free trial was cancelled by Knox (one per card): say so, no charge.
+        if (response.ok && data.trialDenied && Date.now() - Date.parse(data.trialDenied) < 15 * 60 * 1000 && !['super', 'plus', 'max'].includes(data.plan)) {
+          clearTimeout(reveal); overlay.classList.remove('kb-wait', 'kb-hold');
+          icon.textContent = '💎';
+          title.textContent = 'You’ve already had a free trial';
+          status.textContent = 'That card already started a Mega Knox trial, so this one was cancelled and you weren’t charged. Get Mega Knox from Pricing any time.';
+          close.textContent = 'See plans';
+          close.onclick = () => { dismiss(); location.href = '/about#pricing'; };
+          try { localStorage.setItem('knoxMegaTrialDevice', '1'); } catch (_) {}
+          return;
+        }
         if (response.ok && ['super', 'plus', 'max'].includes(data.plan) && wanted.includes(data.plan)) {
           await window.knoxRefreshPlan?.();
           if (window.currentUser?.uid !== user.uid || !overlay.isConnected) return;

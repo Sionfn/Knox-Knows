@@ -301,6 +301,24 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
   });
 }
 
+// True when this trial's card already started a trial on a different account.
+// Otherwise records the card (by Stripe's card fingerprint, never the number).
+async function repeatTrialCard(uid, subscription) {
+  let fingerprint = null;
+  try {
+    const sub = await stripe.subscriptions.retrieve(subscription.id, { expand: ['default_payment_method'] });
+    fingerprint = sub.default_payment_method?.card?.fingerprint || null;
+  } catch (e) { console.error('Trial card lookup failed:', e.message); }
+  if (!fingerprint) return false; // no card to compare (e.g. Link): allow
+  const ref = db.collection('trialCards').doc(fingerprint);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    if (snap.exists && snap.data().uid !== uid) return true;
+    if (!snap.exists) tx.set(ref, { uid, subscriptionId: subscription.id, at: new Date().toISOString() });
+    return false;
+  });
+}
+
 // Resolve uid from a subscription object — checks metadata first, then
 // looks up the customer's metadata.
 async function resolveUid(subscription) {
@@ -379,6 +397,14 @@ export default async function handler(req, res) {
         // Get the price ID from the subscription
         if (!session.subscription) break;
         const subscription = await stripe.subscriptions.retrieve(session.subscription);
+        // One free trial per card: a card that already started a trial on
+        // another account gets this new subscription cancelled (never charged).
+        if (subscription.status === 'trialing' && await repeatTrialCard(uid, subscription)) {
+          await stripe.subscriptions.cancel(subscription.id, {}, { idempotencyKey: `knox-repeat-trial-${subscription.id}` });
+          await db.collection('users').doc(uid).set({ trialDenied: new Date().toISOString() }, { merge: true });
+          console.log(`✗ Repeat trial cancelled: uid=${uid} sub=${subscription.id}`);
+          break;
+        }
         const purchasePlan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
         const notification = ['active', 'trialing'].includes(subscription.status) && purchasePlan
           ? await sendPurchaseEmail(verifiedEmail || await resolveEmail(subscription), purchasePlan) : null;
