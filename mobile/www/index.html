@@ -66,6 +66,19 @@
     (function () {
       var cap = window.Capacitor;
       window.knoxNativeApp = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+      // The website opened from an iPhone home-screen icon gets the app's screens
+      // too (app-shell/); in a browser it stays the normal website. ?shell=1 previews it.
+      var force = /[?&]shell=1\b/.test(location.search), off = /[?&]shell=0\b/.test(location.search);
+      try { if (force) sessionStorage.setItem('knoxShell', '1'); if (off) sessionStorage.removeItem('knoxShell'); force = force || sessionStorage.getItem('knoxShell') === '1'; } catch (e) {}
+      var standalone = navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+      var phone = !!(window.matchMedia && matchMedia('(max-width: 900px)').matches);
+      var webShell = !window.knoxNativeApp && !off && (force || (standalone && phone));
+      window.knoxAppShell = window.knoxNativeApp || webShell;
+      if (webShell) {
+        window.knoxMobileConfig = { version: 'web', apiOrigin: location.origin };
+        window.knoxShellBase = '/app-shell/';
+        document.documentElement.classList.add('native-app', 'web-shell');
+      }
       if (!window.knoxNativeApp) return;
       document.documentElement.classList.add('native-app');
       if (cap.getPlatform && cap.getPlatform() === 'ios') document.documentElement.classList.add('native-ios');
@@ -2547,6 +2560,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   #appHeader #appGuestBtns .header-signup-btn { padding-left: 9px; padding-right: 9px; font-size: 10px; }
 }
 </style>
+<script>
+  // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script>');
+</script>
 <link rel="stylesheet" href="/assets/native.css">
 <script src="/assets/native-pages.js" defer></script>
 <script src="/assets/native-ui.js" defer></script>
@@ -5378,7 +5395,7 @@ function showChatThread() {
 // One set of account/theme controls: sidebar on desktop, compact header on mobile.
 function placeAppControls() {
   const controls = document.querySelector('.header-right');
-  const destination = !window.knoxNativeApp && window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
+  const destination = !window.knoxAppShell && window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
   if (controls && destination && controls.parentElement !== destination) {
     destination.appendChild(controls);
     window.closeUserDropdown?.();
@@ -5392,7 +5409,7 @@ function placeAppControls() {
     // profile button). Desktop guests: no dock is shown, so keep the toggle
     // in the status row on the same line as the credit pill. Mobile: status row.
     const isGuest = document.body.classList.contains('app-guest');
-    const themeDestination = (!window.knoxNativeApp && window.innerWidth > 900 && !isGuest) ? dock : status;
+    const themeDestination = (!window.knoxAppShell && window.innerWidth > 900 && !isGuest) ? dock : status;
     if (theme && themeDestination && theme.parentElement !== themeDestination) themeDestination.appendChild(theme);
     if (settings && status && settings.parentElement !== status) status.appendChild(settings);
   }
@@ -7168,9 +7185,9 @@ if (savedQuestion) {
   finish();
 })();
 
-// In the native app the logo stays in the app instead of opening the
-// marketing page (it has pricing and checkout).
-if (window.knoxNativeApp) {
+// In the app (and the home-screen version) the logo stays in the app instead
+// of opening the marketing page.
+if (window.knoxAppShell) {
   document.querySelectorAll('a[href="/about"]').forEach(a => { a.href = '/app'; a.removeAttribute('title'); });
 }
 
@@ -7227,8 +7244,8 @@ window.addEventListener('pagehide', () => {
   const nav = document.querySelector('.sidebar-body .sidebar-quicknav');
   const calc = $('calcModal');
   const current = () => {
-    if (window.knoxNativeApp && document.body.classList.contains('knox-mobile-home')) return 'home';
-    if (window.knoxNativeApp && document.body.classList.contains('knox-mobile-account')) return 'account';
+    if (window.knoxAppShell && document.body.classList.contains('knox-mobile-home')) return 'home';
+    if (window.knoxAppShell && document.body.classList.contains('knox-mobile-account')) return 'account';
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
