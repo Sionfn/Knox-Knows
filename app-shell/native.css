@@ -279,7 +279,66 @@ html.native-app .knox-app-tabs button[aria-current="page"] { color:var(--text) !
 .knox-app-tabs button[data-tab="account"] .km-tab-tile { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
 @media (prefers-reduced-motion:reduce) { .km-press, .km-tab-tile { transition:none; } .km-press:active { transform:none; } }
 
-/* Website home-screen version: iOS paints the status strip from a fixed element
-   at the very top, so give it the page's color instead of the website's orange. */
-html.web-shell #statusTint { display:block!important; position:fixed; top:0; left:0; right:0; height:6px; z-index:120; pointer-events:none; background:var(--cream); }
-html.web-shell .knox-mobile-page { padding-top:18px; }
+
+/* ─── App header: fixed at the top of every tab, in that screen's own color
+   (set by native-ui.js), so the status bar / island area blends in. ─── */
+html.native-app { --appbar:62px; --safe-top:env(safe-area-inset-top,0px); }
+.km-appbar { position:fixed; z-index:115; top:0; left:0; right:0; height:calc(var(--appbar) + var(--safe-top)); padding:var(--safe-top) max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left)); display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--cream); transition:background .2s; }
+.km-appbar .km-brand b { font-size:19px; }
+.km-appbar[data-tab="learn"] .km-logo { border-color:var(--purple); box-shadow:0 3px 0 var(--purple-dark); }
+html.native-app #mainColumn { padding-top:calc(var(--appbar) + var(--safe-top)); }
+html.native-app #statusTint { display:none!important; }
+.knox-mobile-page { padding-top:14px; }
+.km-flame-pill, .km-streak-card { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+
+/* Home and You never scroll sideways; long titles wrap to two lines. */
+.knox-mobile-page { overflow-x:hidden; touch-action:pan-y; }
+html.native-app, html.native-app body { overscroll-behavior-x:none; }
+.km-page-wrap { min-width:0; }
+.km-deck b, .km-recent b { white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.35; }
+
+/* Knox is bigger next to his replies (Ask and Learn). */
+html.native-app .msg-knox-avatar { width:46px; height:46px; border-radius:15px; border:2.5px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark); }
+html.native-app body.knox-learn-mode .msg-knox-avatar { border-color:var(--purple); box-shadow:0 3px 0 var(--purple-dark); }
+html.native-app .msg-knox-label { font-size:13px; }
+
+/* Paperclip beside the camera (photo library & files). */
+html.native-app .km-clip { display:inline-flex; }
+
+/* Pages from the website open in the app, with a close button. */
+.km-sheet { position:fixed; inset:0; z-index:9500; display:flex; flex-direction:column; background:var(--cream); animation:kmUp .22s ease-out; }
+@keyframes kmUp { from { transform:translateY(24px); opacity:0; } }
+.km-sheet-bar { flex-shrink:0; display:flex; justify-content:flex-end; padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px; }
+.km-sheet-close { --ledge:var(--border); min-height:40px; padding:0 14px; border-radius:12px; border:2px solid var(--border); background:var(--surface); color:var(--text); font:900 14px Nunito,sans-serif; box-shadow:0 3px 0 var(--border); }
+.km-sheet iframe { flex:1; width:100%; border:0; background:var(--surface); }
+
+/* In-app Plans. */
+.km-plans { overflow-y:auto; }
+.km-plans-body { max-width:560px; margin:0 auto; padding:0 18px calc(30px + env(safe-area-inset-bottom,0px)); width:100%; }
+.km-plans h1 { font-size:34px; line-height:1.08; font-weight:900; letter-spacing:-.03em; margin:14px 0 18px; }
+.km-plans h1 span { color:var(--orange); }
+.km-billing { display:flex; gap:6px; padding:5px; border-radius:16px; border:2px solid var(--border); background:var(--surface); margin-bottom:18px; }
+.km-billing button { flex:1; min-height:42px; border:0; border-radius:11px; background:transparent; color:var(--text-light); font:900 14px Nunito,sans-serif; }
+.km-billing button[aria-pressed="true"] { background:var(--orange); color:#fff; box-shadow:0 3px 0 var(--orange-dark); }
+.km-plan-cards { display:grid; gap:16px; }
+.km-plan-card { position:relative; padding:20px 18px 18px; border:2.5px solid var(--border); border-radius:22px; background:var(--surface); box-shadow:0 5px 0 var(--border); }
+.km-plan-card[data-tier="plus"] { border-color:var(--green); box-shadow:0 5px 0 var(--green-dark); }
+.km-plan-card[data-tier="mega"] { border-color:#F2B705; box-shadow:0 5px 0 #C99404; background:linear-gradient(135deg,#FFF3C4,var(--surface) 60%); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-plan-card[data-tier="mega"] { background:linear-gradient(135deg,rgba(242,183,5,.16),transparent 60%),var(--surface); }
+.km-plan-ribbon { position:absolute; top:-13px; right:16px; padding:4px 10px; border-radius:999px; background:#F2B705; color:#4A3400; font-size:10px; font-weight:900; letter-spacing:.06em; box-shadow:0 2px 0 #C99404; }
+.km-plan-name { font-size:15px; font-weight:900; }
+.km-plan-price { display:flex; align-items:baseline; gap:4px; margin:6px 0 10px; }
+.km-plan-price b { font-size:36px; font-weight:900; letter-spacing:-.03em; }
+.km-plan-price span { font-size:14px; font-weight:800; color:var(--text-light); }
+.km-plan-card ul { padding-left:18px; margin:0 0 14px; }
+.km-plan-card li { font-size:13.5px; line-height:1.55; margin:5px 0; font-weight:700; }
+.km-plan-btn { width:100%; min-height:50px; border-radius:15px; border:2px solid var(--border); background:var(--surface); color:var(--text-light); font:900 15px Nunito,sans-serif; }
+.km-plan-btn.go { --ledge:var(--orange-dark); color:#fff; background:var(--orange); border-color:var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); }
+.km-plan-card[data-tier="plus"] .km-plan-btn.go { --ledge:var(--green-dark); background:var(--green); border-color:var(--green-dark); box-shadow:0 4px 0 var(--green-dark); }
+.km-plan-card[data-tier="mega"] .km-plan-btn.go { --ledge:#9A6B00; background:#F2B705; border-color:#C99404; color:#4A3400; box-shadow:0 4px 0 #C99404; }
+.km-plan-btn:disabled { opacity:1; }
+.km-plan-manage { --ledge:var(--border); width:100%; min-height:48px; margin-top:16px; border-radius:15px; border:2px solid var(--border); background:var(--surface); color:var(--text); font:900 15px Nunito,sans-serif; box-shadow:0 3px 0 var(--border); }
+.km-plans .km-plan-note { text-align:center; }
+
+/* The tabs switch between Ask and Learn, so the website's Learn strip is not needed. */
+html.native-app #learnModeBar { display:none!important; }

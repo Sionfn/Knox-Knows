@@ -287,7 +287,7 @@
   // alive and turning in 3D; letting go hides it. Layers stacked in depth give
   // it thickness as it sways. A normal click/tap still does what it did.
   const GLOW = { classic: '#FF6B00', purple: '#A35BFF', blue: '#2E9BFF', gold: '#F2B705', slime: '#6FD83C', diamond: '#8FE3FF' };
-  const PEEK_AT = '#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style';
+  const PEEK_AT = '#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style, .km-flame-pill, .km-streak-card';
   let peek = null, peekFor = null, peekTimer = 0;
   function peekLook(host) {
     const own = host.matches('.knox-flame') ? host : host.querySelector('.knox-flame[data-look], .knox-flame, #streakFlame');
@@ -297,7 +297,7 @@
     if (peekFor === host) return;
     hidePeek();
     const look = peekLook(host);
-    const streak = host.id === 'streakPill' ? Number(document.getElementById('streakCount')?.textContent) || 0 : null;
+    const streak = host.matches('#streakPill, .km-flame-pill, .km-streak-card') ? Number(document.getElementById('streakCount')?.textContent) || 0 : null;
     const layers = [6, 5, 4, 3, 2, 1, 0].map(z => `<span class="fp-layer${z ? ' fp-depth' : ''}" style="--z:${z}">${flameOf(look)}</span>`).join('');
     const embers = Array.from({ length: 7 }, (_, i) => `<i style="--x:${(i * 37) % 70 - 35}px;--d:${(i * 0.43).toFixed(2)}s;--s:${3 + (i % 3)}px"></i>`).join('');
     peek = document.createElement('div');

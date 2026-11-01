@@ -100,7 +100,7 @@ window.showKnoxBillingStatus = function () {
           title.textContent = 'You’ve already had a free trial';
           status.textContent = 'That card already started a Mega Knox trial, so this one was cancelled and you weren’t charged. Get Mega Knox from Pricing any time.';
           close.textContent = 'See plans';
-          close.onclick = () => { dismiss(); location.href = '/about#pricing'; };
+          close.onclick = () => { dismiss(); if (window.knoxOpenPlans) window.knoxOpenPlans(); else location.href = '/about#pricing'; };
           try { localStorage.setItem('knoxMegaTrialDevice', '1'); } catch (_) {}
           return;
         }

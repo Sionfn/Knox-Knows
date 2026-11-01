@@ -104,7 +104,7 @@
         delete step.extra;
         if (step.title === 'Meet Mega Knox') step.text = 'Your Knox plan follows your account. Sign in with the same account you use on your other devices.';
         if (step.finish && step.id !== 'fest') step.finish = () => window.Capacitor.Plugins.Browser.open({ url: 'https://www.knoxknowsapp.com/updates' });
-      }
+      } else if (step.finish && step.id !== 'fest') step.finish = () => window.knoxOpenPage?.('/updates');
     }
     let i = 0, spot = null;
     const layer = document.createElement('div');

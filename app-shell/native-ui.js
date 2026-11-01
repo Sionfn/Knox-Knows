@@ -59,11 +59,27 @@ function attachments(intoCards=false){
  button(d,'Choose file',()=>{d.close();$(intoCards?'fcDocInput':'appFileInput')?.click();});
  button(d,'Cancel',()=>d.close());d.showModal();
 }
-// On the website, iPhone's own file menu already offers Take Photo / Photo Library.
-if(native)document.addEventListener('click',e=>{
+// The camera button opens the camera right away (like other apps); the paperclip
+// next to it is for the photo library and files.
+const webCamera=document.createElement('input');webCamera.type='file';webCamera.accept='image/*';webCamera.setAttribute('capture','environment');webCamera.hidden=true;
+webCamera.onchange=()=>{const f=webCamera.files?.[0];webCamera.value='';if(f)window.handleImageFile?.(f);};document.body.append(webCamera);
+function openCamera(){if(native)takePhoto('CAMERA');else webCamera.click();}
+window.knoxOpenCamera=openCamera;
+document.addEventListener('click',e=>{
+ const clip=e.target.closest('.km-clip');
+ if(clip){e.preventDefault();e.stopImmediatePropagation();if(native)attachments(false);else $('appFileInput')?.click();return;}
  const target=e.target.closest('button[onclick*="appFileInput"],button[data-action="doc-pick"]');
- if(target){e.preventDefault();e.stopImmediatePropagation();attachments(target.dataset.action==='doc-pick');}
+ if(!target)return;
+ if(target.dataset.action==='doc-pick'){if(native){e.preventDefault();e.stopImmediatePropagation();attachments(true);}return;}
+ e.preventDefault();e.stopImmediatePropagation();openCamera();
 },true);
+const camBtn=document.querySelector('button[onclick*="appFileInput"]');
+if(camBtn&&!document.querySelector('.km-clip')){
+ camBtn.setAttribute('aria-label','Take a photo');camBtn.title='Take a photo';
+ const clipBtn=document.createElement('button');clipBtn.type='button';clipBtn.className=camBtn.className+' km-clip';clipBtn.setAttribute('aria-label','Add a photo or file');clipBtn.title='Add a photo or file';
+ clipBtn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>';
+ camBtn.before(clipBtn);
+}
 
 // Ask and Learn share a renderer. Retain the actual message nodes (and their
 // listeners), draft, attachment and lesson state when switching between them.
@@ -91,6 +107,44 @@ const icons={chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 
 icons.home='<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>';
 icons.account='<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>';
 const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons});
+
+// App header on every tab: logo, the tab's name, streak flame and profile. It
+// takes each screen's own background, so the top (and the status bar) blends in.
+const bar=document.createElement('header');bar.className='km-appbar';
+bar.innerHTML='<span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b data-appbar-title>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button></span>';
+document.body.prepend(bar);bar.addEventListener('click',e=>pages.action(e));
+const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
+let themeMeta=document.querySelector('meta[name="theme-color"]');
+function paint(){
+ const surface=current==='home'?$('knoxMobileHome'):current==='account'?$('knoxMobileAccount'):current==='flashcards'?$('flashcardsPanel'):$('chatAndInput')||$('mainColumn');
+ let el=surface,bg='';
+ while(el){bg=getComputedStyle(el).backgroundColor;if(bg&&!/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(bg))break;el=el.parentElement;bg='';}
+ bg=bg||getComputedStyle(document.body).backgroundColor;
+ bar.style.background=bg;if(themeMeta)themeMeta.content=bg;
+ bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
+ bar.dataset.tab=current;
+}
+window.knoxPaintAppBar=paint;
+
+// Pages that live on the website (updates, privacy, redeem…) open inside the
+// app with a close button; there's no browser back button on the home screen.
+function openPage(url){
+ const sheet=document.createElement('div');sheet.className='km-sheet';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');
+ sheet.innerHTML='<div class="km-sheet-bar"><button type="button" class="km-sheet-close km-press">✕ Close</button></div>';
+ const frame=document.createElement('iframe');frame.src=url;frame.title='Knox Knows';sheet.append(frame);
+ sheet.querySelector('.km-sheet-close').onclick=()=>sheet.remove();
+ document.body.append(sheet);
+}
+window.knoxOpenPage=openPage;
+if(!native){
+ window.knoxOpenPlans=()=>pages.openPlans();
+ document.addEventListener('click',e=>{
+  const a=e.target.closest('a[href]');if(!a||a.target==='_blank'&&!/knoxknowsapp\.com/.test(a.href))return;
+  const u=new URL(a.href,location.href);if(u.origin!==location.origin)return;
+  if(u.pathname==='/about'||u.pathname==='/'||u.pathname==='/index.html'){e.preventDefault();if(u.hash==='#pricing')pages.openPlans();else navigate('home');return;}
+  if(/^\/(updates|privacy|terms|refund|redeem|reviews|gift)(\.html)?$/.test(u.pathname)){e.preventDefault();openPage(u.pathname+u.search+u.hash);}
+ },true);
+}
 function surface(target){document.body.classList.toggle('knox-mobile-home',target==='home');document.body.classList.toggle('knox-mobile-account',target==='account');pages.show(target);}
 const entryTarget=new URLSearchParams(location.search).get('open');
 const initialSurface=entryTarget==='account'?'account':'home';
@@ -128,6 +182,7 @@ function sync(){
  const active=current==='calculator'?'home':current;
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
+ if(typeof paint==='function')setTimeout(paint,0);
 }
 new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
 window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
@@ -143,7 +198,9 @@ if(!native){
 }
 for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>document.documentElement.classList.add('native-keyboard')));
 quiet(p.keyboard.addListener('keyboardWillHide',()=>document.documentElement.classList.remove('native-keyboard')));
-function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:'DARK'}));}
+// The status bar sits over the app header (same color), with light text in Dark mode.
+quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
+function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
 new MutationObserver(chrome).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});chrome();
 quiet(p.app.addListener('appStateChange',({isActive})=>{if(isActive){quiet(p.network.getStatus().then(connection));window.updateUsageIndicator?.();}else $('appChatInput')?.dispatchEvent(new Event('change'));}));
 // Keep external web pages outside the trusted local app webview.

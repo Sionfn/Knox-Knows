@@ -5157,7 +5157,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.sendWelcomeEmailCall = sendWelcomeEmailCall;
 
   // ── Payments ────────────────────────────────────────────────
-  window.goToPricing = function() { if (window.knoxNativeApp) return; window.location.href = '/about#pricing'; };
+  window.goToPricing = function() { if (window.knoxNativeApp) return; if (window.knoxOpenPlans) return window.knoxOpenPlans(); window.location.href = '/about#pricing'; }; // the home-screen version has its own Plans page
 
   function showPaymentSuccessModal() { window.showKnoxBillingStatus(); }
   window.showPaymentSuccessModal = showPaymentSuccessModal;
@@ -5514,7 +5514,8 @@ window.openLearnMode = function() {
   const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
   if (learnNav) learnNav.classList.add('sidebar-nav-active');
 
-  document.getElementById('appChatInput')?.focus();
+  // In the app, opening Learn shows the lesson screen first; the keyboard waits for a tap.
+  if (!window.knoxAppShell) document.getElementById('appChatInput')?.focus();
 };
 
 // A guest in Learn who sends a question: every guest message counts toward 3
