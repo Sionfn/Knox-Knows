@@ -3944,6 +3944,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window._conversation = [];
       updatePlanUI();
       renderStreak(0, false);
+      syncDiscordCards(false);
     }
     } catch (e) {
       if (loadVersion !== authLoadVersion) return;
@@ -4019,8 +4020,21 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   // Reads the current streak (without advancing) and renders it. Also
   // detects a broken streak on load (missed day → show 0 / hide).
+  // The Discord card says when this account is already linked (Slime Flame unlocked).
+  function syncDiscordCards(linked) {
+    window.knoxDiscordLinked = linked;
+    document.querySelectorAll('.sidebar-discord-card').forEach(card => {
+      card.classList.toggle('is-linked', linked);
+      card.querySelector('.sidebar-extension-copy strong').textContent = linked ? 'Discord linked ✓' : 'Join the Knox Discord';
+      card.querySelector('.sidebar-extension-copy span').textContent = linked ? 'Your Slime Flame is unlocked' : 'Join, then type /link to unlock it';
+      card.querySelector('.discord-slime-badge').lastChild.textContent = linked ? 'Linked' : 'Free Slime Flame';
+      if (card.getAttribute('aria-hidden') !== 'true') card.setAttribute('aria-label', linked ? 'Your Discord is linked to Knox Knows. Open the Knox Discord' : 'Join the Knox Discord — get the free Slime Flame and become a Knox Ambassador');
+    });
+  }
+  window.syncDiscordCards = syncDiscordCards;
+
   async function loadStreak(uid) {
-    if (!uid) { renderStreak(0, false); return; }
+    if (!uid) { renderStreak(0, false); syncDiscordCards(false); return; }
     try {
       const snap = await getDoc(doc(db, 'users', uid));
       if (window.currentUser?.uid !== uid) return;
@@ -4031,7 +4045,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // If they last studied before yesterday, the streak is broken —
       // unless they have enough Flame Shields to cover the missed days.
       if (lastDay && daysBetween(lastDay, today) - 1 > (data.flameShields || 0) && daysBetween(lastDay, today) > 1) count = 0;
-      window.knoxFlameFest?.applyFlameStyle(data.flameStyle);
+      window.knoxFlameFest?.applyFlameStyle(data.flameStyle || 'classic'); // never keep the last account's look
+      syncDiscordCards(typeof data.discordId === 'string' && !!data.discordId);
       // A saved day ahead of today's local date (e.g. from a different
       // timezone or the old UTC days) means today is already counted.
       const studiedToday = !!lastDay && lastDay >= today;
@@ -4040,6 +4055,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     } catch (e) { if (window.currentUser?.uid === uid) renderStreak(0, false); }
   }
   window.loadStreak = loadStreak;
+  // Coming back to the tab re-reads the flame, so a Discord /unlink (Slime goes
+  // back to classic) or a change on another device shows without reloading.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && window.currentUser) loadStreak(window.currentUser.uid);
+  });
 
   function renderStreak(count, studiedToday) {
     const pill  = document.getElementById('streakPill');
@@ -5144,7 +5164,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         try {
           const res = await fetch('/api/discord-link', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + await u.getIdToken() }, body: JSON.stringify({ action: 'unlink' }) });
           if (!res.ok) throw new Error();
-          showConn(false);
+          showConn(false); syncDiscordCards(false);
           window.loadStreak?.(u.uid); // the streak flame goes back to classic
         } catch (e) { showConn(true); connStatus.textContent = 'Couldn\u2019t disconnect. Please try again.'; }
       } : () => window.open('https://discord.gg/34mMzXc5zG', '_blank', 'noopener');

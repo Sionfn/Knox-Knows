@@ -339,7 +339,7 @@
   // Clicking the Knox Discord card: say how to earn the Slime Flame (linking in
   // the server unlocks it; see api/_discord-link.js).
   function discordHint() {
-    if (document.querySelector('#streakFlame.flame-slime')) return;
+    if (window.knoxDiscordLinked) { note('✅ Your Discord is already linked — the 🟢 Slime Flame is yours.'); return; }
     note('🟢 Join, then type /link in the Knox Discord to unlock the Slime Flame!');
   }
 
@@ -410,6 +410,9 @@
   // Each time someone signs in (or the page opens already signed in), try the
   // popup; it shows once per browser (see the key above) and skips visitors.
   let introTimer = 0;
+  // A different account (or signing out) drops the last one's Flame Fest and
+  // starts on the classic flame; the next streak read paints its own look.
+  addEventListener('knox-auth-changed', () => { state = null; error = ''; loading = false; styleSeq++; close(); applyFlameStyle('classic'); });
   addEventListener('knox-auth-changed', () => { clearTimeout(introTimer); introTimer = setTimeout(intro, 1500); });
   if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 
