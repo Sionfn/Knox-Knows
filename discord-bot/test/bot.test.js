@@ -303,7 +303,7 @@ test('/ask: a linked subscriber is unlimited and gets the role; an ended bot-giv
   assert.ok(!member.roleSet.has('plus'));
 });
 
-test('Check my Plus explains each case', async () => {
+test('Check my plan explains each case', async () => {
   const statuses = { plus: { linked: true, plus: true }, free: { linked: true, plus: false } };
   const plus = new Plus({ config: plusConfig(), fetch: fakeSite(statuses).fetch });
   const handlers = createHandlers({ config: plusConfig(), limits: null, lessons: null, askKnox: null, plus });
@@ -313,7 +313,7 @@ test('Check my Plus explains each case', async () => {
     return i.sent.at(-1);
   };
   assert.match((await reply('plus')).content, /got Knox Plus/);
-  assert.match((await reply('free')).content, /doesn't have Knox Plus/);
+  assert.match((await reply('free')).content, /on the Free plan/);
   assert.match((await reply('stranger')).content, /isn't connected yet/);
 });
 

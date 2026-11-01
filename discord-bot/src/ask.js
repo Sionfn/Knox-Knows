@@ -227,12 +227,12 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     if (config.guildId && interaction.guildId !== config.guildId) return privately(interaction, "Run `/link` inside the Knox Knows server to connect your account.");
     const buttons = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setLabel('Connect Knox Knows').setStyle(ButtonStyle.Link).setURL(plus.linkUrl(interaction.user.id)),
-      new ButtonBuilder().setCustomId('checkplus').setLabel('Check my Plus').setEmoji('✅').setStyle(ButtonStyle.Secondary));
+      new ButtonBuilder().setCustomId('checkplus').setLabel('Check my plan').setEmoji('✅').setStyle(ButtonStyle.Secondary));
     await interaction.reply({
       content: [
         '**Connect your Knox Knows account**',
         '1. Click **Connect Knox Knows** and sign in (the link works for 15 minutes and only for you).',
-        '2. Come back here and click **Check my Plus**.',
+        '2. Come back here and click **Check my plan**.',
         '',
         'Knox Plus and Mega Knox members get their plan here automatically: unlimited questions, longer lessons, and their role.',
         'Everyone who connects also unlocks the 🟢 **Slime Flame** for their streak on Knox Knows.',
@@ -253,7 +253,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     return interaction.editReply('Disconnected. Your Knox Knows account is no longer linked to this Discord, so your plan perks here and the 🟢 Slime Flame are off. Use `/link` any time to connect again.');
   }
 
-  // ── Check my Plus button ──
+  // ── Check my plan button (customId stays 'checkplus' so older messages' buttons still work) ──
   async function checkPlus(interaction) {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const tier = plus.tier ? await plus.tier(interaction.user.id, { fresh: true })
@@ -273,7 +273,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
     }
     const linked = (await plus.statuses([interaction.user.id]).catch(() => ({})))[interaction.user.id]?.linked;
     return interaction.editReply(linked
-      ? 'Your Knox account is connected, but it doesn\'t have Knox Plus. Get it at https://knoxknowsapp.com and run this check again.'
+      ? 'Your Knox account is connected and on the Free plan. Get Knox Plus or Mega Knox at https://knoxknowsapp.com, then tap **Check my plan** again.'
       : "Your Knox account isn't connected yet. Use the **Connect Knox Knows** button from /link, sign in, then check again.");
   }
 
@@ -286,7 +286,7 @@ export function createHandlers({ config, limits, lessons, askKnox, plus = roleOn
         `• \`/learn\` in <#${config.studyChannelId}>: **Learn mode**. Knox teaches you step by step with hints and questions, so you can do it yourself. **💬 Reply to Knox** (or tap an answer button) to keep going; replies are free. **🏁 End lesson** when you're done.`,
         '• 📷 Stuck on a worksheet? Add a **photo** to `/ask` or `/learn` (with or without a question).',
         `• Everyone gets **${config.perUserLimit} questions a day** (resets at midnight UTC; an Ask Knox follow-up is a question) and ${MAX_REPLIES} replies per Learn lesson. Knox Plus: unlimited questions, ${REPLIES_BY_TIER.plus} replies per lesson. Mega Knox: unlimited questions, ${REPLIES_BY_TIER.mega} replies per lesson.`,
-        '• `/link`: connect your Knox Knows account to get your Knox Plus perks here (and the 🟢 Slime Flame). `/unlink` disconnects it.',
+        '• `/link`: connect your Knox Knows account to get your Knox Plus or Mega Knox perks here (and the 🟢 Slime Flame). `/unlink` disconnects it.',
         '',
         'Knox won\'t help during a test or exam, but it\'ll gladly help you study for the next one. More at https://knoxknowsapp.com',
       ].join('\n'),
