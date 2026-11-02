@@ -82,6 +82,27 @@ if(Speech&&tools&&send&&!native){
  };
 }
 
+// ── Keyboard (home-screen version): like Gauth, the app shrinks to the space
+// above the keyboard and the typing box sits right on top of it, instead of iOS
+// pushing the whole page up. (The App Store app resizes natively.)
+if(!native&&w.visualViewport){
+ const vv=w.visualViewport,root=document.documentElement;let base=innerHeight;
+ const typing=()=>document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]),textarea,[contenteditable="true"]');
+ const fit=()=>{
+  base=Math.max(base,innerHeight);
+  const open=base-vv.height>120&&typing();
+  root.style.setProperty('--vvh',Math.round(vv.height)+'px');
+  if(open){root.classList.add('native-keyboard','km-kb');if(scrollY||vv.offsetTop)scrollTo(0,0);const t=$('chatThread');if(t&&t._kmStick)t.scrollTop=t.scrollHeight;}
+  else root.classList.remove('km-kb');
+ };
+ vv.addEventListener('resize',fit);
+ vv.addEventListener('scroll',()=>{if(root.classList.contains('km-kb')&&(scrollY||vv.offsetTop))scrollTo(0,0);});
+ addEventListener('orientationchange',()=>setTimeout(()=>{base=innerHeight;fit();},400));
+ // If you were reading the latest message, keep it in view while the keyboard opens.
+ $('appChatInput')?.addEventListener('focus',()=>{const t=$('chatThread');if(t)t._kmStick=t.scrollHeight-t.scrollTop-t.clientHeight<80;});
+ document.addEventListener('focusout',()=>setTimeout(fit,80));
+}
+
 // ── Gestures: swipe in from the left edge for History; swipe it away to close ──
 let sx=0,sy=0,edge=false,inDrawer=false;
 document.addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;edge=sx<24;inDrawer=!!e.target.closest('#mobileHistoryDrawer.open');},{passive:true});

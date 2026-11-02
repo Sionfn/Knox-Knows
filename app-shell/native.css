@@ -534,3 +534,13 @@ html.native-app #inputOuter:has(.km-mic):not(.km-has-text) #appSendBtn { display
 html.native-app #inputOuter.km-has-text .km-mic:not(.on) { display:none!important; }
 html.native-app .km-mic { width:46px!important; height:46px!important; min-width:46px; border-radius:50%; background:var(--orange)!important; color:#fff!important; box-shadow:0 3px 0 var(--orange-dark); }
 html.native-app body.knox-learn-mode .km-mic { background:var(--purple)!important; box-shadow:0 3px 0 var(--purple-dark); }
+
+/* Keyboard open (home-screen version): the app fits above the keyboard. */
+html.native-app.km-kb, html.native-app.km-kb body, html.native-app.km-kb #appShell { height:var(--vvh,100%)!important; min-height:0!important; }
+html.native-app.km-kb #mainColumn { padding-bottom:0!important; }
+html.native-app.native-keyboard #inputOuter { padding-bottom:8px!important; }
+html.native-app.native-keyboard .input-disclaimer { display:none!important; }
+/* The welcome tucks its topics away so the heading stays above the typing box. */
+html.native-app.native-keyboard #welcomeScreen { justify-content:flex-end; padding-bottom:14px; }
+html.native-app.native-keyboard #welcomeScreen .suggestion-grid, html.native-app.native-keyboard #welcomeScreen .welcome-sub, html.native-app.native-keyboard .km-latest { display:none!important; }
+html.native-app.native-keyboard .knox-app-tabs { display:none!important; }
