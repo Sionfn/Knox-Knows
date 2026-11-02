@@ -141,7 +141,7 @@ const EXAMPLES=[
 ];
 const isPlus=()=>['super','max','plus'].includes(window.userPlan)||window.userComped===true;
 const EVERYONE=true; // launched Nov 1: everyone can use Flashcards
-// Making a deck with Knox: Knox Plus is unlimited (up to 20 cards); free
+// Making a deck with Knox: server-enforced plan limits apply; free
 // accounts spend DECK_COST credits per deck, up to FREE_MAX cards (the server
 // in api/generate-flashcards.js enforces both).
 const DECK_COST=2, FREE_MAX=10;
@@ -174,9 +174,9 @@ function makeView(){
         <div><span class="fc-field-label">Difficulty</span><div class="fc-chips">${[['mixed','Mixed'],['easy','Easy'],['medium','Medium'],['hard','Hard']].map(([id,label])=>mega||id==='mixed'?chip(label,'make-difficulty',makeOpts.difficulty===id,`data-difficulty="${id}"`):chip(`${label} ${tierTag('mega')}`,'upgrade',false,'title="Mega Knox: choose the difficulty"')).join('')}</div></div>
       </div>
       <label class="fc-switch"><input type="checkbox" id="fcAutoPics"${autoPictures()?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>Add pictures automatically</b><small>Knox adds a free picture to cards where one helps (a body part, a place, an artwork). You can always add or change pictures yourself.</small></span></label>
-      ${makeOpts.upgrade?`<div class="fc-upsell">${mega?'⚡':'💎'} <span>${tier==='plus'?'<b>Mega Knox</b> makes decks up to 40 cards, with difficulty, more card styles and up to 10 photos.':'Go unlimited with <b>Knox Plus</b> (up to 15 cards a deck) or <b>Mega Knox</b> (up to 40, fully customizable).'}</span>${btn('See the plans','upgrade',{cls:'small'})}</div>`:''}
+      ${makeOpts.upgrade?`<div class="fc-upsell">${mega?'⚡':'💎'} <span>${tier==='plus'?'<b>Mega Knox</b> makes decks up to 40 cards, with difficulty, more card styles and up to 10 photos.':(window.knoxAppShell?'Make larger decks with <b>Knox Plus</b> (up to 15 cards) or <b>Mega Knox</b> (up to 40), with daily generation limits.':'Go unlimited with <b>Knox Plus</b> (up to 15 cards a deck) or <b>Mega Knox</b> (up to 40, fully customizable).')}</span>${btn('See the plans','upgrade',{cls:'small'})}</div>`:''}
       <div class="fc-toolbar" style="margin-top:20px">${btn(plus?'✨ Make my deck':`✨ Make my deck · ${DECK_COST} credits`,'make-go',{cls:'primary'})}</div>
-      <p class="fc-cost">${mega?'💎 Mega Knox — unlimited decks, up to 40 cards, any style and difficulty.':plus?'⚡ Knox Plus — unlimited decks, up to 15 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes unlimited decks.`}</p>
+      <p class="fc-cost">${window.knoxAppShell?(mega?'💎 Mega Knox — up to 100 AI decks per day, up to 40 cards each.':plus?'⚡ Knox Plus — up to 40 AI decks per day, up to 15 cards each.':`Uses ${DECK_COST} daily credits · up to ${FREE_MAX} cards. Paid plans include deck generation with daily limits.`):mega?'💎 Mega Knox — unlimited decks, up to 40 cards, any style and difficulty.':plus?'⚡ Knox Plus — unlimited decks, up to 15 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes unlimited decks.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
   panel.querySelector('#fcMakeReq')?.focus();
@@ -614,9 +614,16 @@ window.openFlashcards=open; // lets /app?open=flashcards reopen this section aft
 let learnReturn=null;
 window.flashcardsMake=async (request,fromLearn=false)=>{
  if(!canSee())return false;
+ const owner=key();
+ if(window.knoxAppShell){
+  if(makeOpts.reading||panel.querySelector('.fc-loading')){message('Let Knox finish this step before starting a different deck.');return false;}
+  if(!dirty&&((makeOpts.request||'').trim()||makeOpts.files.length)&&!(await knoxConfirm({title:'Replace your Make with Knox draft?',body:'This starts a deck from the selected answer. Your current request and attached notes will be cleared. Saved decks stay safe.',ok:'Use this answer',cancel:'Keep my draft'})))return false;
+  if(owner!==key())return false;
+ }
  const origin=fromLearn&&window.currentUser&&window._currentConversationId?{uid:window.currentUser.uid,id:window._currentConversationId}:null;
  const lessonUrl=new URL(location.href);lessonUrl.searchParams.set('open','learn');
- await open();if(panel.hidden)return false;
+ if(!(await open())||owner!==key())return false;
+ if(window.knoxAppShell){documentReadVersion++;makeOpts.files=[];makeOpts.reading=false;}
  learnReturn=origin;makeOpts.request=String(request||'').slice(0,4000);
  if(origin){
   history.replaceState({...history.state,knoxLearnLesson:origin},'',lessonUrl.pathname+lessonUrl.search+lessonUrl.hash);
@@ -685,7 +692,7 @@ async function takeFiles(list){
         if(window.knoxIsPhoto?.(file)&&!window.knoxIsDocument?.(file)){const p=await window.knoxShrinkPhoto(file);if(stale())return;addPhoto(p);continue;}
         const doc=await window.knoxReadDocument(file);
         if(stale())return;
-        if(doc.kind==='image'){addPhoto(await window.knoxShrinkPhoto(doc.file),doc.name+' (page 1)');continue;} // scanned PDF
+        if(doc.kind==='image'){const photo=await window.knoxShrinkPhoto(doc.file);if(stale())return;addPhoto(photo,doc.name+' (page 1)');continue;} // scanned PDF
         const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_CHARS[tierNow()]-used-doc.name.length-8;
         if(room<500)throw Error(`That’s a lot of reading for one deck — make this one, then another with ${doc.name}.`);
         makeOpts.files.push({kind:'text',name:doc.name,text:doc.text.slice(0,room),truncated:doc.truncated||doc.text.length>room});
@@ -779,7 +786,7 @@ panel.addEventListener('click',async e=>{
  if(action==='sample'){b.disabled=true;try{await sampleDeck();}finally{b.disabled=false;}}
  if(action==='due'||action==='practice')start(id,action==='due');
  if(action==='flip'&&session)flip();
- if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;if(s.reviewed===5||(!s.queue.length&&s.reviewed>=3))window.knoxFlameFest?.studied();study();}
+ if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;if(window.knoxAppShell&&window.currentUser?.uid)window.dispatchEvent(new CustomEvent('knox-study-completed',{detail:{uid:window.currentUser.uid,id:s.id+':'+(s.mobileId||=crypto.randomUUID())+':'+s.reviewed,kind:'review'}}));if(s.reviewed===5||(!s.queue.length&&s.reviewed>=3))window.knoxFlameFest?.studied();study();}
  if(action==='import')importView();
  }catch(err){message(err.message);}
 });

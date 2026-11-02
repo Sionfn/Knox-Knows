@@ -483,10 +483,10 @@ body.knox-learn-mode .km-answer-actions button { border-color:color-mix(in srgb,
 /* Today's goal (Home). */
 .km-goal { display:flex; align-items:center; gap:14px; margin:-8px 0 24px; padding:14px 16px; border:2px solid var(--border); border-radius:20px; background:var(--surface); box-shadow:0 3px 0 var(--border); }
 .km-goal[hidden] { display:none; }
-.km-goal svg { width:52px; height:52px; flex-shrink:0; transform:rotate(-90deg); }
-.km-goal circle { fill:none; stroke-width:6; }
-.km-goal .t { stroke:var(--border); }
-.km-goal .f { stroke:var(--green); stroke-linecap:round; transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
+.km-goal > svg { width:52px; height:52px; flex-shrink:0; transform:rotate(-90deg); }
+.km-goal > svg > circle { fill:none; stroke-width:6; }
+.km-goal > svg > .t { stroke:var(--border); }
+.km-goal > svg > .f { stroke:var(--green); stroke-linecap:round; transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
 .km-goal b { display:block; font-size:15px; font-weight:900; }
 .km-goal small { display:block; font-size:12px; font-weight:700; color:var(--text-light); margin-top:2px; line-height:1.45; }
 
@@ -549,3 +549,15 @@ html.native-app.native-keyboard #welcomeScreen { justify-content:flex-end; paddi
 html.native-app.native-keyboard #welcomeScreen .suggestion-grid, html.native-app.native-keyboard #welcomeScreen .welcome-sub, html.native-app.native-keyboard .km-latest { display:none!important; }
 html.native-app.native-keyboard .knox-app-tabs { display:none!important; }
 html.native-app.km-kb #chatAndInput, html.native-app.km-kb .knox-mobile-page { animation:none!important; }
+
+/* Preserve every tool when text or device height makes the welcome taller. */
+html.native-app #welcomeScreen { justify-content:flex-start;overflow-y:auto;touch-action:pan-y; }
+.km-crop-adjust { flex:none;max-height:35dvh;overflow:auto;padding:8px 0; }
+.km-crop-adjust summary { min-height:44px;display:flex;align-items:center;font:800 14px Nunito,sans-serif;cursor:pointer; }
+.km-crop-ranges { display:grid;grid-template-columns:1fr 1fr;gap:8px 16px; }
+.km-crop-ranges label { min-width:0;font:700 13px Nunito,sans-serif; }
+.km-crop-ranges input { width:100%;min-height:36px;accent-color:#FF6B00; }
+.km-crop :focus-visible { outline:3px solid #1CB0F6;outline-offset:3px; }
+.km-crop-actions { flex-shrink:0; }
+.km-crop-stage { overflow:hidden; }
+@media (max-height:600px) { .km-welcome { padding-top:16px;padding-bottom:12px;overflow-y:auto; }.km-welcome-logo { width:56px;height:56px;border-radius:16px; }.km-welcome-track { min-height:210px; }.km-welcome-track span { font-size:40px; }.km-welcome-track h2 { font-size:27px; }.km-welcome-track p { font-size:14px; } }

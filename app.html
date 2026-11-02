@@ -2560,7 +2560,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 </style>
 <script>
   // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
-  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/study-model.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
 </script>
 </head>
 <body class="app-auth-pending">
@@ -5760,12 +5760,14 @@ async function fitImageForUpload(file) {
 
 async function handleImageFile(file, displayName, keepVersion) {
   if (!file) return;
-  // In the app, a new photo opens the crop step first (pick just one problem).
+  const selectionVersion = keepVersion || ++imageSelectionVersion;
+  const selectionUid = window.currentUser?.uid || null, selectionView = window._appViewVersion;
+  const obsolete = () => selectionVersion !== imageSelectionVersion || (window.currentUser?.uid || null) !== selectionUid || window._appViewVersion !== selectionView;
+  // Claim this selection before awaiting crop so older picks and old accounts cannot replace it.
   if (window.knoxCropPhoto && !displayName && !keepVersion && /^image\/(jpeg|png|webp)$/.test(file.type)) {
     file = await window.knoxCropPhoto(file);
-    if (!file) return;
+    if (!file || obsolete()) return;
   }
-  const selectionVersion = keepVersion || ++imageSelectionVersion;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
@@ -5774,14 +5776,14 @@ async function handleImageFile(file, displayName, keepVersion) {
   let uploadFile;
   try { uploadFile = await fitImageForUpload(file); }
   catch (error) { console.error('Could not prepare photo:', error); }
-  if (selectionVersion !== imageSelectionVersion) return;
+  if (obsolete()) return;
   if (!uploadFile) {
     alert('Could not prepare this photo. Try a closer crop of the question or a different image.');
     return;
   }
   const reader = new FileReader();
   reader.onload = (ev) => {
-    if (selectionVersion !== imageSelectionVersion) return;
+    if (obsolete()) return;
     const dataUrl = String(ev.target.result);
     const base64  = dataUrl.split(',')[1];
     window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
@@ -6605,6 +6607,8 @@ window.appHandleAsk = async function() {
     // only for signed-in users, same as before.
     // Small talk is a one-line chat reply: no Copy / 👍 / 👎 icons under it.
     replaceThinking(thinkId, html, data.isCasual ? '' : window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
+
+    if (window.knoxAppShell && requestUid && !data.isCasual && answer.trim()) window.dispatchEvent(new CustomEvent('knox-study-completed', {detail:{uid:requestUid,id:fbId,kind:'answer',lessonId:requestLearnSessionId,completed:requestLearnMode && !!parseLearnExtras(answer).recap,streak:Number(document.getElementById('streakCount')?.textContent)||0}}));
 
     // Track conversation
     // Keep the document's text in the conversation so follow-up questions

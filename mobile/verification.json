@@ -1,13 +1,13 @@
 {
-  "date": "2026-11-01",
-  "version": "1.3.1",
-  "build": 5,
-  "claudeMobileBase": "3c21893",
+  "date": "2026-11-02",
+  "version": "1.3.2",
+  "build": 6,
+  "claudeMobileBase": "a19aace",
   "latestMainIncluded": "4fadbb2",
   "published": false,
   "websiteTests": 233,
-  "mobileTests": 18,
-  "bundleFiles": 78,
+  "mobileTests": 31,
+  "bundleFiles": 80,
   "bundleHashMismatches": 0,
   "nativePlugins": 11,
   "nativeProductionAuditAdvisories": 0,
@@ -15,11 +15,16 @@
   "realDeviceTested": false,
   "mockedBrowserQA": [
     "320x568",
+    "375x667",
     "390x844",
     "430x932",
     "768x1024",
     "1024x768"
   ],
   "productionChanged": false,
-  "originalClaudeCheckoutChanged": false
+  "originalClaudeCheckoutChanged": false,
+  "sourceParsingUnits": 287,
+  "cropBrowserUpload": "blocked by browser local-file access; no settings changed",
+  "liveAIQualityTested": false,
+  "competitorComparison": "official published feature descriptions only; no comparative accuracy benchmark"
 }

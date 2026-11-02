@@ -186,8 +186,10 @@ document.body.append(nav);surface(deepStudy?null:initialSurface);
 async function navigate(target){
  if(busy)return false;
  if(target===current){
-  // Tapping the tab you're on: jump to the latest message, or if you're there, start fresh.
-  if(['chat','learn'].includes(target)){const t=$('chatThread');if(t&&!t.classList.contains('hidden')&&t.scrollHeight-t.scrollTop-t.clientHeight>40)t.scrollTo({top:t.scrollHeight,behavior:'smooth'});else if(window._currentConversationId||(t&&!t.classList.contains('hidden')))newStudy();}
+  // Reselecting a tab scrolls; New is always a separate, deliberate action.
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(['chat','learn'].includes(target)){const t=$('chatThread');if(t&&!t.classList.contains('hidden'))t.scrollTo({top:t.scrollHeight,behavior:reduced?'auto':'smooth'});}
+  else if(target==='home'||target==='account')$(target==='home'?'knoxMobileHome':'knoxMobileAccount')?.scrollTo({top:0,behavior:reduced?'auto':'smooth'});
   return true;
  }
  if(cameraBusy || (!['home','account'].includes(target) && ((window._appAskBusy && target!==mode()) || $('appImagePill')?.classList.contains('is-reading')))){note('Let Knox finish this step before switching tabs.');return;}
@@ -257,7 +259,7 @@ window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.
 // "Jump to latest" when you've scrolled up in a chat.
 const latest=document.createElement('button');latest.type='button';latest.className='km-latest km-press';latest.hidden=true;latest.setAttribute('aria-label','Jump to the latest message');
 latest.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
-latest.onclick=()=>{const t=$('chatThread');t?.scrollTo({top:t.scrollHeight,behavior:'smooth'});};document.body.append(latest);
+latest.onclick=()=>{const t=$('chatThread');t?.scrollTo({top:t.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};document.body.append(latest);
 const thread=$('chatThread');
 const checkLatest=()=>{latest.hidden=!thread||thread.classList.contains('hidden')||!['chat','learn'].includes(current)||thread.scrollHeight-thread.scrollTop-thread.clientHeight<160;};
 thread?.addEventListener('scroll',checkLatest,{passive:true});new MutationObserver(checkLatest).observe(document.body,{attributes:true,attributeFilter:['class']});
