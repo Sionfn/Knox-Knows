@@ -82,25 +82,28 @@ if(Speech&&tools&&send&&!native){
  };
 }
 
-// ── Keyboard (home-screen version): like Gauth, the app shrinks to the space
-// above the keyboard and the typing box sits right on top of it, instead of iOS
-// pushing the whole page up. (The App Store app resizes natively.)
+// ── Keyboard (home-screen version): like Gauth. While the keyboard is open the
+// app is pinned to exactly the visible area (iOS's visual viewport: its top
+// offset and height), updated every frame as the keyboard slides, so the typing
+// box rides right on top of the keyboard. The page color fills behind it.
+// (The App Store app resizes natively.)
 if(!native&&w.visualViewport){
- const vv=w.visualViewport,root=document.documentElement;let base=innerHeight;
+ const vv=w.visualViewport,root=document.documentElement;let base=innerHeight,frame=0;
  const typing=()=>document.activeElement?.matches?.('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]),textarea,[contenteditable="true"]');
- const fit=()=>{
-  base=Math.max(base,innerHeight);
-  const open=base-vv.height>120&&typing();
-  root.style.setProperty('--vvh',Math.round(vv.height)+'px');
-  if(open){root.classList.add('native-keyboard','km-kb');if(scrollY||vv.offsetTop)scrollTo(0,0);const t=$('chatThread');if(t&&t._kmStick)t.scrollTop=t.scrollHeight;}
-  else root.classList.remove('km-kb');
+ const apply=()=>{
+  frame=0;base=Math.max(base,innerHeight);
+  const open=typing()&&base-vv.height>120;
+  root.style.setProperty('--vvh',vv.height+'px');root.style.setProperty('--vvt',vv.offsetTop+'px');
+  if(open){
+   if(!root.classList.contains('km-kb')){root.classList.add('native-keyboard','km-kb');const t=$('chatThread');if(t&&t._kmStick)requestAnimationFrame(()=>{t.scrollTop=t.scrollHeight;});}
+  }else if(root.classList.contains('km-kb')&&!typing()||base-vv.height<=120){root.classList.remove('km-kb');root.style.setProperty('--vvt','0px');}
  };
- vv.addEventListener('resize',fit);
- vv.addEventListener('scroll',()=>{if(root.classList.contains('km-kb')&&(scrollY||vv.offsetTop))scrollTo(0,0);});
- addEventListener('orientationchange',()=>setTimeout(()=>{base=innerHeight;fit();},400));
+ const schedule=()=>{if(!frame)frame=requestAnimationFrame(apply);};
+ vv.addEventListener('resize',schedule);vv.addEventListener('scroll',schedule);
+ addEventListener('orientationchange',()=>setTimeout(()=>{base=innerHeight;schedule();},400));
  // If you were reading the latest message, keep it in view while the keyboard opens.
- $('appChatInput')?.addEventListener('focus',()=>{const t=$('chatThread');if(t)t._kmStick=t.scrollHeight-t.scrollTop-t.clientHeight<80;});
- document.addEventListener('focusout',()=>setTimeout(fit,80));
+ $('appChatInput')?.addEventListener('focus',()=>{const t=$('chatThread');if(t)t._kmStick=t.scrollHeight-t.scrollTop-t.clientHeight<80;schedule();});
+ document.addEventListener('focusout',()=>setTimeout(schedule,60));
 }
 
 // ── Gestures: swipe in from the left edge for History; swipe it away to close ──
