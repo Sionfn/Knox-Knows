@@ -451,3 +451,72 @@ html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-
    website's "fresh fall look" tip is the You tab's look picker in the app. */
 html.native-app #inputOuter .calc-btn { display:none!important; }
 html.native-app .fall-tip:not(.fall-rest-note) { display:none!important; }
+
+/* ─── App extras (extras.js) ─── */
+/* Keep studying from an answer. */
+.km-answer-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.km-answer-actions button { min-height:38px; padding:0 13px; border-radius:999px; border:2px solid var(--border); background:var(--surface); color:var(--text); font:800 13.5px Nunito,sans-serif; box-shadow:0 2px 0 var(--border); }
+.km-answer-actions button:active { transform:translateY(2px); box-shadow:none; }
+body.knox-learn-mode .km-answer-actions button { border-color:color-mix(in srgb, var(--purple) 45%, var(--border)); }
+
+/* Crop step. */
+.km-crop { position:fixed; inset:0; z-index:9600; display:flex; flex-direction:column; background:#14100c; color:#fff; padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px)); }
+.km-crop-tip { text-align:center; font:800 14px Nunito,sans-serif; opacity:.85; margin:4px 0 12px; }
+.km-crop-stage { position:relative; flex:1; min-height:0; display:flex; align-items:center; justify-content:center; touch-action:none; }
+.km-crop-stage img { max-width:100%; max-height:100%; object-fit:contain; user-select:none; -webkit-user-drag:none; }
+.km-crop-box { position:absolute; border:3px solid #FF6B00; border-radius:10px; box-shadow:0 0 0 9999px rgba(0,0,0,.55); cursor:move; touch-action:none; }
+.km-crop-box i { position:absolute; width:26px; height:26px; background:#FF6B00; border:3px solid #fff; border-radius:50%; }
+.km-crop-box i[data-h="nw"] { left:-14px; top:-14px; } .km-crop-box i[data-h="ne"] { right:-14px; top:-14px; }
+.km-crop-box i[data-h="sw"] { left:-14px; bottom:-14px; } .km-crop-box i[data-h="se"] { right:-14px; bottom:-14px; }
+.km-crop-actions { display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:8px; margin-top:14px; }
+.km-crop-actions button { min-height:50px; border-radius:15px; border:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); color:#fff; font:900 14px Nunito,sans-serif; }
+.km-crop-actions .go { background:#FF6B00; border-color:#CC5500; box-shadow:0 4px 0 #CC5500; }
+
+/* Voice. */
+.km-mic.on { color:#fff!important; background:var(--red)!important; border-radius:50%; animation:kmPulse 1.2s ease-in-out infinite; }
+@keyframes kmPulse { 50% { box-shadow:0 0 0 8px color-mix(in srgb, var(--red) 25%, transparent); } }
+
+/* Answers appear piece by piece. */
+.km-reveal > * { animation:kmReveal .35s ease-out both; animation-delay:calc(var(--i,0) * 70ms); }
+@keyframes kmReveal { from { opacity:0; transform:translateY(6px); } }
+
+/* Today's goal (Home). */
+.km-goal { display:flex; align-items:center; gap:14px; margin:-8px 0 24px; padding:14px 16px; border:2px solid var(--border); border-radius:20px; background:var(--surface); box-shadow:0 3px 0 var(--border); }
+.km-goal[hidden] { display:none; }
+.km-goal svg { width:52px; height:52px; flex-shrink:0; transform:rotate(-90deg); }
+.km-goal circle { fill:none; stroke-width:6; }
+.km-goal .t { stroke:var(--border); }
+.km-goal .f { stroke:var(--green); stroke-linecap:round; transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
+.km-goal b { display:block; font-size:15px; font-weight:900; }
+.km-goal small { display:block; font-size:12px; font-weight:700; color:var(--text-light); margin-top:2px; line-height:1.45; }
+
+/* Progress and badges (You). */
+.km-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.km-stat { display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 4px; border:2px solid var(--border); border-radius:16px; background:var(--surface); box-shadow:0 3px 0 var(--border); text-align:center; }
+.km-stat span { font-size:20px; } .km-stat b { font-size:20px; font-weight:900; } .km-stat small { font-size:10.5px; font-weight:800; color:var(--text-light); line-height:1.25; }
+.km-badge-count { font-size:12px; font-weight:900; color:var(--text-light); }
+.km-badges { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.km-badge { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 4px; border-radius:16px; border:2px dashed var(--border); text-align:center; opacity:.5; filter:grayscale(1); }
+.km-badge span { font-size:24px; } .km-badge small { font-size:10.5px; font-weight:800; line-height:1.25; }
+.km-badge.on { opacity:1; filter:none; border-style:solid; border-color:#F2B705; background:linear-gradient(135deg,#FFF3C4,var(--surface)); box-shadow:0 3px 0 #C99404; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-badge.on { background:linear-gradient(135deg,rgba(242,183,5,.16),transparent),var(--surface); }
+.km-looks { grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); }
+
+/* Celebrations. */
+.km-confetti { position:fixed; inset:0; z-index:9700; pointer-events:none; }
+
+/* First-open welcome. */
+.km-welcome { position:fixed; inset:0; z-index:9650; display:flex; flex-direction:column; align-items:center; padding:calc(40px + env(safe-area-inset-top,0px)) 22px calc(26px + env(safe-area-inset-bottom,0px)); background:var(--cream); color:var(--text); animation:kmUp .3s ease-out; }
+.km-welcome-logo { width:84px; height:84px; border-radius:24px; border:3px solid var(--orange); box-shadow:0 5px 0 var(--orange-dark); }
+.km-welcome-track { flex:1; width:100%; display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; scrollbar-width:none; }
+.km-welcome-track::-webkit-scrollbar { display:none; }
+.km-welcome-track section { flex:0 0 100%; scroll-snap-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:0 10px; }
+.km-welcome-track span { font-size:64px; }
+.km-welcome-track h2 { font-size:34px; font-weight:900; margin:12px 0 10px; letter-spacing:-.02em; }
+.km-welcome-track p { font-size:16px; font-weight:700; line-height:1.55; color:var(--text-light); max-width:320px; }
+.km-welcome-dots { display:flex; gap:6px; margin:10px 0 18px; }
+.km-welcome-dots i { width:8px; height:8px; border-radius:99px; background:var(--border); transition:width .2s, background .2s; }
+.km-welcome-dots i.on { width:22px; background:var(--orange); }
+.km-welcome button { width:100%; max-width:420px; min-height:54px; border-radius:16px; font:900 16px Nunito,sans-serif; border:0; background:transparent; color:var(--text-light); }
+.km-welcome button.go { background:var(--orange); color:#fff; border:2px solid var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); margin-bottom:8px; }
+@media (prefers-reduced-motion:reduce) { .km-reveal > *, .km-mic.on, .km-welcome { animation:none!important; } }

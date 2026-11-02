@@ -2560,7 +2560,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 </style>
 <script>
   // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
-  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script>');
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
 </script>
 </head>
 <body class="app-auth-pending">
@@ -4958,6 +4958,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         '<span class="fb-thanks" aria-live="polite"></span>';
     }
     html += '</div>';
+    // In the app: one tap to keep studying from this answer.
+    if (window.knoxAppShell && showFeedback) html += '<div class="km-answer-actions">' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'simpler\')">🪄 Explain simpler</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'similar\')">🔁 Similar problem</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'cards\')">🃏 Make flashcards</button></div>';
     return html;
   }
   window.buildMessageActionsHtml = buildMessageActionsHtml;
@@ -5755,6 +5760,11 @@ async function fitImageForUpload(file) {
 
 async function handleImageFile(file, displayName, keepVersion) {
   if (!file) return;
+  // In the app, a new photo opens the crop step first (pick just one problem).
+  if (window.knoxCropPhoto && !displayName && !keepVersion && /^image\/(jpeg|png|webp)$/.test(file.type)) {
+    file = await window.knoxCropPhoto(file);
+    if (!file) return;
+  }
   const selectionVersion = keepVersion || ++imageSelectionVersion;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
