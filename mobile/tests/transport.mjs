@@ -23,3 +23,8 @@ test('normal browser fetch stays unchanged and request objects retain their meth
  const web=setup(false);await web.ctx.fetch('/api/ask');assert.equal(web.sent.length,0);assert.equal(web.plain.length,1);
  const h=setup();await h.ctx.fetch(new Request('capacitor://localhost/api/me',{method:'POST',body:'{}'}));assert.equal(h.sent[0].method,'POST');assert.equal(h.sent[0].data,'{}');
 });
+test('abort while a Request body is being read never dispatches the native action',async()=>{
+ const h=setup(),controller=new AbortController(),request=new Request('capacitor://localhost/api/ask',{method:'POST',body:'{}'});
+ request.clone=()=>({text:async()=>{controller.abort();return '{}';}});
+ await assert.rejects(h.ctx.fetch(request,{signal:controller.signal}));assert.equal(h.sent.length,0);
+});

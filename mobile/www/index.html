@@ -2562,9 +2562,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 </style>
 <script>
   // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
-  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script>');
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script>');
 </script>
 <link rel="stylesheet" href="/assets/native.css">
+<script src="/assets/draft-store.js" defer></script>
 <script src="/assets/native-pages.js" defer></script>
 <script src="/assets/native-ui.js" defer></script>
 </head>
@@ -4955,6 +4956,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   function buildMessageActionsHtml(fbId, showFeedback) {
     let html = '<div class="feedback-bar">' +
       '<button class="fb-btn fb-copy" onclick="appCopyAnswer(\'' + fbId + '\', this)" aria-label="Copy answer" title="Copy">' + COPY_ICON + '</button>';
+    if (window.knoxNativeApp) html += '<button class="fb-btn" onclick="window.knoxNativeShareAnswer?.(\'' + fbId + '\')" aria-label="Share answer" title="Share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V3m-4 4 4-4 4 4M6 12H4v9h16v-9h-2"/></svg></button>';
     if (showFeedback) {
       html +=
         '<button class="fb-btn fb-up" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Good answer" title="Good answer">' + THUMB_UP_ICON + '</button>' +
@@ -5146,6 +5148,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window._conversation = [];
       updatePlanUI();
       if (window.appStartNewChat) window.appStartNewChat();
+      window.knoxMobile?.showHome?.();
     } catch (e) { /* silent */ }
   };
 
@@ -6386,6 +6389,7 @@ window.appHandleAsk = async function() {
   if (sendBtn) sendBtn.disabled = true;
 
   showChatThread();
+  window.knoxMobile?.saveDraft?.();
   if (input) { input.value = ''; input.style.height = 'auto'; }
 
   // ── Build user message with optional image preview ─────────
@@ -6623,6 +6627,7 @@ window.appHandleAsk = async function() {
     const message = requestUser && !idToken ? 'Please sign in again before sending your question.' : 'Knox could not finish this request. Your draft is available below; check your connection and try again.';
     replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">' + escHtml(message) + '</p>');
   } finally {
+    if (window._appViewVersion === requestView && (window.currentUser?.uid || null) === requestUid) window.knoxMobile?.saveDraft?.(true);
     clearTimeout(requestTimeout);
     slowNotes.forEach(clearTimeout);
     // Nothing was saved (an error, a limit…): a refresh clears the "just sent" History row.

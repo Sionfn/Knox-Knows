@@ -461,6 +461,9 @@ function study(){
 // per session (and again if the width changes) on hidden copies of each side.
 function evenCards(d){
   const card=panel.querySelector('.fc-card'),s=session;if(!card||!s)return;
+  // App reviews use a bounded scrolling face, not the tallest historical
+  // viewport. Retaining that measured minimum hid controls after rotation.
+  if(window.knoxAppShell){for(const face of card.querySelectorAll('.fc-face'))face.style.removeProperty('min-height');return;}
   const w=card.offsetWidth;
   if(s.evenWidth!==w){
     const box=document.createElement('div');
@@ -603,9 +606,9 @@ function exportView(target){
 async function exportCsv(data){if(window.knoxNativeExport)return window.knoxNativeExport('\uFEFF'+toCsv(data),(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv');const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 async function exportData(data){if(window.knoxNativeExport)return window.knoxNativeExport(JSON.stringify({version:1,decks:data},null,2),'knox-flashcards.json');const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.knoxMobileReveal?.();window.closeCalc?.();/* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
+async function open(){if(!canSee())return false;if(dirty&&!(await confirmLeave()))return false;window.knoxMobileReveal?.();window.closeCalc?.();/* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
  // Bring in decks from the account; redraw the deck list if still on it.
- pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
+ pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});return true;}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 // From a finished Learn lesson: open Make with Knox with the lesson filled in.
 let learnReturn=null;
@@ -794,7 +797,7 @@ if(window.knoxAppShell){
   addFiles:takeFiles,
   summary(){const uid=syncUid()||'guest';return {uid,decks:identity!==key()?[]:decks.map(d=>({id:d.id,title:d.title,count:d.cards.length,due:studyQueue(d.cards,true).length}))};},
   async refreshSummary(){const uid=syncUid();if(identity!==key())load();if(uid&&!editing&&!session&&!makeOpts.reading&&!panel.querySelector('.fc-loading'))await pullDecks();return window.knoxFlashcardsMobile.summary();},
-  async review(id){if(!canSee())return false;if(identity!==key())load();if(!decks.some(d=>d.id===id))return false;await open();if(panel.hidden)return false;const deck=decks.find(d=>d.id===id);if(!deck)return false;start(id,studyQueue(deck.cards,true).length>0);return true;}
+  async review(id){if(!canSee())return false;if(identity!==key())load();if(!decks.some(d=>d.id===id))return false;if(!(await open()))return false;const deck=decks.find(d=>d.id===id);if(!deck)return false;start(id,studyQueue(deck.cards,true).length>0);return true;}
  };
  window.addEventListener('knox-auth-changed',()=>{mobileOpened=false;});
  window.addEventListener('online',()=>{if(syncUid()){pushDecks();pullDecks();}});

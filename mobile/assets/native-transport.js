@@ -21,6 +21,7 @@
     const method=String(init.method || request?.method || 'GET').toUpperCase();
     const body=init.body!==undefined?init.body:request && !['GET','HEAD'].includes(method)?await request.clone().text():undefined;
     if(body!=null && typeof body!=='string')throw new TypeError('Knox API requests must use JSON text.');
+    if(signal?.aborted)throw signal.reason || new DOMException('Aborted','AbortError');
     const target=new URL(url.pathname+url.search,base);
     return new Promise((resolve,reject)=>{
       let finished=false;

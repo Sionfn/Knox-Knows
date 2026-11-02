@@ -12,17 +12,17 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.2"),
-        .package(name: "CapacitorFirebaseAuthentication", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor-firebase/authentication"),
-        .package(name: "CapacitorStatusBar", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/status-bar"),
-        .package(name: "CapacitorApp", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/app"),
-        .package(name: "CapacitorBrowser", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/browser"),
-        .package(name: "CapacitorCamera", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/camera"),
-        .package(name: "CapacitorFilesystem", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/filesystem"),
-        .package(name: "CapacitorHaptics", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/haptics"),
-        .package(name: "CapacitorKeyboard", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/keyboard"),
-        .package(name: "CapacitorNetwork", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/network"),
-        .package(name: "CapacitorShare", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/share"),
-        .package(name: "CapacitorSplashScreen", path: "../../../../../knox-mobile-polish-oct31/mobile/node_modules/@capacitor/splash-screen")
+        .package(name: "CapacitorFirebaseAuthentication", path: "../../../node_modules/@capacitor-firebase/authentication"),
+        .package(name: "CapacitorStatusBar", path: "../../../node_modules/@capacitor/status-bar"),
+        .package(name: "CapacitorApp", path: "../../../node_modules/@capacitor/app"),
+        .package(name: "CapacitorBrowser", path: "../../../node_modules/@capacitor/browser"),
+        .package(name: "CapacitorCamera", path: "../../../node_modules/@capacitor/camera"),
+        .package(name: "CapacitorFilesystem", path: "../../../node_modules/@capacitor/filesystem"),
+        .package(name: "CapacitorHaptics", path: "../../../node_modules/@capacitor/haptics"),
+        .package(name: "CapacitorKeyboard", path: "../../../node_modules/@capacitor/keyboard"),
+        .package(name: "CapacitorNetwork", path: "../../../node_modules/@capacitor/network"),
+        .package(name: "CapacitorShare", path: "../../../node_modules/@capacitor/share"),
+        .package(name: "CapacitorSplashScreen", path: "../../../node_modules/@capacitor/splash-screen")
     ],
     targets: [
         .target(

@@ -342,3 +342,52 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-plan-card[data-tier="mega"] { ba
 
 /* The tabs switch between Ask and Learn, so the website's Learn strip is not needed. */
 html.native-app #learnModeBar { display:none!important; }
+
+/* Mobile polish: fixed controls, readable targets, compact study chrome. */
+.km-appbar [hidden] { display:none!important; }
+.km-appbar .km-brand { flex:1;min-width:0; }
+.km-appbar .km-brand b { overflow:hidden;text-overflow:ellipsis; }
+.km-bar-action { display:grid;place-items:center;min-width:44px;min-height:44px;padding:10px;border:1.5px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text); }
+.km-bar-action svg { width:22px;height:22px; }
+.km-bar-action:active { background:var(--orange-light); }
+.km-appbar :focus-visible { outline:3px solid var(--blue);outline-offset:2px; }
+.km-top-avatar,.km-flame-pill { min-height:44px;min-width:44px; }
+.km-askbar { gap:8px; }
+.km-askbar-text { flex:1;min-width:0;min-height:44px;padding:0;border:0;text-align:left;background:none;color:var(--text-light);font:800 15px Nunito,sans-serif; }
+.km-askbar-cam,.km-askbar-go { width:44px;height:44px;padding:0; }
+.km-askbar-go { border:0; }
+.km-draft { display:flex;align-items:center;gap:12px;width:100%;margin:0 0 16px;padding:14px;border:2px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 3px 0 var(--border);text-align:left;font-family:inherit; }
+.km-draft > span:nth-child(2) { min-width:0;flex:1; }
+.km-draft b { font-size:14px;display:block; }
+.km-draft small { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;color:var(--text-light);font-size:12px;line-height:1.5;margin-top:4px; }
+.km-draft-note { margin:24px 0 4px;font-size:12px;line-height:1.6;color:var(--text-light); }
+.km-history-search { flex:none;min-height:46px;margin:12px;padding:10px 14px;border:2px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font:700 16px Nunito,sans-serif; }
+.km-history-empty { padding:8px 16px;color:var(--text-light);font-size:13px;line-height:1.5; }
+#mobileHistoryDrawer [hidden] { display:none!important; }
+.knox-offline { position:fixed;top:calc(var(--appbar) + var(--safe-top));left:0;right:0;z-index:120;box-shadow:0 2px 0 var(--border); }
+html.native-app.native-offline #mainColumn { padding-top:calc(var(--appbar) + var(--safe-top) + var(--offline-height,52px)); }
+html.native-app #inputBox .input-icon-btn { min-width:36px;min-height:44px; }
+html.native-app .input-disclaimer { font-size:10px;line-height:1.4;padding:4px 0 0; }
+html.native-app.native-keyboard #mainColumn { padding-bottom:0; }
+html.native-app.native-keyboard #inputOuter { padding-bottom:max(8px,env(safe-area-inset-bottom)); }
+.knox-native-dialog { max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px); }
+html.native-app #flashcardsPanel .fc-view:has(.fc-stage) { padding-top:12px; }
+@media (max-height:650px) {
+ html.native-app #flashcardsPanel .fc-face { --fc-h:clamp(130px,calc(100dvh - 400px - var(--safe-top) - var(--mobile-safe)),230px);padding:16px;gap:10px; }
+ html.native-app #flashcardsPanel .fc-study-top { margin-bottom:10px; }
+ html.native-app #flashcardsPanel .fc-controls { margin-top:12px; }
+ html.native-app #flashcardsPanel .fc-tip { display:none; }
+}
+@media (max-width:350px) { .km-resume { padding:16px;gap:10px; }.km-resume-knox { width:46px;height:46px; }.km-resume h2 { font-size:18px; }.km-appbar { padding-left:12px;padding-right:12px; }.km-appbar .km-brand { gap:8px; } }
+@media (prefers-reduced-motion:reduce) { .km-appbar,.km-sheet { transition:none;animation:none; } }
+
+.km-reading { display:flex;gap:10px; }
+.km-reading button { flex:1;min-height:48px;border:2px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);font:800 15px Nunito,sans-serif; }
+.km-reading [aria-pressed="true"] { border-color:var(--orange);background:var(--orange-light);box-shadow:0 3px 0 var(--orange-dark); }
+.km-reading + .km-draft-note { margin-top:12px; }
+html.native-app .feedback-bar .fb-btn { min-width:44px;min-height:44px; }
+html.native-app.knox-reading-large :is(.msg-knox-bubble,.msg-user-bubble,.knox-response-body p,.knox-response-body li,.learn-question,.learn-choice,.fc-face p) { font-size:19px!important;line-height:1.65; }
+html.native-app.knox-reading-large .knox-final-answer { font-size:20px;line-height:1.6; }
+html.native-app.knox-reading-large .fc-face .fc-face-text { font-size:clamp(22px,5vw,32px); }
+
+html.native-app #mobileHistoryDrawer :is(.sidebar-discord-card,.sidebar-flame-card,.drawer-footer) { display:none!important; }

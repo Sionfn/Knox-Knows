@@ -3,6 +3,8 @@
 window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const $=id=>document.getElementById(id),w=window;
  const model=import((w.knoxShellBase||'/assets/')+'home-model.js');
+ let reading='standard';try{if(localStorage.getItem('knoxMobileReading')==='large')reading='large';}catch{}
+ document.documentElement.classList.toggle('knox-reading-large',reading==='large');
  const home=document.createElement('section'),account=document.createElement('section');
  home.id='knoxMobileHome';account.id='knoxMobileAccount';home.className=account.className='knox-mobile-page';home.hidden=account.hidden=true;
  home.setAttribute('aria-label','Home');account.setAttribute('aria-label','You');
@@ -19,7 +21,8 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const topbar=()=>`<header class="km-topbar"><span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button></span></header>`;
  home.innerHTML=`<div class="km-page-wrap">
   <div class="km-heading"><span class="km-chip">🦊 Your AI study companion</span><h1 id="kmGreeting">Hey there!<br><span>What are we tackling today?</span></h1></div>
-  <button type="button" class="km-askbar km-press" data-go="chat"><span>Ask Knox anything…</span><span class="km-askbar-cam" data-action="photo" aria-label="Snap your homework">${xsvg('camera')}</span><span class="km-askbar-go" aria-hidden="true">${xsvg('up')}</span></button>
+  <div class="km-askbar"><button type="button" class="km-askbar-text" data-go="chat">Ask Knox anything…</button><button type="button" class="km-askbar-cam" data-action="photo" aria-label="Snap your homework">${xsvg('camera')}</button><button type="button" class="km-askbar-go" data-go="chat" aria-label="Open Ask Knox">${xsvg('up')}</button></div>
+  <div id="kmDrafts"></div>
   <div id="kmResume"></div>
   <section aria-labelledby="kmToolsTitle"><div class="km-section-heading"><h2 id="kmToolsTitle">What are we working on?</h2></div>
    <div class="km-tools">${[['chat','Ask Knox','Snap it, ask it, get it'],['learn','Learn','Step by step, at your pace'],['flashcards','Flashcards','Make it stick'],['calculator','Calculator','Basic & scientific']].map(([id,label,copy])=>`<button type="button" class="km-tool km-press" data-go="${id}" data-color="${id}">${tile(id)}<b>${label}</b><span>${copy}</span></button>`).join('')}</div>
@@ -35,12 +38,14 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <section class="km-account-section" aria-labelledby="kmPlanTitle"><div class="km-section-heading"><h2 id="kmPlanTitle">Your plan</h2></div><div id="kmAccountPlan"></div></section>
   <section class="km-account-section" aria-labelledby="kmStreakTitle"><div class="km-section-heading"><h2 id="kmStreakTitle">Keep your flame going.</h2></div><button type="button" class="km-streak-card km-press" data-action="streak"><span aria-hidden="true"><span class="knox-flame">🔥</span></span><span><b id="kmStreakCount">Your study streak</b><small id="kmStreakNote">Study a little, come back a little stronger.</small></span><span aria-hidden="true">↗</span></button></section>
   <section class="km-account-section" aria-labelledby="kmAppearanceTitle"><div class="km-section-heading"><h2 id="kmAppearanceTitle">Make yourself at home.</h2></div><div class="km-looks" role="group" aria-label="Appearance">${[['light','Light','☀️'],['dark','Dark','🌙'],['seasonal','Fall','🍂']].map(([id,label,symbol])=>`<button type="button" class="km-press" data-look="${id}" aria-pressed="false"><span aria-hidden="true">${symbol}</span><b>${label}</b><small data-selected-label></small></button>`).join('')}</div></section>
+  <section class="km-account-section" aria-labelledby="kmReadingTitle"><div class="km-section-heading"><h2 id="kmReadingTitle">Comfortable reading</h2></div><div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Standard</button><button type="button" data-reading="large" aria-pressed="false">Larger text</button></div><p class="km-draft-note">Applies to Ask and Learn answers and flashcard text.</p></section>
   <section class="km-account-section" aria-labelledby="kmSettingsTitle"><div class="km-section-heading"><h2 id="kmSettingsTitle">Account & help</h2></div><div class="km-menu-list">
    <button type="button" class="km-press" data-action="settings">${xtile('settings','grey')}<span>Account & settings<small>Profile, connections and account deletion</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="credits">${xtile('coin','gold')}<span>Questions & limits<small>Understand your current allowance</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="support">${xtile('help','calculator')}<span>Help & support<small>Find answers or talk to the Knox team</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="tour">${xtile('map','learn')}<span>Show me around<small>A quick tour of your study tools</small></span><span aria-hidden="true">›</span></button>
   </div></section>
+  <p class="km-draft-note">Unsent text drafts stay on this device for up to 7 days and are cleared when you sign out. Photos and files are not included in recovered drafts.</p><button type="button" class="km-text-button" data-action="clear-drafts">Clear unsent text drafts</button>
   <div class="km-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund">Refund policy</a></div>
   <button type="button" class="km-signout km-press" data-action="signout">Sign out</button>
   <p class="km-footer-note">Knox Knows${w.knoxMobileConfig?.version&&w.knoxMobileConfig.version!=='web'?' · '+w.knoxMobileConfig.version:''}</p>
@@ -56,6 +61,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   const activity=homeSummary({uid,sourceUid:source.uid,decks:source.decks,history:historyRows()}),plan=planDetails(w.userTier);
   const first=user?.displayName?.trim().split(/\s+/)[0]?.slice(0,30);
   block('kmGreeting',`Hey ${first?esc(first):'there'}!<br><span>What are we tackling today?</span>`);
+  block('kmDrafts',(w.knoxMobile?.drafts?.()||[]).map(d=>`<button type="button" class="km-draft km-press" data-draft="${d.mode}">${tile(d.mode,d.mode,'sm')}<span><b>Continue your ${d.mode==='learn'?'Learn':'Ask'} draft</b><small>${esc(d.text.slice(0,75))}${d.text.length>75?'…':''}</small></span><span aria-hidden="true">→</span></button>`).join(''));
   const recentLesson=activity.recentLesson;
   block('kmResume',recentLesson?`<button type="button" class="km-resume km-press" data-conversation="${esc(recentLesson.id)}"><img class="km-resume-knox" src="/knox-logo-square.jpg" alt=""><span><span class="km-eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${esc(recentLesson.title)}</h2><span class="km-resume-cta">Keep learning <span aria-hidden="true">→</span></span></span></button>`:'');
   block('kmReview',activity.decks.length?`<div class="km-review-summary"><b>${activity.due?activity.due+' card'+(activity.due===1?'':'s')+' ready for review':'All caught up for now.'}</b><span>${activity.decks.length} saved deck${activity.decks.length===1?'':'s'} · ${activity.totalCards} cards</span></div><div class="km-deck-list">${activity.decks.slice(0,3).map(d=>`<button type="button" class="km-deck km-press" data-deck="${esc(d.id)}">${tile('flashcards','flashcards','sm')}<span><b>${esc(d.title)}</b><small>${d.due?d.due+' due':d.count+' cards · practice anytime'}</small></span><span aria-hidden="true">→</span></button>`).join('')}</div>`:`<div class="km-empty">${tile('flashcards','flashcards','sm')}<b>Your next “I know this!” starts here.</b><p>Turn a topic or your notes into a deck, then come back for a quick review.</p><button type="button" class="km-inline-action" data-go="flashcards">Explore Flashcards →</button></div>`);
@@ -73,6 +79,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   $('kmStreakNote').textContent=user?(pill?.classList.contains('active')?'You studied today. Keep it going.':count>0?'Study today to keep your flame.':'Start with one question today.'):'Sign in to build a streak and see your calendar.';
   const theme=w.knoxTheme?.()||'light',mo=new Date().getMonth();
   account.querySelectorAll('[data-look]').forEach(b=>{const selected=b.dataset.look===theme;b.setAttribute('aria-pressed',String(selected));b.querySelector('[data-selected-label]').textContent=selected?'Selected':'';b.hidden=b.dataset.look==='seasonal'&&(mo<8||mo>10);});
+  account.querySelectorAll('[data-reading]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.reading===reading)));
   account.querySelector('[data-action="signout"]').hidden=!user;
  }
  function show(target){home.hidden=target!=='home';account.hidden=target!=='account';if(target==='home'||target==='account'){render();if(target==='home')refreshDecks();}}
@@ -134,9 +141,11 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  }
  async function action(e){
   const b=e.target.closest('button');if(!b)return;
-  if(e.target.closest('[data-action="photo"]')){await navigate('chat');document.querySelector('button[onclick*="appFileInput"]')?.click();return;}
+  if(e.target.closest('[data-action="photo"]')){if(!(await navigate('chat')))return;document.querySelector('button[onclick*="appFileInput"]')?.click();return;}
+  if(b.dataset.reading){reading=b.dataset.reading==='large'?'large':'standard';document.documentElement.classList.toggle('knox-reading-large',reading==='large');try{localStorage.setItem('knoxMobileReading',reading);}catch{}render();return;}
+  if(b.dataset.draft){await w.knoxMobile?.resumeDraft(b.dataset.draft);return;}
   if(b.dataset.go){navigate(b.dataset.go);return;}
-  if(b.dataset.conversation){const uid=w.currentUser?.uid;if(!uid){w.openAuthModal?.();return;}if(w._appAskBusy){note('Let Knox finish this answer first.');return;}b.disabled=true;try{const ok=await w.openConversation?.(b.dataset.conversation);if(ok===false&&uid===w.currentUser?.uid)note('That conversation could not be opened. Please try again.');}finally{b.disabled=false;}return;}
+  if(b.dataset.conversation){const uid=w.currentUser?.uid;if(!uid){w.openAuthModal?.();return;}if(w._appAskBusy){note('Let Knox finish this answer first.');return;}b.disabled=true;try{const ok=await (w.knoxMobile?.openConversation||w.openConversation)?.(b.dataset.conversation);if(ok===false&&uid===w.currentUser?.uid)note('That conversation could not be opened. Please try again.');}finally{b.disabled=false;}return;}
   if(b.dataset.deck){if(!w.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}await w.knoxFlashcardsMobile.review?.(b.dataset.deck);return;}
   switch(b.dataset.action){
    case 'history':if(!w.currentUser){w.openAuthModal?.();break;}w.openMobileHistory?.();break;
@@ -153,13 +162,14 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
    }
    case 'support':w.openHelp?.();break;
    case 'tour':w.knoxTour?.start();break;
+   case 'clear-drafts':w.knoxMobile?.clearDrafts();break;
    case 'signout':w.appHandleLogout?.();break;
   }
   if(b.dataset.look){w.knoxSetTheme?.(b.dataset.look);render();}
  }
  home.addEventListener('click',action);account.addEventListener('click',action);
  const historyList=$('sidebarHistoryList');if(historyList)new MutationObserver(()=>{if(!home.hidden)render();}).observe(historyList,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','data-row-key']});
- const status=$('streakPill');if(status)new MutationObserver(()=>{if(!account.hidden)render();}).observe(status,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title']});
+ const status=$('streakPill');if(status)new MutationObserver(()=>{render();}).observe(status,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title']});
  w.addEventListener('knox-plan-changed',render);w.addEventListener('knox-mobile-data',()=>{if(!home.hidden){render();refreshDecks();}});
  w.addEventListener('knox-auth-changed',()=>{historyOwner=w.currentUser?.uid||'guest';refreshAt=0;renderVersion++;render();if(!home.hidden)refreshDecks();});
  new MutationObserver(()=>{if(!account.hidden)render();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});

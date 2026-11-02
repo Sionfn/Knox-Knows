@@ -21,7 +21,8 @@ const p={share:plugin('Share'),files:plugin('Filesystem'),keyboard:plugin('Keybo
 const quiet=promise=>Promise.resolve(promise).catch(()=>{});
 let toastTimer;
 function note(text){let el=$('knoxNativeNote');if(!el){el=document.createElement('div');el.id='knoxNativeNote';el.className='knox-native-note';el.setAttribute('role','status');document.body.append(el);}el.textContent=text;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.hidden=true;},5500);}
-function dialog(title,text){const el=document.createElement('dialog');el.className='knox-native-dialog';const h=document.createElement('h2');h.textContent=title;const body=document.createElement('p');body.textContent=text;el.append(h,body);document.body.append(el);el.addEventListener('close',()=>el.remove(),{once:true});return el;}
+let dialogId=0;
+function dialog(title,text){const el=document.createElement('dialog');el.className='knox-native-dialog';const h=document.createElement('h2');h.textContent=title;h.id='knoxDialogTitle'+(++dialogId);el.setAttribute('aria-labelledby',h.id);const body=document.createElement('p');body.textContent=text;el.append(h,body);document.body.append(el);el.addEventListener('close',()=>el.remove(),{once:true});return el;}
 function button(el,label,fn,cls=''){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;el.append(b);return b;}
 
 // Cache temporary exports only until the share sheet closes; never put private
@@ -38,6 +39,10 @@ if(native)window.knoxNativeExport=async(text,filename)=>{
  finally{if(path)quiet(p.files.deleteFile({path,directory:'CACHE'}));exporting=false;}
 };
 
+if(native)window.knoxNativeShareAnswer=async(id)=>{
+ const text=window._fbPayloads?.[id]?.answer;if(!text)return;
+ try{await p.share.share({title:'Knox Knows',text,dialogTitle:'Share this answer'});}catch(err){if(!/cancel|dismiss/i.test(err?.message||''))note('The answer could not be shared. Try Copy instead.');}
+};
 let cameraBusy=false;
 async function takePhoto(source,intoCards=false){
  if(cameraBusy)return;cameraBusy=true;
@@ -83,10 +88,19 @@ if(camBtn&&!document.querySelector('.km-clip')){
 
 // Ask and Learn share a renderer. Retain the actual message nodes (and their
 // listeners), draft, attachment and lesson state when switching between them.
-const slots=new Map();let owner=window.currentUser?.uid||'', busy=false, current='home';
-const stateFields=['_conversation','_currentConversationId','_learnSessionId','_learnSource','_learnStyle','_appImage','_appDoc','_fbPayloads','_appRenewLearn'];
+const slots=new Map();let owner=window.currentUser?.uid||'', busy=false, current='home',calculatorReturn='home';
+let draftTimer,draftEdited=false;
+let draftStorage;try{draftStorage=localStorage;}catch{draftStorage={getItem:()=>null,setItem(){throw Error('Storage unavailable');},removeItem(){}};}
+const drafts=window.createKnoxDraftStore(draftStorage);
+function saveDraft(force=false){clearTimeout(draftTimer);const text=$('appChatInput')?.value||'';if(owner&&owner===window.currentUser?.uid&&(text||draftEdited||force===true)){drafts.save(owner,mode(),text,window._currentConversationId||null);draftEdited=false;}}
+$('appChatInput')?.addEventListener('input',()=>{draftEdited=true;clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,250);});
+window.addEventListener('pagehide',saveDraft);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveDraft();});
+const disclaimer=document.querySelector('.input-disclaimer');if(disclaimer)disclaimer.textContent='Knox can make mistakes. Check important answers.';
+const stateFields=['_learnModeActive','_conversation','_currentConversationId','_learnSessionId','_learnSource','_learnStyle','_appImage','_appDoc','_fbPayloads','_appRenewLearn'];
 function mode(){return window._learnModeActive?'learn':'chat';}
 function remember(){
+ saveDraft();
  const t=$('chatThread'), input=$('appChatInput');if(!t)return;
  slots.set(mode(),{state:Object.fromEntries(stateFields.map(k=>[k,window[k]])),nodes:[...t.childNodes],
   hidden:t.classList.contains('hidden'),welcome:$('welcomeScreen')?.style.display,scroll:t.scrollTop,
@@ -94,8 +108,9 @@ function remember(){
   pillDisplay:$('appImagePill')?.style.display,pillName:$('appImagePillName')?.textContent,pillThumb:$('appImagePillThumb')?.src});
 }
 function restore(target){
- const slot=slots.get(target);if(!slot)return;
+ const slot=slots.get(target);if(!slot){const input=$('appChatInput');input.value='';input.style.height='';return;}
  for(const k of stateFields)window[k]=slot.state[k];
+ document.body.classList.toggle('knox-learn-mode',target==='learn');
  const t=$('chatThread');t.replaceChildren(...slot.nodes);t.classList.toggle('hidden',slot.hidden);
  $('welcomeScreen').style.display=slot.welcome;
  const input=$('appChatInput');input.value=slot.draft;input.style.height=slot.height;
@@ -111,8 +126,8 @@ const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons
 // App header on every tab: logo, the tab's name, streak flame and profile. It
 // takes each screen's own background, so the top (and the status bar) blends in.
 const bar=document.createElement('header');bar.className='km-appbar';
-bar.innerHTML='<span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b data-appbar-title>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button></span>';
-document.body.prepend(bar);bar.addEventListener('click',e=>pages.action(e));
+bar.innerHTML='<span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b data-appbar-title>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button><button type="button" class="km-bar-action" data-study-action="history" aria-label="Open study history" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg></button><button type="button" class="km-bar-action" data-study-action="new" aria-label="New chat" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></span>';
+document.body.prepend(bar);bar.addEventListener('click',e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);});
 const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
 let themeMeta=document.querySelector('meta[name="theme-color"]');
 function paint(){
@@ -123,6 +138,12 @@ function paint(){
  bar.style.background=bg;if(themeMeta)themeMeta.content=bg;
  bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
  bar.dataset.tab=current;
+ const study=['chat','learn'].includes(current);
+ bar.querySelectorAll('[data-study-action]').forEach(b=>{b.hidden=!study;});
+ bar.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
+ const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
+ bar.querySelector('[data-go="account"]').hidden=study;
+ bar.querySelector('[data-action="streak"]').hidden=study||!window.currentUser;
 }
 window.knoxPaintAppBar=paint;
 
@@ -157,12 +178,13 @@ for(const [target,label] of [['home','Home'],['chat','Ask'],['learn','Learn'],['
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
 async function navigate(target){
- if(busy || target===current)return;
- if(!['home','account'].includes(target) && ((window._appAskBusy && target!==mode()) || cameraBusy || $('appImagePill')?.classList.contains('is-reading'))){note('Let Knox finish this step before switching tabs.');return;}
+ if(busy)return false;if(target===current)return true;
+ if(cameraBusy || (!['home','account'].includes(target) && ((window._appAskBusy && target!==mode()) || $('appImagePill')?.classList.contains('is-reading')))){note('Let Knox finish this step before switching tabs.');return;}
  busy=true;
  try{
+  saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
-  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();quiet(p.haptics.selectionChanged());return;}
+  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();quiet(p.haptics.selectionChanged());return true;}
   if(target==='flashcards'){
    if(!window.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}
    window.closeCalc?.();if(!(await window.knoxFlashcardsMobile.show()))return;
@@ -174,23 +196,59 @@ async function navigate(target){
     if(mode()!==target){remember();if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();restore(target);}
    }
   }
-  surface(null);current=target;sync();quiet(p.haptics.selectionChanged());
+  surface(null);current=target;sync();quiet(p.haptics.selectionChanged());return true;
  }finally{busy=false;}
 }
+async function newStudy(){
+ if(window._appAskBusy||cameraBusy){note('Let Knox finish this step first.');return;}
+ const target=mode(),input=$('appChatInput');
+ const start=()=>{drafts.remove(owner,target);slots.delete(target);input.value='';input.style.height='';if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();sync();};
+ if(input.value.trim()||window._appImage||window._appDoc){const d=dialog('Start a new '+(target==='learn'?'lesson?':'chat?'),'Your saved conversation stays in history. Starting fresh discards the current unsent text and attachment.');button(d,'Keep working',()=>d.close());button(d,'Start fresh',()=>{d.close();start();},'primary');d.showModal();}else start();
+}
+async function openSaved(id){
+ if(busy||window._appAskBusy||cameraBusy){note('Let Knox finish this step first.');return false;}
+ const uid=window.currentUser?.uid;if(!uid){window.openAuthModal?.();return false;}
+ busy=true;const previous=current,priorMode=mode(),same=id===window._currentConversationId;
+ remember();
+ try{
+  window.knoxFlashcardsMobile?.hide();
+  const ok=await window.openConversation(id);
+  if(uid!==window.currentUser?.uid)return false;
+  if(!ok){restore(priorMode);if(previous==='flashcards')await window.knoxFlashcardsMobile?.show();surface(['home','account'].includes(previous)?previous:null);note('That conversation could not be opened. Your draft is still saved.');return false;}
+  const slot=slots.get(priorMode),input=$('appChatInput');input.value=same?slot?.draft||'':'';input.style.height='';draftEdited=false;
+  window.closeMobileHistory?.();surface(null);sync();return true;
+ }finally{busy=false;}
+}
+async function resumeDraft(target){
+ const uid=window.currentUser?.uid,row=drafts.read(uid,target);if(!row)return;
+ if(!(await navigate(target)))return;
+ if(uid!==window.currentUser?.uid)return;
+ if(row.conversationId&&window._currentConversationId!==row.conversationId){
+  if(!(await openSaved(row.conversationId))){note('The saved conversation could not be opened. Your draft is still saved.');return;}
+ }else if(!row.conversationId&&window._currentConversationId){if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();}
+ if(uid!==window.currentUser?.uid)return;
+ $('appChatInput').value=row.text;$('appChatInput').dispatchEvent(new Event('input',{bubbles:true}));
+ surface(null);sync();
+}
 function sync(){
+ const before=current;
  current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
+ if(current==='calculator'&&before!=='calculator')calculatorReturn=before;
+ const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Cards'}[calculatorReturn]||'Home');
  const active=current==='calculator'?'home':current;
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
  if(typeof paint==='function')setTimeout(paint,0);
 }
 new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
-window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
+window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;clearTimeout(draftTimer);draftEdited=false;drafts.clear(owner);slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
 
-const offline=document.createElement('div');offline.className='knox-offline';offline.setAttribute('role','status');offline.hidden=true;offline.textContent='You’re offline. Saved flashcards and the calculator are available. AI needs a connection.';$('appHeader')?.after(offline);
-const connection=({connected})=>{offline.hidden=!!connected;if(connected)window.dispatchEvent(new Event('online'));};
+const offline=document.createElement('div');offline.className='knox-offline';offline.setAttribute('role','status');offline.hidden=true;offline.textContent='You’re offline. Saved flashcards and the calculator are available. AI needs a connection.';document.body.append(offline);
+new ResizeObserver(()=>{const height=offline.getBoundingClientRect().height;if(height)document.documentElement.style.setProperty('--offline-height',height+'px');}).observe(offline);
+let wasConnected=navigator.onLine;
+const connection=({connected})=>{offline.hidden=!!connected;document.documentElement.classList.toggle('native-offline',!connected);if(connected!==wasConnected){wasConnected=connected;window.dispatchEvent(new Event(connected?'online':'offline'));}};
 quiet(p.network.getStatus().then(connection));quiet(p.network.addListener('networkStatusChange',connection));
-window.addEventListener('offline',()=>{offline.hidden=false;});window.addEventListener('online',()=>{offline.hidden=true;window.knoxRefreshPlan?.();});
+window.addEventListener('offline',()=>{offline.hidden=false;document.documentElement.classList.add('native-offline');});window.addEventListener('online',()=>{offline.hidden=true;document.documentElement.classList.remove('native-offline');window.knoxRefreshPlan?.();});
 if(!native){
  const typing=e=>e.target.matches?.('input:not([type="checkbox"]):not([type="radio"]):not([type="button"]),textarea,[contenteditable="true"]');
  document.addEventListener('focusin',e=>{if(typing(e))document.documentElement.classList.add('native-keyboard');});
@@ -202,7 +260,8 @@ quiet(p.keyboard.addListener('keyboardWillHide',()=>document.documentElement.cla
 quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
 function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
 new MutationObserver(chrome).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});chrome();
-quiet(p.app.addListener('appStateChange',({isActive})=>{if(isActive){quiet(p.network.getStatus().then(connection));window.updateUsageIndicator?.();}else $('appChatInput')?.dispatchEvent(new Event('change'));}));
+let resumedAt=0;
+quiet(p.app.addListener('appStateChange',({isActive})=>{if(isActive){quiet(p.network.getStatus().then(status=>{connection(status);if(status.connected&&Date.now()-resumedAt>30000){resumedAt=Date.now();quiet(window.knoxRefreshPlan?.());quiet(pages.refreshDecks());}}));window.updateUsageIndicator?.();}else saveDraft();}));
 // Keep external web pages outside the trusted local app webview.
 if(native)document.addEventListener('click',e=>{
  const a=e.target.closest('a[href]');if(!a)return;const u=new URL(a.href,location.href),local=new URL(location.href),isLocal=u.protocol===local.protocol&&u.host===local.host;
@@ -233,5 +292,21 @@ if(native)window.knoxRequestAccountDeletion=function(){
 };
 // Splash is also bounded natively; this merely ends it promptly once UI exists.
 quiet(p.splash.hide());
-window.knoxMobile={navigate,note,refreshHome:pages.render};
+document.addEventListener('click',e=>{
+ const fresh=e.target.closest('#mobileHistoryDrawer .sidebar-new-btn');if(fresh){e.preventDefault();e.stopImmediatePropagation();window.closeMobileHistory?.();newStudy();return;}
+ const row=e.target.closest('#mobileHistoryList .sidebar-history-item[data-conversation-id]');
+ if(!row||e.target.closest('button,.shi-menu,[role="menuitem"],input'))return;
+ e.preventDefault();e.stopImmediatePropagation();openSaved(row.dataset.conversationId);
+},true);
+const historyPanel=document.querySelector('#mobileHistoryDrawer .drawer-panel');
+if(historyPanel){
+ const search=document.createElement('input');search.type='search';search.className='km-history-search';search.placeholder='Find a chat or lesson';search.setAttribute('aria-label','Search study history');
+ const body=historyPanel.querySelector('.drawer-body');body?.before(search);
+ const filter=()=>{const term=search.value.trim().toLocaleLowerCase();let matches=0;historyPanel.querySelectorAll('.sidebar-history-item').forEach(row=>{const show=!term||row.textContent.toLocaleLowerCase().includes(term);row.hidden=!show;if(show)matches++;});empty.hidden=!term||matches>0;};
+ const empty=document.createElement('p');empty.className='km-history-empty';empty.textContent='No matches in loaded history. Try another word or load more.';empty.hidden=true;body?.before(empty);
+ search.addEventListener('input',filter);if(body)new MutationObserver(filter).observe(body,{childList:true,subtree:true,characterData:true});
+}
+window.knoxMobile={navigate,note,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
+ calculatorBack(){window.closeCalc?.();if(['home','account'].includes(calculatorReturn))surface(calculatorReturn);sync();},
+ async calculatorDraft(target,text){if(!(await navigate(target)))return;const input=$('appChatInput');input.value=input.value?input.value+'\n'+text:text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();},refreshHome:pages.render,drafts:()=>drafts.list(owner),resumeDraft,clearDrafts(){drafts.clear(owner);note('Unsent text drafts cleared. Saved chats and decks are unchanged.');pages.render();}};
 })();

@@ -1,12 +1,10 @@
-# Knox Knows mobile app 1.3.0 — local release candidate
+# Knox Knows mobile app 1.3.1 — local review candidate
 
-**1.3.0 (Nov 1, Claude):** rebuilt on the live Nov 1 website (all launch fixes) and redesigned to look like Knox Knows: logo header with streak flame and profile, the website's hero and "Ask Knox anything…" bar with camera, the website's sticker icon tiles, chunky ledge cards in each section's color, Mega gold plan cards, and a tab bar whose active icon sits on its color tile. Checked in Fall, Light and Dark at 390px and 320px with Codex's mocked QA server.
+November 1, 2026. Built on Claude's latest local `home-screen-app` commit **3c21893** (which includes `mobile-knox-look` 93087d7), plus the two new main Flashcard commits through **4fadbb2**. Original Claude checkout and hosted sites are untouched. This is a local candidate, not a published App Store app or an installable IPA.
 
-Based on Claude/GitHub `nov-1-update` commit `a53e97faac5f8dd7373b531a076c239d54338a1a`, verified October 31, 2026. This source project is not an installable IPA and has not been submitted or published.
+## Build and review
 
-## Build
-
-Use a current Node release and Xcode with Swift 6.1 or newer. This candidate targets iOS/iPadOS **17.4 and newer**, matching the modern browser APIs used by the bundled PDF reader (notably Promise.withResolvers). Older devices are not certified by this build.
+Use Node 24, Xcode with Swift 6.1 or newer, and iOS/iPadOS **17.4+**. From this repository:
 
 ```sh
 cd mobile
@@ -15,54 +13,45 @@ npm run sync
 npm run ios
 ```
 
-Select the App target and the existing Knox signing team. The project includes the Sign in with Apple entitlement, but Apple Developer provisioning and Firebase provider configuration must be verified on the owner's account. Archive/TestFlight from Xcode after the release gates below pass. Do not upload the source ZIP to App Store Connect.
+Select the existing Knox App target and signing team. `sync` packages the current source into `www` and `ios/App/App/public`, updates native plugins and records 78 SHA-256 bundle hashes. Generated native plugin paths are portable `../../../node_modules/...`; they must not point into an old Codex output directory. No remote `server.url`: interface, Firebase SDK, fonts and document readers ship inside the app. Authenticated AI/sync still use **https://www.knoxknowsapp.com** with the existing production Firebase identifiers.
 
-`npm run build` packages a fixed local interface; `npm run sync` regenerates the iOS resources and native plugin package. Keep `www`, `ios/App/App/public`, the native config, dependencies and `bundle-hashes.json` in sync. These generated resources never contain server code, environment variables, private keys or test doubles. Firebase browser and iOS app identifiers remain those of the existing production project.
-
-## Implemented
-
-- Local, versioned Ask/Learn/Flashcards/Calculator interface; no remote `server.url` or broad `allowNavigation` list.
-- Bundled Firebase browser SDK 10.7.0, Nunito fonts, PDF/Word/PowerPoint/Excel reader dependencies and Knox assets.
-- Removes the persistent website top bar. Five tabs: Home, Ask, Learn, Cards and You. Calculator lives on Home and beside the composer.
-- Home shows actual recent lessons/chats, local/synced deck counts and due cards. It opens saved lessons and card reviews directly; counts update after grading. Empty states never invent progress. A small tier-aware plan card sits below study activity; Mega users get no upgrade advert.
-- You holds profile/account settings, plan comparisons, credits/limits, streak/calendar, appearance, support and sign-out. Plan comparison is informational; no new checkout or StoreKit purchasing was added. The original header remains hidden in the DOM because shared account logic uses its counters, but it occupies no space or accessibility navigation.
-- Separate in-memory Ask/Learn drafts, attachment/lesson state and message nodes. Home/You preserve the current lesson and deck editor. Explicitly starting another card review still asks before discarding unsaved edits. Busy chat/file steps cannot switch to a conflicting lesson.
-- Native camera/photo library choices alongside the system file input. Existing upload validation and image sizing are reused.
-- Temporary-cache exports through Filesystem/Share; cancellation does not claim a file was saved. Temporary export data is removed after the sheet closes.
-- Keyboard-aware tabs, safe-area spacing, tablet account controls, theme-aware tab colors and small selection haptics.
-- Offline status and an actual local error page; restored Firebase identity is required to open account-specific local decks. Account plan/history loading is skipped when the browser reports offline; plan/deck sync refreshes when online again. Remote pictures and AI still require internet. This does not promise offline AI or downloaded image caching.
-- Branded launch storyboard using the original Knox logo; Filesystem required-reason privacy manifest.
-- Authenticated, confirmed account-deletion initiation via `api/_support.js`, with an idempotent server-only `accountDeletionRequests/{uid}` index and a visible human Support Desk ticket. No AI approval or email from the student is required. **Deletion remains manual, not automatic or completed when the request is accepted.**
-- Mobile tour and FAQ instructions use Home/You navigation; web-only pricing/gift entry buttons and Chrome extension advertising are hidden.
-
-## Release gates — still required
-
-1. **Matching backend:** this build calls `https://www.knoxknowsapp.com`, not the private preview. The Nov 1 server features must be live before shipping this app. The new account-deletion handler must also be deployed through the normal approved GitHub release. Nothing was deployed by this work.
-2. **Deletion operations:** the owner must monitor Account deletion request tickets, delete associated user data, address subscriptions/required retention, revoke Apple tokens where applicable, and confirm completion. A queued request is not fulfillment. Verify the complete process with a disposable test account before submission.
-3. **Native build and devices:** Capacitor packaging passed; Xcode compilation was blocked by this session's sandbox (`sandbox_apply: Operation not permitted`) and simulator services. Compilation, signing, TestFlight installation, fresh/returning Apple and Google sign-in, camera/photo permissions, actual Files sharing, background/foreground recovery, offline launch and large-text/VoiceOver checks remain unverified on real iPhones/iPads.
-4. **Subscriptions:** existing account entitlements are retained. New in-app purchases/StoreKit/restore purchases have not been implemented. Decide and validate the App Store purchase/distribution approach for intended storefronts; review reachable support/external links too. Do not advertise an iOS purchase flow that does not exist.
-5. **Store submission:** verify App Store privacy disclosures, support/privacy URLs, screenshots, review credentials and provisioning. The required-reason manifest is not a certification of all privacy labels or Apple approval.
-
-## Verification performed
-
-- 218 shared website/backend tests pass, including confirmed/idempotent deletion initiation, ownership isolation, inbox visibility and durable failed-email delivery.
-- Nine mobile tests pass (five Home data/plan/account isolation/escaping tests and four native-transport tests). Transport checks cover: fixed backend routing, JSON/auth preservation, HTTP failures/no replay, abort handling, browser passthrough and request objects. The iOS generation timeout is 70 seconds at the native layer; caller signals can end UI waiting sooner. An already-received server action cannot be undone by aborting.
-- 265 source/inline parsing units, plist/project syntax and dependency audit were checked; native production npm dependencies have zero reported advisories.
-- Real UI operated locally at 320×568, 390×844, 430×932 and 1024×768: no document horizontal overflow, header height 0, page boundaries meet bottom navigation and checked composer stays above it. Verified saved-lesson reopening, preserving a typed lesson answer through Home/You, due-card review and count decrement, Calculator access, cancelling a dirty-deck navigation and restoring the editor, creating/saving a deck, account settings/credits/support, three appearance choices, Free→Plus and Plus→Mega promotion placement, no Mega upsell, sign-out activity isolation, restored fake email sign-in, and calendar launch with the built-in Flame Fest demo (no real rewards claimed). Prior 1.1 native integration checks are retained; physical device testing remains pending. No console errors in tested tabs.
-- Browser checks use **fake identities, Firebase, API replies and native plugins**. They verify interface/integration logic, not real AI, payments, production sync or hardware behavior.
-
-## Local QA
+Local QA (fake Firebase, fake API and native plugins; no production changes):
 
 ```sh
 npm test
 npm run qa
 ```
 
-The QA server binds only to 127.0.0.1 and prints its URL. It substitutes test services and native plugins. It is excluded from the installed bundle. Stop it after testing. Shared backend tests run from the repository root with `node --experimental-vm-modules --test tests/*.mjs`.
+The server binds only to 127.0.0.1 and prints its URL. Optional `?qa-controls=1` exposes clearly labelled local controls for simulated keyboard, offline and lifecycle events. Never ship these QA files. Shared backend tests run from the repository root with `node --experimental-vm-modules --test tests/*.mjs`.
 
-Screenshots of the local test build use disposable QA data, not the owner's production activity:
-- `outputs/mobile-home-oct31.jpg`
-- `outputs/mobile-you-oct31.jpg`
-- `outputs/mobile-home-review-plans-oct31.jpg`
+## What changed in this candidate
 
-The previous 1.1.0 ZIP is unchanged. The original Claude checkout, GitHub, hosted website/preview, Firebase settings/rules and environment variables were not modified.
+- Preserves Claude's Knox design, Home/Ask/Learn/Cards/You tabs, direct camera button, paperclip picker, themed app header, seasonal artwork and informational native plan comparison.
+- Ask/Learn header now has useful History and New controls. Search filters the loaded history; a no-results message makes its loaded-history scope explicit. Duplicate profile/promotional blocks are removed from the history drawer.
+- Corrects first-switch draft leakage between Ask and Learn. Messages, attachments and active lesson state remain separate in memory. Opening a saved conversation preserves the outgoing draft and clears the input for a different conversation; failed opens restore the prior view.
+- Adds account-scoped recovery for unsent text only, with explicit Home resume buttons, a 16,000-character bound and 7-day expiry. Recovery never sends a message automatically. Sign-out clears the outgoing account's drafts; You offers manual clearing and describes retention. Photos/files are not in recovered drafts. Typing state is saved on background/page hide; successful sends clear their text draft and failures retain it.
+- New chat/lesson asks before discarding unsent text or attachments; saved conversations remain in history. Cancelled replacement card review keeps the editor intact.
+- Fixes the hidden native keyboard's leftover tab-bar space and gives offline notices their own measured space. Reconnection/foreground refreshes plan and deck summaries without replaying AI requests. The calculator and previously saved decks remain local; remote pictures and AI require internet.
+- Brings in Claude's fixed-size/scrollable cards, then removes the stale measured native minimum that hid grading controls after tablet rotation. All grading controls fit the tested 320px phone with larger reading text.
+- Adds a persistent Standard/Larger reading choice for answers/card text, larger feedback targets, properly named dialogs and independently accessible Home camera/Ask controls.
+- Adds native answer sharing using the same cleaned answer as Copy; cancellation stays quiet. Existing native deck Files/share export remains. Calculator Back returns to its actual originating screen; Send/Explain appends to the target draft instead of replacing it or sending it.
+- Sign-out returns to Home. Native transport rechecks cancellation after reading a Request body, before dispatch.
+- Updates local version/build to 1.3.1 / 5, refreshes all bundled/native resources and fixes portable Swift package paths.
+
+These are local source changes. Shared app-shell files also serve Claude's home-screen web version if later merged; the regular browser layout is guarded and unchanged. The draft-retention paragraph in `privacy.html` is for review alongside that future merge. Do not deploy the entire mobile project as a website.
+
+## Verification
+
+- **233 shared website/backend tests + 18 mobile tests pass (251 total).** Mobile coverage includes owner isolation/expiry/bounded recovery, native transport and cancellation, cleaned-answer sharing, cancelled card review and rotation-height regression.
+- JavaScript/JSON/inline scripts parsed; plist/project syntax checked; 78 bundled/native hashes match. Capacitor sync registers all 11 plugins. Native production dependency audit reports **0 advisories**.
+- Local real UI exercised at 320×568, 390×844, 430×932, 768×1024 and 1024×768. Verified independent Ask/Learn drafts, relaunch recovery, New cancellation, search/opening a saved lesson, camera cancellation, mocked Ask result/history, three themes, larger reading, card flip/Good/completion/Home count update, dirty editor cancellation/return/save, calculator, simulated keyboard/background/offline/reconnect and sign-out isolation. Test data/services are fake. These checks do not certify hardware, live AI, production sync or payment behavior.
+- Xcode build was attempted but package resolution could not write its manifest diagnostic cache and CoreSimulator services were unavailable in this sandbox. No signed build, simulator run, TestFlight installation or physical-device certification is claimed.
+
+## Remaining release work
+
+1. Compile/sign/install on real iPhone/iPad; verify fresh/returning Apple and Google auth, actual camera/library permissions including denied/cancelled cases, document readers, real Share/Files, background recovery, offline cold launch, safe-area/keyboard behavior and VoiceOver/larger system text.
+2. Confirm the matching production APIs and account-deletion handler. Deletion initiation is authenticated and idempotent, but fulfillment remains manual. Test a disposable account's full deletion process and Apple-token revocation where needed; accepting a request is not deleting an account.
+3. Existing web plan entitlements are retained. Native StoreKit purchases/restore purchases are **not implemented**; choose and validate the intended storefront subscription approach before promising in-app upgrades. Native plan comparison remains informational.
+4. Validate App Store privacy/support metadata, screenshots, provisioning and reviewer access. The privacy manifest alone is not Apple approval.
+
+See `MOBILE-REVIEW-HANDOFF.md` at the repository root for exact branch, changes and merge instructions. Nothing was pushed, deployed or submitted by this work.

@@ -1,5 +1,6 @@
 // LOCAL QA ONLY: fake native plugins, no production requests.
 (()=>{
+  let connected=true;
   const original=fetch.bind(window);window.qaCalls=[];window.qaListeners={};
   const qaPlan=new URLSearchParams(location.search).get('qa-plan')||'plus';
   const now=Date.now(),today=new Date(now-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -19,12 +20,25 @@
   window.Capacitor={isNativePlatform:()=>true,getPlatform:()=> 'ios',Plugins:{},registerPlugin(name){
    if(this.Plugins[name])return this.Plugins[name];
    const methods={
-    request:async o=>{window.qaCalls.push({plugin:name,...o});const r=await original(new URL(o.url).pathname+new URL(o.url).search,{method:o.method,headers:{...o.headers,'X-QA-Plan':qaPlan},body:['GET','HEAD'].includes(o.method)?undefined:o.data});return{status:r.status,headers:Object.fromEntries(r.headers),data:await r.text()};},
+    request:async o=>{if(!connected)throw Error('Offline QA');window.qaCalls.push({plugin:name,...o});const r=await original(new URL(o.url).pathname+new URL(o.url).search,{method:o.method,headers:{...o.headers,'X-QA-Plan':qaPlan},body:['GET','HEAD'].includes(o.method)?undefined:o.data});return{status:r.status,headers:Object.fromEntries(r.headers),data:await r.text()};},
     addListener:async(event,fn)=>{window.qaListeners[name+':'+event]=fn;return{remove(){}};},
-    getStatus:async()=>({connected:navigator.onLine}),getPhoto:async()=>{throw Error('User cancelled');},
+    getStatus:async()=>({connected}),getPhoto:async()=>{throw Error('User cancelled');},
     writeFile:async o=>{window.qaCalls.push({plugin:name,...o});return{uri:'file:///tmp/qa-export.json'};},
     share:async o=>{window.qaCalls.push({plugin:name,...o});return{};},deleteFile:async()=>{},
     open:async o=>{window.qaCalls.push({plugin:name,...o});},setStyle:async()=>{},hide:async()=>{},selectionChanged:async()=>{}
    };this.Plugins[name]=methods;return methods;
   }};
+ if(new URLSearchParams(location.search).has('qa-controls'))document.addEventListener('DOMContentLoaded',()=>{
+  const controls=document.createElement('details');controls.id='qaControls';controls.style.cssText='position:fixed;z-index:20000;right:4px;bottom:80px;background:white;color:black;padding:6px;max-width:180px;font:12px system-ui;border:1px solid black';
+  const summary=document.createElement('summary');summary.textContent='Local QA controls';controls.append(summary);
+  for(const [label,fn] of [
+   ['Keyboard on',()=>window.qaListeners['Keyboard:keyboardWillShow']?.({keyboardHeight:300})],
+   ['Keyboard off',()=>window.qaListeners['Keyboard:keyboardWillHide']?.()],
+   ['Go offline',()=>{connected=false;window.qaListeners['Network:networkStatusChange']?.({connected});}],
+   ['Reconnect',()=>{connected=true;window.qaListeners['Network:networkStatusChange']?.({connected});}],
+   ['Background app',()=>window.qaListeners['App:appStateChange']?.({isActive:false})],
+   ['Resume app',()=>window.qaListeners['App:appStateChange']?.({isActive:true})]
+  ]){const button=document.createElement('button');button.textContent=label;button.style.cssText='display:block;min-height:36px;width:100%';button.onclick=fn;controls.append(button);}
+  document.body.append(controls);
+ });
  })();
