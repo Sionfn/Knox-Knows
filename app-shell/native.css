@@ -391,3 +391,63 @@ html.native-app.knox-reading-large .knox-final-answer { font-size:20px;line-heig
 html.native-app.knox-reading-large .fc-face .fc-face-text { font-size:clamp(22px,5vw,32px); }
 
 html.native-app #mobileHistoryDrawer :is(.sidebar-discord-card,.sidebar-flame-card,.drawer-footer) { display:none!important; }
+
+/* ─── Full screen (Nov 1 evening): no header bar on any tab. A thin strip in
+   the screen's own color sits behind the clock/island (iOS colors the status
+   area from a fixed element at the top); everything else is content. ─── */
+html.native-app { --appbar:10px; }
+html.native-app:not(.web-shell) { --appbar:0px; }
+.km-appbar { display:none!important; }
+.km-statusfill { position:fixed; z-index:116; top:0; left:0; right:0; height:calc(var(--appbar) + var(--safe-top)); background:var(--km-top, var(--cream)); pointer-events:none; }
+.knox-mobile-page { padding-top:16px; }
+.knox-mobile-page .km-topbar { margin-bottom:18px; }
+
+/* Ask / Learn: History and New float in the top corner. */
+.km-float { position:fixed; z-index:117; top:calc(var(--appbar) + var(--safe-top) + 8px); right:max(12px, env(safe-area-inset-right)); display:flex; gap:8px; }
+.km-float[hidden] { display:none!important; }
+.km-float button { --ledge:var(--border); width:44px; height:44px; display:grid; place-items:center; padding:0; border-radius:14px; border:2px solid var(--border); background:var(--surface); color:var(--text); box-shadow:0 3px 0 var(--border), 0 6px 16px rgba(0,0,0,.08); }
+.km-float button[hidden] { display:none!important; }
+.km-float svg { width:22px; height:22px; }
+body.knox-learn-mode .km-float button { color:var(--purple-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) body.knox-learn-mode .km-float button { color:var(--purple); }
+/* Room for them above the welcome screen and first message. */
+html.native-app #welcomeScreen { padding-top:56px; }
+html.native-app #chatThread { padding-top:60px; }
+
+/* Bigger tab bar. */
+html.native-app { --mobile-tabs:84px; }
+.knox-app-tabs { height:calc(84px + var(--mobile-safe)); padding-top:7px; }
+html.native-app .knox-app-tabs button, html.native-app .knox-app-tabs button[aria-current="page"] { font-size:12.5px; gap:5px; }
+.km-tab-tile { width:54px; height:38px; border-radius:13px; }
+.km-tab-tile svg { width:26px; height:26px; }
+
+/* Typing box: bigger buttons, slimmer area, so more of Knox's answer shows. */
+html.native-app .input-disclaimer { display:none!important; }
+html.native-app #inputOuter { padding:8px 12px 10px!important; }
+html.native-app #appChatInput { font-size:17px!important; }
+html.native-app #inputOuter .input-icon-btn { width:42px; height:42px; min-width:42px; }
+html.native-app #inputOuter .input-icon-btn svg { width:22px; height:22px; }
+html.native-app #appSendBtn { width:46px; height:46px; min-width:46px; }
+
+/* Chats open right at the latest message, no long scroll-down. */
+html.native-app #chatThread { scroll-behavior:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+.km-latest { position:fixed; z-index:112; left:50%; transform:translateX(-50%); bottom:calc(var(--mobile-tabs) + var(--mobile-safe) + 92px); width:42px; height:42px; display:grid; place-items:center; padding:0; border-radius:50%; border:2px solid var(--border); background:var(--surface); color:var(--text); box-shadow:0 3px 0 var(--border), 0 6px 16px rgba(0,0,0,.12); }
+.km-latest[hidden] { display:none!important; }
+.km-latest.km-press:active { transform:translateX(-50%) translateY(3px); }
+html.native-keyboard .km-latest { display:none; }
+
+/* History: a smooth side sheet with big, easy-to-tap rows. */
+html.native-app #mobileHistoryDrawer { animation:none; background:rgba(20,14,10,.4); }
+html.native-app #mobileHistoryDrawer .drawer-panel { width:88%; max-width:360px; padding-top:var(--safe-top); animation:kmSheetIn .28s cubic-bezier(.2,.8,.2,1); box-shadow:6px 0 30px rgba(0,0,0,.18); border-radius:0 24px 24px 0; }
+@keyframes kmSheetIn { from { transform:translateX(-100%); } }
+html.native-app #mobileHistoryDrawer .sidebar-history-item { min-height:52px; padding:12px 14px; border-radius:14px; font-size:15px; }
+html.native-app #mobileHistoryDrawer .shi-text { font-size:15px; }
+
+/* Smooth tab changes. */
+html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-mobile-home):not(.knox-mobile-account) #chatAndInput, html.native-app #flashcardsPanel:not([hidden]) { animation:kmTabIn .18s ease-out; }
+@keyframes kmTabIn { from { opacity:0; transform:translateY(6px); } }
+@media (prefers-reduced-motion:reduce) { .km-latest, .knox-mobile-page, #chatAndInput, #flashcardsPanel, #mobileHistoryDrawer .drawer-panel { animation:none!important; } }
+/* More room to type: the calculator lives on Home (and its own tile), and the
+   website's "fresh fall look" tip is the You tab's look picker in the app. */
+html.native-app #inputOuter .calc-btn { display:none!important; }
+html.native-app .fall-tip:not(.fall-rest-note) { display:none!important; }

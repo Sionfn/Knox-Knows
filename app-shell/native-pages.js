@@ -20,6 +20,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  // The logo bar with the streak flame and profile is the app header (native-ui.js).
  const topbar=()=>`<header class="km-topbar"><span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button></span></header>`;
  home.innerHTML=`<div class="km-page-wrap">
+  ${topbar()}
   <div class="km-heading"><span class="km-chip">🦊 Your AI study companion</span><h1 id="kmGreeting">Hey there!<br><span>What are we tackling today?</span></h1></div>
   <div class="km-askbar"><button type="button" class="km-askbar-text" data-go="chat">Ask Knox anything…</button><button type="button" class="km-askbar-cam" data-action="photo" aria-label="Snap your homework">${xsvg('camera')}</button><button type="button" class="km-askbar-go" data-go="chat" aria-label="Open Ask Knox">${xsvg('up')}</button></div>
   <div id="kmDrafts"></div>
@@ -48,7 +49,8 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <p class="km-draft-note">Unsent text drafts stay on this device for up to 7 days and are cleared when you sign out. Photos and files are not included in recovered drafts.</p><button type="button" class="km-text-button" data-action="clear-drafts">Clear unsent text drafts</button>
   <div class="km-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund">Refund policy</a></div>
   <button type="button" class="km-signout km-press" data-action="signout">Sign out</button>
-  <p class="km-footer-note">Knox Knows${w.knoxMobileConfig?.version&&w.knoxMobileConfig.version!=='web'?' · '+w.knoxMobileConfig.version:''}</p>
+  <p class="km-footer-note">Knox is AI and can make mistakes. Check important answers.</p>
+  <p class="km-footer-note" style="margin-top:6px">Knox Knows${w.knoxMobileConfig?.version&&w.knoxMobileConfig.version!=='web'?' · '+w.knoxMobileConfig.version:''}</p>
  </div>`;
  let historyOwner=w.currentUser?.uid||'guest',renderVersion=0,refreshAt=0,refreshOwner='',refreshing=false;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

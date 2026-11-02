@@ -370,4 +370,4 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-plus-tag.mega { color:#FFD45C; }
 .fc-face > :last-child { margin-bottom:auto; }
 .fc-face > * { flex-shrink:0; }
 /* The iPhone app and home-screen version also have a header and tab bar. */
-html.native-app .fc-face { --fc-h:clamp(220px, calc(100dvh - 470px), 480px); }
+html.native-app .fc-face { --fc-h:clamp(220px, calc(100dvh - 420px), 500px); } /* no top bar in the app */

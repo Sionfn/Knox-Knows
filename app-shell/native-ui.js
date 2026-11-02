@@ -127,7 +127,13 @@ const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons
 // takes each screen's own background, so the top (and the status bar) blends in.
 const bar=document.createElement('header');bar.className='km-appbar';
 bar.innerHTML='<span class="km-brand"><img class="km-logo" src="/knox-logo-square.jpg" alt=""><b data-appbar-title>Knox Knows</b></span><span class="km-top-right"><button type="button" class="km-flame-pill km-press" data-action="streak" aria-label="Your streak"><span class="knox-flame" aria-hidden="true">🔥</span><b data-streak-count>0</b></button><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You" data-avatar>K</button><button type="button" class="km-bar-action" data-study-action="history" aria-label="Open study history" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg></button><button type="button" class="km-bar-action" data-study-action="new" aria-label="New chat" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></span>';
-document.body.prepend(bar);bar.addEventListener('click',e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);});
+document.body.prepend(bar);
+// Full screen: the header is gone. Ask/Learn keep History and New as two small
+// floating buttons; Home shows the logo, flame and profile in the page itself.
+const float=document.createElement('div');float.className='km-float';float.append(...bar.querySelectorAll('[data-study-action]'));document.body.append(float);
+const strip=document.createElement('div');strip.className='km-statusfill';strip.setAttribute('aria-hidden','true');document.body.prepend(strip);
+const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
+bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
 const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
 let themeMeta=document.querySelector('meta[name="theme-color"]');
 function paint(){
@@ -135,12 +141,12 @@ function paint(){
  let el=surface,bg='';
  while(el){bg=getComputedStyle(el).backgroundColor;if(bg&&!/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(bg))break;el=el.parentElement;bg='';}
  bg=bg||getComputedStyle(document.body).backgroundColor;
- bar.style.background=bg;if(themeMeta)themeMeta.content=bg;
+ bar.style.background=bg;if(themeMeta)themeMeta.content=bg;document.documentElement.style.setProperty('--km-top',bg);
  bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
- bar.querySelectorAll('[data-study-action]').forEach(b=>{b.hidden=!study;});
- bar.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
+ float.hidden=!study;float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
+ float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  bar.querySelector('[data-go="account"]').hidden=study;
  bar.querySelector('[data-action="streak"]').hidden=study||!window.currentUser;
@@ -178,7 +184,12 @@ for(const [target,label] of [['home','Home'],['chat','Ask'],['learn','Learn'],['
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
 async function navigate(target){
- if(busy)return false;if(target===current)return true;
+ if(busy)return false;
+ if(target===current){
+  // Tapping the tab you're on: jump to the latest message, or if you're there, start fresh.
+  if(['chat','learn'].includes(target)){const t=$('chatThread');if(t&&!t.classList.contains('hidden')&&t.scrollHeight-t.scrollTop-t.clientHeight>40)t.scrollTo({top:t.scrollHeight,behavior:'smooth'});else if(window._currentConversationId||(t&&!t.classList.contains('hidden')))newStudy();}
+  return true;
+ }
  if(cameraBusy || (!['home','account'].includes(target) && ((window._appAskBusy && target!==mode()) || $('appImagePill')?.classList.contains('is-reading')))){note('Let Knox finish this step before switching tabs.');return;}
  busy=true;
  try{
@@ -243,6 +254,13 @@ function sync(){
 new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
 window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;clearTimeout(draftTimer);draftEdited=false;drafts.clear(owner);slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
 
+// "Jump to latest" when you've scrolled up in a chat.
+const latest=document.createElement('button');latest.type='button';latest.className='km-latest km-press';latest.hidden=true;latest.setAttribute('aria-label','Jump to the latest message');
+latest.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
+latest.onclick=()=>{const t=$('chatThread');t?.scrollTo({top:t.scrollHeight,behavior:'smooth'});};document.body.append(latest);
+const thread=$('chatThread');
+const checkLatest=()=>{latest.hidden=!thread||thread.classList.contains('hidden')||!['chat','learn'].includes(current)||thread.scrollHeight-thread.scrollTop-thread.clientHeight<160;};
+thread?.addEventListener('scroll',checkLatest,{passive:true});new MutationObserver(checkLatest).observe(document.body,{attributes:true,attributeFilter:['class']});
 const offline=document.createElement('div');offline.className='knox-offline';offline.setAttribute('role','status');offline.hidden=true;offline.textContent='You’re offline. Saved flashcards and the calculator are available. AI needs a connection.';document.body.append(offline);
 new ResizeObserver(()=>{const height=offline.getBoundingClientRect().height;if(height)document.documentElement.style.setProperty('--offline-height',height+'px');}).observe(offline);
 let wasConnected=navigator.onLine;
