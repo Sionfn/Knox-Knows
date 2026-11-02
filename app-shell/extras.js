@@ -67,12 +67,17 @@ if(Speech&&tools&&send&&!native){
  const mic=document.createElement('button');mic.type='button';mic.className='input-icon-btn km-mic';mic.setAttribute('aria-label','Ask out loud');mic.title='Ask out loud';
  mic.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg>';
  send.before(mic);let rec=null;
+ // Like messaging apps: 🎤 while the box is empty, ➤ Send once there's something to send.
+ const outer=$('inputOuter'),input0=$('appChatInput'),pill=$('appImagePill');
+ const swap=()=>{const has=!!input0?.value.trim()||(pill&&getComputedStyle(pill).display!=='none')||!!w._appImage||!!w._appDoc;outer?.classList.toggle('km-has-text',has||!!rec);};
+ input0?.addEventListener('input',swap);if(pill)new MutationObserver(swap).observe(pill,{attributes:true,attributeFilter:['style','class']});swap();
+ w.knoxSwapSend=swap;
  mic.onclick=()=>{
   if(rec){rec.stop();return;}
   const input=$('appChatInput'),start=input.value?input.value.replace(/\s*$/,' '):'';
   rec=new Speech();rec.lang=navigator.language||'en-US';rec.interimResults=true;rec.continuous=false;
   rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;input.value=start+t;input.dispatchEvent(new Event('input',{bubbles:true}));};
-  rec.onend=()=>{rec=null;mic.classList.remove('on');};rec.onerror=e=>{if(e.error==='not-allowed')note('Allow the microphone for Knox in Settings to ask out loud.');};
+  rec.onend=()=>{rec=null;mic.classList.remove('on');swap();};rec.onerror=e=>{if(e.error==='not-allowed')note('Allow the microphone for Knox in Settings to ask out loud.');};
   mic.classList.add('on');try{rec.start();}catch{rec=null;mic.classList.remove('on');}
  };
 }

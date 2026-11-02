@@ -96,7 +96,7 @@ function saveDraft(force=false){clearTimeout(draftTimer);const text=$('appChatIn
 $('appChatInput')?.addEventListener('input',()=>{draftEdited=true;clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,250);});
 window.addEventListener('pagehide',saveDraft);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveDraft();});
-const disclaimer=document.querySelector('.input-disclaimer');if(disclaimer)disclaimer.textContent='Knox can make mistakes. Check important answers.';
+const disclaimer=document.querySelector('.input-disclaimer');if(disclaimer)disclaimer.textContent='Knox is AI and can make mistakes. Check important answers.';
 const stateFields=['_learnModeActive','_conversation','_currentConversationId','_learnSessionId','_learnSource','_learnStyle','_appImage','_appDoc','_fbPayloads','_appRenewLearn'];
 function mode(){return window._learnModeActive?'learn':'chat';}
 function remember(){

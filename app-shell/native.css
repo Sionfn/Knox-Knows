@@ -422,7 +422,7 @@ html.native-app .knox-app-tabs button, html.native-app .knox-app-tabs button[ari
 .km-tab-tile svg { width:26px; height:26px; }
 
 /* Typing box: bigger buttons, slimmer area, so more of Knox's answer shows. */
-html.native-app .input-disclaimer { display:none!important; }
+html.native-app .input-disclaimer { display:block!important; margin:6px 0 0!important; font-size:11px!important; line-height:1.3!important; opacity:.8; }
 html.native-app #inputOuter { padding:8px 12px 10px!important; }
 html.native-app #appChatInput { font-size:17px!important; }
 html.native-app #inputOuter .input-icon-btn { width:42px; height:42px; min-width:42px; }
@@ -520,3 +520,17 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-badge.on { background:linear-gra
 .km-welcome button { width:100%; max-width:420px; min-height:54px; border-radius:16px; font:900 16px Nunito,sans-serif; border:0; background:transparent; color:var(--text-light); }
 .km-welcome button.go { background:var(--orange); color:#fff; border:2px solid var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); margin-bottom:8px; }
 @media (prefers-reduced-motion:reduce) { .km-reveal > *, .km-mic.on, .km-welcome { animation:none!important; } }
+
+/* Ask and Learn stay put: the welcome screen fits (topics in a 2×2 grid) and
+   doesn't drag up and down; chats scroll without the rubber-band bounce. */
+html.native-app #welcomeScreen { justify-content:center; padding:56px 16px 12px; overscroll-behavior:none; }
+html.native-app .suggestion-grid { grid-template-columns:1fr 1fr; gap:10px; }
+html.native-app .suggestion-chip { flex-direction:column; align-items:flex-start; gap:8px; padding:14px 12px; }
+html.native-app .welcome-sub { margin-bottom:16px; }
+@media (min-height:640px) { html.native-app #welcomeScreen { overflow:hidden; touch-action:none; } }
+html.native-app #chatThread, html.native-app .knox-mobile-page, html.native-app #flashcardsPanel .fc-scroll { overscroll-behavior-y:none; }
+/* 🎤 and ➤ share one spot: mic when empty, Send when there's text or a photo. */
+html.native-app #inputOuter:has(.km-mic):not(.km-has-text) #appSendBtn { display:none!important; }
+html.native-app #inputOuter.km-has-text .km-mic:not(.on) { display:none!important; }
+html.native-app .km-mic { width:46px!important; height:46px!important; min-width:46px; border-radius:50%; background:var(--orange)!important; color:#fff!important; box-shadow:0 3px 0 var(--orange-dark); }
+html.native-app body.knox-learn-mode .km-mic { background:var(--purple)!important; box-shadow:0 3px 0 var(--purple-dark); }
