@@ -114,9 +114,9 @@ test('a file read normally is added to the deck draft',async()=>{
 });
 
 test('open Make form refreshes pricing and limits on plan changes without losing the draft',()=>{
- const h=harness();h.showMake();h.window.userTier='mega';h.api.makeView();h.topic.value='My unsent topic';assert.match(h.api.rendered(),/Mega Knox — unlimited decks/);
+ const h=harness();h.showMake();h.window.userTier='mega';h.api.makeView();h.topic.value='My unsent topic';assert.match(h.api.rendered(),/Mega Knox — up to 100 AI decks a day/);
  h.window.userTier='free';h.window.userPlan='free';h.listeners['knox-plan-changed']();
- assert.equal(h.api.state().request,'My unsent topic');assert.match(h.api.rendered(),/Make my deck · 2 credits/);assert.match(h.api.rendered(),/up to 10 cards/);assert.doesNotMatch(h.api.rendered(),/Mega Knox — unlimited decks/);assert.equal(h.requests(),0);
+ assert.equal(h.api.state().request,'My unsent topic');assert.match(h.api.rendered(),/Make my deck · 2 credits/);assert.match(h.api.rendered(),/up to 10 cards/);assert.doesNotMatch(h.api.rendered(),/Mega Knox — up to 100 AI decks a day/);assert.equal(h.requests(),0);
 });
 
 test('downgrade keeps attached photos but refuses excess photos before generation or credits',async()=>{
