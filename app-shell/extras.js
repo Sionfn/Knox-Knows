@@ -27,7 +27,7 @@ w.knoxCropPhoto=file=>new Promise(resolve=>{
  img.onload=()=>{
   if(!alive())return cancel();
   sheet=document.createElement('div');sheet.className='km-crop';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Crop your photo');
-  sheet.innerHTML='<p class="km-crop-tip">Choose the problem you want help with. Drag the box or use Adjust crop.</p><div class="km-crop-stage"><img alt="Your selected notes"><div class="km-crop-box" aria-hidden="true"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><details class="km-crop-adjust"><summary>Adjust crop</summary><div class="km-crop-ranges">'+[['x','Left'],['y','Top'],['w','Width'],['h','Height']].map(([id,name])=>'<label>'+name+'<input type="range" min="0" max="100" step="1" data-range="'+id+'" aria-label="Crop '+name.toLowerCase()+'"></label>').join('')+'</div></details><div class="km-crop-actions"><button type="button" data-crop="cancel">Cancel</button><button type="button" data-crop="all">Whole photo</button><button type="button" data-crop="ok" class="go">Use this part</button></div>';
+  sheet.innerHTML='<p class="km-crop-tip">Drag the box around the one problem you want help with</p><div class="km-crop-stage"><img alt="Your selected notes"><div class="km-crop-box" aria-hidden="true"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><details class="km-crop-adjust"><summary>Adjust crop</summary><div class="km-crop-ranges">'+[['x','Left'],['y','Top'],['w','Width'],['h','Height']].map(([id,name])=>'<label>'+name+'<input type="range" min="0" max="100" step="1" data-range="'+id+'" aria-label="Crop '+name.toLowerCase()+'"></label>').join('')+'</div></details><div class="km-crop-actions"><button type="button" data-crop="cancel">Cancel</button><button type="button" data-crop="all">Whole photo</button><button type="button" data-crop="ok" class="go">Use this part</button></div>';
   const view=sheet.querySelector('img');view.src=url;document.body.append(sheet);
   const box=sheet.querySelector('.km-crop-box');let r=model.cropBounds({x:.08,y:.18,w:.84,h:.64}),drag=null;
   const draw=()=>{if(!alive())return cancel();const iw=view.clientWidth,ih=view.clientHeight;Object.assign(box.style,{left:view.offsetLeft+r.x*iw+'px',top:view.offsetTop+r.y*ih+'px',width:r.w*iw+'px',height:r.h*ih+'px'});for(const input of sheet.querySelectorAll('[data-range]')){const k=input.dataset.range;input.min=k==='w'||k==='h'?'12':'0';input.max=String(Math.round(100*(k==='x'?1-r.w:k==='y'?1-r.h:k==='w'?1-r.x:1-r.y)));input.value=String(Math.round(r[k]*100));input.setAttribute('aria-valuetext',input.value+' percent');}};
@@ -63,7 +63,7 @@ w.knoxAnswerAction=async(id,kind)=>{
   if(input.value.trim()){
    const d=document.createElement('dialog');d.className='knox-native-dialog';d.setAttribute('aria-label','Keep your current draft');
    const h=document.createElement('h2');h.textContent='You already have a draft.';const copy=document.createElement('p');copy.textContent='Keep it as it is, or add this follow-up below it. Nothing is sent until you tap Send.';d.append(h,copy);
-   for(const [label,append] of [['Keep draft',false],['Add follow-up',true]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{if(append&&uid()===owner){input.value=input.value+'\n\n'+prompt;input.dispatchEvent(new Event('input',{bubbles:true}));}d.close();};d.append(button);}
+   for(const [label,append] of [['Keep draft',false],['Add follow-up',true]]){const button=document.createElement('button');button.type='button';button.textContent=label;if(append)button.className='primary';button.onclick=()=>{if(append&&uid()===owner){input.value=input.value+'\n\n'+prompt;input.dispatchEvent(new Event('input',{bubbles:true}));}d.close();};d.append(button);}
    d.addEventListener('close',()=>d.remove(),{once:true});document.body.append(d);d.showModal();
   }else{input.value=prompt;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();note('Follow-up ready. Review it, then tap Send.');}
  }finally{actionBusy=false;}
@@ -121,6 +121,12 @@ if(!native&&w.visualViewport){
  document.addEventListener('focusout',()=>setTimeout(schedule,60));
 }
 
+// ── Welcome (Ask/Learn): lock it still whenever it fits on screen. ──
+const ws=$('welcomeScreen');
+if(ws){const fits=()=>{const had=ws.classList.contains('km-fits');ws.classList.remove('km-fits');const ok=ws.scrollHeight<=ws.clientHeight+2;if(ok)ws.classList.add('km-fits');else if(had)ws.scrollTop=0;};
+ new ResizeObserver(fits).observe(ws);new MutationObserver(list=>{if(list.some(m=>!(m.target===ws&&m.attributeName==='class')))requestAnimationFrame(fits);}).observe(ws,{childList:true,subtree:true,attributes:true,attributeFilter:['open','hidden','style','class']});
+ addEventListener('resize',fits);document.addEventListener('knox-mobile-tab',fits);fits();}
+
 // ── Gestures: swipe in from the left edge for History; swipe it away to close ──
 let sx=0,sy=0,edge=false,inDrawer=false;
 document.addEventListener('touchstart',e=>{if(e.touches.length!==1||e.target.closest('dialog,[role="dialog"],input,textarea,.km-crop')){edge=inDrawer=false;return;}const t=e.touches[0];sx=t.clientX;sy=t.clientY;edge=sx<24;inDrawer=!!e.target.closest('#mobileHistoryDrawer.open');},{passive:true});
@@ -161,23 +167,33 @@ function goalRing(){
  let el=$('kmGoal');if(!el){el=document.createElement('section');el.id='kmGoal';el.className='km-goal';home.querySelector('.km-askbar')?.after(el);}
  if(!uid()){el.hidden=true;return;}el.hidden=false;
  const n=Math.min(GOAL,activity.today(uid())),pct=n/GOAL,C=2*Math.PI*22;
- const html=`<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="22" class="t"/><circle cx="26" cy="26" r="22" class="f" style="stroke-dasharray:${C};stroke-dashoffset:${C*(1-pct)}"/></svg><span><b>${n>=GOAL?'Daily goal done! 🎯':'Today’s goal: '+n+' of '+GOAL}</b><small>${n>=GOAL?'Nice work. Come back tomorrow to keep it going.':'Ask a question, finish a lesson step or review a card.'}</small></span>`;
+ const html=`<span class="km-goal-ring${n>=GOAL?' done':''}"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="22" class="t"/><circle cx="26" cy="26" r="22" class="f" style="stroke-dasharray:${C};stroke-dashoffset:${C*(1-pct)}"/></svg><span class="km-goal-mid">${svgIcon('target')}</span></span><span><b>${n>=GOAL?'Daily goal done! 🎯':'Today’s goal: '+n+' of '+GOAL}</b><small>${n>=GOAL?'Nice work. Come back tomorrow to keep it going.':'Ask a question, finish a lesson step or review a card.'}</small></span>`;
  if(el.innerHTML!==html)el.innerHTML=html;
 }
 
 // ── You: progress and badges ──
+// One drawn icon set (like the website's tiles) instead of mixed emoji.
+const ICON={flame:'<path d="M12 22c4 0 7-2.8 7-6.8 0-3.5-2.3-5.6-3.6-7.6-.6 1.8-1.6 2.9-2.7 3.4.3-3.4-1.2-6.2-3.7-8 .2 3.3-1.4 5.4-2.9 7.2C4.9 11.7 5 13.3 5 15.2 5 19.2 8 22 12 22Z"/>',
+ chat:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.2A8.5 8.5 0 1 1 21 11.5Z"/>',
+ cap:'<path d="M22 9 12 4 2 9l10 5 10-5Z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>',
+ cards:'<rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11"/>',
+ brain:'<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1Zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/>',
+ target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+ trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/>'};
+const svgIcon=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+const iconTile=(n,color)=>`<span class="km-tile sm" data-color="${color}">${svgIcon(n)}</span>`;
 function progress(){
  const acct=$('knoxMobileAccount')?.querySelector('.km-page-wrap');if(!acct)return;
  let el=$('kmProgress');if(!el){el=document.createElement('section');el.id='kmProgress';el.className='km-account-section';const ref=acct.querySelector('.km-account-section:nth-of-type(2)');if(ref)ref.after(el);else acct.append(el);}
  if(!uid()){el.hidden=true;return;}el.hidden=false;
  const s=stats(),streak=Number($('streakCount')?.textContent)||0;s.bestStreak=Math.max(streak,s.bestStreak);
  const deck=w.knoxFlashcardsMobile?.summary?.()||{decks:[]},decks=deck.decks?.length||0;
- const tiles=[['🔥',streak,'day streak'],['💬',s.questions||0,'study replies'],['🎓',s.lessons||0,'lessons done'],['🃏',s.cards||0,'cards reviewed']];
- const badges=[['🎓','First lesson',s.lessons>=1],['🔥','3-day streak',s.bestStreak>=3],['🔥','7-day streak',s.bestStreak>=7],['💬','10 study replies',s.questions>=10],['🃏','First deck',decks>=1],['🧠','50 cards',s.cards>=50],['🎯','Daily goal',s.goalDays>=1],['🏆','5 lessons',s.lessons>=5]];
- const html=`<div class="km-section-heading"><h2>Your progress</h2></div><div class="km-stats">${tiles.map(([i,n,l])=>`<div class="km-stat"><span>${i}</span><b>${n}</b><small>${l}</small></div>`).join('')}</div>
+ const tiles=[['flame','chat',streak,'day streak'],['chat','chat',s.questions||0,'questions answered'],['cap','learn',s.lessons||0,'lessons done'],['cards','flashcards',s.cards||0,'cards reviewed']];
+ const badges=[['cap','First lesson',s.lessons>=1],['flame','3-day streak',s.bestStreak>=3],['flame','7-day streak',s.bestStreak>=7],['chat','10 questions',s.questions>=10],['cards','First deck',decks>=1],['brain','50 cards',s.cards>=50],['target','Daily goal',s.goalDays>=1],['trophy','5 lessons',s.lessons>=5]];
+ const html=`<div class="km-section-heading"><h2>Your progress</h2></div><div class="km-stats">${tiles.map(([i,c,n,l])=>`<div class="km-stat">${iconTile(i,c)}<b>${n}</b><small>${l}</small></div>`).join('')}</div>
   <div class="km-section-heading"><h2>Badges</h2><small class="km-badge-count">${badges.filter(b=>b[2]).length} of ${badges.length}</small></div>
-  <div class="km-badges">${badges.map(([i,l,on])=>`<div class="km-badge${on?' on':''}" aria-label="${esc(l)}: ${on?'unlocked':'not yet unlocked'}" title="${esc(l)}"><span>${i}</span><small>${esc(l)}</small></div>`).join('')}</div>
-  <p class="km-footer-note" style="margin-top:10px">Successful study activity on this device. Counts are not a mastery score.</p>`;
+  <div class="km-badges">${badges.map(([i,l,on])=>`<div class="km-badge${on?' on':''}" aria-label="${esc(l)}: ${on?'unlocked':'not yet unlocked'}" title="${esc(l)}"><span class="km-badge-icon">${svgIcon(i)}</span><small>${esc(l)}</small></div>`).join('')}</div>
+  <p class="km-footer-note" style="margin-top:10px">Counted on this device as you study.</p>`;
  if(el.innerHTML!==html)el.innerHTML=html;
 }
 const refresh=()=>{goalRing();progress();if(!$('knoxMobileAccount')?.hidden)setTimeout(autoButton,60);};

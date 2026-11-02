@@ -483,10 +483,14 @@ body.knox-learn-mode .km-answer-actions button { border-color:color-mix(in srgb,
 /* Today's goal (Home). */
 .km-goal { display:flex; align-items:center; gap:14px; margin:-8px 0 24px; padding:14px 16px; border:2px solid var(--border); border-radius:20px; background:var(--surface); box-shadow:0 3px 0 var(--border); }
 .km-goal[hidden] { display:none; }
-.km-goal > svg { width:52px; height:52px; flex-shrink:0; transform:rotate(-90deg); }
-.km-goal > svg > circle { fill:none; stroke-width:6; }
-.km-goal > svg > .t { stroke:var(--border); }
-.km-goal > svg > .f { stroke:var(--green); stroke-linecap:round; transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
+.km-goal-ring { position:relative; width:56px; height:56px; flex-shrink:0; }
+.km-goal-ring > svg { width:56px; height:56px; transform:rotate(-90deg); }
+.km-goal-mid { position:absolute; inset:0; display:grid; place-items:center; color:var(--green-dark); }
+.km-goal-mid svg { width:22px; height:22px; }
+.km-goal-ring.done .km-goal-mid { color:var(--green); }
+.km-goal-ring > svg > circle { fill:none; stroke-width:6; }
+.km-goal-ring > svg > .t { stroke:var(--green-light); }
+.km-goal-ring > svg > .f { stroke:var(--green); stroke-linecap:round; transition:stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
 .km-goal b { display:block; font-size:15px; font-weight:900; }
 .km-goal small { display:block; font-size:12px; font-weight:700; color:var(--text-light); margin-top:2px; line-height:1.45; }
 
@@ -551,7 +555,10 @@ html.native-app.native-keyboard .knox-app-tabs { display:none!important; }
 html.native-app.km-kb #chatAndInput, html.native-app.km-kb .knox-mobile-page { animation:none!important; }
 
 /* Preserve every tool when text or device height makes the welcome taller. */
-html.native-app #welcomeScreen { justify-content:flex-start;overflow-y:auto;touch-action:pan-y; }
+/* Locked still when everything fits (most phones); scrolls only when it truly
+   doesn't (small phones, larger text, Learn's open review list), never bouncing. */
+html.native-app #welcomeScreen { justify-content:flex-start;overflow-y:auto;overscroll-behavior:none; }
+html.native-app #welcomeScreen.km-fits { overflow:hidden;touch-action:none;justify-content:center; }
 .km-crop-adjust { flex:none;max-height:35dvh;overflow:auto;padding:8px 0; }
 .km-crop-adjust summary { min-height:44px;display:flex;align-items:center;font:800 14px Nunito,sans-serif;cursor:pointer; }
 .km-crop-ranges { display:grid;grid-template-columns:1fr 1fr;gap:8px 16px; }
@@ -561,3 +568,17 @@ html.native-app #welcomeScreen { justify-content:flex-start;overflow-y:auto;touc
 .km-crop-actions { flex-shrink:0; }
 .km-crop-stage { overflow:hidden; }
 @media (max-height:600px) { .km-welcome { padding-top:16px;padding-bottom:12px;overflow-y:auto; }.km-welcome-logo { width:56px;height:56px;border-radius:16px; }.km-welcome-track { min-height:210px; }.km-welcome-track span { font-size:40px; }.km-welcome-track h2 { font-size:27px; }.km-welcome-track p { font-size:14px; } }
+
+/* Polish (Nov 2): goal card in green, matching icon tiles, upgrade buttons. */
+.km-goal { border-color:color-mix(in srgb, var(--green) 55%, var(--border)); box-shadow:0 3px 0 color-mix(in srgb, var(--green-dark) 45%, var(--border)); }
+.km-stat .km-tile { margin-bottom:4px; }
+.km-badge-icon { display:grid; place-items:center; width:34px; height:34px; color:var(--text-light); }
+.km-badge-icon svg { width:24px; height:24px; }
+.km-badge.on .km-badge-icon { color:#9A6B00; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-badge.on .km-badge-icon { color:#FFD45C; }
+.km-plan-cta { --ledge:var(--green-dark); display:block; width:100%; margin-top:14px; min-height:48px; border-radius:15px; border:2px solid var(--green-dark); background:var(--green); color:#fff; font:900 15px Nunito,sans-serif; box-shadow:0 4px 0 var(--green-dark); }
+.km-plan-cta[data-tier="mega"] { --ledge:#9A6B00; border-color:#C99404; background:#F2B705; color:#4A3400; box-shadow:0 4px 0 #C99404; }
+.km-crop-adjust summary { list-style:none; justify-content:center; width:max-content; margin:0 auto; padding:0 14px; min-height:36px; border-radius:999px; border:1.5px solid rgba(255,255,255,.3); color:rgba(255,255,255,.85); font-size:13px; }
+.km-crop-adjust summary::-webkit-details-marker { display:none; }
+.km-crop-adjust summary::after { content:"▾"; margin-left:6px; opacity:.7; }
+.km-crop-adjust[open] summary::after { content:"▴"; }
