@@ -1657,6 +1657,8 @@
     .settings-switch:disabled { opacity: .55; cursor: pointer; }
     .settings-websearch { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
     .settings-websearch .ws-copy { flex: 1; min-width: 0; }
+    .settings-websearch .ws-beta { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 99px; background: #FFF3C4; border: 1.5px solid #F2B705; color: #7A5A00; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
+    html[data-theme="dark"] .settings-websearch .ws-beta { background: color-mix(in srgb, #F2B705 22%, var(--surface)); color: #FFD84D; }
     .settings-websearch .ws-copy small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
     .knox-response-body > :first-child { margin-top: 0 !important; }
     .knox-response-body > :last-child { margin-bottom: 0 !important; }
@@ -5224,7 +5226,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     const mega = window.userTier === 'mega';
     if (mega || !window.knoxNativeApp) {
       const ws = document.createElement('div'); ws.className = 'settings-websearch';
-      ws.innerHTML = '<span class="ws-copy"><span class="settings-label">🌐 Search the web</span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
+      ws.innerHTML = '<span class="ws-copy"><span class="settings-label">🌐 Search the web <span class="ws-beta">Beta</span></span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
       const note = ws.querySelector('small'), sw = ws.querySelector('.settings-switch');
       const show = on => {
         sw.setAttribute('aria-checked', String(on));
