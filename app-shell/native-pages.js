@@ -228,7 +228,10 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  }
  home.addEventListener('click',action);account.addEventListener('click',action);
  const historyList=$('sidebarHistoryList');if(historyList)new MutationObserver(()=>{if(!home.hidden)render();}).observe(historyList,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','data-row-key']});
- const status=$('streakPill');if(status)new MutationObserver(()=>{render();}).observe(status,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','class']});
+ // Watch the streak count and whether today's flame is lit. Never watch the flame
+ // icon's classes: render() restyles it (applyFlameStyle), which would loop.
+ let renderSoon=0;const later=()=>{clearTimeout(renderSoon);renderSoon=setTimeout(render,30);};
+ const status=$('streakPill');if(status){new MutationObserver(later).observe(status,{childList:true,subtree:true,characterData:true});new MutationObserver(later).observe(status,{attributes:true,attributeFilter:['title','class']});}
  w.addEventListener('knox-plan-changed',render);w.addEventListener('knox-mobile-data',()=>{if(!home.hidden){render();refreshDecks();}});
  w.addEventListener('knox-auth-changed',()=>{historyOwner=w.currentUser?.uid||'guest';refreshAt=0;renderVersion++;render();if(!home.hidden)refreshDecks();});
  new MutationObserver(()=>{if(!account.hidden)render();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
