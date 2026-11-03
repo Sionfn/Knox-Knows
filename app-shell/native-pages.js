@@ -3,6 +3,10 @@
 window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const $=id=>document.getElementById(id),w=window;
  const model=import((w.knoxShellBase||'/assets/')+'home-model.js');
+ // Answer language (sent with each question; "auto" answers in the question's language).
+ const LANGS=[['auto','Auto'],['en','English'],['es','Español'],['fr','Français'],['pt','Português'],['de','Deutsch'],['it','Italiano'],['zh','中文 (简体)'],['ja','日本語'],['ko','한국어'],['ar','العربية'],['hi','हिन्दी'],['vi','Tiếng Việt'],['tl','Tagalog'],['ru','Русский']];
+ let language='auto';try{const saved=localStorage.getItem('knoxAnswerLanguage');if(LANGS.some(([id])=>id===saved))language=saved;}catch{}
+ w.knoxAnswerLanguage=()=>language==='auto'?null:language;
  let reading='standard';try{if(localStorage.getItem('knoxMobileReading')==='large')reading='large';}catch{}
  document.documentElement.classList.toggle('knox-reading-large',reading==='large');
  const home=document.createElement('section'),account=document.createElement('section');
@@ -32,13 +36,13 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   ['🗣️','orange','learn','Teach me Spanish greetings','Teach me common Spanish greetings and quiz me on them.'],
   ['⚛️','blue','chat','What’s the difference between an atom and a molecule?','What’s the difference between an atom and a molecule?'],
  ];
- // ‹ › buttons for the sideways rows, so it's clear there's more to the right.
- const scrollCtl=(id,what)=>`<span class="km-scroll-ctl" data-row="${id}"><button type="button" class="km-press" data-scroll="-1" aria-label="Previous ${what}" disabled>${svg('left')}</button><button type="button" class="km-press" data-scroll="1" aria-label="More ${what}">${svg('arrow')}</button></span>`;
+ // Long lists show the first few, with "Show all" underneath (like History on the website).
+ const SHOW=3,moreBtn=(id,what,n)=>n>SHOW?`<button type="button" class="km-show-all km-press" data-more="${id}" aria-expanded="false" aria-controls="${id}">Show all ${what} <span aria-hidden="true">↓</span></button>`:'';
  const TOOLS=[
-  ['learn','learn','Learn','Step-by-step lessons','go'],
-  ['flashcards','flashcards','Flashcards','Turn anything into cards','go'],
-  ['quiz','quiz','Quiz me','Practice until it sticks','quiz'],
-  ['calculator','calculator','Calculator','Basic & scientific','go'],
+  ['learn','purple','Learn','Step-by-step lessons','go'],
+  ['flashcards','green','Flashcards','Turn anything into cards','go'],
+  ['quiz','orange','Quiz me','Practice until it sticks','quiz'],
+  ['calculator','blue','Calculator','Basic & scientific','go'],
  ];
  home.innerHTML=`<div class="km-page-wrap">
   <header class="km-topbar"><button type="button" class="km-top-avatar km-press" data-go="account" aria-label="You: account, plan and settings" data-avatar>K</button>
@@ -53,11 +57,11 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <button type="button" class="km-join km-press km-rise" data-action="signup" hidden><span class="km-join-gem" aria-hidden="true">🦊</span><span><b>Sign up free</b><small>Save your chats, build a streak and keep your decks.</small></span><span class="km-join-go" aria-hidden="true">${svg('arrow')}</span></button>
   <section class="km-today km-rise" aria-label="Today"><button type="button" class="km-streak-card km-press" data-action="streak"><span class="km-streak-flame" aria-hidden="true"><span class="knox-flame">🔥</span></span><span><b id="kmStreakCount">Your streak</b><small id="kmStreakNote">Study today to light it.</small></span></button><section id="kmGoal" class="km-goal" hidden></section></section>
   <div id="kmResume"></div>
-  <section class="km-rise" aria-labelledby="kmStartsTitle"><div class="km-section-heading"><h2 id="kmStartsTitle">Try asking Knox</h2>${scrollCtl('kmStarts','ideas')}</div>
-   <div class="km-starts" id="kmStarts" role="group" aria-labelledby="kmStartsTitle">${STARTS.map(([e,c,t,label,q],i)=>`<button type="button" class="km-start km-press" data-color="${c}" data-start="${i}"><span class="km-start-emoji" aria-hidden="true">${e}</span><b>${esc(label)}</b><small>${t==='learn'?'Learn with Knox':'Ask Knox'} →</small></button>`).join('')}</div></section>
+  <section class="km-rise" aria-labelledby="kmStartsTitle"><div class="km-section-heading"><h2 id="kmStartsTitle">Try asking Knox</h2></div>
+   <div class="km-ideas km-list" id="kmStarts" role="group" aria-labelledby="kmStartsTitle">${STARTS.map(([e,c,t,label,q],i)=>`<button type="button" class="km-idea km-chip km-press" data-flavor="${c}" data-start="${i}"${i>=SHOW?' hidden':''}><span class="km-chip-circle" aria-hidden="true">${e}</span><span class="km-chip-copy"><b>${esc(label)}</b><small>${t==='learn'?'Learn with Knox':'Ask Knox'}</small></span><span class="km-chip-go" aria-hidden="true">${svg('arrow')}</span></button>`).join('')}</div>${moreBtn('kmStarts','ideas',STARTS.length)}</section>
   <section class="km-rise" aria-labelledby="kmToolsTitle"><div class="km-section-heading"><h2 id="kmToolsTitle">Study tools</h2></div>
-   <div class="km-tools">${TOOLS.map(([id,color,label,copy,kind])=>`<button type="button" class="km-tool km-press" data-color="${color}" ${kind==='quiz'?'data-action="quiz"':`data-go="${id}"`}><span class="km-tool-icon" aria-hidden="true">${kind==='quiz'?svg('quiz'):svg(id)}</span><b>${label}</b><span>${copy}</span></button>`).join('')}</div></section>
-  <section class="km-rise" aria-labelledby="kmReviewTitle"><div class="km-section-heading"><h2 id="kmReviewTitle">Review</h2>${scrollCtl('kmDeckRow','decks')}</div><div id="kmReview"></div></section>
+   <div class="km-bubbles">${TOOLS.map(([id,color,label,copy,kind])=>`<button type="button" class="km-chip km-bubble km-press" data-flavor="${color}" ${kind==='quiz'?'data-action="quiz"':`data-go="${id}"`}><span class="km-chip-circle" aria-hidden="true">${kind==='quiz'?svg('quiz'):svg(id)}</span><span class="km-chip-copy"><b>${label}</b><small>${copy}</small></span></button>`).join('')}</div></section>
+  <section class="km-rise" aria-labelledby="kmReviewTitle"><div class="km-section-heading"><h2 id="kmReviewTitle">Review</h2></div><div id="kmReview"></div></section>
   <section class="km-rise" id="kmRecentSection" aria-labelledby="kmRecentTitle"><div class="km-section-heading"><h2 id="kmRecentTitle">Recent</h2><button type="button" class="km-text-button" data-action="history">See all</button></div><div id="kmRecent"></div></section>
   <div id="kmHomePlan"></div>
   <p class="km-footer-note">Knox is AI and can make mistakes. Check important answers.</p>
@@ -67,7 +71,10 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <section class="km-account-section" aria-labelledby="kmPlanTitle"><div class="km-section-heading"><h2 id="kmPlanTitle">Your plan</h2></div><div id="kmAccountPlan"></div></section>
   <section id="kmProgress" class="km-account-section" hidden></section>
   <section class="km-account-section" aria-labelledby="kmAppearanceTitle"><div class="km-section-heading"><h2 id="kmAppearanceTitle">Look</h2></div><div class="km-looks" role="group" aria-label="Appearance">${[['light','Light'],['dark','Dark'],['seasonal','Fall']].map(([id,label])=>`<button type="button" class="km-press" data-look="${id}" aria-pressed="false"><span class="km-look-swatch" data-swatch="${id}" aria-hidden="true"><i></i><i></i><i></i></span><b>${label}</b><small data-selected-label></small></button>`).join('')}</div>
-   <div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Aa Standard</button><button type="button" data-reading="large" aria-pressed="false"><span style="font-size:1.2em">Aa</span> Larger</button></div></section>
+   <div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Aa Standard</button><button type="button" data-reading="large" aria-pressed="false"><span style="font-size:1.2em">Aa</span> Larger</button></div>
+   <div class="km-reading-preview" aria-hidden="true"><span class="km-reading-fox">🦊</span><p><b>Knox</b>This is how big Knox’s answers and lessons will look.</p></div></section>
+  <section class="km-account-section" aria-labelledby="kmLangTitle"><div class="km-section-heading"><h2 id="kmLangTitle">Language</h2></div>
+   <label class="km-lang"><span><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select data-lang aria-label="Language Knox answers in">${LANGS.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label></section>
   <section class="km-account-section" aria-labelledby="kmSettingsTitle"><div class="km-section-heading"><h2 id="kmSettingsTitle">Account & help</h2></div><div class="km-menu-list">
    <button type="button" class="km-press" data-action="settings">${tile('settings','grey')}<span>Account & settings<small>Profile, connections, account deletion</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="credits">${tile('coin','gold')}<span>Questions & limits<small>See your current allowance</small></span><span aria-hidden="true">›</span></button>
@@ -94,7 +101,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   block('kmDrafts',(w.knoxMobile?.drafts?.()||[]).map(d=>`<button type="button" class="km-draft km-press" data-draft="${d.mode}">${tile(d.mode,d.mode)}<span><b>Continue your ${d.mode==='learn'?'Learn':'Ask'} draft</b><small>${esc(d.text.slice(0,75))}${d.text.length>75?'…':''}</small></span><span aria-hidden="true">→</span></button>`).join(''));
   const recentLesson=activity.recentLesson;
   block('kmResume',recentLesson?`<button type="button" class="km-resume km-press km-rise" data-conversation="${esc(recentLesson.id)}"><span class="km-resume-badge" aria-hidden="true">${svg('learn')}</span><span><span class="km-eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${esc(recentLesson.title)}</h2></span><span class="km-resume-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
-  block('kmReview',activity.decks.length?`<div class="km-review-hero${activity.due?' due':''}"><span class="km-review-count"><b>${activity.due||'✓'}</b><small>${activity.due?'card'+(activity.due===1?'':'s')+' due':'all caught up'}</small></span><span class="km-review-copy"><b>${activity.due?'Time for a quick review':'Nice! Nothing due right now'}</b><small>${activity.decks.length} deck${activity.decks.length===1?'':'s'} · ${activity.totalCards} cards</small></span>${activity.due?`<button type="button" class="km-review-go km-press" data-deck="${esc(activity.decks[0].id)}">Review</button>`:''}</div><div class="km-deck-row" id="kmDeckRow">${activity.decks.slice(0,6).map(d=>`<button type="button" class="km-deck km-press" data-deck="${esc(d.id)}"><span class="km-deck-stack" aria-hidden="true"><i></i><i></i></span><b>${esc(d.title)}</b><small>${d.due?d.due+' due':d.count+' cards'}</small></button>`).join('')}</div>`:`<button type="button" class="km-empty km-press" data-go="flashcards">${tile('flashcards','flashcards')}<span><b>Make your first deck</b><small>Turn a topic, your notes or a photo into flashcards.</small></span><span aria-hidden="true">→</span></button>`);
+  block('kmReview',activity.decks.length?`<div class="km-review-hero${activity.due?' due':''}"><span class="km-review-count"><b>${activity.due||'✓'}</b><small>${activity.due?'card'+(activity.due===1?'':'s')+' due':'all caught up'}</small></span><span class="km-review-copy"><b>${activity.due?'Time for a quick review':'Nice! Nothing due right now'}</b><small>${activity.decks.length} deck${activity.decks.length===1?'':'s'} · ${activity.totalCards} cards</small></span>${activity.due?`<button type="button" class="km-review-go km-press" data-deck="${esc(activity.decks[0].id)}">Review</button>`:''}</div><div class="km-deck-list km-list" id="kmDeckRow">${activity.decks.slice(0,8).map((d,i)=>`<button type="button" class="km-deck km-press" data-deck="${esc(d.id)}"${i>=SHOW?' hidden':''}>${tile('flashcards','flashcards')}<span><b>${esc(d.title)}</b><small>${d.due?d.due+' due':d.count+' cards'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div>${moreBtn('kmDeckRow','decks',Math.min(8,activity.decks.length))}`:`<button type="button" class="km-empty km-press" data-go="flashcards">${tile('flashcards','flashcards')}<span><b>Make your first deck</b><small>Turn a topic, your notes or a photo into flashcards.</small></span><span aria-hidden="true">→</span></button>`);
   block('kmRecent',activity.history.length?`<div class="km-recent-list">${activity.history.map(r=>`<button type="button" class="km-recent km-press" data-conversation="${esc(r.id)}">${r.kind==='learn'?tile('learn','learn'):tile('chat','chat')}<span><b>${esc(r.title)}</b><small>${r.kind==='learn'?'Learn lesson':'Ask Knox'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div>`:`<div class="km-empty km-empty-small"><span><b>${user?'Your work shows up here':'Keep your work together'}</b><small>${user?'Ask a question or start a lesson to begin.':'Sign in to keep your chats, lessons and decks.'}</small></span>${user?'':`<button type="button" class="km-inline-action" data-action="signin">Sign in →</button>`}</div>`);
   block('kmHomePlan',plan.suggested&&!w.knoxNativeApp?`<button type="button" class="km-upsell km-press km-rise" data-action="plans" data-tier="${plan.suggested.id}"><span class="km-upsell-shine" aria-hidden="true"></span><span class="km-upsell-gem" aria-hidden="true">${plan.suggested.id==='mega'?'💎':'⚡'}</span><span><small>${plan.suggested.id==='mega'?'GO BIGGER':'LEVEL UP'}</small><b>${esc(plan.suggested.name)}</b><span>${plan.suggested.id==='mega'?'40-card decks, longer files and the most of everything.':'Unlimited questions and full Learn lessons.'}</span></span><span class="km-upsell-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
   const initials=(user?.displayName||user?.email||'K').slice(0,1).toUpperCase();
@@ -112,8 +119,9 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   const theme=w.knoxTheme?.()||'light',mo=new Date().getMonth();
   account.querySelectorAll('[data-look]').forEach(b=>{const selected=b.dataset.look===theme;b.setAttribute('aria-pressed',String(selected));b.querySelector('[data-selected-label]').textContent=selected?'✓':'';b.hidden=b.dataset.look==='seasonal'&&(mo<8||mo>10);});
   account.querySelectorAll('[data-reading]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.reading===reading)));
+  const langPick=account.querySelector('[data-lang]');if(langPick&&langPick.value!==language)langPick.value=language;
   account.querySelector('[data-action="signout"]').hidden=!user;
-  home.querySelectorAll('.km-starts,.km-deck-row').forEach(syncScroll);document.querySelector('.km-scroll-ctl[data-row="kmDeckRow"]')?.toggleAttribute('hidden',!$('kmDeckRow'));
+  home.querySelectorAll('[data-more]').forEach(b=>{if(b.getAttribute('aria-expanded')==='true')expand(b,true);});
  }
  function show(target){home.hidden=target!=='home';account.hidden=target!=='account';if(target==='home'||target==='account'){render();if(target==='home')refreshDecks();}}
  async function refreshDecks(){
@@ -199,13 +207,11 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   input.value=text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();
   try{input.setSelectionRange(text.length,text.length);}catch{}
  }
- function syncScroll(row){const ctl=document.querySelector(`.km-scroll-ctl[data-row="${row.id}"]`);if(!ctl)return;const more=row.scrollWidth-row.clientWidth>4;ctl.hidden=!more;ctl.querySelector('[data-scroll="-1"]').disabled=row.scrollLeft<8;ctl.querySelector('[data-scroll="1"]').disabled=row.scrollLeft>row.scrollWidth-row.clientWidth-8;row.classList.toggle('km-more',!ctl.querySelector('[data-scroll="1"]').disabled);row.classList.toggle('km-less',row.scrollLeft>=8);}
- home.addEventListener('scroll',e=>{if(e.target.matches?.('.km-starts,.km-deck-row'))syncScroll(e.target);},{capture:true,passive:true});
- new ResizeObserver(()=>home.querySelectorAll('.km-starts,.km-deck-row').forEach(syncScroll)).observe(home);
+ function expand(b,open){const list=$(b.dataset.more);if(!list)return;[...list.children].forEach((el,i)=>{el.hidden=!open&&i>=SHOW;});b.setAttribute('aria-expanded',String(open));b.innerHTML=open?'Show less <span aria-hidden="true">↑</span>':`Show all ${b.dataset.more==='kmStarts'?'ideas':'decks'} <span aria-hidden="true">↓</span>`;}
  async function action(e){
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.action==='type'){prefill('chat','');return;}
-  if(b.dataset.scroll){const row=$(b.parentElement.dataset.row);row?.scrollBy({left:Number(b.dataset.scroll)*row.clientWidth*.8,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});return;}
+  if(b.dataset.more){expand(b,b.getAttribute('aria-expanded')!=='true');return;}
   if(e.target.closest('[data-action="photo"]')){w.knoxSnap?.();return;}
   if(b.dataset.reading){reading=b.dataset.reading==='large'?'large':'standard';document.documentElement.classList.toggle('knox-reading-large',reading==='large');try{localStorage.setItem('knoxMobileReading',reading);}catch{}render();return;}
   if(b.dataset.draft){await w.knoxMobile?.resumeDraft(b.dataset.draft);return;}
@@ -237,6 +243,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   if(b.dataset.look){w.knoxSetTheme?.(b.dataset.look);render();}
  }
  home.addEventListener('click',action);account.addEventListener('click',action);
+ account.addEventListener('change',e=>{if(!e.target.matches('[data-lang]'))return;language=LANGS.some(([id])=>id===e.target.value)?e.target.value:'auto';try{localStorage.setItem('knoxAnswerLanguage',language);}catch{}note(language==='auto'?'Knox answers in the language you ask in.':'Knox will answer in '+e.target.selectedOptions[0].textContent+'.');});
  const historyList=$('sidebarHistoryList');if(historyList)new MutationObserver(()=>{if(!home.hidden)render();}).observe(historyList,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','data-row-key']});
  // Watch the streak count and whether today's flame is lit. Never watch the flame
  // icon's classes: render() restyles it (applyFlameStyle), which would loop.

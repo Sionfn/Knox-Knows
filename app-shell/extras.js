@@ -46,9 +46,12 @@ w.knoxDetectQuestion=detectQuestion;
 // Photo review starts with the whole image. Cropping is an explicit choice;
 // an aimed camera frame is preserved exactly rather than guessed a second time.
 let cancelCrop=null;
+// The main button sends the photo to Knox right away (Solve it / Teach me);
+// "Add a note first" attaches it so the student can type with it.
 w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
+ if(options.skip){file.knoxSend=true;return resolve(file);} // camera with Crop off: straight to Knox
  cancelCrop?.();const owner=uid(),viewVersion=w._appViewVersion,previous=document.activeElement;
- let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0,found=false;
+ let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0,found=false,send=true;const learn=!!w._learnModeActive;
  const cropBounds=rect=>model.cropBounds(rect,.02);
  let cropped=!!options.frame,r=cropBounds(options.frame||{x:0,y:0,w:1,h:1});
  const url=URL.createObjectURL(file),img=new Image();
@@ -63,7 +66,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
   if(!options.frame){const auto=detectQuestion(img,null);if(auto){r=cropBounds(auto);cropped=found=true;}}
   document.activeElement?.blur();
   sheet=document.createElement('dialog');sheet.className='km-photo-review';sheet.setAttribute('aria-labelledby','kmPhotoTitle');
-  sheet.innerHTML='<header class="km-photo-header"><button type="button" data-photo="cancel" aria-label="Cancel photo">Cancel</button><h2 id="kmPhotoTitle">Review photo</h2><span aria-hidden="true"></span></header><p class="km-photo-tip" id="kmPhotoTip">Check that your question is clear. Crop only if you need to.</p><div class="km-photo-stage"><img alt="Photo you selected"><div class="km-photo-box" aria-hidden="true"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><div class="km-photo-tools"><button type="button" data-photo="crop" aria-pressed="false">Crop</button><button type="button" data-photo="rotate">Rotate</button><button type="button" data-photo="reset">Whole photo</button></div><details class="km-photo-adjust" hidden><summary>Adjust selection</summary><div class="km-photo-ranges">'+[['x','Left'],['y','Top'],['w','Width'],['h','Height']].map(([id,name])=>'<label>'+name+'<input type="range" min="0" max="100" step="1" data-range="'+id+'" aria-label="Selection '+name.toLowerCase()+'"></label>').join('')+'</div></details><footer class="km-photo-footer"><p role="status">Nothing is sent until you tap Send in your question.</p><button type="button" class="go" data-photo="use">Use photo</button></footer>';
+  sheet.innerHTML='<header class="km-photo-header"><button type="button" data-photo="cancel" aria-label="Cancel photo">Cancel</button><h2 id="kmPhotoTitle">Review photo</h2><span aria-hidden="true"></span></header><p class="km-photo-tip" id="kmPhotoTip">Check that your question is clear. Crop only if you need to.</p><div class="km-photo-stage"><img alt="Photo you selected"><div class="km-photo-box" aria-hidden="true"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><div class="km-photo-tools"><button type="button" data-photo="crop" aria-pressed="false">Crop</button><button type="button" data-photo="rotate">Rotate</button><button type="button" data-photo="reset">Whole photo</button></div><details class="km-photo-adjust" hidden><summary>Adjust selection</summary><div class="km-photo-ranges">'+[['x','Left'],['y','Top'],['w','Width'],['h','Height']].map(([id,name])=>'<label>'+name+'<input type="range" min="0" max="100" step="1" data-range="'+id+'" aria-label="Selection '+name.toLowerCase()+'"></label>').join('')+'</div></details><footer class="km-photo-footer"><p role="status"></p><button type="button" class="go" data-photo="use">Solve it</button><button type="button" class="km-photo-later" data-photo="later">Add a note first</button></footer>';
   const stage=sheet.querySelector('.km-photo-stage'),view=stage.querySelector('img'),box=stage.querySelector('.km-photo-box'),adjust=sheet.querySelector('details'),use=sheet.querySelector('[data-photo="use"]');
   view.src=url;document.body.append(sheet);sheet.addEventListener('cancel',e=>{e.preventDefault();cancel();});sheet.showModal();
   function draw(){
@@ -71,7 +74,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    fit=model.photoFit(img.naturalWidth,img.naturalHeight,stage.clientWidth,stage.clientHeight,rotation);
    Object.assign(view.style,{width:img.naturalWidth*fit.scale+'px',height:img.naturalHeight*fit.scale+'px',left:(stage.clientWidth-img.naturalWidth*fit.scale)/2+'px',top:(stage.clientHeight-img.naturalHeight*fit.scale)/2+'px',transform:'rotate('+rotation+'deg)'});
    Object.assign(box.style,{left:fit.x+r.x*fit.w+'px',top:fit.y+r.y*fit.h+'px',width:r.w*fit.w+'px',height:r.h*fit.h+'px'});
-   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?'Preparing photo…':cropped?'Use crop':'Use photo';
+   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?'Sending to Knox…':learn?'Teach me →':'Solve it →';
    sheet.querySelector('#kmPhotoTip').textContent=found&&cropped?'✨ Knox found your question. Drag to change it, or tap Whole photo.':cropped?'Drag the selection or its corners. Keep the full question inside.':'Check that your question is clear. Crop only if you need to.';
    for(const input of sheet.querySelectorAll('[data-range]')){const k=input.dataset.range;input.min=k==='w'||k==='h'?'2':'0';input.max=String(Math.round(100*(k==='x'?1-r.w:k==='y'?1-r.h:k==='w'?1-r.x:1-r.y)));input.value=String(Math.round(r[k]*100));input.setAttribute('aria-valuetext',input.value+' percent');}
   }
@@ -88,13 +91,13 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    if(a==='crop'){cropped=!cropped;found=false;if(cropped&&r.w===1&&r.h===1)r=cropBounds({x:.04,y:.04,w:.92,h:.92});draw();return;}
    if(a==='rotate'){found=false;rotation=(rotation+90)%360;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
    if(a==='reset'){found=false;rotation=0;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
-   if(a!=='use')return;if(!cropped&&rotation===0)return done(file);
+   if(a!=='use'&&a!=='later')return;send=a==='use';const finish=f=>{if(f)f.knoxSend=send;done(f);};if(!cropped&&rotation===0)return finish(file);
    exporting=true;sheet.querySelectorAll('button,input').forEach(b=>{if(b.dataset.photo!=='cancel')b.disabled=true;});draw();
    try{
     const sw=img.naturalWidth,sh=img.naturalHeight,W=rotation%180?sh:sw,H=rotation%180?sw:sh,sel=cropped?r:{x:0,y:0,w:1,h:1},scale=Math.min(1,2200/Math.max(sel.w*W,sel.h*H));
     const c=document.createElement('canvas');c.width=Math.max(1,Math.round(sel.w*W*scale));c.height=Math.max(1,Math.round(sel.h*H*scale));const ctx=c.getContext('2d');if(!ctx)throw Error();ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.scale(scale,scale);ctx.translate(-sel.x*W,-sel.y*H);
     if(rotation===90){ctx.translate(W,0);ctx.rotate(Math.PI/2);}else if(rotation===180){ctx.translate(W,H);ctx.rotate(Math.PI);}else if(rotation===270){ctx.translate(0,H);ctx.rotate(-Math.PI/2);}ctx.drawImage(img,0,0,sw,sh);
-    c.toBlob(blob=>{if(!alive())return cancel();if(!blob)return failed();done(new File([blob],file.name.replace(/\.\w+$/,'')+(cropped?'-crop':'-rotated')+'.jpg',{type:'image/jpeg'}));},'image/jpeg',.92);
+    c.toBlob(blob=>{if(!alive())return cancel();if(!blob)return failed();finish(new File([blob],file.name.replace(/\.\w+$/,'')+(cropped?'-crop':'-rotated')+'.jpg',{type:'image/jpeg'}));},'image/jpeg',.92);
    }catch{failed();}
   });
   function failed(){if(!alive())return cancel();exporting=false;sheet.querySelectorAll('button,input').forEach(b=>b.disabled=false);sheet.querySelector('.km-photo-footer p').textContent='Could not prepare that edit. Try again, or choose Whole photo.';draw();}

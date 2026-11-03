@@ -80,7 +80,7 @@ const webPhotos=document.createElement('input');webPhotos.type='file';webPhotos.
 webPhotos.onchange=()=>selected(webPhotos);document.body.append(webPhotos);
 $('appFileInput')?.addEventListener('change',e=>{const input=e.currentTarget,ticket=pickerTickets.get(input);pickerTickets.delete(input);if(ticket&&(ticket.uid!==(window.currentUser?.uid||'')||ticket.view!==window._appViewVersion)){input.value='';e.stopImmediatePropagation();}},true);
 const SVG=d=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
-const PIC={x:'<path d="M18 6 6 18M6 6l12 12"/>',photos:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>',calc:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+const PIC={x:'<path d="M18 6 6 18M6 6l12 12"/>',photos:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>',crop:'<path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/>',calc:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
 // Camera (home-screen version): a full-screen viewfinder like other study apps.
 // Aim the frame at one question and snap; Knox then pre-selects it for the crop
 // step (extras.js). Without a live camera, the phone's own camera picker opens.
@@ -91,7 +91,7 @@ async function viewfinder(){
 let target=current==='learn'?'learn':'chat',stream=null;
  const el=document.createElement('dialog');el.className='km-cam';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Snap a question');
  el.innerHTML='<video playsinline muted autoplay></video><div class="km-cam-shade" aria-hidden="true"></div><div class="km-cam-frame" aria-hidden="true"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i><span class="km-cam-scan"></span></div><span class="km-cam-focus" aria-hidden="true"></span>'+
-  '<div class="km-cam-top"><div class="km-cam-topbar"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><button type="button" class="km-cam-sys" data-cam="system">'+SVG(PIC.camera)+'Device camera</button></div><span class="km-cam-hint">Opening camera…</span></div>'+
+  '<div class="km-cam-top"><div class="km-cam-topbar"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><button type="button" class="km-cam-crop" data-cam="crop" aria-pressed="true">'+SVG(PIC.crop)+'<span>Crop on</span></button><button type="button" class="km-cam-sys" data-cam="system">'+SVG(PIC.camera)+'Device camera</button></div><span class="km-cam-hint">Opening camera…</span></div>'+
   '<div class="km-cam-off" hidden><b>Camera isn’t available</b><span>Allow camera access for this site in Settings, or use your phone’s camera instead.</span><button type="button" data-cam="system">Open camera</button></div>'+
   '<div class="km-cam-bottom"><div class="km-cam-modes" role="group" aria-label="How Knox helps">'+[['chat','Ask Knox'],['learn','Learn']].map(([id,l])=>'<button type="button" data-cam-mode="'+id+'" aria-pressed="'+(id===target)+'">'+l+'</button>').join('')+'</div>'+
   '<div class="km-cam-row"><button type="button" class="km-cam-side" data-cam="photos" aria-label="Choose from Photos">'+SVG(PIC.photos)+'<small>Photos</small></button><button type="button" class="km-cam-shutter" data-cam="snap" aria-label="Take the photo" disabled><span></span></button><button type="button" class="km-cam-side" data-cam="file" aria-label="Upload a file">'+SVG(PIC.file)+'<small>File</small></button></div></div>';
@@ -100,6 +100,10 @@ let target=current==='learn'?'learn':'chat',stream=null;
  el.addEventListener('cancel',e=>{e.preventDefault();stop();});el.showModal();
  // The frame: drag it to move it, drag a corner to resize it.
  const fr=el.querySelector('.km-cam-frame');let box=null,drag=null,adjusted=false;
+ // Crop on: aim the box at one question. Crop off: Knox gets the whole picture.
+ let cropOn=true;try{cropOn=localStorage.getItem('knoxCamCrop')!=='off';}catch{}
+ const hintText=()=>cropOn?'Fit one question in the box · drag corners to resize':'Crop is off · Knox reads the whole picture';
+ const showCrop=()=>{el.classList.toggle('no-crop',!cropOn);const t=el.querySelector('[data-cam="crop"]');t.setAttribute('aria-pressed',String(cropOn));t.querySelector('span').textContent=cropOn?'Crop on':'Crop off';if(!el.querySelector('[data-cam="snap"]').disabled)el.querySelector('.km-cam-hint').textContent=hintText();};
  const bounds=()=>({l:10,r:el.clientWidth-10,t:el.querySelector('.km-cam-top').getBoundingClientRect().bottom+10,b:el.querySelector('.km-cam-bottom').getBoundingClientRect().top-12});
  function place(){
   const B=bounds();if(B.r<=B.l||B.b<=B.t){fr.hidden=true;return;}fr.hidden=false;if(!box||!adjusted){const w=Math.min(el.clientWidth*.86,520),h=Math.min((B.b-B.t)*.62,w*.72);box={x:(el.clientWidth-w)/2,y:B.t+(B.b-B.t-h)/2,w,h};}
@@ -107,7 +111,7 @@ let target=current==='learn'?'learn':'chat',stream=null;
   box.x=Math.min(Math.max(box.x,B.l),B.r-box.w);box.y=Math.min(Math.max(box.y,B.t),B.b-box.h);
   Object.assign(fr.style,{left:box.x+'px',top:box.y+'px',width:box.w+'px',height:box.h+'px'});
  }
- const frameResize=new ResizeObserver(place);frameResize.observe(el);place();addEventListener('resize',place);
+ const frameResize=new ResizeObserver(place);frameResize.observe(el);place();showCrop();addEventListener('resize',place);
  fr.addEventListener('pointerdown',e=>{e.preventDefault();if(!box)place();try{fr.setPointerCapture(e.pointerId);}catch{}drag={c:e.target.closest('i')?.dataset.c||'move',x:e.clientX,y:e.clientY,b:{...box},moved:false};el.classList.add('adjusting');});
  fr.addEventListener('pointermove',e=>{
   if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y,o=drag.b,c=drag.c;if(Math.abs(dx)+Math.abs(dy)>6){drag.moved=true;adjusted=true;}box={...o};
@@ -140,6 +144,7 @@ let target=current==='learn'?'learn':'chat',stream=null;
   if(b.dataset.camMode){target=b.dataset.camMode;el.querySelectorAll('[data-cam-mode]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));el.dataset.mode=target;return;}
   const a=b.dataset.cam;
   if(a==='close'){stop();return;}
+  if(a==='crop'){cropOn=!cropOn;try{localStorage.setItem('knoxCamCrop',cropOn?'on':'off');}catch{}showCrop();return;}
   if(a==='photos'){stop();if(await go())pick(webPhotos);return;}
   if(a==='file'){stop();if(await go())pick($('appFileInput'));return;}
   if(a==='system'){stop();if(await go())pick(webCamera);return;}
@@ -152,7 +157,7 @@ let target=current==='learn'?'learn':'chat',stream=null;
   let blob;try{blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.9));}catch{}
   if(!active())return;if(!blob){capturing=false;b.disabled=false;note('Could not take that photo. Try again or choose Photos.');return;}stop();
   if(!(await go()))return;
-  await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}),undefined,undefined,{frame});
+  await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}),undefined,undefined,cropOn?{frame}:{skip:true});
  });
  // iPhones with 2 or 3 back cameras give websites the main lens, which can't
  // focus up close on paper. Their combined "Dual Wide"/"Triple" camera swaps
@@ -174,7 +179,7 @@ let target=current==='learn'?'learn':'chat',stream=null;
   }
  }catch{stream?.getTracks().forEach(t=>t.stop());stream=null;if(cam?.el===el){el.querySelector('.km-cam-off').hidden=false;el.classList.add('off');}return;}
  if(cam?.el!==el){stream.getTracks().forEach(t=>t.stop());return;}
- const ready=()=>{if(active()){el.querySelector('[data-cam="snap"]').disabled=false;el.querySelector('.km-cam-hint').textContent='Fit one question in the box · drag corners to resize';}};video.addEventListener('loadeddata',ready,{once:true});
+ const ready=()=>{if(active()){el.querySelector('[data-cam="snap"]').disabled=false;el.querySelector('.km-cam-hint').textContent=hintText();}};video.addEventListener('loadeddata',ready,{once:true});
  const track=stream.getVideoTracks()[0];caps=track?.getCapabilities?.()||{};
  if(caps.focusMode?.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
  video.srcObject=stream;video.play().then(ready).catch(()=>{if(active()){el.querySelector('.km-cam-off').hidden=false;el.classList.add('off');}});
@@ -211,6 +216,8 @@ function addMenu(){
  document.body.append(sheet);sheet.showModal();sheet.querySelector('[data-add="camera"]').focus({preventScroll:true});
 }
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
+// Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
+{const box=$('appChatInput');let off=0;box?.addEventListener('focus',()=>{clearTimeout(off);document.documentElement.classList.add('km-typing');});box?.addEventListener('blur',()=>{off=setTimeout(()=>document.documentElement.classList.remove('km-typing'),150);});}
 const inputBox=$('inputBox');
 if(inputBox&&!inputBox.querySelector('.km-plus')){
  const plus=document.createElement('button');plus.type='button';plus.className='km-plus km-press';plus.setAttribute('aria-label','Add a photo, file or calculator');plus.innerHTML=SVG(PIC.plus);
@@ -284,6 +291,7 @@ function paint(){
  modeChip.hidden=!study;modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
+ document.documentElement.classList.toggle('km-hist-learn',current==='learn');
  bar.querySelector('[data-go="account"]').hidden=study;
  bar.querySelector('[data-action="streak"]').hidden=study||!window.currentUser;
 }
@@ -462,7 +470,14 @@ const historyPanel=document.querySelector('#mobileHistoryDrawer .drawer-panel');
 if(historyPanel){
  const search=document.createElement('input');search.type='search';search.className='km-history-search';search.placeholder='Find a chat or lesson';search.setAttribute('aria-label','Search study history');
  const body=historyPanel.querySelector('.drawer-body');body?.before(search);
- const filter=()=>{const term=search.value.trim().toLocaleLowerCase();let matches=0;historyPanel.querySelectorAll('.sidebar-history-item').forEach(row=>{const show=!term||row.textContent.toLocaleLowerCase().includes(term);row.hidden=!show;if(show)matches++;});empty.hidden=!term||matches>0;};
+ const top=historyPanel.querySelector('.sidebar-top'),fresh=historyPanel.querySelector('.sidebar-new-btn');if(top&&fresh)top.querySelector('.drawer-close')?.before(fresh);
+ // All · Ask · Learn, so a long history is easy to sort through.
+ const tabs=document.createElement('div');tabs.className='km-hist-tabs';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Show');
+ tabs.innerHTML=[['all','All'],['chat','Ask'],['learn','Learn']].map(([k,l])=>'<button type="button" data-kind="'+k+'" aria-pressed="'+(k==='all')+'">'+l+'</button>').join('');search.after(tabs);let kind='all';
+ tabs.addEventListener('click',e=>{const b=e.target.closest('[data-kind]');if(!b)return;kind=b.dataset.kind;tabs.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));filter();});
+ // Learn's "Review from your lessons" sits here instead of under the lesson topics.
+ const review=$('learnReviewPanel');if(review){tabs.after(review);review.addEventListener('click',e=>{if(e.target.closest('.lr-start'))window.closeMobileHistory?.();});}
+ const filter=()=>{const term=search.value.trim().toLocaleLowerCase();let matches=0;historyPanel.querySelectorAll('.sidebar-history-item').forEach(row=>{const learn=row.classList.contains('shi-learn'),show=(!term||row.textContent.toLocaleLowerCase().includes(term))&&(kind==='all'||(kind==='learn')===learn);row.hidden=!show;if(show)matches++;});empty.hidden=matches>0||!(term||kind!=='all');empty.textContent=term?'No matches in loaded history. Try another word or load more.':kind==='learn'?'No lessons yet. Start one in Learn.':'No Ask Knox chats yet.';};
  const empty=document.createElement('p');empty.className='km-history-empty';empty.textContent='No matches in loaded history. Try another word or load more.';empty.hidden=true;body?.before(empty);
  search.addEventListener('input',filter);if(body)new MutationObserver(filter).observe(body,{childList:true,subtree:true,characterData:true});
 }
