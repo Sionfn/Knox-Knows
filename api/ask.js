@@ -820,11 +820,12 @@ function cleanLatexAnswer(text) {
   }).join('');
 }
 
-// ── Mega Knox "Search the web" ──────────────────────────────────────────────
-// An opt-in setting (off by default). The same model runs through OpenAI's
-// Responses API with its hosted web_search tool, so Knox checks real pages and
-// links its sources instead of telling the student to go look it up.
-const WEB_SEARCH_INSTRUCTION = 'Web search is ON for this student. Search the web before answering whenever facts, quotes, dates, statistics, current events, or sources matter, especially for essays, research and citations. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
+// ── Smart search ────────────────────────────────────────────────────────────
+// Every plan: Ask Knox runs through OpenAI's Responses API with its hosted
+// web_search tool, and the model searches only when the question needs it, so
+// Knox checks real pages and links its sources instead of telling the student
+// to go look it up. A search costs no more credits than any other question.
+const WEB_SEARCH_INSTRUCTION = 'You can search the web. Search only when the answer depends on facts you should check: quotes, dates, statistics, current events, real people or works, or sources and citations (essays and research). Do not search for math, problems you can work out, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
 
 function toResponsesInput(messages) {
   return messages.map(msg => ({
@@ -1301,9 +1302,10 @@ export default async function handler(req, res) {
       requestBody.temperature = casual ? 1.0 : 0.7;
     }
 
-    // Mega Knox with "Search the web" on (Ask Knox only, not Learn or small
-    // talk): search first. If search is unavailable, answer normally instead.
-    const useWebSearch = webSearch === true && tier === 'mega' && !learnMode && !casual && !isBot;
+    // Smart search (Ask Knox on the website, every plan; not Learn or small
+    // talk). The website opts in with webSearch, so the extension and bot keep
+    // their plain answers. If search is unavailable, answer normally instead.
+    const useWebSearch = webSearch === true && !learnMode && !casual && !isBot;
     let searched = null;
     if (useWebSearch) {
       try {
@@ -1430,7 +1432,7 @@ export default async function handler(req, res) {
       catch (err) { console.error('Streak update failed:', err); }
     }
     return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage,
-      webSearch: useWebSearch ? (searched ? 'used' : 'unavailable') : undefined });
+      webSearch: searched?.sources.length ? 'used' : undefined });
 
   } catch (err) {
     console.error("Ask error:", err.message);

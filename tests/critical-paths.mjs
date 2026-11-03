@@ -2044,7 +2044,7 @@ test('one free trial per card: the same card trialing on a second account is can
   assert.deepEqual(cancelled, ['sub_b']);
 });
 
-test('Mega "Search the web" uses hosted web search with sources; other plans and Learn never do; failures fall back', async () => {
+test('Smart search: every plan can search with sources; Learn, the extension/bot (no flag) never do; failures fall back', async () => {
   const { db, store } = memoryDb();
   const calls = [];
   let searchFails = false;
@@ -2077,10 +2077,17 @@ test('Mega "Search the web" uses hosted web search with sources; other plans and
 
   searchFails = true; res = response();
   await handler(askRequest({ question: 'Was this quote used in a published book again?', webSearch: true }), res);
-  assert.equal(res.code, 200); assert.equal(res.body.answer, 'Plain answer.'); assert.equal(res.body.webSearch, 'unavailable');
+  assert.equal(res.code, 200); assert.equal(res.body.answer, 'Plain answer.'); assert.equal(res.body.webSearch, undefined);
 
-  for (const [user, body] of [[{ plan: 'super' }, { question: 'Find a source for this essay quote', webSearch: true }],
-                              [{ plan: 'max' }, { question: 'Teach me how to cite a book', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }],
+  searchFails = false;
+  for (const user of [{ plan: 'free' }, { plan: 'super' }]) {
+    store.set('users/u1', user); store.set('users/u1/usage/bank', { balance: 5, lastRegenAt: Date.now() }); calls.length = 0; res = response();
+    await handler(askRequest({ question: 'Find a source for this essay quote ' + user.plan, webSearch: true }), res);
+    assert.equal(res.body.webSearch, 'used', user.plan);
+  }
+  assert.equal(store.get('users/u1/usage/bank').balance, 5, 'a search costs no more than a normal question (Plus is not charged credits)');
+
+  for (const [user, body] of [[{ plan: 'max' }, { question: 'Teach me how to cite a book', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }],
                               [{ plan: 'max' }, { question: 'Find a source for this essay quote' }]]) {
     store.set('users/u1', user); calls.length = 0; res = response();
     await handler(askRequest(body), res);
