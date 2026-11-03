@@ -217,7 +217,10 @@ function addMenu(){
 }
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
-{const box=$('appChatInput');let off=0;box?.addEventListener('focus',()=>{clearTimeout(off);document.documentElement.classList.add('km-typing');});box?.addEventListener('blur',()=>{off=setTimeout(()=>document.documentElement.classList.remove('km-typing'),0);});}
+{const box=$('appChatInput'),R=document.documentElement;let off=0,leave=0;
+ // Tapping in: the topic buttons drop away one after another, then the heading settles.
+ box?.addEventListener('focus',()=>{clearTimeout(off);if(R.classList.contains('km-typing'))return;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,welcome=$('welcomeScreen');if(reduced||!welcome||welcome.offsetParent===null){R.classList.add('km-typing');return;}R.classList.add('km-typing-leave');clearTimeout(leave);leave=setTimeout(()=>{R.classList.remove('km-typing-leave');R.classList.add('km-typing');},200);});
+ box?.addEventListener('blur',()=>{clearTimeout(leave);off=setTimeout(()=>R.classList.remove('km-typing','km-typing-leave'),0);});}
 const inputBox=$('inputBox');
 if(inputBox&&!inputBox.querySelector('.km-plus')){
  const plus=document.createElement('button');plus.type='button';plus.className='km-plus km-press';plus.setAttribute('aria-label','Add a photo, file or calculator');plus.innerHTML=SVG(PIC.plus);
