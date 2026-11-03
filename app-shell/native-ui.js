@@ -68,22 +68,86 @@ function attachments(intoCards=false){
 // next to it is for the photo library and files.
 const webCamera=document.createElement('input');webCamera.type='file';webCamera.accept='image/*';webCamera.setAttribute('capture','environment');webCamera.hidden=true;
 webCamera.onchange=()=>{const f=webCamera.files?.[0];webCamera.value='';if(f)window.handleImageFile?.(f);};document.body.append(webCamera);
-function openCamera(){if(native)takePhoto('CAMERA');else webCamera.click();}
+// Photo library (no camera) for the home-screen version.
+const webPhotos=document.createElement('input');webPhotos.type='file';webPhotos.accept='image/*';webPhotos.hidden=true;
+webPhotos.onchange=()=>{const f=webPhotos.files?.[0];webPhotos.value='';if(f)window.handleImageFile?.(f);};document.body.append(webPhotos);
+const SVG=d=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+const PIC={x:'<path d="M18 6 6 18M6 6l12 12"/>',photos:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L6 21"/>',file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>',calc:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+// Camera (home-screen version): a full-screen viewfinder like other study apps.
+// Aim the frame at one question and snap; Knox then pre-selects it for the crop
+// step (extras.js). Without a live camera, the phone's own camera picker opens.
+let cam=null;
+async function viewfinder(){
+ if(cam||cameraBusy)return;
+ const owner=window.currentUser?.uid||'';let target=current==='learn'?'learn':'chat',stream=null;
+ const el=document.createElement('div');el.className='km-cam';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Snap a question');
+ el.innerHTML='<video playsinline muted autoplay></video><div class="km-cam-shade" aria-hidden="true"></div><div class="km-cam-frame" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="km-cam-scan"></span></div>'+
+  '<div class="km-cam-top"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><span class="km-cam-hint">Fit one question in the box</span></div>'+
+  '<div class="km-cam-off" hidden><b>Camera isn’t available</b><span>Allow camera access for this site in Settings, or use your phone’s camera instead.</span><button type="button" data-cam="system">Open camera</button></div>'+
+  '<div class="km-cam-bottom"><div class="km-cam-modes" role="group" aria-label="How Knox helps">'+[['chat','Ask Knox'],['learn','Learn']].map(([id,l])=>'<button type="button" data-cam-mode="'+id+'" aria-pressed="'+(id===target)+'">'+l+'</button>').join('')+'</div>'+
+  '<div class="km-cam-row"><button type="button" class="km-cam-side" data-cam="photos" aria-label="Choose from Photos">'+SVG(PIC.photos)+'<small>Photos</small></button><button type="button" class="km-cam-shutter" data-cam="snap" aria-label="Take the photo"><span></span></button><button type="button" class="km-cam-side" data-cam="file" aria-label="Upload a file">'+SVG(PIC.file)+'<small>File</small></button></div></div>';
+ document.body.append(el);
+ const video=el.querySelector('video'),stop=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;el.remove();if(cam?.el===el)cam=null;document.removeEventListener('visibilitychange',vis);removeEventListener('knox-auth-changed',stop);};
+ const vis=()=>{if(document.visibilityState==='hidden')stop();};
+ cam={el,stop};document.addEventListener('visibilitychange',vis);addEventListener('knox-auth-changed',stop);
+ const go=async()=>{if(target!==current&&!(await navigate(target)))return false;return owner===(window.currentUser?.uid||'');};
+ el.addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.camMode){target=b.dataset.camMode;el.querySelectorAll('[data-cam-mode]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));el.dataset.mode=target;return;}
+  const a=b.dataset.cam;
+  if(a==='close'){stop();return;}
+  if(a==='photos'){stop();if(await go())webPhotos.click();return;}
+  if(a==='file'){stop();if(await go())$('appFileInput')?.click();return;}
+  if(a==='system'){stop();if(await go())webCamera.click();return;}
+  if(a!=='snap'||!video.videoWidth)return;
+  // Where the frame sits on the (cover-fitted) video, in the photo's own coordinates.
+  const vw=video.videoWidth,vh=video.videoHeight,r=video.getBoundingClientRect(),f=el.querySelector('.km-cam-frame').getBoundingClientRect();
+  const k=Math.max(r.width/vw,r.height/vh),ox=(vw*k-r.width)/2,oy=(vh*k-r.height)/2;
+  const frame={x:(f.left-r.left+ox)/(vw*k),y:(f.top-r.top+oy)/(vh*k),w:f.width/(vw*k),h:f.height/(vh*k)};
+  const c=document.createElement('canvas');c.width=vw;c.height=vh;c.getContext('2d').drawImage(video,0,0,vw,vh);
+  el.classList.add('flash');quiet(p.haptics.selectionChanged());
+  const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.9));stop();
+  if(!blob||!(await go()))return;
+  window.knoxCropHint={frame,at:Date.now()};
+  await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}));
+ });
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1440}},audio:false});}
+ catch{if(cam?.el===el){el.querySelector('.km-cam-off').hidden=false;el.classList.add('off');}return;}
+ if(cam?.el!==el){stream.getTracks().forEach(t=>t.stop());return;}
+ video.srcObject=stream;video.play().catch(()=>{});
+}
+const liveCamera=()=>!native&&!!navigator.mediaDevices?.getUserMedia;
+function openCamera(){if(native)takePhoto('CAMERA');else if(liveCamera())viewfinder();else webCamera.click();}
 window.knoxOpenCamera=openCamera;
 document.addEventListener('click',e=>{
- const clip=e.target.closest('.km-clip');
- if(clip){e.preventDefault();e.stopImmediatePropagation();if(native)attachments(false);else $('appFileInput')?.click();return;}
  const target=e.target.closest('button[onclick*="appFileInput"],button[data-action="doc-pick"]');
  if(!target)return;
  if(target.dataset.action==='doc-pick'){if(native){e.preventDefault();e.stopImmediatePropagation();attachments(true);}return;}
  e.preventDefault();e.stopImmediatePropagation();openCamera();
 },true);
-const camBtn=document.querySelector('button[onclick*="appFileInput"]');
-if(camBtn&&!document.querySelector('.km-clip')){
- camBtn.setAttribute('aria-label','Take a photo');camBtn.title='Take a photo';
- const clipBtn=document.createElement('button');clipBtn.type='button';clipBtn.className=camBtn.className+' km-clip';clipBtn.setAttribute('aria-label','Add a photo or file');clipBtn.title='Add a photo or file';
- clipBtn.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>';
- camBtn.before(clipBtn);
+// Typing bar: one "+" opens camera, photos, files and the calculator, so the
+// box has room to type (the big orange Snap button is always one tap away too).
+function addMenu(){
+ document.querySelector('.km-add')?.remove();
+ const sheet=document.createElement('div');sheet.className='km-add';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label','Add to your question');
+ const rows=[['camera','orange','Take a photo','Snap one question'],['photos','green','Photo library','Pick a picture you already took'],['file','blue','Upload a file','PDF, Word or PowerPoint'],['calc','purple','Calculator','Work out the numbers']];
+ sheet.innerHTML='<div class="km-add-panel"><span class="km-add-grab" aria-hidden="true"></span><h2>Add to your question</h2>'+rows.map(([id,c,t,d])=>'<button type="button" class="km-press" data-add="'+id+'" data-color="'+c+'"><span class="km-add-icon">'+SVG(PIC[id])+'</span><span><b>'+t+'</b><small>'+d+'</small></span></button>').join('')+'<button type="button" class="km-add-cancel" data-add="close">Cancel</button></div>';
+ const close=()=>sheet.remove();
+ sheet.addEventListener('click',e=>{
+  if(e.target===sheet){close();return;}
+  const a=e.target.closest('[data-add]')?.dataset.add;if(!a)return;close();
+  if(a==='camera')openCamera();
+  else if(a==='photos'){if(native)takePhoto('PHOTOS');else webPhotos.click();}
+  else if(a==='file')$('appFileInput')?.click();
+  else if(a==='calc')navigate('calculator');
+ });
+ sheet.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+ document.body.append(sheet);sheet.querySelector('[data-add="camera"]').focus({preventScroll:true});
+}
+const inputBox=$('inputBox');
+if(inputBox&&!inputBox.querySelector('.km-plus')){
+ const plus=document.createElement('button');plus.type='button';plus.className='km-plus km-press';plus.setAttribute('aria-label','Add a photo, file or calculator');plus.innerHTML=SVG(PIC.plus);
+ plus.onclick=addMenu;inputBox.prepend(plus);
 }
 
 // Ask and Learn share a renderer. Retain the actual message nodes (and their
@@ -186,7 +250,9 @@ const nav=document.createElement('nav');nav.className='knox-app-tabs';nav.setAtt
 // Home · Ask · 📷 Snap (raised, like other study apps) · Learn · Cards. You is the
 // profile picture on Home.
 icons.camera='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>';
-async function snap(){if(await navigate('chat'))openCamera();}
+// The live viewfinder lets you pick Ask or Learn after snapping; other cameras open from Ask.
+async function snap(){if(liveCamera()){viewfinder();return;}if(await navigate(current==='learn'?'learn':'chat'))openCamera();}
+window.knoxSnap=snap;
 for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Cards']]){
  const b=button(nav,label,()=>target==='camera'?snap():navigate(target));b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
