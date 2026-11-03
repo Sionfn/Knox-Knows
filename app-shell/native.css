@@ -1365,3 +1365,14 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { --island:color-mix(
 /* Nothing rises above the island now, so the typing bar can sit closer to it. */
 html.native-app { --mobile-tabs:88px; }
 html.native-app.native-keyboard { --mobile-tabs:0px; }
+
+/* ═══ Island, B + D ═════════════════════════════════════════════════════════
+   Snap lives inside the island at the right end, sized to fit it. No cream
+   band: a clear frosted glow just a little bigger than the island softens
+   whatever scrolls by its edges. */
+.knox-app-tabs { right:max(12px,env(safe-area-inset-right))!important; }
+.knox-app-tabs .km-tab-snap { position:relative!important; top:auto; right:auto; order:9; flex:0 0 66px!important; width:auto; height:100%!important; margin:0!important; display:grid; place-items:center; font-size:0!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile { width:54px!important; height:54px!important; box-shadow:0 3px 0 var(--orange-dark), 0 5px 12px rgba(244,119,33,.28)!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile svg { width:26px; height:26px; }
+@media (max-width:350px) { .knox-app-tabs { right:12px!important; } .knox-app-tabs .km-tab-snap { flex-basis:56px!important; right:auto; margin:0!important; } .knox-app-tabs .km-tab-snap .km-tab-tile { width:48px!important; height:48px!important; } }
+.km-dock-fade { left:max(4px,calc(env(safe-area-inset-left) - 8px)); right:max(4px,calc(env(safe-area-inset-right) - 8px)); bottom:0; height:calc(72px + 8px + 10px + var(--mobile-safe)); border-radius:34px 34px 0 0; background:color-mix(in srgb,var(--surface) 22%,transparent)!important; -webkit-backdrop-filter:blur(14px) saturate(1.4)!important; backdrop-filter:blur(14px) saturate(1.4)!important; -webkit-mask-image:linear-gradient(to bottom,transparent,#000 14px)!important; mask-image:linear-gradient(to bottom,transparent,#000 14px)!important; }
