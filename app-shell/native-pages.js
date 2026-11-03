@@ -27,14 +27,15 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const tile=(name,color)=>`<span class="km-tile sm" data-color="${color}" aria-hidden="true">${svg(name)}</span>`;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const TIER={free:'🪙',plus:'⚡',mega:'💎'};
- // Ideas to tap: they fill the typing box (never send on their own).
+ // Ideas to tap: they fill the typing box (never send on their own). Icons are
+ // Knox's own (knox-icons.js), the same ones as the website's topic cards.
  const STARTS=[
-  ['🧮','orange','chat','Solve 3x + 7 = 22 step by step','Solve 3x + 7 = 22 and show me each step.'],
-  ['🌱','green','chat','Explain photosynthesis simply','Explain photosynthesis like I’m 12, with an easy example.'],
-  ['✍️','purple','learn','Help me write a strong thesis','Help me write a strong thesis for my essay. My topic is: '],
-  ['🌎','blue','learn','Quiz me on World War I','Quiz me on the causes of World War I, one question at a time.'],
-  ['🗣️','orange','learn','Teach me Spanish greetings','Teach me common Spanish greetings and quiz me on them.'],
-  ['⚛️','blue','chat','What’s the difference between an atom and a molecule?','What’s the difference between an atom and a molecule?'],
+  ['calc','orange','chat','Solve 3x + 7 = 22 step by step','Solve 3x + 7 = 22 and show me each step.'],
+  ['leaf','green','chat','Explain photosynthesis simply','Explain photosynthesis like I’m 12, with an easy example.'],
+  ['pencil','purple','learn','Help me write a strong thesis','Help me write a strong thesis for my essay. My topic is: '],
+  ['globe','blue','learn','Quiz me on World War I','Quiz me on the causes of World War I, one question at a time.'],
+  ['book','orange','learn','Teach me Spanish greetings','Teach me common Spanish greetings and quiz me on them.'],
+  ['flask','blue','chat','What’s the difference between an atom and a molecule?','What’s the difference between an atom and a molecule?'],
  ];
  // Long lists show the first few, with "Show all" underneath (like History on the website).
  const SHOW=3,moreBtn=(id,what,n)=>n>SHOW?`<button type="button" class="km-show-all km-press" data-more="${id}" aria-expanded="false" aria-controls="${id}">Show all ${what} <span aria-hidden="true">↓</span></button>`:'';
@@ -58,7 +59,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <section class="km-today km-rise" aria-label="Today"><button type="button" class="km-streak-card km-press" data-action="streak"><span class="km-streak-flame" aria-hidden="true"><span class="knox-flame">🔥</span></span><span><b id="kmStreakCount">Your streak</b><small id="kmStreakNote">Study today to light it.</small></span></button><section id="kmGoal" class="km-goal" hidden></section></section>
   <div id="kmResume"></div>
   <section class="km-rise" aria-labelledby="kmStartsTitle"><div class="km-section-heading"><h2 id="kmStartsTitle">Try asking Knox</h2></div>
-   <div class="km-ideas km-list" id="kmStarts" role="group" aria-labelledby="kmStartsTitle">${STARTS.map(([e,c,t,label,q],i)=>`<button type="button" class="km-idea km-chip km-press" data-flavor="${c}" data-start="${i}"${i>=SHOW?' hidden':''}><span class="km-chip-circle" aria-hidden="true">${e}</span><span class="km-chip-copy"><b>${esc(label)}</b><small>${t==='learn'?'Learn with Knox':'Ask Knox'}</small></span><span class="km-chip-go" aria-hidden="true">${svg('arrow')}</span></button>`).join('')}</div>${moreBtn('kmStarts','ideas',STARTS.length)}</section>
+   <div class="km-ideas km-list" id="kmStarts" role="group" aria-labelledby="kmStartsTitle">${STARTS.map(([e,c,t,label,q],i)=>`<button type="button" class="km-idea km-chip km-press" data-flavor="${c}" data-start="${i}"${i>=SHOW?' hidden':''}><span class="km-chip-circle" aria-hidden="true">${w.KI?.(e,{tint:false})||''}</span><span class="km-chip-copy"><b>${esc(label)}</b><small>${t==='learn'?'Learn with Knox':'Ask Knox'}</small></span><span class="km-chip-go" aria-hidden="true">${svg('arrow')}</span></button>`).join('')}</div>${moreBtn('kmStarts','ideas',STARTS.length)}</section>
   <section class="km-rise" aria-labelledby="kmToolsTitle"><div class="km-section-heading"><h2 id="kmToolsTitle">Study tools</h2></div>
    <div class="km-bubbles">${TOOLS.map(([id,color,label,copy,kind])=>`<button type="button" class="km-chip km-bubble km-press" data-flavor="${color}" ${kind==='quiz'?'data-action="quiz"':`data-go="${id}"`}><span class="km-chip-circle" aria-hidden="true">${kind==='quiz'?svg('quiz'):svg(id)}</span><span class="km-chip-copy"><b>${label}</b><small>${copy}</small></span></button>`).join('')}</div></section>
   <section class="km-rise" aria-labelledby="kmReviewTitle"><div class="km-section-heading"><h2 id="kmReviewTitle">Review</h2></div><div id="kmReview"></div></section>
