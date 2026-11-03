@@ -127,6 +127,8 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   const first=user?.displayName?.trim().split(/\s+/)[0]?.slice(0,30);
   block('kmGreeting',greeting(first));
   const pill=$('kmPlanPill');if(pill){pill.textContent=TIER[plan.current.id]+' '+(user?plan.current.name:'Free');pill.dataset.tier=plan.current.id;pill.hidden=!!w.knoxNativeApp&&plan.current.id==='free';}
+  // Cards in the dock shows how many cards are due.
+  const cardsTab=document.querySelector('.knox-app-tabs [data-tab="flashcards"]');if(cardsTab){if(activity.due>0){cardsTab.dataset.badge=activity.due>99?'99+':String(activity.due);cardsTab.setAttribute('aria-label','Cards, '+activity.due+' due');}else{delete cardsTab.dataset.badge;cardsTab.removeAttribute('aria-label');}}
   block('kmDrafts',(w.knoxMobile?.drafts?.()||[]).map(d=>`<button type="button" class="km-draft km-press" data-draft="${d.mode}">${tile(d.mode,d.mode)}<span><b>Continue your ${d.mode==='learn'?'Learn':'Ask'} draft</b><small>${esc(d.text.slice(0,75))}${d.text.length>75?'…':''}</small></span><span aria-hidden="true">→</span></button>`).join(''));
   const recentLesson=activity.recentLesson;
   block('kmResume',recentLesson?`<button type="button" class="km-resume km-press km-rise" data-conversation="${esc(recentLesson.id)}"><span class="km-resume-badge" aria-hidden="true">${svg('learn')}</span><span><span class="km-eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${esc(recentLesson.title)}</h2></span><span class="km-resume-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');

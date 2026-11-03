@@ -333,6 +333,12 @@ for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
+// One colored highlight glides to the tab you're on; the tapped icon gives a small pop.
+const glider=document.createElement('span');glider.className='km-tab-glider';glider.setAttribute('aria-hidden','true');nav.prepend(glider);
+function moveGlider(){const a=nav.querySelector('button[aria-current="page"]:not(.km-tab-snap)'),t=a?.querySelector('.km-tab-tile');if(!t||!nav.offsetWidth){glider.style.opacity='0';return;}const n=nav.getBoundingClientRect(),r=t.getBoundingClientRect();glider.style.width=r.width+'px';glider.style.height=r.height+'px';glider.style.transform='translate('+(r.left-n.left-nav.clientLeft)+'px,'+(r.top-n.top-nav.clientTop)+'px)';glider.dataset.tab=a.dataset.tab;glider.style.opacity='1';}
+new ResizeObserver(moveGlider).observe(nav);
+nav.addEventListener('click',e=>{const t=e.target.closest('button')?.querySelector('.km-tab-tile');if(!t)return;t.classList.remove('km-pop');void t.offsetWidth;t.classList.add('km-pop');});
+nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
 async function navigate(target){
  if(busy)return false;
  if(target===current){
@@ -400,6 +406,7 @@ function sync(){
  const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Cards'}[calculatorReturn]||'Home');
  const active=current==='calculator'?'home':current;
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+ moveGlider();
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
  if(typeof paint==='function')setTimeout(paint,0);
 }
