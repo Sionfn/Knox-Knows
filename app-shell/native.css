@@ -1341,3 +1341,13 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { background:color-mi
 .km-dock-fade { position:fixed; left:0; right:0; bottom:0; height:calc(64px + var(--mobile-safe)); z-index:109; pointer-events:none; background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--cream) 72%,transparent) 60%); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); -webkit-mask-image:linear-gradient(to bottom,transparent,#000 50%); mask-image:linear-gradient(to bottom,transparent,#000 50%); }
 html.native-keyboard .km-dock-fade { display:none; }
 @media (prefers-reduced-motion:reduce) { .knox-app-tabs.km-lensing .km-tab-glider { scale:1.1; } }
+
+/* ═══ Island, final look ════════════════════════════════════════════════════
+   A cream backing behind the island (so its sides don't show), an island that
+   matches it, and an outline that curves up around Snap so they read as one. */
+.km-dock-fade { height:calc(90px + var(--mobile-safe)); background:linear-gradient(to bottom,transparent,var(--cream) 14px); -webkit-backdrop-filter:none; backdrop-filter:none; -webkit-mask-image:none; mask-image:none; }
+.knox-app-tabs { --island:color-mix(in srgb,var(--surface) 84%,var(--cream)); --island-line:color-mix(in srgb,var(--border) 70%,#fff); background:var(--island)!important; -webkit-backdrop-filter:none; backdrop-filter:none; border:1.5px solid var(--island-line)!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { --island:color-mix(in srgb,var(--surface) 82%,var(--cream)); --island-line:rgba(255,255,255,.12); background:var(--island)!important; }
+.knox-app-tabs .km-tab-snap::before { content:""; position:absolute; z-index:-1; left:50%; top:-7px; width:76px; height:76px; margin-left:-38px; border-radius:50%; background:var(--island); border:1.5px solid var(--island-line); box-sizing:border-box; clip-path:inset(0 0 calc(100% - 31px) 0); pointer-events:none; }
+/* Dragging uses the same highlight look as tapping (no glass lens). */
+.knox-app-tabs.km-lensing .km-tab-glider { scale:1; background:var(--c-light); border:2px solid var(--c); box-shadow:0 3px 0 var(--c-dark); -webkit-backdrop-filter:none; backdrop-filter:none; transition:transform .28s cubic-bezier(.3,1.35,.5,1), background-color .2s, border-color .2s, box-shadow .2s; }
