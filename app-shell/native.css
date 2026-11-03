@@ -963,3 +963,20 @@ html.native-app.native-keyboard #welcomeScreen .suggestion-chip .chip-sub { disp
 html.native-app.native-keyboard #welcomeScreen .suggestion-chip .chip-text { font-size:13px; white-space:nowrap; }
 html.native-app.native-keyboard #welcomeScreen > :not(.suggestion-grid):not(.welcome-title):not(h1):not(h2) { display:none; }
 @media (prefers-reduced-motion:reduce) { .km-cam-scan, .km-add, .km-add-panel { animation:none!important; } }
+/* Camera frame you can move and resize; tap-to-focus ring; iPhone camera button. */
+.km-cam-frame { right:auto; pointer-events:auto; touch-action:none; cursor:move; }
+.km-cam-frame i { pointer-events:auto; width:40px; height:40px; }
+.km-cam-frame i::before { content:""; position:absolute; inset:-18px; }
+.km-cam-frame i[data-c="nw"] { cursor:nwse-resize; } .km-cam-frame i[data-c="se"] { cursor:nwse-resize; }
+.km-cam-frame i[data-c="ne"] { cursor:nesw-resize; } .km-cam-frame i[data-c="sw"] { cursor:nesw-resize; }
+.km-cam.adjusting .km-cam-scan { display:none; }
+.km-cam.adjusting .km-cam-frame { box-shadow:0 0 0 200vmax rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.6); }
+.km-cam-topbar { align-self:stretch; display:flex; justify-content:space-between; align-items:center; }
+.km-cam-sys { display:flex; align-items:center; gap:6px; min-height:40px; padding:0 14px; border:0; border-radius:999px; background:rgba(0,0,0,.45); color:#fff; font:900 13px Nunito,sans-serif; }
+.km-cam-sys svg { width:18px; height:18px; }
+.km-cam.off .km-cam-sys { visibility:hidden; }
+.km-cam-hint { font-size:13.5px; text-align:center; }
+.km-cam-focus { position:absolute; z-index:2; width:72px; height:72px; margin:-36px 0 0 -36px; border:2.5px solid #FFD84D; border-radius:16px; opacity:0; pointer-events:none; }
+.km-cam-focus.on { animation:kmFocus .9s ease-out; }
+@keyframes kmFocus { 0% { opacity:1; transform:scale(1.35); } 30% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1); } }
+.km-crop-box i::before { content:""; position:absolute; inset:-16px; }

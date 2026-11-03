@@ -81,13 +81,45 @@ async function viewfinder(){
  if(cam||cameraBusy)return;
  const owner=window.currentUser?.uid||'';let target=current==='learn'?'learn':'chat',stream=null;
  const el=document.createElement('div');el.className='km-cam';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Snap a question');
- el.innerHTML='<video playsinline muted autoplay></video><div class="km-cam-shade" aria-hidden="true"></div><div class="km-cam-frame" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="km-cam-scan"></span></div>'+
-  '<div class="km-cam-top"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><span class="km-cam-hint">Fit one question in the box</span></div>'+
+ el.innerHTML='<video playsinline muted autoplay></video><div class="km-cam-shade" aria-hidden="true"></div><div class="km-cam-frame" aria-hidden="true"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i><span class="km-cam-scan"></span></div><span class="km-cam-focus" aria-hidden="true"></span>'+
+  '<div class="km-cam-top"><div class="km-cam-topbar"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><button type="button" class="km-cam-sys" data-cam="system">'+SVG(PIC.camera)+'iPhone camera</button></div><span class="km-cam-hint">Fit one question in the box · drag corners to resize</span></div>'+
   '<div class="km-cam-off" hidden><b>Camera isn’t available</b><span>Allow camera access for this site in Settings, or use your phone’s camera instead.</span><button type="button" data-cam="system">Open camera</button></div>'+
   '<div class="km-cam-bottom"><div class="km-cam-modes" role="group" aria-label="How Knox helps">'+[['chat','Ask Knox'],['learn','Learn']].map(([id,l])=>'<button type="button" data-cam-mode="'+id+'" aria-pressed="'+(id===target)+'">'+l+'</button>').join('')+'</div>'+
   '<div class="km-cam-row"><button type="button" class="km-cam-side" data-cam="photos" aria-label="Choose from Photos">'+SVG(PIC.photos)+'<small>Photos</small></button><button type="button" class="km-cam-shutter" data-cam="snap" aria-label="Take the photo"><span></span></button><button type="button" class="km-cam-side" data-cam="file" aria-label="Upload a file">'+SVG(PIC.file)+'<small>File</small></button></div></div>';
  document.body.append(el);
- const video=el.querySelector('video'),stop=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;el.remove();if(cam?.el===el)cam=null;document.removeEventListener('visibilitychange',vis);removeEventListener('knox-auth-changed',stop);};
+ const video=el.querySelector('video'),stop=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;el.remove();if(cam?.el===el)cam=null;document.removeEventListener('visibilitychange',vis);removeEventListener('knox-auth-changed',stop);removeEventListener('resize',place);};
+ // The frame: drag it to move it, drag a corner to resize it.
+ const fr=el.querySelector('.km-cam-frame');let box=null,drag=null;
+ const bounds=()=>({l:10,r:innerWidth-10,t:el.querySelector('.km-cam-top').getBoundingClientRect().bottom+10,b:el.querySelector('.km-cam-bottom').getBoundingClientRect().top+24});
+ function place(){
+  const B=bounds();if(!box){const w=Math.min(innerWidth*.86,520),h=Math.min((B.b-B.t)*.62,w*.72);box={x:(innerWidth-w)/2,y:B.t+(B.b-B.t-h)/2,w,h};}
+  box.w=Math.min(Math.max(box.w,90),B.r-B.l);box.h=Math.min(Math.max(box.h,70),B.b-B.t);
+  box.x=Math.min(Math.max(box.x,B.l),B.r-box.w);box.y=Math.min(Math.max(box.y,B.t),B.b-box.h);
+  Object.assign(fr.style,{left:box.x+'px',top:box.y+'px',width:box.w+'px',height:box.h+'px'});
+ }
+ place();addEventListener('resize',place);
+ fr.addEventListener('pointerdown',e=>{e.preventDefault();if(!box)place();try{fr.setPointerCapture(e.pointerId);}catch{}drag={c:e.target.closest('i')?.dataset.c||'move',x:e.clientX,y:e.clientY,b:{...box},moved:false};el.classList.add('adjusting');});
+ fr.addEventListener('pointermove',e=>{
+  if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y,o=drag.b,c=drag.c;if(Math.abs(dx)+Math.abs(dy)>6)drag.moved=true;box={...o};
+  if(c==='move'){box.x=o.x+dx;box.y=o.y+dy;}
+  else{
+   if(c.includes('w')){box.w=Math.max(90,o.w-dx);box.x=o.x+o.w-box.w;}if(c.includes('e'))box.w=o.w+dx;
+   if(c.includes('n')){box.h=Math.max(70,o.h-dy);box.y=o.y+o.h-box.h;}if(c.includes('s'))box.h=o.h+dy;
+  }
+  place();
+ });
+ const endDrag=e=>{if(drag&&!drag.moved&&e.type==='pointerup')focusAt(e.clientX,e.clientY);drag=null;el.classList.remove('adjusting');};
+ fr.addEventListener('pointerup',endDrag);fr.addEventListener('pointercancel',endDrag);
+ // Tap to focus, where the phone's browser allows it.
+ let caps={};
+ function focusAt(x,y){
+  const track=stream?.getVideoTracks()[0];if(!track||!(caps.focusMode?.includes('single-shot')||caps.pointsOfInterest))return;
+  const r=video.getBoundingClientRect();
+  track.applyConstraints({advanced:[{pointsOfInterest:[{x:(x-r.left)/r.width,y:(y-r.top)/r.height}],focusMode:'single-shot'}]}).catch(()=>{});
+  setTimeout(()=>{if(caps.focusMode?.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});},1500);
+  const ring=el.querySelector('.km-cam-focus');ring.style.left=x+'px';ring.style.top=y+'px';ring.classList.remove('on');void ring.offsetWidth;ring.classList.add('on');
+ }
+ video.addEventListener('click',e=>focusAt(e.clientX,e.clientY));
  const vis=()=>{if(document.visibilityState==='hidden')stop();};
  cam={el,stop};document.addEventListener('visibilitychange',vis);addEventListener('knox-auth-changed',stop);
  const go=async()=>{if(target!==current&&!(await navigate(target)))return false;return owner===(window.currentUser?.uid||'');};
@@ -111,9 +143,27 @@ async function viewfinder(){
   window.knoxCropHint={frame,at:Date.now()};
   await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}));
  });
- try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1440}},audio:false});}
- catch{if(cam?.el===el){el.querySelector('.km-cam-off').hidden=false;el.classList.add('off');}return;}
+ // iPhones with 2 or 3 back cameras give websites the main lens, which can't
+ // focus up close on paper. Their combined "Dual Wide"/"Triple" camera swaps
+ // lenses for close-ups like the Camera app does, so use it when there is one.
+ const size={width:{ideal:2560},height:{ideal:1920}},PREF='knoxCamDevice';
+ const open=id=>navigator.mediaDevices.getUserMedia({audio:false,video:id?{deviceId:{exact:id},...size}:{facingMode:{ideal:'environment'},...size}});
+ const rank=label=>/triple/i.test(label)?3:/dual wide/i.test(label)?2:/dual/i.test(label)?1:0;
+ try{
+  let saved=null;try{saved=localStorage.getItem(PREF);}catch{}
+  if(saved){try{stream=await open(saved);}catch{saved=null;try{localStorage.removeItem(PREF);}catch{}}}
+  if(!stream)stream=await open(null);
+  if(!saved&&cam?.el===el){
+   const best=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'&&rank(d.label)).sort((a,b)=>rank(b.label)-rank(a.label))[0];
+   if(best&&best.deviceId!==stream.getVideoTracks()[0]?.getSettings?.().deviceId){
+    stream.getTracks().forEach(t=>t.stop());stream=null;
+    try{stream=await open(best.deviceId);try{localStorage.setItem(PREF,best.deviceId);}catch{}}catch{stream=await open(null);}
+   }
+  }
+ }catch{stream?.getTracks().forEach(t=>t.stop());stream=null;if(cam?.el===el){el.querySelector('.km-cam-off').hidden=false;el.classList.add('off');}return;}
  if(cam?.el!==el){stream.getTracks().forEach(t=>t.stop());return;}
+ const track=stream.getVideoTracks()[0];caps=track?.getCapabilities?.()||{};
+ if(caps.focusMode?.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
  video.srcObject=stream;video.play().catch(()=>{});
 }
 const liveCamera=()=>!native&&!!navigator.mediaDevices?.getUserMedia;
