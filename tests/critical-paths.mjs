@@ -2043,3 +2043,50 @@ test('one free trial per card: the same card trialing on a second account is can
   await handler(webhookRequest(event), response());
   assert.deepEqual(cancelled, ['sub_b']);
 });
+
+test('Mega "Search the web" uses hosted web search with sources; other plans and Learn never do; failures fall back', async () => {
+  const { db, store } = memoryDb();
+  const calls = [];
+  let searchFails = false;
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    calls.push({ url, body });
+    if (url.endsWith('/responses')) {
+      if (searchFails) return { ok: false, text: async () => 'unsupported tool' };
+      return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [
+        { type: 'web_search_call', status: 'completed' },
+        { type: 'message', content: [{ type: 'output_text', text: 'It is cited in "Real Book" (2019).', annotations: [
+          { type: 'url_citation', url: 'https://example.org/real_book?a=1&b=2', title: 'Real [Book] (page)' },
+          { type: 'url_citation', url: 'https://example.org/real_book?a=1&b=2', title: 'dup' },
+          { type: 'url_citation', url: 'javascript:alert(1)', title: 'bad' }] }] }] }) };
+    }
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'Plain answer.' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  let res = response();
+  await handler(askRequest({ question: 'Was this quote used in a published book?', webSearch: true }), res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.webSearch, 'used');
+  const search = calls.find(call => call.url.endsWith('/responses'));
+  assert.deepEqual(search.body.tools, [{ type: 'web_search' }]);
+  assert.match(JSON.stringify(search.body.input), /Never tell them to go to a library/);
+  assert.match(res.body.answer, /🌐 Searched the web\n- \[Real Book page\]\(https:\/\/example\.org\/real_book\?a=1&b=2\)$/);
+  assert.doesNotMatch(res.body.answer, /javascript:|dup/);
+
+  searchFails = true; res = response();
+  await handler(askRequest({ question: 'Was this quote used in a published book again?', webSearch: true }), res);
+  assert.equal(res.code, 200); assert.equal(res.body.answer, 'Plain answer.'); assert.equal(res.body.webSearch, 'unavailable');
+
+  for (const [user, body] of [[{ plan: 'super' }, { question: 'Find a source for this essay quote', webSearch: true }],
+                              [{ plan: 'max' }, { question: 'Teach me how to cite a book', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }],
+                              [{ plan: 'max' }, { question: 'Find a source for this essay quote' }]]) {
+    store.set('users/u1', user); calls.length = 0; res = response();
+    await handler(askRequest(body), res);
+    assert.ok(!calls.some(call => call.url.endsWith('/responses')), JSON.stringify(body));
+    assert.equal(res.body?.webSearch, undefined);
+  }
+  res = response(); await handler(askRequest({ question: 'hi there friend', webSearch: 'yes' }), res);
+  assert.equal(res.code, 400);
+});

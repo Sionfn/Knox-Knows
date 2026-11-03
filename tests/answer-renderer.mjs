@@ -252,3 +252,15 @@ test('Single-asterisk titles become italics without touching math or bold', () =
   assert.equal(context.formatInline('x*y and a*b'), 'x*y and a*b');
   assert.equal(context.formatInline('**Bold** and *italic*'), '<strong>Bold</strong> and <em>italic</em>');
 });
+
+test('web search answers: quiet citation chips, a sources card, safe links; other answers unchanged', () => {
+  const html = context.renderAnswerHtml('Said by FDR ([presidency.ucsb.edu](https://www.presidency.ucsb.edu/a_b?x=1&y=2)). See [Real Book](https://example.org/b).\n\n🌐 Searched the web\n- [Inaugural Address | Project](https://www.presidency.ucsb.edu/a_b?x=1&y=2)\n- [Other](https://govinfo.gov/x)');
+  assert.match(html, /<a class="knox-cite" href="https:\/\/www\.presidency\.ucsb\.edu\/a_b\?x=1&amp;y=2" target="_blank" rel="noopener noreferrer">presidency\.ucsb\.edu<\/a>/);
+  assert.match(html, /<a class="knox-link" href="https:\/\/example\.org\/b"[^>]*>Real Book<\/a>/);
+  assert.match(html, /class="knox-web-sources".*Searched the web<small>2 sources<\/small>/);
+  assert.match(html, /<span class="kws-site">presidency\.ucsb\.edu<\/span><span class="kws-title">Inaugural Address \| Project<\/span>/);
+  assert.doesNotMatch(html, /🌐 Searched the web<br>|<li>/);
+  const unsafe = context.renderAnswerHtml('Hi [x](javascript:alert(1)) and [y]("onmouseover=1)\n\n🌐 Searched the web\n- [bad](javascript:alert(1))');
+  assert.doesNotMatch(unsafe, /href="javascript|onmouseover=1"|knox-web-sources/);
+  assert.doesNotMatch(context.renderAnswerHtml('### Sources\n- one'), /knox-web-sources/);
+});
