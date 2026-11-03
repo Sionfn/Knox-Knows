@@ -5,7 +5,16 @@
  const number=n=>Number.isSafeInteger(n)&&n>=0&&n<=1e9?n:0;
  const day=now=>{const d=new Date(now);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
  w.knoxStudyModel={
-  cropBounds(r={}){const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a));const x=clamp(r.x,0,.88),y=clamp(r.y,0,.88);return{x,y,w:clamp(r.w,.12,1-x),h:clamp(r.h,.12,1-y)};},
+  cropBounds(r={},minimum=.12){const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number.isFinite(v)?v:a)),min=clamp(minimum,.001,.5);const x=clamp(r.x,0,1-min),y=clamp(r.y,0,1-min);return{x,y,w:clamp(r.w,min,1-x),h:clamp(r.h,min,1-y)};},
+  photoFit(width,height,areaWidth,areaHeight,rotation=0){
+   const valid=n=>Number.isFinite(n)&&n>0; if(![width,height,areaWidth,areaHeight].every(valid))return{x:0,y:0,w:0,h:0,scale:0};
+   const W=rotation%180?height:width,H=rotation%180?width:height,scale=Math.min(areaWidth/W,areaHeight/H);
+   return{x:(areaWidth-W*scale)/2,y:(areaHeight-H*scale)/2,w:W*scale,h:H*scale,scale};
+  },
+  cameraFrame(width,height,view,frame){
+   if(![width,height,view.width,view.height,frame.width,frame.height].every(n=>Number.isFinite(n)&&n>0))return null;const scale=Math.max(view.width/width,view.height/height),ox=(width*scale-view.width)/2,oy=(height*scale-view.height)/2;
+   return this.cropBounds({x:(frame.left-view.left+ox)/(width*scale),y:(frame.top-view.top+oy)/(height*scale),w:frame.width/(width*scale),h:frame.height/(height*scale)},.001);
+  },
   followup(payload,kind){
    const question=text(payload?.question,3000),answer=text(payload?.answer,7000);if(!answer||!['simpler','similar','cards'].includes(kind))return '';
    const task=kind==='simpler'?'Explain this answer more simply. Define unfamiliar terms and show one short example.':kind==='similar'?'Give me one similar practice problem that tests the same skill, using different details. Let me try before revealing the answer.':'Make focused flashcards from this question and explanation. Keep them specific to what was taught.';

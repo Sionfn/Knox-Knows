@@ -18,21 +18,31 @@
    {id:'qa-fractions',title:'Fraction practice',cards:[{front:'What does the denominator describe?',back:'How many equal parts make one whole.',due:0},{front:'Is 3/4 larger than 3/7?',back:'Yes, when the wholes are the same size.',due:0}]}]));
   if(!localStorage.getItem('knoxTheme'))localStorage.setItem('knoxTheme','seasonal');
   if(new URLSearchParams(location.search).has('qa-web'))window.SpeechRecognition=class{start(){window.qaVoice=this;}stop(){this.onend?.();}abort(){this.onend?.();}};
+  // Synthetic worksheet and camera streams: no real files, microphone or camera.
+  const worksheet=()=>{const c=document.createElement('canvas');c.width=900;c.height=1200;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,900,1200);g.fillStyle='#f47721';g.fillRect(0,0,900,24);g.fillStyle='#6d44b8';g.fillRect(0,1176,900,24);g.fillStyle='#26211a';g.font='bold 42px sans-serif';g.fillText('FRACTIONS PRACTICE',60,130);g.font='32px sans-serif';g.fillText('1. Which fraction is larger?',60,350);g.fillText('3/4 or 3/7? Explain why.',60,405);g.fillText('2. Add 1/2 + 1/4.',60,750);g.fillText('Show your working.',60,805);return c;};
+  const sampleFile=async()=>new File([await new Promise(r=>worksheet().toBlob(r,'image/png'))],'QA fractions.png',{type:'image/png'});
+  const params=new URLSearchParams(location.search),testTracks=[];let cameraMode='normal',finishCamera;
+  if(params.has('qa-web'))Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{if(cameraMode==='unavailable')throw Error('QA denied camera');const stream=worksheet().captureStream(1);testTracks.push(...stream.getTracks());if(cameraMode==='slow')await new Promise(r=>finishCamera=r);return stream;},enumerateDevices:async()=>[]}});
   window.Capacitor={isNativePlatform:()=>!new URLSearchParams(location.search).has('qa-web'),getPlatform:()=> 'ios',Plugins:{},registerPlugin(name){
    if(this.Plugins[name])return this.Plugins[name];
    const methods={
     request:async o=>{if(!connected)throw Error('Offline QA');window.qaCalls.push({plugin:name,...o});const r=await original(new URL(o.url).pathname+new URL(o.url).search,{method:o.method,headers:{...o.headers,'X-QA-Plan':qaPlan},body:['GET','HEAD'].includes(o.method)?undefined:o.data});return{status:r.status,headers:Object.fromEntries(r.headers),data:await r.text()};},
     addListener:async(event,fn)=>{window.qaListeners[name+':'+event]=fn;return{remove(){}};},
-    getStatus:async()=>({connected}),getPhoto:async()=>{throw Error('User cancelled');},
+    getStatus:async()=>({connected}),getPhoto:async()=>{if(params.has('qa-photo'))return{webPath:worksheet().toDataURL('image/png')};throw Error('User cancelled');},
     writeFile:async o=>{window.qaCalls.push({plugin:name,...o});return{uri:'file:///tmp/qa-export.json'};},
     share:async o=>{window.qaCalls.push({plugin:name,...o});return{};},deleteFile:async()=>{},
-    open:async o=>{window.qaCalls.push({plugin:name,...o});},setStyle:async()=>{},hide:async()=>{},selectionChanged:async()=>{}
+    open:async o=>{window.qaCalls.push({plugin:name,...o});},setStyle:async()=>{},hide:async()=>{if(name==='Keyboard')window.qaListeners['Keyboard:keyboardWillHide']?.();},selectionChanged:async()=>{}
    };this.Plugins[name]=methods;return methods;
   }};
  if(new URLSearchParams(location.search).has('qa-controls'))document.addEventListener('DOMContentLoaded',()=>{
-  const controls=document.createElement('details');controls.id='qaControls';controls.style.cssText='position:fixed;z-index:20000;right:4px;bottom:80px;background:white;color:black;padding:6px;max-width:180px;font:12px system-ui;border:1px solid black';
+  const controls=document.createElement('details');controls.id='qaControls';controls.style.cssText='position:fixed;z-index:20000;right:4px;bottom:80px;background:white;color:black;padding:6px;max-width:180px;max-height:calc(100dvh - 100px);overflow-y:auto;font:12px system-ui;border:1px solid black';
   const summary=document.createElement('summary');summary.textContent='Local QA controls';controls.append(summary);
   for(const [label,fn] of [
+   ['Sample photo',async()=>{if(document.body.matches('.knox-mobile-home,.knox-mobile-account,.knox-flashcards'))await window.knoxMobile?.navigate('chat');await window.handleImageFile?.(await sampleFile());}],
+   ['Camera unavailable',()=>cameraMode='unavailable'],
+   ['Slow camera',()=>cameraMode='slow'],
+   ['Normal camera',()=>cameraMode='normal'],
+   ['Finish delayed camera',()=>finishCamera?.()],
    ['Dictation result',()=>window.qaVoice?.onresult?.({results:[[{transcript:'A dictated QA question'}]]})],
    ['Keyboard on',()=>window.qaListeners['Keyboard:keyboardWillShow']?.({keyboardHeight:300})],
    ['Keyboard off',()=>window.qaListeners['Keyboard:keyboardWillHide']?.()],
@@ -41,6 +51,7 @@
    ['Background app',()=>window.qaListeners['App:appStateChange']?.({isActive:false})],
    ['Resume app',()=>window.qaListeners['App:appStateChange']?.({isActive:true})]
   ]){const button=document.createElement('button');button.textContent=label;button.style.cssText='display:block;min-height:36px;width:100%';button.onclick=fn;controls.append(button);}
+  const status=document.createElement('p');status.setAttribute('role','status');controls.append(status);setInterval(()=>status.textContent='Test camera tracks: '+testTracks.filter(t=>t.readyState==='live').length,300);
   document.body.append(controls);
  });
  })();

@@ -2586,7 +2586,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 </style>
 <script>
   // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
-  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/study-model.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/study-model.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
 </script>
 </head>
 <body class="app-auth-pending">
@@ -5817,14 +5817,14 @@ async function fitImageForUpload(file) {
   }
 }
 
-async function handleImageFile(file, displayName, keepVersion) {
+async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
   if (!file) return;
   const selectionVersion = keepVersion || ++imageSelectionVersion;
   const selectionUid = window.currentUser?.uid || null, selectionView = window._appViewVersion;
   const obsolete = () => selectionVersion !== imageSelectionVersion || (window.currentUser?.uid || null) !== selectionUid || window._appViewVersion !== selectionView;
   // Claim this selection before awaiting crop so older picks and old accounts cannot replace it.
   if (window.knoxCropPhoto && !displayName && !keepVersion && /^image\/(jpeg|png|webp)$/.test(file.type)) {
-    file = await window.knoxCropPhoto(file);
+    file = await window.knoxCropPhoto(file, reviewOptions);
     if (!file || obsolete()) return;
   }
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -5995,7 +5995,7 @@ if (_ci) {
     // Enter while an IME is composing (Chinese, Japanese, Korean keyboards)
     // confirms the character — it must not send a half-typed question.
     if (e.isComposing || e.keyCode === 229) return;
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !window.knoxAppShell) {
       e.preventDefault();
       window.appHandleAsk();
     }

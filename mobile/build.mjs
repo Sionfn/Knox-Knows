@@ -26,7 +26,7 @@ html=html.replace('width=device-width, initial-scale=1.0','width=device-width, i
 html=html.replace(/https:\/\/www\.gstatic\.com\/firebasejs\/10\.7\.0\/(firebase-[\w-]+\.js)/g,'/vendor/$1');
 html=html.replace(/<link href="https:\/\/fonts\.googleapis\.com[^>]+>/,'<link rel="stylesheet" href="/assets/fonts.css">');
 html=html.replace('<head>','<head>\n<script src="/assets/app-config.js"></script>\n<script src="/assets/native-transport.js"></script>');
-html=html.replace('</head>','<link rel="stylesheet" href="/assets/native.css">\n<script src="/assets/draft-store.js" defer></script>\n<script src="/assets/native-pages.js" defer></script>\n<script src="/assets/native-ui.js" defer></script>\n<script src="/assets/study-model.js" defer></script>\n<script src="/assets/extras.js" defer></script>\n</head>');
+html=html.replace('</head>','<link rel="stylesheet" href="/assets/native.css">\n<script src="/assets/draft-store.js" defer></script>\n<script src="/assets/native-pages.js" defer></script>\n<script src="/assets/study-model.js" defer></script>\n<script src="/assets/native-ui.js" defer></script>\n<script src="/assets/extras.js" defer></script>\n</head>');
 for(const f of ['index.html','app.html']) await writeFile(path.join(out,f),html);
 await writeFile(path.join(out,'assets/app-config.js'),'window.knoxMobileConfig='+JSON.stringify(config)+';\n');
 let reader=await readFile(path.join(out,'doc-extract.js'),'utf8');

@@ -16,6 +16,7 @@ const server=http.createServer((req,res)=>{
    if(u.pathname==='/api/ask'){
     if(String(request.question).includes('[QA fail]')){res.statusCode=503;result={error:'QA simulated server failure'};}
     else if(String(request.question).includes('[QA casual]'))result={answer:'Hello!',isCasual:true,model:'qa-fixture'};
+    else if(request.image&&!request.learnMode)result={answer:'**QA photo received** — '+request.imageType+'. This is the local transport test, not a live AI answer.',model:'qa-fixture'};
     else if(request.learnMode&&String(request.question).includes('3/4'))result={answer:'Correct. With equal numerators, the smaller denominator gives the larger fraction.\nRecap: Compare equal parts of the same whole.\nWatch out: Always compare the same-sized whole.\nLesson plan: Compare fractions\nProgress: 1/1\nAssessment: correct',model:'qa-fixture'};
     else result={answer:request.learnMode?'Equal parts of one whole.\nYour turn: Which fraction is larger?\nLesson plan: Compare fractions\nProgress: 1/1\nAssessment: new':'**Answer: 5**',model:'qa-fixture'};
    }

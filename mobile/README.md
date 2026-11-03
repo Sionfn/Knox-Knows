@@ -1,10 +1,10 @@
-# Knox Knows mobile app 1.3.2 — local review candidate
+# Knox Knows mobile 1.3.3 / build 7 — local photo and layout review
 
-November 2, 2026. Built on Claude's latest local `home-screen-app` commit **a19aace**, including the previous mobile polish and main Flashcard fixes through **4fadbb2**. Original Claude checkout and hosted sites are untouched. This is a local candidate, not a published App Store app or an installable IPA.
+November 3, 2026. Based on Claude's newest local **app-redesign da662ea**, including main **85dd114**. The original Claude checkout is unchanged. This is a local source candidate, not a published app, signed IPA or TestFlight build.
 
-## Build and review
+## Build
 
-Use Node 24, Xcode with Swift 6.1 or newer, and iOS/iPadOS **17.4+**. From this repository:
+Use Node 24, Xcode with Swift 6.1+ and iOS/iPadOS 17.4+:
 
 ```sh
 cd mobile
@@ -13,48 +13,33 @@ npm run sync
 npm run ios
 ```
 
-Select the existing Knox App target and signing team. `sync` packages the current source into `www` and `ios/App/App/public`, updates native plugins and records 80 SHA-256 bundle hashes. Generated native plugin paths are portable `../../../node_modules/...`; they must not point into an old Codex output directory. No remote `server.url`: interface, Firebase SDK, fonts and document readers ship inside the app. Authenticated AI/sync still use **https://www.knoxknowsapp.com** with the existing production Firebase identifiers.
+The interface, Firebase SDK, document readers and fonts ship locally. There is no remote server.url; authenticated AI/sync use the existing production Knox API/Firebase identifiers. Do not substitute private-preview Firebase settings. The synced Swift plugin paths are portable node_modules paths. Do not deploy the mobile source ZIP as a website.
 
-Local QA (fake Firebase, fake API and native plugins; no production changes):
+## Changes
 
-```sh
-npm test
-npm run qa
-```
+- Photo review starts with the whole photo. Crop is optional; an explicit live-camera frame is carried through exactly. Removed heuristic auto-picking and the claim that Knox had found the question. Smaller selections are no longer expanded to 12 percent.
+- Added Rotate, Whole photo reset, precise fitted-image coordinates, larger corner hit areas, keyboard-adjustable selection and screen-frame-coalesced drag updates. Output is bounded and correctly rotated; Cancel keeps an existing attachment. No automatic send.
+- Real modal photo/Add/camera screens contain focus and close safely. Camera streams stop on cancellation, capture, backgrounding, account change, navigation or a late permission result. Repeated shutter taps cannot create parallel captures. Gallery/file tickets reject old account/view selections.
+- Photo/camera/Add screens track the visible viewport during keyboard dismissal. The untouched viewfinder frame recenters after a size change. Device-camera fallback remains available.
+- Ask and Learn keep full two-column topic cards with vertical scrolling. Review from your lessons stays available. Removed horizontal keyboard chips, guessed fit locking and focus-only keyboard collapse; real viewport changes control the web keyboard layout. Closing it restores navigation, and pinch zoom is not mistaken for a keyboard.
+- Removed doubled website padding from the app composer and reserved space for the raised Snap button. Return adds a new line in the app; Send is explicit. Ordinary website Enter-to-send behavior is unchanged.
+- Calculator Back records the originating screen before switching. New chat/lesson no longer leaves a stale Jump to latest button on the welcome. Home study ideas retain real button semantics for accessibility.
+- Preserves Claude's redesign, native integrations, owner-scoped draft recovery, history, plans, Learn, cards, themes and existing prices/entitlements. No backend API, Firebase rules, environment or account changes were made.
 
-The server binds only to 127.0.0.1 and prints its URL. Optional `?qa-controls=1` exposes clearly labelled local controls for simulated keyboard, offline and lifecycle events. Never ship these QA files. Shared backend tests run from the repository root with `node --experimental-vm-modules --test tests/*.mjs`.
+## Checks
 
-## What changed in this candidate
+- **235 shared tests + 47 mobile tests pass (282 total).** Coverage includes crop fit/rotation/frame mapping, small selections, delayed camera cancellation, Enter/IME, calculator origin, keyboard open/close/zoom, and prior draft/ownership/transport regressions.
+- Local real UI with synthetic worksheet/video and fake auth/API/Firestore/plugins: crop drag/resize/export, rotation, cancellation, camera frame movement and mode choice, delayed/unavailable camera, keyboard-to-camera transition, no accidental Return send, saved photo history, saved Learn completion, history search, Calculator 7×8/return/append, native plan comparison, themes/larger reading, cards/Good/due counts and New cancellation.
+- Phone/tablet layout checks: 320×568,375×667,390×844,430×932,768×1024,1024×768; portrait/landscape photo review and simulated keyboard visible areas also checked. No horizontal document overflow in those checks.
+- 80 bundled www/native public hashes match; 11 plugins sync; plist/project validation and scoped native production dependency audit pass (0 advisories).
+- The final fresh native and web-shell QA tabs produced no warning/error console messages. Synthetic streams avoid actual hardware/permission access. QA files are source-only and are not copied into the installed bundle.
 
-Claude's full-screen design, floating History/New controls, welcome cards, camera, Auto look, local progress and five tabs are preserved. This review fixes:
+Run shared tests from the repository root with `node --experimental-vm-modules --test tests/*.mjs`; mobile tests with `npm --prefix mobile test`. `npm --prefix mobile run qa` starts a 127.0.0.1-only server. Optional `qa-controls`, `qa-web` and `qa-photo` query flags expose synthetic local fixtures only. These controls must never be served as the production app.
 
-- Reselecting Ask/Learn scrolls to the latest reply; it does not unexpectedly start a new session. New remains an explicit action.
-- Explain simpler / Similar problem prepare a grounded prompt containing the selected question and answer. They never send or spend a credit automatically. Existing text can be kept or appended to.
-- Make flashcards protects the current Make request/attachments, honors a cancelled editor and rechecks account ownership. Accepted replacement removes prior notes so they cannot contaminate the new deck. Scanned-PDF photo conversion rejects stale results.
-- Photo selections claim their generation before awaiting crop. Crop work is tied to the original account and view; newer selections win. The crop dialog adds labelled range controls, focus handling and bounded output. A failed crop offers retry/Whole photo instead of silently sending the original.
-- Web-only dictation stops on manual edits, account changes or mode changes. Late results are ignored. This is not native voice tutoring.
-- Progress records successful non-casual study replies and saved card-review transitions, not taps, failed requests or restored history. Lesson completion is recorded once per stable session. Daily goals use the local calendar date. Counters are bounded, account-scoped and explicitly local activity, not mastery. Unverified old counters are not promoted into these new totals; real server streaks and saved history/decks are unchanged.
-- Short-screen Learn welcome content scrolls rather than clipping the review control. Daily-goal ring CSS no longer changes the inline target icon. Reduced-motion preference is honored by tab scrolling.
-- App plan information discloses existing backend generation limits: Plus 40 AI decks/day, 15 cards each; Mega 100/day, 40 cards each. Existing prices, limits and backend policies are unchanged. Ordinary browser marketing is outside this local app patch.
-- Decorative answer reveal observes new replies correctly and leaves restored history immediate. It is cosmetic; API responses still arrive as complete JSON.
+## Still required before a release
 
-Version/build is **1.3.2 / 6**. Previous draft recovery, native Share, keyboard/offline handling, calculator return, signout isolation and fixed-size review safeguards remain. No native StoreKit flow, new voice service, lecture transcription or exam engine was added.
+A physical iPhone/iPad build must verify camera permission denial, actual lens/focus quality, touch/pinch and keyboard/safe-area transitions, real native auth/files/share, VoiceOver and system text sizes, offline/background relaunch and long sessions. This review did not run a signed app or real AI quality/purchase test. Prior Xcode attempts were blocked by sandbox/CoreSimulator availability; source sync is not a compiled app.
 
-Shared app-shell files also serve Claude's home-screen web version if later merged; regular browser changes are guarded. Do not deploy this source ZIP as a website.
+Native StoreKit purchase/restore is still not implemented. Existing subscriptions follow the account; native comparison is informational. Account deletion still needs its complete manual fulfillment test, including any applicable Apple-token revocation. Android packaging was not added.
 
-## Verification
-
-- **233 shared website/backend tests + 31 mobile tests pass (264 total).** New tests cover successful-event ownership/deduplication, daily/lesson counts, failed storage, crop selection/account races, bounded grounded prompts, cancelled Make replacement and server plan-limit parity.
-- 287 source/inline-script parsing units checked; plist/project syntax checked; 80 bundled/native hashes match; Capacitor sync registers 11 plugins. Native production dependency audit: **0 advisories**.
-- Local real browser UI with fake Firebase/API/native plugins checked successful and failed Ask accounting, casual replies, saved Learn completion/history, card flip/Good/Home due count, non-destructive tab reselection, existing follow-up and Make drafts, short-screen review access, light/dark/fall/Auto appearance and simulated web dictation/manual-edit/mode-switch isolation. No live AI quality, real sync, microphone, camera or purchases are certified by these mocks.
-- Browser file upload was blocked by Chrome's local file-access setting. Crop math and stale-result behavior are covered by tests, but the complete crop picker flow needs device testing. No security setting was changed to bypass that block.
-- The prior Xcode attempt was blocked by SwiftPM diagnostic-cache permissions and unavailable CoreSimulator. This review syncs/validates source; it does not claim a compiled/signed app, simulator run, TestFlight or physical-device certification.
-
-## Remaining release work
-
-1. Compile/sign/install on real iPhone/iPad; verify fresh/returning Apple and Google auth, actual camera/library permissions including denied/cancelled cases, document readers, real Share/Files, background recovery, offline cold launch, safe-area/keyboard behavior and VoiceOver/larger system text.
-2. Confirm the matching production APIs and account-deletion handler. Deletion initiation is authenticated and idempotent, but fulfillment remains manual. Test a disposable account's full deletion process and Apple-token revocation where needed; accepting a request is not deleting an account.
-3. Existing web plan entitlements are retained. Native StoreKit purchases/restore purchases are **not implemented**; choose and validate the intended storefront subscription approach before promising in-app upgrades. Native plan comparison remains informational.
-4. Validate App Store privacy/support metadata, screenshots, provisioning and reviewer access. The privacy manifest alone is not Apple approval.
-
-See the Codex workspace output `CLAUDE-MOBILE-NOV2-HANDOFF.md` for branch/patch instructions and competitive gaps. Handoff notes intentionally stay outside the website repository. Nothing was pushed, deployed or submitted by this work.
+The Claude handoff and patch are in the Codex workspace outputs, outside this repository. Nothing was pushed or published.
