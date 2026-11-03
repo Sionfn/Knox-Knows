@@ -820,6 +820,51 @@ function cleanLatexAnswer(text) {
   }).join('');
 }
 
+// ── Mega Knox "Search the web" ──────────────────────────────────────────────
+// An opt-in setting (off by default). The same model runs through OpenAI's
+// Responses API with its hosted web_search tool, so Knox checks real pages and
+// links its sources instead of telling the student to go look it up.
+const WEB_SEARCH_INSTRUCTION = 'Web search is ON for this student. Search the web before answering whenever facts, quotes, dates, statistics, current events, or sources matter, especially for essays, research and citations. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Keep Knox\'s normal answer style.';
+
+function toResponsesInput(messages) {
+  return messages.map(msg => ({
+    role: msg.role,
+    content: typeof msg.content === 'string' ? msg.content : msg.content.map(part => part.type === 'image_url'
+      ? { type: 'input_image', image_url: part.image_url.url, detail: part.image_url.detail || 'auto' }
+      : { type: 'input_text', text: part.text }),
+  }));
+}
+
+// Returns { text, sources, usage }, or null so the caller answers without search.
+async function webSearchAnswer(messages, model, tokenLimit, timeoutMs) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model, input: toResponsesInput(messages), tools: [{ type: 'web_search' }], max_output_tokens: tokenLimit }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!response.ok) {
+    console.error("Web search error [" + model + "]:", (await response.text()).slice(0, 2000));
+    return null;
+  }
+  const data = await response.json();
+  const message = (data.output || []).filter(item => item.type === 'message').pop();
+  const parts = (message?.content || []).filter(part => part.type === 'output_text');
+  const text = parts.map(part => part.text).join('');
+  if (data.status !== 'completed' || !text.trim()) {
+    console.error("Empty web search answer from " + model + " — status:", data.status, data.incomplete_details);
+    return null;
+  }
+  const sources = [];
+  for (const part of parts) for (const note of part.annotations || []) {
+    if (note.type !== 'url_citation' || !/^https?:\/\/[^\s]+$/.test(note.url || '') || sources.some(s => s.url === note.url)) continue;
+    let title = String(note.title || '').replace(/[\[\]()\s]+/g, ' ').trim();
+    if (!title) { try { title = new URL(note.url).hostname; } catch { continue; } }
+    sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
+  }
+  return { text, sources: sources.slice(0, 8), usage: data.usage };
+}
+
 // ── Discord bot ─────────────────────────────────────────────────────────────
 // The Knox Discord bot calls this endpoint server-to-server with a shared
 // secret (KNOX_BOT_KEY, set in Vercel and on the bot's host) instead of a
@@ -928,7 +973,8 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch } = req.body;
+  if (webSearch != null && typeof webSearch !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
   // The bot uses Learn mode (/learn) unless it asks for Ask Knox (/ask sends
   // learnMode: false). History is the lesson so far (its Reply button) and a
   // photo goes through the same size and type checks as the website's.
@@ -1255,48 +1301,69 @@ export default async function handler(req, res) {
       requestBody.temperature = casual ? 1.0 : 0.7;
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-      // Small talk is a one-liner: give up sooner so a slow moment never
-      // leaves the thinking dots hanging (the student gets a 'try again').
-      // Everything else (long essays included) gets up to 50s, always
-      // inside the 60-second function limit.
-      signal: AbortSignal.timeout(casual ? 15000 : Math.max(5000, Math.min(50000, 57000 - (Date.now() - startedAt)))),
-    });
-
-    if (!response.ok) {
-      await refundFailedAnswer();
-      const err = await response.text();
-      console.error("OpenAI error [" + modelToUse + "]:", err);
-      return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
+    // Mega Knox with "Search the web" on (Ask Knox only, not Learn or small
+    // talk): search first. If search is unavailable, answer normally instead.
+    const useWebSearch = webSearch === true && tier === 'mega' && !learnMode && !casual && !isBot;
+    let searched = null;
+    if (useWebSearch) {
+      try {
+        searched = await webSearchAnswer([...messages, { role: 'system', content: WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
+          Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))));
+      } catch (err) { console.error('Web search skipped:', err?.message); }
     }
 
-    const data = await response.json();
-    if (learnMode && !casual && data.choices?.[0]?.message?.refusal) {
-      await refundFailedAnswer();
-      return res.status(422).json({error:String(data.choices[0].message.refusal).slice(0,1000)});
-    }
-    let answer = data.choices?.[0]?.message?.content || "";
+    let data, answer;
+    if (searched) {
+      data = { usage: searched.usage };
+      answer = searched.text;
+    } else {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+        // Small talk is a one-liner: give up sooner so a slow moment never
+        // leaves the thinking dots hanging (the student gets a 'try again').
+        // Everything else (long essays included) gets up to 50s, always
+        // inside the 60-second function limit.
+        signal: AbortSignal.timeout(casual ? 15000 : Math.max(5000, Math.min(50000, 57000 - (Date.now() - startedAt)))),
+      });
 
-    // ── Safety net: never silently send an empty answer to the client ──
-    // If the model's entire token budget got consumed by internal reasoning
-    // (or anything else) and there's no visible text left, don't return an
-    // empty bubble the student can't do anything with — tell them plainly
-    // what likely happened and how to get a real answer, and log the
-    // finish_reason so this is diagnosable instead of a silent mystery.
-    if (typeof answer !== "string" || !answer.trim() || data.choices?.[0]?.finish_reason !== "stop") {
-      await refundFailedAnswer();
-      console.error(
-        "Empty answer from " + modelToUse + " — finish_reason:",
-        data.choices?.[0]?.finish_reason, "usage:", data.usage
-      );
-      return res.status(502).json({ error: 'Knox could not finish the answer. Please try a smaller question.' });
+      if (!response.ok) {
+        await refundFailedAnswer();
+        const err = await response.text();
+        console.error("OpenAI error [" + modelToUse + "]:", err);
+        return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
+      }
+
+      data = await response.json();
+      if (learnMode && !casual && data.choices?.[0]?.message?.refusal) {
+        await refundFailedAnswer();
+        return res.status(422).json({error:String(data.choices[0].message.refusal).slice(0,1000)});
+      }
+      answer = data.choices?.[0]?.message?.content || "";
+
+      // ── Safety net: never silently send an empty answer to the client ──
+      // If the model's entire token budget got consumed by internal reasoning
+      // (or anything else) and there's no visible text left, don't return an
+      // empty bubble the student can't do anything with — tell them plainly
+      // what likely happened and how to get a real answer, and log the
+      // finish_reason so this is diagnosable instead of a silent mystery.
+      if (typeof answer !== "string" || !answer.trim() || data.choices?.[0]?.finish_reason !== "stop") {
+        await refundFailedAnswer();
+        console.error(
+          "Empty answer from " + modelToUse + " — finish_reason:",
+          data.choices?.[0]?.finish_reason, "usage:", data.usage
+        );
+        return res.status(502).json({ error: 'Knox could not finish the answer. Please try a smaller question.' });
+      }
     }
 
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
+    // Sources go after the LaTeX cleanup so nothing in a link gets rewritten.
+    if (searched?.sources.length) {
+      answer = answer.trim() + '\n\n### Sources\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n');
+    }
 
     if (learnMode && !casual) Object.assign(lessonState, correctedLessonState(answer, lessonState));
 
@@ -1362,7 +1429,8 @@ export default async function handler(req, res) {
       try { await advanceStudyStreak(db, uid, localDay); }
       catch (err) { console.error('Streak update failed:', err); }
     }
-    return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage });
+    return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage,
+      webSearch: useWebSearch ? (searched ? 'used' : 'unavailable') : undefined });
 
   } catch (err) {
     console.error("Ask error:", err.message);

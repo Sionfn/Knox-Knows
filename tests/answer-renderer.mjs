@@ -252,3 +252,10 @@ test('Single-asterisk titles become italics without touching math or bold', () =
   assert.equal(context.formatInline('x*y and a*b'), 'x*y and a*b');
   assert.equal(context.formatInline('**Bold** and *italic*'), '<strong>Bold</strong> and <em>italic</em>');
 });
+
+test('source links render as safe new-tab links; other brackets stay text', () => {
+  const html = context.renderAnswerHtml('See [Real Book](https://example.org/a_b?x=1&y=2).\n\n### Sources\n- [Site](https://example.org/s)\n- [x](javascript:alert(1)) and [y]("onmouseover=1)');
+  assert.match(html, /<a class="knox-link" href="https:\/\/example\.org\/a_b\?x=1&amp;y=2" target="_blank" rel="noopener noreferrer">Real Book<\/a>/);
+  assert.match(html, /<h3>Sources<\/h3>/);
+  assert.doesNotMatch(html, /href="javascript|onmouseover=1"/);
+});

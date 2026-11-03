@@ -1647,6 +1647,17 @@
     html[data-theme="dark"] .knox-final-answer-label { color: #74D4FF; }
     html.knox-seasonal .knox-final-answer-label { color: var(--blue-dark); }
     .knox-response-body { padding: 18px 20px 16px; }
+    .knox-response-body a.knox-link { color: var(--orange-dark); font-weight: 800; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+    html[data-theme="dark"] .knox-response-body a.knox-link { color: var(--orange); }
+    .knox-web-note { margin: 0 20px 14px; padding: 8px 12px; border-radius: 12px; background: var(--cream-warm, #FFF3E8); color: var(--text-light); font-size: 13px; font-weight: 700; }
+    .settings-switch { position: relative; flex-shrink: 0; width: 46px; height: 28px; border-radius: 99px; border: 2px solid var(--border); background: var(--border); cursor: pointer; padding: 0; transition: background .15s, border-color .15s; }
+    .settings-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
+    .settings-switch[aria-checked="true"] { background: #F2B705; border-color: #B38600; }
+    .settings-switch[aria-checked="true"]::after { transform: translateX(18px); }
+    .settings-switch:disabled { opacity: .55; cursor: pointer; }
+    .settings-websearch { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+    .settings-websearch .ws-copy { flex: 1; min-width: 0; }
+    .settings-websearch .ws-copy small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
     .knox-response-body > :first-child { margin-top: 0 !important; }
     .knox-response-body > :last-child { margin-bottom: 0 !important; }
     .knox-response-body > .knox-section-card:first-child { margin-top: 0; }
@@ -3749,6 +3760,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <p>Unlimited questions, no daily cap, no waiting — plus the most Knox can do.</p>
         <ul>
           <li><strong>Flashcard decks up to 40 cards</strong> — pick the difficulty, fill-in-the-blank or true/false cards.</li>
+          <li><strong>Search the web</strong> — turn it on in Account &amp; Plan and Knox checks real websites and links its sources.</li>
           <li><strong>The highest limits</strong> — files twice as long, 10 photos per deck, the longest Learn sessions.</li>
           <li><strong>Early access</strong> to new features before anyone else.</li>
           <li><strong>Fastest support</strong> and the private Mega lounge on <a href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer">Discord</a> — talk to the founder and vote on what's next.</li>
@@ -5171,6 +5183,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.showWelcomeModal = showWelcomeModal;
 
   // ── Settings ────────────────────────────────────────────────
+  window.knoxWebSearchOn = function(uid) {
+    try { return !!uid && localStorage.getItem('knoxWebSearch:' + uid) === '1'; } catch (_) { return false; }
+  };
   window.openAppSettings = function() {
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
@@ -5203,6 +5218,30 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.className   = 'plan-badge badge-' + badgeClass;
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
+
+    // Mega Knox: "Search the web" (off by default, saved on this device). With it
+    // on, Ask Knox looks things up online and links its sources.
+    const mega = window.userTier === 'mega';
+    if (mega || !window.knoxNativeApp) {
+      const ws = document.createElement('div'); ws.className = 'settings-websearch';
+      ws.innerHTML = '<span class="ws-copy"><span class="settings-label">🌐 Search the web</span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
+      const note = ws.querySelector('small'), sw = ws.querySelector('.settings-switch');
+      const show = on => {
+        sw.setAttribute('aria-checked', String(on));
+        note.textContent = !mega ? '💎 Mega Knox — Knox checks real websites and links its sources.'
+          : on ? 'On — in Ask Knox, Knox checks real websites and links its sources. Answers can take a little longer.'
+          : 'Off — turn on so Knox checks real websites and links its sources (great for essays and citations).';
+      };
+      sw.setAttribute('aria-label', 'Search the web');
+      show(mega && window.knoxWebSearchOn(u.uid));
+      sw.onclick = () => {
+        if (!mega) { goToPricing(); closeAppSettings(); return; }
+        const on = sw.getAttribute('aria-checked') !== 'true';
+        try { localStorage.setItem('knoxWebSearch:' + u.uid, on ? '1' : '0'); } catch (_) {}
+        show(on);
+      };
+      el.appendChild(ws);
+    }
 
     // Connections: Discord (linked with /link in the Knox server). Shows whether
     // it's connected and lets the student disconnect or connect it here.
@@ -5342,7 +5381,10 @@ function escHtml(s) {
 function formatInline(text) {
   return String(text).split(/(`[^`\n]+`)/g).map((part, index) => index % 2
     ? '<code>' + escHtml(part.slice(1, -1)) + '</code>'
-    : escHtml(part).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    : escHtml(part)
+      // [title](https://…) → a link (web search sources). Escaped first, so the URL can't break out.
+      .replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s()<>]+)\)/g, '<a class="knox-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       // *Title* → italics, only around words, so 5*2*3 and 2 * 3 stay math.
       .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).join('');
 }
@@ -6473,6 +6515,8 @@ window.appHandleAsk = async function() {
         learnSessionId: requestLearnSessionId,
         reviewSkillId: requestReviewSkillId,
         renewLearn: renewLearn || undefined,
+        // Mega Knox's "Search the web" setting (Account & Plan); the server checks the plan.
+        webSearch: (!requestLearnMode && window.userTier === 'mega' && window.knoxWebSearchOn?.(requestUid)) || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
       }),
@@ -6555,7 +6599,8 @@ window.appHandleAsk = async function() {
 
     const answer = data.answer || '';
     // Small talk in Learn mode isn't a lesson step: no "Lesson" heading.
-    const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
+    const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer') +
+      (data.webSearch === 'unavailable' ? '<div class="knox-web-note">🌐 Knox couldn’t search the web this time, so this answer is without online sources. Try again for sources.</div>' : '');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer, mode: requestLearnMode ? 'learn' : 'ask' };
 
