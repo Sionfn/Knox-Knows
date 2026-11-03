@@ -70,14 +70,13 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <p class="km-footer-note">Knox is AI and can make mistakes. Check important answers.</p>
  </div>`;
  account.innerHTML=`<div class="km-page-wrap">
-  <section class="km-profile"><div class="km-profile-banner" aria-hidden="true"><span></span><span></span><span></span></div><div id="kmIdentity"></div></section>
+  <section class="km-profile"><div class="km-profile-banner" id="kmBanner"><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span><button type="button" class="km-banner-edit km-press" data-action="banner" hidden>${svg('camera')}Banner</button></div><div id="kmIdentity"></div></section>
   <section class="km-account-section" aria-labelledby="kmPlanTitle"><div class="km-section-heading"><h2 id="kmPlanTitle">Your plan</h2></div><div id="kmAccountPlan"></div></section>
   <section id="kmProgress" class="km-account-section" hidden></section>
-  <section class="km-account-section" aria-labelledby="kmAppearanceTitle"><div class="km-section-heading"><h2 id="kmAppearanceTitle">Look</h2></div><div class="km-looks" role="group" aria-label="Appearance">${[['light','Light'],['dark','Dark'],['seasonal','Fall']].map(([id,label])=>`<button type="button" class="km-press" data-look="${id}" aria-pressed="false"><span class="km-look-swatch" data-swatch="${id}" aria-hidden="true"><i></i><i></i><i></i></span><b>${label}</b><small data-selected-label></small></button>`).join('')}</div>
-   <div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Aa Standard</button><button type="button" data-reading="large" aria-pressed="false"><span style="font-size:1.2em">Aa</span> Larger</button></div>
-   <div class="km-reading-preview" aria-hidden="true"><span class="km-reading-fox">🦊</span><p><b>Knox</b>This is how big Knox’s answers and lessons will look.</p></div></section>
-  <section class="km-account-section" aria-labelledby="kmLangTitle"><div class="km-section-heading"><h2 id="kmLangTitle">Language</h2></div>
-   <label class="km-lang"><span><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select data-lang aria-label="Language Knox answers in">${LANGS.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label></section>
+  <section class="km-account-section" aria-labelledby="kmAppearanceTitle"><div class="km-section-heading"><h2 id="kmAppearanceTitle">Look &amp; language</h2></div><div class="km-pref-panel"><div class="km-pref-row"><span class="km-pref-label">Theme</span><div class="km-looks" role="group" aria-label="Appearance">${[['light','Light'],['dark','Dark'],['seasonal','Fall']].map(([id,label])=>`<button type="button" class="km-press" data-look="${id}" aria-pressed="false"><span class="km-look-swatch" data-swatch="${id}" aria-hidden="true"><i></i><i></i><i></i></span><b>${label}</b><small data-selected-label></small></button>`).join('')}</div>
+   </div><div class="km-pref-row"><span class="km-pref-label">Answer text size</span><div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Aa Standard</button><button type="button" data-reading="large" aria-pressed="false"><span style="font-size:1.2em">Aa</span> Larger</button></div>
+   <div class="km-reading-preview" aria-hidden="true"><span class="km-reading-fox">🦊</span><p><b>Knox</b>This is how big Knox’s answers and lessons will look.</p></div></div>
+   <label class="km-lang km-pref-row"><span><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select data-lang aria-label="Language Knox answers in">${LANGS.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label></div></section>
   <section class="km-account-section" aria-labelledby="kmSettingsTitle"><div class="km-section-heading"><h2 id="kmSettingsTitle">Account & help</h2></div><div class="km-menu-list">
    <button type="button" class="km-press" data-action="settings">${tile('settings','grey')}<span>Account & settings<small>Profile, connections, account deletion</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="credits">${tile('coin','gold')}<span>Questions & limits<small>See your current allowance</small></span><span aria-hidden="true">›</span></button>
@@ -89,6 +88,33 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   <div class="km-legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund">Refunds</a></div>
   <p class="km-footer-note">Knox Knows${w.knoxMobileConfig?.version&&w.knoxMobileConfig.version!=='web'?' · '+w.knoxMobileConfig.version:''} · Made for students 🦊</p>
  </div>`;
+ // Profile look: a banner (5 Knox designs or your own photo) and your own profile
+ // picture. Saved on this device for each account (they don't sync yet).
+ const BANNERS=[['sunset','Knox Sunset'],['ocean','Ocean'],['forest','Forest'],['galaxy','Galaxy'],['leaves','Fall Leaves']];
+ const looks={key:(k,uid)=>'knox'+k+'.'+uid,get(k,uid){try{return localStorage.getItem(this.key(k,uid));}catch{return null;}},set(k,uid,v){try{v==null?localStorage.removeItem(this.key(k,uid)):localStorage.setItem(this.key(k,uid),v);return true;}catch{note('There isn’t room to save that picture on this device. Try a smaller one.');return false;}}};
+ // Center-crops a picked photo to the size needed and returns a small JPEG.
+ function shrink(file,W,H){return new Promise((ok,bad)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const k=Math.max(W/img.naturalWidth,H/img.naturalHeight),sw=W/k,sh=H/k;c.getContext('2d').drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sh)/2,sw,sh,0,0,W,H);URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',.85));};img.onerror=()=>{URL.revokeObjectURL(url);bad();};img.src=url;});}
+ function pickImage(){return new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/jpeg,image/png,image/webp';i.onchange=()=>ok(i.files?.[0]||null);i.click();});}
+ function paintBanner(){const el=$('kmBanner'),uid=w.currentUser?.uid;if(!el)return;const id=uid?looks.get('Banner',uid):null,img=id==='custom'?looks.get('BannerImg',uid):null;el.dataset.banner=img?'custom':BANNERS.some(([b])=>b===id)?id:'sunset';el.style.backgroundImage=img?`url("${img}")`:'';el.querySelector('.km-banner-edit').hidden=!uid;}
+ function lookSheet(kind){
+  const uid=w.currentUser?.uid;if(!uid)return;
+  const sheet=document.createElement('dialog');sheet.className='km-pick';sheet.setAttribute('aria-label',kind==='banner'?'Choose a banner':'Change profile picture');
+  const current=kind==='banner'?(looks.get('Banner',uid)||'sunset'):null,mine=kind==='avatar'&&looks.get('Avatar',uid);
+  sheet.innerHTML=`<div class="km-pick-panel"><span class="km-add-grab" aria-hidden="true"></span><h2>${kind==='banner'?'Choose a banner':'Profile picture'}</h2>`+(kind==='banner'
+   ?`<div class="km-pick-grid">${BANNERS.map(([id,label])=>`<button type="button" class="km-press" data-pick-banner="${id}" aria-pressed="${current===id}"><span class="km-pick-swatch" data-banner="${id}"></span><b>${label}</b></button>`).join('')}<button type="button" class="km-press" data-pick-banner="custom" aria-pressed="${current==='custom'}"><span class="km-pick-swatch km-pick-own">${svg('camera')}</span><b>Your photo</b></button></div>`
+   :`<div class="km-pick-list"><button type="button" class="km-press" data-pick-avatar="upload">${svg('camera')}<span><b>Choose a photo</b><small>From your photo library</small></span></button>${mine?`<button type="button" class="km-press" data-pick-avatar="reset">${svg('close')}<span><b>Remove my photo</b><small>Go back to your ${w.currentUser?.photoURL?'Google photo':'initial'}</small></span></button>`:''}</div>`)+`<button type="button" class="km-add-cancel" data-pick-close>Done</button></div>`;
+  const close=()=>{sheet.close();sheet.remove();};
+  sheet.addEventListener('cancel',e=>{e.preventDefault();close();});
+  sheet.addEventListener('click',async e=>{
+   if(e.target===sheet||e.target.closest('[data-pick-close]'))return close();
+   const bb=e.target.closest('[data-pick-banner]'),ab=e.target.closest('[data-pick-avatar]');
+   if(bb){let id=bb.dataset.pickBanner;if(id==='custom'){const f=await pickImage();if(!f)return;try{if(!looks.set('BannerImg',uid,await shrink(f,1000,400)))return;}catch{note('That picture could not be opened. Try another one.');return;}}
+    if(uid!==w.currentUser?.uid)return close();looks.set('Banner',uid,id);sheet.querySelectorAll('[data-pick-banner]').forEach(x=>x.setAttribute('aria-pressed',String(x===bb)));paintBanner();return;}
+   if(ab){if(ab.dataset.pickAvatar==='reset')looks.set('Avatar',uid,null);else{const f=await pickImage();if(!f)return;try{if(!looks.set('Avatar',uid,await shrink(f,320,320)))return;}catch{note('That picture could not be opened. Try another one.');return;}}
+    if(uid!==w.currentUser?.uid)return close();close();render();note(ab.dataset.pickAvatar==='reset'?'Photo removed.':'Profile picture updated.');}
+  });
+  document.body.append(sheet);sheet.showModal();
+ }
  let historyOwner=w.currentUser?.uid||'guest',renderVersion=0,refreshAt=0,refreshOwner='',refreshing=false;
  function block(id,html){const el=$(id);if(el && el.innerHTML!==html)el.innerHTML=html;}
  function historyRows(){return historyOwner===(w.currentUser?.uid||'guest')?[...document.querySelectorAll('#sidebarHistoryList .sidebar-history-item[data-conversation-id]:not(.shi-removing)')].map(el=>({id:el.dataset.conversationId,title:el.querySelector('.shi-text')?.textContent||el.title,kind:el.classList.contains('shi-learn')?'learn':'chat'})):[];}
@@ -108,9 +134,11 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   block('kmRecent',activity.history.length?`<div class="km-recent-list">${activity.history.slice(0,3).map(r=>`<button type="button" class="km-recent km-press" data-conversation="${esc(r.id)}">${r.kind==='learn'?tile('learn','learn'):tile('chat','chat')}<span><b>${esc(r.title)}</b><small>${r.kind==='learn'?'Learn lesson':'Ask Knox'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div>`:`<div class="km-empty km-empty-small"><span><b>${user?'Your work shows up here':'Keep your work together'}</b><small>${user?'Ask a question or start a lesson to begin.':'Sign in to keep your chats, lessons and decks.'}</small></span>${user?'':`<button type="button" class="km-inline-action" data-action="signin">Sign in →</button>`}</div>`);
   block('kmHomePlan',plan.suggested&&!w.knoxNativeApp?`<button type="button" class="km-upsell km-press km-rise" data-action="plans" data-tier="${plan.suggested.id}"><span class="km-upsell-shine" aria-hidden="true"></span><span class="km-upsell-gem" aria-hidden="true">${plan.suggested.id==='mega'?'💎':'⚡'}</span><span><small>${plan.suggested.id==='mega'?'GO BIGGER':'LEVEL UP'}</small><b>${esc(plan.suggested.name)}</b><span>${plan.suggested.id==='mega'?'40-card decks, longer files and the most of everything.':'Unlimited questions and full Learn lessons.'}</span></span><span class="km-upsell-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
   const initials=(user?.displayName||user?.email||'K').slice(0,1).toUpperCase();
-  const photo=user?.photoURL&&/^https:\/\//.test(user.photoURL)?`<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">`:esc(initials);
+  const own=user?looks.get('Avatar',user.uid):null;
+  const photo=own&&/^data:image\/jpeg;base64,/.test(own)?`<img src="${own}" alt="">`:user?.photoURL&&/^https:\/\//.test(user.photoURL)?`<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">`:esc(initials);
   document.querySelectorAll('[data-avatar]').forEach(a=>{if(a.innerHTML!==photo)a.innerHTML=photo;});
-  block('kmIdentity',`<div class="km-identity"><span class="km-avatar">${photo}</span><h1>${esc(user?.displayName||'Welcome to Knox')}</h1><p>${esc(user?.email||'Sign in to save your progress.')}</p><span class="km-tier" data-tier="${plan.current.id}">${user?TIER[plan.current.id]+' '+esc(plan.current.name):'Guest'}</span>${user?'':`<button type="button" class="km-solid-button km-press" data-action="signin">Sign in or create an account</button>`}</div>`);
+  paintBanner();
+  block('kmIdentity',`<div class="km-identity"><span class="km-avatar-wrap"><span class="km-avatar">${photo}</span>${user?`<button type="button" class="km-avatar-edit km-press" data-action="avatar" aria-label="Change profile picture">${svg('camera')}</button>`:''}</span><h1>${esc(user?.displayName||'Welcome to Knox')}</h1><p>${esc(user?.email||'Sign in to save your progress.')}</p><span class="km-tier" data-tier="${plan.current.id}">${user?TIER[plan.current.id]+' '+esc(plan.current.name):'Guest'}</span>${user?'':`<button type="button" class="km-solid-button km-press" data-action="signin">Sign in or create an account</button>`}</div>`);
   block('kmAccountPlan',`<div class="km-current-plan" data-tier="${plan.current.id}"><span class="km-current-gem" aria-hidden="true">${TIER[plan.current.id]}</span><span class="km-current-copy"><span class="km-eyebrow">${user?'CURRENT PLAN':'START FREE'}</span><h3>${esc(plan.current.name)}</h3><p>${esc(plan.current.label)}</p></span>${plan.current.id==='mega'||w.knoxNativeApp?`<button type="button" class="km-inline-action" data-action="plans">Compare →</button>`:`<button type="button" class="km-plan-cta km-press" data-action="plans" data-tier="${plan.current.id==='plus'?'mega':'plus'}">${plan.current.id==='plus'?'💎 Go Mega':'⚡ Upgrade'}</button>`}</div>`);
   home.querySelector('.km-join').hidden=!!user;home.querySelector('.km-today').hidden=!user;$('kmRecentSection').hidden=!user;
   // Ideas help new students start; once there's history, Recent takes their place.
@@ -216,6 +244,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  async function action(e){
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.action==='type'){prefill('chat','');return;}
+  if(b.dataset.action==='banner'||b.dataset.action==='avatar'){lookSheet(b.dataset.action);return;}
   if(b.dataset.more){expand(b,b.getAttribute('aria-expanded')!=='true');return;}
   if(e.target.closest('[data-action="photo"]')){w.knoxSnap?.();return;}
   if(b.dataset.reading){reading=b.dataset.reading==='large'?'large':'standard';document.documentElement.classList.toggle('knox-reading-large',reading==='large');try{localStorage.setItem('knoxMobileReading',reading);}catch{}render();return;}
