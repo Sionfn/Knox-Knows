@@ -582,3 +582,286 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-badge.on .km-badge-icon { color:
 .km-crop-adjust summary::-webkit-details-marker { display:none; }
 .km-crop-adjust summary::after { content:"▾"; margin-left:6px; opacity:.7; }
 .km-crop-adjust[open] summary::after { content:"▴"; }
+
+/* ═══════════════════ Knox 2 (Nov 3): a brighter, bolder app ═══════════════════
+   Solid color blocks with chunky ledges, a big orange hero with Knox, a raised
+   camera button, sideways scrollers and a real paywall. Later rules win. */
+@keyframes kmRise { from { opacity:0; transform:translateY(10px); } }
+@keyframes kmBob { 50% { transform:rotate(6deg) translateY(-5px); } }
+@keyframes kmShine { 0%,60% { transform:translateX(-120%) skewX(-20deg); } 100% { transform:translateX(320%) skewX(-20deg); } }
+@keyframes kmTwinkle { 50% { opacity:.25; transform:scale(.6); } }
+.km2 .km-rise { animation:kmRise .4s cubic-bezier(.2,.8,.2,1) both; }
+.km2 .km-page-wrap > .km-rise:nth-child(3) { animation-delay:.04s; } .km2 .km-page-wrap > .km-rise:nth-child(5) { animation-delay:.08s; }
+.km2 .km-page-wrap > .km-rise:nth-child(7) { animation-delay:.12s; } .km2 .km-page-wrap > .km-rise:nth-child(8) { animation-delay:.16s; }
+.knox-mobile-page.km2 { padding:14px 18px 36px; background:var(--cream); }
+.km2 .km-section-heading { margin:26px 2px 12px; }
+.km2 .km-section-heading h2 { font-size:20px; letter-spacing:-.03em; }
+.km2 .km-text-button { font-size:14px; }
+
+/* Top: profile picture · streak · plan */
+.km2 .km-topbar { margin:0 0 14px; }
+.km2 .km-top-avatar { width:44px; height:44px; border-radius:50%; font-size:18px; }
+.km-plan-pill { --ledge:var(--orange-dark); height:44px; padding:0 14px; border-radius:14px; border:2px solid var(--orange); background:var(--orange-light); color:var(--orange-dark); font:900 14px Nunito,sans-serif; box-shadow:0 3px 0 var(--orange-dark); white-space:nowrap; }
+.km-plan-pill[data-tier="plus"] { --ledge:var(--green-dark); border-color:var(--green); background:var(--green-light); color:var(--green-dark); box-shadow:0 3px 0 var(--green-dark); }
+.km-plan-pill[data-tier="mega"] { --ledge:#9A6B00; border-color:#F2B705; background:#FFF3C4; color:#6A4900; box-shadow:0 3px 0 #C99404; }
+.km-plan-pill[hidden] { display:none; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-plan-pill { color:var(--orange); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-plan-pill[data-tier="plus"] { color:var(--green); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-plan-pill[data-tier="mega"] { background:rgba(242,183,5,.18); color:#FFD84D; }
+
+/* Hero: Knox on orange, with the camera front and center. */
+.km-hero { position:relative; overflow:hidden; isolation:isolate; margin:0 0 18px; padding:20px 16px 16px; border-radius:30px; color:#fff;
+  background:linear-gradient(155deg,#FFA040 0%,#FF6B00 48%,#EE4F00 100%); box-shadow:0 6px 0 #B84500, 0 20px 40px -16px rgba(255,107,0,.6); }
+.km-hero-glow { position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:radial-gradient(circle at 88% 12%, rgba(255,255,255,.32), transparent 34%), radial-gradient(circle at 8% 100%, rgba(255,214,120,.35), transparent 42%), radial-gradient(circle at 60% 60%, rgba(255,255,255,.08) 0 2px, transparent 3px) 0 0/22px 22px; }
+.km-hero-top { display:flex; align-items:flex-start; gap:12px; }
+.km-hero-copy { flex:1; min-width:0; padding-left:4px; }
+.km-hero-hi { font-size:14.5px; font-weight:800; opacity:.95; margin:2px 0 0; }
+.km2 .km-hero h1 { margin:6px 0 0; font-size:clamp(28px,8vw,38px); line-height:1.04; font-weight:900; letter-spacing:-.035em; color:#fff; text-shadow:0 2px 0 rgba(140,50,0,.25); }
+.km-hero-fox { width:86px; height:86px; flex-shrink:0; border-radius:28px; border:3px solid #fff; object-fit:cover; background:#FFE0C2; box-shadow:0 5px 0 rgba(130,45,0,.35); transform:rotate(6deg); animation:kmBob 4.5s ease-in-out infinite; }
+.km-hero-snap { --ledge:rgba(130,45,0,.38); display:flex; align-items:center; gap:12px; width:100%; margin-top:18px; padding:12px 14px 12px 12px; border:0; border-radius:22px; background:#fff; color:#3A1D00; text-align:left; font-family:inherit; box-shadow:0 5px 0 rgba(130,45,0,.38); }
+.km-hero-snap > span:nth-child(2) { flex:1; min-width:0; }
+.km-hero-snap b { display:block; font-size:18px; font-weight:900; letter-spacing:-.02em; }
+.km-hero-snap small { display:block; margin-top:2px; font-size:12.5px; font-weight:800; color:#8A5A33; }
+.km-hero-snap-icon { width:52px; height:52px; flex-shrink:0; border-radius:17px; display:grid; place-items:center; background:linear-gradient(155deg,#FF9A3C,#FF6B00); color:#fff; box-shadow:0 3px 0 var(--orange-dark); }
+.km-hero-snap-icon svg { width:28px; height:28px; }
+.km-hero-snap-go { color:var(--orange); } .km-hero-snap-go svg { width:22px; height:22px; }
+.km-hero-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.km-hero-alt { --ledge:rgba(130,45,0,.3); display:flex; align-items:center; justify-content:center; gap:8px; min-height:50px; padding:0 10px; border-radius:17px; border:2px solid rgba(255,255,255,.5); background:rgba(255,255,255,.17); color:#fff; font:900 14.5px Nunito,sans-serif; box-shadow:0 3px 0 rgba(130,45,0,.3); }
+.km-hero-alt svg { width:20px; height:20px; flex-shrink:0; }
+.km-hero :focus-visible { outline:3px solid #fff; outline-offset:3px; }
+
+/* Today: streak + daily goal side by side. */
+.km-today { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.km-today:has(> #kmGoal[hidden]) { grid-template-columns:1fr; }
+#knoxMobileHome .km-streak-card { --ledge:var(--border); flex-direction:column; align-items:flex-start; gap:10px; padding:14px; border-radius:22px; border:2px solid var(--border); background:var(--surface); box-shadow:0 4px 0 var(--border); min-height:132px; }
+#knoxMobileHome .km-streak-card.lit { --ledge:var(--orange-dark); border-color:var(--orange); box-shadow:0 4px 0 var(--orange-dark); background:linear-gradient(160deg, var(--orange-light), var(--surface) 75%); }
+.km-streak-flame { width:46px; height:46px; display:grid; place-items:center; border-radius:15px; background:var(--orange-light); border:1.5px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark); }
+.km-streak-flame .knox-flame { font-size:26px; line-height:1; }
+.km-streak-card:not(.lit) .km-streak-flame .knox-flame { filter:grayscale(.6); opacity:.7; }
+#knoxMobileHome .km-streak-card b { font-size:20px; letter-spacing:-.02em; }
+#knoxMobileHome .km-streak-card small { margin-top:1px; font-size:12px; line-height:1.4; }
+#knoxMobileHome .km-goal { margin:0; flex-direction:column; align-items:flex-start; gap:10px; padding:14px; border-radius:22px; min-height:132px; border:2px solid color-mix(in srgb,var(--green) 60%,var(--border)); box-shadow:0 4px 0 color-mix(in srgb,var(--green-dark) 55%,var(--border)); background:linear-gradient(160deg, color-mix(in srgb,var(--green) 12%,var(--surface)), var(--surface) 75%); }
+#knoxMobileHome .km-goal[hidden] { display:none; }
+#knoxMobileHome .km-goal-ring, #knoxMobileHome .km-goal-ring > svg { width:46px; height:46px; }
+#knoxMobileHome .km-goal b { font-size:15px; line-height:1.25; }
+#knoxMobileHome .km-goal small { font-size:11.5px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* Shared color sets for blocks. */
+.km2 [data-color="orange"],.km2 [data-color="chat"] { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark); }
+.km2 [data-color="green"],.km2 [data-color="flashcards"] { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
+.km2 [data-color="purple"],.km2 [data-color="learn"] { --c:var(--purple); --c-light:var(--purple-light); --c-dark:var(--purple-dark); }
+.km2 [data-color="blue"],.km2 [data-color="calculator"] { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
+
+/* Try asking: a sideways row of ideas. */
+.km-starts { display:flex; gap:12px; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x mandatory; scroll-padding:0 18px; margin:0 -18px; padding:2px 18px 10px; scrollbar-width:none; touch-action:pan-x pan-y; }
+.km-starts::-webkit-scrollbar { display:none; }
+.km-start { --ledge:var(--c-dark); flex:0 0 156px; scroll-snap-align:start; display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-height:150px; padding:14px; border-radius:22px; border:2px solid var(--c); background:linear-gradient(170deg, var(--c-light), var(--surface) 80%); color:var(--text); text-align:left; font-family:inherit; box-shadow:0 4px 0 var(--c-dark); }
+.km-start-emoji { width:44px; height:44px; display:grid; place-items:center; border-radius:14px; background:var(--surface); border:1.5px solid var(--c); font-size:24px; box-shadow:0 2px 0 var(--c-dark); }
+.km-start b { font-size:14.5px; line-height:1.3; font-weight:900; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.km-start small { margin-top:auto; font-size:12px; font-weight:900; color:var(--c-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-start small { color:var(--c); }
+
+/* Study tools: bold solid tiles. */
+#knoxMobileHome .km-tools { grid-template-columns:1fr 1fr; gap:14px 12px; }
+#knoxMobileHome .km-tool { --t1:#FF9A3C; --t2:#E85D00; --t3:#B84500; --ledge:var(--t3); position:relative; overflow:hidden; isolation:isolate; min-height:146px; padding:16px; border:0; border-radius:24px; color:#fff; background:linear-gradient(160deg,var(--t1),var(--t2)); box-shadow:0 5px 0 var(--t3); gap:4px; }
+#knoxMobileHome .km-tool::after { content:""; position:absolute; z-index:-1; right:-28px; bottom:-34px; width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,.14); }
+#knoxMobileHome .km-tool[data-color="learn"] { --t1:#C08BFF; --t2:#8B4FD8; --t3:#6534AD; }
+#knoxMobileHome .km-tool[data-color="flashcards"] { --t1:#78D62A; --t2:#3F9A02; --t3:#2E7400; }
+#knoxMobileHome .km-tool[data-color="quiz"] { --t1:#FF7FA0; --t2:#DE2F5C; --t3:#A81E42; }
+#knoxMobileHome .km-tool[data-color="calculator"] { --t1:#4CC8FF; --t2:#0E86C7; --t3:#08659A; }
+#knoxMobileHome .km-tool-icon { width:48px; height:48px; margin:0 0 10px; display:grid; place-items:center; border-radius:16px; background:rgba(255,255,255,.22); border:1.5px solid rgba(255,255,255,.45); color:#fff; }
+#knoxMobileHome .km-tool-icon svg { width:26px; height:26px; }
+#knoxMobileHome .km-tool b { font-size:19px; letter-spacing:-.02em; color:#fff; }
+#knoxMobileHome .km-tool > span:last-child { font-size:12.5px; font-weight:800; color:rgba(255,255,255,.92); line-height:1.35; }
+#knoxMobileHome .km-tool :is(svg) { color:#fff; }
+
+/* Pick up where you left off. */
+#knoxMobileHome .km-resume { --ledge:#6534AD; display:flex; align-items:center; gap:14px; margin:18px 0 0; padding:16px; border:0; border-radius:24px; color:#fff; background:linear-gradient(150deg,#C08BFF,#8B4FD8); box-shadow:0 5px 0 #6534AD; }
+.km-resume-badge { width:50px; height:50px; flex-shrink:0; display:grid; place-items:center; border-radius:16px; background:rgba(255,255,255,.22); border:1.5px solid rgba(255,255,255,.45); }
+.km-resume-badge svg { width:26px; height:26px; }
+#knoxMobileHome .km-resume .km-eyebrow { color:rgba(255,255,255,.85); }
+#knoxMobileHome .km-resume h2 { margin:3px 0 0; font-size:17px; line-height:1.3; color:#fff; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.km-resume-go { margin-left:auto; width:40px; height:40px; flex-shrink:0; display:grid; place-items:center; border-radius:50%; background:#fff; color:#8B4FD8; }
+.km-resume-go svg { width:20px; height:20px; }
+
+/* Review: what's due, then your decks sideways. */
+.km-review-hero { display:flex; align-items:center; gap:12px; padding:14px; border-radius:22px; border:2px solid var(--border); background:var(--surface); box-shadow:0 4px 0 var(--border); }
+.km-review-hero.due { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); background:linear-gradient(160deg, var(--green-light), var(--surface) 75%); }
+.km-review-count { width:58px; height:58px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:50%; background:var(--green); color:#fff; box-shadow:0 3px 0 var(--green-dark); }
+.km-review-count b { font-size:22px; font-weight:900; line-height:1; }
+.km-review-count small { font-size:8.5px; font-weight:900; text-transform:uppercase; letter-spacing:.04em; line-height:1.1; text-align:center; max-width:52px; }
+.km-review-copy { flex:1; min-width:0; } .km-review-copy b { display:block; font-size:15.5px; font-weight:900; } .km-review-copy small { display:block; font-size:12px; font-weight:700; color:var(--text-light); margin-top:2px; }
+.km-review-go { --ledge:var(--green-dark); min-height:42px; padding:0 16px; border-radius:14px; border:2px solid var(--green-dark); background:var(--green); color:#fff; font:900 14px Nunito,sans-serif; box-shadow:0 3px 0 var(--green-dark); }
+.km-deck-row { display:flex; gap:12px; overflow-x:auto; margin:12px -18px 0; padding:2px 18px 8px; scrollbar-width:none; touch-action:pan-x pan-y; scroll-snap-type:x mandatory; scroll-padding:0 18px; }
+.km-deck-row::-webkit-scrollbar { display:none; }
+#knoxMobileHome .km-deck { flex:0 0 140px; scroll-snap-align:start; flex-direction:column; align-items:flex-start; gap:6px; min-height:128px; padding:14px; border-radius:20px; }
+.km-deck-stack { position:relative; width:40px; height:34px; margin-bottom:4px; }
+.km-deck-stack i { position:absolute; inset:0; border-radius:9px; border:2px solid var(--green); background:var(--green-light); }
+.km-deck-stack i:first-child { transform:rotate(-8deg) translate(-3px,2px); opacity:.6; }
+.km-deck-stack i:last-child { box-shadow:0 2px 0 var(--green-dark); }
+#knoxMobileHome .km-deck b { font-size:14px; } #knoxMobileHome .km-deck small { font-weight:800; color:var(--green-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-deck small { color:var(--green); }
+#knoxMobileHome .km-empty { --ledge:var(--green-dark); flex-direction:row; align-items:center; gap:12px; width:100%; padding:16px; text-align:left; font-family:inherit; color:var(--text); border:2px dashed var(--green); background:linear-gradient(160deg, var(--green-light), var(--surface) 75%); border-radius:22px; }
+#knoxMobileHome .km-empty > span:nth-child(2) { flex:1; min-width:0; }
+#knoxMobileHome .km-empty small { display:block; font-size:12.5px; font-weight:700; color:var(--text-light); margin-top:3px; line-height:1.45; }
+#knoxMobileHome .km-empty-small { flex-direction:column; align-items:flex-start; border-color:var(--border); background:var(--surface); }
+#knoxMobileHome .km-recent { border-radius:18px; }
+
+/* Upgrade card: Mega in gold on dark, Plus in green. */
+.km-upsell { --ledge:#8A6200; position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; margin:26px 0 0; padding:18px 16px; border:2px solid #F2B705; border-radius:24px; color:#FFF6D6; text-align:left; font-family:inherit; background:linear-gradient(150deg,#4A3400,#231800); box-shadow:0 5px 0 #8A6200; }
+.km-upsell[data-tier="plus"] { --ledge:#2E7400; border-color:#9BE15D; color:#fff; background:linear-gradient(150deg,#58CC02,#2E8A00); box-shadow:0 5px 0 #2E7400; }
+.km-upsell-shine { position:absolute; inset:0 auto 0 0; width:40%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); animation:kmShine 4s ease-in-out infinite; pointer-events:none; }
+.km-upsell-gem { width:52px; height:52px; flex-shrink:0; display:grid; place-items:center; border-radius:17px; font-size:28px; background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.3); }
+.km-upsell > span:nth-child(3) { flex:1; min-width:0; }
+.km-upsell small { display:block; font-size:10.5px; font-weight:900; letter-spacing:.12em; color:#FFD84D; }
+.km-upsell[data-tier="plus"] small { color:#E3FFC8; }
+.km-upsell b { display:block; font-size:20px; font-weight:900; margin:2px 0; }
+.km-upsell span span { font-size:12.5px; font-weight:700; opacity:.9; }
+.km-upsell-go { width:40px; height:40px; flex-shrink:0; display:grid; place-items:center; border-radius:50%; background:#F2B705; color:#3A2800; }
+.km-upsell[data-tier="plus"] .km-upsell-go { background:#fff; color:#2E8A00; }
+.km-upsell-go svg { width:20px; height:20px; }
+
+/* Bottom bar: a floating dock with the raised camera in the middle. */
+html.native-app { --mobile-tabs:88px; }
+.knox-app-tabs { display:flex!important; align-items:center; gap:2px; left:max(12px,env(safe-area-inset-left)); right:max(12px,env(safe-area-inset-right)); bottom:calc(8px + var(--mobile-safe)); height:70px!important; padding:6px!important; border:2px solid var(--border)!important; border-radius:26px; background:color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter:blur(18px) saturate(1.4); backdrop-filter:blur(18px) saturate(1.4); box-shadow:0 4px 0 var(--border), 0 14px 34px -10px rgba(70,35,0,.28)!important; }
+.knox-app-tabs > button { flex:1; min-width:0; height:100%; }
+html.native-app .knox-app-tabs button, html.native-app .knox-app-tabs button[aria-current="page"] { font-size:11.5px; gap:3px; }
+.knox-app-tabs .km-tab-tile { width:48px; height:32px; }
+.knox-app-tabs .km-tab-tile svg { width:24px; height:24px; }
+.knox-app-tabs button[data-tab="home"] .km-tab-tile, .knox-app-tabs button[data-tab="chat"] .km-tab-tile { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark); }
+.knox-app-tabs .km-tab-snap { flex:0 0 72px; position:relative; align-self:flex-start; height:auto!important; margin-top:-30px; padding:0; border:0; background:transparent!important; color:var(--text-light); }
+.knox-app-tabs .km-tab-snap .km-tab-tile { width:66px; height:66px; border-radius:50%; border:4px solid var(--cream)!important; color:#fff!important; background:linear-gradient(155deg,#FFA040,#FF6B00 55%,#EE4F00)!important; box-shadow:0 4px 0 var(--orange-dark), 0 10px 22px -6px rgba(255,107,0,.7)!important; transform:none!important; transition:transform .12s, box-shadow .12s; }
+.knox-app-tabs .km-tab-snap .km-tab-tile svg { width:30px; height:30px; }
+.knox-app-tabs .km-tab-snap:active .km-tab-tile { transform:translateY(3px)!important; box-shadow:0 1px 0 var(--orange-dark)!important; }
+html.native-app .knox-app-tabs .km-tab-snap { font-size:11.5px; font-weight:900; color:var(--orange-dark); gap:2px; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs .km-tab-snap { color:var(--orange); }
+.knox-native-note { bottom:calc(100px + env(safe-area-inset-bottom)); }
+
+/* Ask / Learn: which mode you're in, top left (tap for Home). */
+.km-mode-chip { --ledge:var(--orange-dark); position:fixed; z-index:117; top:calc(var(--appbar) + var(--safe-top) + 8px); left:max(12px, env(safe-area-inset-left)); display:flex; align-items:center; gap:8px; height:44px; padding:0 14px 0 5px; border-radius:15px; border:2px solid var(--orange); background:var(--surface); color:var(--text); font:900 15px Nunito,sans-serif; box-shadow:0 3px 0 var(--orange-dark), 0 6px 16px rgba(0,0,0,.08); }
+.km-mode-chip[hidden] { display:none!important; }
+.km-mode-chip img { width:32px; height:32px; border-radius:10px; object-fit:cover; }
+.km-mode-chip[data-mode="learn"] { --ledge:var(--purple-dark); border-color:var(--purple); box-shadow:0 3px 0 var(--purple-dark), 0 6px 16px rgba(0,0,0,.08); }
+html.native-app.km-kb .km-mode-chip { top:calc(var(--vvt,0px) + var(--appbar) + 8px); }
+
+/* You: a banner with your picture, then plan, progress and settings. */
+.km-profile { position:relative; margin:-14px -18px 4px; }
+.km-profile-banner { position:relative; height:118px; overflow:hidden; background:linear-gradient(120deg,#FF9A3C,#FF6B00 40%,#E2365F 80%,#8B4FD8); }
+.km-profile-banner span { position:absolute; border-radius:50%; background:rgba(255,255,255,.16); }
+.km-profile-banner span:nth-child(1) { width:140px; height:140px; right:-30px; top:-50px; }
+.km-profile-banner span:nth-child(2) { width:70px; height:70px; left:20px; bottom:-30px; }
+.km-profile-banner span:nth-child(3) { width:22px; height:22px; left:45%; top:22px; background:rgba(255,255,255,.3); }
+#knoxMobileAccount .km-identity { display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; margin:-56px 18px 0; padding:0 0 6px; border:0; background:none; box-shadow:none; }
+#knoxMobileAccount .km-avatar { width:104px; height:104px; border-radius:50%; border:5px solid var(--cream); box-shadow:0 5px 0 var(--orange-dark), 0 0 0 2px var(--orange); font-size:42px; margin-bottom:8px; }
+#knoxMobileAccount .km-identity h1 { font-size:25px; font-weight:900; letter-spacing:-.03em; overflow-wrap:anywhere; }
+#knoxMobileAccount .km-identity p { margin:2px 0 10px; font-size:13px; }
+#knoxMobileAccount .km-identity .km-solid-button { margin-top:14px; box-shadow:0 4px 0 var(--orange-dark); --ledge:var(--orange-dark); }
+#knoxMobileAccount .km-current-plan { display:flex; align-items:center; gap:14px; padding:16px; border-radius:22px; }
+.km-current-gem { width:52px; height:52px; flex-shrink:0; display:grid; place-items:center; font-size:28px; border-radius:17px; background:var(--orange-light); border:1.5px solid var(--orange); }
+.km-current-plan[data-tier="plus"] .km-current-gem { background:var(--green-light); border-color:var(--green); }
+.km-current-plan[data-tier="mega"] .km-current-gem { background:#FFF3C4; border-color:#F2B705; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-current-plan[data-tier="mega"] .km-current-gem { background:rgba(242,183,5,.18); }
+.km-current-copy { flex:1; min-width:0; }
+#knoxMobileAccount .km-current-plan h3 { font-size:20px; margin:1px 0; }
+#knoxMobileAccount .km-plan-cta { width:auto; margin:0; min-height:44px; padding:0 14px; white-space:nowrap; }
+#knoxMobileAccount .km-plan-cta[data-tier="plus"] { --ledge:var(--green-dark); }
+.km-looks .km-look-swatch { display:flex; gap:3px; height:auto; padding:6px; border-radius:12px; border:1.5px solid var(--border); }
+.km-look-swatch i { width:12px; height:22px; border-radius:6px; }
+.km-look-swatch[data-swatch="light"] { background:#FFF8F0; } .km-look-swatch[data-swatch="light"] i:nth-child(1) { background:#FF6B00; } .km-look-swatch[data-swatch="light"] i:nth-child(2) { background:#fff; border:1px solid #E5DCD0; } .km-look-swatch[data-swatch="light"] i:nth-child(3) { background:#58CC02; }
+.km-look-swatch[data-swatch="dark"] { background:#101013; } .km-look-swatch[data-swatch="dark"] i:nth-child(1) { background:#FF6B00; } .km-look-swatch[data-swatch="dark"] i:nth-child(2) { background:#29292E; } .km-look-swatch[data-swatch="dark"] i:nth-child(3) { background:#CE82FF; }
+.km-look-swatch[data-swatch="seasonal"] { background:#F6E6CC; } .km-look-swatch[data-swatch="seasonal"] i:nth-child(1) { background:#B65028; } .km-look-swatch[data-swatch="seasonal"] i:nth-child(2) { background:#E9A23B; } .km-look-swatch[data-swatch="seasonal"] i:nth-child(3) { background:#6B7F2A; }
+#knoxMobileAccount .km-looks small { color:var(--orange-dark); font-size:14px; }
+#knoxMobileAccount .km-looks [data-auto] > span:first-child { font-size:26px; height:36px; display:grid; place-items:center; }
+#knoxMobileAccount .km-reading { margin-top:12px; }
+#knoxMobileAccount .km-draft-note { text-align:center; } #knoxMobileAccount .km-draft-note .km-text-button { min-height:auto; padding:0; font-size:12px; text-decoration:underline; }
+#knoxMobileAccount .km-stat { border-radius:18px; }
+
+/* Plans: a proper paywall. */
+.km-plans { background:var(--cream); }
+.km-pw-hero { position:relative; overflow:hidden; isolation:isolate; padding:calc(54px + env(safe-area-inset-top,0px)) 22px 56px; text-align:center; color:#fff; background:linear-gradient(165deg,#5A3F00,#2A1C00 70%); }
+.km-plans[data-tier="plus"] .km-pw-hero { background:linear-gradient(165deg,#3E9A00,#1D5200 75%); }
+.km-pw-hero::before { content:""; position:absolute; z-index:-1; left:50%; top:30%; width:340px; height:340px; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(255,216,77,.45), transparent 65%); }
+.km-plans[data-tier="plus"] .km-pw-hero::before { background:radial-gradient(circle, rgba(190,255,140,.4), transparent 65%); }
+.km-pw-close { --ledge:rgba(0,0,0,.3); position:absolute; top:calc(12px + env(safe-area-inset-top,0px)); left:14px; width:44px; height:44px; display:grid; place-items:center; padding:0; border-radius:50%; border:2px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; }
+.km-pw-close svg { width:22px; height:22px; }
+.km-pw-sparkles i { position:absolute; width:8px; height:8px; border-radius:50%; background:#FFD84D; box-shadow:0 0 12px #FFD84D; animation:kmTwinkle 2.4s ease-in-out infinite; }
+.km-plans[data-tier="plus"] .km-pw-sparkles i { background:#D7FFB8; box-shadow:0 0 12px #D7FFB8; }
+.km-pw-sparkles i:nth-child(1) { left:14%; top:34%; } .km-pw-sparkles i:nth-child(2) { right:16%; top:26%; animation-delay:.5s; } .km-pw-sparkles i:nth-child(3) { left:24%; bottom:24%; animation-delay:1s; width:5px; height:5px; } .km-pw-sparkles i:nth-child(4) { right:22%; bottom:30%; animation-delay:1.4s; } .km-pw-sparkles i:nth-child(5) { left:50%; top:18%; animation-delay:1.9s; width:5px; height:5px; }
+.km-pw-fox { width:88px; height:88px; border-radius:28px; border:3px solid #FFD84D; box-shadow:0 6px 0 rgba(0,0,0,.35), 0 0 40px rgba(255,216,77,.5); object-fit:cover; transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
+.km-plans[data-tier="plus"] .km-pw-fox { border-color:#B8F28A; box-shadow:0 6px 0 rgba(0,0,0,.3), 0 0 40px rgba(190,255,140,.45); }
+.km-pw-hero h1 { margin:16px 0 8px; font-size:34px; line-height:1.04; font-weight:900; letter-spacing:-.035em; }
+.km-pw-hero h1 span { color:#FFD84D; } .km-plans[data-tier="plus"] .km-pw-hero h1 span { color:#C8FF9E; }
+.km-pw-hero p { max-width:320px; margin:0 auto; font-size:14.5px; font-weight:700; line-height:1.5; opacity:.9; }
+.km-pw-body { position:relative; max-width:560px; margin:-34px auto 0; padding:0 16px calc(30px + env(safe-area-inset-bottom,0px)); }
+.km-pw-switch { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:6px; border-radius:22px; background:var(--surface); border:2px solid var(--border); box-shadow:0 4px 0 var(--border), 0 14px 30px -12px rgba(0,0,0,.25); }
+.km-pw-switch button { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:54px; border:0; border-radius:16px; background:transparent; color:var(--text-light); font:900 15.5px Nunito,sans-serif; }
+.km-pw-switch button small { font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; opacity:.85; }
+.km-pw-switch button[aria-pressed="true"][data-tier="mega"] { background:#F2B705; color:#3A2800; box-shadow:0 3px 0 #C99404; }
+.km-pw-switch button[aria-pressed="true"][data-tier="plus"] { background:var(--green); color:#fff; box-shadow:0 3px 0 var(--green-dark); }
+.km-pw-card { position:relative; margin-top:16px; padding:18px; border-radius:26px; border:2.5px solid #F2B705; background:linear-gradient(170deg,#FFF6D6,var(--surface) 45%); box-shadow:0 6px 0 #C99404; }
+.km-pw-card[data-tier="plus"] { border-color:var(--green); background:linear-gradient(170deg,var(--green-light),var(--surface) 45%); box-shadow:0 6px 0 var(--green-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-pw-card { background:linear-gradient(170deg,rgba(242,183,5,.16),var(--surface) 50%); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-pw-card[data-tier="plus"] { background:linear-gradient(170deg,rgba(88,204,2,.14),var(--surface) 50%); }
+.km-pw-ribbon { position:absolute; top:-14px; left:50%; transform:translateX(-50%); padding:5px 14px; border-radius:999px; background:linear-gradient(90deg,#FF6B00,#E2365F); color:#fff; font-size:11px; font-weight:900; letter-spacing:.1em; white-space:nowrap; box-shadow:0 3px 0 #A81E42; }
+.km-pw-card .km-billing { margin:8px 0 14px; }
+.km-billing button em { font-style:normal; font-size:11px; padding:2px 6px; margin-left:4px; border-radius:6px; background:var(--green); color:#fff; }
+.km-billing button[aria-pressed="true"] em { background:#fff; color:var(--orange-dark); }
+.km-pw-price { display:flex; align-items:baseline; justify-content:center; gap:4px; }
+.km-pw-price b { font-size:48px; font-weight:900; letter-spacing:-.04em; line-height:1; }
+.km-pw-price span { font-size:16px; font-weight:800; color:var(--text-light); }
+.km-pw-sub { margin:6px 0 14px; text-align:center; font-size:13px; font-weight:800; color:var(--text-light); }
+.km-pw-features { list-style:none; display:grid; gap:10px; margin:0 0 18px; padding:0; }
+.km-pw-features li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; font-weight:800; line-height:1.4; }
+.km-pw-features svg { width:22px; height:22px; flex-shrink:0; padding:4px; border-radius:50%; background:#F2B705; color:#3A2800; stroke-width:3.2; }
+.km-pw-card[data-tier="plus"] .km-pw-features svg { background:var(--green); color:#fff; }
+.km-pw-cta { position:relative; overflow:hidden; width:100%; min-height:58px; border-radius:18px; border:2px solid var(--border); background:var(--surface); color:var(--text-light); font:900 17px Nunito,sans-serif; }
+.km-pw-cta.go { --ledge:#9A6B00; border-color:#C99404; background:linear-gradient(180deg,#FFCB2E,#F2B705); color:#3A2800; box-shadow:0 5px 0 #C99404; }
+.km-pw-card[data-tier="plus"] .km-pw-cta.go { --ledge:var(--green-dark); border-color:var(--green-dark); background:linear-gradient(180deg,#6BDD10,var(--green)); color:#fff; box-shadow:0 5px 0 var(--green-dark); }
+.km-pw-cta-shine { position:absolute; inset:0 auto 0 0; width:35%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent); animation:kmShine 3.2s ease-in-out infinite; pointer-events:none; }
+.km-pw-timeline, .km-pw-compare { margin-top:22px; padding:18px; border-radius:24px; border:2px solid var(--border); background:var(--surface); box-shadow:0 4px 0 var(--border); }
+.km-pw-timeline h2, .km-pw-compare h2 { font-size:17px; font-weight:900; margin:0 0 14px; }
+.km-pw-timeline ol { list-style:none; margin:0; padding:0; display:grid; gap:14px; position:relative; }
+.km-pw-timeline ol::before { content:""; position:absolute; left:19px; top:20px; bottom:20px; width:3px; border-radius:3px; background:linear-gradient(#FF6B00,#F2B705); }
+.km-pw-timeline li { position:relative; display:grid; grid-template-columns:40px 1fr; column-gap:12px; align-items:center; }
+.km-pw-timeline li > span { grid-row:span 2; width:40px; height:40px; display:grid; place-items:center; border-radius:50%; background:var(--surface); border:2.5px solid var(--orange); font-size:18px; position:relative; }
+.km-pw-timeline li b { font-size:14.5px; font-weight:900; } .km-pw-timeline li small { font-size:12.5px; font-weight:700; color:var(--text-light); line-height:1.4; }
+.km-pw-table { display:grid; font-size:13px; }
+.km-pw-table > div { display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; align-items:center; border-top:1px solid var(--border); }
+.km-pw-table > div.km-pw-head { border-top:0; }
+.km-pw-table span { padding:10px 4px; text-align:center; font-weight:800; }
+.km-pw-table span[role="rowheader"] { text-align:left; padding-left:0; font-weight:800; color:var(--text-light); }
+.km-pw-head span { display:flex; flex-direction:column; align-items:center; font-size:16px; padding-bottom:6px; }
+.km-pw-head b { font-size:12px; font-weight:900; }
+.km-pw-table span.on { background:color-mix(in srgb, #F2B705 16%, transparent); color:var(--text); font-weight:900; }
+.km-plans[data-tier="plus"] .km-pw-table span.on { background:color-mix(in srgb, var(--green) 14%, transparent); }
+.km-pw-head span.on { border-radius:12px 12px 0 0; } .km-pw-table > div:last-child span.on { border-radius:0 0 12px 12px; }
+.km-pw-yes { display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff; }
+.km-pw-yes svg { width:14px; height:14px; stroke-width:3.4; }
+.km-pw-no { font-style:normal; color:var(--text-light); opacity:.6; }
+.km-pw-fine { margin:12px 0 0; font-size:11.5px; font-weight:700; color:var(--text-light); line-height:1.5; }
+.km-plans .km-plan-manage { margin-top:18px; }
+.km-plans .km-plan-note { margin-top:16px; font-weight:800; }
+
+@media (min-width:700px) {
+  #knoxMobileHome .km-tools { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .km-hero { padding:26px 24px 22px; } .km-hero-row { grid-template-columns:1fr 1fr; }
+}
+@media (max-width:350px) {
+  .km-hero-fox { width:66px; height:66px; border-radius:22px; }
+  .km-hero-snap b { font-size:16px; } .km-hero-snap small { display:none; }
+  .km-today { grid-template-columns:1fr; }
+  .knox-app-tabs .km-tab-snap { flex-basis:62px; } .knox-app-tabs .km-tab-snap .km-tab-tile { width:58px; height:58px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .km2 .km-rise, .km-hero-fox, .km-pw-fox, .km-upsell-shine, .km-pw-cta-shine, .km-pw-sparkles i { animation:none!important; }
+}
+.km2 [hidden] { display:none!important; }
+.km-join { --ledge:var(--orange-dark); display:flex; align-items:center; gap:12px; width:100%; padding:14px; border-radius:22px; border:2px solid var(--orange); background:var(--surface); color:var(--text); text-align:left; font-family:inherit; box-shadow:0 4px 0 var(--orange-dark); }
+.km-join > span:nth-child(2) { flex:1; min-width:0; }
+.km-join b { display:block; font-size:17px; font-weight:900; } .km-join small { display:block; font-size:12.5px; font-weight:700; color:var(--text-light); margin-top:2px; line-height:1.4; }
+.km-join-gem { width:48px; height:48px; flex-shrink:0; display:grid; place-items:center; border-radius:16px; background:var(--orange-light); border:1.5px solid var(--orange); font-size:26px; }
+.km-join-go { width:40px; height:40px; flex-shrink:0; display:grid; place-items:center; border-radius:50%; background:var(--orange); color:#fff; box-shadow:0 3px 0 var(--orange-dark); }
+.km-join-go svg { width:20px; height:20px; }
+#kmIdentity { position:relative; z-index:1; }
+.km-plans > * { flex-shrink:0; }

@@ -98,8 +98,8 @@
       if (step.target?.includes('.fc-nav')) step.target = '.knox-app-tabs [data-tab="flashcards"]';
       if (step.target?.includes('data-nav="calculator"')) { step.target = '.knox-app-tabs [data-tab="home"]'; step.text = 'Calculator lives on Home and beside your typing area. Work out the numbers, then tap Explain it to learn why.'; }
       if (step.target === '#inputOuter') step.target = '.knox-app-tabs [data-tab="chat"]';
-      if (step.target?.includes('#sidebarControlsSlot') || step.target?.includes('#appUpgradeBtn')) { step.target = '.knox-app-tabs [data-tab="account"]'; if (step.title !== 'Meet Mega Knox') step.text = 'Open You for your account, plan, questions, streak and calendar. Choose your favorite appearance there too.'; }
-      if (step.title === 'You’re all set!') step.text = 'Open You for settings, your streak, appearance and Help & support. Home keeps your recent work and study tools together.';
+      if (step.target?.includes('#sidebarControlsSlot') || step.target?.includes('#appUpgradeBtn')) { step.target = '.knox-app-tabs [data-tab="home"]'; if (step.title !== 'Meet Mega Knox') step.text = 'Tap your picture at the top of Home for your account, plan, progress and badges. Choose your favorite look there too.'; }
+      if (step.title === 'You’re all set!') step.text = 'Tap your picture on Home for settings, your streak, appearance and Help & support. The orange camera button snaps a question from anywhere.';
       if (window.knoxNativeApp) {
         delete step.extra;
         if (step.title === 'Meet Mega Knox') step.text = 'Your Knox plan follows your account. Sign in with the same account you use on your other devices.';

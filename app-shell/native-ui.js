@@ -131,6 +131,10 @@ document.body.prepend(bar);
 // Full screen: the header is gone. Ask/Learn keep History and New as two small
 // floating buttons; Home shows the logo, flame and profile in the page itself.
 const float=document.createElement('div');float.className='km-float';float.append(...bar.querySelectorAll('[data-study-action]'));document.body.append(float);
+// Top left in Ask / Learn: which mode you're in; tap to go Home.
+const modeChip=document.createElement('button');modeChip.type='button';modeChip.className='km-mode-chip km-press';modeChip.hidden=true;
+modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
+modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
 const strip=document.createElement('div');strip.className='km-statusfill';strip.setAttribute('aria-hidden','true');document.body.prepend(strip);
 const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
 bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
@@ -146,6 +150,7 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  float.hidden=!study;float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
+ modeChip.hidden=!study;modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  bar.querySelector('[data-go="account"]').hidden=study;
@@ -178,8 +183,12 @@ const initialSurface=entryTarget==='account'?'account':'home';
 const deepStudy=['learn','calculator','flashcards'].includes(entryTarget);
 window.knoxMobileReveal=()=>{if(document.body.classList.contains('app-auth-pending')&&!deepStudy)return;surface(null);};
 const nav=document.createElement('nav');nav.className='knox-app-tabs';nav.setAttribute('aria-label','Main navigation');
-for(const [target,label] of [['home','Home'],['chat','Ask'],['learn','Learn'],['flashcards','Cards'],['account','You']]){
- const b=button(nav,label,()=>navigate(target));b.dataset.tab=target;
+// Home · Ask · 📷 Snap (raised, like other study apps) · Learn · Cards. You is the
+// profile picture on Home.
+icons.camera='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3.5"/>';
+async function snap(){if(await navigate('chat'))openCamera();}
+for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Cards']]){
+ const b=button(nav,label,()=>target==='camera'?snap():navigate(target));b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
