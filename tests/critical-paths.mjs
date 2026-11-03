@@ -2072,7 +2072,7 @@ test('Mega "Search the web" uses hosted web search with sources; other plans and
   const search = calls.find(call => call.url.endsWith('/responses'));
   assert.deepEqual(search.body.tools, [{ type: 'web_search' }]);
   assert.match(JSON.stringify(search.body.input), /Never tell them to go to a library/);
-  assert.match(res.body.answer, /### Sources\n- \[Real Book page\]\(https:\/\/example\.org\/real_book\?a=1&b=2\)$/);
+  assert.match(res.body.answer, /🌐 Searched the web\n- \[Real Book page\]\(https:\/\/example\.org\/real_book\?a=1&b=2\)$/);
   assert.doesNotMatch(res.body.answer, /javascript:|dup/);
 
   searchFails = true; res = response();

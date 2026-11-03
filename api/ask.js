@@ -1362,7 +1362,7 @@ export default async function handler(req, res) {
     answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
     // Sources go after the LaTeX cleanup so nothing in a link gets rewritten.
     if (searched?.sources.length) {
-      answer = answer.trim() + '\n\n### Sources\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n');
+      answer = answer.trim() + '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n');
     }
 
     if (learnMode && !casual) Object.assign(lessonState, correctedLessonState(answer, lessonState));
