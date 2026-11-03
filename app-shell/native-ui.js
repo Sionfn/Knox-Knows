@@ -334,11 +334,26 @@ for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
 // One colored highlight glides to the tab you're on; the tapped icon gives a small pop.
+const fade=document.createElement('div');fade.className='km-dock-fade';fade.setAttribute('aria-hidden','true');nav.before(fade);
 const glider=document.createElement('span');glider.className='km-tab-glider';glider.setAttribute('aria-hidden','true');nav.prepend(glider);
-function moveGlider(){const a=nav.querySelector('button[aria-current="page"]:not(.km-tab-snap)'),t=a?.querySelector('.km-tab-tile');if(!t||!nav.offsetWidth){glider.style.opacity='0';return;}const n=nav.getBoundingClientRect(),r=t.getBoundingClientRect();glider.style.width=r.width+'px';glider.style.height=r.height+'px';glider.style.transform='translate('+(r.left-n.left-nav.clientLeft)+'px,'+(r.top-n.top-nav.clientTop)+'px)';glider.dataset.tab=a.dataset.tab;glider.style.opacity='1';}
+function moveGlider(){const a=nav.querySelector('button[aria-current="page"]:not(.km-tab-snap)'),t=a?.querySelector('.km-tab-tile');if(!t||!nav.offsetWidth){glider.style.opacity='0';return;}const n=nav.getBoundingClientRect(),r=t.getBoundingClientRect();glider.style.width=r.width+'px';glider.style.height=r.height+'px';glider.style.transform='translate('+(r.left-n.left-nav.clientLeft)+'px,'+(r.top-n.top-nav.clientTop)+'px)';glider.dataset.at=a.dataset.tab;glider.style.opacity='1';}
 new ResizeObserver(moveGlider).observe(nav);
 nav.addEventListener('click',e=>{const t=e.target.closest('button')?.querySelector('.km-tab-tile');if(!t)return;t.classList.remove('km-pop');void t.offsetWidth;t.classList.add('km-pop');});
 nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
+// Liquid Glass: hold the island and slide. A glass lens follows your finger, takes
+// the color of the tab under it, and lifting your finger opens that tab.
+{
+ const tabs=()=>[...nav.querySelectorAll('button[data-tab]:not(.km-tab-snap):not([hidden])')];
+ const under=x=>{let best=null,d=1e9;for(const b of tabs()){const r=b.getBoundingClientRect(),c=(r.left+r.right)/2;if(Math.abs(x-c)<d){d=Math.abs(x-c);best=b;}}return best;};
+ let press=null,hold=0,suppress=false;
+ const lens=x=>{const n=nav.getBoundingClientRect(),list=tabs(),first=list[0]?.querySelector('.km-tab-tile').getBoundingClientRect(),last=list.at(-1)?.querySelector('.km-tab-tile').getBoundingClientRect();if(!first)return;const w=glider.offsetWidth,cx=Math.min(Math.max(x,(first.left+first.right)/2),(last.left+last.right)/2);glider.style.transform='translate('+(cx-w/2-n.left-nav.clientLeft)+'px,'+(first.top-n.top-nav.clientTop)+'px)';const b=under(x);if(b&&b.dataset.tab!==press.tab){press.tab=b.dataset.tab;glider.dataset.at=b.dataset.tab;quiet(p.haptics.selectionChanged());}};
+ const start=()=>{if(!press||press.drag)return;press.drag=true;nav.classList.add('km-lensing');glider.style.opacity='1';lens(press.x);quiet(p.haptics.selectionChanged());};
+ nav.addEventListener('pointerdown',e=>{const b=e.target.closest('button[data-tab]');if(!b||b.classList.contains('km-tab-snap')||e.button>0)return;press={x:e.clientX,x0:e.clientX,id:e.pointerId,tab:glider.dataset.at,drag:false};try{nav.setPointerCapture(e.pointerId);}catch{}clearTimeout(hold);hold=setTimeout(start,220);});
+ nav.addEventListener('pointermove',e=>{if(!press||e.pointerId!==press.id)return;press.x=e.clientX;if(!press.drag&&Math.abs(e.clientX-press.x0)>10)start();if(press.drag){e.preventDefault();lens(e.clientX);}});
+ const end=e=>{clearTimeout(hold);if(!press)return;const was=press;press=null;nav.classList.remove('km-lensing');if(!was.drag)return;suppress=true;setTimeout(()=>{suppress=false;},400);const b=e.type==='pointercancel'?null:under(was.x);if(b&&b.getAttribute('aria-current')!=='page'){b.querySelector('.km-tab-tile')?.classList.add('km-pop');b.onclick?.();}moveGlider();};
+ nav.addEventListener('pointerup',end);nav.addEventListener('pointercancel',end);
+ nav.addEventListener('click',e=>{if(suppress){e.stopImmediatePropagation();e.preventDefault();suppress=false;}},true);
+}
 async function navigate(target){
  if(busy)return false;
  if(target===current){

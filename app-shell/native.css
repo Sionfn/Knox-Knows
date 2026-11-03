@@ -1309,9 +1309,9 @@ html.native-app:not(.native-keyboard) .knox-app-tabs { animation:kmDockIn .3s cu
 html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { background:color-mix(in srgb,var(--surface) 58%,transparent)!important; border-color:rgba(255,255,255,.12)!important; box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08)!important; }
 .knox-app-tabs > button { position:relative; z-index:1; }
 .km-tab-glider { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); position:absolute; left:0; top:0; z-index:0; border-radius:12px; background:var(--c-light); border:2px solid var(--c); box-shadow:0 3px 0 var(--c-dark); opacity:0; pointer-events:none; transition:transform .38s cubic-bezier(.3,1.35,.5,1), width .3s, height .3s, background-color .25s, border-color .25s, box-shadow .25s, opacity .2s; }
-.km-tab-glider[data-tab="chat"] { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark); }
-.km-tab-glider[data-tab="learn"] { --c:var(--purple); --c-light:var(--purple-light); --c-dark:var(--purple-dark); }
-.km-tab-glider[data-tab="flashcards"] { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
+.km-tab-glider[data-at="chat"] { --c:var(--orange); --c-light:var(--orange-light); --c-dark:var(--orange-dark); }
+.km-tab-glider[data-at="learn"] { --c:var(--purple); --c-light:var(--purple-light); --c-dark:var(--purple-dark); }
+.km-tab-glider[data-at="flashcards"] { --c:var(--green); --c-light:var(--green-light); --c-dark:var(--green-dark); }
 /* The glider is the highlight now; the tiles themselves stay plain. */
 .knox-app-tabs button:not(.km-tab-snap) .km-tab-tile, .knox-app-tabs button[aria-current="page"]:not(.km-tab-snap) .km-tab-tile { background:transparent!important; border-color:transparent!important; box-shadow:none!important; transform:none; }
 .knox-app-tabs button:not([aria-current="page"]):not(.km-tab-snap) .km-tab-tile { color:color-mix(in srgb,var(--c) 75%,var(--text-light)); }
@@ -1330,3 +1330,14 @@ html.native-app body.knox-flashcards #flashcardsPanel .fc-scroll { padding-botto
    and the icons stay crisp. */
 .knox-app-tabs { background:color-mix(in srgb,var(--surface) 84%,transparent)!important; -webkit-backdrop-filter:blur(30px) saturate(1.9); backdrop-filter:blur(30px) saturate(1.9); border:1.5px solid color-mix(in srgb,var(--border) 70%,#fff)!important; box-shadow:0 12px 34px rgba(60,35,10,.2), 0 2px 6px rgba(60,35,10,.08), inset 0 1px 0 rgba(255,255,255,.7)!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { background:color-mix(in srgb,var(--surface) 82%,transparent)!important; }
+
+/* Liquid Glass lens while you hold and drag the island. */
+.knox-app-tabs { touch-action:none; -webkit-user-select:none; user-select:none; }
+.knox-app-tabs.km-lensing .km-tab-glider { transition:background-color .2s, border-color .2s, box-shadow .2s; scale:1.28; background:color-mix(in srgb,var(--c-light) 45%,rgba(255,255,255,.35)); border:1.5px solid rgba(255,255,255,.85); box-shadow:0 8px 22px rgba(0,0,0,.18), inset 0 1px 1px rgba(255,255,255,.9), inset 0 -2px 6px color-mix(in srgb,var(--c) 30%,transparent); -webkit-backdrop-filter:blur(3px) saturate(1.6); backdrop-filter:blur(3px) saturate(1.6); }
+.km-tab-glider { scale:1; transition:transform .38s cubic-bezier(.3,1.35,.5,1), scale .25s cubic-bezier(.3,1.4,.5,1), width .3s, height .3s, background-color .25s, border-color .25s, box-shadow .25s, opacity .2s; }
+.knox-app-tabs.km-lensing button:not(.km-tab-snap) .km-tab-tile { transition:transform .2s; }
+/* A clear, short frosted fade behind the island so the page doesn't show around
+   its sides (smaller and see-through, unlike the old cream strip). */
+.km-dock-fade { position:fixed; left:0; right:0; bottom:0; height:calc(64px + var(--mobile-safe)); z-index:109; pointer-events:none; background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--cream) 72%,transparent) 60%); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); -webkit-mask-image:linear-gradient(to bottom,transparent,#000 50%); mask-image:linear-gradient(to bottom,transparent,#000 50%); }
+html.native-keyboard .km-dock-fade { display:none; }
+@media (prefers-reduced-motion:reduce) { .knox-app-tabs.km-lensing .km-tab-glider { scale:1.1; } }
