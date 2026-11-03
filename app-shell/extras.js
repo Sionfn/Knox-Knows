@@ -13,12 +13,42 @@ const model=w.knoxStudyModel;if(!model)return;
 let progressStorage;try{progressStorage=localStorage;}catch{progressStorage={getItem:()=>null,setItem(){throw Error();}};}
 const activity=model.createProgress(progressStorage);
 
+// ── Auto-pick: find the question in a photo (like Quizard). It looks for the
+// block of writing nearest the middle (or inside the camera frame the student
+// aimed with), so the crop box starts around it for library photos. The student can
+// drag it or tap Whole photo. A camera frame the student aimed is kept as is.
+function detectQuestion(img,frame){
+ try{
+  const W=Math.min(360,img.naturalWidth),H=Math.max(1,Math.round(img.naturalHeight*W/img.naturalWidth));
+  const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,W,H);
+  const d=g.getImageData(0,0,W,H).data,L=new Float32Array(W*H);
+  for(let i=0;i<W*H;i++)L[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+  const C=6,cw=Math.ceil(W/C),ch=Math.ceil(H/C),cell=new Uint16Array(cw*ch);
+  const fx0=frame?Math.max(1,Math.floor(frame.x*W)):1,fy0=frame?Math.max(1,Math.floor(frame.y*H)):1,fx1=frame?Math.min(W-1,Math.ceil((frame.x+frame.w)*W)):W-1,fy1=frame?Math.min(H-1,Math.ceil((frame.y+frame.h)*H)):H-1;
+  for(let y=fy0;y<fy1;y++)for(let x=fx0;x<fx1;x++){const i=y*W+x;if(Math.abs(L[i+1]-L[i-1])+Math.abs(L[i+W]-L[i-W])>48)cell[(y/C|0)*cw+(x/C|0)]++;}
+  const on=new Uint8Array(cw*ch);for(let i=0;i<on.length;i++)on[i]=cell[i]>=3?1:0;
+  // Group writing that sits close together (same line, or the next line).
+  const comp=new Int32Array(cw*ch).fill(-1),boxes=[];
+  for(let i=0;i<on.length;i++){if(!on[i]||comp[i]>=0)continue;const id=boxes.length,b={x0:1e9,y0:1e9,x1:-1,y1:-1,n:0};boxes.push(b);const q=[i];comp[i]=id;
+   while(q.length){const k=q.pop(),kx=k%cw,ky=k/cw|0;b.n++;b.x0=Math.min(b.x0,kx);b.x1=Math.max(b.x1,kx);b.y0=Math.min(b.y0,ky);b.y1=Math.max(b.y1,ky);
+    for(let dy=-2;dy<=2;dy++)for(let dx=-4;dx<=4;dx++){const nx=kx+dx,ny=ky+dy;if(nx<0||ny<0||nx>=cw||ny>=ch)continue;const j=ny*cw+nx;if(on[j]&&comp[j]<0){comp[j]=id;q.push(j);}}}}
+  const cx=frame?(frame.x+frame.w/2)*cw:cw/2,cy=frame?(frame.y+frame.h/2)*ch:ch/2;
+  let best=null,score=-1;
+  for(const b of boxes){if(b.n<6)continue;const dx=Math.max(b.x0-cx,0,cx-b.x1)/cw,dy=Math.max(b.y0-cy,0,cy-b.y1)/ch,s=Math.sqrt(b.n)/(1+8*(dx+dy));if(s>score){score=s;best=b;}}
+  if(!best)return frame||null;
+  const pad=1.5,box={x:Math.max(0,(best.x0-pad)/cw),y:Math.max(0,(best.y0-pad)/ch)};box.w=Math.min(1-box.x,(best.x1+1+pad)/cw-box.x);box.h=Math.min(1-box.y,(best.y1+1+pad)/ch-box.y);
+  if(box.w*box.h<.02||box.w*box.h>.97)return frame||null;
+  return box;
+ }catch{return frame||null;}
+}
+w.knoxDetectQuestion=detectQuestion;
+
 // Photo review starts with the whole image. Cropping is an explicit choice;
 // an aimed camera frame is preserved exactly rather than guessed a second time.
 let cancelCrop=null;
 w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
  cancelCrop?.();const owner=uid(),viewVersion=w._appViewVersion,previous=document.activeElement;
- let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0;
+ let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0,found=false;
  const cropBounds=rect=>model.cropBounds(rect,.02);
  let cropped=!!options.frame,r=cropBounds(options.frame||{x:0,y:0,w:1,h:1});
  const url=URL.createObjectURL(file),img=new Image();
@@ -30,6 +60,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
  img.onerror=()=>{if(alive())note('This photo could not be opened. Choose another picture.');cancel();};
  img.onload=()=>{
   if(!alive())return cancel();
+  if(!options.frame){const auto=detectQuestion(img,null);if(auto){r=cropBounds(auto);cropped=found=true;}}
   document.activeElement?.blur();
   sheet=document.createElement('dialog');sheet.className='km-photo-review';sheet.setAttribute('aria-labelledby','kmPhotoTitle');
   sheet.innerHTML='<header class="km-photo-header"><button type="button" data-photo="cancel" aria-label="Cancel photo">Cancel</button><h2 id="kmPhotoTitle">Review photo</h2><span aria-hidden="true"></span></header><p class="km-photo-tip" id="kmPhotoTip">Check that your question is clear. Crop only if you need to.</p><div class="km-photo-stage"><img alt="Photo you selected"><div class="km-photo-box" aria-hidden="true"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><div class="km-photo-tools"><button type="button" data-photo="crop" aria-pressed="false">Crop</button><button type="button" data-photo="rotate">Rotate</button><button type="button" data-photo="reset">Whole photo</button></div><details class="km-photo-adjust" hidden><summary>Adjust selection</summary><div class="km-photo-ranges">'+[['x','Left'],['y','Top'],['w','Width'],['h','Height']].map(([id,name])=>'<label>'+name+'<input type="range" min="0" max="100" step="1" data-range="'+id+'" aria-label="Selection '+name.toLowerCase()+'"></label>').join('')+'</div></details><footer class="km-photo-footer"><p role="status">Nothing is sent until you tap Send in your question.</p><button type="button" class="go" data-photo="use">Use photo</button></footer>';
@@ -41,22 +72,22 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    Object.assign(view.style,{width:img.naturalWidth*fit.scale+'px',height:img.naturalHeight*fit.scale+'px',left:(stage.clientWidth-img.naturalWidth*fit.scale)/2+'px',top:(stage.clientHeight-img.naturalHeight*fit.scale)/2+'px',transform:'rotate('+rotation+'deg)'});
    Object.assign(box.style,{left:fit.x+r.x*fit.w+'px',top:fit.y+r.y*fit.h+'px',width:r.w*fit.w+'px',height:r.h*fit.h+'px'});
    stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?'Preparing photo…':cropped?'Use crop':'Use photo';
-   sheet.querySelector('#kmPhotoTip').textContent=cropped?'Drag the selection or its corners. Keep the full question inside.':'Check that your question is clear. Crop only if you need to.';
+   sheet.querySelector('#kmPhotoTip').textContent=found&&cropped?'✨ Knox found your question. Drag to change it, or tap Whole photo.':cropped?'Drag the selection or its corners. Keep the full question inside.':'Check that your question is clear. Crop only if you need to.';
    for(const input of sheet.querySelectorAll('[data-range]')){const k=input.dataset.range;input.min=k==='w'||k==='h'?'2':'0';input.max=String(Math.round(100*(k==='x'?1-r.w:k==='y'?1-r.h:k==='w'?1-r.x:1-r.y)));input.value=String(Math.round(r[k]*100));input.setAttribute('aria-valuetext',input.value+' percent');}
   }
   const scheduleDraw=()=>{if(!drawFrame)drawFrame=requestAnimationFrame(()=>{drawFrame=0;draw();});};
   resize=new ResizeObserver(draw);resize.observe(stage);requestAnimationFrame(draw);
   sheet.addEventListener('input',e=>{const k=e.target.dataset.range;if(!k||exporting)return;r=cropBounds({...r,[k]:Number(e.target.value)/100});draw();});
   box.addEventListener('pointerdown',e=>{if(exporting||e.isPrimary===false)return;e.preventDefault();try{box.setPointerCapture(e.pointerId);}catch{}drag={h:e.target.dataset.h||'move',x:e.clientX,y:e.clientY,r:{...r}};});
-  box.addEventListener('pointermove',e=>{if(!drag||!fit?.w||!fit?.h)return;const dx=(e.clientX-drag.x)/fit.w,dy=(e.clientY-drag.y)/fit.h,o=drag.r;let n={...o};
+  box.addEventListener('pointermove',e=>{if(!drag||!fit?.w||!fit?.h)return;found=false;const dx=(e.clientX-drag.x)/fit.w,dy=(e.clientY-drag.y)/fit.h,o=drag.r;let n={...o};
    if(drag.h==='move'){n.x=Math.min(1-o.w,Math.max(0,o.x+dx));n.y=Math.min(1-o.h,Math.max(0,o.y+dy));}
    else{if(drag.h.includes('w')){n.x=Math.min(o.x+o.w-.02,Math.max(0,o.x+dx));n.w=o.w+o.x-n.x;}if(drag.h.includes('e'))n.w=Math.min(1-o.x,Math.max(.02,o.w+dx));if(drag.h.includes('n')){n.y=Math.min(o.y+o.h-.02,Math.max(0,o.y+dy));n.h=o.h+o.y-n.y;}if(drag.h.includes('s'))n.h=Math.min(1-o.y,Math.max(.02,o.h+dy));}r=cropBounds(n);scheduleDraw();});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])box.addEventListener(event,()=>{drag=null;});
   sheet.addEventListener('click',e=>{
    const a=e.target.closest('[data-photo]')?.dataset.photo;if(!a)return;if(!alive())return cancel();if(a==='cancel')return cancel();if(exporting)return;
-   if(a==='crop'){cropped=!cropped;if(cropped&&r.w===1&&r.h===1)r=cropBounds({x:.04,y:.04,w:.92,h:.92});draw();return;}
-   if(a==='rotate'){rotation=(rotation+90)%360;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
-   if(a==='reset'){rotation=0;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
+   if(a==='crop'){cropped=!cropped;found=false;if(cropped&&r.w===1&&r.h===1)r=cropBounds({x:.04,y:.04,w:.92,h:.92});draw();return;}
+   if(a==='rotate'){found=false;rotation=(rotation+90)%360;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
+   if(a==='reset'){found=false;rotation=0;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
    if(a!=='use')return;if(!cropped&&rotation===0)return done(file);
    exporting=true;sheet.querySelectorAll('button,input').forEach(b=>{if(b.dataset.photo!=='cancel')b.disabled=true;});draw();
    try{
