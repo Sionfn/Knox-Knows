@@ -217,7 +217,7 @@ function addMenu(){
 }
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
-{const box=$('appChatInput');let off=0;box?.addEventListener('focus',()=>{clearTimeout(off);document.documentElement.classList.add('km-typing');});box?.addEventListener('blur',()=>{off=setTimeout(()=>document.documentElement.classList.remove('km-typing'),150);});}
+{const box=$('appChatInput');let off=0;box?.addEventListener('focus',()=>{clearTimeout(off);document.documentElement.classList.add('km-typing');});box?.addEventListener('blur',()=>{off=setTimeout(()=>document.documentElement.classList.remove('km-typing'),0);});}
 const inputBox=$('inputBox');
 if(inputBox&&!inputBox.querySelector('.km-plus')){
  const plus=document.createElement('button');plus.type='button';plus.className='km-plus km-press';plus.setAttribute('aria-label','Add a photo, file or calculator');plus.innerHTML=SVG(PIC.plus);
