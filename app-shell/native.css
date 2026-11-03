@@ -1184,3 +1184,47 @@ html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-resume-badge { c
 #knoxMobileHome .km-review-hero.due { background:var(--surface); }
 #knoxMobileHome .km-review-count { background:var(--green-light); color:var(--green-dark); border:3px solid var(--green); box-shadow:0 3px 0 var(--green); }
 html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-review-count { color:var(--green); }
+
+/* ═══ Home zones ═══════════════════════════════════════════════════════════
+   Each part of Home has its own shape so it reads as a few clear areas, not one
+   stack of look-alike boxes: the orange hero · one Today panel · round tool
+   shortcuts · grouped lists (ideas, review, recent) with rows inside one card. */
+#knoxMobileHome section + section, #knoxMobileHome .km-today-panel { margin-top:26px; }
+/* Today: streak | goal side by side, "pick up where you left off" along the bottom. */
+.km-today-panel { border:2px solid var(--border); border-radius:24px; background:var(--surface); box-shadow:0 4px 0 var(--border); overflow:hidden; }
+.km-today-panel:has(> .km-today[hidden]):has(> #kmResume:empty) { display:none; }
+#knoxMobileHome .km-today-panel .km-today { gap:0; margin:0; }
+#knoxMobileHome .km-today-panel :is(.km-streak-card,.km-goal) { border:0!important; border-radius:0; box-shadow:none!important; background:transparent!important; min-height:0; padding:16px; }
+#knoxMobileHome .km-today-panel .km-goal { border-left:2px solid var(--border)!important; }
+#knoxMobileHome .km-today-panel .km-streak-card.lit .km-streak-flame { box-shadow:0 3px 0 var(--orange-dark); }
+#knoxMobileHome .km-today-panel #kmResume:not(:empty) { border-top:2px solid var(--border); }
+#knoxMobileHome .km-today-panel .km-today[hidden] + #kmResume { border-top:0; }
+#knoxMobileHome .km-today-panel .km-resume { margin:0; border:0!important; border-radius:0; box-shadow:none!important; padding:14px 16px; background:color-mix(in srgb,var(--purple-light) 45%,var(--surface))!important; animation:none; }
+#knoxMobileHome .km-today-panel .km-resume-badge { width:42px; height:42px; }
+#knoxMobileHome .km-today-panel .km-resume-go { width:36px; height:36px; }
+/* Study tools: a row of round shortcuts (like app icons), not more cards. */
+#knoxMobileHome .km-bubbles { grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:14px; }
+#knoxMobileHome .km-bubble { flex-direction:column; align-items:center; gap:8px; min-height:0; padding:4px 0; border:0; background:transparent; box-shadow:none; text-align:center; }
+#knoxMobileHome .km-bubble:active { transform:translateY(2px); box-shadow:none; }
+#knoxMobileHome .km-bubble .km-chip-circle { width:62px; height:62px; border-width:3px; box-shadow:0 4px 0 var(--chip-ledge); }
+#knoxMobileHome .km-bubble .km-chip-circle svg { width:28px; height:28px; }
+#knoxMobileHome .km-bubble .km-chip-copy { align-items:center; }
+#knoxMobileHome .km-bubble .km-chip-copy b { font-size:12.5px; text-transform:none; letter-spacing:0; }
+#knoxMobileHome .km-bubble .km-chip-copy small { display:none; }
+/* Grouped lists: one card, rows separated by lines; the colored circles keep each row's color. */
+#knoxMobileHome :is(.km-ideas,.km-recent-list), #knoxMobileHome #kmReview:has(.km-review-hero) { display:block; margin-top:12px; border:2px solid var(--border); border-radius:22px; background:var(--surface); box-shadow:0 4px 0 var(--border); overflow:hidden; }
+#knoxMobileHome :is(.km-ideas,.km-recent-list,#kmReview) > :is(button,.km-review-hero) + :is(button,div), #knoxMobileHome #kmReview .km-deck-list > button { border-top:1.5px solid var(--border)!important; }
+#knoxMobileHome :is(.km-idea,.km-recent,.km-deck,.km-review-hero) { width:100%; margin:0; border:0!important; border-radius:0!important; box-shadow:none!important; background:transparent!important; min-height:64px; }
+#knoxMobileHome :is(.km-idea,.km-recent,.km-deck):active { transform:none; background:color-mix(in srgb,var(--border) 35%,transparent)!important; }
+#knoxMobileHome .km-idea .km-chip-circle { width:42px; height:42px; box-shadow:0 2px 0 var(--chip); }
+#knoxMobileHome .km-idea .km-chip-circle svg { width:20px; height:20px; }
+#knoxMobileHome #kmReview .km-deck-list { display:block; margin:0; }
+#knoxMobileHome #kmReview .km-review-hero { padding:14px 16px; }
+#knoxMobileHome .km-recent-list { padding:0; }
+/* "Show all" becomes the group's last row. */
+#knoxMobileHome .km-list:has(+ .km-show-all), #knoxMobileHome #kmReview .km-deck-list:has(+ .km-show-all) { border-bottom-left-radius:0; border-bottom-right-radius:0; }
+#knoxMobileHome .km-ideas + .km-show-all { margin:-2px 0 0; border:2px solid var(--border); border-top:1.5px solid var(--border); border-radius:0 0 22px 22px; box-shadow:0 4px 0 var(--border); }
+#knoxMobileHome .km-ideas:has(+ .km-show-all) { box-shadow:none; border-bottom:0; }
+#knoxMobileHome #kmReview .km-show-all { margin:0; border:0; border-top:1.5px solid var(--border); border-radius:0; box-shadow:none; background:transparent; }
+/* Home in the dock is blue (orange is Ask Knox, like the website). */
+.knox-app-tabs button[data-tab="home"] .km-tab-tile { --c:var(--blue); --c-light:var(--blue-light); --c-dark:var(--blue-dark); }
