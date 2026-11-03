@@ -1351,3 +1351,17 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { --island:color-mix(
 .knox-app-tabs .km-tab-snap::before { content:""; position:absolute; z-index:-1; left:50%; top:-7px; width:76px; height:76px; margin-left:-38px; border-radius:50%; background:var(--island); border:1.5px solid var(--island-line); box-sizing:border-box; clip-path:inset(0 0 calc(100% - 31px) 0); pointer-events:none; }
 /* Dragging uses the same highlight look as tapping (no glass lens). */
 .knox-app-tabs.km-lensing .km-tab-glider { scale:1; background:var(--c-light); border:2px solid var(--c); box-shadow:0 3px 0 var(--c-dark); -webkit-backdrop-filter:none; backdrop-filter:none; transition:transform .28s cubic-bezier(.3,1.35,.5,1), background-color .2s, border-color .2s, box-shadow .2s; }
+
+/* ═══ Island, option D ══════════════════════════════════════════════════════
+   Four tabs in the island and Snap as its own round button beside it (like
+   iOS 26). The cream backing stays so the sides never show. */
+.knox-app-tabs { right:calc(max(12px,env(safe-area-inset-right)) + 80px)!important; }
+.knox-app-tabs .km-tab-snap { position:absolute!important; top:50%; right:-80px; width:70px; height:70px!important; margin:-35px 0 0!important; padding:0!important; flex:none!important; font-size:0!important; gap:0!important; z-index:2; }
+.knox-app-tabs .km-tab-snap::before { content:none!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile { width:70px!important; height:70px!important; border:0!important; border-radius:50%!important; box-shadow:0 4px 0 var(--orange-dark), 0 8px 18px rgba(244,119,33,.3)!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile svg { width:30px; height:30px; }
+.knox-app-tabs .km-tab-snap:active .km-tab-tile { transform:translateY(3px)!important; box-shadow:0 1px 0 var(--orange-dark)!important; }
+@media (max-width:350px) { .knox-app-tabs { right:calc(12px + 70px)!important; } .knox-app-tabs .km-tab-snap { right:-70px; width:60px; height:60px!important; margin-top:-30px!important; } .knox-app-tabs .km-tab-snap .km-tab-tile { width:60px!important; height:60px!important; } }
+/* Nothing rises above the island now, so the typing bar can sit closer to it. */
+html.native-app { --mobile-tabs:88px; }
+html.native-app.native-keyboard { --mobile-tabs:0px; }
