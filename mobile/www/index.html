@@ -4996,9 +4996,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     html += '</div>';
     // In the app: one tap to keep studying from this answer.
     if (window.knoxAppShell && showFeedback) html += '<div class="km-answer-actions">' +
-      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'simpler\')">🪄 Explain simpler</button>' +
-      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'similar\')">🔁 Similar problem</button>' +
-      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'cards\')">🃏 Make flashcards</button></div>';
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'simpler\')">' + (window.KI ? window.KI('spark', { tint: false }) : '') + ' Explain simpler</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'similar\')">' + (window.KI ? window.KI('refresh', { tint: false }) : '') + ' Similar problem</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'cards\')">' + (window.KI ? window.KI('cards', { tint: false }) : '') + ' Make flashcards</button></div>';
     return html;
   }
   window.buildMessageActionsHtml = buildMessageActionsHtml;

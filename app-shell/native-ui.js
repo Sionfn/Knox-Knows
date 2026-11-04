@@ -278,6 +278,7 @@ document.body.prepend(bar);
 // floating buttons; Home shows the logo, flame and profile in the page itself.
 const float=document.createElement('div');float.className='km-float';float.append(...bar.querySelectorAll('[data-study-action]'));document.body.append(float);
 // Top left in Ask / Learn: which mode you're in; tap to go Home.
+const topFade=document.createElement('div');topFade.className='km-top-fade';topFade.setAttribute('aria-hidden','true');topFade.hidden=true;document.body.append(topFade);
 const modeChip=document.createElement('button');modeChip.type='button';modeChip.className='km-mode-chip km-press';modeChip.hidden=true;
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
 modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
@@ -298,7 +299,7 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  float.hidden=!study;float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
- modeChip.hidden=!study;modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':'Ask Knox';
+ modeChip.hidden=!study;topFade.hidden=!study;modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  document.documentElement.classList.toggle('km-hist-learn',current==='learn');

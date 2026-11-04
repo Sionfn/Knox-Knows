@@ -1488,3 +1488,36 @@ html.native-app .km-hero-fox { transform:rotate(-5deg); animation:kmBob 4.5s eas
 #knoxMobileHome .km-today-panel .km-goal b { font-size:14px; letter-spacing:-.01em; }
 
 html.native-app .km-review-go { background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); }
+
+/* ═══ Consistency pass ═══════════════════════════════════════════════════════ */
+/* Ask/Learn: messages fade out under the floating top buttons instead of
+   showing between them. */
+.km-top-fade { position:fixed; z-index:116; top:0; left:0; right:0; height:calc(var(--appbar) + var(--safe-top) + 64px); pointer-events:none; background:linear-gradient(to bottom,var(--km-page,var(--cream)) 55%,color-mix(in srgb,var(--km-page,var(--cream)) 0%,transparent)); }
+.km-top-fade[hidden] { display:none; }
+html.native-app.km-kb .km-top-fade { top:var(--vvt,0px); }
+/* The AI reminder under the typing bar: smaller and lighter, and only on a new
+   chat or lesson (it's still shown before the first question). */
+html.native-app .input-disclaimer { font-size:10.5px!important; opacity:.75; line-height:1.35; }
+html.native-app #chatAndInput:has(#welcomeScreen[style*="none"]) .input-disclaimer { display:none!important; }
+/* Follow-up bubbles: Knox icons sized like the rest of the app. */
+html.native-app .km-answer-actions button svg { width:16px; height:16px; color:var(--c); flex:none; }
+/* Mega card on Home: a cream Knox panel with a gold border (the big dark version
+   stays on the Plans screen). */
+html.native-app .km-upsell:not([data-tier="plus"]) { background:linear-gradient(170deg,#FFF6D6,var(--surface) 55%)!important; color:var(--text)!important; border:2.5px solid #F2B705!important; box-shadow:0 5px 0 #C99404, 0 14px 26px -14px rgba(120,80,0,.35)!important; }
+html.native-app .km-upsell:not([data-tier="plus"]) small { color:#9A6B00!important; }
+html.native-app .km-upsell:not([data-tier="plus"]) .km-upsell-gem { background:#FFF3C4; border:2px solid #F2B705; }
+html.native-app .km-upsell:not([data-tier="plus"]) span span { color:var(--text-light); opacity:1; }
+html.native-app .km-upsell:not([data-tier="plus"]) .km-upsell-shine { background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) { background:linear-gradient(170deg,rgba(242,183,5,.16),var(--surface) 55%)!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) small { color:#FFD45C!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) .km-upsell-gem { background:rgba(242,183,5,.18); }
+/* Home in the island: a warm Knox brown (Home isn't one of the colored modes). */
+.knox-app-tabs button[data-tab="home"] .km-tab-tile { --c:#A8743F; --c-light:#F6E9D8; --c-dark:#7E5228; }
+.km-tab-glider:not([data-at]), .km-tab-glider[data-at="home"] { --c:#A8743F; --c-light:#F6E9D8; --c-dark:#7E5228; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="home"] .km-tab-tile, html[data-theme="dark"]:not(.knox-seasonal) .km-tab-glider[data-at="home"] { --c:#D9A46A; --c-dark:#8A5A2B; }
+/* Photo review: Knox's deep brown (dark plum in Dark mode) instead of plain black. */
+.km-photo-review, .km-photo-review::backdrop { background:#2A1D13!important; }
+.km-photo-stage { background:#3A2A1D!important; }
+.km-photo-tools button { background:#3E2D20!important; border-color:#6E5844!important; }
+html[data-theme="dark"]:not(.knox-seasonal) :is(.km-photo-review, .km-photo-review::backdrop) { background:#16111C!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-photo-stage { background:#221A2A!important; }
