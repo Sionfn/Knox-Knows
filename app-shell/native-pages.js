@@ -1,6 +1,6 @@
 /* Local mobile Home and You pages (Knox 2 look). Account activity comes from the
    shared signed-in history/deck stores; never invent progress, credits or streaks. */
-window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
+window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStudyFile}){
  const $=id=>document.getElementById(id),w=window;
  const model=import((w.knoxShellBase||'/assets/')+'home-model.js');
  // Answer language (sent with each question; "auto" answers in the question's language).
@@ -93,8 +93,25 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  const BANNERS=[['sunset','Knox Sunset'],['ocean','Ocean'],['forest','Forest'],['galaxy','Galaxy'],['leaves','Fall Leaves']];
  const looks={key:(k,uid)=>'knox'+k+'.'+uid,get(k,uid){try{return localStorage.getItem(this.key(k,uid));}catch{return null;}},set(k,uid,v){try{v==null?localStorage.removeItem(this.key(k,uid)):localStorage.setItem(this.key(k,uid),v);return true;}catch{note('There isn’t room to save that picture on this device. Try a smaller one.');return false;}}};
  // Center-crops a picked photo to the size needed and returns a small JPEG.
- function shrink(file,W,H){return new Promise((ok,bad)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const k=Math.max(W/img.naturalWidth,H/img.naturalHeight),sw=W/k,sh=H/k;c.getContext('2d').drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sh)/2,sw,sh,0,0,W,H);URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',.85));};img.onerror=()=>{URL.revokeObjectURL(url);bad();};img.src=url;});}
- function pickImage(){return new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/jpeg,image/png,image/webp';i.onchange=()=>ok(i.files?.[0]||null);i.click();});}
+ function shrink(file,width,height){
+  return new Promise((resolve,reject)=>{
+   const url=URL.createObjectURL(file),img=new Image();
+   img.onload=()=>{
+    try{
+     const canvas=document.createElement('canvas');
+     canvas.width=width;canvas.height=height;
+     const scale=Math.max(width/img.naturalWidth,height/img.naturalHeight);
+     const sourceWidth=width/scale,sourceHeight=height/scale;
+     canvas.getContext('2d').drawImage(img,(img.naturalWidth-sourceWidth)/2,(img.naturalHeight-sourceHeight)/2,sourceWidth,sourceHeight,0,0,width,height);
+     resolve(canvas.toDataURL('image/jpeg',.85));
+    }catch(error){reject(error);}
+    finally{URL.revokeObjectURL(url);}
+   };
+   img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not decode profile photo'));};
+   img.src=url;
+  });
+ }
+ function pickImage(){return new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/jpeg,image/png,image/webp';i.onchange=()=>ok(i.files?.[0]||null);i.oncancel=()=>ok(null);i.click();});}
  function paintBanner(){const el=$('kmBanner'),uid=w.currentUser?.uid;if(!el)return;const id=uid?looks.get('Banner',uid):null,img=id==='custom'?looks.get('BannerImg',uid):null;el.dataset.banner=img?'custom':BANNERS.some(([b])=>b===id)?id:'sunset';el.style.backgroundImage=img?`url("${img}")`:'';el.querySelector('.km-banner-edit').hidden=!uid;}
  function lookSheet(kind){
   const uid=w.currentUser?.uid;if(!uid)return;
@@ -103,15 +120,34 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   sheet.innerHTML=`<div class="km-pick-panel"><span class="km-add-grab" aria-hidden="true"></span><h2>${kind==='banner'?'Choose a banner':'Profile picture'}</h2>`+(kind==='banner'
    ?`<div class="km-pick-grid">${BANNERS.map(([id,label])=>`<button type="button" class="km-press" data-pick-banner="${id}" aria-pressed="${current===id}"><span class="km-pick-swatch" data-banner="${id}"></span><b>${label}</b></button>`).join('')}<button type="button" class="km-press" data-pick-banner="custom" aria-pressed="${current==='custom'}"><span class="km-pick-swatch km-pick-own">${svg('camera')}</span><b>Your photo</b></button></div>`
    :`<div class="km-pick-list"><button type="button" class="km-press" data-pick-avatar="upload">${svg('camera')}<span><b>Choose a photo</b><small>From your photo library</small></span></button>${mine?`<button type="button" class="km-press" data-pick-avatar="reset">${svg('close')}<span><b>Remove my photo</b><small>Go back to your ${w.currentUser?.photoURL?'Google photo':'initial'}</small></span></button>`:''}</div>`)+`<button type="button" class="km-add-cancel" data-pick-close>Done</button></div>`;
-  const close=()=>{sheet.close();sheet.remove();};
-  sheet.addEventListener('cancel',e=>{e.preventDefault();close();});
+  let picking=false;
+  const currentSheet=()=>sheet.open&&w.currentUser?.uid===uid;
+  const close=()=>sheet.close();
+  sheet.addEventListener('close',()=>{w.removeEventListener('knox-auth-changed',close);sheet.remove();},{once:true});
+  w.addEventListener('knox-auth-changed',close);
   sheet.addEventListener('click',async e=>{
    if(e.target===sheet||e.target.closest('[data-pick-close]'))return close();
-   const bb=e.target.closest('[data-pick-banner]'),ab=e.target.closest('[data-pick-avatar]');
-   if(bb){let id=bb.dataset.pickBanner;if(id==='custom'){const f=await pickImage();if(!f)return;try{if(!looks.set('BannerImg',uid,await shrink(f,1000,400)))return;}catch{note('That picture could not be opened. Try another one.');return;}}
-    if(uid!==w.currentUser?.uid)return close();looks.set('Banner',uid,id);sheet.querySelectorAll('[data-pick-banner]').forEach(x=>x.setAttribute('aria-pressed',String(x===bb)));paintBanner();return;}
-   if(ab){if(ab.dataset.pickAvatar==='reset')looks.set('Avatar',uid,null);else{const f=await pickImage();if(!f)return;try{if(!looks.set('Avatar',uid,await shrink(f,320,320)))return;}catch{note('That picture could not be opened. Try another one.');return;}}
-    if(uid!==w.currentUser?.uid)return close();close();render();note(ab.dataset.pickAvatar==='reset'?'Photo removed.':'Profile picture updated.');}
+   const choice=e.target.closest('[data-pick-banner],[data-pick-avatar]');
+   if(!choice||picking||!currentSheet())return;
+   const id=choice.dataset.pickBanner,avatar=choice.dataset.pickAvatar;
+   const usePhoto=id==='custom'||avatar==='upload';
+   if(usePhoto){
+    picking=true;
+    try{
+     const file=await pickImage();if(!file||!currentSheet())return;
+     const photo=await shrink(file,avatar?320:1000,avatar?320:400);
+     if(!currentSheet()||!looks.set(avatar?'Avatar':'BannerImg',uid,photo))return;
+    }catch{if(currentSheet())note('That picture could not be opened. Try another one.');return;}
+    finally{picking=false;}
+   }
+   if(id){
+    if(!looks.set('Banner',uid,id))return;
+    sheet.querySelectorAll('[data-pick-banner]').forEach(x=>x.setAttribute('aria-pressed',String(x===choice)));
+    paintBanner();
+   }else{
+    if(avatar==='reset'&&!looks.set('Avatar',uid,null))return;
+    close();render();note(avatar==='reset'?'Photo removed.':'Profile picture updated.');
+   }
   });
   document.body.append(sheet);sheet.showModal();
  }
@@ -256,7 +292,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
   if(b.dataset.conversation){const uid=w.currentUser?.uid;if(!uid){w.openAuthModal?.();return;}if(w._appAskBusy){note('Let Knox finish this answer first.');return;}b.disabled=true;try{const ok=await (w.knoxMobile?.openConversation||w.openConversation)?.(b.dataset.conversation);if(ok===false&&uid===w.currentUser?.uid)note('That conversation could not be opened. Please try again.');}finally{b.disabled=false;}return;}
   if(b.dataset.deck){if(!w.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}await w.knoxFlashcardsMobile.review?.(b.dataset.deck);return;}
   switch(b.dataset.action){
-   case 'file':if(!(await navigate('chat')))return;$('appFileInput')?.click();break;
+   case 'file':if(await navigate('chat'))pickStudyFile();break;
    case 'quiz':prefill('learn','Quiz me on ');break;
    case 'history':if(!w.currentUser){w.openAuthModal?.();break;}w.openMobileHistory?.();break;
    case 'signin':w.openAuthModal?.();break;
@@ -285,7 +321,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon}){
  // icon's classes: render() restyles it (applyFlameStyle), which would loop.
  let renderSoon=0;const later=()=>{clearTimeout(renderSoon);renderSoon=setTimeout(render,30);};
  const status=$('streakPill');if(status){new MutationObserver(later).observe(status,{childList:true,subtree:true,characterData:true});new MutationObserver(later).observe(status,{attributes:true,attributeFilter:['title','class']});}
- w.addEventListener('knox-plan-changed',render);w.addEventListener('knox-mobile-data',()=>{if(!home.hidden){render();refreshDecks();}});
+ w.addEventListener('knox-plan-changed',render);w.addEventListener('knox-mobile-data',()=>{render();if(!home.hidden)refreshDecks();});
  w.addEventListener('knox-auth-changed',()=>{historyOwner=w.currentUser?.uid||'guest';refreshAt=0;renderVersion++;render();if(!home.hidden)refreshDecks();});
  new MutationObserver(()=>{if(!account.hidden)render();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
  return {show,render,refreshDecks,home,account,action,openPlans};

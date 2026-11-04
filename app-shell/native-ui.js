@@ -65,7 +65,7 @@ function attachments(intoCards=false){
  const d=dialog('Add your notes','Take a photo, choose a picture, or open a document from Files.');
  button(d,'Take photo',()=>{d.close();takePhoto('CAMERA',intoCards);});
  button(d,'Photo library',()=>{d.close();takePhoto('PHOTOS',intoCards);});
- button(d,'Choose file',()=>{d.close();$(intoCards?'fcDocInput':'appFileInput')?.click();});
+ button(d,'Choose file',()=>{d.close();if(intoCards)$('fcDocInput')?.click();else pick($('appFileInput'));});
  button(d,'Cancel',()=>d.close());d.showModal();
 }
 // The camera button opens the camera right away (like other apps); the paperclip
@@ -152,12 +152,17 @@ let target=current==='learn'?'learn':'chat',stream=null;
   // Where the frame sits on the (cover-fitted) video, in the photo's own coordinates.
   const vw=video.videoWidth,vh=video.videoHeight,r=video.getBoundingClientRect(),f=el.querySelector('.km-cam-frame').getBoundingClientRect();
   const frame=window.knoxStudyModel.cameraFrame(vw,vh,r,f);
-  const c=document.createElement('canvas'),scale=Math.min(1,2200/Math.max(vw,vh));c.width=Math.round(vw*scale);c.height=Math.round(vh*scale);c.getContext('2d').drawImage(video,0,0,c.width,c.height);
-  el.classList.add('flash');quiet(p.haptics.selectionChanged());
-  let blob;try{blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.9));}catch{}
-  if(!active())return;if(!blob){capturing=false;b.disabled=false;note('Could not take that photo. Try again or choose Photos.');return;}stop();
+  let blob;
+  try{
+   const c=document.createElement('canvas'),scale=Math.min(1,2200/Math.max(vw,vh));
+   c.width=Math.max(1,Math.round(vw*scale));c.height=Math.max(1,Math.round(vh*scale));
+   c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+   el.classList.add('flash');quiet(p.haptics.selectionChanged());
+   blob=await new Promise(res=>c.toBlob(res,'image/jpeg',.9));
+  }catch{}
+  if(!active())return;if(!blob){el.classList.remove('flash');capturing=false;b.disabled=false;note('Could not take that photo. Try again or choose Photos.');return;}stop();
   if(!(await go()))return;
-  await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}),undefined,undefined,cropOn?{frame}:{skip:true});
+  await window.handleImageFile?.(new File([blob],'Knox photo.jpg',{type:'image/jpeg'}),undefined,undefined,cropOn&&frame?{frame}:{skip:true});
  });
  // iPhones with 2 or 3 back cameras give websites the main lens, which can't
  // focus up close on paper. Their combined "Dual Wide"/"Triple" camera swaps
@@ -262,7 +267,7 @@ function restore(target){
 const icons={chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/>',learn:'<path d="M12 7v14M3 3h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5v17h-5a4 4 0 0 0-4 1 4 4 0 0 0-4-1H3Z"/>',flashcards:'<rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/>',calculator:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>'};
 icons.home='<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>';
 icons.account='<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>';
-const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons});
+const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons,pickStudyFile:()=>pick($('appFileInput'))});
 
 // App header on every tab: logo, the tab's name, streak flame and profile. It
 // takes each screen's own background, so the top (and the status bar) blends in.
@@ -353,8 +358,8 @@ nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
  // kept between the first and last tab; lifting it glides onto the nearest tab.
  let lastX=0,lastT=0,relax=0;
  const lens=x=>{const list=tabs(),a=list[0]?.querySelector('.km-tab-tile'),z=list.at(-1)?.querySelector('.km-tab-tile');if(!a||!z)return;const n=nav.getBoundingClientRect(),ra=a.getBoundingClientRect(),rz=z.getBoundingClientRect(),w=ra.width,cx=Math.min(Math.max(x,ra.left+w/2),rz.left+w/2),now=performance.now(),v=lastT?Math.abs(cx-lastX)/Math.max(8,now-lastT):0;lastX=cx;lastT=now;const st=1+Math.min(.18,v*.12);glider.style.transform='translate('+(cx-w/2-n.left-nav.clientLeft)+'px,'+(ra.top-n.top-nav.clientTop)+'px) scale('+st+','+(2-st)+')';clearTimeout(relax);relax=setTimeout(()=>{if(press?.drag)glider.style.transform=glider.style.transform.replace(/ scale\([^)]*\)/,'');},90);const b=under(cx);if(b&&b.dataset.tab!==press.tab){press.tab=b.dataset.tab;glider.dataset.at=b.dataset.tab;quiet(p.haptics.selectionChanged());}};
- const start=()=>{if(!press||press.drag)return;press.drag=true;nav.classList.add('km-lensing');glider.style.opacity='1';lens(press.x);quiet(p.haptics.selectionChanged());};
- nav.addEventListener('pointerdown',e=>{const b=e.target.closest('button[data-tab]');if(!b||b.classList.contains('km-tab-snap')||e.button>0)return;press={x:e.clientX,x0:e.clientX,id:e.pointerId,tab:glider.dataset.at,drag:false};try{nav.setPointerCapture(e.pointerId);}catch{}clearTimeout(hold);hold=setTimeout(start,220);});
+ const start=()=>{if(!press||press.drag)return;press.drag=true;try{nav.setPointerCapture(press.id);}catch{}nav.classList.add('km-lensing');glider.style.opacity='1';lens(press.x);quiet(p.haptics.selectionChanged());};
+ nav.addEventListener('pointerdown',e=>{const b=e.target.closest('button[data-tab]');if(!b||b.classList.contains('km-tab-snap')||e.button>0)return;press={x:e.clientX,x0:e.clientX,id:e.pointerId,tab:glider.dataset.at,drag:false};clearTimeout(hold);hold=setTimeout(start,220);});
  nav.addEventListener('pointermove',e=>{if(!press||e.pointerId!==press.id)return;press.x=e.clientX;if(!press.drag&&Math.abs(e.clientX-press.x0)>10)start();if(press.drag){e.preventDefault();lens(e.clientX);}});
  const end=e=>{clearTimeout(hold);if(!press)return;const was=press;press=null;nav.classList.remove('km-lensing');if(!was.drag)return;suppress=true;setTimeout(()=>{suppress=false;},400);const b=e.type==='pointercancel'?null:under(was.x);lastT=0;if(b&&b.getAttribute('aria-current')!=='page')b.onclick?.();moveGlider();};
  nav.addEventListener('pointerup',end);nav.addEventListener('pointercancel',end);
@@ -425,7 +430,7 @@ function sync(){
  current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
  if(current==='calculator'&&before!=='calculator')calculatorReturn=before;
  const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Cards'}[calculatorReturn]||'Home');
- const active=current==='calculator'?'home':current;
+ const active=current==='calculator'?calculatorReturn:current;
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  moveGlider();
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;

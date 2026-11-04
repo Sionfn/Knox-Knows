@@ -19,7 +19,8 @@ const activity=model.createProgress(progressStorage);
 // drag it or tap Whole photo. A camera frame the student aimed is kept as is.
 function detectQuestion(img,frame){
  try{
-  const W=Math.min(360,img.naturalWidth),H=Math.max(1,Math.round(img.naturalHeight*W/img.naturalWidth));
+  const scale=Math.min(1,360/Math.max(img.naturalWidth,img.naturalHeight));
+  const W=Math.max(1,Math.round(img.naturalWidth*scale)),H=Math.max(1,Math.round(img.naturalHeight*scale));
   const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0,W,H);
   const d=g.getImageData(0,0,W,H).data,L=new Float32Array(W*H);
   for(let i=0;i<W*H;i++)L[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
@@ -47,7 +48,8 @@ w.knoxDetectQuestion=detectQuestion;
 // an aimed camera frame is preserved exactly rather than guessed a second time.
 let cancelCrop=null;
 // The main button sends the photo to Knox right away (Solve it / Teach me);
-// "Add a note first" attaches it so the student can type with it.
+// "Add a note first" attaches it so the student can type with it. If a photo or
+// file is already attached, the new one is attached without sending.
 w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
  if(options.skip){file.knoxSend=true;return resolve(file);} // camera with Crop off: straight to Knox
  cancelCrop?.();const owner=uid(),viewVersion=w._appViewVersion,previous=document.activeElement;
