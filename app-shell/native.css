@@ -1470,3 +1470,17 @@ html.native-app .km-answer-actions button:nth-child(2) { --c:var(--blue); --cd:v
 html.native-app .km-answer-actions button:nth-child(3) { --c:var(--green); --cd:var(--green-dark); --cl:var(--green-light); }
 html.native-app .km-answer-actions button:active { transform:translateY(2px); box-shadow:0 1px 0 var(--cd); }
 @media (prefers-reduced-motion:reduce) { html.native-app #chatThread .msg-wrap, html.native-app .km-in-right, html.native-app .km-in-left { animation:none!important; } }
+
+/* ═══ Island in Knox's own style ═════════════════════════════════════════════
+   A solid Knox card (cream surface, border, darker edge underneath) like the
+   Today panel and lists, floating over a soft blur. The highlight and Snap use
+   the same chunky edge, so all three match the rest of the app. */
+.knox-app-tabs { background:var(--surface)!important; -webkit-backdrop-filter:none!important; backdrop-filter:none!important; border:2px solid var(--border)!important; border-radius:26px; box-shadow:0 4px 0 var(--border), 0 12px 28px rgba(60,35,10,.14)!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { background:var(--surface)!important; border-color:var(--border)!important; box-shadow:0 4px 0 var(--border), 0 12px 28px rgba(0,0,0,.45)!important; }
+.km-dock-fade { background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--cream) 55%,transparent) 40%)!important; -webkit-backdrop-filter:blur(10px)!important; backdrop-filter:blur(10px)!important; }
+.km-tab-glider { background:var(--c-light)!important; border:2px solid var(--c)!important; box-shadow:0 3px 0 var(--c-dark)!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-tab-glider { background:color-mix(in srgb,var(--c) 22%,var(--surface))!important; border-color:var(--c)!important; box-shadow:0 3px 0 var(--c-dark)!important; }
+/* While dragging it's a plain Knox tile (no tab colors flashing past). */
+.knox-app-tabs.km-lensing .km-tab-glider { background:var(--cream)!important; border:2px solid var(--border)!important; box-shadow:0 3px 0 var(--border), 0 6px 14px rgba(60,35,10,.12)!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs.km-lensing .km-tab-glider { background:color-mix(in srgb,var(--text) 10%,var(--surface))!important; border-color:var(--border)!important; box-shadow:0 3px 0 var(--border)!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile { border:2px solid var(--orange-dark)!important; box-shadow:0 3px 0 var(--orange-dark)!important; }
