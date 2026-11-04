@@ -220,6 +220,9 @@ function addMenu(){
  sheet.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  document.body.append(sheet);sheet.showModal();sheet.querySelector('[data-add="camera"]').focus({preventScroll:true});
 }
+// Ask/Learn welcome: the badge, title and line under it share one hero header
+// (styled like the Plans screen in native.css).
+{const ws=$('welcomeScreen'),parts=['.welcome-badge','.welcome-title','.welcome-sub'].map(q=>ws?.querySelector(':scope > '+q)).filter(Boolean);if(ws&&parts.length&&!ws.querySelector('.km-mode-hero')){const hero=document.createElement('div');hero.className='km-mode-hero';parts[0].before(hero);hero.append(...parts);}}
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
@@ -291,6 +294,10 @@ function paint(){
  let el=surface,bg='';
  while(el){bg=getComputedStyle(el).backgroundColor;if(bg&&!/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(bg))break;el=el.parentElement;bg='';}
  bg=bg||getComputedStyle(document.body).backgroundColor;
+ document.documentElement.style.setProperty('--km-page',bg); // the page itself, for the island's backing
+ // Screens that open with a colored hero get the hero's color behind the clock too.
+ const hero=current==='flashcards'?document.querySelector('#flashcardsPanel .fc-head'):current==='calculator'?document.querySelector('#calcModal .kc-head'):['chat','learn'].includes(current)?document.querySelector('#welcomeScreen .km-mode-hero'):null;
+ if(hero&&hero.offsetParent!==null&&hero.getBoundingClientRect().top<60){const h=getComputedStyle(hero).getPropertyValue('--h1').trim();if(h)bg=h;}
  bar.style.background=bg;if(themeMeta)themeMeta.content=bg;document.documentElement.style.setProperty('--km-top',bg);
  bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
  bar.dataset.tab=current;
@@ -304,6 +311,7 @@ function paint(){
  bar.querySelector('[data-action="streak"]').hidden=study||!window.currentUser;
 }
 window.knoxPaintAppBar=paint;
+{let soon=0;const again=()=>{clearTimeout(soon);soon=setTimeout(paint,40);};for(const id of ['flashcardsPanel','welcomeScreen','calcModal'])if($(id))new MutationObserver(again).observe($(id),{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden']});}
 
 // Pages that live on the website (updates, privacy, redeem…) open inside the
 // app with a close button; there's no browser back button on the home screen.
@@ -527,6 +535,6 @@ if(historyPanel){
  search.addEventListener('input',filter);if(body)new MutationObserver(filter).observe(body,{childList:true,subtree:true,characterData:true});
 }
 window.knoxMobile={navigate,note,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
- calculatorBack(){window.closeCalc?.();if(['home','account'].includes(calculatorReturn))surface(calculatorReturn);sync();},
+ async calculatorBack(){window.closeCalc?.();if(['home','account'].includes(calculatorReturn))surface(calculatorReturn);else if(calculatorReturn==='flashcards')await window.knoxFlashcardsMobile?.show();sync();},
  async calculatorDraft(target,text){if(!(await navigate(target)))return;const input=$('appChatInput');input.value=input.value?input.value+'\n'+text:text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();},refreshHome:pages.render,drafts:()=>drafts.list(owner),resumeDraft,clearDrafts(){drafts.clear(owner);note('Unsent text drafts cleared. Saved chats and decks are unchanged.');pages.render();}};
 })();
