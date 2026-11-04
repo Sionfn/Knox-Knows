@@ -1484,3 +1484,11 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-tab-glider { background:color-mi
 .knox-app-tabs.km-lensing .km-tab-glider { background:var(--cream)!important; border:2px solid var(--border)!important; box-shadow:0 3px 0 var(--border), 0 6px 14px rgba(60,35,10,.12)!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs.km-lensing .km-tab-glider { background:color-mix(in srgb,var(--text) 10%,var(--surface))!important; border-color:var(--border)!important; box-shadow:0 3px 0 var(--border)!important; }
 .knox-app-tabs .km-tab-snap .km-tab-tile { border:2px solid var(--orange-dark)!important; box-shadow:0 3px 0 var(--orange-dark)!important; }
+
+/* Island a bit bigger, and a solid backing in the page's own color (set by the
+   app bar code as --km-top) from the island's top edge down, so nothing shows
+   beside or under it and there's no visible strip. */
+.knox-app-tabs { left:max(8px,env(safe-area-inset-left))!important; right:max(8px,env(safe-area-inset-right))!important; height:76px!important; }
+.km-dock-fade { height:calc(8px + 76px + var(--mobile-safe))!important; background:var(--km-top,var(--cream))!important; -webkit-backdrop-filter:none!important; backdrop-filter:none!important; -webkit-mask-image:none!important; mask-image:none!important; }
+html.native-app { --mobile-tabs:92px; }
+html.native-app.native-keyboard { --mobile-tabs:0px; }
