@@ -1463,51 +1463,14 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs.km-lensing .km-tab-gl
 html.native-app { --mobile-tabs:92px; }
 html.native-app.native-keyboard { --mobile-tabs:0px; }
 
-/* ═══ The Plans-screen polish, everywhere in the app ═══════════════════════════
-   Every mode opens with the same kind of hero as Plans: a deep gradient in the
-   mode's color, a soft glow and sparkles, the tilted Knox fox gently bobbing,
-   and white type. Cards below overlap the hero and use a colored border, a soft
-   tint at the top, a chunky edge and a soft drop shadow. */
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head) {
- --h1:#FF8A2B; --h2:#B84300; --hglow:rgba(255,214,140,.5); --hspark:#FFE7A3; --haccent:#FFE08A;
- position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; align-items:center; text-align:center; color:#fff;
- background:linear-gradient(165deg,var(--h1),var(--h2) 78%); border-radius:0 0 32px 32px; box-shadow:0 10px 30px -14px rgba(60,30,5,.45);
-}
-html.native-app body.knox-learn-mode #welcomeScreen .km-mode-hero { --h1:#A66BFF; --h2:#4E1FA8; --hglow:rgba(225,200,255,.5); --hspark:#F1E2FF; --haccent:#F3DDFF; }
-html.native-app #flashcardsPanel .fc-head { --h1:#62CC1C; --h2:#1F6A00; --hglow:rgba(215,255,170,.5); --hspark:#E6FFC9; --haccent:#D7FFB8; }
-html.native-app #calcModal .kc-head { --h1:#36B8F7; --h2:#0B579A; --hglow:rgba(190,235,255,.5); --hspark:#DDF5FF; --haccent:#CFF1FF; }
-/* The fox, tilted and bobbing, like on Plans. */
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head)::before { content:""; display:block; flex:none; width:72px; height:72px; margin:0 auto 12px; border-radius:24px; border:3px solid var(--haccent); background:url(/knox-logo-square.jpg) center/cover; box-shadow:0 5px 0 rgba(0,0,0,.28), 0 0 34px var(--hglow); transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
-/* Glow and sparkles behind everything. */
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head)::after { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
- background:radial-gradient(circle at 15% 30%,var(--hspark) 0 2.5px,transparent 4px),radial-gradient(circle at 84% 22%,var(--hspark) 0 3px,transparent 4.5px),radial-gradient(circle at 26% 78%,var(--hspark) 0 2px,transparent 3.5px),radial-gradient(circle at 78% 70%,var(--hspark) 0 2px,transparent 3.5px),radial-gradient(circle at 60% 12%,var(--hspark) 0 1.5px,transparent 3px),radial-gradient(circle at 50% 34%,var(--hglow),transparent 62%);
- animation:kmHeroTwinkle 2.6s ease-in-out infinite alternate; }
+/* ═══ Plans-screen finish on the app's own screens ═════════════════════════════
+   Home, You and History share the Plans polish: soft drop shadows under the
+   panels and the Home hero's glow, sparkles and bobbing fox. Ask, Learn,
+   Flashcards and Calculator keep their original design. */
 @keyframes kmHeroTwinkle { from { opacity:.7; } to { opacity:1; } }
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head) :is(.welcome-title,.fc-title,.kc-title) { color:#fff!important; text-shadow:0 2px 0 rgba(0,0,0,.12); letter-spacing:-.03em; }
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head) :is(.welcome-accent,.accent) { color:var(--haccent)!important; }
-html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head) :is(.welcome-sub,.fc-sub) { color:rgba(255,255,255,.92)!important; font-weight:700; max-width:330px; margin-left:auto; margin-right:auto; }
-html.native-app :root:root body :is(.km-mode-hero .welcome-badge, #flashcardsPanel .fc-head .fc-badge, #calcModal .kc-head .kc-badge), html.native-app body :is(.km-mode-hero .welcome-badge, #flashcardsPanel .fc-head .fc-badge, #calcModal .kc-head .kc-badge) { background:rgba(255,255,255,.18)!important; border:1.5px solid rgba(255,255,255,.55)!important; color:#fff!important; box-shadow:none!important; }
-/* Hero size and full-bleed placement in each screen. */
-html.native-app .km-mode-hero { margin:-68px -16px 0; padding:68px 22px 58px; }
-html.native-app.native-keyboard .km-mode-hero { margin-top:-68px; padding-top:68px; }
-html.native-app #welcomeScreen .km-mode-hero + .suggestion-grid { margin-top:-34px!important; position:relative; z-index:2; }
-html.native-app.km-typing .km-mode-hero { padding-bottom:30px; }
-html.native-app #flashcardsPanel .fc-head { margin:-18px -16px 0; padding:62px 22px 56px; }
-html.native-app #flashcardsPanel .fc-head + * { position:relative; z-index:2; margin-top:-32px!important; }
-html.native-app #calcModal .kc-head { margin:0 -16px 0; padding:62px 22px 50px; }
-html.native-app #calcModal .kc-head + * { position:relative; z-index:2; margin-top:-28px!important; }
-@media (prefers-reduced-motion:reduce) { html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head)::before, html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head)::after { animation:none; } }
-
-/* Cards everywhere: soft tint at the top, chunky edge, soft drop shadow (Plans cards). */
-html.native-app #welcomeScreen .suggestion-chip { background:linear-gradient(170deg,color-mix(in srgb,var(--chip) 14%,var(--surface)),var(--surface) 55%); box-shadow:0 4px 0 var(--chip-ledge), 0 14px 26px -14px rgba(60,35,10,.35); border-width:2.5px; }
-html.native-app #flashcardsPanel :is(.fc-way,.fc-deck) { background:linear-gradient(170deg,var(--chip-tint),var(--surface) 50%); box-shadow:0 5px 0 var(--chip-ledge), 0 14px 26px -14px rgba(60,35,10,.35); border-width:2.5px; }
-html.native-app #calcModal .kc-card { background:linear-gradient(170deg,var(--blue-light),var(--surface) 40%); border-color:var(--blue); box-shadow:0 6px 0 var(--blue-dark), 0 16px 30px -14px rgba(10,40,80,.35); }
 html.native-app :is(.km-today-panel,.km-pref-panel,#knoxMobileAccount .km-stats,#knoxMobileAccount .km-menu-list,.km-current-plan), html.native-app #knoxMobileHome :is(.km-ideas,.km-recent-list,#kmReview:has(.km-review-hero)) { box-shadow:0 4px 0 var(--border), 0 14px 28px -14px rgba(60,35,10,.3)!important; }
-html.native-app #chatThread .msg-knox-bubble { box-shadow:0 4px 0 var(--knox-ledge,var(--orange-dark)), 0 14px 26px -16px rgba(60,35,10,.35); }
 html.native-app #mobileHistoryDrawer .sidebar-history-item { box-shadow:0 3px 0 var(--border), 0 10px 20px -12px rgba(60,35,10,.28); }
-html[data-theme="dark"]:not(.knox-seasonal) :is(#welcomeScreen .suggestion-chip, #flashcardsPanel .fc-way, #flashcardsPanel .fc-deck, #calcModal .kc-card) { background:linear-gradient(170deg,color-mix(in srgb,var(--chip,var(--blue)) 16%,var(--surface)),var(--surface) 55%); }
 /* Primary buttons get the Plans button finish: a gradient fill. */
-html.native-app :is(#flashcardsPanel .fc-btn.primary, .km-review-go) { background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); }
 html.native-app #sendBtn, html.native-app .send-btn { background-image:linear-gradient(180deg,rgba(255,255,255,.25),transparent 60%); }
 /* Home hero gets the same glow, sparkles and bobbing fox. */
 html.native-app .km-hero { isolation:isolate; }
@@ -1515,9 +1478,6 @@ html.native-app .km-hero::after { content:""; position:absolute; inset:0; z-inde
 html.native-app .km-hero > * { position:relative; z-index:1; }
 html.native-app .km-hero-fox { transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
 
-html.native-app #calcModal .kc-head { margin:-28px -12px 0; padding:56px 20px 44px; }
-html.native-app #calcModal .kc-head::before { width:56px; height:56px; border-radius:19px; margin-bottom:10px; }
-html.native-app #calcModal .kc-head .kc-sub { color:rgba(255,255,255,.92)!important; font-weight:700; }
 .km-dock-fade { background:var(--km-page,var(--cream))!important; }
 /* Plans: the billing toggle takes the selected plan's color (gold Mega, green Plus). */
 .km-pw-card .km-billing button[aria-pressed="true"] { background:#F2B705; color:#3A2800; box-shadow:0 3px 0 #C99404; }
@@ -1526,13 +1486,5 @@ html.native-app #calcModal .kc-head .kc-sub { color:rgba(255,255,255,.92)!import
 .km-pw-card[data-tier="plus"] .km-billing button[aria-pressed="true"] em { color:var(--green-dark); }
 /* Today panel: the goal title fits on one line. */
 #knoxMobileHome .km-today-panel .km-goal b { font-size:14px; letter-spacing:-.01em; }
-/* Short phones (iPhone SE): smaller heroes so the topics and tools show right away. */
-@media (max-height:700px) {
- html.native-app :is(.km-mode-hero, #flashcardsPanel .fc-head, #calcModal .kc-head)::before { width:48px; height:48px; border-radius:16px; margin-bottom:8px; }
- html.native-app .km-mode-hero { padding:60px 18px 46px; }
- html.native-app #flashcardsPanel .fc-head { padding:52px 18px 46px; }
- html.native-app #calcModal .kc-head { padding:46px 18px 38px; }
- html.native-app :is(.km-mode-hero .welcome-title, #flashcardsPanel .fc-title, #calcModal .kc-title) { font-size:26px!important; }
- html.native-app :is(.km-mode-hero .welcome-sub, #flashcardsPanel .fc-sub) { font-size:13px!important; margin-bottom:0; }
-}
-html.native-app .km-mode-hero { align-self:stretch; width:auto; box-sizing:border-box; }
+
+html.native-app .km-review-go { background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); }
