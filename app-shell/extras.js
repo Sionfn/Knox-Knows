@@ -145,8 +145,12 @@ if(!native&&w.visualViewport){
   root.style.setProperty('--vvh',vv.height+'px');root.style.setProperty('--vvt',vv.offsetTop+'px');
   if(open){
    if(!root.classList.contains('km-kb')){root.classList.add('native-keyboard','km-kb');const t=$('chatThread');if(t&&t._kmStick)requestAnimationFrame(()=>{t.scrollTop=t.scrollHeight;});}
-  }else{root.classList.remove('km-kb','native-keyboard');root.style.setProperty('--vvt','0px');}
+  }else{root.classList.remove('km-kb','native-keyboard');root.style.setProperty('--vvt','0px');unshift();}
  };
+ // iPhone slides the whole page up to show a text box above the keyboard and
+ // leaves it there after the keyboard closes, hiding the top of every screen.
+ // Put it back once the keyboard is gone (again after iOS's own settle).
+ function unshift(){if(typing())return;if(scrollY||document.documentElement.scrollTop)scrollTo(0,0);setTimeout(()=>{if(!typing()&&(scrollY||document.documentElement.scrollTop))scrollTo(0,0);},320);}
  const schedule=()=>{if(!frame)frame=requestAnimationFrame(apply);};
  vv.addEventListener('resize',schedule);vv.addEventListener('scroll',schedule);
  addEventListener('orientationchange',()=>setTimeout(()=>{base=innerHeight;schedule();},400));
@@ -154,7 +158,7 @@ if(!native&&w.visualViewport){
  $('appChatInput')?.addEventListener('focus',()=>{const t=$('chatThread');if(t)t._kmStick=t.scrollHeight-t.scrollTop-t.clientHeight<80;schedule();});
  // Done (✓) on the keyboard: bring the dock and topics back right away instead of
  // waiting for iPhone to finish sliding the keyboard down.
- document.addEventListener('focusout',e=>{if(!e.target.matches?.('#appChatInput'))return setTimeout(schedule,60);setTimeout(()=>{if(typing())return;root.classList.remove('km-kb','native-keyboard');root.style.setProperty('--vvt','0px');},0);});
+ document.addEventListener('focusout',e=>{if(!e.target.matches?.('#appChatInput'))return setTimeout(()=>{schedule();unshift();},60);setTimeout(()=>{if(typing())return;root.classList.remove('km-kb','native-keyboard');root.style.setProperty('--vvt','0px');unshift();},0);});
 }
 
 // Welcome stays vertically scrollable at every text/keyboard size. Centering

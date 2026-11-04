@@ -179,7 +179,8 @@ function makeView(){
       <p class="fc-cost">${mega?'💎 Mega Knox — up to 100 AI decks a day, up to 40 cards each, any style and difficulty.':plus?'⚡ Knox Plus — up to 40 AI decks a day, up to 15 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes up to 40 decks a day.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
-  panel.querySelector('#fcMakeReq')?.focus();
+  // On phones the keyboard would cover the page as soon as it opens; let the student tap in.
+  if(!window.knoxAppShell)panel.querySelector('#fcMakeReq')?.focus();
 }
 // "Try a sample deck": Knox writes a brand-new deck on a random school topic —
 // random size, card style and pictures on or off — and saves it right away.

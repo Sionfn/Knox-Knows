@@ -468,7 +468,7 @@ window.addEventListener('offline',()=>{offline.hidden=false;document.documentEle
 // The web shell uses actual visualViewport changes in extras.js; focusing a
 // field with a hardware keyboard must not collapse the whole study screen.
 for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>document.documentElement.classList.add('native-keyboard')));
-quiet(p.keyboard.addListener('keyboardWillHide',()=>document.documentElement.classList.remove('native-keyboard')));
+quiet(p.keyboard.addListener('keyboardWillHide',()=>{document.documentElement.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
 // The status bar sits over the app header (same color), with light text in Dark mode.
 quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
 function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
