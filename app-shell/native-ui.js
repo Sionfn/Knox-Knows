@@ -367,6 +367,15 @@ nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
  nav.addEventListener('pointerup',end);nav.addEventListener('pointercancel',end);
  nav.addEventListener('click',e=>{if(suppress){e.stopImmediatePropagation();e.preventDefault();suppress=false;}},true);
 }
+// Switching tabs slides the new page in from the side of the tab you tapped.
+const TAB_ORDER={home:0,account:0,chat:1,learn:2,calculator:2,flashcards:3};
+function slideIn(from,to){
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches||from===to)return;
+ const el=to==='home'?$('knoxMobileHome'):to==='account'?$('knoxMobileAccount'):to==='flashcards'?$('flashcardsPanel'):['chat','learn'].includes(to)?$('chatAndInput'):null;if(!el)return;
+ const dir=(TAB_ORDER[to]??0)>=(TAB_ORDER[from]??0)?'right':'left';
+ el.classList.remove('km-in-right','km-in-left');void el.offsetWidth;el.classList.add('km-in-'+dir);
+ el.addEventListener('animationend',()=>el.classList.remove('km-in-right','km-in-left'),{once:true});
+}
 async function navigate(target){
  if(busy)return false;
  if(target===current){
@@ -381,7 +390,8 @@ async function navigate(target){
  try{
   saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
-  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();quiet(p.haptics.selectionChanged());return true;}
+  const from=current;
+  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
   if(target==='flashcards'){
    if(!window.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}
    window.closeCalc?.();if(!(await window.knoxFlashcardsMobile.show()))return;
@@ -393,7 +403,7 @@ async function navigate(target){
     if(mode()!==target){remember();if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();restore(target);}
    }
   }
-  surface(null);current=target;sync();quiet(p.haptics.selectionChanged());return true;
+  surface(null);current=target;sync();slideIn(from,target);quiet(p.haptics.selectionChanged());return true;
  }finally{busy=false;}
 }
 async function newStudy(){

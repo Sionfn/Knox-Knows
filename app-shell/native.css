@@ -1422,3 +1422,51 @@ html.native-app #inputBox { outline:4px solid transparent; outline-offset:1px; t
 html.native-app #inputBox:focus-within { outline-color:color-mix(in srgb,var(--orange) 22%,transparent); }
 html.native-app body.knox-learn-mode #inputBox:focus-within { outline-color:color-mix(in srgb,var(--purple) 24%,transparent); }
 @media (prefers-reduced-motion:reduce) { html.native-app #welcomeScreen .suggestion-grid { transition:opacity .15s; } }
+
+/* ═══ Tab transitions ═══════════════════════════════════════════════════════ */
+@keyframes kmInRight { from { opacity:.35; transform:translateX(28px); } to { opacity:1; transform:none; } }
+@keyframes kmInLeft { from { opacity:.35; transform:translateX(-28px); } to { opacity:1; transform:none; } }
+html.native-app .km-in-right { animation:kmInRight .3s cubic-bezier(.22,.8,.25,1)!important; }
+html.native-app .km-in-left { animation:kmInLeft .3s cubic-bezier(.22,.8,.25,1)!important; }
+
+/* ═══ Cards tab in the app style ═════════════════════════════════════════════
+   The three ways to make a deck are round shortcuts (like Study tools), and
+   decks are one grouped list with a Review button on each row. */
+#flashcardsPanel .fc-ways { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:6px auto 4px; }
+#flashcardsPanel .fc-way { display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0; border:0!important; background:transparent!important; box-shadow:none!important; text-align:center; min-height:0; }
+#flashcardsPanel .fc-way:active { transform:translateY(2px); }
+#flashcardsPanel .fc-way-icon { width:62px; height:62px; margin:0; font-size:26px; box-shadow:0 4px 0 var(--chip-ledge); }
+#flashcardsPanel .fc-way-icon svg { width:28px; height:28px; }
+#flashcardsPanel .fc-way b { font-size:12.5px; line-height:1.25; }
+#flashcardsPanel .fc-way > span:last-child { display:none; }
+#flashcardsPanel .fc-toolbar-quiet { justify-content:center; margin-top:10px; }
+#flashcardsPanel .fc-sync-note { font-size:12px; }
+#flashcardsPanel .fc-grid { display:block; border:2px solid var(--border); border-radius:22px; background:var(--surface); box-shadow:0 4px 0 var(--border); overflow:hidden; }
+#flashcardsPanel .fc-grid:has(.fc-empty) { border:0; background:transparent; box-shadow:none; }
+#flashcardsPanel .fc-deck { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"top go" "more more"; align-items:center; gap:4px 10px; padding:14px 14px 8px; margin:0; border:0!important; border-radius:0!important; box-shadow:none!important; background:transparent!important; }
+#flashcardsPanel .fc-deck + .fc-deck { border-top:1.5px solid var(--border)!important; }
+#flashcardsPanel .fc-deck-top { grid-area:top; gap:12px; }
+#flashcardsPanel .fc-deck-icon { width:44px; height:44px; font-size:21px; box-shadow:0 2px 0 var(--chip); }
+#flashcardsPanel .fc-deck-name { font-size:15px; text-transform:none; letter-spacing:0; margin:0 0 4px; }
+#flashcardsPanel .fc-deck-actions { grid-area:go; flex-direction:column; gap:6px; }
+#flashcardsPanel .fc-deck-actions .fc-btn { min-height:36px; padding:6px 14px; font-size:13px; }
+#flashcardsPanel .fc-deck-actions .fc-btn:not(.primary) { border:0; background:transparent; box-shadow:none; color:var(--text-light); min-height:28px; padding:2px 8px; }
+#flashcardsPanel .fc-deck-more { grid-area:more; justify-content:flex-start; margin:0 0 0 50px; }
+#flashcardsPanel .fc-deck-more .fc-btn { min-height:30px; padding:4px 8px; font-size:12px; }
+
+/* ═══ Chat answers in the app style ══════════════════════════════════════════
+   Messages ease in, Knox's answers use the full width (no side avatar column),
+   and the follow-up actions are colored Knox bubbles. */
+@keyframes kmMsgIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+html.native-app #chatThread .msg-wrap { animation:kmMsgIn .32s cubic-bezier(.22,.8,.25,1) backwards; }
+html.native-app #chatThread .msg-knox { gap:0; }
+html.native-app #chatThread .msg-knox-avatar { display:none; }
+html.native-app #chatThread .msg-knox-content { max-width:100%; width:100%; }
+html.native-app #chatThread .msg-knox-label { display:flex; align-items:center; gap:6px; margin:0 0 6px 4px; }
+html.native-app #chatThread .msg-knox-label::before { content:""; width:20px; height:20px; border-radius:6px; background:url(/knox-logo-square.jpg) center/cover; box-shadow:0 0 0 1.5px var(--orange); }
+html.native-app .km-answer-actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 2px; }
+html.native-app .km-answer-actions button { --c:var(--purple); --cd:var(--purple-dark); --cl:var(--purple-light); display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:7px 14px; border:2px solid var(--c); border-radius:999px; background:color-mix(in srgb,var(--cl) 55%,var(--surface)); color:var(--text); font:800 13px Nunito,sans-serif; box-shadow:0 3px 0 var(--cd); }
+html.native-app .km-answer-actions button:nth-child(2) { --c:var(--blue); --cd:var(--blue-dark); --cl:var(--blue-light); }
+html.native-app .km-answer-actions button:nth-child(3) { --c:var(--green); --cd:var(--green-dark); --cl:var(--green-light); }
+html.native-app .km-answer-actions button:active { transform:translateY(2px); box-shadow:0 1px 0 var(--cd); }
+@media (prefers-reduced-motion:reduce) { html.native-app #chatThread .msg-wrap, html.native-app .km-in-right, html.native-app .km-in-left { animation:none!important; } }
