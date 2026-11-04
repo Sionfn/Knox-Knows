@@ -3298,6 +3298,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       'auth/account-exists-with-different-credential':
                                         'An account with this email exists with a different sign-in method.',
       'auth/missing-email':            'Please enter your email.',
+      'auth/operation-not-allowed':    'That sign-in option isn\u2019t turned on yet. Try another one.',
     };
     if (code in map) return map[code];
     return 'Something went wrong. Please try again.';
@@ -5041,9 +5042,31 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     }
   }
 
+  // Popup sign-in shared by Microsoft and (outside the iPhone app) Apple.
+  async function popupSignIn(provider) {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      const isNew = result._tokenResponse?.isNewUser;
+      closeAuthModal();
+      if (isNew) {
+        sendWelcomeEmailCall(result.user);
+        showWelcomeModal(result.user.displayName);
+      }
+    } catch (e) {
+      const msg = authErrorMessage(e);
+      if (msg) showAuthError(msg);
+    }
+  }
+
   window.appHandleAppleLogin = async function() {
     clearAuthMsgs();
-    if (!nativeAuth) return;
+    if (!nativeAuth) {
+      // Home-screen app (and later the website): Apple's own popup.
+      const p = new OAuthProvider('apple.com');
+      p.addScope('email'); p.addScope('name');
+      return popupSignIn(p);
+    }
     try {
       const r = await nativeAuth.signInWithApple();
       const credential = new OAuthProvider('apple.com').credential({ idToken: r.credential?.idToken, rawNonce: r.credential?.nonce });
@@ -5089,21 +5112,19 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   window.appHandleMicrosoftLogin = async function() {
     clearAuthMsgs();
-    try {
-      const p = new OAuthProvider('microsoft.com');
-      p.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, p);
-      window.currentUser = result.user;
-      const isNew = result._tokenResponse?.isNewUser;
-      closeAuthModal();
-      if (isNew) {
-        sendWelcomeEmailCall(result.user);
-        showWelcomeModal(result.user.displayName);
+    if (nativeAuth?.signInWithMicrosoft) {
+      try {
+        const r = await nativeAuth.signInWithMicrosoft();
+        await finishNativeSignIn(new OAuthProvider('microsoft.com').credential({ idToken: r.credential?.idToken, accessToken: r.credential?.accessToken, rawNonce: r.credential?.nonce }), r.user?.displayName);
+      } catch (e) {
+        if (nativeCancelled(e)) return;
+        showAuthError(nativeAuthError(e, 'Microsoft'));
       }
-    } catch (e) {
-      const msg = authErrorMessage(e);
-      if (msg) showAuthError(msg);
+      return;
     }
+    const p = new OAuthProvider('microsoft.com');
+    p.setCustomParameters({ prompt: 'select_account' });
+    return popupSignIn(p);
   };
 
   window.appHandleEmailSignin = async function() {

@@ -220,6 +220,16 @@ function addMenu(){
  sheet.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  document.body.append(sheet);sheet.showModal();sheet.querySelector('[data-add="camera"]').focus({preventScroll:true});
 }
+// Sign-in (app only): Google, Apple and Microsoft at the top of one screen that
+// both signs in and creates accounts, then email underneath. The website keeps
+// its own layout until the December update.
+{const body=document.querySelector('#authModal .auth-body'),social=$('authSocialButtons'),divider=$('authSocialDivider'),tabs=$('authTabs');
+ if(body&&social&&divider&&tabs){
+  for(const id of ['authError','authSuccess']){const el=$(id);if(el)body.prepend(el);}
+  tabs.before(social);tabs.before(divider);divider.textContent='or use your email';
+  const google=social.querySelector('[onclick*="Google"]'),apple=$('authAppleBtn'),ms=$('authMicrosoftBtn');[google,apple,ms].forEach(b=>b&&social.append(b));
+  const up=$('authSignupTab');if(up)up.textContent='Create account';
+ }}
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;

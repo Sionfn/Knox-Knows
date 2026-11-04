@@ -1521,3 +1521,34 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs button[data-tab="home
 .km-photo-tools button { background:#3E2D20!important; border-color:#6E5844!important; }
 html[data-theme="dark"]:not(.knox-seasonal) :is(.km-photo-review, .km-photo-review::backdrop) { background:#16111C!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .km-photo-stage { background:#221A2A!important; }
+
+/* ═══ Sign-in (app) ═══════════════════════════════════════════════════════════
+   A sheet from the bottom in the Plans style: a gradient header with the tilted
+   fox and sparkles, the three sign-in providers first, then email with one
+   Sign in / Create account switch. */
+html.native-app #authMicrosoftBtn, html.native-app #authModal #authAppleBtn { display:flex!important; }
+html.native-app #authModal { align-items:flex-end!important; padding:0!important; background:rgba(20,12,4,.5); }
+html.native-app #authModal .auth-card { max-width:520px; width:100%; margin:0 auto; border-radius:30px 30px 0 0; border:0; max-height:94dvh!important; padding-bottom:env(safe-area-inset-bottom,0px); box-shadow:0 -12px 40px rgba(0,0,0,.25); animation:kmHistUp .32s cubic-bezier(.2,.8,.2,1); }
+html.native-app #authModal .auth-header { position:relative; isolation:isolate; overflow:hidden; padding:30px 24px 30px; border:0; background:linear-gradient(165deg,#FF8A2B,#B84300 80%); }
+html.native-app #authModal .auth-header::after { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle at 14% 30%,#FFE7A3 0 2.5px,transparent 4px),radial-gradient(circle at 86% 24%,#FFE7A3 0 3px,transparent 4.5px),radial-gradient(circle at 24% 80%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 80% 74%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 50% 30%,rgba(255,214,140,.5),transparent 62%); animation:kmHeroTwinkle 2.6s ease-in-out infinite alternate; }
+html.native-app #authModal .auth-header img { width:76px; height:76px; border-radius:24px; border:3px solid #FFE08A; object-position:center; transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; box-shadow:0 5px 0 rgba(0,0,0,.28), 0 0 34px rgba(255,214,140,.55); margin-bottom:12px; }
+html.native-app #authModal .auth-header h2 { font-size:28px; letter-spacing:-.03em; text-shadow:0 2px 0 rgba(0,0,0,.12); }
+html.native-app #authModal .auth-header p { font-size:14.5px; }
+html.native-app #authModal .auth-body { padding:20px 20px 22px; }
+/* The three providers, first and all the same size (Apple in its own black). */
+html.native-app #authModal #authSocialButtons { display:grid; gap:10px; }
+html.native-app #authModal .auth-social { min-height:54px; margin:0; border-radius:16px; border:2px solid var(--border); box-shadow:0 3px 0 var(--border); font-size:15.5px; font-weight:900; background:var(--surface); }
+html.native-app #authModal .auth-social:active { transform:translateY(2px); box-shadow:0 1px 0 var(--border); }
+html.native-app #authModal #authAppleBtn { background:#111; color:#fff; border-color:#111; box-shadow:0 3px 0 #000; }
+html[data-theme="dark"]:not(.knox-seasonal) #authModal #authAppleBtn { background:#fff; color:#111; border-color:#fff; box-shadow:0 3px 0 #bbb; }
+html.native-app #authModal .auth-divider { margin:20px 0 14px; text-transform:none; font-size:13px; letter-spacing:0; }
+/* One small switch instead of big tabs. */
+html.native-app #authModal .auth-tabs { margin-bottom:16px; border-radius:14px; }
+html.native-app #authModal .auth-tab { text-transform:none; letter-spacing:0; font-size:14px; padding:10px; }
+html.native-app #authModal .auth-tab.active { background:var(--orange-light); color:var(--orange-dark); box-shadow:inset 0 0 0 2px var(--orange); }
+html[data-theme="dark"]:not(.knox-seasonal) #authModal .auth-tab.active { color:var(--orange); }
+html.native-app #authModal .auth-field label { text-transform:none; letter-spacing:0; font-size:13px; }
+html.native-app #authModal .auth-field input { min-height:50px; border-radius:16px; }
+html.native-app #authModal .auth-submit { min-height:56px; border-radius:18px; text-transform:none; letter-spacing:0; font-size:16.5px; background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); border:2px solid var(--orange-dark); box-shadow:0 5px 0 var(--orange-dark); }
+html.native-app #authModal .auth-error:not(:empty), html.native-app #authModal .auth-success:not(:empty) { margin-bottom:12px; }
+@media (prefers-reduced-motion:reduce) { html.native-app #authModal .auth-header::after, html.native-app #authModal .auth-header img { animation:none; } }

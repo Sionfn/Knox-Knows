@@ -17,7 +17,8 @@
       "skipNativeAuth": true,
       "providers": [
         "google.com",
-        "apple.com"
+        "apple.com",
+        "microsoft.com"
       ]
     },
     "StatusBar": {
