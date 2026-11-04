@@ -232,6 +232,7 @@ function progress(){
   <div class="km-badges">${badges.map(([i,l,on])=>`<div class="km-badge${on?' on':''}" aria-label="${esc(l)}: ${on?'unlocked':'not yet unlocked'}" title="${esc(l)}"><span class="km-badge-icon">${svgIcon(i)}</span><small>${esc(l)}</small></div>`).join('')}</div>
   <p class="km-footer-note" style="margin-top:10px">Counted on this device as you study.</p>`;
  if(el.innerHTML!==html)el.innerHTML=html;
+ w.knoxCheckBadges?.(badges);
 }
 const refresh=()=>{goalRing();progress();if(!$('knoxMobileAccount')?.hidden)setTimeout(autoButton,60);};
 addEventListener('knox-goal-changed',refresh);addEventListener('knox-auth-changed',refresh);
@@ -274,4 +275,78 @@ function welcome(){
   o.remove();w.openAuthModal?.(a==='skip'?'signin':'signup');});
 }
 setTimeout(welcome,600);
+
+// ── Big moments: a full-screen Knox celebration in the Plans style ──
+// Streak milestones, a finished lesson, a finished card review, a new badge and
+// upgrading. Each moment is celebrated once, when it actually happens (never for
+// old history), and remembered per account on this device.
+// Knox's own drawn icons (knox-icons.js) for each moment.
+const kIcon=(n,alt)=>w.KI?.(n,{tint:false})||alt;
+const CEL={orange:['#FF8A2B','#B84300','#FFE08A'],purple:['#A66BFF','#4E1FA8','#F3DDFF'],green:['#62CC1C','#1F6A00','#D7FFB8'],gold:['#6B4B00','#2A1C00','#FFD84D'],blue:['#36B8F7','#0B579A','#CFF1FF']};
+let celebrating=null;const celebQueue=[];
+function bigMoment(m){
+ if(celebrating){celebQueue.push(m);return;}
+ const [c1,c2,accent]=CEL[m.color]||CEL.orange,d=document.createElement('dialog');
+ d.className='km-celebrate';d.setAttribute('aria-labelledby','kmCelTitle');d.style.cssText='--c1:'+c1+';--c2:'+c2+';--ca:'+accent;
+ d.innerHTML='<div class="km-cel-burst" aria-hidden="true">'+'<i></i>'.repeat(16)+'</div><div class="km-cel-body"><div class="km-cel-icon">'+(m.icon||'<img src="/knox-logo-square.jpg" alt="">')+'</div><h2 id="kmCelTitle">'+esc(m.title)+(m.accent?' <span>'+esc(m.accent)+'</span>':'')+'</h2>'+(m.text?'<p>'+esc(m.text)+'</p>':'')+(m.stats?.length?'<div class="km-cel-stats">'+m.stats.map(([n,l])=>'<div><b>'+esc(n)+'</b><small>'+esc(l)+'</small></div>').join('')+'</div>':'')+'<button type="button" class="km-cel-go">'+esc(m.action||'Keep going')+'</button></div>';
+ let done=false;
+ const finish=()=>{if(done)return;done=true;if(d.open)d.close();d.remove();celebrating=null;const next=celebQueue.shift();if(next)setTimeout(()=>bigMoment(next),350);};
+ const close=finish;d.addEventListener('close',finish);
+ d.addEventListener('click',e=>{if(e.target===d||e.target.closest('.km-cel-go'))close();});
+ document.body.append(d);d.showModal();celebrating=d;try{navigator.vibrate?.(30);}catch{}
+}
+w.knoxBigMoment=bigMoment;
+// Preview links only (never knoxknowsapp.com): a row on You that plays every big moment.
+const SAMPLES=[{color:'orange',icon:'<span class="knox-flame">🔥</span>',title:'7-day',accent:'streak!',text:'You studied 7 days in a row. Keep the flame going!',action:'Keep it going'},{color:'purple',icon:kIcon('cap','🎓'),title:'Lesson',accent:'complete!',text:'You worked through Comparing fractions. Your recap is ready below.',action:'See my recap'},{color:'green',icon:kIcon('cards','🃏'),title:'Review',accent:'complete!',text:'Your schedule is saved. Knox will bring cards back when they’re due.',stats:[['12','Reviews'],['10','Got it'],['2','Again']],action:'Done'},{color:'gold',icon:svgIcon('trophy'),title:'Badge',accent:'unlocked!',text:'10 questions',action:'Nice!'},{color:'gold',icon:kIcon('gem','💎'),title:'Welcome to',accent:'Mega Knox!',text:'40-card decks, the highest limits and early access to new features are all yours.',action:'Let’s go'}];
+if(!/(^|\.)knoxknowsapp\.com$/.test(location.hostname)){
+ const addRow=()=>{const list=document.querySelector('#knoxMobileAccount .km-menu-list');if(!list||list.querySelector('[data-cel-preview]'))return;const b=document.createElement('button');b.type='button';b.className='km-press';b.dataset.celPreview='';b.innerHTML='<span class="km-tile sm" data-color="gold" aria-hidden="true">'+svgIcon('trophy')+'</span><span>Preview celebrations<small>Preview link only: see every big moment</small></span><span aria-hidden="true">›</span>';b.onclick=()=>SAMPLES.forEach(m=>bigMoment(m));list.append(b);};
+ addRow();setTimeout(addRow,1500);addEventListener('knox-auth-changed',()=>setTimeout(addRow,500));
+}
+const celKey=()=>'knoxCelebrated.'+uid();
+const celRead=()=>{try{return JSON.parse(localStorage.getItem(celKey())||'null');}catch{return null;}};
+const celSave=v=>{try{localStorage.setItem(celKey(),JSON.stringify(v));}catch{}};
+// Right after the app opens or someone signs in, the streak, plan and badges are
+// still loading, so for a few seconds changes are only recorded, never celebrated.
+let settleUntil=Date.now()+8000;addEventListener('knox-auth-changed',()=>{settleUntil=Date.now()+8000;});
+const settling=()=>Date.now()<settleUntil;
+function celState(){if(!uid())return null;let v=celRead();if(!v){v={streak:0,badges:null,tier:w.userTier||'free'};celSave(v);}return v;}
+const MILESTONES=[3,7,14,30,50,100,200,365];
+function checkStreak(){
+ const v=celState(),n=Number($('streakCount')?.textContent)||0;if(!v||!n)return;
+ const hit=settling()?0:MILESTONES.filter(m=>m<=n&&m>(v.streak||0)).pop();
+ if(n>(v.streak||0)){v.streak=n;celSave(v);}
+ if(hit)bigMoment({color:'orange',icon:'<span class="knox-flame">🔥</span>',title:hit+'-day',accent:'streak!',text:hit>=30?'That’s serious dedication. Knox is proud of you.':'You studied '+hit+' days in a row. Keep the flame going!',action:'Keep it going'});
+}
+const sc=$('streakCount');if(sc)new MutationObserver(()=>setTimeout(checkStreak,50)).observe(sc,{childList:true,characterData:true,subtree:true});
+addEventListener('knox-auth-changed',()=>setTimeout(checkStreak,400));
+// Badges (streak badges are covered by the streak celebration above).
+w.knoxCheckBadges=list=>{
+ const v=celState();if(!v)return;const on=list.filter(([,l,ok])=>ok&&!/streak/i.test(l)).map(([,l])=>l);
+ if(!v.badges||settling()){v.badges=[...new Set([...(v.badges||[]),...on])];celSave(v);return;}
+ const fresh=on.filter(l=>!v.badges.includes(l));if(!fresh.length)return;v.badges=[...v.badges,...fresh];celSave(v);
+ for(const l of fresh)bigMoment({color:'gold',icon:svgIcon(list.find(b=>b[1]===l)[0]),title:'Badge',accent:'unlocked!',text:l,action:'Nice!'});
+};
+// Upgrading to Knox Plus or Mega Knox.
+const RANK={free:0,plus:1,mega:2};
+addEventListener('knox-plan-changed',()=>{
+ const v=celState(),t=w.userTier||'free';if(!v)return;
+ if(!settling()&&(RANK[t]??0)>(RANK[v.tier]??0))bigMoment(t==='mega'?{color:'gold',icon:kIcon('gem','💎'),title:'Welcome to',accent:'Mega Knox!',text:'40-card decks, the highest limits and early access to new features are all yours.',action:'Let’s go'}:{color:'green',icon:kIcon('bolt','⚡'),title:'Welcome to',accent:'Knox Plus!',text:'Unlimited questions and full Learn lessons are unlocked.',action:'Let’s go'});
+ if(v.tier!==t){v.tier=t;celSave(v);}
+});
+// A finished Learn lesson (its recap appears right after a reply you just asked for).
+let askedAt=0;const ask=w.appHandleAsk;if(typeof ask==='function')w.appHandleAsk=function(){askedAt=Date.now();return ask.apply(this,arguments);};
+const lessonThread=$('chatThread');
+if(lessonThread)new MutationObserver(list=>{
+ if(Date.now()-askedAt>120000)return;
+ for(const m of list)for(const n of m.addedNodes){const recap=n.nodeType===1&&(n.matches?.('.learn-recap')?n:n.querySelector?.('.learn-recap'));if(!recap)continue;
+  askedAt=0;const topic=(recap.querySelector('.learn-recap-title')?.textContent||'').split('·')[1]?.trim();
+  setTimeout(()=>bigMoment({color:'purple',icon:kIcon('cap','🎓'),title:'Lesson',accent:'complete!',text:topic?'You worked through '+topic+'. Your recap is ready below.':'Nice work. Your recap is ready below.',action:'See my recap'}),500);return;}
+}).observe(lessonThread,{childList:true,subtree:true});
+// A finished flashcard review.
+(function hookCards(){const cardsPanel=$('flashcardsPanel');if(!cardsPanel){setTimeout(hookCards,800);return;}
+new MutationObserver(list=>{
+ for(const m of list)for(const n of m.addedNodes){const done=n.nodeType===1&&(n.matches?.('.fc-done')?n:n.querySelector?.('.fc-done'));if(!done)continue;
+  const st=[...done.querySelectorAll('.fc-stat')].map(x=>[x.querySelector('b')?.textContent||'0',x.querySelector('span')?.textContent||'']);
+  bigMoment({color:'green',icon:kIcon('cards','🃏'),title:'Review',accent:'complete!',text:'Your schedule is saved. Knox will bring cards back when they’re due.',stats:st,action:'Done'});return;}
+}).observe(cardsPanel,{childList:true,subtree:true});})();
 })();

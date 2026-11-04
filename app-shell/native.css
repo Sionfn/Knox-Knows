@@ -1552,3 +1552,46 @@ html.native-app #authModal .auth-field input { min-height:50px; border-radius:16
 html.native-app #authModal .auth-submit { min-height:56px; border-radius:18px; text-transform:none; letter-spacing:0; font-size:16.5px; background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); border:2px solid var(--orange-dark); box-shadow:0 5px 0 var(--orange-dark); }
 html.native-app #authModal .auth-error:not(:empty), html.native-app #authModal .auth-success:not(:empty) { margin-bottom:12px; }
 @media (prefers-reduced-motion:reduce) { html.native-app #authModal .auth-header::after, html.native-app #authModal .auth-header img { animation:none; } }
+
+/* ═══ Celebrations (Plans style, Brawl-Stars-rank-up energy) ════════════════ */
+dialog.km-celebrate { position:fixed; inset:0; margin:0; padding:0; border:0; width:100%; max-width:none; height:100%; max-height:none; color:#fff; background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--ca) 40%,transparent),transparent 55%),linear-gradient(165deg,var(--c1),var(--c2) 80%); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+dialog.km-celebrate:not([open]) { display:none; }
+dialog.km-celebrate::backdrop { background:var(--c2,#000); }
+.km-cel-body { position:relative; z-index:1; width:min(360px,calc(100% - 40px)); text-align:center; animation:kmCelIn .5s cubic-bezier(.2,1.2,.3,1) both; }
+@keyframes kmCelIn { from { opacity:0; transform:scale(.7) translateY(20px); } to { opacity:1; transform:none; } }
+.km-cel-icon { width:112px; height:112px; margin:0 auto 18px; display:grid; place-items:center; border-radius:34px; border:4px solid var(--ca); background:rgba(255,255,255,.16); box-shadow:0 7px 0 rgba(0,0,0,.28), 0 0 60px color-mix(in srgb,var(--ca) 70%,transparent); transform:rotate(-6deg); animation:kmBob 3.6s ease-in-out .5s infinite; overflow:hidden; font-size:58px; line-height:1; }
+.km-cel-icon img { width:100%; height:100%; object-fit:cover; }
+.km-cel-icon svg { width:58px; height:58px; color:var(--ca); }
+.km-cel-icon .knox-flame { font-size:62px; }
+.km-celebrate h2 { margin:0 0 10px; font:900 40px/1.02 Nunito,sans-serif; letter-spacing:-.035em; text-shadow:0 3px 0 rgba(0,0,0,.18); }
+.km-celebrate h2 span { display:block; color:var(--ca); }
+.km-celebrate p { margin:0 auto 18px; max-width:300px; font:700 15.5px/1.5 Nunito,sans-serif; color:rgba(255,255,255,.92); }
+.km-cel-stats { display:flex; justify-content:center; gap:10px; margin:0 0 20px; }
+.km-cel-stats > div { min-width:82px; padding:10px 8px; border-radius:18px; background:rgba(255,255,255,.16); border:1.5px solid rgba(255,255,255,.4); }
+.km-cel-stats b { display:block; font:900 26px/1 Nunito,sans-serif; } .km-cel-stats small { font:800 11.5px Nunito,sans-serif; opacity:.9; }
+.km-cel-go { width:100%; min-height:58px; border-radius:20px; border:2px solid rgba(0,0,0,.18); background:#fff; color:var(--c2); font:900 17px Nunito,sans-serif; box-shadow:0 5px 0 rgba(0,0,0,.25); }
+.km-cel-go:active { transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.25); }
+/* Sparkle burst from the middle. */
+.km-cel-burst { position:absolute; left:50%; top:40%; width:0; height:0; }
+.km-cel-burst i { position:absolute; width:9px; height:9px; margin:-4.5px; border-radius:50%; background:var(--ca); box-shadow:0 0 12px var(--ca); opacity:0; animation:kmCelSpark 1.4s cubic-bezier(.2,.8,.3,1) .15s both; }
+.km-cel-burst i:nth-child(3n) { background:#fff; box-shadow:0 0 10px #fff; width:6px; height:6px; }
+.km-cel-burst i:nth-child(4n) { border-radius:2px; transform:rotate(45deg); }
+@keyframes kmCelSpark { 0% { opacity:0; transform:translate(0,0) scale(.4); } 15% { opacity:1; } 100% { opacity:0; transform:translate(var(--x),var(--y)) scale(1); } }
+.km-cel-burst i:nth-child(1){--x:-150px;--y:-170px} .km-cel-burst i:nth-child(2){--x:140px;--y:-180px} .km-cel-burst i:nth-child(3){--x:-190px;--y:-40px} .km-cel-burst i:nth-child(4){--x:185px;--y:-60px}
+.km-cel-burst i:nth-child(5){--x:-120px;--y:150px} .km-cel-burst i:nth-child(6){--x:130px;--y:140px} .km-cel-burst i:nth-child(7){--x:-40px;--y:-220px} .km-cel-burst i:nth-child(8){--x:50px;--y:-210px}
+.km-cel-burst i:nth-child(9){--x:-210px;--y:80px} .km-cel-burst i:nth-child(10){--x:205px;--y:70px} .km-cel-burst i:nth-child(11){--x:-80px;--y:-120px} .km-cel-burst i:nth-child(12){--x:90px;--y:-110px}
+.km-cel-burst i:nth-child(13){--x:-30px;--y:190px} .km-cel-burst i:nth-child(14){--x:40px;--y:200px} .km-cel-burst i:nth-child(15){--x:-170px;--y:-110px} .km-cel-burst i:nth-child(16){--x:165px;--y:-120px}
+@media (prefers-reduced-motion:reduce) { .km-cel-body, .km-cel-icon, .km-cel-burst i { animation:none!important; } .km-cel-burst { display:none; } }
+
+/* What's New and the gift popup get the same finish in the app. */
+html.native-app .kt-card.kt-center { border:2.5px solid var(--orange)!important; background:linear-gradient(170deg,var(--orange-light),var(--surface) 55%)!important; box-shadow:0 6px 0 var(--orange-dark), 0 20px 40px -16px rgba(60,30,5,.45)!important; border-radius:26px!important; }
+html.native-app .kt-card.kt-center .kt-icon { width:54px; height:54px; border-radius:17px; border:3px solid var(--orange); transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; box-shadow:0 3px 0 var(--orange-dark); }
+html.native-app .kg-card { border-radius:26px!important; box-shadow:0 6px 0 var(--orange-dark), 0 20px 40px -16px rgba(60,30,5,.45)!important; }
+html.native-app .kg-card.kg-mega { box-shadow:0 6px 0 #C99404, 0 20px 40px -16px rgba(120,80,0,.45)!important; }
+
+/* Every celebration sits on the Plans hero itself (deep brown-gold, warm glow,
+   twinkling sparkles); each moment's own color shows in its title and icon. */
+dialog.km-celebrate { background:radial-gradient(circle at 50% 36%,rgba(255,216,77,.42),transparent 52%),radial-gradient(circle at 14% 22%,#FFD84D 0 2.5px,transparent 4px),radial-gradient(circle at 86% 18%,#FFD84D 0 3px,transparent 4.5px),radial-gradient(circle at 22% 76%,#FFD84D 0 2px,transparent 3.5px),radial-gradient(circle at 80% 70%,#FFD84D 0 2px,transparent 3.5px),radial-gradient(circle at 60% 8%,#FFD84D 0 1.5px,transparent 3px),linear-gradient(165deg,#5A3F00,#2A1C00 70%)!important; }
+dialog.km-celebrate::backdrop { background:#2A1C00; }
+.km-celebrate .km-cel-go { color:#3A2800; background:linear-gradient(180deg,#FFCB2E,#F2B705); border-color:#C99404; box-shadow:0 5px 0 #9A6B00; }
+.km-cel-icon svg.kk-ic { width:60px; height:60px; color:var(--ca); }
