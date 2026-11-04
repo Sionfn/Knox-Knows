@@ -150,7 +150,8 @@ if(!native&&w.visualViewport){
  // iPhone slides the whole page up to show a text box above the keyboard and
  // leaves it there after the keyboard closes, hiding the top of every screen.
  // Put it back once the keyboard is gone (again after iOS's own settle).
- function unshift(){if(typing())return;if(scrollY||document.documentElement.scrollTop)scrollTo(0,0);setTimeout(()=>{if(!typing()&&(scrollY||document.documentElement.scrollTop))scrollTo(0,0);},320);}
+ const shifted=()=>(w.scrollY||document.documentElement?.scrollTop||0)>0;
+ function unshift(){if(typing()||typeof w.scrollTo!=='function')return;if(shifted())w.scrollTo(0,0);setTimeout(()=>{if(!typing()&&shifted())w.scrollTo(0,0);},320);}
  const schedule=()=>{if(!frame)frame=requestAnimationFrame(apply);};
  vv.addEventListener('resize',schedule);vv.addEventListener('scroll',schedule);
  addEventListener('orientationchange',()=>setTimeout(()=>{base=innerHeight;schedule();},400));
