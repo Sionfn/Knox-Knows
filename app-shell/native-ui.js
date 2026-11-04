@@ -391,7 +391,7 @@ async function navigate(target){
   saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
   const from=current;
-  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
+  if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
   if(target==='flashcards'){
    if(!window.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}
    window.closeCalc?.();if(!(await window.knoxFlashcardsMobile.show()))return;
@@ -403,7 +403,7 @@ async function navigate(target){
     if(mode()!==target){remember();if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();restore(target);}
    }
   }
-  surface(null);current=target;sync();slideIn(from,target);quiet(p.haptics.selectionChanged());return true;
+  surface(null);current=target;sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;
  }finally{busy=false;}
 }
 async function newStudy(){
