@@ -1430,15 +1430,10 @@ html.native-app .km-in-right { animation:kmInRight .3s cubic-bezier(.22,.8,.25,1
 html.native-app .km-in-left { animation:kmInLeft .3s cubic-bezier(.22,.8,.25,1)!important; }
 
 /* ═══ Chat answers in the app style ══════════════════════════════════════════
-   Messages ease in, Knox's answers use the full width (no side avatar column),
-   and the follow-up actions are colored Knox bubbles. */
+   Answers keep the website's look; messages ease in, and the app-only
+   follow-up actions are colored Knox bubbles. */
 @keyframes kmMsgIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
 html.native-app #chatThread .msg-wrap { animation:kmMsgIn .32s cubic-bezier(.22,.8,.25,1) backwards; }
-html.native-app #chatThread .msg-knox { gap:0; }
-html.native-app #chatThread .msg-knox-avatar { display:none; }
-html.native-app #chatThread .msg-knox-content { max-width:100%; width:100%; }
-html.native-app #chatThread .msg-knox-label { display:flex; align-items:center; gap:6px; margin:0 0 6px 4px; }
-html.native-app #chatThread .msg-knox-label::before { content:""; width:20px; height:20px; border-radius:6px; background:url(/knox-logo-square.jpg) center/cover; box-shadow:0 0 0 1.5px var(--orange); }
 html.native-app .km-answer-actions { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 2px; }
 html.native-app .km-answer-actions button { --c:var(--purple); --cd:var(--purple-dark); --cl:var(--purple-light); display:inline-flex; align-items:center; gap:6px; min-height:38px; padding:7px 14px; border:2px solid var(--c); border-radius:999px; background:color-mix(in srgb,var(--cl) 55%,var(--surface)); color:var(--text); font:800 13px Nunito,sans-serif; box-shadow:0 3px 0 var(--cd); }
 html.native-app .km-answer-actions button:nth-child(2) { --c:var(--blue); --cd:var(--blue-dark); --cl:var(--blue-light); }
