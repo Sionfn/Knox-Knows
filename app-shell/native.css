@@ -1429,31 +1429,6 @@ html.native-app body.knox-learn-mode #inputBox:focus-within { outline-color:colo
 html.native-app .km-in-right { animation:kmInRight .3s cubic-bezier(.22,.8,.25,1)!important; }
 html.native-app .km-in-left { animation:kmInLeft .3s cubic-bezier(.22,.8,.25,1)!important; }
 
-/* ═══ Cards tab in the app style ═════════════════════════════════════════════
-   The three ways to make a deck are round shortcuts (like Study tools), and
-   decks are one grouped list with a Review button on each row. */
-#flashcardsPanel .fc-ways { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:6px auto 4px; }
-#flashcardsPanel .fc-way { display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0; border:0!important; background:transparent!important; box-shadow:none!important; text-align:center; min-height:0; }
-#flashcardsPanel .fc-way:active { transform:translateY(2px); }
-#flashcardsPanel .fc-way-icon { width:62px; height:62px; margin:0; font-size:26px; box-shadow:0 4px 0 var(--chip-ledge); }
-#flashcardsPanel .fc-way-icon svg { width:28px; height:28px; }
-#flashcardsPanel .fc-way b { font-size:12.5px; line-height:1.25; }
-#flashcardsPanel .fc-way > span:last-child { display:none; }
-#flashcardsPanel .fc-toolbar-quiet { justify-content:center; margin-top:10px; }
-#flashcardsPanel .fc-sync-note { font-size:12px; }
-#flashcardsPanel .fc-grid { display:block; border:2px solid var(--border); border-radius:22px; background:var(--surface); box-shadow:0 4px 0 var(--border); overflow:hidden; }
-#flashcardsPanel .fc-grid:has(.fc-empty) { border:0; background:transparent; box-shadow:none; }
-#flashcardsPanel .fc-deck { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"top go" "more more"; align-items:center; gap:4px 10px; padding:14px 14px 8px; margin:0; border:0!important; border-radius:0!important; box-shadow:none!important; background:transparent!important; }
-#flashcardsPanel .fc-deck + .fc-deck { border-top:1.5px solid var(--border)!important; }
-#flashcardsPanel .fc-deck-top { grid-area:top; gap:12px; }
-#flashcardsPanel .fc-deck-icon { width:44px; height:44px; font-size:21px; box-shadow:0 2px 0 var(--chip); }
-#flashcardsPanel .fc-deck-name { font-size:15px; text-transform:none; letter-spacing:0; margin:0 0 4px; }
-#flashcardsPanel .fc-deck-actions { grid-area:go; flex-direction:column; gap:6px; }
-#flashcardsPanel .fc-deck-actions .fc-btn { min-height:36px; padding:6px 14px; font-size:13px; }
-#flashcardsPanel .fc-deck-actions .fc-btn:not(.primary) { border:0; background:transparent; box-shadow:none; color:var(--text-light); min-height:28px; padding:2px 8px; }
-#flashcardsPanel .fc-deck-more { grid-area:more; justify-content:flex-start; margin:0 0 0 50px; }
-#flashcardsPanel .fc-deck-more .fc-btn { min-height:30px; padding:4px 8px; font-size:12px; }
-
 /* ═══ Chat answers in the app style ══════════════════════════════════════════
    Messages ease in, Knox's answers use the full width (no side avatar column),
    and the follow-up actions are colored Knox bubbles. */
