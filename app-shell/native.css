@@ -1404,3 +1404,21 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs { background:color-mi
 .knox-app-tabs.km-lensing .km-tab-glider { transition:transform .07s linear, background-color .18s, border-color .18s, box-shadow .18s!important; background:color-mix(in srgb,var(--c-light) 70%,rgba(255,255,255,.5))!important; border:1px solid color-mix(in srgb,var(--c) 55%,#fff)!important; box-shadow:0 2px 0 color-mix(in srgb,var(--c-dark) 60%,transparent), inset 0 1px 0 rgba(255,255,255,.85), 0 6px 16px color-mix(in srgb,var(--c) 28%,transparent)!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .km-tab-glider { background:color-mix(in srgb,var(--c) 24%,rgba(255,255,255,.06))!important; border-color:color-mix(in srgb,var(--c) 60%,transparent)!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.15), 0 4px 12px color-mix(in srgb,var(--c) 25%,transparent)!important; }
 .knox-app-tabs.km-lensing button:not(.km-tab-snap) .km-tab-tile { transition:none; }
+
+/* Dragging: a clear glass highlight (no tab colors flashing past), moved every
+   frame without lag; letting go flows it onto the tab and fades in its color. */
+.knox-app-tabs.km-lensing .km-tab-glider { transition:background-color .2s, border-color .2s, box-shadow .2s!important; background:rgba(255,255,255,.58)!important; border:1px solid rgba(255,255,255,.95)!important; box-shadow:0 6px 18px rgba(60,35,10,.16), inset 0 1px 0 #fff, inset 0 -1px 2px rgba(60,35,10,.06)!important; will-change:transform; }
+html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs.km-lensing .km-tab-glider { background:rgba(255,255,255,.16)!important; border-color:rgba(255,255,255,.32)!important; box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.3)!important; }
+.km-tab-glider { transition:transform .42s cubic-bezier(.2,.9,.25,1), background-color .32s, border-color .32s, box-shadow .32s, opacity .2s!important; }
+
+/* ═══ Typing bar: smooth, no jumps ═══════════════════════════════════════════
+   The topic buttons fold away (and unfold) with one eased motion instead of
+   vanishing, the heading stays still, and the box glows in the mode's color. */
+html.native-app #welcomeScreen .suggestion-grid { max-height:640px; overflow:hidden; transform-origin:50% 0; transition:max-height .38s cubic-bezier(.22,.8,.25,1), opacity .24s ease, transform .38s cubic-bezier(.22,.8,.25,1), margin-top .38s cubic-bezier(.22,.8,.25,1); }
+html.native-app.km-typing #welcomeScreen .suggestion-grid { display:grid!important; max-height:0!important; opacity:0; transform:translateY(-6px) scale(.97); margin-top:0!important; pointer-events:none; }
+html.native-app.km-typing #welcomeScreen > *, html.native-app.km-typing-leave #welcomeScreen .suggestion-chip { animation:none!important; }
+html.native-app #welcomeScreen .suggestion-chip { animation:none; }
+html.native-app #inputBox { outline:4px solid transparent; outline-offset:1px; transition:outline-color .25s ease, border-color .25s ease, box-shadow .25s ease; }
+html.native-app #inputBox:focus-within { outline-color:color-mix(in srgb,var(--orange) 22%,transparent); }
+html.native-app body.knox-learn-mode #inputBox:focus-within { outline-color:color-mix(in srgb,var(--purple) 24%,transparent); }
+@media (prefers-reduced-motion:reduce) { html.native-app #welcomeScreen .suggestion-grid { transition:opacity .15s; } }
