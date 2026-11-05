@@ -824,6 +824,8 @@ function cleanLatexAnswer(text) {
 // An opt-in setting (off by default). The same model runs through OpenAI's
 // Responses API with its hosted web_search tool, so Knox checks real pages and
 // links its sources instead of telling the student to go look it up.
+// Answer languages students can choose in the app (codes the client sends).
+const ANSWER_LANGUAGES = { auto: 'auto', en: 'English', es: 'Spanish', fr: 'French', pt: 'Portuguese', de: 'German', it: 'Italian', zh: 'Simplified Chinese', ja: 'Japanese', ko: 'Korean', ar: 'Arabic', hi: 'Hindi', vi: 'Vietnamese', tl: 'Tagalog', ru: 'Russian' };
 const WEB_SEARCH_INSTRUCTION = 'Web search is ON for this student. Search the web before answering whenever facts, quotes, dates, statistics, current events, or sources matter, especially for essays, research and citations. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
 
 function toResponsesInput(messages) {
@@ -973,8 +975,9 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch, language } = req.body;
   if (webSearch != null && typeof webSearch !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
+  if (language != null && (typeof language !== 'string' || !Object.hasOwn(ANSWER_LANGUAGES, language))) return res.status(400).json({ error: 'Invalid request.' });
   // The bot uses Learn mode (/learn) unless it asks for Ask Knox (/ask sends
   // learnMode: false). History is the lesson so far (its Reply button) and a
   // photo goes through the same size and type checks as the website's.
@@ -1285,6 +1288,8 @@ export default async function handler(req, res) {
     // before writing, which can use up 3000 tokens before a word appears.
     const writing = !casual && /\b(essays?|stor(?:y|ies)|poems?|letters?|speech(?:es)?|narratives?|articles?|reports?|\d+[ -]?(?:words?|paragraphs?|pages?|sentences?))\b/i.test(trimmedQuestion);
     const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : writing ? 8000 : 3000; // files can hold many problems, like photos
+    // The student's chosen answer language (app setting). Learn's JSON keys stay as specified.
+    if (language && language !== 'auto') messages.splice(messages.length - 1, 0, { role: 'system', content: `Write your entire reply in ${ANSWER_LANGUAGES[language]}, even if the question or photo is in another language, unless the student asks for a translation or for a different language. Keep math notation as is. Any required output format, labels or JSON keys stay exactly as specified; only the student-facing text is in ${ANSWER_LANGUAGES[language]}.` });
     const requestBody = {
       model:       modelToUse,
       messages,
