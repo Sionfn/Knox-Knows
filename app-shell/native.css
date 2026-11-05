@@ -1601,3 +1601,10 @@ dialog.km-celebrate[data-tone="blue"] { --ca-line:var(--blue); --ca-ledge:var(--
 dialog.km-celebrate[data-tone="gold"] .km-cel-go { color:#3A2800; }
 html[data-theme="dark"]:not(.knox-seasonal) dialog.km-celebrate .km-cel-icon svg { color:var(--ca-line); }
 html[data-theme="dark"]:not(.knox-seasonal) dialog.km-celebrate h2 span { color:var(--ca-line); }
+
+/* Ask and Learn start screens: Knox floats above the heading (tilted, gently
+   bobbing), in its usual orange frame (purple in Learn). Nothing else changes. */
+html.native-app .km-welcome-fox { display:block; flex:none; width:72px; height:72px; margin:0 auto 14px; border-radius:22px; border:3px solid var(--orange); object-fit:cover; box-shadow:0 4px 0 var(--orange-dark); transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
+html.native-app body.knox-learn-mode .km-welcome-fox { border-color:var(--purple); box-shadow:0 4px 0 var(--purple-dark); }
+@media (prefers-reduced-motion:reduce) { html.native-app .km-welcome-fox { animation:none; } }
+@media (max-height:700px) { html.native-app .km-welcome-fox { width:52px; height:52px; border-radius:16px; margin-bottom:8px; } }

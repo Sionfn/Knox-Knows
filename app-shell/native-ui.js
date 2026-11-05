@@ -230,6 +230,8 @@ function addMenu(){
   const google=social.querySelector('[onclick*="Google"]'),apple=$('authAppleBtn'),ms=$('authMicrosoftBtn');[google,apple,ms].forEach(b=>b&&social.append(b));
   const up=$('authSignupTab');if(up)up.textContent='Create account';
  }}
+// Ask and Learn start screens: Knox floats above the heading.
+{const badge=$('welcomeScreen')?.querySelector(':scope > .welcome-badge');if(badge&&!$('welcomeScreen').querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';badge.before(fox);}}
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
