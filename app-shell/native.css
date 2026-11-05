@@ -1639,3 +1639,10 @@ html.native-app #authModal .auth-header { position:relative; }
 @media (max-width:350px) {
   html.native-app #welcomeScreen .suggestion-chip .chip-text { font-size:12px!important; letter-spacing:-.01em; overflow-wrap:normal; word-break:normal; }
 }
+/* Typing: Knox keeps floating, and the soft glow hugs the typing bar and its
+   darker edge (no white gap between the bar and the glow). */
+html.native-app.km-typing #welcomeScreen > .km-welcome-fox { animation:kmBob 4.5s ease-in-out infinite!important; }
+@media (prefers-reduced-motion:reduce) { html.native-app.km-typing #welcomeScreen > .km-welcome-fox { animation:none!important; } }
+html.native-app #inputBox, html.native-app #inputBox:focus-within { outline:0!important; }
+html.native-app #inputBox:focus-within { --ring:color-mix(in srgb,var(--orange) 20%,transparent); box-shadow:0 4px 0 var(--orange-dark), 0 0 0 5px var(--ring), 0 4px 0 5px var(--ring)!important; }
+html.native-app body.knox-learn-mode #inputBox:focus-within { --ring:color-mix(in srgb,var(--purple) 22%,transparent); border-color:var(--purple-dark); box-shadow:0 4px 0 var(--purple-dark), 0 0 0 5px var(--ring), 0 4px 0 5px var(--ring)!important; }
