@@ -247,6 +247,18 @@ function addMenu(){
  }}
 // Ask and Learn start screens: Knox floats above the heading.
 {const badge=$('welcomeScreen')?.querySelector(':scope > .welcome-badge');if(badge&&!$('welcomeScreen').querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';badge.before(fox);}}
+// Ask and Learn start screens fit without a little scroll: measure the real
+// space (the notch and home bar take some) and tighten the gaps only if needed.
+{const ws=$('welcomeScreen'),R=document.documentElement;let soon=0;
+ const fit=()=>{if(!ws||!ws.offsetParent||R.classList.contains('km-typing')||R.classList.contains('native-keyboard'))return;
+  R.classList.remove('km-fit1','km-fit2');const over=()=>ws.scrollHeight>ws.clientHeight+1;
+  if(over()){R.classList.add('km-fit1');if(over())R.classList.add('km-fit2');}
+  if(!over())ws.scrollTop=0;};
+ const later=()=>{clearTimeout(soon);soon=setTimeout(fit,50);};
+ window.knoxFitWelcome=fit;addEventListener('resize',later);
+ if(ws)new MutationObserver(later).observe(ws,{childList:true,subtree:true,characterData:true});
+ new MutationObserver(later).observe(document.body,{attributes:true,attributeFilter:['class']});
+ later();}
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;

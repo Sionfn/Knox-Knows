@@ -1667,3 +1667,15 @@ html.native-app .knox-app-tabs { animation:none!important; }
 html.native-app .km2 .km-rise { animation:none!important; }
 /* Tabs switch instantly, like iPhone apps' own tab bars. */
 html.native-app .km-in-right, html.native-app .km-in-left { animation:none!important; }
+
+/* Same tightening when the app measures that the start screen doesn't fit
+   (real iPhones lose height to the notch and home bar, which media queries miss). */
+  html.native-app.km-fit1 #welcomeScreen { padding-top:58px!important; }
+  html.native-app.km-fit1 #welcomeScreen .welcome-badge { margin-bottom:6px!important; }
+  html.native-app.km-fit1 #welcomeScreen .welcome-title { margin-bottom:6px!important; }
+  html.native-app.km-fit1 #welcomeScreen .welcome-sub { margin-bottom:4px!important; font-size:13px!important; line-height:1.4!important; }
+  html.native-app.km-fit1 #welcomeScreen .suggestion-grid { margin-top:8px!important; gap:10px!important; }
+  html.native-app.km-fit1 #welcomeScreen .suggestion-chip { min-height:96px!important; padding:10px!important; }
+  html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle { width:40px!important; height:40px!important; }
+  html.native-app.km-fit2 #welcomeScreen .welcome-sub { display:none!important; }
+  html.native-app.km-fit2 #welcomeScreen .welcome-title { margin-bottom:2px!important; }
