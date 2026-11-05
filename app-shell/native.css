@@ -1463,20 +1463,6 @@ html[data-theme="dark"]:not(.knox-seasonal) .knox-app-tabs.km-lensing .km-tab-gl
 html.native-app { --mobile-tabs:92px; }
 html.native-app.native-keyboard { --mobile-tabs:0px; }
 
-/* ═══ Plans-screen finish on the app's own screens ═════════════════════════════
-   Home, You and History share the Plans polish: soft drop shadows under the
-   panels and the Home hero's glow, sparkles and bobbing fox. Ask, Learn,
-   Flashcards and Calculator keep their original design. */
-@keyframes kmHeroTwinkle { from { opacity:.7; } to { opacity:1; } }
-html.native-app :is(.km-today-panel,.km-pref-panel,#knoxMobileAccount .km-stats,#knoxMobileAccount .km-menu-list,.km-current-plan), html.native-app #knoxMobileHome :is(.km-ideas,.km-recent-list,#kmReview:has(.km-review-hero)) { box-shadow:0 4px 0 var(--border), 0 14px 28px -14px rgba(60,35,10,.3)!important; }
-html.native-app #mobileHistoryDrawer .sidebar-history-item { box-shadow:0 3px 0 var(--border), 0 10px 20px -12px rgba(60,35,10,.28); }
-/* Primary buttons get the Plans button finish: a gradient fill. */
-html.native-app #sendBtn, html.native-app .send-btn { background-image:linear-gradient(180deg,rgba(255,255,255,.25),transparent 60%); }
-/* Home hero gets the same glow, sparkles and bobbing fox. */
-html.native-app .km-hero { isolation:isolate; }
-html.native-app .km-hero::after { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(circle at 12% 22%,#FFE7A3 0 2.5px,transparent 4px),radial-gradient(circle at 60% 10%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 90% 60%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 80% 18%,rgba(255,214,140,.45),transparent 45%); animation:kmHeroTwinkle 2.6s ease-in-out infinite alternate; border-radius:inherit; }
-html.native-app .km-hero > * { position:relative; z-index:1; }
-html.native-app .km-hero-fox { transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
 
 .km-dock-fade { background:var(--km-page,var(--cream))!important; }
 /* Plans: the billing toggle takes the selected plan's color (gold Mega, green Plus). */
@@ -1487,7 +1473,6 @@ html.native-app .km-hero-fox { transform:rotate(-5deg); animation:kmBob 4.5s eas
 /* Today panel: the goal title fits on one line. */
 #knoxMobileHome .km-today-panel .km-goal b { font-size:14px; letter-spacing:-.01em; }
 
-html.native-app .km-review-go { background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); }
 
 /* ═══ Consistency pass ═══════════════════════════════════════════════════════ */
 /* Ask/Learn: messages fade out under the floating top buttons instead of
@@ -1507,7 +1492,6 @@ html.native-app .km-upsell:not([data-tier="plus"]) { background:linear-gradient(
 html.native-app .km-upsell:not([data-tier="plus"]) small { color:#9A6B00!important; }
 html.native-app .km-upsell:not([data-tier="plus"]) .km-upsell-gem { background:#FFF3C4; border:2px solid #F2B705; }
 html.native-app .km-upsell:not([data-tier="plus"]) span span { color:var(--text-light); opacity:1; }
-html.native-app .km-upsell:not([data-tier="plus"]) .km-upsell-shine { background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent); }
 html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) { background:linear-gradient(170deg,rgba(242,183,5,.16),var(--surface) 55%)!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) small { color:#FFD45C!important; }
 html[data-theme="dark"]:not(.knox-seasonal) .km-upsell:not([data-tier="plus"]) .km-upsell-gem { background:rgba(242,183,5,.18); }
@@ -1523,17 +1507,11 @@ html[data-theme="dark"]:not(.knox-seasonal) :is(.km-photo-review, .km-photo-revi
 html[data-theme="dark"]:not(.knox-seasonal) .km-photo-stage { background:#221A2A!important; }
 
 /* ═══ Sign-in (app) ═══════════════════════════════════════════════════════════
-   A sheet from the bottom in the Plans style: a gradient header with the tilted
-   fox and sparkles, the three sign-in providers first, then email with one
-   Sign in / Create account switch. */
+   A sheet from the bottom with the website's orange header, the three sign-in
+   providers first, then email with one Sign in / Create account switch. */
 html.native-app #authMicrosoftBtn, html.native-app #authModal #authAppleBtn { display:flex!important; }
 html.native-app #authModal { align-items:flex-end!important; padding:0!important; background:rgba(20,12,4,.5); }
 html.native-app #authModal .auth-card { max-width:520px; width:100%; margin:0 auto; border-radius:30px 30px 0 0; border:0; max-height:94dvh!important; padding-bottom:env(safe-area-inset-bottom,0px); box-shadow:0 -12px 40px rgba(0,0,0,.25); animation:kmHistUp .32s cubic-bezier(.2,.8,.2,1); }
-html.native-app #authModal .auth-header { position:relative; isolation:isolate; overflow:hidden; padding:30px 24px 30px; border:0; background:linear-gradient(165deg,#FF8A2B,#B84300 80%); }
-html.native-app #authModal .auth-header::after { content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(circle at 14% 30%,#FFE7A3 0 2.5px,transparent 4px),radial-gradient(circle at 86% 24%,#FFE7A3 0 3px,transparent 4.5px),radial-gradient(circle at 24% 80%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 80% 74%,#FFE7A3 0 2px,transparent 3.5px),radial-gradient(circle at 50% 30%,rgba(255,214,140,.5),transparent 62%); animation:kmHeroTwinkle 2.6s ease-in-out infinite alternate; }
-html.native-app #authModal .auth-header img { width:76px; height:76px; border-radius:24px; border:3px solid #FFE08A; object-position:center; transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; box-shadow:0 5px 0 rgba(0,0,0,.28), 0 0 34px rgba(255,214,140,.55); margin-bottom:12px; }
-html.native-app #authModal .auth-header h2 { font-size:28px; letter-spacing:-.03em; text-shadow:0 2px 0 rgba(0,0,0,.12); }
-html.native-app #authModal .auth-header p { font-size:14.5px; }
 html.native-app #authModal .auth-body { padding:20px 20px 22px; }
 /* The three providers, first and all the same size (Apple in its own black). */
 html.native-app #authModal #authSocialButtons { display:grid; gap:10px; }
@@ -1549,9 +1527,8 @@ html.native-app #authModal .auth-tab.active { background:var(--orange-light); co
 html[data-theme="dark"]:not(.knox-seasonal) #authModal .auth-tab.active { color:var(--orange); }
 html.native-app #authModal .auth-field label { text-transform:none; letter-spacing:0; font-size:13px; }
 html.native-app #authModal .auth-field input { min-height:50px; border-radius:16px; }
-html.native-app #authModal .auth-submit { min-height:56px; border-radius:18px; text-transform:none; letter-spacing:0; font-size:16.5px; background-image:linear-gradient(180deg,rgba(255,255,255,.22),transparent 60%); border:2px solid var(--orange-dark); box-shadow:0 5px 0 var(--orange-dark); }
+html.native-app #authModal .auth-submit { min-height:56px; border-radius:18px; text-transform:none; letter-spacing:0; font-size:16.5px; border:2px solid var(--orange-dark); box-shadow:0 5px 0 var(--orange-dark); }
 html.native-app #authModal .auth-error:not(:empty), html.native-app #authModal .auth-success:not(:empty) { margin-bottom:12px; }
-@media (prefers-reduced-motion:reduce) { html.native-app #authModal .auth-header::after, html.native-app #authModal .auth-header img { animation:none; } }
 
 /* ═══ Celebrations (Plans style, Brawl-Stars-rank-up energy) ════════════════ */
 dialog.km-celebrate { position:fixed; inset:0; margin:0; padding:0; border:0; width:100%; max-width:none; height:100%; max-height:none; color:#fff; background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--ca) 40%,transparent),transparent 55%),linear-gradient(165deg,var(--c1),var(--c2) 80%); display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -1583,15 +1560,44 @@ dialog.km-celebrate::backdrop { background:var(--c2,#000); }
 .km-cel-burst i:nth-child(13){--x:-30px;--y:190px} .km-cel-burst i:nth-child(14){--x:40px;--y:200px} .km-cel-burst i:nth-child(15){--x:-170px;--y:-110px} .km-cel-burst i:nth-child(16){--x:165px;--y:-120px}
 @media (prefers-reduced-motion:reduce) { .km-cel-body, .km-cel-icon, .km-cel-burst i { animation:none!important; } .km-cel-burst { display:none; } }
 
-/* What's New and the gift popup get the same finish in the app. */
-html.native-app .kt-card.kt-center { border:2.5px solid var(--orange)!important; background:linear-gradient(170deg,var(--orange-light),var(--surface) 55%)!important; box-shadow:0 6px 0 var(--orange-dark), 0 20px 40px -16px rgba(60,30,5,.45)!important; border-radius:26px!important; }
-html.native-app .kt-card.kt-center .kt-icon { width:54px; height:54px; border-radius:17px; border:3px solid var(--orange); transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; box-shadow:0 3px 0 var(--orange-dark); }
-html.native-app .kg-card { border-radius:26px!important; box-shadow:0 6px 0 var(--orange-dark), 0 20px 40px -16px rgba(60,30,5,.45)!important; }
-html.native-app .kg-card.kg-mega { box-shadow:0 6px 0 #C99404, 0 20px 40px -16px rgba(120,80,0,.45)!important; }
 
-/* Every celebration sits on the Plans hero itself (deep brown-gold, warm glow,
-   twinkling sparkles); each moment's own color shows in its title and icon. */
-dialog.km-celebrate { background:radial-gradient(circle at 50% 36%,rgba(255,216,77,.42),transparent 52%),radial-gradient(circle at 14% 22%,#FFD84D 0 2.5px,transparent 4px),radial-gradient(circle at 86% 18%,#FFD84D 0 3px,transparent 4.5px),radial-gradient(circle at 22% 76%,#FFD84D 0 2px,transparent 3.5px),radial-gradient(circle at 80% 70%,#FFD84D 0 2px,transparent 3.5px),radial-gradient(circle at 60% 8%,#FFD84D 0 1.5px,transparent 3px),linear-gradient(165deg,#5A3F00,#2A1C00 70%)!important; }
-dialog.km-celebrate::backdrop { background:#2A1C00; }
-.km-celebrate .km-cel-go { color:#3A2800; background:linear-gradient(180deg,#FFCB2E,#F2B705); border-color:#C99404; box-shadow:0 5px 0 #9A6B00; }
 .km-cel-icon svg.kk-ic { width:60px; height:60px; color:var(--ca); }
+
+/* ═══ Knox's own look everywhere in the app ══════════════════════════════════
+   Cream backgrounds, solid colored borders with the darker edge underneath,
+   flat Knox colors, no glows, sparkles, gradients or bobbing. */
+/* Home: a flat Knox-orange header card. */
+html.native-app .km-hero { background:var(--orange)!important; box-shadow:0 6px 0 var(--orange-dark)!important; }
+html.native-app .km-hero-glow, html.native-app .km-upsell-shine, html.native-app .km-pw-cta-shine, html.native-app .km-pw-sparkles { display:none!important; }
+html.native-app .km-hero-fox { animation:none!important; transform:none!important; }
+/* Plans: Knox's cream page with an orange header like the website's, the fox in
+   its usual round frame, and flat buttons with an edge. */
+html.native-app .km-pw-hero, html.native-app .km-plans[data-tier="plus"] .km-pw-hero { background:var(--orange)!important; border-bottom:4px solid var(--orange-dark); }
+html.native-app .km-pw-hero::before { display:none!important; }
+html.native-app .km-pw-fox, html.native-app .km-plans[data-tier="plus"] .km-pw-fox { animation:none!important; transform:none!important; border-radius:50%!important; border:4px solid #fff!important; box-shadow:0 4px 0 rgba(0,0,0,.12)!important; }
+html.native-app .km-pw-hero h1 span, html.native-app .km-plans[data-tier="plus"] .km-pw-hero h1 span { color:#FFF3C4!important; }
+html.native-app .km-pw-card { background:var(--surface)!important; }
+html.native-app .km-pw-cta.go { background:#F2B705!important; }
+html.native-app .km-pw-card[data-tier="plus"] .km-pw-cta.go { background:var(--green)!important; }
+/* Celebrations: a Knox card over a dimmed screen (like the website's welcome
+   popup), in each moment's color, with Knox's confetti. */
+dialog.km-celebrate { background:transparent!important; color:var(--text); }
+dialog.km-celebrate::backdrop { background:rgba(30,18,6,.55)!important; }
+.km-cel-burst { display:none!important; }
+.km-cel-body { width:min(360px,calc(100% - 40px)); padding:26px 22px 22px; border-radius:26px; background:var(--surface); border:3px solid var(--ca-line,var(--orange)); box-shadow:0 7px 0 var(--ca-ledge,var(--orange-dark)); }
+dialog.km-celebrate[data-tone="orange"] { --ca-line:var(--orange); --ca-ledge:var(--orange-dark); --ca-tint:var(--orange-light); --ca-ink:var(--orange); }
+dialog.km-celebrate[data-tone="purple"] { --ca-line:var(--purple); --ca-ledge:var(--purple-dark); --ca-tint:var(--purple-light); --ca-ink:var(--purple-dark); }
+dialog.km-celebrate[data-tone="green"] { --ca-line:var(--green); --ca-ledge:var(--green-dark); --ca-tint:var(--green-light); --ca-ink:var(--green-dark); }
+dialog.km-celebrate[data-tone="gold"] { --ca-line:#F2B705; --ca-ledge:#C99404; --ca-tint:#FFF3C4; --ca-ink:#9A6B00; }
+dialog.km-celebrate[data-tone="blue"] { --ca-line:var(--blue); --ca-ledge:var(--blue-dark); --ca-tint:var(--blue-light); --ca-ink:var(--blue-dark); }
+.km-cel-icon { width:96px; height:96px; border-radius:50%; border:4px solid var(--ca-line); background:var(--ca-tint); box-shadow:0 4px 0 var(--ca-ledge); transform:none; animation:none; font-size:48px; }
+.km-cel-icon svg, .km-cel-icon svg.kk-ic { width:48px; height:48px; color:var(--ca-ink); }
+.km-celebrate h2 { color:var(--text); font-size:32px; text-shadow:none; }
+.km-celebrate h2 span { color:var(--ca-ink); }
+.km-celebrate p { color:var(--text-light); font-size:15px; }
+.km-cel-stats > div { background:var(--cream); border:2px solid var(--border); box-shadow:0 3px 0 var(--border); color:var(--text); }
+.km-cel-stats small { color:var(--text-light); opacity:1; }
+.km-celebrate .km-cel-go { color:#fff; background:var(--ca-line); border:2px solid var(--ca-ledge); box-shadow:0 5px 0 var(--ca-ledge); }
+dialog.km-celebrate[data-tone="gold"] .km-cel-go { color:#3A2800; }
+html[data-theme="dark"]:not(.knox-seasonal) dialog.km-celebrate .km-cel-icon svg { color:var(--ca-line); }
+html[data-theme="dark"]:not(.knox-seasonal) dialog.km-celebrate h2 span { color:var(--ca-line); }

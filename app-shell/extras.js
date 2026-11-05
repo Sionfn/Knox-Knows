@@ -276,7 +276,7 @@ function welcome(){
 }
 setTimeout(welcome,600);
 
-// ── Big moments: a full-screen Knox celebration in the Plans style ──
+// ── Big moments: a Knox celebration card with confetti ──
 // Streak milestones, a finished lesson, a finished card review, a new badge and
 // upgrading. Each moment is celebrated once, when it actually happens (never for
 // old history), and remembered per account on this device.
@@ -286,14 +286,14 @@ const CEL={orange:['#FF8A2B','#B84300','#FFE08A'],purple:['#A66BFF','#4E1FA8','#
 let celebrating=null;const celebQueue=[];
 function bigMoment(m){
  if(celebrating){celebQueue.push(m);return;}
- const [c1,c2,accent]=CEL[m.color]||CEL.orange,d=document.createElement('dialog');
- d.className='km-celebrate';d.setAttribute('aria-labelledby','kmCelTitle');d.style.cssText='--c1:'+c1+';--c2:'+c2+';--ca:'+accent;
+ const d=document.createElement('dialog');
+ d.className='km-celebrate';d.dataset.tone=CEL[m.color]?m.color:'orange';d.setAttribute('aria-labelledby','kmCelTitle');
  d.innerHTML='<div class="km-cel-burst" aria-hidden="true">'+'<i></i>'.repeat(16)+'</div><div class="km-cel-body"><div class="km-cel-icon">'+(m.icon||'<img src="/knox-logo-square.jpg" alt="">')+'</div><h2 id="kmCelTitle">'+esc(m.title)+(m.accent?' <span>'+esc(m.accent)+'</span>':'')+'</h2>'+(m.text?'<p>'+esc(m.text)+'</p>':'')+(m.stats?.length?'<div class="km-cel-stats">'+m.stats.map(([n,l])=>'<div><b>'+esc(n)+'</b><small>'+esc(l)+'</small></div>').join('')+'</div>':'')+'<button type="button" class="km-cel-go">'+esc(m.action||'Keep going')+'</button></div>';
  let done=false;
  const finish=()=>{if(done)return;done=true;if(d.open)d.close();d.remove();celebrating=null;const next=celebQueue.shift();if(next)setTimeout(()=>bigMoment(next),350);};
  const close=finish;d.addEventListener('close',finish);
  d.addEventListener('click',e=>{if(e.target===d||e.target.closest('.km-cel-go'))close();});
- document.body.append(d);d.showModal();celebrating=d;try{navigator.vibrate?.(30);}catch{}
+ document.body.append(d);d.showModal();celebrating=d;confetti();try{navigator.vibrate?.(30);}catch{}
 }
 w.knoxBigMoment=bigMoment;
 // Preview links only (never knoxknowsapp.com): a row on You that plays every big moment.
