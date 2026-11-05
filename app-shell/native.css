@@ -1608,3 +1608,15 @@ html.native-app .km-welcome-fox { display:block; flex:none; width:72px; height:7
 html.native-app body.knox-learn-mode .km-welcome-fox { border-color:var(--purple); box-shadow:0 4px 0 var(--purple-dark); }
 @media (prefers-reduced-motion:reduce) { html.native-app .km-welcome-fox { animation:none; } }
 @media (max-height:700px) { html.native-app .km-welcome-fox { width:52px; height:52px; border-radius:16px; margin-bottom:8px; } }
+
+/* Fixes from the Nov 5 review. Celebrations scroll on short screens so the
+   button is never cut off, and their button text is dark enough to read. */
+dialog.km-celebrate { align-items:flex-start!important; overflow-y:auto!important; overscroll-behavior:contain; padding:calc(16px + env(safe-area-inset-top,0px)) 0 calc(22px + env(safe-area-inset-bottom,0px))!important; }
+dialog.km-celebrate .km-cel-body { margin-block:auto; flex:none; }
+.km-celebrate .km-cel-go { color:#2A1A0E!important; }
+/* Photo review: "Add a note first" hides when the photo will be attached anyway. */
+.km-photo-footer [hidden] { display:none!important; }
+/* Sign-in sheet: close button on the orange header. */
+html.native-app #authModal .auth-header { position:relative; }
+.km-auth-close { position:absolute; top:10px; right:10px; width:40px; height:40px; display:grid; place-items:center; padding:0; border:2px solid rgba(255,255,255,.7); border-radius:13px; background:rgba(0,0,0,.14); color:#fff; font:900 24px/1 Nunito,sans-serif; cursor:pointer; }
+.km-auth-close:focus-visible { outline:3px solid #fff; outline-offset:2px; }

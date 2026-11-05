@@ -230,14 +230,31 @@ function addMenu(){
   const google=social.querySelector('[onclick*="Google"]'),apple=$('authAppleBtn'),ms=$('authMicrosoftBtn');[google,apple,ms].forEach(b=>b&&social.append(b));
   const up=$('authSignupTab');if(up)up.textContent='Create account';
  }}
+// Sign-in sheet: a close button, and keyboard focus stays inside it while open
+// (Escape already closes it), then goes back to where it was.
+{const modal=$('authModal'),header=modal?.querySelector('.auth-header');
+ if(modal&&header&&!modal.querySelector('.km-auth-close')){
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','authHeaderTitle');
+  const x=document.createElement('button');x.type='button';x.className='km-auth-close';x.setAttribute('aria-label','Close sign-in');x.textContent='×';x.onclick=()=>window.closeAuthModal?.();header.append(x);
+  const controls=()=>[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),a[href]')].filter(el=>el.getClientRects().length);
+  modal.addEventListener('keydown',e=>{if(e.key!=='Tab')return;const all=controls(),first=all[0],last=all.at(-1);if(!first)return;
+   if(!modal.contains(document.activeElement)){e.preventDefault();first.focus();}
+   else if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+   else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
+  let back=null;const open=window.openAuthModal,close=window.closeAuthModal;
+  if(typeof open==='function')window.openAuthModal=function(){back=document.activeElement;const r=open.apply(this,arguments);requestAnimationFrame(()=>{if(!modal.contains(document.activeElement))x.focus({preventScroll:true});});return r;};
+  if(typeof close==='function')window.closeAuthModal=function(){const was=modal.style.display!=='none';const r=close.apply(this,arguments);if(was&&back?.isConnected&&!back.matches('input,textarea'))back.focus?.({preventScroll:true});back=null;return r;};
+ }}
 // Ask and Learn start screens: Knox floats above the heading.
 {const badge=$('welcomeScreen')?.querySelector(':scope > .welcome-badge');if(badge&&!$('welcomeScreen').querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';badge.before(fox);}}
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
  // Tapping in folds the topic buttons away in one smooth motion (native.css); Done unfolds them.
- box?.addEventListener('focus',()=>{clearTimeout(off);R.classList.add('km-typing');});
- box?.addEventListener('blur',()=>{off=setTimeout(()=>R.classList.remove('km-typing'),0);});}
+ // While folded away the topic buttons can't be reached with the keyboard either.
+ const grid=()=>$('welcomeScreen')?.querySelector('.suggestion-grid');
+ box?.addEventListener('focus',()=>{clearTimeout(off);R.classList.add('km-typing');const g=grid();if(g)g.inert=true;});
+ box?.addEventListener('blur',()=>{off=setTimeout(()=>{R.classList.remove('km-typing');const g=grid();if(g)g.inert=false;},0);});}
 const inputBox=$('inputBox');
 if(inputBox&&!inputBox.querySelector('.km-plus')){
  const plus=document.createElement('button');plus.type='button';plus.className='km-plus km-press';plus.setAttribute('aria-label','Add a photo, file or calculator');plus.innerHTML=SVG(PIC.plus);

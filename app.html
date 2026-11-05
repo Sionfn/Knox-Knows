@@ -5849,8 +5849,9 @@ async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
     file = await window.knoxCropPhoto(file, reviewOptions);
     if (!file || obsolete()) return;
   }
-  // App photo screen: "Solve it" sends as soon as the photo is attached.
-  const sendWhenReady = !!file.knoxSend && !window._appImage && !window._appDoc;
+  // App photo screen: "Solve it" sends as soon as the photo is attached, but only
+  // into an empty box. Typed text or another attachment means it's just attached.
+  const sendWhenReady = !!file.knoxSend && !window._appImage && !window._appDoc && !$('appChatInput')?.value.trim();
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
@@ -5878,7 +5879,7 @@ async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
     if (thumb) thumb.src = dataUrl;
     if (name)  name.textContent  = displayName || uploadFile.name;
     if (pill)  pill.style.display = 'inline-flex';
-    if (sendWhenReady && !window._appAskBusy) setTimeout(() => { if (!obsolete()) window.appHandleAsk?.(); }, 0);
+    if (sendWhenReady && !window._appAskBusy && !$('appChatInput')?.value.trim()) setTimeout(() => { if (!obsolete()) window.appHandleAsk?.(); }, 0);
   };
   reader.readAsDataURL(uploadFile);
 }

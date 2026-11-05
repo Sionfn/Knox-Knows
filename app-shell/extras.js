@@ -54,6 +54,8 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
  if(options.skip){file.knoxSend=true;return resolve(file);} // camera with Crop off: straight to Knox
  cancelCrop?.();const owner=uid(),viewVersion=w._appViewVersion,previous=document.activeElement;
  let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0,found=false,send=true;const learn=!!w._learnModeActive;
+ // Something already typed or attached: the photo joins it instead of sending.
+ const hasDraft=!!($('appChatInput')?.value.trim()||w._appImage||w._appDoc);
  const cropBounds=rect=>model.cropBounds(rect,.02);
  let cropped=!!options.frame,r=cropBounds(options.frame||{x:0,y:0,w:1,h:1});
  const url=URL.createObjectURL(file),img=new Image();
@@ -76,7 +78,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    fit=model.photoFit(img.naturalWidth,img.naturalHeight,stage.clientWidth,stage.clientHeight,rotation);
    Object.assign(view.style,{width:img.naturalWidth*fit.scale+'px',height:img.naturalHeight*fit.scale+'px',left:(stage.clientWidth-img.naturalWidth*fit.scale)/2+'px',top:(stage.clientHeight-img.naturalHeight*fit.scale)/2+'px',transform:'rotate('+rotation+'deg)'});
    Object.assign(box.style,{left:fit.x+r.x*fit.w+'px',top:fit.y+r.y*fit.h+'px',width:r.w*fit.w+'px',height:r.h*fit.h+'px'});
-   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?'Sending to Knox…':learn?'Teach me →':'Solve it →';
+   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?(hasDraft?'Attaching…':'Sending to Knox…'):hasDraft?'Attach photo':learn?'Teach me →':'Solve it →';sheet.querySelector('[data-photo="later"]').hidden=hasDraft;
    sheet.querySelector('#kmPhotoTip').textContent=found&&cropped?'✨ Knox found your question. Drag to change it, or tap Whole photo.':cropped?'Drag the selection or its corners. Keep the full question inside.':'Check that your question is clear. Crop only if you need to.';
    for(const input of sheet.querySelectorAll('[data-range]')){const k=input.dataset.range;input.min=k==='w'||k==='h'?'2':'0';input.max=String(Math.round(100*(k==='x'?1-r.w:k==='y'?1-r.h:k==='w'?1-r.x:1-r.y)));input.value=String(Math.round(r[k]*100));input.setAttribute('aria-valuetext',input.value+' percent');}
   }
@@ -93,7 +95,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    if(a==='crop'){cropped=!cropped;found=false;if(cropped&&r.w===1&&r.h===1)r=cropBounds({x:.04,y:.04,w:.92,h:.92});draw();return;}
    if(a==='rotate'){found=false;rotation=(rotation+90)%360;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
    if(a==='reset'){found=false;rotation=0;r={x:0,y:0,w:1,h:1};cropped=false;draw();return;}
-   if(a!=='use'&&a!=='later')return;send=a==='use';const finish=f=>{if(f)f.knoxSend=send;done(f);};if(!cropped&&rotation===0)return finish(file);
+   if(a!=='use'&&a!=='later')return;send=a==='use'&&!hasDraft;const finish=f=>{if(f)f.knoxSend=send;done(f);};if(!cropped&&rotation===0)return finish(file);
    exporting=true;sheet.querySelectorAll('button,input').forEach(b=>{if(b.dataset.photo!=='cancel')b.disabled=true;});draw();
    try{
     const sw=img.naturalWidth,sh=img.naturalHeight,W=rotation%180?sh:sw,H=rotation%180?sw:sh,sel=cropped?r:{x:0,y:0,w:1,h:1},scale=Math.min(1,2200/Math.max(sel.w*W,sel.h*H));
@@ -298,7 +300,9 @@ function bigMoment(m){
 w.knoxBigMoment=bigMoment;
 // Preview links only (never knoxknowsapp.com): a row on You that plays every big moment.
 const SAMPLES=[{color:'orange',icon:'<span class="knox-flame">🔥</span>',title:'7-day',accent:'streak!',text:'You studied 7 days in a row. Keep the flame going!',action:'Keep it going'},{color:'purple',icon:kIcon('cap','🎓'),title:'Lesson',accent:'complete!',text:'You worked through Comparing fractions. Your recap is ready below.',action:'See my recap'},{color:'green',icon:kIcon('cards','🃏'),title:'Review',accent:'complete!',text:'Your schedule is saved. Knox will bring cards back when they’re due.',stats:[['12','Reviews'],['10','Got it'],['2','Again']],action:'Done'},{color:'gold',icon:svgIcon('trophy'),title:'Badge',accent:'unlocked!',text:'10 questions',action:'Nice!'},{color:'gold',icon:kIcon('gem','💎'),title:'Welcome to',accent:'Mega Knox!',text:'40-card decks, the highest limits and early access to new features are all yours.',action:'Let’s go'}];
-if(!/(^|\.)knoxknowsapp\.com$/.test(location.hostname)){
+// The iPhone app runs from localhost, so it's excluded by name.
+addEventListener('knox-auth-changed',()=>{celebQueue.length=0;celebrating?.close();});
+if(!w.knoxNativeApp&&!/(^|\.)knoxknowsapp\.com$/.test(location.hostname)){
  const addRow=()=>{const list=document.querySelector('#knoxMobileAccount .km-menu-list');if(!list||list.querySelector('[data-cel-preview]'))return;const b=document.createElement('button');b.type='button';b.className='km-press';b.dataset.celPreview='';b.innerHTML='<span class="km-tile sm" data-color="gold" aria-hidden="true">'+svgIcon('trophy')+'</span><span>Preview celebrations<small>Preview link only: see every big moment</small></span><span aria-hidden="true">›</span>';b.onclick=()=>SAMPLES.forEach(m=>bigMoment(m));list.append(b);};
  addRow();setTimeout(addRow,1500);addEventListener('knox-auth-changed',()=>setTimeout(addRow,500));
 }
