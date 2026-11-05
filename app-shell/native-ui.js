@@ -474,6 +474,7 @@ async function resumeDraft(target){
  $('appChatInput').value=row.text;$('appChatInput').dispatchEvent(new Event('input',{bubbles:true}));
  surface(null);sync();
 }
+let paintedFor=null;
 function sync(){
  const before=current;
  current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
@@ -483,11 +484,13 @@ function sync(){
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  moveGlider();
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
- if(typeof paint==='function')setTimeout(paint,0);
+ // A new screen: the header, status bar color and island backing change in the
+ // same frame as the page (painting them later made every tab switch blink).
+ if(typeof paint==='function'){if(current!==paintedFor){paintedFor=current;paint();}else setTimeout(paint,0);}
 }
 // Class changes anywhere can mean a new screen; check once per frame, not once
 // per change (a tab switch makes dozens).
-let syncQueued=false;new MutationObserver(()=>{if(syncQueued)return;syncQueued=true;afterPaint(()=>{syncQueued=false;sync();});}).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
+let syncQueued=false;new MutationObserver(()=>{if(syncQueued)return;syncQueued=true;queueMicrotask(()=>{syncQueued=false;sync();});}).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
 window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;clearTimeout(draftTimer);draftEdited=false;drafts.clear(owner);slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
 
 // "Jump to latest" when you've scrolled up in a chat.

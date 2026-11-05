@@ -1656,3 +1656,7 @@ html.native-app body.knox-learn-mode #inputBox:focus-within { --ring:color-mix(i
 @keyframes kmInLeft { from { opacity:.9; transform:translateX(-14px); } to { opacity:1; transform:none; } }
 html.native-app .km-in-right { animation:kmInRight .2s cubic-bezier(.25,.8,.3,1)!important; }
 html.native-app .km-in-left { animation:kmInLeft .2s cubic-bezier(.25,.8,.3,1)!important; }
+/* Tab switch: a short slide only, no opacity change (fading layers on iPhone
+   can flash for a frame). */
+@keyframes kmInRight { from { transform:translateX(12px); } to { transform:none; } }
+@keyframes kmInLeft { from { transform:translateX(-12px); } to { transform:none; } }
