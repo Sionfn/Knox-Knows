@@ -135,6 +135,37 @@ w.knoxAnswerAction=async(id,kind)=>{
  }finally{actionBusy=false;}
 };
 
+// ── Permission before AI (Apple 5.1.2(i)): the first time something would be
+// sent to Knox's AI, the student is told it goes to OpenAI and says OK. Saved
+// on this device; until then nothing is sent (the typed text stays put).
+const AI_OK='knoxAiOk';
+const aiAllowed=()=>{try{return localStorage.getItem(AI_OK)==='1';}catch{return false;}};
+let aiAsk=null;
+function askAiPermission(){
+ if(aiAllowed())return Promise.resolve(true);
+ if(aiAsk)return aiAsk;
+ aiAsk=new Promise(resolve=>{
+  const d=document.createElement('dialog');d.className='knox-native-dialog km-ai-ok';d.setAttribute('aria-labelledby','kmAiOkTitle');
+  d.innerHTML='<img class="km-ai-ok-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmAiOkTitle">Before Knox answers</h2><p>Knox uses AI from <b>OpenAI</b> to answer questions, teach lessons and make flashcards. When you send something, what you type and any photos or files you add go to OpenAI to make Knox’s reply.</p><p class="km-ai-ok-tip">Leave out private info like your full name, address or passwords.</p><a href="https://www.knoxknowsapp.com/privacy" target="_blank" rel="noopener">Read the Privacy Policy</a><div class="km-ai-ok-actions"><button type="button" data-ai="no">Not now</button><button type="button" class="primary" data-ai="yes">OK, continue</button></div>';
+  let answer=false;
+  d.addEventListener('click',e=>{const a=e.target.closest('[data-ai]')?.dataset.ai;if(!a)return;answer=a==='yes';if(answer){try{localStorage.setItem(AI_OK,'1');}catch{}}d.close();});
+  d.addEventListener('close',()=>{d.remove();aiAsk=null;if(!answer)note('Nothing was sent. Knox needs your OK before it can answer.');resolve(answer);},{once:true});
+  document.body.append(d);d.showModal();d.querySelector('[data-ai="yes"]').focus();
+ });
+ return aiAsk;
+}
+w.knoxAskAiPermission=askAiPermission;
+// Sending a question or lesson reply (typed, snapped or a follow-up).
+{const send=w.appHandleAsk;if(typeof send==='function')w.appHandleAsk=async function(){if(!(await askAiPermission()))return;return send.apply(this,arguments);};}
+// Everything else that reaches the AI (making flashcards, Learn review,
+// Knox Support) waits for the same OK; saying no sends nothing.
+{const AI_PATHS=/\/api\/(ask|generate-flashcards)\b|\/api\/me\?route=(support|learn-review)\b/;const real=w.fetch.bind(w);
+ w.fetch=async function(input,init){
+  const url=typeof input==='string'?input:input?.url||'';
+  if(AI_PATHS.test(url)&&!aiAllowed()&&!(await askAiPermission()))return new Response(JSON.stringify({error:'Knox needs your OK before it can use AI. Nothing was sent.'}),{status:403,headers:{'Content-Type':'application/json'}});
+  return real(input,init);
+ };}
+
 // ── Voice: no custom mic. The iPhone keyboard's own 🎤 dictation works in
 // every text box; a browser speech button didn't work in home-screen apps.
 

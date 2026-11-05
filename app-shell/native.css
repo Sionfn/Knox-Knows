@@ -1679,3 +1679,32 @@ html.native-app .km-in-right, html.native-app .km-in-left { animation:none!impor
   html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle { width:40px!important; height:40px!important; }
   html.native-app.km-fit2 #welcomeScreen .welcome-sub { display:none!important; }
   html.native-app.km-fit2 #welcomeScreen .welcome-title { margin-bottom:2px!important; }
+
+/* Permission before AI: a Knox card like the other app popups. */
+.km-ai-ok { text-align:center; }
+.km-ai-ok-fox { display:block; width:64px; height:64px; margin:0 auto 12px; border-radius:20px; border:3px solid var(--orange); box-shadow:0 4px 0 var(--orange-dark); object-fit:cover; transform:rotate(-5deg); }
+.km-ai-ok h2 { margin:0 0 10px; font:900 22px/1.15 Nunito,sans-serif; color:var(--text); }
+.km-ai-ok p { margin:0 0 10px; font:700 15px/1.5 Nunito,sans-serif; color:var(--text-light); }
+.km-ai-ok p b { color:var(--text); }
+.km-ai-ok .km-ai-ok-tip { font-size:13.5px; padding:10px 12px; border-radius:14px; background:var(--orange-light); color:var(--text); }
+.km-ai-ok a { display:inline-block; margin:2px 0 16px; font:800 14px Nunito,sans-serif; color:var(--orange-dark); }
+.km-ai-ok-actions { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; }
+.km-ai-ok-actions button { min-height:50px; margin:0; }
+
+/* Streak flames stand out: always full color (no greyed-out flame), a bit
+   bigger, and the "Study today to keep it" note sits in a clear orange chip
+   (green once you've studied today). The top flame is never faded either. */
+.km-streak-card:not(.lit) .km-streak-flame .knox-flame, .km-flame-pill.dim .knox-flame { filter:none!important; opacity:1!important; }
+#knoxMobileHome .km-streak-flame { width:52px; height:52px; border-radius:16px; background:var(--orange-light); border:2px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark)!important; }
+#knoxMobileHome .km-streak-flame .knox-flame { font-size:30px; }
+#knoxMobileHome .km-streak-flame .kk-flame { width:32px; height:32px; }
+.km-flame-pill .kk-flame { width:22px; height:22px; }
+#knoxMobileHome .km-streak-card small#kmStreakNote { display:inline-block; margin-top:6px; padding:4px 9px; border-radius:10px; font-size:12.5px; line-height:1.3; font-weight:900; color:var(--orange-dark); background:var(--orange-light); border:1.5px solid var(--orange); }
+#knoxMobileHome .km-streak-card.lit small#kmStreakNote { color:var(--green-dark); background:var(--green-light); border-color:var(--green); }
+html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-card small#kmStreakNote { color:var(--orange); background:color-mix(in srgb,var(--orange) 16%,var(--surface)); }
+html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-card.lit small#kmStreakNote { color:var(--green); background:color-mix(in srgb,var(--green) 16%,var(--surface)); }
+/* The flame on a white tile so it pops (orange on orange-tan blended in). */
+#knoxMobileHome .km-streak-flame { background:#fff!important; }
+#knoxMobileHome .km-streak-flame .kk-flame { width:38px!important; height:38px!important; }
+html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-flame { background:color-mix(in srgb,var(--orange) 14%,var(--surface))!important; }
+#knoxMobileHome .km-streak-card small#kmStreakNote { white-space:nowrap; font-size:12px; padding:4px 8px; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
