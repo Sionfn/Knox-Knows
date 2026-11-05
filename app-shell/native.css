@@ -1646,3 +1646,13 @@ html.native-app.km-typing #welcomeScreen > .km-welcome-fox { animation:kmBob 4.5
 html.native-app #inputBox, html.native-app #inputBox:focus-within { outline:0!important; }
 html.native-app #inputBox:focus-within { --ring:color-mix(in srgb,var(--orange) 20%,transparent); box-shadow:0 4px 0 var(--orange-dark), 0 0 0 5px var(--ring), 0 4px 0 5px var(--ring)!important; }
 html.native-app body.knox-learn-mode #inputBox:focus-within { --ring:color-mix(in srgb,var(--purple) 22%,transparent); border-color:var(--purple-dark); box-shadow:0 4px 0 var(--purple-dark), 0 0 0 5px var(--ring), 0 4px 0 5px var(--ring)!important; }
+/* Snappier island and tab switches: icons never grow when tapped, the
+   highlight glides quickly without overshoot, and pages slide in a short way
+   without fading from see-through (which read as lag). */
+.knox-app-tabs .km-tab-tile.km-pop, .knox-app-tabs .km-tab-snap .km-tab-tile.km-pop { animation:none!important; }
+.knox-app-tabs > button:not(.km-tab-snap) .km-tab-tile { transform:none!important; }
+.km-tab-glider { transition:transform .26s cubic-bezier(.25,.8,.3,1), width .2s, height .2s, background-color .2s, border-color .2s, box-shadow .2s, opacity .15s!important; will-change:transform; }
+@keyframes kmInRight { from { opacity:.9; transform:translateX(14px); } to { opacity:1; transform:none; } }
+@keyframes kmInLeft { from { opacity:.9; transform:translateX(-14px); } to { opacity:1; transform:none; } }
+html.native-app .km-in-right { animation:kmInRight .2s cubic-bezier(.25,.8,.3,1)!important; }
+html.native-app .km-in-left { animation:kmInLeft .2s cubic-bezier(.25,.8,.3,1)!important; }

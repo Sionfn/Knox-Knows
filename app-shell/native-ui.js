@@ -370,7 +370,7 @@ icons.camera='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0
 async function snap(){if(liveCamera()){viewfinder();return;}if(await navigate(current==='learn'?'learn':'chat'))openCamera();}
 window.knoxSnap=snap;
 for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Cards']]){
- const b=button(nav,label,()=>target==='camera'?snap():navigate(target));b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
+ const b=button(nav,label,async()=>{if(target==='camera')return snap();if(target!==current&&!busy){showTab(target);await nextFrame();}const ok=await navigate(target);if(!ok)sync();});b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
@@ -380,8 +380,12 @@ const glider=document.createElement('span');glider.className='km-tab-glider';gli
 let gliderTarget=null,targetTimer=0;
 function moveGlider(){const now=nav.querySelector('button[aria-current="page"]:not(.km-tab-snap)');if(gliderTarget&&now?.dataset.tab===gliderTarget)gliderTarget=null;const a=gliderTarget?nav.querySelector('button[data-tab="'+gliderTarget+'"]'):now,t=a?.querySelector('.km-tab-tile');if(!t||!nav.offsetWidth){glider.style.opacity='0';return;}const n=nav.getBoundingClientRect(),r=t.getBoundingClientRect();glider.style.width=r.width+'px';glider.style.height=r.height+'px';glider.style.transform='translate('+(r.left-n.left-nav.clientLeft)+'px,'+(r.top-n.top-nav.clientTop)+'px)';glider.dataset.at=a.dataset.tab;glider.style.opacity='1';}
 new ResizeObserver(moveGlider).observe(nav);
-nav.addEventListener('click',e=>{const t=e.target.closest('button')?.querySelector('.km-tab-tile');if(!t)return;t.classList.remove('km-pop');void t.offsetWidth;t.classList.add('km-pop');});
-nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
+// Tapping a tab: the highlight moves to it at once, and the page switches on the
+// next frame, so the tap always feels instant even while the page is built.
+function showTab(target){const b=nav.querySelector('button[data-tab="'+target+'"]');if(!b||b.classList.contains('km-tab-snap'))return;nav.querySelectorAll('button[aria-current]').forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','page');moveGlider();}
+// After the next paint (or 60ms at most, in case frames are paused).
+const afterPaint=fn=>{let done=false;const go=()=>{if(!done){done=true;setTimeout(fn,0);}};requestAnimationFrame(go);setTimeout(go,60);};
+const nextFrame=()=>new Promise(afterPaint);
 // Hold the island and slide: a clear glass highlight follows your finger
 // smoothly between the tabs; lifting it flows onto the tab under it and takes
 // that tab's color.
@@ -390,7 +394,7 @@ nav.addEventListener('animationend',e=>e.target.classList?.remove('km-pop'));
  const center=b=>{const r=b.querySelector('.km-tab-tile').getBoundingClientRect();return r.left+r.width/2;};
  const under=x=>{let best=null,d=1e9;for(const b of tabs()){const c=center(b);if(Math.abs(x-c)<d){d=Math.abs(x-c);best=b;}}return best;};
  let press=null,hold=0,suppress=false,frame=0,cx=0,tx=0,over=null;
- const place=()=>{const list=tabs();if(!list.length)return;const n=nav.getBoundingClientRect(),t=list[0].querySelector('.km-tab-tile').getBoundingClientRect(),lo=center(list[0]),hi=center(list.at(-1));tx=Math.min(Math.max(tx,lo),hi);cx+=(tx-cx)*.32;const v=tx-cx,st=1+Math.min(.12,Math.abs(v)/70);glider.style.transform='translate('+(cx-t.width/2-n.left-nav.clientLeft)+'px,'+(t.top-n.top-nav.clientTop)+'px) scale('+st.toFixed(3)+','+(1/st).toFixed(3)+')';const b=under(cx);if(b&&b!==over){over=b;quiet(p.haptics.selectionChanged());}if(press?.drag||Math.abs(v)>.4)frame=requestAnimationFrame(place);else frame=0;};
+ const place=()=>{const list=tabs();if(!list.length)return;const n=nav.getBoundingClientRect(),t=list[0].querySelector('.km-tab-tile').getBoundingClientRect(),lo=center(list[0]),hi=center(list.at(-1));tx=Math.min(Math.max(tx,lo),hi);cx+=(tx-cx)*.32;const v=tx-cx;glider.style.transform='translate('+(cx-t.width/2-n.left-nav.clientLeft)+'px,'+(t.top-n.top-nav.clientTop)+'px)';const b=under(cx);if(b&&b!==over){over=b;quiet(p.haptics.selectionChanged());}if(press?.drag||Math.abs(v)>.4)frame=requestAnimationFrame(place);else frame=0;};
  const start=()=>{if(!press||press.drag)return;press.drag=true;try{nav.setPointerCapture(press.id);}catch{}const cur=nav.querySelector('button[aria-current="page"]:not(.km-tab-snap)');cx=cur?center(cur):press.x;tx=press.x;over=under(cx);nav.classList.add('km-lensing');glider.style.opacity='1';if(!frame)frame=requestAnimationFrame(place);quiet(p.haptics.selectionChanged());};
  nav.addEventListener('pointerdown',e=>{const b=e.target.closest('button[data-tab]');if(!b||b.classList.contains('km-tab-snap')||e.button>0)return;press={x:e.clientX,x0:e.clientX,id:e.pointerId,drag:false};clearTimeout(hold);hold=setTimeout(start,220);});
  nav.addEventListener('pointermove',e=>{if(!press||e.pointerId!==press.id)return;press.x=e.clientX;if(!press.drag&&Math.abs(e.clientX-press.x0)>10)start();if(press.drag){e.preventDefault();tx=e.clientX;if(!frame)frame=requestAnimationFrame(place);}});
@@ -481,7 +485,9 @@ function sync(){
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
  if(typeof paint==='function')setTimeout(paint,0);
 }
-new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
+// Class changes anywhere can mean a new screen; check once per frame, not once
+// per change (a tab switch makes dozens).
+let syncQueued=false;new MutationObserver(()=>{if(syncQueued)return;syncQueued=true;afterPaint(()=>{syncQueued=false;sync();});}).observe(document.body,{attributes:true,attributeFilter:['class'],subtree:true});sync();
 window.addEventListener('knox-auth-changed',()=>{const next=window.currentUser?.uid||'';if(next!==owner){const hadOwner=!!owner;clearTimeout(draftTimer);draftEdited=false;drafts.clear(owner);slots.clear();owner=next;document.querySelectorAll('.knox-native-dialog').forEach(d=>d.close());if(hadOwner||!deepStudy)surface(hadOwner?'home':initialSurface);}sync();});
 
 // "Jump to latest" when you've scrolled up in a chat.
