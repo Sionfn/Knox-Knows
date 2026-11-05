@@ -418,8 +418,11 @@ const nextFrame=()=>new Promise(afterPaint);
 }
 // Switching tabs slides the new page in from the side of the tab you tapped.
 const TAB_ORDER={home:0,account:0,chat:1,learn:2,calculator:2,flashcards:3};
+// Tabs now switch instantly (native.css), so this does nothing: no layout
+// measuring or listeners on each switch.
+const SLIDE_TABS=false;
 function slideIn(from,to){
- if(matchMedia('(prefers-reduced-motion: reduce)').matches||from===to)return;
+ if(!SLIDE_TABS||matchMedia('(prefers-reduced-motion: reduce)').matches||from===to)return;
  const el=to==='home'?$('knoxMobileHome'):to==='account'?$('knoxMobileAccount'):to==='flashcards'?$('flashcardsPanel'):['chat','learn'].includes(to)?$('chatAndInput'):null;if(!el)return;
  const dir=(TAB_ORDER[to]??0)>=(TAB_ORDER[from]??0)?'right':'left';
  el.classList.remove('km-in-right','km-in-left');void el.offsetWidth;el.classList.add('km-in-'+dir);
