@@ -51,11 +51,15 @@ let cancelCrop=null;
 // "Add a note first" attaches it so the student can type with it. If a photo or
 // file is already attached, the new one is attached without sending.
 w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
- if(options.skip){file.knoxSend=true;return resolve(file);} // camera with Crop off: straight to Knox
+ // Camera with Crop off: straight to Knox, unless something is already typed or
+ // attached (then the review screen shows so nothing is replaced or sent by surprise).
+ if(options.skip&&!($('appChatInput')?.value.trim()||w._appImage||w._appDoc)){file.knoxSend=true;return resolve(file);}
  cancelCrop?.();const owner=uid(),viewVersion=w._appViewVersion,previous=document.activeElement;
  let settled=false,sheet=null,resize=null,drag=null,rotation=0,exporting=false,fit=null,drawFrame=0,found=false,send=true;const learn=!!w._learnModeActive;
  // Something already typed or attached: the photo joins it instead of sending.
  const hasDraft=!!($('appChatInput')?.value.trim()||w._appImage||w._appDoc);
+ // One attachment at a time: say so when this photo would replace a file or photo.
+ const replacing=w._appDoc?.name||w._appImage?.name||(w._appDoc||w._appImage?'your attachment':'');
  const cropBounds=rect=>model.cropBounds(rect,.02);
  let cropped=!!options.frame,r=cropBounds(options.frame||{x:0,y:0,w:1,h:1});
  const url=URL.createObjectURL(file),img=new Image();
@@ -78,7 +82,7 @@ w.knoxCropPhoto=(file,options={})=>new Promise(resolve=>{
    fit=model.photoFit(img.naturalWidth,img.naturalHeight,stage.clientWidth,stage.clientHeight,rotation);
    Object.assign(view.style,{width:img.naturalWidth*fit.scale+'px',height:img.naturalHeight*fit.scale+'px',left:(stage.clientWidth-img.naturalWidth*fit.scale)/2+'px',top:(stage.clientHeight-img.naturalHeight*fit.scale)/2+'px',transform:'rotate('+rotation+'deg)'});
    Object.assign(box.style,{left:fit.x+r.x*fit.w+'px',top:fit.y+r.y*fit.h+'px',width:r.w*fit.w+'px',height:r.h*fit.h+'px'});
-   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?(hasDraft?'Attaching…':'Sending to Knox…'):hasDraft?'Attach photo':learn?'Teach me →':'Solve it →';sheet.querySelector('[data-photo="later"]').hidden=hasDraft;
+   stage.classList.toggle('cropping',cropped);adjust.hidden=!cropped;sheet.querySelector('[data-photo="crop"]').setAttribute('aria-pressed',String(cropped));use.textContent=exporting?(hasDraft?'Attaching…':'Sending to Knox…'):replacing?'Replace attachment':hasDraft?'Attach photo':learn?'Teach me →':'Solve it →';sheet.querySelector('[data-photo="later"]').hidden=hasDraft;if(replacing&&!exporting&&!sheet.querySelector('.km-photo-footer p').textContent)sheet.querySelector('.km-photo-footer p').textContent='This photo will replace “'+replacing+'”. Tap Cancel to keep it.';
    sheet.querySelector('#kmPhotoTip').textContent=found&&cropped?'✨ Knox found your question. Drag to change it, or tap Whole photo.':cropped?'Drag the selection or its corners. Keep the full question inside.':'Check that your question is clear. Crop only if you need to.';
    for(const input of sheet.querySelectorAll('[data-range]')){const k=input.dataset.range;input.min=k==='w'||k==='h'?'2':'0';input.max=String(Math.round(100*(k==='x'?1-r.w:k==='y'?1-r.h:k==='w'?1-r.x:1-r.y)));input.value=String(Math.round(r[k]*100));input.setAttribute('aria-valuetext',input.value+' percent');}
   }

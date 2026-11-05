@@ -1620,3 +1620,22 @@ dialog.km-celebrate .km-cel-body { margin-block:auto; flex:none; }
 html.native-app #authModal .auth-header { position:relative; }
 .km-auth-close { position:absolute; top:10px; right:10px; width:40px; height:40px; display:grid; place-items:center; padding:0; border:2px solid rgba(255,255,255,.7); border-radius:13px; background:rgba(0,0,0,.14); color:#fff; font:900 24px/1 Nunito,sans-serif; cursor:pointer; }
 .km-auth-close:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+/* Short phones (iPhone SE/mini): tighter gaps on the Ask and Learn start
+   screens so all four topic cards fit without scrolling. Same pieces, same look. */
+@media (max-height:760px) {
+  html.native-app #welcomeScreen { padding-top:58px!important; }
+  html.native-app #welcomeScreen .welcome-badge { margin-bottom:6px!important; }
+  html.native-app #welcomeScreen .welcome-title { margin-bottom:6px!important; }
+  html.native-app #welcomeScreen .welcome-sub { margin-bottom:4px!important; font-size:13px!important; line-height:1.4!important; }
+  html.native-app #welcomeScreen .suggestion-grid { margin-top:8px!important; gap:10px!important; }
+  html.native-app #welcomeScreen .suggestion-chip { min-height:96px!important; padding:10px!important; }
+  html.native-app #welcomeScreen .suggestion-chip .chip-circle { width:40px!important; height:40px!important; }
+}
+@media (max-height:700px) {
+  html.native-app #welcomeScreen .welcome-sub { display:none!important; }
+  html.native-app #welcomeScreen .welcome-title { margin-bottom:2px!important; }
+}
+/* Narrowest phones (320px): long topic names like PHOTOSYNTHESIS stay on one line. */
+@media (max-width:350px) {
+  html.native-app #welcomeScreen .suggestion-chip .chip-text { font-size:12px!important; letter-spacing:-.01em; overflow-wrap:normal; word-break:normal; }
+}
