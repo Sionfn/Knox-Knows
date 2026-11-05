@@ -1660,3 +1660,10 @@ html.native-app .km-in-left { animation:kmInLeft .2s cubic-bezier(.25,.8,.3,1)!i
    can flash for a frame). */
 @keyframes kmInRight { from { transform:translateX(12px); } to { transform:none; } }
 @keyframes kmInLeft { from { transform:translateX(-12px); } to { transform:none; } }
+/* No blink on tab switch: the island never replays its slide-up entrance
+   (it was replaying on every tab), and Home's sections don't fade in again
+   each time Home opens. */
+html.native-app .knox-app-tabs { animation:none!important; }
+html.native-app .km2 .km-rise { animation:none!important; }
+/* Tabs switch instantly, like iPhone apps' own tab bars. */
+html.native-app .km-in-right, html.native-app .km-in-left { animation:none!important; }
