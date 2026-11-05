@@ -1708,3 +1708,10 @@ html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-card.lit 
 #knoxMobileHome .km-streak-flame .kk-flame { width:38px!important; height:38px!important; }
 html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-flame { background:color-mix(in srgb,var(--orange) 14%,var(--surface))!important; }
 #knoxMobileHome .km-streak-card small#kmStreakNote { white-space:nowrap; font-size:12px; padding:4px 8px; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+
+/* No blue focus rings on phones and tablets (touch screens): iPhone draws them
+   when a popup focuses its button. A hardware keyboard still gets one. */
+@media (hover:none) and (pointer:coarse) {
+  html.native-app :is(*:focus, *:focus-visible) { outline:none!important; }
+}
+html.native-app :is(button, a, [role="button"]) { -webkit-tap-highlight-color:transparent; }

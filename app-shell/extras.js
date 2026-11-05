@@ -150,7 +150,7 @@ function askAiPermission(){
   let answer=false;
   d.addEventListener('click',e=>{const a=e.target.closest('[data-ai]')?.dataset.ai;if(!a)return;answer=a==='yes';if(answer){try{localStorage.setItem(AI_OK,'1');}catch{}}d.close();});
   d.addEventListener('close',()=>{d.remove();aiAsk=null;if(!answer)note('Nothing was sent. Knox needs your OK before it can answer.');resolve(answer);},{once:true});
-  document.body.append(d);d.showModal();d.querySelector('[data-ai="yes"]').focus();
+  document.body.append(d);d.showModal();
  });
  return aiAsk;
 }
