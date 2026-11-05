@@ -2,6 +2,16 @@
    Runs in the iPhone app (Capacitor) and in the website's home-screen version
    (window.knoxAppShell, see app-shell.js), where web stand-ins replace plugins. */
 (function(){
+// One popup at a time: a popup asked to open while another is showing waits
+// until that one closes (then the next opens), so they never stack.
+{const proto=HTMLDialogElement.prototype,show=proto.showModal;
+ const OTHERS='.ff-modal,.kt-layer,.usage-info-overlay,.modal-backdrop';
+ const visible=el=>el.isConnected&&el.getClientRects().length>0&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden';
+ const busy=self=>[...document.querySelectorAll('dialog[open]')].some(d=>d!==self&&!d.contains(self)&&!self.contains(d)&&d.matches(':modal')&&visible(d))||[...document.querySelectorAll(OTHERS)].some(visible);
+ const waiting=[];let timer=0;
+ const pump=()=>{timer=0;while(waiting.length){const d=waiting[0];if(!d.isConnected||d.open){waiting.shift();continue;}if(busy(d))break;waiting.shift();show.call(d);}if(waiting.length)timer=setTimeout(pump,250);};
+ proto.showModal=function(){if(this.open||!busy(this))return show.call(this);if(!waiting.includes(this))waiting.push(this);if(!timer)timer=setTimeout(pump,250);};
+}
 const native=!!window.Capacitor?.isNativePlatform?.();
 if(!native && !window.knoxAppShell)return;
 const $=id=>document.getElementById(id), cap=window.Capacitor;

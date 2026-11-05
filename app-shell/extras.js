@@ -157,12 +157,14 @@ function askAiPermission(){
 w.knoxAskAiPermission=askAiPermission;
 // Sending a question or lesson reply (typed, snapped or a follow-up).
 {const send=w.appHandleAsk;if(typeof send==='function')w.appHandleAsk=async function(){if(!(await askAiPermission()))return;return send.apply(this,arguments);};}
-// Everything else that reaches the AI (making flashcards, Learn review,
-// Knox Support) waits for the same OK; saying no sends nothing.
-{const AI_PATHS=/\/api\/(ask|generate-flashcards)\b|\/api\/me\?route=(support|learn-review)\b/;const real=w.fetch.bind(w);
+// Everything else that reaches the AI (making flashcards, a message to Knox
+// Support) waits for the same OK; saying no sends nothing.
+{const AI_PATHS=/\/api\/(ask|generate-flashcards)\b/,SUPPORT=/\/api\/me\?route=support\b/;const real=w.fetch.bind(w);
+ // Only real sends to the AI ask: loading lists (Learn review, support inbox) never does.
+ const toAi=(url,init)=>{if(AI_PATHS.test(url))return true;if(!SUPPORT.test(url))return false;try{return JSON.parse(init?.body||'{}').action==='say';}catch{return false;}};
  w.fetch=async function(input,init){
   const url=typeof input==='string'?input:input?.url||'';
-  if(AI_PATHS.test(url)&&!aiAllowed()&&!(await askAiPermission()))return new Response(JSON.stringify({error:'Knox needs your OK before it can use AI. Nothing was sent.'}),{status:403,headers:{'Content-Type':'application/json'}});
+  if(toAi(url,init)&&!aiAllowed()&&!(await askAiPermission()))return new Response(JSON.stringify({error:'Knox needs your OK before it can use AI. Nothing was sent.'}),{status:403,headers:{'Content-Type':'application/json'}});
   return real(input,init);
  };}
 
