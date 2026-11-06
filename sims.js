@@ -44,7 +44,7 @@
       const unit = UNITS[v.unit] || 'mi', time = TIMES[v.time] || 'h';
       return {
         title: 'Catch-up race', play: true,
-        sliders: [['a', `Runner A speed (${unit}/${time})`, 1, 120, 1, num(v.a, 1, 120, 60)], ['b', `Runner B speed (${unit}/${time})`, 1, 120, 1, num(v.b, 1, 120, 75)], ['head', `A's head start (${unit})`, 0, 200, 1, num(v.head, 0, 200, 30)]],
+        sliders: [['a', `A's speed (${unit}/${time})`, 1, 120, 1, num(v.a, 1, 120, 60)], ['b', `B's speed (${unit}/${time})`, 1, 120, 1, num(v.b, 1, 120, 75)], ['head', `A's head start (${unit})`, 0, 200, 1, num(v.head, 0, 200, 30)]],
         draw(g, s, c, t) {
           const catchT = s.b > s.a ? s.head / (s.b - s.a) : Infinity, end = Number.isFinite(catchT) ? catchT * 1.25 : 4, now = t == null ? end : t * end;
           const pa = s.head + s.a * now, pb = s.b * now, far = Math.max(s.head + s.a * end, s.b * end, 1), W = c.w - 40;
@@ -134,11 +134,11 @@
     const p = parse(el.dataset.sim), make = p && TEMPLATES[p.type];
     if (!make) { el.remove(); return; }
     const tpl = make(p.vals), state = Object.fromEntries(tpl.sliders.map(s => [s[0], s[5]]));
-    el.innerHTML = `<div class="ks-head"><span class="ks-badge" aria-hidden="true">🎛️</span><span><b>Try it yourself</b><small>${tpl.title}</small></span><span class="ks-beta">Mega · Beta</span></div>
-      <canvas class="ks-canvas" role="img"></canvas><p class="ks-readout" aria-live="polite"></p>
-      <div class="ks-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ks-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
-      ${tpl.play || tpl.roll ? `<div class="ks-actions"><button type="button" class="ks-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button></div>` : ''}`;
-    const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ks-readout');
+    el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">🎛️</span><span><b>Try it yourself</b><small>${tpl.title}</small></span><span class="ksim-beta">Mega · Beta</span></div>
+      <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
+      <div class="ksim-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ksim-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
+      ${tpl.play || tpl.roll ? `<div class="ksim-actions"><button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button></div>` : ''}`;
+    const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
     let anim = 0;
     const render = t => {
       const w = canvas.clientWidth || 320, h = Math.round(Math.min(260, Math.max(170, w * 0.55))), dpr = Math.min(2, devicePixelRatio || 1);
@@ -146,10 +146,13 @@
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
       const c = { ...colors(), w, h }, text = tpl.draw(g, state, c, t);
       out.textContent = text; canvas.setAttribute('aria-label', tpl.title + '. ' + text);
-      for (const [k] of tpl.sliders) el.querySelector(`[data-out="${k}"]`).textContent = fmt(state[k]);
+      for (const [k, , lo, hi] of tpl.sliders) {
+        el.querySelector(`[data-out="${k}"]`).textContent = fmt(state[k]);
+        el.querySelector(`[data-k="${k}"]`).style.setProperty('--p', (100 * (state[k] - lo) / (hi - lo)) + '%');
+      }
     };
     el.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; cancelAnimationFrame(anim); anim = 0; state[k] = Number(e.target.value); if (tpl.counts) tpl.counts = null; render(); });
-    el.querySelector('.ks-play')?.addEventListener('click', () => {
+    el.querySelector('.ksim-play')?.addEventListener('click', () => {
       if (tpl.roll) { tpl.counts = null; render(); return; }
       cancelAnimationFrame(anim); const start = performance.now(), dur = 2600;
       const step = now => { const t = Math.min(1, (now - start) / dur); render(t); anim = t < 1 ? requestAnimationFrame(step) : 0; };
