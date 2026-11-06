@@ -834,7 +834,7 @@ const WEB_SEARCH_INSTRUCTION = 'Web search is ON for this student. Search the we
 const SIM_INSTRUCTION = 'Simulations are ON for this student. When a hands-on simulation would genuinely help them understand THIS answer, end your reply with exactly ONE extra line in one of these formats (plain numbers only, no units in values, no extra text on the line):\n' +
   'Sim: line | m=2, b=1   (straight lines, slope, y-intercept)\n' +
   'Sim: parabola | a=1, b=0, c=-4   (quadratics, vertex, roots)\n' +
-  'Sim: motion | a=60, b=75, head=30, unit=mi, time=h   (catch-up / overtaking: A starts head ahead going a, B chases at b; unit is mi, km, m or ft; time is h, min or s)\n' +
+  'Sim: motion | a=60, b=75, head=30, unit=mi, time=h, who=car   (catch-up / overtaking: A starts head ahead going a, B chases at b; unit is mi, km, m or ft; time is h, min or s; who is what is moving: car, runner, person, train, bike, plane, boat, dog, bus or truck — leave it out if none fits)\n' +
   'Sim: projectile | speed=20, angle=45   (launches in m/s and degrees)\n' +
   'Sim: probability | kind=coin, trials=100   (or kind=die)\n' +
   'Sim: fraction | n=3, d=4   (fractions, decimals, percents; d from 1 to 12)\n' +

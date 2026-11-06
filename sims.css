@@ -21,3 +21,5 @@
 .ksim-play { min-height: 44px; padding: 0 18px; border-radius: 14px; border: 2px solid var(--blue-dark, #1899D6); background: var(--blue, #1CB0F6); color: #fff; font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 var(--blue-dark, #1899D6); cursor: pointer; }
 .ksim-play:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--blue-dark, #1899D6); }
 html[data-theme="dark"]:not(.knox-seasonal) .ksim-beta { background: rgba(242,183,5,.16); color: #FFD45C; }
+.ksim-reset { min-height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid var(--border, #E8DCCB); background: var(--surface, #fff); color: var(--text); font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 var(--border, #E8DCCB); cursor: pointer; }
+.ksim-reset:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border, #E8DCCB); }

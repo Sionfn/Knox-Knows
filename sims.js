@@ -12,6 +12,9 @@
   const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   const colors = () => ({ orange: css('--orange') || '#FF6B00', blue: css('--blue') || '#1CB0F6', purple: css('--purple') || '#8B4FD8', green: css('--green') || '#58CC02', text: css('--text') || '#3C2A1E', light: css('--text-light') || '#7A6A5C', border: css('--border') || '#E8DCCB', surface: css('--surface') || '#fff' });
   const UNITS = { mi: 'mi', km: 'km', m: 'm', ft: 'ft' }, TIMES = { h: 'h', min: 'min', s: 's' };
+  // What's racing in a catch-up problem (who=…): drawn with its emoji, named in the labels.
+  // flip: most phone emoji face left, so they're mirrored to drive to the right.
+  const MOVERS = { car: { name: 'Car', a: '🚗', b: '🚙', flip: true }, runner: { name: 'Runner', a: '🏃', b: '🏃‍♀️', flip: true }, person: { name: 'Person', a: '🚶', b: '🚶‍♀️', flip: true }, train: { name: 'Train', a: '🚆', b: '🚄', flip: true }, bike: { name: 'Bike', a: '🚴', b: '🚴‍♀️', flip: true }, plane: { name: 'Plane', a: '✈️', b: '🛩️', flip: false }, boat: { name: 'Boat', a: '⛵', b: '🚤', flip: true }, dog: { name: 'Dog', a: '🐕', b: '🐕', flip: true }, bus: { name: 'Bus', a: '🚌', b: '🚌', flip: true }, truck: { name: 'Truck', a: '🚚', b: '🚚', flip: true } };
 
   function parse(spec) {
     const m = /^\s*([a-z]+)\s*(?:\|\s*(.*))?$/i.exec(String(spec || ''));
@@ -41,18 +44,19 @@
       },
     }),
     motion: v => {
-      const unit = UNITS[v.unit] || 'mi', time = TIMES[v.time] || 'h';
+      const unit = UNITS[v.unit] || 'mi', time = TIMES[v.time] || 'h', who = MOVERS[String(v.who || '').toLowerCase()] || null;
+      const A = who ? `${who.name} A` : 'A', B = who ? `${who.name} B` : 'B';
       return {
-        title: 'Catch-up race', play: true,
-        sliders: [['a', `A's speed (${unit}/${time})`, 1, 120, 1, num(v.a, 1, 120, 60)], ['b', `B's speed (${unit}/${time})`, 1, 120, 1, num(v.b, 1, 120, 75)], ['head', `A's head start (${unit})`, 0, 200, 1, num(v.head, 0, 200, 30)]],
+        title: who ? `${who.name} catch-up race` : 'Catch-up race', play: true,
+        sliders: [['a', `${A}'s speed (${unit}/${time})`, 1, 120, 1, num(v.a, 1, 120, 60)], ['b', `${B}'s speed (${unit}/${time})`, 1, 120, 1, num(v.b, 1, 120, 75)], ['head', `${A}'s head start (${unit})`, 0, 200, 1, num(v.head, 0, 200, 30)]],
         draw(g, s, c, t) {
           const catchT = s.b > s.a ? s.head / (s.b - s.a) : Infinity, end = Number.isFinite(catchT) ? catchT * 1.25 : 4, now = t == null ? end : t * end;
-          const pa = s.head + s.a * now, pb = s.b * now, far = Math.max(s.head + s.a * end, s.b * end, 1), W = c.w - 40;
-          track(g, c, 20, c.h * 0.35, W, 'A', c.orange, 20 + W * pa / far);
-          track(g, c, 20, c.h * 0.7, W, 'B', c.blue, 20 + W * pb / far);
-          if (Number.isFinite(catchT) && now >= catchT) { const x = 20 + W * (s.head + s.a * catchT) / far; g.setLineDash([5, 5]); g.strokeStyle = c.green; g.lineWidth = 2; g.beginPath(); g.moveTo(x, 10); g.lineTo(x, c.h - 10); g.stroke(); g.setLineDash([]); }
+          const pa = s.head + s.a * now, pb = s.b * now, far = Math.max(s.head + s.a * end, s.b * end, 1), pad = who ? 30 : 20, W = c.w - pad * 2;
+          track(g, c, pad, c.h * 0.35, W, 'A', c.orange, pad + W * pa / far, who);
+          track(g, c, pad, c.h * 0.7, W, 'B', c.blue, pad + W * pb / far, who);
+          if (Number.isFinite(catchT) && now >= catchT) { const x = pad + W * (s.head + s.a * catchT) / far; g.setLineDash([5, 5]); g.strokeStyle = c.green; g.lineWidth = 2; g.beginPath(); g.moveTo(x, 10); g.lineTo(x, c.h - 10); g.stroke(); g.setLineDash([]); }
           const clock = `Time ${fmt(now)} ${time}`;
-          return Number.isFinite(catchT) ? `${clock} · B catches A after ${fmt(catchT)} ${time}, ${fmt(s.b * catchT)} ${unit} from B's start` : `${clock} · B is never faster than A, so B never catches up`;
+          return Number.isFinite(catchT) ? `${clock} · ${B} catches ${A} after ${fmt(catchT)} ${time}, ${fmt(s.b * catchT)} ${unit} from ${B}'s start` : `${clock} · ${B} is never faster than ${A}, so it never catches up`;
         },
       };
     },
@@ -125,7 +129,14 @@
   }
   function dot(g, c, x, y, col) { if (Math.abs(x) > 10 || Math.abs(y) > 10) return; ball(g, toX(c, x), toY(c, y), col, 6); }
   function ball(g, x, y, col, r = 9) { g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); }
-  function track(g, c, x, y, W, label, col, pos) { g.strokeStyle = c.border; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + W, y); g.stroke(); g.lineCap = 'butt'; ball(g, Math.min(pos, x + W), y, col, 11); g.fillStyle = '#fff'; g.font = '900 11px Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, Math.min(pos, x + W), y + 0.5); g.textBaseline = 'alphabetic'; }
+  function track(g, c, x, y, W, label, col, pos, who) {
+    if (who) {
+      g.strokeStyle = c.border; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y + 14); g.lineTo(x + W, y + 14); g.stroke(); g.lineCap = 'butt';
+      const px = Math.min(pos, x + W);
+      g.save(); g.translate(px, y); if (who.flip) g.scale(-1, 1); g.font = '30px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label === 'A' ? who.a : who.b, 0, 0); g.restore();
+      g.fillStyle = col; g.font = '900 12px Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(label, px, y - 20);
+      return;
+    } g.strokeStyle = c.border; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + W, y); g.stroke(); g.lineCap = 'butt'; ball(g, Math.min(pos, x + W), y, col, 11); g.fillStyle = '#fff'; g.font = '900 11px Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, Math.min(pos, x + W), y + 0.5); g.textBaseline = 'alphabetic'; }
   function roundRect(g, x, y, w, h, r) { r = Math.min(r, h / 2, w / 2); g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.arcTo(x, y, x + r, y, r); g.closePath(); }
 
   // ── Build one card ───────────────────────────────────────────────────────
@@ -137,14 +148,14 @@
     el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">🎛️</span><span><b>Try it yourself</b><small>${tpl.title}</small></span><span class="ksim-beta">Mega · Beta</span></div>
       <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
       <div class="ksim-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ksim-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
-      ${tpl.play || tpl.roll ? `<div class="ksim-actions"><button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button></div>` : ''}`;
+      <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button>` : ''}<button type="button" class="ksim-reset">↺ Reset</button></div>`;
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
     let anim = 0;
     const render = t => {
       const w = canvas.clientWidth || 320, h = Math.round(Math.min(260, Math.max(170, w * 0.55))), dpr = Math.min(2, devicePixelRatio || 1);
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.height = h + 'px'; }
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-      const c = { ...colors(), w, h }, text = tpl.draw(g, state, c, t);
+      const c = { ...colors(), w, h }, text = tpl.draw(g, state, c, t == null && tpl.play ? 0 : t); // races and launches wait at the start until Play
       out.textContent = text; canvas.setAttribute('aria-label', tpl.title + '. ' + text);
       for (const [k, , lo, hi] of tpl.sliders) {
         el.querySelector(`[data-out="${k}"]`).textContent = fmt(state[k]);
@@ -152,6 +163,13 @@
       }
     };
     el.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; cancelAnimationFrame(anim); anim = 0; state[k] = Number(e.target.value); if (tpl.counts) tpl.counts = null; render(); });
+    // Reset: back to the numbers from the question.
+    const initial = { ...state };
+    el.querySelector('.ksim-reset').addEventListener('click', () => {
+      cancelAnimationFrame(anim); anim = 0; Object.assign(state, initial); tpl.counts = null;
+      for (const [k] of tpl.sliders) el.querySelector(`[data-k="${k}"]`).value = state[k];
+      render();
+    });
     el.querySelector('.ksim-play')?.addEventListener('click', () => {
       if (tpl.roll) { tpl.counts = null; render(); return; }
       cancelAnimationFrame(anim); const start = performance.now(), dur = 2600;
