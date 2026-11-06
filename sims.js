@@ -150,7 +150,7 @@
       <div class="ksim-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ksim-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
       <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button>` : ''}<button type="button" class="ksim-reset">↺ Reset</button></div>`;
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
-    let anim = 0;
+    let anim = 0, pos = null, stop = () => { cancelAnimationFrame(anim); anim = 0; };
     const render = t => {
       const w = canvas.clientWidth || 320, h = Math.round(Math.min(260, Math.max(170, w * 0.55))), dpr = Math.min(2, devicePixelRatio || 1);
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.height = h + 'px'; }
@@ -162,21 +162,27 @@
         el.querySelector(`[data-k="${k}"]`).style.setProperty('--p', (100 * (state[k] - lo) / (hi - lo)) + '%');
       }
     };
-    el.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; cancelAnimationFrame(anim); anim = 0; state[k] = Number(e.target.value); if (tpl.counts) tpl.counts = null; render(); });
+    el.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; stop(); pos = null; state[k] = Number(e.target.value); if (tpl.counts) tpl.counts = null; render(); });
     // Reset: back to the numbers from the question.
     const initial = { ...state };
     el.querySelector('.ksim-reset').addEventListener('click', () => {
-      cancelAnimationFrame(anim); anim = 0; Object.assign(state, initial); tpl.counts = null;
+      stop(); pos = null; Object.assign(state, initial); tpl.counts = null;
       for (const [k] of tpl.sliders) el.querySelector(`[data-k="${k}"]`).value = state[k];
       render();
     });
-    el.querySelector('.ksim-play')?.addEventListener('click', () => {
+    // Play ↔ Pause: Pause freezes it where it is, Play carries on from there,
+    // and after the end Play starts over.
+    const playBtn = el.querySelector('.ksim-play');
+    const label = running => { if (playBtn && !tpl.roll) { playBtn.textContent = running ? '❚❚ Pause' : '▶ Play'; playBtn.setAttribute('aria-pressed', String(running)); } };
+    stop = () => { cancelAnimationFrame(anim); anim = 0; label(false); };
+    playBtn?.addEventListener('click', () => {
       if (tpl.roll) { tpl.counts = null; render(); return; }
-      cancelAnimationFrame(anim); const start = performance.now(), dur = 2600;
-      const step = now => { const t = Math.min(1, (now - start) / dur); render(t); anim = t < 1 ? requestAnimationFrame(step) : 0; };
-      anim = requestAnimationFrame(step);
+      if (anim) { stop(); return; }
+      const from = pos == null || pos >= 1 ? 0 : pos, began = performance.now();
+      const step = now => { pos = Math.min(1, from + (now - began) / 2600); render(pos); if (pos < 1) anim = requestAnimationFrame(step); else stop(); };
+      label(true); anim = requestAnimationFrame(step);
     });
-    if ('ResizeObserver' in window) new ResizeObserver(() => { if (!anim) render(); }).observe(canvas);
+    if ('ResizeObserver' in window) new ResizeObserver(() => { if (!anim) render(pos == null ? undefined : pos); }).observe(canvas);
     render();
   }
   const scan = root => (root.querySelectorAll ? root : document).querySelectorAll('.knox-sim:not([data-ready])').forEach(build);
