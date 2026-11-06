@@ -14,6 +14,8 @@
   const UNITS = { mi: 'mi', km: 'km', m: 'm', ft: 'ft' }, TIMES = { h: 'h', min: 'min', s: 's' };
   // What's racing in a catch-up problem (who=…): drawn with its emoji, named in the labels.
   // flip: most phone emoji face left, so they're mirrored to drive to the right.
+  // What's launched in a projectile problem (item=…), drawn with its emoji.
+  const THINGS = { soccer: ['⚽', 'Soccer ball'], ball: ['⚽', 'Ball'], basketball: ['🏀', 'Basketball'], football: ['🏈', 'Football'], baseball: ['⚾', 'Baseball'], tennis: ['🎾', 'Tennis ball'], volleyball: ['🏐', 'Volleyball'], softball: ['🥎', 'Softball'], golf: ['⛳', 'Golf ball'], rocket: ['🚀', 'Rocket'], rock: ['🪨', 'Rock'], water: ['💧', 'Water'], arrow: ['🏹', 'Arrow'], cannonball: ['💣', 'Cannonball'], frisbee: ['🥏', 'Frisbee'], apple: ['🍎', 'Apple'] };
   const MOVERS = { car: { name: 'Car', a: '🚗', b: '🚙', flip: true }, runner: { name: 'Runner', a: '🏃', b: '🏃‍♀️', flip: true }, person: { name: 'Person', a: '🚶', b: '🚶‍♀️', flip: true }, train: { name: 'Train', a: '🚆', b: '🚄', flip: true }, bike: { name: 'Bike', a: '🚴', b: '🚴‍♀️', flip: true }, plane: { name: 'Plane', a: '✈️', b: '🛩️', flip: false }, boat: { name: 'Boat', a: '⛵', b: '🚤', flip: true }, dog: { name: 'Dog', a: '🐕', b: '🐕', flip: true }, bus: { name: 'Bus', a: '🚌', b: '🚌', flip: true }, truck: { name: 'Truck', a: '🚚', b: '🚚', flip: true } };
 
   function parse(spec) {
@@ -60,8 +62,8 @@
         },
       };
     },
-    projectile: v => ({
-      title: 'Projectile launch', play: true,
+    projectile: v => { const thing = THINGS[String(v.item || '').toLowerCase()] || null; return {
+      title: thing ? `${thing[1]} launch` : 'Projectile launch', play: true,
       sliders: [['speed', 'Launch speed (m/s)', 5, 50, 1, num(v.speed, 5, 50, 20)], ['angle', 'Angle (degrees)', 5, 85, 1, num(v.angle, 5, 85, 45)]],
       draw(g, s, c, t) {
         const G = 9.8, r = s.angle * Math.PI / 180, vx = s.speed * Math.cos(r), vy = s.speed * Math.sin(r), T = 2 * vy / G, range = vx * T, top = vy * vy / (2 * G);
@@ -73,10 +75,12 @@
         g.strokeStyle = c.blue; g.lineWidth = 2.5; g.setLineDash([6, 5]); g.beginPath();
         for (let i = 0; i <= 60; i++) { const tt = T * i / 60, X = x0 + vx * tt * scale, Y = y0 - (vy * tt - G * tt * tt / 2) * scale; i ? g.lineTo(X, Y) : g.moveTo(X, Y); }
         g.stroke(); g.setLineDash([]);
-        const now = t == null ? T : t * T; ball(g, x0 + vx * now * scale, y0 - (vy * now - G * now * now / 2) * scale, c.orange);
+        const now = t == null ? T : t * T, bx = x0 + vx * now * scale, by = y0 - (vy * now - G * now * now / 2) * scale;
+        if (thing) emoji(g, thing[0], bx, by - 6, 28, thing[0] === '🚀' ? Math.atan2(-(vy - G * now), vx) + Math.PI / 4 : (thing[0] === '⚽' || thing[0] === '🏀' || thing[0] === '🏐' || thing[0] === '⚾' || thing[0] === '🎾' ? now * 6 : 0));
+        else ball(g, bx, by, c.orange);
         return `Flies ${fmt(range, 1)} m · highest point ${fmt(top, 1)} m · in the air ${fmt(T, 2)} s${t != null ? ` · t = ${fmt(now, 2)} s` : ''}`;
       },
-    }),
+    }; },
     probability: v => {
       const die = /^d(ie|ice)?$/i.test(v.kind || '') || v.kind === 'die';
       return {
@@ -128,6 +132,7 @@
     g.stroke(); g.restore();
   }
   function dot(g, c, x, y, col) { if (Math.abs(x) > 10 || Math.abs(y) > 10) return; ball(g, toX(c, x), toY(c, y), col, 6); }
+  function emoji(g, ch, x, y, size, turn = 0) { g.save(); g.translate(x, y); if (turn) g.rotate(turn); g.font = size + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 0, 0); g.restore(); }
   function ball(g, x, y, col, r = 9) { g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke(); }
   function track(g, c, x, y, W, label, col, pos, who) {
     if (who) {

@@ -835,11 +835,11 @@ const SIM_INSTRUCTION = 'Simulations are ON for this student. When a hands-on si
   'Sim: line | m=2, b=1   (straight lines, slope, y-intercept)\n' +
   'Sim: parabola | a=1, b=0, c=-4   (quadratics, vertex, roots)\n' +
   'Sim: motion | a=60, b=75, head=30, unit=mi, time=h, who=car   (catch-up / overtaking: A starts head ahead going a, B chases at b; unit is mi, km, m or ft; time is h, min or s; who is what is moving: car, runner, person, train, bike, plane, boat, dog, bus or truck — leave it out if none fits)\n' +
-  'Sim: projectile | speed=20, angle=45   (launches in m/s and degrees)\n' +
+  'Sim: projectile | speed=20, angle=45, item=soccer   (launches in m/s and degrees; item is what is launched: soccer, ball, basketball, football, baseball, tennis, volleyball, softball, golf, rocket, rock, water, arrow, cannonball, frisbee or apple)\n' +
   'Sim: probability | kind=coin, trials=100   (or kind=die)\n' +
   'Sim: fraction | n=3, d=4   (fractions, decimals, percents; d from 1 to 12)\n' +
   'Sim: interest | p=1000, r=5, t=10   (simple vs compound interest: dollars, percent per year, years)\n' +
-  'Use the numbers from the student\'s problem as the starting values. Only use one of these templates, only when it truly fits a math or science question, and never for anything else. Do not mention the Sim line or describe it; the app shows it as a card. Keep the normal answer complete without it.';
+  'Whenever the problem names what is moving or being launched, ALWAYS include who= (motion) or item= (projectile) with the closest word from its list, so the app draws it. Use the numbers from the student\'s problem as the starting values. Only use one of these templates, only when it truly fits a math or science question, and never for anything else. Do not mention the Sim line or describe it; the app shows it as a card. Keep the normal answer complete without it.';
 
 function toResponsesInput(messages) {
   return messages.map(msg => ({
