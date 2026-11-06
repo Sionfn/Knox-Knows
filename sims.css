@@ -1,0 +1,20 @@
+/* Interactive simulations (sims.js): a Knox card with a blue border and edge. */
+.knox-sim { margin: 14px 0 4px; padding: 14px; border: 2px solid var(--blue, #1CB0F6); border-radius: 20px; background: var(--surface, #fff); box-shadow: 0 4px 0 var(--blue-dark, #1899D6); font-family: Nunito, sans-serif; color: var(--text); }
+.knox-sim:not([data-ready]) { display: none; }
+.ks-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ks-badge { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--blue-light, #DDF4FF); border: 1.5px solid var(--blue, #1CB0F6); font-size: 19px; }
+.ks-head > span:nth-child(2) { flex: 1; min-width: 0; }
+.ks-head b { display: block; font-size: 16px; font-weight: 900; }
+.ks-head small { display: block; font-size: 13px; font-weight: 700; color: var(--text-light); }
+.ks-beta { flex: none; padding: 3px 8px; border-radius: 99px; background: #FFF4CC; color: #7A5600; border: 1.5px solid #F2B705; font-size: 11px; font-weight: 900; }
+.ks-canvas { display: block; width: 100%; height: 200px; border-radius: 14px; background: var(--cream, #FFF8F0); border: 1.5px solid var(--border); }
+.ks-readout { margin: 10px 2px 4px; font-size: 14px; font-weight: 800; line-height: 1.45; color: var(--text); }
+.ks-controls { display: grid; gap: 10px; margin-top: 8px; }
+.ks-slider { display: grid; gap: 4px; font-size: 13px; font-weight: 800; color: var(--text-light); }
+.ks-slider > span { display: flex; justify-content: space-between; gap: 8px; }
+.ks-slider b { color: var(--blue-dark, #1899D6); font-weight: 900; }
+.ks-slider input { width: 100%; accent-color: var(--blue, #1CB0F6); min-height: 28px; }
+.ks-actions { display: flex; gap: 8px; margin-top: 12px; }
+.ks-play { min-height: 44px; padding: 0 18px; border-radius: 14px; border: 2px solid var(--blue-dark, #1899D6); background: var(--blue, #1CB0F6); color: #fff; font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 var(--blue-dark, #1899D6); cursor: pointer; }
+.ks-play:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--blue-dark, #1899D6); }
+html[data-theme="dark"]:not(.knox-seasonal) .ks-beta { background: rgba(242,183,5,.16); color: #FFD45C; }
