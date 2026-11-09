@@ -1881,3 +1881,8 @@ html.native-app.knox-seasonal #welcomeScreen > :is(.fall-sky, .harvest-bough) { 
 html.native-app.knox-seasonal body { background:transparent!important; }
 html.native-app.knox-seasonal :is(#appLayout, #chatColumn, #chatAndInput, #welcomeScreen, #chatThread, #flashcardsPanel, #knoxMobileHome, #knoxMobileAccount, #inputOuter) { background:transparent!important; background-image:none!important; box-shadow:none; }
 html.native-app.knox-seasonal .km-dock-fade { background:linear-gradient(180deg,#F7E9CE,#F2DEB7)!important; }
+
+/* Reading or studying: a quiet background so the words stand out. Light and Dark
+   drop the spots; Fall keeps its sky with softer leaves. Start screens keep it all. */
+html.native-app.km-focus:not(.knox-seasonal) #chatAndInput { background:var(--surface); }
+html.native-app.km-focus.knox-seasonal .km-fall-scene .fall-leaf { opacity:.18; }

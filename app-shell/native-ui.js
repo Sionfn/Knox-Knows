@@ -371,7 +371,10 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  const cards=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // only Flashcards' main screen; inner screens keep their own back button
- fallScene((study&&$('welcomeScreen')?.getClientRects().length>0)||cards); // the branch only where the top-left is free
+ const startScreen=(study&&$('welcomeScreen')?.getClientRects().length>0)||cards;
+ fallScene(startScreen); // the branch only where the top-left is free
+ // Reading or studying: the background goes quiet, in every look (native.css).
+ document.documentElement.classList.toggle('km-focus',(study||current==='flashcards')&&!startScreen);
  float.hidden=!(study||cards);float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
  syncFoxes();
  modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
