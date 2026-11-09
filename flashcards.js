@@ -190,7 +190,7 @@ async function sampleDeck(){
   const user=window.currentUser;
   if(!user?.getIdToken){message('Sign in to try a sample deck.');window.openAuthModal?.();return;}
   const owner=key(),version=++generationVersion;
-  const options={request:pick(SAMPLE_TOPICS),count:pick([10,15,20]),style:pick(['qa','term']),pictures:Math.random()<0.5};
+  const options={request:pick(SAMPLE_TOPICS),count:Math.min(pick([10,15,20]),MAX_CARDS[tierNow()]),style:pick(['qa','term']),pictures:Math.random()<0.5};
   nextWay='make';frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is picking a surprise deck…</h2><p class="fc-sub">A random topic, ${options.count} cards${options.pictures?', with pictures':''}. This takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','back',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{

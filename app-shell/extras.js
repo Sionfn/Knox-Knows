@@ -199,7 +199,9 @@ w.knoxAskAiPermission=askAiPermission;
   }catch{release();note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
   if(uid()!==owner)return release();
   const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t));
-  const rec=new MediaRecorder(stream,type?{mimeType:type}:undefined),chunks=[];
+  let rec;const chunks=[];
+  try{rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);}
+  catch{release();note('Knox couldn’t start recording. Try again, or type your question.');return;}
   const d=document.createElement('dialog');d.className='knox-native-dialog km-voice';d.setAttribute('aria-labelledby','kmVoiceTitle');
   d.innerHTML='<img class="km-voice-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmVoiceTitle">Listening…</h2><p role="status"></p><div class="km-voice-bars" aria-hidden="true">'+'<i></i>'.repeat(5)+'</div><div class="km-voice-actions"><button type="button" data-v="cancel">Cancel</button><button type="button" class="primary" data-v="done">Done</button></div>';
   const say=(title,text)=>{d.querySelector('h2').textContent=title;d.querySelector('p').textContent=text;};
@@ -222,7 +224,7 @@ w.knoxAskAiPermission=askAiPermission;
   rec.onerror=()=>{cancelled=true;finish();if(d.open)d.close();release();note('Knox couldn’t record that. Try again, or type your question.');};
   rec.onstop=async()=>{
    stream.getTracks().forEach(t=>t.stop());
-   if(cancelled)return release();
+   if(cancelled){if(d.open)d.close();d.remove();return release();}
    d.classList.add('sending');say('Got it!','Knox is writing that down…');d.querySelectorAll('button').forEach(b=>{b.disabled=true;});
    try{
     const blob=new Blob(chunks,{type:rec.mimeType||type||'audio/mp4'});
@@ -236,9 +238,13 @@ w.knoxAskAiPermission=askAiPermission;
    }catch{note('Knox couldn’t hear that. Try again, or type your question.');}
    finally{if(d.open)d.close();release();}
   };
-  document.body.append(d);d.showModal();rec.start();
+  document.body.append(d);
+  try{d.showModal();rec.start();}
+  catch{cancelled=true;stopped=true;clearInterval(timer);if(d.open)d.close();d.remove();release();note('Knox couldn’t start recording. Try again, or type your question.');}
  }
  const MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>';
+ // The smallest phones have less room beside the mic: a shorter hint stays on one line.
+ if(matchMedia('(max-width:350px)').matches)$('appChatInput')?.setAttribute('placeholder','Ask Knox…');
  const send=$('appSendBtn');
  if(send&&!$('kmTalk')){const b=document.createElement('button');b.type='button';b.id='kmTalk';b.className='km-talk km-press';b.setAttribute('aria-label','Talk to Knox');b.innerHTML=MIC;b.onclick=()=>talk();send.before(b);}
  // Make with Knox: say what you're studying. It fills the box so the student can
@@ -401,14 +407,14 @@ setTimeout(welcome,600);
 // Knox's own drawn icons (knox-icons.js) for each moment.
 const kIcon=(n,alt)=>w.KI?.(n,{tint:false})||alt;
 const CEL={orange:['#FF8A2B','#B84300','#FFE08A'],purple:['#A66BFF','#4E1FA8','#F3DDFF'],green:['#62CC1C','#1F6A00','#D7FFB8'],gold:['#6B4B00','#2A1C00','#FFD84D'],blue:['#36B8F7','#0B579A','#CFF1FF']};
-let celebrating=null;const celebQueue=[];
+let celebrating=null,celebGen=0;const celebQueue=[];
 function bigMoment(m){
  if(celebrating){celebQueue.push(m);return;}
  const d=document.createElement('dialog');
  d.className='km-celebrate';d.dataset.tone=CEL[m.color]?m.color:'orange';d.setAttribute('aria-labelledby','kmCelTitle');
  d.innerHTML='<div class="km-cel-burst" aria-hidden="true">'+'<i></i>'.repeat(16)+'</div><div class="km-cel-body"><div class="km-cel-icon">'+(m.icon||'<img src="/knox-logo-square.jpg" alt="">')+'</div><h2 id="kmCelTitle">'+esc(m.title)+(m.accent?' <span>'+esc(m.accent)+'</span>':'')+'</h2>'+(m.text?'<p>'+esc(m.text)+'</p>':'')+(m.stats?.length?'<div class="km-cel-stats">'+m.stats.map(([n,l])=>'<div><b>'+esc(n)+'</b><small>'+esc(l)+'</small></div>').join('')+'</div>':'')+'<button type="button" class="km-cel-go">'+esc(m.action||'Keep going')+'</button></div>';
  let done=false;
- const finish=()=>{if(done)return;done=true;if(d.open)d.close();d.remove();celebrating=null;const next=celebQueue.shift();if(next)setTimeout(()=>bigMoment(next),350);};
+ const finish=()=>{if(done)return;done=true;if(d.open)d.close();d.remove();celebrating=null;const next=celebQueue.shift();if(next){const gen=celebGen;setTimeout(()=>{if(gen===celebGen)bigMoment(next);},350);}};
  const close=finish;d.addEventListener('close',finish);
  d.addEventListener('click',e=>{if(e.target===d||e.target.closest('.km-cel-go'))close();});
  document.body.append(d);d.showModal();celebrating=d;confetti();try{navigator.vibrate?.(30);}catch{}
@@ -417,7 +423,7 @@ w.knoxBigMoment=bigMoment;
 // Preview links only (never knoxknowsapp.com): a row on You that plays every big moment.
 const SAMPLES=[{color:'orange',icon:'<span class="knox-flame">🔥</span>',title:'7-day',accent:'streak!',text:'You studied 7 days in a row. Keep the flame going!',action:'Keep it going'},{color:'purple',icon:kIcon('cap','🎓'),title:'Lesson',accent:'complete!',text:'You worked through Comparing fractions. Your recap is ready below.',action:'See my recap'},{color:'green',icon:kIcon('cards','🃏'),title:'Review',accent:'complete!',text:'Your schedule is saved. Knox will bring cards back when they’re due.',stats:[['12','Reviews'],['10','Got it'],['2','Again']],action:'Done'},{color:'gold',icon:svgIcon('trophy'),title:'Badge',accent:'unlocked!',text:'10 questions',action:'Nice!'},{color:'gold',icon:kIcon('gem','💎'),title:'Welcome to',accent:'Mega Knox!',text:'40-card decks, the highest limits and early access to new features are all yours.',action:'Let’s go'}];
 // The iPhone app runs from localhost, so it's excluded by name.
-addEventListener('knox-auth-changed',()=>{celebQueue.length=0;celebrating?.close();});
+addEventListener('knox-auth-changed',()=>{celebGen++;celebQueue.length=0;if(celebrating){if(celebrating.open)celebrating.close();else{celebrating.remove();celebrating=null;}}});
 if(!w.knoxNativeApp&&!/(^|\.)knoxknowsapp\.com$/.test(location.hostname)){
  const addRow=()=>{const list=document.querySelector('#knoxMobileAccount .km-menu-list');if(!list||list.querySelector('[data-cel-preview]'))return;const b=document.createElement('button');b.type='button';b.className='km-press';b.dataset.celPreview='';b.innerHTML='<span class="km-tile sm" data-color="gold" aria-hidden="true">'+svgIcon('trophy')+'</span><span>Preview celebrations<small>Preview link only: see every big moment</small></span><span aria-hidden="true">›</span>';b.onclick=()=>SAMPLES.forEach(m=>bigMoment(m));list.append(b);};
  addRow();setTimeout(addRow,1500);addEventListener('knox-auth-changed',()=>setTimeout(addRow,500));
