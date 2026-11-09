@@ -1893,5 +1893,5 @@ html.native-app :is(#inputArea, #inputOuter) { background:transparent!important;
 html.native-app #calcModal { background:transparent!important; }
 html.native-app #calcModal .calc-decor { display:none!important; }
 
-/* The jump-to-latest arrow sits at the right edge, clear of the words. */
-html.native-app .km-latest { left:auto!important; right:max(10px,env(safe-area-inset-right))!important; margin:0!important; transform:none!important; width:40px; height:40px; }
+/* The jump-to-latest arrow sits at the left edge, in the free space under Knox's picture. */
+html.native-app .km-latest { left:max(12px,env(safe-area-inset-left))!important; right:auto!important; margin:0!important; transform:none!important; width:40px; height:40px; }
