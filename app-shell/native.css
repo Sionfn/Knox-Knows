@@ -1943,3 +1943,10 @@ html.native-app #mobileHistoryDrawer .drawer-panel::before { display:none; }
 html.native-app #mobileHistoryDrawer .sidebar-top { touch-action:none; }
 /* History's top line takes the mode's color: purple in Learn. */
 html.native-app.km-hist-learn #mobileHistoryDrawer .drawer-panel { border-top-color:var(--purple); }
+/* Mega beta perks: same breathing room as the rest of the You page. */
+.km-beta-row { gap:14px; padding:16px; }
+.km-beta-copy b { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:16px; }
+.km-beta-ico { display:inline-grid; place-items:center; font-size:18px; line-height:1; }
+.km-beta-ico svg { width:20px; height:20px; }
+.km-beta-copy em { margin-left:0; }
+.km-beta-copy small { margin-top:6px; font-size:13px; line-height:1.45; }
