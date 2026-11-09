@@ -357,6 +357,7 @@ const modeChip=document.createElement('button');modeChip.type='button';modeChip.
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
 modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
 const strip=document.createElement('div');strip.className='km-statusfill';strip.setAttribute('aria-hidden','true');document.body.prepend(strip);
+for(const piece of [topFade,strip])piece?.insertAdjacentHTML('beforeend','<div class="harvest-sun"></div>'); // Fall's sun, so the top matches the scene
 const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(current==='flashcards'&&action){const fc=window.knoxFlashcardsMobile;if(action==='new'){if(fc?.make)fc.make();else document.querySelector('#flashcardsPanel [data-action="make"]')?.click();}else fc?.showDecks?.();return;}if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
 bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
 const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
