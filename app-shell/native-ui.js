@@ -523,6 +523,24 @@ const latest=document.createElement('button');latest.type='button';latest.classN
 latest.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>';
 latest.onclick=()=>{const t=$('chatThread');t?.scrollTo({top:t.scrollHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});};document.body.append(latest);
 const thread=$('chatThread');
+// A new answer (or a reopened chat) opens at the START of Knox's reply, just
+// under the top buttons. It's placed again as the keyboard finishes closing,
+// unless the student has started scrolling.
+window.knoxShowAnswer=row=>{
+ if(!thread)return;
+ row=row||[...thread.querySelectorAll('.msg-knox')].at(-1)?.closest('.msg-wrap');
+ if(!row){setTimeout(()=>{thread.scrollTop=thread.scrollHeight;},50);return;}
+ let moved=false;const stop=()=>{moved=true;};
+ for(const type of ['touchstart','wheel'])thread.addEventListener(type,stop,{once:true,passive:true});
+ const place=()=>{
+  if(moved||!row.isConnected||thread.classList.contains('hidden'))return;
+  let y=0,el=row;while(el&&el!==thread&&thread.contains(el)){y+=el.offsetTop;el=el.offsetParent;}
+  if(el!==thread)y-=thread.offsetTop;
+  const chip=modeChip.getBoundingClientRect(),room=chip.height?chip.bottom-thread.getBoundingClientRect().top+12:76;
+  thread.scrollTop=Math.max(0,y-room);
+ };
+ place();for(const wait of [60,220,480])setTimeout(place,wait);
+};
 const checkLatest=()=>{latest.hidden=!thread||thread.classList.contains('hidden')||!['chat','learn'].includes(current)||thread.scrollHeight-thread.scrollTop-thread.clientHeight<160;};
 thread?.addEventListener('scroll',checkLatest,{passive:true});new MutationObserver(checkLatest).observe(document.body,{attributes:true,attributeFilter:['class']});
 if(thread){new MutationObserver(checkLatest).observe(thread,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});new ResizeObserver(checkLatest).observe(thread);}

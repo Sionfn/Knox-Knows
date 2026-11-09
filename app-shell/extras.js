@@ -156,7 +156,7 @@ function askAiPermission(){
 }
 w.knoxAskAiPermission=askAiPermission;
 // Sending a question or lesson reply (typed, snapped or a follow-up).
-{const send=w.appHandleAsk;if(typeof send==='function')w.appHandleAsk=async function(){if(!(await askAiPermission()))return;return send.apply(this,arguments);};}
+{const send=w.appHandleAsk;if(typeof send==='function')w.appHandleAsk=async function(){if(!(await askAiPermission()))return;const box=$('appChatInput');if(!w._appAskBusy&&(box?.value.trim()||w._appImage||w._appDoc))box?.blur();/* the keyboard closes on send so the answer has the whole screen */return send.apply(this,arguments);};}
 // Everything else that reaches the AI (making flashcards, a message to Knox
 // Support) waits for the same OK; saying no sends nothing.
 {const AI_PATHS=/\/api\/(ask|generate-flashcards)\b/,SUPPORT=/\/api\/me\?route=support\b/;const real=w.fetch.bind(w);

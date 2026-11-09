@@ -4847,7 +4847,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window.settleLearnActions?.();
 
       window.showChatThread();
-      window.scrollChat();
+      if (window.knoxShowAnswer) window.knoxShowAnswer(); else window.scrollChat();
       return true;
     } catch (e) {
       if (window._appViewVersion === viewVersion && window.currentUser?.uid === uid) highlightNav(priorNav);
@@ -6774,7 +6774,8 @@ function replaceThinking(thinkId, html, actionsHtml = '', modelLabel = '') {
     '</div>';
   thinking.replaceWith(row);
   settleLearnActions();
-  scrollChat();
+  // The app opens at the start of Knox's answer; the website keeps following the bottom.
+  if (window.knoxShowAnswer) window.knoxShowAnswer(row); else scrollChat();
 }
 
 // ── Render the upgrade card for rate-limit errors ──────────
