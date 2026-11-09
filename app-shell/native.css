@@ -1729,7 +1729,6 @@ html.native-app #flashcardsPanel .fc-row-body .fc-fields { width:100%; flex:none
    the explanation lines drop away once there are decks or a form to get to. */
 html.native-app #flashcardsPanel .fc-head { margin-bottom:12px; }
 html.native-app #flashcardsPanel .fc-badges { margin-bottom:8px; }
-html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sub,
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sync-note,
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-row, .fc-input, .fc-textarea) .fc-sub { display:none; }
 html.native-app #flashcardsPanel .fc-scroll { padding-top:10px; }
@@ -1763,6 +1762,16 @@ html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileAccount .km-badge.on[data
 
 /* Flashcards' main screen: the same top-left badge and floating Knox as Ask and Learn. */
 .km-mode-chip[data-mode="flashcards"] { --ledge:var(--green-dark); border-color:var(--green); box-shadow:0 3px 0 var(--green-dark), 0 6px 16px rgba(0,0,0,.08); }
-html.native-app #flashcardsPanel .fc-scroll:has(.fc-ways) { padding-top:60px; }
-html.native-app #flashcardsPanel .km-welcome-fox { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); margin-bottom:10px; }
-html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .km-welcome-fox { width:60px; height:60px; border-radius:18px; }
+html.native-app #flashcardsPanel .fc-scroll:has(.fc-ways) { padding-top:68px; }
+html.native-app #flashcardsPanel .km-welcome-fox { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); }
+
+/* Flashcards' main screen lines up with the Ask and Learn start screens:
+   same Knox, same gaps, same button style as the topic buttons. */
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-badges { margin-bottom:12px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { margin-bottom:8px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-head { margin-bottom:12px; }
+html.native-app #flashcardsPanel .fc-way { border-width:2px; border-radius:22px; }
+html.native-app #flashcardsPanel .fc-way:not(:active) { box-shadow:0 4px 0 var(--chip-ledge); transform:none; }
+html.native-app #flashcardsPanel .fc-way-icon { width:48px; height:48px; font-size:24px; }
+html.native-app #flashcardsPanel .fc-ways.has-decks .fc-way { padding:12px 4px 14px; }
+html.native-app #flashcardsPanel .fc-way b { font-size:13.5px; line-height:1.25; letter-spacing:.02em; text-transform:uppercase; }
