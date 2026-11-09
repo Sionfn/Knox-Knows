@@ -1850,3 +1850,6 @@ html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-toolbar-quiet { marg
 body.knox-flashcards .km-float button { color:var(--green-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) body.knox-flashcards .km-float button { color:var(--green); }
 html.native-app #flashcardsPanel .fc-face { height:clamp(240px,calc(100dvh - 470px - var(--safe-top,0px)),440px); }
+/* Ask's top-right buttons are orange, like Learn's purple and Flashcards' green. */
+body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange); }

@@ -5635,7 +5635,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '<span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
+  if (badge) badge.innerHTML = '<span class="season-hide">' + (window.knoxAppShell && window.KI ? window.KI('chat') : '🦊') + ' Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>'; // the app uses Knox's chat icon
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);

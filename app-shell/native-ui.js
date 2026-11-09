@@ -258,6 +258,11 @@ function addMenu(){
   if(typeof open==='function')window.openAuthModal=function(){back=document.activeElement;const r=open.apply(this,arguments);requestAnimationFrame(()=>{if(!modal.contains(document.activeElement))x.focus({preventScroll:true});});return r;};
   if(typeof close==='function')window.closeAuthModal=function(){const was=modal.style.display!=='none';const r=close.apply(this,arguments);if(was&&back?.isConnected&&!back.matches('input,textarea'))back.focus?.({preventScroll:true});back=null;return r;};
  }}
+// Every floating Knox bobs on the same clock, so switching between Ask, Learn
+// and Flashcards never shows it jump.
+function syncFoxes(){document.querySelectorAll('.km-welcome-fox').forEach(f=>f.getAnimations?.().forEach(a=>{if(a.animationName==='kmBob')a.startTime=0;}));}
+// Ask's start label uses Knox's chat icon in the app (appStartNewChat does too).
+{const label=document.querySelector('#welcomeScreen .welcome-badge .season-hide');if(label&&window.KI)label.innerHTML=window.KI('chat')+' Your AI study companion';}
 // Ask and Learn start screens: Knox floats above the heading.
 {const badge=$('welcomeScreen')?.querySelector(':scope > .welcome-badge');if(badge&&!$('welcomeScreen').querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';badge.before(fox);}}
 // Ask and Learn start screens fit without a little scroll: measure the real
@@ -274,7 +279,7 @@ function addMenu(){
  later();}
 // Flashcards' main screen: Knox floats above the heading, like Ask and Learn.
 (function foxOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(foxOnCards,800);return;}
- const add=()=>{const head=panel.querySelector('.fc-wrap:has(.fc-ways) .fc-head');if(head&&!head.querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.prepend(fox);}};
+ const add=()=>{const head=panel.querySelector('.fc-wrap:has(.fc-ways) .fc-head');if(head&&!head.querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.prepend(fox);syncFoxes();}};
  new MutationObserver(add).observe(panel,{childList:true,subtree:true});add();})();
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
@@ -341,7 +346,7 @@ const modeChip=document.createElement('button');modeChip.type='button';modeChip.
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
 modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
 const strip=document.createElement('div');strip.className='km-statusfill';strip.setAttribute('aria-hidden','true');document.body.prepend(strip);
-const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(current==='flashcards'&&action){if(action==='new')window.knoxFlashcardsMobile?.make();else window.knoxFlashcardsMobile?.showDecks();return;}if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
+const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(current==='flashcards'&&action){const fc=window.knoxFlashcardsMobile;if(action==='new'){if(fc?.make)fc.make();else document.querySelector('#flashcardsPanel [data-action="make"]')?.click();}else fc?.showDecks?.();return;}if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
 bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
 const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
 let themeMeta=document.querySelector('meta[name="theme-color"]');
@@ -357,6 +362,7 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  float.hidden=!(study||current==='flashcards');float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
+ syncFoxes();
  const cards=current==='flashcards'; // Flashcards gets the same top-left badge as Ask and Learn
  modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='flashcards'?'Make with Knox':current==='learn'?'New lesson':'New chat');float.querySelector('[data-study-action="history"]')?.setAttribute('aria-label',current==='flashcards'?'Your decks':'History');
