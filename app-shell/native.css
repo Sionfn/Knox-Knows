@@ -1859,3 +1859,10 @@ html.native-app.km-fit2 #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { displa
 /* No fade when switching tabs. This one ran on every tab, and twice over on
    Flashcards (its panel sits inside the page that fades), which read as a blink. */
 html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-mobile-home):not(.knox-mobile-account) #chatAndInput, html.native-app #flashcardsPanel:not([hidden]) { animation:none!important; }
+
+/* One background everywhere: Ask, Learn and Flashcards use Home's white page with
+   the colored spots. The page behind them is the single colored layer, so the top
+   of the screen takes the same color on every tab with no band. */
+html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green-light) 55%,transparent) 0 120px,transparent 121px),var(--surface); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange) 10%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue) 9%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green) 8%,transparent) 0 120px,transparent 121px),var(--surface); }
+html.native-app:not(.knox-seasonal) :is(#appLayout, #chatColumn, #welcomeScreen, #chatThread, #flashcardsPanel) { background:transparent!important; }
