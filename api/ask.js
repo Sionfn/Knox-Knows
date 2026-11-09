@@ -828,6 +828,19 @@ function cleanLatexAnswer(text) {
 const ANSWER_LANGUAGES = { auto: 'auto', en: 'English', es: 'Spanish', fr: 'French', pt: 'Portuguese', de: 'German', it: 'Italian', zh: 'Simplified Chinese', ja: 'Japanese', ko: 'Korean', ar: 'Arabic', hi: 'Hindi', vi: 'Vietnamese', tl: 'Tagalog', ru: 'Russian' };
 const WEB_SEARCH_INSTRUCTION = 'Web search is ON for this student. Search the web before answering whenever facts, quotes, dates, statistics, current events, or sources matter, especially for essays, research and citations. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
 
+// Mega Knox "Simulations" (Beta setting, Ask Knox only): Knox may end an answer
+// with ONE "Sim:" line; the app (sims.js) turns it into a built-in interactive
+// template with sliders. The model only picks a template and starting numbers.
+const SIM_INSTRUCTION = 'Simulations are ON for this student. When a hands-on simulation would genuinely help them understand THIS answer, end your reply with exactly ONE extra line in one of these formats (plain numbers only, no units in values, no extra text on the line):\n' +
+  'Sim: line | m=2, b=1   (straight lines, slope, y-intercept)\n' +
+  'Sim: parabola | a=1, b=0, c=-4   (quadratics, vertex, roots)\n' +
+  'Sim: motion | a=60, b=75, head=30, unit=mi, time=h, who=car   (catch-up / overtaking: A starts head ahead going a, B chases at b; unit is mi, km, m or ft; time is h, min or s; who is what is moving: car, runner, person, train, bike, plane, boat, dog, bus or truck — leave it out if none fits)\n' +
+  'Sim: projectile | speed=20, angle=45, item=soccer   (launches in m/s and degrees; item is what is launched: soccer, ball, basketball, football, baseball, tennis, volleyball, softball, golf, rocket, rock, water, arrow, cannonball, frisbee or apple)\n' +
+  'Sim: probability | kind=coin, trials=100   (or kind=die)\n' +
+  'Sim: fraction | n=3, d=4   (fractions, decimals, percents; d from 1 to 12)\n' +
+  'Sim: interest | p=1000, r=5, t=10   (simple vs compound interest: dollars, percent per year, years)\n' +
+  'Whenever the problem names what is moving or being launched, ALWAYS include who= (motion) or item= (projectile) with the closest word from its list, so the app draws it. Use the numbers from the student\'s problem as the starting values. Only use one of these templates, only when it truly fits a math or science question, and never for anything else. Do not mention the Sim line or describe it; the app shows it as a card. Keep the normal answer complete without it.';
+
 function toResponsesInput(messages) {
   return messages.map(msg => ({
     role: msg.role,
@@ -975,8 +988,9 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch, language } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch, simulations, language } = req.body;
   if (webSearch != null && typeof webSearch !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
+  if (simulations != null && typeof simulations !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
   if (language != null && (typeof language !== 'string' || !Object.hasOwn(ANSWER_LANGUAGES, language))) return res.status(400).json({ error: 'Invalid request.' });
   // The bot uses Learn mode (/learn) unless it asks for Ask Knox (/ask sends
   // learnMode: false). History is the lesson so far (its Reply button) and a
@@ -1290,6 +1304,8 @@ export default async function handler(req, res) {
     const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : writing ? 8000 : 3000; // files can hold many problems, like photos
     // The student's chosen answer language (app setting). Learn's JSON keys stay as specified.
     if (language && language !== 'auto') messages.splice(messages.length - 1, 0, { role: 'system', content: `Write your entire reply in ${ANSWER_LANGUAGES[language]}, even if the question or photo is in another language, unless the student asks for a translation or for a different language. Keep math notation as is. Any required output format, labels or JSON keys stay exactly as specified; only the student-facing text is in ${ANSWER_LANGUAGES[language]}.` });
+    // Mega Knox with "Simulations" on (Ask Knox only): Knox may add one Sim: line.
+    if (simulations === true && tier === 'mega' && !learnMode && !casual && !isBot) messages.splice(messages.length - 1, 0, { role: 'system', content: SIM_INSTRUCTION });
     const requestBody = {
       model:       modelToUse,
       messages,

@@ -84,6 +84,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
    </div><div class="km-pref-row"><span class="km-pref-label">Answer text size</span><div class="km-reading" role="group" aria-label="Answer text size"><button type="button" data-reading="standard" aria-pressed="true">Aa Standard</button><button type="button" data-reading="large" aria-pressed="false"><span style="font-size:1.2em">Aa</span> Larger</button></div>
    <div class="km-reading-preview" aria-hidden="true"><span class="km-reading-fox">🦊</span><p><b>Knox</b>This is how big Knox’s answers and lessons will look.</p></div></div>
    <label class="km-lang km-pref-row"><span><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select data-lang aria-label="Language Knox answers in">${LANGS.map(([id,label])=>`<option value="${id}">${label}</option>`).join('')}</select></label></div></section>
+  <section class="km-account-section" id="kmBetaPerks" aria-labelledby="kmBetaTitle" hidden><div class="km-section-heading"><h2 id="kmBetaTitle">Mega beta perks</h2></div><div class="km-pref-panel"><div class="km-beta-row" data-beta="web"><span class="km-beta-copy"><b>🌐 Search the web <em>Beta</em></b><small></small></span><button type="button" class="km-beta-switch" role="switch" aria-label="Search the web" aria-checked="false"></button></div><div class="km-beta-row" data-beta="sims"><span class="km-beta-copy"><b>🎛️ Simulations <em>Beta</em></b><small></small></span><button type="button" class="km-beta-switch" role="switch" aria-label="Simulations" aria-checked="false"></button></div></div></section>
   <section class="km-account-section" aria-labelledby="kmSettingsTitle"><div class="km-section-heading"><h2 id="kmSettingsTitle">Account & help</h2></div><div class="km-menu-list">
    <button type="button" class="km-press" data-action="settings">${tile('settings','grey')}<span>Account & settings<small>Profile, connections, account deletion</small></span><span aria-hidden="true">›</span></button>
    <button type="button" class="km-press" data-action="credits">${tile('coin','gold')}<span>Questions & limits<small>See your current allowance</small></span><span aria-hidden="true">›</span></button>
@@ -196,11 +197,24 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   $('kmStreakNote').textContent=user?(lit?'Studied today. Nice!':count>0?'Study today to keep it':'Start your streak today'):'Sign in to start a streak';
   const theme=w.knoxTheme?.()||'light',mo=new Date().getMonth();
   account.querySelectorAll('[data-look]').forEach(b=>{const selected=b.dataset.look===theme;b.setAttribute('aria-pressed',String(selected));b.querySelector('[data-selected-label]').textContent=selected?'✓':'';b.hidden=b.dataset.look==='seasonal'&&(mo<8||mo>10);});
+  paintBeta();
   account.querySelectorAll('[data-reading]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.reading===reading)));
   const langPick=account.querySelector('[data-lang]');if(langPick&&langPick.value!==language)langPick.value=language;
   account.querySelector('[data-action="signout"]').hidden=!user;
   home.querySelectorAll('[data-more]').forEach(b=>{if(b.getAttribute('aria-expanded')==='true')expand(b,true);});
  }
+ // Mega beta perks (same switches and saved settings as the website's Account & Plan).
+ // The iPhone app can't advertise upgrades, so there only Mega accounts see them.
+ const BETA={web:['knoxWebSearch:','On: in Ask Knox, Knox checks real websites and links its sources. Answers can take a little longer.','Off: turn on so Knox checks real websites and links its sources.','Mega Knox: Knox checks real websites and links its sources.'],sims:['knoxSims:','On: in Ask Knox, Knox adds a simulation you can play with when it helps.','Off: turn on so Knox can add a simulation with sliders to math and science answers.','Mega Knox: Knox adds a hands-on simulation with sliders when it helps.']};
+ const betaOn=(id,uid)=>{try{return !!uid&&localStorage.getItem(BETA[id][0]+uid)==='1';}catch{return false;}};
+ function paintBeta(){
+  const user=w.currentUser,mega=w.userTier==='mega',box=$('kmBetaPerks');if(!box)return;
+  box.hidden=!user||(!mega&&!!w.knoxNativeApp);
+  box.querySelectorAll('[data-beta]').forEach(row=>{const id=row.dataset.beta,on=mega&&betaOn(id,user?.uid);row.querySelector('.km-beta-switch').setAttribute('aria-checked',String(on));row.classList.toggle('locked',!mega);row.querySelector('small').textContent=!mega?BETA[id][3]:on?BETA[id][1]:BETA[id][2];});
+ }
+ account.addEventListener('click',e=>{const sw=e.target.closest('.km-beta-switch');if(!sw)return;const user=w.currentUser;if(!user)return;
+  if(w.userTier!=='mega'){account.querySelector('#kmAccountPlan [data-action="plans"]')?.click();return;}
+  const id=sw.closest('[data-beta]').dataset.beta,on=!betaOn(id,user.uid);try{localStorage.setItem(BETA[id][0]+user.uid,on?'1':'0');}catch{}paintBeta();});
  function show(target){home.hidden=target!=='home';account.hidden=target!=='account';if(target==='home'||target==='account'){render();if(target==='home')refreshDecks();}}
  async function refreshDecks(){
   const uid=w.currentUser?.uid||'guest';if(refreshing || !w.knoxFlashcardsMobile || (uid===refreshOwner&&Date.now()-refreshAt<30000))return;
