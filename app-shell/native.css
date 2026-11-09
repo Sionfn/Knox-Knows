@@ -1623,17 +1623,11 @@ html.native-app #authModal .auth-header { position:relative; }
 /* Short phones (iPhone SE/mini): tighter gaps on the Ask and Learn start
    screens so all four topic cards fit without scrolling. Same pieces, same look. */
 @media (max-height:760px) {
-  html.native-app #welcomeScreen { padding-top:58px!important; }
-  html.native-app #welcomeScreen .welcome-badge { margin-bottom:6px!important; }
-  html.native-app #welcomeScreen .welcome-title { margin-bottom:6px!important; }
-  html.native-app #welcomeScreen .welcome-sub { margin-bottom:4px!important; font-size:13px!important; line-height:1.4!important; }
-  html.native-app #welcomeScreen .suggestion-grid { margin-top:8px!important; gap:10px!important; }
   html.native-app #welcomeScreen .suggestion-chip { min-height:96px!important; padding:10px!important; }
   html.native-app #welcomeScreen .suggestion-chip .chip-circle { width:40px!important; height:40px!important; }
 }
 @media (max-height:700px) {
   html.native-app #welcomeScreen .welcome-sub { display:none!important; }
-  html.native-app #welcomeScreen .welcome-title { margin-bottom:2px!important; }
 }
 /* Narrowest phones (320px): long topic names like PHOTOSYNTHESIS stay on one line. */
 @media (max-width:350px) {
@@ -1670,15 +1664,9 @@ html.native-app .km-in-right, html.native-app .km-in-left { animation:none!impor
 
 /* Same tightening when the app measures that the start screen doesn't fit
    (real iPhones lose height to the notch and home bar, which media queries miss). */
-  html.native-app.km-fit1 #welcomeScreen { padding-top:58px!important; }
-  html.native-app.km-fit1 #welcomeScreen .welcome-badge { margin-bottom:6px!important; }
-  html.native-app.km-fit1 #welcomeScreen .welcome-title { margin-bottom:6px!important; }
-  html.native-app.km-fit1 #welcomeScreen .welcome-sub { margin-bottom:4px!important; font-size:13px!important; line-height:1.4!important; }
-  html.native-app.km-fit1 #welcomeScreen .suggestion-grid { margin-top:8px!important; gap:10px!important; }
   html.native-app.km-fit1 #welcomeScreen .suggestion-chip { min-height:96px!important; padding:10px!important; }
   html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle { width:40px!important; height:40px!important; }
   html.native-app.km-fit2 #welcomeScreen .welcome-sub { display:none!important; }
-  html.native-app.km-fit2 #welcomeScreen .welcome-title { margin-bottom:2px!important; }
 
 /* Permission before AI: a Knox card like the other app popups. */
 .km-ai-ok { text-align:center; }
@@ -1856,3 +1844,14 @@ html[data-theme="dark"]:not(.knox-seasonal) body:not(.knox-learn-mode):not(.knox
 .km-talk-wide:active { transform:translateY(2px); box-shadow:0 1px 0 var(--green-dark); }
 body.knox-flashcards .km-voice-fox { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); }
 body.knox-flashcards .km-voice-bars i { background:var(--green); }
+
+/* Ask, Learn and Flashcards are level: Knox, the label and the heading sit in the
+   same place on all three. When a phone is short, only the topic boxes get
+   shorter, and Flashcards drops its small line whenever Ask and Learn do. */
+html.native-app.km-fit1 #welcomeScreen { padding-bottom:4px!important; }
+html.native-app.km-fit1 #welcomeScreen .suggestion-grid { padding-bottom:4px; gap:10px; }
+html.native-app.km-fit1 #welcomeScreen .suggestion-chip { min-height:100px!important; gap:6px; }
+html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle { width:36px!important; height:36px!important; font-size:18px; }
+html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle svg { width:18px; height:18px; }
+html.native-app.km-fit2 #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { display:none; }
+@media (max-height:700px) { html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { display:none; } }

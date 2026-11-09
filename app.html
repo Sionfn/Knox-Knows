@@ -5593,7 +5593,7 @@ window.openLearnMode = function() {
   const sub   = document.querySelector('.welcome-sub');
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
-  if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand." +
+  if (sub)   sub.textContent = (window.knoxAppShell ? "I'll guide you to the answer so you actually understand it." : "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.") +
     (window.currentUser ? '' : ' Sign up free to start a lesson.');
   updateSuggestionChipsForMode(true);
   window.learnReviewUI?.refresh();
