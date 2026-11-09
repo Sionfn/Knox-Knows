@@ -1892,3 +1892,6 @@ html.native-app.km-focus.knox-seasonal .km-fall-scene .fall-leaf { opacity:.18; 
 html.native-app :is(#inputArea, #inputOuter) { background:transparent!important; box-shadow:none!important; }
 html.native-app #calcModal { background:transparent!important; }
 html.native-app #calcModal .calc-decor { display:none!important; }
+
+/* The jump-to-latest arrow sits at the right edge, clear of the words. */
+html.native-app .km-latest { left:auto!important; right:max(10px,env(safe-area-inset-right))!important; margin:0!important; transform:none!important; width:40px; height:40px; }
