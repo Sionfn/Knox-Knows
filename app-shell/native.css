@@ -1863,8 +1863,8 @@ html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-
 /* One background everywhere: Ask, Learn and Flashcards use Home's white page with
    the colored spots. The page behind them is the single colored layer, so the top
    of the screen takes the same color on every tab with no band. */
-html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green-light) 55%,transparent) 0 120px,transparent 121px),var(--surface); }
-html.native-app[data-theme="dark"]:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange) 10%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue) 9%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green) 8%,transparent) 0 120px,transparent 121px),var(--surface); }
+html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),var(--surface); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange) 10%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue) 9%,transparent) 0 190px,transparent 191px),var(--surface); }
 html.native-app:not(.knox-seasonal) :is(#appLayout, #chatColumn, #welcomeScreen, #chatThread, #flashcardsPanel) { background:transparent!important; }
 
 /* ═══ Fall in the app, like the website ═════════════════════════════════════
@@ -1903,3 +1903,7 @@ html.native-app.km-scrolled .km-top-fade { opacity:1; }
 html.native-app.km-scrolled.knox-seasonal .km-fall-scene { background-image:linear-gradient(180deg,#FFF7E9 0%,#FBF1DE 75%,#F2DEB7 100%); }
 html.native-app.knox-seasonal .km-fall-scene .harvest-sun { transition:opacity .15s linear; }
 html.native-app.km-scrolled.knox-seasonal .km-fall-scene .harvest-sun { opacity:0; }
+
+/* Dark: the page behind everything is the same color as the tabs, so no darker
+   band shows between the text bar and the island. */
+html.native-app:not(.knox-seasonal), html.native-app:not(.knox-seasonal) body { background:var(--km-page,var(--surface))!important; }
