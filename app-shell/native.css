@@ -1907,3 +1907,7 @@ html.native-app.km-scrolled.knox-seasonal .km-fall-scene .harvest-sun { opacity:
 /* Dark: the page behind everything is the same color as the tabs, so no darker
    band shows between the text bar and the island. */
 html.native-app:not(.knox-seasonal), html.native-app:not(.knox-seasonal) body { background:var(--km-page,var(--surface))!important; }
+
+/* The fade under the top badge is a plain soft gradient: iPhone can spread a
+   blur past its mask and wash out what's next to it. */
+html.native-app .km-top-fade { -webkit-backdrop-filter:none!important; backdrop-filter:none!important; -webkit-mask-image:none!important; mask-image:none!important; }
