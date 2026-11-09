@@ -272,6 +272,10 @@ function addMenu(){
  if(ws)new MutationObserver(later).observe(ws,{childList:true,subtree:true,characterData:true});
  new MutationObserver(later).observe(document.body,{attributes:true,attributeFilter:['class']});
  later();}
+// Flashcards' main screen: Knox floats above the heading, like Ask and Learn.
+(function foxOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(foxOnCards,800);return;}
+ const add=()=>{const head=panel.querySelector('.fc-wrap:has(.fc-ways) .fc-head');if(head&&!head.querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.prepend(fox);}};
+ new MutationObserver(add).observe(panel,{childList:true,subtree:true});add();})();
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
@@ -353,7 +357,8 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  float.hidden=!study;float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
- modeChip.hidden=!study;topFade.hidden=!study;modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':'Ask Knox';
+ const cardsHome=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // Flashcards' main screen gets the same badge
+ modeChip.hidden=!(study||cardsHome);topFade.hidden=!(study||cardsHome);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  document.documentElement.classList.toggle('km-hist-learn',current==='learn');

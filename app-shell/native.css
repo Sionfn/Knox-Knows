@@ -1733,3 +1733,36 @@ html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sub,
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sync-note,
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-row, .fc-input, .fc-textarea) .fc-sub { display:none; }
 html.native-app #flashcardsPanel .fc-scroll { padding-top:10px; }
+
+/* Badges: each earned badge has its own color (what it's for), not all gold. */
+#knoxMobileAccount .km-badge[data-tone="purple"] { --b:var(--purple); --bl:var(--purple-light); --bd:var(--purple-dark); }
+#knoxMobileAccount .km-badge[data-tone="orange"] { --b:var(--orange); --bl:var(--orange-light); --bd:var(--orange-dark); }
+#knoxMobileAccount .km-badge[data-tone="red"] { --b:#E5484D; --bl:#FFE1E1; --bd:#B3261E; }
+#knoxMobileAccount .km-badge[data-tone="blue"] { --b:var(--blue); --bl:var(--blue-light); --bd:var(--blue-dark); }
+#knoxMobileAccount .km-badge[data-tone="green"] { --b:var(--green); --bl:var(--green-light); --bd:var(--green-dark); }
+#knoxMobileAccount .km-badge[data-tone="teal"] { --b:#14B8A6; --bl:#CFF7F0; --bd:#0F8A7E; }
+#knoxMobileAccount .km-badge[data-tone="pink"] { --b:#EC4899; --bl:#FFE0F0; --bd:#B8246F; }
+#knoxMobileAccount .km-badge[data-tone="gold"] { --b:#F2B705; --bl:#FFF3C4; --bd:#9A6B00; }
+#knoxMobileAccount .km-badge.on[data-tone] .km-badge-icon { border-color:var(--b); background:var(--bl); color:var(--bd); box-shadow:0 3px 0 var(--bd); }
+html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileAccount .km-badge.on[data-tone] .km-badge-icon { background:color-mix(in srgb,var(--b) 18%,var(--surface)); color:var(--b); }
+
+/* Bottom of Home: talk to support, follow Knox and the founder, who built it. */
+.km-home-foot { margin-top:24px; text-align:center; }
+.km-help-card { display:flex; align-items:center; gap:12px; width:100%; padding:14px; border:2px solid var(--blue); border-radius:20px; background:var(--surface); color:var(--text); text-align:left; font-family:inherit; box-shadow:0 4px 0 var(--blue-dark); }
+.km-help-card > span:nth-child(2) { flex:1; min-width:0; }
+.km-help-card b { display:block; font-size:16px; font-weight:900; }
+.km-help-card small { display:block; margin-top:2px; font-size:13px; font-weight:700; color:var(--text-light); }
+.km-home-foot h3 { margin:22px 0 10px; font:900 12px Nunito,sans-serif; letter-spacing:.08em; text-transform:uppercase; color:var(--text-light); }
+.km-socials { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.km-social { width:44px; height:44px; display:grid; place-items:center; border-radius:13px; color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.25); }
+.km-social svg { width:21px; height:21px; }
+.km-social:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.25); }
+.km-built { margin:22px 0 4px; font:800 13px Nunito,sans-serif; color:var(--text); }
+.km-built svg { width:17px; height:17px; vertical-align:-3px; margin-left:2px; }
+.km-copy { margin:0; font:700 12px Nunito,sans-serif; color:var(--text-light); }
+
+/* Flashcards' main screen: the same top-left badge and floating Knox as Ask and Learn. */
+.km-mode-chip[data-mode="flashcards"] { --ledge:var(--green-dark); border-color:var(--green); box-shadow:0 3px 0 var(--green-dark), 0 6px 16px rgba(0,0,0,.08); }
+html.native-app #flashcardsPanel .fc-scroll:has(.fc-ways) { padding-top:60px; }
+html.native-app #flashcardsPanel .km-welcome-fox { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); margin-bottom:10px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .km-welcome-fox { width:60px; height:60px; border-radius:18px; }

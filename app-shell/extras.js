@@ -266,10 +266,10 @@ function progress(){
  const s=stats(),streak=Number($('streakCount')?.textContent)||0;s.bestStreak=Math.max(streak,s.bestStreak);
  const deck=w.knoxFlashcardsMobile?.summary?.()||{decks:[]},decks=deck.decks?.length||0;
  const tiles=[['flame','chat',streak,'day streak'],['chat','chat',s.questions||0,'questions answered'],['cap','learn',s.lessons||0,'lessons done'],['cards','flashcards',s.cards||0,'cards reviewed']];
- const badges=[['cap','First lesson',s.lessons>=1],['flame','3-day streak',s.bestStreak>=3],['flame','7-day streak',s.bestStreak>=7],['chat','10 questions',s.questions>=10],['cards','First deck',decks>=1],['brain','50 cards',s.cards>=50],['target','Daily goal',s.goalDays>=1],['trophy','5 lessons',s.lessons>=5]];
+ const badges=[['cap','First lesson',s.lessons>=1,'purple'],['flame','3-day streak',s.bestStreak>=3,'orange'],['flame','7-day streak',s.bestStreak>=7,'red'],['chat','10 questions',s.questions>=10,'blue'],['cards','First deck',decks>=1,'green'],['brain','50 cards',s.cards>=50,'teal'],['target','Daily goal',s.goalDays>=1,'pink'],['trophy','5 lessons',s.lessons>=5,'gold']];
  const html=`<div class="km-section-heading"><h2>Your progress</h2></div><div class="km-stats">${tiles.map(([i,c,n,l])=>`<div class="km-stat">${iconTile(i,c)}<b>${n}</b><small>${l}</small></div>`).join('')}</div>
   <div class="km-section-heading"><h2>Badges</h2><small class="km-badge-count">${badges.filter(b=>b[2]).length} of ${badges.length}</small></div>
-  <div class="km-badges">${badges.map(([i,l,on])=>`<div class="km-badge${on?' on':''}" aria-label="${esc(l)}: ${on?'unlocked':'not yet unlocked'}" title="${esc(l)}"><span class="km-badge-icon">${svgIcon(i)}</span><small>${esc(l)}</small></div>`).join('')}</div>
+  <div class="km-badges">${badges.map(([i,l,on,tone])=>`<div class="km-badge${on?' on':''}" data-tone="${tone}" aria-label="${esc(l)}: ${on?'unlocked':'not yet unlocked'}" title="${esc(l)}"><span class="km-badge-icon">${svgIcon(i)}</span><small>${esc(l)}</small></div>`).join('')}</div>
   <p class="km-footer-note" style="margin-top:10px">Counted on this device as you study.</p>`;
  if(el.innerHTML!==html)el.innerHTML=html;
  w.knoxCheckBadges?.(badges);
