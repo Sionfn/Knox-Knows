@@ -1715,3 +1715,21 @@ html[data-theme="dark"]:not(.knox-seasonal) #knoxMobileHome .km-streak-flame { b
   html.native-app :is(*:focus, *:focus-visible) { outline:none!important; }
 }
 html.native-app :is(button, a, [role="button"]) { -webkit-tap-highlight-color:transparent; }
+
+/* ═══ Flashcards fit the phone ══════════════════════════════════════════════
+   iPhone zooms the whole page when a text box is under 16px, and once zoomed
+   the app can be dragged in every direction (top cut off, island out of view).
+   So boxes are 16px, the pages only move up and down, and the card fields use
+   the full width of their card instead of about half of it. */
+html.native-app :is(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select) { font-size:16px!important; }
+html.native-app #flashcardsPanel .fc-scroll { overflow-x:hidden; touch-action:pan-y; }
+html.native-app #flashcardsPanel .fc-row-body { align-items:stretch; }
+html.native-app #flashcardsPanel .fc-row-body .fc-fields { width:100%; flex:none; }
+/* Less stacked above the work: tighter headings on every Flashcards screen, and
+   the explanation lines drop away once there are decks or a form to get to. */
+html.native-app #flashcardsPanel .fc-head { margin-bottom:12px; }
+html.native-app #flashcardsPanel .fc-badges { margin-bottom:8px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sub,
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways.has-decks) .fc-sync-note,
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-row, .fc-input, .fc-textarea) .fc-sub { display:none; }
+html.native-app #flashcardsPanel .fc-scroll { padding-top:10px; }

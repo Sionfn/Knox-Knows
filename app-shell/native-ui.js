@@ -2,6 +2,9 @@
    Runs in the iPhone app (Capacitor) and in the website's home-screen version
    (window.knoxAppShell, see app-shell.js), where web stand-ins replace plugins. */
 (function(){
+// The app never zooms: iPhone's zoom on a small text box left the whole screen
+// draggable, with the top cut off and the island out of view.
+{const vp=document.querySelector('meta[name="viewport"]');if(vp&&!/maximum-scale/.test(vp.content))vp.content+=', maximum-scale=1';}
 // One popup at a time: a popup asked to open while another is showing waits
 // until that one closes (then the next opens), so they never stack.
 {const proto=HTMLDialogElement.prototype,show=proto.showModal;
