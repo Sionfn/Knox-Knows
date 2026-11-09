@@ -1855,3 +1855,7 @@ html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle { width:36p
 html.native-app.km-fit1 #welcomeScreen .suggestion-chip .chip-circle svg { width:18px; height:18px; }
 html.native-app.km-fit2 #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { display:none; }
 @media (max-height:700px) { html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-sub { display:none; } }
+
+/* No fade when switching tabs. This one ran on every tab, and twice over on
+   Flashcards (its panel sits inside the page that fades), which read as a blink. */
+html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-mobile-home):not(.knox-mobile-account) #chatAndInput, html.native-app #flashcardsPanel:not([hidden]) { animation:none!important; }
