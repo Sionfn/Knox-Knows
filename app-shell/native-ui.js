@@ -350,6 +350,9 @@ document.body.prepend(bar);
 const float=document.createElement('div');float.className='km-float';float.append(...bar.querySelectorAll('[data-study-action]'));document.body.append(float);
 // Top left in Ask / Learn: which mode you're in; tap to go Home.
 const topFade=document.createElement('div');topFade.className='km-top-fade';topFade.setAttribute('aria-hidden','true');topFade.hidden=true;document.body.append(topFade);
+// Scrolled content fades out just below the top badge (native.css); nothing shows behind it.
+function topScroll(){const el=['chat','learn'].includes(current)?$('chatThread'):current==='flashcards'?document.querySelector('#flashcardsPanel .fc-scroll'):null;document.documentElement.classList.toggle('km-scrolled',!!el&&el.getClientRects().length>0&&el.scrollTop>2);}
+document.addEventListener('scroll',topScroll,{capture:true,passive:true});
 const modeChip=document.createElement('button');modeChip.type='button';modeChip.className='km-mode-chip km-press';modeChip.hidden=true;
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
 modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
@@ -376,7 +379,7 @@ function paint(){
  // Reading or studying: the background goes quiet, in every look (native.css).
  document.documentElement.classList.toggle('km-focus',(study||current==='flashcards')&&!startScreen);
  float.hidden=!(study||cards);float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
- syncFoxes();
+ syncFoxes();topScroll();
  modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='flashcards'?'Make with Knox':current==='learn'?'New lesson':'New chat');float.querySelector('[data-study-action="history"]')?.setAttribute('aria-label',current==='flashcards'?'Your decks':'History');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
@@ -564,7 +567,7 @@ window.knoxShowAnswer=row=>{
   if(moved||!row.isConnected||thread.classList.contains('hidden'))return;
   let y=0,el=row;while(el&&el!==thread&&thread.contains(el)){y+=el.offsetTop;el=el.offsetParent;}
   if(el!==thread)y-=thread.offsetTop;
-  const chip=modeChip.getBoundingClientRect(),room=chip.height?chip.bottom-thread.getBoundingClientRect().top+12:76;
+  const chip=modeChip.getBoundingClientRect(),room=chip.height?chip.bottom-thread.getBoundingClientRect().top+20:84;
   thread.scrollTop=Math.max(0,y-room);
  };
  place();for(const wait of [60,220,480])setTimeout(place,wait);
