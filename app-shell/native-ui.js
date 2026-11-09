@@ -280,7 +280,7 @@ function syncFoxes(){document.querySelectorAll('.km-welcome-fox').forEach(f=>f.g
 // Flashcards' main screen: Knox floats above the heading, like Ask and Learn.
 (function foxOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(foxOnCards,800);return;}
  const add=()=>{const head=panel.querySelector('.fc-wrap:has(.fc-ways) .fc-head');if(head&&!head.querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.prepend(fox);syncFoxes();}};
- new MutationObserver(add).observe(panel,{childList:true,subtree:true});add();})();
+ new MutationObserver(()=>{add();if(current==='flashcards')paint();}).observe(panel,{childList:true,subtree:true});add();})(); // the top badge and buttons change with the screen, no lag
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
@@ -361,9 +361,9 @@ function paint(){
  bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
- float.hidden=!(study||current==='flashcards');float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
+ const cards=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // only Flashcards' main screen; inner screens keep their own back button
+ float.hidden=!(study||cards);float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
  syncFoxes();
- const cards=current==='flashcards'; // Flashcards gets the same top-left badge as Ask and Learn
  modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='flashcards'?'Make with Knox':current==='learn'?'New lesson':'New chat');float.querySelector('[data-study-action="history"]')?.setAttribute('aria-label',current==='flashcards'?'Your decks':'History');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}

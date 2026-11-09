@@ -1837,19 +1837,15 @@ html .km-photo-tools [aria-pressed="true"] { background:var(--orange-light)!impo
 .km-photo-footer .go { background:var(--orange); border-color:var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); }
 body.knox-learn-mode .km-photo-footer .go { background:var(--purple); border-color:var(--purple-dark); box-shadow:0 4px 0 var(--purple-dark); }
 
-/* Flashcards spaced like Ask and Learn: the top-left badge on every screen,
-   the same gap above the buttons, the same gap between them and their height. */
-html.native-app #flashcardsPanel .fc-scroll { padding-top:60px; }
+/* Flashcards' main screen spaced like Ask and Learn: the same gap above the buttons, the same gap between them and their height. */
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-head { margin-bottom:20px; }
 html.native-app #flashcardsPanel .fc-ways.has-decks { gap:12px; }
 html.native-app #flashcardsPanel .fc-ways.has-decks .fc-way { min-height:121px; padding:12px 3px 14px; justify-content:flex-start; }
 html.native-app #flashcardsPanel .fc-way b { font-size:13px; }
 html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-toolbar-quiet { margin-top:16px; }
-/* Flashcards' top-right buttons match Ask and Learn, in its green, and the card
-   leaves room for the top row so studying never scrolls. */
+/* Flashcards' top-right buttons match Ask and Learn, in its green. */
 body.knox-flashcards .km-float button { color:var(--green-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) body.knox-flashcards .km-float button { color:var(--green); }
-html.native-app #flashcardsPanel .fc-face { height:clamp(240px,calc(100dvh - 470px - var(--safe-top,0px)),440px); }
 /* Ask's top-right buttons are orange, like Learn's purple and Flashcards' green. */
 body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange); }
