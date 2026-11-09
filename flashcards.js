@@ -803,6 +803,15 @@ if(window.knoxAppShell){
   async show(){if(!canSee())return false;if(!mobileOpened || identity!==key()){await open();mobileOpened=!panel.hidden;}else{document.body.classList.add('knox-flashcards');panel.hidden=false;}return !panel.hidden;},
   hide(){if(!panel.hidden)mobileOpened=true;document.body.classList.remove('knox-flashcards');panel.hidden=true;},
   addFiles:takeFiles,
+  // The app's top-right buttons: + starts Make with Knox, the clock goes down to your decks.
+  async make(){if(panel.querySelector('.fc-loading')||(dirty&&!(await confirmLeave())))return false;makeView();panel.querySelector('.fc-scroll')?.scrollTo(0,0);return true;},
+  async showDecks(){
+   if(panel.querySelector('.fc-loading')||(dirty&&!(await confirmLeave())))return false;
+   dirty=false;if(!panel.querySelector('#fcDecks'))home();
+   const scroller=panel.querySelector('.fc-scroll'),spot=panel.querySelector('.fc-search-wrap')||panel.querySelector('#fcDecks'),chip=document.querySelector('.km-mode-chip');
+   if(scroller&&spot){const room=(chip?.getBoundingClientRect().bottom||scroller.getBoundingClientRect().top+60)-scroller.getBoundingClientRect().top+12;scroller.scrollTo({top:scroller.scrollTop+spot.getBoundingClientRect().top-scroller.getBoundingClientRect().top-room,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+   return true;
+  },
   summary(){const uid=syncUid()||'guest';return {uid,decks:identity!==key()?[]:decks.map(d=>({id:d.id,title:d.title,count:d.cards.length,due:studyQueue(d.cards,true).length}))};},
   async refreshSummary(){const uid=syncUid();if(identity!==key())load();if(uid&&!editing&&!session&&!makeOpts.reading&&!panel.querySelector('.fc-loading'))await pullDecks();return window.knoxFlashcardsMobile.summary();},
   async review(id){if(!canSee())return false;if(identity!==key())load();if(!decks.some(d=>d.id===id))return false;if(!(await open()))return false;const deck=decks.find(d=>d.id===id);if(!deck)return false;start(id,studyQueue(deck.cards,true).length>0);return true;}

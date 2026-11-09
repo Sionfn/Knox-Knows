@@ -104,7 +104,7 @@ async function viewfinder(){
 let target=current==='learn'?'learn':'chat',stream=null;
  const el=document.createElement('dialog');el.className='km-cam';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Snap a question');
  el.innerHTML='<video playsinline muted autoplay></video><div class="km-cam-shade" aria-hidden="true"></div><div class="km-cam-frame" aria-hidden="true"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i><span class="km-cam-scan"></span></div><span class="km-cam-focus" aria-hidden="true"></span>'+
-  '<div class="km-cam-top"><div class="km-cam-topbar"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><button type="button" class="km-cam-crop" data-cam="crop" aria-pressed="true">'+SVG(PIC.crop)+'<span>Crop on</span></button><button type="button" class="km-cam-sys" data-cam="system">'+SVG(PIC.camera)+'Device camera</button></div><span class="km-cam-hint">Opening camera…</span></div>'+
+  '<div class="km-cam-top"><div class="km-cam-topbar"><button type="button" class="km-cam-x" data-cam="close" aria-label="Close camera">'+SVG(PIC.x)+'</button><button type="button" class="km-cam-crop" data-cam="crop" aria-pressed="true">'+SVG(PIC.crop)+'<span>Crop on</span></button><button type="button" class="km-cam-sys" data-cam="system">'+SVG(PIC.camera)+'Device camera</button></div><div class="km-cam-brand"><img src="/knox-logo-square.jpg" alt=""><span class="km-cam-hint">Opening camera…</span></div></div>'+
   '<div class="km-cam-off" hidden><b>Camera isn’t available</b><span>Allow camera access for this site in Settings, or use your phone’s camera instead.</span><button type="button" data-cam="system">Open camera</button></div>'+
   '<div class="km-cam-bottom"><div class="km-cam-modes" role="group" aria-label="How Knox helps">'+[['chat','Ask Knox'],['learn','Learn']].map(([id,l])=>'<button type="button" data-cam-mode="'+id+'" aria-pressed="'+(id===target)+'">'+l+'</button>').join('')+'</div>'+
   '<div class="km-cam-row"><button type="button" class="km-cam-side" data-cam="photos" aria-label="Choose from Photos">'+SVG(PIC.photos)+'<small>Photos</small></button><button type="button" class="km-cam-shutter" data-cam="snap" aria-label="Take the photo" disabled><span></span></button><button type="button" class="km-cam-side" data-cam="file" aria-label="Upload a file">'+SVG(PIC.file)+'<small>File</small></button></div></div>';
@@ -341,7 +341,7 @@ const modeChip=document.createElement('button');modeChip.type='button';modeChip.
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
 modeChip.onclick=()=>navigate('home');document.body.append(modeChip);
 const strip=document.createElement('div');strip.className='km-statusfill';strip.setAttribute('aria-hidden','true');document.body.prepend(strip);
-const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
+const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(current==='flashcards'&&action){if(action==='new')window.knoxFlashcardsMobile?.make();else window.knoxFlashcardsMobile?.showDecks();return;}if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
 bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
 const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
 let themeMeta=document.querySelector('meta[name="theme-color"]');
@@ -356,10 +356,10 @@ function paint(){
  bar.querySelector('[data-appbar-title]').textContent=TITLES[current]||'Knox Knows';
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
- float.hidden=!study;float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
- const cardsHome=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // Flashcards' main screen gets the same badge
- modeChip.hidden=!(study||cardsHome);topFade.hidden=!(study||cardsHome);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
- float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='learn'?'New lesson':'New chat');
+ float.hidden=!(study||current==='flashcards');float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
+ const cards=current==='flashcards'; // Flashcards gets the same top-left badge as Ask and Learn
+ modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
+ float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='flashcards'?'Make with Knox':current==='learn'?'New lesson':'New chat');float.querySelector('[data-study-action="history"]')?.setAttribute('aria-label',current==='flashcards'?'Your decks':'History');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  document.documentElement.classList.toggle('km-hist-learn',current==='learn');
  bar.querySelector('[data-go="account"]').hidden=study;
@@ -400,7 +400,7 @@ icons.camera='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0
 async function snap(){if(liveCamera()){viewfinder();return;}if(await navigate(current==='learn'?'learn':'chat'))openCamera();}
 window.knoxSnap=snap;
 for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Cards']]){
- const b=button(nav,label,async()=>{if(target==='camera')return snap();if(target!==current&&!busy){showTab(target);await nextFrame();}const ok=await navigate(target);if(!ok)sync();});b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
+ const b=button(nav,label,async()=>{if(target==='camera')return snap();if(target!==current&&!busy){showTab(target);await nextFrame();}let ok=false;try{ok=await navigate(target);}finally{pendingTab=null;sync();}});b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
@@ -412,7 +412,8 @@ function moveGlider(){const now=nav.querySelector('button[aria-current="page"]:n
 new ResizeObserver(moveGlider).observe(nav);
 // Tapping a tab: the highlight moves to it at once, and the page switches on the
 // next frame, so the tap always feels instant even while the page is built.
-function showTab(target){const b=nav.querySelector('button[data-tab="'+target+'"]');if(!b||b.classList.contains('km-tab-snap'))return;nav.querySelectorAll('button[aria-current]').forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','page');moveGlider();}
+let pendingTab=null; // the tab just tapped, held while its page opens (Flashcards takes a moment)
+function showTab(target){const b=nav.querySelector('button[data-tab="'+target+'"]');if(!b||b.classList.contains('km-tab-snap'))return;pendingTab=target;nav.querySelectorAll('button[aria-current]').forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','page');moveGlider();}
 // After the next paint (or 60ms at most, in case frames are paused).
 const afterPaint=fn=>{let done=false;const go=()=>{if(!done){done=true;setTimeout(fn,0);}};requestAnimationFrame(go);setTimeout(go,60);};
 const nextFrame=()=>new Promise(afterPaint);
@@ -513,7 +514,7 @@ function sync(){
  current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
  if(current==='calculator'&&before!=='calculator')calculatorReturn=before;
  const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Cards'}[calculatorReturn]||'Home');
- const active=current==='calculator'?calculatorReturn:current;
+ const active=pendingTab||(current==='calculator'?calculatorReturn:current);
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  moveGlider();
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;

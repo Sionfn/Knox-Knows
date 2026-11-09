@@ -12,6 +12,7 @@ import discordLink from "./_discord-link.js";
 import testerPlan from "./_tester-plan.js";
 import support from "./_support.js";
 import { learnReviewRoute } from "./_learn-review.js";
+import transcribe from "./_transcribe.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -90,6 +91,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "tester-plan") return testerPlan(req, res);
   // Knox Support chat + the team's inbox (see api/_support.js).
   if (req.query?.route === "support") return support(req, res);
+  // Talk to Knox: a short recording becomes text (see api/_transcribe.js).
+  if (req.query?.route === "transcribe") return transcribe(req, res, { db, auth: adminAuth });
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");

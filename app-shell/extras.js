@@ -146,7 +146,7 @@ function askAiPermission(){
  if(aiAsk)return aiAsk;
  aiAsk=new Promise(resolve=>{
   const d=document.createElement('dialog');d.className='knox-native-dialog km-ai-ok';d.setAttribute('aria-labelledby','kmAiOkTitle');
-  d.innerHTML='<img class="km-ai-ok-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmAiOkTitle">Before Knox answers</h2><p>Knox uses AI from <b>OpenAI</b> to answer questions, teach lessons and make flashcards. When you send something, what you type and any photos or files you add go to OpenAI to make Knox’s reply.</p><p class="km-ai-ok-tip">Leave out private info like your full name, address or passwords.</p><a href="https://www.knoxknowsapp.com/privacy" target="_blank" rel="noopener">Read the Privacy Policy</a><div class="km-ai-ok-actions"><button type="button" data-ai="no">Not now</button><button type="button" class="primary" data-ai="yes">OK, continue</button></div>';
+  d.innerHTML='<img class="km-ai-ok-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmAiOkTitle">Before Knox answers</h2><p>Knox uses AI from <b>OpenAI</b> to answer questions, teach lessons and make flashcards. When you send something, what you type or say and any photos or files you add go to OpenAI to make Knox’s reply.</p><p class="km-ai-ok-tip">Leave out private info like your full name, address or passwords.</p><a href="https://www.knoxknowsapp.com/privacy" target="_blank" rel="noopener">Read the Privacy Policy</a><div class="km-ai-ok-actions"><button type="button" data-ai="no">Not now</button><button type="button" class="primary" data-ai="yes">OK, continue</button></div>';
   let answer=false;
   d.addEventListener('click',e=>{const a=e.target.closest('[data-ai]')?.dataset.ai;if(!a)return;answer=a==='yes';if(answer){try{localStorage.setItem(AI_OK,'1');}catch{}}d.close();});
   d.addEventListener('close',()=>{d.remove();aiAsk=null;if(!answer)note('Nothing was sent. Knox needs your OK before it can answer.');resolve(answer);},{once:true});
@@ -168,8 +168,78 @@ w.knoxAskAiPermission=askAiPermission;
   return real(input,init);
  };}
 
-// ── Voice: no custom mic. The iPhone keyboard's own 🎤 dictation works in
-// every text box; a browser speech button didn't work in home-screen apps.
+// ── Talk to Knox: the mic in the typing bar records the question, the server
+// turns it into text (api/_transcribe.js, the audio isn't saved) and it's sent
+// like a typed message. Works in the iPhone app and the home-screen version,
+// where the browser's own speech button doesn't.
+{
+ const MAX_MS=60000,QUIET_MS=1600,NO_SPEECH_MS=9000,LOUD=.025;
+ let talking=false;
+ const toBase64=blob=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]||'');r.onerror=no;r.readAsDataURL(blob);});
+ function deliver(text){
+  const box=$('appChatInput');if(!box)return;
+  const typed=box.value.trim();
+  box.value=typed?typed+' '+text:text;box.dispatchEvent(new Event('input',{bubbles:true}));
+  if(typed){note('Added to your message. Tap send when it’s ready.');return;} // never send a half-written draft by surprise
+  w.appHandleAsk?.();
+ }
+ async function talk(){
+  if(talking)return;
+  if(w._appAskBusy){note('Let Knox finish this step first.');return;}
+  if(!w.currentUser){w.openAuthModal?.('signup');return;}
+  if(!navigator.mediaDevices?.getUserMedia||!w.MediaRecorder){note('Talking isn’t available here. Tap the 🎤 on your keyboard instead.');return;}
+  const Ctx=w.AudioContext||w.webkitAudioContext,audio=Ctx?new Ctx():null; // made during the tap, or iPhone keeps it silent
+  talking=true;
+  const owner=uid();let stream=null;
+  const release=()=>{stream?.getTracks().forEach(t=>t.stop());audio?.close?.().catch?.(()=>{});talking=false;};
+  try{
+   if(!(await askAiPermission()))return release();
+   $('appChatInput')?.blur();
+   stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+  }catch{release();note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
+  if(uid()!==owner)return release();
+  const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t));
+  const rec=new MediaRecorder(stream,type?{mimeType:type}:undefined),chunks=[];
+  const d=document.createElement('dialog');d.className='knox-native-dialog km-voice';d.setAttribute('aria-labelledby','kmVoiceTitle');
+  d.innerHTML='<img class="km-voice-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmVoiceTitle">Listening…</h2><p role="status">Ask out loud. Knox sends it when you stop talking.</p><div class="km-voice-bars" aria-hidden="true">'+'<i></i>'.repeat(5)+'</div><div class="km-voice-actions"><button type="button" data-v="cancel">Cancel</button><button type="button" class="primary" data-v="done">Done</button></div>';
+  const say=(title,text)=>{d.querySelector('h2').textContent=title;d.querySelector('p').textContent=text;};
+  let timer=0,cancelled=false,stopped=false,heard=false,lastLoud=Date.now();const began=Date.now();
+  const bars=[...d.querySelectorAll('.km-voice-bars i')];
+  const meter=audio?audio.createAnalyser():null,wave=meter?new Uint8Array(meter.fftSize=512):null;
+  if(meter){audio.resume?.();audio.createMediaStreamSource(stream).connect(meter);}
+  const finish=()=>{if(stopped)return;stopped=true;clearInterval(timer);if(rec.state!=='inactive')rec.stop();};
+  timer=setInterval(()=>{
+   const now=Date.now();
+   if(meter){meter.getByteTimeDomainData(wave);let sum=0;for(const v of wave)sum+=((v-128)/128)**2;const level=Math.sqrt(sum/wave.length);if(level>LOUD){heard=true;lastLoud=now;}bars.forEach((b,i)=>{b.style.transform='scaleY('+Math.min(1,.18+level*(5+i%3*3)).toFixed(2)+')';});}
+   if(now-began>MAX_MS||(meter&&heard&&now-lastLoud>QUIET_MS))finish();
+   else if(meter&&!heard&&now-began>NO_SPEECH_MS){cancelled=true;finish();d.close();note('Knox didn’t hear anything. Try again a little closer to your phone.');}
+  },100);
+  d.addEventListener('click',e=>{const a=e.target.closest('[data-v]')?.dataset.v;if(a==='cancel'){cancelled=true;finish();d.close();}else if(a==='done')finish();});
+  d.addEventListener('cancel',e=>{e.preventDefault();cancelled=true;finish();d.close();});
+  d.addEventListener('close',()=>{cancelled=cancelled||!stopped;finish();d.remove();},{once:true});
+  rec.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
+  rec.onerror=()=>{cancelled=true;finish();if(d.open)d.close();release();note('Knox couldn’t record that. Try again, or type your question.');};
+  rec.onstop=async()=>{
+   stream.getTracks().forEach(t=>t.stop());
+   if(cancelled)return release();
+   d.classList.add('sending');say('Got it!','Knox is writing that down…');d.querySelectorAll('button').forEach(b=>{b.disabled=true;});
+   try{
+    const blob=new Blob(chunks,{type:rec.mimeType||type||'audio/mp4'});
+    if(blob.size<800)throw Error('empty');
+    const res=await fetch('/api/me?route=transcribe',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await w.currentUser.getIdToken()},body:JSON.stringify({audio:await toBase64(blob),type:blob.type})});
+    const data=await res.json().catch(()=>({}));
+    if(uid()!==owner)return;
+    if(!res.ok)return note(data.error||'Knox couldn’t hear that. Try again, or type your question.');
+    if(!data.text)return note('Knox didn’t catch that. Try again.');
+    if(d.open)d.close();deliver(data.text);
+   }catch{note('Knox couldn’t hear that. Try again, or type your question.');}
+   finally{if(d.open)d.close();release();}
+  };
+  document.body.append(d);d.showModal();rec.start();
+ }
+ const send=$('appSendBtn');
+ if(send&&!$('kmTalk')){const b=document.createElement('button');b.type='button';b.id='kmTalk';b.className='km-talk km-press';b.setAttribute('aria-label','Talk to Knox');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>';b.onclick=talk;send.before(b);}
+}
 
 // ── Keyboard (home-screen version): like Gauth. While the keyboard is open the
 // app is pinned to exactly the visible area (iOS's visual viewport: its top

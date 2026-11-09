@@ -1775,3 +1775,78 @@ html.native-app #flashcardsPanel .fc-way:not(:active) { box-shadow:0 4px 0 var(-
 html.native-app #flashcardsPanel .fc-way-icon { width:48px; height:48px; font-size:24px; }
 html.native-app #flashcardsPanel .fc-ways.has-decks .fc-way { padding:12px 4px 14px; }
 html.native-app #flashcardsPanel .fc-way b { font-size:13.5px; line-height:1.25; letter-spacing:.02em; text-transform:uppercase; }
+
+/* Talk to Knox: the mic in the typing bar and its listening card. */
+.km-talk { flex:none; width:42px; height:42px; display:grid; place-items:center; padding:0; border-radius:50%; border:2px solid var(--orange); background:var(--orange-light); color:var(--orange-dark); box-shadow:0 3px 0 var(--orange-dark); cursor:pointer; }
+.km-talk svg { width:21px; height:21px; }
+.km-talk:active { transform:translateY(2px); box-shadow:0 1px 0 var(--orange-dark); }
+html.native-app body.knox-learn-mode .km-talk { border-color:var(--purple); background:var(--purple-light); color:var(--purple-dark); box-shadow:0 3px 0 var(--purple-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .km-talk { color:var(--orange); }
+html[data-theme="dark"]:not(.knox-seasonal) body.knox-learn-mode .km-talk { color:var(--purple); }
+.km-voice { text-align:center; }
+.km-voice-fox { display:block; width:76px; height:76px; margin:0 auto 12px; border-radius:22px; border:3px solid var(--orange); box-shadow:0 4px 0 var(--orange-dark); object-fit:cover; transform:rotate(-5deg); animation:kmBob 4.5s ease-in-out infinite; }
+.km-voice h2 { margin:0 0 6px; font:900 24px/1.15 Nunito,sans-serif; color:var(--text); }
+.km-voice p { margin:0 0 14px; font:700 15px/1.45 Nunito,sans-serif; color:var(--text-light); }
+.km-voice-bars { display:flex; justify-content:center; align-items:center; gap:7px; height:48px; margin-bottom:14px; }
+.km-voice-bars i { width:9px; height:46px; border-radius:9px; background:var(--orange); transform:scaleY(.18); transition:transform .1s linear; }
+body.knox-learn-mode .km-voice-bars i { background:var(--purple); }
+body.knox-learn-mode .km-voice-fox { border-color:var(--purple); box-shadow:0 4px 0 var(--purple-dark); }
+.km-voice.sending .km-voice-bars { visibility:hidden; height:8px; margin-bottom:6px; }
+.km-voice-actions { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; }
+.km-voice-actions button { min-height:50px; margin:0; }
+@media (prefers-reduced-motion:reduce) { .km-voice-fox { animation:none; } }
+
+/* ═══ Camera and photo review in Knox's look ════════════════════════════════
+   Cream panels with borders and the darker edge above and below the camera
+   window, flat Knox colors, and buttons like the rest of the app. */
+.km-cam { background:var(--cream)!important; color:var(--text); }
+.km-cam-top, .km-cam-bottom { z-index:3; background:var(--cream)!important; color:var(--text); }
+.km-cam-top { gap:10px; padding-bottom:12px; border-bottom:2px solid var(--border); border-radius:0 0 26px 26px; box-shadow:0 4px 0 var(--border); }
+.km-cam-bottom { gap:14px; padding-top:14px; border-top:2px solid var(--border); border-radius:26px 26px 0 0; }
+.km-cam-x, .km-cam-sys, .km-cam-crop { min-height:44px; border:2px solid var(--border)!important; background:var(--surface)!important; color:var(--text)!important; box-shadow:0 3px 0 var(--border); -webkit-backdrop-filter:none!important; backdrop-filter:none!important; }
+.km-cam-x { width:44px; border-radius:14px; }
+.km-cam-sys, .km-cam-crop { border-radius:14px; }
+.km-cam-crop[aria-pressed="true"] { border-color:var(--orange)!important; background:var(--orange-light)!important; box-shadow:0 3px 0 var(--orange-dark); }
+.km-cam-brand { display:flex; align-items:center; justify-content:center; gap:10px; align-self:stretch; }
+.km-cam-brand img { width:36px; height:36px; flex:none; border-radius:11px; border:2px solid var(--orange); object-fit:cover; }
+.km-cam[data-mode="learn"] .km-cam-brand img { border-color:var(--purple); }
+.km-cam-hint { padding:0; background:none!important; color:var(--text); font:900 15px/1.25 Nunito,sans-serif; text-align:left; }
+.km-cam-modes { padding:4px; background:var(--surface); border:2px solid var(--border); box-shadow:0 3px 0 var(--border); border-radius:16px; }
+.km-cam-modes button { border-radius:11px; color:var(--text-light); }
+.km-cam-modes button[aria-pressed="true"] { background:var(--orange); color:#fff; box-shadow:0 2px 0 var(--orange-dark); }
+.km-cam-modes button[data-cam-mode="learn"][aria-pressed="true"] { background:var(--purple); box-shadow:0 2px 0 var(--purple-dark); }
+.km-cam-side { color:var(--text); }
+.km-cam-side svg { background:var(--surface); border:2px solid var(--border); box-shadow:0 3px 0 var(--border); color:var(--text); }
+.km-cam-shutter { width:80px; height:80px; border:4px solid var(--orange); background:var(--surface); box-shadow:0 4px 0 var(--orange-dark); }
+.km-cam-shutter span { background:var(--orange)!important; box-shadow:none!important; }
+.km-cam[data-mode="learn"] .km-cam-shutter { border-color:var(--purple); box-shadow:0 4px 0 var(--purple-dark); }
+.km-cam[data-mode="learn"] .km-cam-shutter span { background:var(--purple)!important; }
+.km-cam-scan { background:var(--orange)!important; box-shadow:none!important; }
+.km-cam-off { z-index:3; background:var(--surface)!important; color:var(--text); border:2px solid var(--border); box-shadow:0 4px 0 var(--border); -webkit-backdrop-filter:none!important; backdrop-filter:none!important; }
+.km-cam :focus-visible { outline-color:var(--blue); }
+
+html .km-photo-review, html .km-photo-review::backdrop { background:var(--cream)!important; color:var(--text); }
+html[data-theme="dark"]:not(.knox-seasonal) :is(.km-photo-review, .km-photo-review::backdrop) { background:var(--cream)!important; }
+.km-photo-header button { color:var(--text); }
+.km-photo-tip, .km-photo-footer p { color:var(--text-light); }
+html .km-photo-stage, html[data-theme="dark"]:not(.knox-seasonal) .km-photo-stage { background:var(--surface)!important; border:2px solid var(--border); border-radius:20px; box-shadow:0 4px 0 var(--border); }
+html .km-photo-tools button { background:var(--surface)!important; border:2px solid var(--border)!important; color:var(--text); box-shadow:0 3px 0 var(--border); }
+html .km-photo-tools [aria-pressed="true"] { background:var(--orange-light)!important; border-color:var(--orange)!important; color:var(--text); box-shadow:0 3px 0 var(--orange-dark); }
+.km-photo-adjust summary, .km-photo-ranges label { color:var(--text); }
+.km-photo-later { color:var(--text-light); }
+.km-photo-footer .go { background:var(--orange); border-color:var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); }
+body.knox-learn-mode .km-photo-footer .go { background:var(--purple); border-color:var(--purple-dark); box-shadow:0 4px 0 var(--purple-dark); }
+
+/* Flashcards spaced like Ask and Learn: the top-left badge on every screen,
+   the same gap above the buttons, the same gap between them and their height. */
+html.native-app #flashcardsPanel .fc-scroll { padding-top:60px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-head { margin-bottom:20px; }
+html.native-app #flashcardsPanel .fc-ways.has-decks { gap:12px; }
+html.native-app #flashcardsPanel .fc-ways.has-decks .fc-way { min-height:121px; padding:12px 3px 14px; justify-content:flex-start; }
+html.native-app #flashcardsPanel .fc-way b { font-size:13px; }
+html.native-app #flashcardsPanel .fc-wrap:has(.fc-ways) .fc-toolbar-quiet { margin-top:16px; }
+/* Flashcards' top-right buttons match Ask and Learn, in its green, and the card
+   leaves room for the top row so studying never scrolls. */
+body.knox-flashcards .km-float button { color:var(--green-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) body.knox-flashcards .km-float button { color:var(--green); }
+html.native-app #flashcardsPanel .fc-face { height:clamp(240px,calc(100dvh - 470px - var(--safe-top,0px)),440px); }
