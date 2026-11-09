@@ -260,6 +260,14 @@ function addMenu(){
  }}
 // Every floating Knox bobs on the same clock, so switching between Ask, Learn
 // and Flashcards never shows it jump.
+// Fall look: the website's scene (sky, sun, drifting leaves, oak branch) sits
+// behind every tab. The pieces come from the ones theme.js builds for the website.
+function fallScene(showBranch){
+ let scene=$('kmFallScene');
+ if(!scene){scene=document.createElement('div');scene.id='kmFallScene';scene.className='km-fall-scene';scene.setAttribute('aria-hidden','true');document.body.prepend(scene);}
+ if(!scene.children.length){const w=$('welcomeScreen'),sky=w?.querySelector(':scope > .fall-sky'),branch=w?.querySelector(':scope > .harvest-bough');if(sky)scene.append(sky.cloneNode(true));if(branch)scene.append(branch.cloneNode(true));}
+ if(showBranch!==undefined)scene.dataset.branch=showBranch?'1':'';
+}
 function syncFoxes(){document.querySelectorAll('.km-welcome-fox').forEach(f=>f.getAnimations?.().forEach(a=>{if(a.animationName==='kmBob')a.startTime=0;}));}
 // Ask's start label uses Knox's chat icon in the app (appStartNewChat does too).
 {const label=document.querySelector('#welcomeScreen .welcome-badge .season-hide');if(label&&window.KI)label.innerHTML=window.KI('chat')+' Your AI study companion';}
@@ -355,6 +363,7 @@ function paint(){
  let el=surface,bg='';
  while(el){bg=getComputedStyle(el).backgroundColor;if(bg&&!/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(bg))break;el=el.parentElement;bg='';}
  bg=bg||getComputedStyle(document.body).backgroundColor;
+ if(document.documentElement.classList.contains('knox-seasonal'))bg='#FFF7E9'; // Fall: the top of the sky behind the clear pages
  document.documentElement.style.setProperty('--km-page',bg); // the page itself, for the island's backing
 
  bar.style.background=bg;if(themeMeta)themeMeta.content=bg;document.documentElement.style.setProperty('--km-top',bg);
@@ -362,6 +371,7 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  const cards=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // only Flashcards' main screen; inner screens keep their own back button
+ fallScene((study&&$('welcomeScreen')?.getClientRects().length>0)||cards); // the branch only where the top-left is free
  float.hidden=!(study||cards);float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
  syncFoxes();
  modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';

@@ -1866,3 +1866,18 @@ html.native-app .knox-mobile-page:not([hidden]), html.native-app body:not(.knox-
 html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green-light) 55%,transparent) 0 120px,transparent 121px),var(--surface); }
 html.native-app[data-theme="dark"]:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange) 10%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) 66%,color-mix(in srgb,var(--blue) 9%,transparent) 0 190px,transparent 191px),radial-gradient(circle at 20% 108%,color-mix(in srgb,var(--green) 8%,transparent) 0 120px,transparent 121px),var(--surface); }
 html.native-app:not(.knox-seasonal) :is(#appLayout, #chatColumn, #welcomeScreen, #chatThread, #flashcardsPanel) { background:transparent!important; }
+
+/* ═══ Fall in the app, like the website ═════════════════════════════════════
+   One scene behind every tab: the warm sky, the sun, drifting leaves and the oak
+   branch. The tabs are clear so it shows through; cards stay solid. */
+.km-fall-scene { display:none; }
+html.native-app.knox-seasonal .km-fall-scene { display:block; position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; background-image:radial-gradient(ellipse at 88% 8%,#F5D69A70,transparent 48%),linear-gradient(180deg,#FFF7E9 0%,#FBF1DE 75%,#F2DEB7 100%); }
+html.native-app.knox-seasonal .km-fall-scene .fall-sky { display:block; position:absolute; inset:0; height:auto; -webkit-mask-image:none; mask-image:none; }
+html.native-app.knox-seasonal .km-fall-scene .harvest-sun { display:block; top:calc(var(--safe-top,0px) + var(--appbar,0px) - 75px); right:-70px; }
+html.native-app.knox-seasonal .km-fall-scene .fall-leaf { opacity:.6; }
+html.native-app.knox-seasonal .km-fall-scene .harvest-bough { display:none; }
+html.native-app.knox-seasonal .km-fall-scene[data-branch="1"] .harvest-bough { display:block; position:absolute!important; left:0; top:calc(var(--safe-top,0px) + var(--appbar,0px) + 58px); width:150px; opacity:.8; }
+html.native-app.knox-seasonal #welcomeScreen > :is(.fall-sky, .harvest-bough) { display:none!important; }
+html.native-app.knox-seasonal body { background:transparent!important; }
+html.native-app.knox-seasonal :is(#appLayout, #chatColumn, #chatAndInput, #welcomeScreen, #chatThread, #flashcardsPanel, #knoxMobileHome, #knoxMobileAccount, #inputOuter) { background:transparent!important; background-image:none!important; box-shadow:none; }
+html.native-app.knox-seasonal .km-dock-fade { background:linear-gradient(180deg,#F7E9CE,#F2DEB7)!important; }
