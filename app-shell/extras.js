@@ -183,9 +183,9 @@ w.knoxAskAiPermission=askAiPermission;
   if(typed){note('Added to your message. Tap send when it’s ready.');return;} // never send a half-written draft by surprise
   w.appHandleAsk?.();
  }
- async function talk(){
+ async function talk(done=deliver,hint='Ask out loud. Knox sends it when you stop talking.'){
   if(talking)return;
-  if(w._appAskBusy){note('Let Knox finish this step first.');return;}
+  if(w._appAskBusy&&done===deliver){note('Let Knox finish this step first.');return;}
   if(!w.currentUser){w.openAuthModal?.('signup');return;}
   if(!navigator.mediaDevices?.getUserMedia||!w.MediaRecorder){note('Talking isn’t available here. Tap the 🎤 on your keyboard instead.');return;}
   const Ctx=w.AudioContext||w.webkitAudioContext,audio=Ctx?new Ctx():null; // made during the tap, or iPhone keeps it silent
@@ -194,15 +194,16 @@ w.knoxAskAiPermission=askAiPermission;
   const release=()=>{stream?.getTracks().forEach(t=>t.stop());audio?.close?.().catch?.(()=>{});talking=false;};
   try{
    if(!(await askAiPermission()))return release();
-   $('appChatInput')?.blur();
+   document.activeElement?.blur?.();
    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
   }catch{release();note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
   if(uid()!==owner)return release();
   const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t));
   const rec=new MediaRecorder(stream,type?{mimeType:type}:undefined),chunks=[];
   const d=document.createElement('dialog');d.className='knox-native-dialog km-voice';d.setAttribute('aria-labelledby','kmVoiceTitle');
-  d.innerHTML='<img class="km-voice-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmVoiceTitle">Listening…</h2><p role="status">Ask out loud. Knox sends it when you stop talking.</p><div class="km-voice-bars" aria-hidden="true">'+'<i></i>'.repeat(5)+'</div><div class="km-voice-actions"><button type="button" data-v="cancel">Cancel</button><button type="button" class="primary" data-v="done">Done</button></div>';
+  d.innerHTML='<img class="km-voice-fox" src="/knox-logo-square.jpg" alt=""><h2 id="kmVoiceTitle">Listening…</h2><p role="status"></p><div class="km-voice-bars" aria-hidden="true">'+'<i></i>'.repeat(5)+'</div><div class="km-voice-actions"><button type="button" data-v="cancel">Cancel</button><button type="button" class="primary" data-v="done">Done</button></div>';
   const say=(title,text)=>{d.querySelector('h2').textContent=title;d.querySelector('p').textContent=text;};
+  d.querySelector('p').textContent=hint;
   let timer=0,cancelled=false,stopped=false,heard=false,lastLoud=Date.now();const began=Date.now();
   const bars=[...d.querySelectorAll('.km-voice-bars i')];
   const meter=audio?audio.createAnalyser():null,wave=meter?new Uint8Array(meter.fftSize=512):null;
@@ -231,14 +232,21 @@ w.knoxAskAiPermission=askAiPermission;
     if(uid()!==owner)return;
     if(!res.ok)return note(data.error||'Knox couldn’t hear that. Try again, or type your question.');
     if(!data.text)return note('Knox didn’t catch that. Try again.');
-    if(d.open)d.close();deliver(data.text);
+    if(d.open)d.close();done(data.text);
    }catch{note('Knox couldn’t hear that. Try again, or type your question.');}
    finally{if(d.open)d.close();release();}
   };
   document.body.append(d);d.showModal();rec.start();
  }
+ const MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>';
  const send=$('appSendBtn');
- if(send&&!$('kmTalk')){const b=document.createElement('button');b.type='button';b.id='kmTalk';b.className='km-talk km-press';b.setAttribute('aria-label','Talk to Knox');b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>';b.onclick=talk;send.before(b);}
+ if(send&&!$('kmTalk')){const b=document.createElement('button');b.type='button';b.id='kmTalk';b.className='km-talk km-press';b.setAttribute('aria-label','Talk to Knox');b.innerHTML=MIC;b.onclick=()=>talk();send.before(b);}
+ // Make with Knox: say what you're studying. It fills the box so the student can
+ // still pick the options; making a deck uses credits, so it's never automatic.
+ (function talkOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(talkOnCards,800);return;}
+  const fill=text=>{const box=panel.querySelector('#fcMakeReq');if(!box)return;const typed=box.value.trim();box.value=typed?typed+' '+text:text;box.dispatchEvent(new Event('input',{bubbles:true}));note('Got it! Check it, then make your deck.');};
+  const add=()=>{const box=panel.querySelector('#fcMakeReq');if(!box||panel.querySelector('.km-talk-wide'))return;const b=document.createElement('button');b.type='button';b.className='km-talk-wide km-press';b.innerHTML=MIC+'<span>Say it instead</span>';b.onclick=()=>talk(fill,'Say what you’re studying. Knox fills it in when you stop talking.');box.after(b);};
+  new MutationObserver(add).observe(panel,{childList:true,subtree:true});add();})();
 }
 
 // ── Keyboard (home-screen version): like Gauth. While the keyboard is open the

@@ -1849,3 +1849,10 @@ html[data-theme="dark"]:not(.knox-seasonal) body.knox-flashcards .km-float butto
 /* Ask's top-right buttons are orange, like Learn's purple and Flashcards' green. */
 body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange-dark); }
 html[data-theme="dark"]:not(.knox-seasonal) body:not(.knox-learn-mode):not(.knox-flashcards) .km-float button { color:var(--orange); }
+
+/* Talking on Make with Knox, in Flashcards' green. */
+.km-talk-wide { display:flex; align-items:center; gap:8px; width:max-content; max-width:100%; min-height:44px; margin:10px 0 2px; padding:0 16px; border-radius:14px; border:2px solid var(--green); background:var(--green-light); color:var(--text); font:900 14.5px Nunito,sans-serif; box-shadow:0 3px 0 var(--green-dark); cursor:pointer; }
+.km-talk-wide svg { width:19px; height:19px; color:var(--green-dark); }
+.km-talk-wide:active { transform:translateY(2px); box-shadow:0 1px 0 var(--green-dark); }
+body.knox-flashcards .km-voice-fox { border-color:var(--green); box-shadow:0 4px 0 var(--green-dark); }
+body.knox-flashcards .km-voice-bars i { background:var(--green); }
