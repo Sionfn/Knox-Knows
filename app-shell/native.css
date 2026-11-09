@@ -1932,3 +1932,12 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-beta-copy em { background:rgba(2
 /* Simulations in the app's narrower answer bubble: the title gets the room. */
 html.native-app .ksim-beta { display:none; }
 html.native-app .knox-sim { padding:12px; }
+
+/* History: "All" is Knox's brown (Ask stays orange, Learn purple), and the bar at
+   the top really drags the sheet down to close it. */
+.km-hist-tabs button[data-kind="all"][aria-pressed="true"] { background:#F6E9D8; color:#7E5228; box-shadow:inset 0 0 0 2px #A8743F; }
+html[data-theme="dark"]:not(.knox-seasonal) .km-hist-tabs button[data-kind="all"][aria-pressed="true"] { background:color-mix(in srgb,#A8743F 26%,var(--surface)); color:#E7BC8A; box-shadow:inset 0 0 0 2px #D9A46A; }
+html.native-app #mobileHistoryDrawer .drawer-panel::before { display:none; }
+.km-hist-grab { flex:none; display:flex; justify-content:center; align-items:flex-start; height:30px; padding-top:10px; touch-action:none; cursor:grab; }
+.km-hist-grab::before { content:""; width:44px; height:5px; border-radius:99px; background:var(--border); }
+html.native-app #mobileHistoryDrawer .sidebar-top { touch-action:none; }

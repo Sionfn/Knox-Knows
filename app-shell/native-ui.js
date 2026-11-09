@@ -629,6 +629,18 @@ document.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();openSaved(row.dataset.conversationId);
 },true);
 const historyPanel=document.querySelector('#mobileHistoryDrawer .drawer-panel');
+// History slides down to close: drag the bar at the top (or the title row).
+if(historyPanel&&!historyPanel.querySelector('.km-hist-grab')){
+ const grab=document.createElement('div');grab.className='km-hist-grab';grab.setAttribute('aria-hidden','true');historyPanel.prepend(grab);
+ const drawer=$('mobileHistoryDrawer'),title=historyPanel.querySelector('.sidebar-top');
+ let drag=null;
+ const reset=()=>{historyPanel.style.transition='';historyPanel.style.transform='';drawer.style.backgroundColor='';};
+ const settle=close=>{historyPanel.style.transition='transform .2s cubic-bezier(.2,.8,.2,1)';drawer.style.transition='background-color .2s';historyPanel.style.transform=close?'translateY(100%)':'';if(close)drawer.style.backgroundColor='rgba(20,14,10,0)';else drawer.style.backgroundColor='';setTimeout(()=>{drawer.style.transition='';if(close)window.closeMobileHistory?.();reset();},210);};
+ const down=e=>{if(e.button>0||e.target.closest('button,a,input'))return;drag={y:e.clientY,t:performance.now(),dy:0,id:e.pointerId};historyPanel.style.transition='none';try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}};
+ const move=e=>{if(!drag||e.pointerId!==drag.id)return;drag.dy=Math.max(0,e.clientY-drag.y);historyPanel.style.transform='translateY('+drag.dy+'px)';drawer.style.backgroundColor='rgba(20,14,10,'+(.42*Math.max(0,1-drag.dy/historyPanel.offsetHeight)).toFixed(3)+')';};
+ const up=e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;const fast=d.dy/Math.max(1,performance.now()-d.t)>.6&&d.dy>30;settle(e.type==='pointerup'&&(d.dy>110||fast));};
+ for(const zone of [grab,title]){if(!zone)continue;zone.addEventListener('pointerdown',down);zone.addEventListener('pointermove',move);zone.addEventListener('pointerup',up);zone.addEventListener('pointercancel',up);}
+}
 if(historyPanel){
  const search=document.createElement('input');search.type='search';search.className='km-history-search';search.placeholder='Find a chat or lesson';search.setAttribute('aria-label','Search study history');
  const body=historyPanel.querySelector('.drawer-body');body?.before(search);
