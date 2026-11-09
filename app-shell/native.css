@@ -1886,3 +1886,9 @@ html.native-app.knox-seasonal .km-dock-fade { background:linear-gradient(180deg,
    drop the spots; Fall keeps its sky with softer leaves. Start screens keep it all. */
 html.native-app.km-focus:not(.knox-seasonal) #chatAndInput { background:var(--surface); }
 html.native-app.km-focus.knox-seasonal .km-fall-scene .fall-leaf { opacity:.18; }
+
+/* No box around the typing bar in any look, and the Calculator sits on the same
+   background as the other tabs (spots in Light and Dark, the scene in Fall). */
+html.native-app :is(#inputArea, #inputOuter) { background:transparent!important; box-shadow:none!important; }
+html.native-app #calcModal { background:transparent!important; }
+html.native-app #calcModal .calc-decor { display:none!important; }
