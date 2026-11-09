@@ -1941,3 +1941,5 @@ html.native-app #mobileHistoryDrawer .drawer-panel::before { display:none; }
 .km-hist-grab { flex:none; display:flex; justify-content:center; align-items:flex-start; height:30px; padding-top:10px; touch-action:none; cursor:grab; }
 .km-hist-grab::before { content:""; width:44px; height:5px; border-radius:99px; background:var(--border); }
 html.native-app #mobileHistoryDrawer .sidebar-top { touch-action:none; }
+/* History's top line takes the mode's color: purple in Learn. */
+html.native-app.km-hist-learn #mobileHistoryDrawer .drawer-panel { border-top-color:var(--purple); }
