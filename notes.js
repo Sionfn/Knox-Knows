@@ -6,7 +6,10 @@
 // /api/me?route=notes (api/_notes.js); each note has a subject, and the
 // subject tabs work like a real binder's dividers.
 //
-//   window.openBinder(tab?) — 'notes' | 'flashcards' (default: the last one)
+// A third tab, 🎛️ Simulations, lists every Knox simulation (sims.js builds
+// them); playing them is a Mega Knox perk, others see them with a 💎 lock.
+//
+//   window.openBinder(tab?) — 'notes' | 'flashcards' | 'sims' (default: the last one)
 //   window.openNotes()      — the Notes tab
 (function () {
   const TAB_KEY = 'knoxBinderTab';
@@ -62,11 +65,64 @@
     el.className = 'binder-tabs'; el.setAttribute('role', 'tablist'); el.setAttribute('aria-label', 'Binder');
     el.innerHTML = `<span class="binder-label" aria-hidden="true">📒 Binder</span>
       <button type="button" role="tab" data-binder="notes" aria-selected="${active === 'notes'}"><span aria-hidden="true">📝</span> Notes</button>
-      <button type="button" role="tab" data-binder="flashcards" aria-selected="${active === 'flashcards'}"><span aria-hidden="true">🗂️</span> Flashcards</button>`;
+      <button type="button" role="tab" data-binder="flashcards" aria-selected="${active === 'flashcards'}"><span aria-hidden="true">🗂️</span> Flashcards</button>
+      <button type="button" role="tab" data-binder="sims" aria-selected="${active === 'sims'}"><span aria-hidden="true">🎛️</span> Simulations</button>`;
     el.addEventListener('click', e => { const b = e.target.closest('[data-binder]'); if (b) openBinder(b.dataset.binder); });
     return el;
   }
   panel.prepend(strip('notes'));
+
+  // ── Simulations tab ──
+  const SIMS = [
+    ['motion | a=60, b=75, head=30, unit=mi, time=h, who=car', '🚗', 'Catch-up race', 'When does the faster car catch up?', 'orange'],
+    ['projectile | speed=20, angle=45, item=soccer', '⚽', 'Launch a ball', 'How angle and speed change the distance', 'green'],
+    ['parabola | a=1, b=-2, c=-3', '📈', 'Parabolas', 'Find the vertex and where it crosses', 'purple'],
+    ['line | m=2, b=1', '📏', 'Lines', 'See slope and the y-intercept move', 'blue'],
+    ['probability | kind=coin, trials=100', '🪙', 'Flip coins', 'Do the results match the odds?', 'gold'],
+    ['probability | kind=die, trials=300', '🎲', 'Roll a die', 'Six sides, hundreds of rolls', 'pink'],
+    ['fraction | n=3, d=4', '🍕', 'Fractions', 'Fraction, decimal and percent', 'orange'],
+    ['interest | p=1000, r=5, t=10', '💰', 'Interest', 'Simple vs compound growth', 'green'],
+  ];
+  const simsPanel = document.createElement('section');
+  simsPanel.id = 'simsPanel'; simsPanel.hidden = true; simsPanel.setAttribute('aria-label', 'Simulations');
+  const simsView = document.createElement('div'); simsView.className = 'nb-scroll bs-scroll';
+  simsPanel.append(strip('sims'), simsView);
+  document.querySelector('#chatAndInput')?.append(simsPanel);
+  const isMega = () => window.userTier === 'mega';
+  function simsHome() {
+    const mega = isMega();
+    simsView.innerHTML = `<div class="bs-wrap"><div class="bs-head"><h2>🎛️ Simulations</h2><p>Move the sliders, press Play, and watch math and science happen.</p></div>` +
+      (mega ? '' : `<div class="bs-lock"><span>💎 Simulations are a <b>Mega Knox</b> perk. Upgrade to play with all of them.</span>${window.knoxNativeApp ? '' : '<button type="button" data-sims-upgrade>See Mega</button>'}</div>`) +
+      `<div class="bs-grid">${SIMS.map(([, icon, title, sub, flavor], i) => `<button type="button" class="bs-tile" data-flavor="${flavor}" data-sim-i="${i}"><span class="bs-ico" aria-hidden="true">${icon}</span><b>${title}</b><small>${sub}</small>${mega ? '' : '<em aria-label="Mega Knox">💎</em>'}</button>`).join('')}</div>` +
+      (mega ? '<p class="bs-tip">Tip: turn on 🎛️ Simulations in Account &amp; Plan and Ask Knox adds one to your math and science answers.</p>' : '') + '</div>';
+    simsView.scrollTop = 0;
+  }
+  function simOpen(i) {
+    const [spec, icon, title] = SIMS[i];
+    simsView.innerHTML = `<div class="bs-wrap"><div class="bs-top"><button type="button" class="bs-back" data-sims-back>← All simulations</button><b>${icon} ${title}</b></div><div class="knox-sim bs-big" data-sim="${esc(spec)}"></div></div>`;
+    simsView.scrollTop = 0;
+  }
+  simsView.addEventListener('click', e => {
+    if (e.target.closest('[data-sims-back]')) { simsHome(); return; }
+    if (e.target.closest('[data-sims-upgrade]')) { window.goToPricing?.(); return; }
+    const t = e.target.closest('[data-sim-i]'); if (!t) return;
+    if (!isMega()) { say('💎 Simulations are a Mega Knox perk.'); return; }
+    simOpen(+t.dataset.simI);
+  });
+  function openSims() {
+    window.closeCalc?.();
+    document.body.classList.add('knox-sims');
+    simsPanel.hidden = false;
+    setNavActive();
+    window.closeMobileHistory?.();
+    if (!simsView.querySelector('.bs-big') || !isMega()) simsHome();
+  }
+  function closeSims() { document.body.classList.remove('knox-sims'); simsPanel.hidden = true; }
+  window.closeSims = closeSims;
+  window.openSims = () => openBinder('sims');
+  // Plan or account changes: redraw so the lock matches.
+  window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) simsHome(); });
+  window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.bs-big')) simsHome(); });
   // Flashcards' panel gets the same strip once it exists.
   (function addToFlashcards(tries = 0) {
     const fc = document.getElementById('flashcardsPanel');
@@ -81,17 +137,19 @@
   async function openBinder(tab) {
     let pick = tab;
     if (!pick) { try { pick = localStorage.getItem(TAB_KEY); } catch {} }
-    if (pick !== 'flashcards') pick = 'notes';
+    if (pick !== 'flashcards' && pick !== 'sims') pick = 'notes';
     try { localStorage.setItem(TAB_KEY, pick); } catch {}
     if (pick === 'flashcards') {
       if (!panel.hidden && !(await leaveEditor())) return;
-      closeNotes();
+      closeNotes(); closeSims();
       await window.openFlashcards?.();
       return;
     }
     if (document.body.classList.contains('knox-flashcards')) {
       if (window.closeFlashcards && !(await window.closeFlashcards())) return; // unsaved deck: they chose to stay
     }
+    if (pick === 'sims') { if (!panel.hidden) closeNotes(); openSims(); return; }
+    closeSims();
     openNotes();
   }
 
@@ -115,9 +173,9 @@
 
   // Leaving Notes from the sidebar (another section, a chat, New chat) closes it.
   document.addEventListener('click', e => {
-    if (panel.hidden) return;
+    if (panel.hidden && simsPanel.hidden) return;
     const nav = e.target.closest('.sidebar-quicknav-link:not(.fc-nav), .sidebar-new-btn, .sidebar-history-item');
-    if (nav) closeNotes();
+    if (nav) { if (!panel.hidden) closeNotes(); closeSims(); }
   }, true);
   // Signing in or out: start over with that account's notes.
   window.addEventListener('knox-auth-changed', () => { notes = null; editing = null; loadedFor = null; if (!panel.hidden) home(); });
@@ -290,4 +348,5 @@
   }
   // /app?open=notes after a refresh (app.html asks before this file has loaded).
   if (window.__knoxOpenNotesWhenReady) { window.__knoxOpenNotesWhenReady = false; openBinder('notes'); }
+  if (window.__knoxOpenSimsWhenReady) { window.__knoxOpenSimsWhenReady = false; openBinder('sims'); }
 })();

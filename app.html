@@ -28,7 +28,7 @@
     (function() {
       try {
         var v = new URLSearchParams(location.search).get('open');
-        if (v === 'learn' || v === 'calculator' || v === 'flashcards' || v === 'notes') {
+        if (v === 'learn' || v === 'calculator' || v === 'flashcards' || v === 'notes' || v === 'sims') {
           var root = document.documentElement;
           root.classList.add('knox-restoring');
           setTimeout(function() { root.classList.remove('knox-restoring'); }, 5000);
@@ -7241,7 +7241,7 @@ if (window.knoxNativeApp) {
 // which would otherwise close it again) but before the loading screen lifts,
 // so the section is already showing when the page appears.
 const openTarget = new URLSearchParams(location.search).get('open');
-if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards' || openTarget === 'notes') {
+if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards' || openTarget === 'notes' || openTarget === 'sims') {
   let restored = false;
   window.knoxRestoreSection = async function() {
     if (restored) return;
@@ -7256,6 +7256,7 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
       } else window.openLearnMode?.();
     }
     else if (openTarget === 'notes') { if (window.openNotes) window.openNotes(); else window.__knoxOpenNotesWhenReady = true; }
+    else if (openTarget === 'sims') { if (window.openSims) window.openSims(); else window.__knoxOpenSimsWhenReady = true; }
     else if (window.openFlashcards) window.openFlashcards();
     else window.__knoxOpenFlashcardsWhenReady = true; // flashcards.js picks this up when it loads
     document.documentElement.classList.remove('knox-restoring');
@@ -7291,6 +7292,7 @@ window.addEventListener('pagehide', () => {
   const current = () => {
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
     if (document.body.classList.contains('knox-notes')) return 'notes';
+    if (document.body.classList.contains('knox-sims')) return 'sims';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
   };

@@ -95,3 +95,42 @@ body.knox-notes #ksLauncher { display:none; }
   .nb-body { padding:14px; min-height:280px; }
 }
 @media (max-width:380px) { .nb-grid { grid-template-columns:1fr; } }
+
+/* ── 🎛️ Simulations tab ── */
+#simsPanel { flex:1; min-height:0; position:relative; overflow:hidden; color:var(--text); background:var(--cream); }
+#simsPanel[hidden] { display:none; }
+#simsPanel:not([hidden]) { display:block; }
+body.knox-sims #chatAndInput > :not(#simsPanel) { display:none !important; }
+body.knox-sims #ksLauncher { display:none; }
+.binder-tabs button[data-binder="sims"][aria-selected="true"] { background:var(--blue); color:#fff; box-shadow:0 2px 0 var(--blue-dark); }
+.bs-wrap { max-width:760px; margin:0 auto; }
+.bs-head { text-align:center; margin-bottom:18px; }
+.bs-head h2 { margin:0 0 6px; font-size:26px; font-weight:900; color:var(--text); }
+.bs-head p { margin:0; font-size:15px; font-weight:700; color:var(--text-light); }
+.bs-lock { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 16px; padding:12px 14px; border-radius:16px; background:#FFF3C4; border:2px solid #F2B705; color:#7A5A00; font-size:14px; font-weight:800; line-height:1.4; }
+.bs-lock button { border:2px solid #C99400; background:#F2B705; color:#3C2A1E; font:inherit; font-weight:900; padding:8px 14px; border-radius:12px; box-shadow:0 3px 0 #C99400; cursor:pointer; }
+.bs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; }
+.bs-tile { --c:var(--orange); --cd:var(--orange-dark); --cl:var(--orange-light); position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-height:140px; padding:14px; border-radius:20px; border:2px solid var(--c); background:var(--surface,#fff); box-shadow:0 4px 0 var(--cd); color:var(--text); font:inherit; text-align:left; cursor:pointer; transition:transform .12s, box-shadow .12s; }
+.bs-tile:hover { transform:translateY(-2px); box-shadow:0 6px 0 var(--cd); }
+.bs-tile:active { transform:translateY(3px); box-shadow:0 1px 0 var(--cd); }
+.bs-tile[data-flavor="green"] { --c:var(--green); --cd:var(--green-dark); --cl:var(--green-light); }
+.bs-tile[data-flavor="purple"] { --c:var(--purple); --cd:var(--purple-dark); --cl:var(--purple-light); }
+.bs-tile[data-flavor="blue"] { --c:var(--blue); --cd:var(--blue-dark); --cl:var(--blue-light); }
+.bs-tile[data-flavor="gold"] { --c:#F2B705; --cd:#C99400; --cl:#FFF3C4; }
+.bs-tile[data-flavor="pink"] { --c:#EC4899; --cd:#B8246F; --cl:#FFE0F0; }
+.bs-ico { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:var(--cl); border:3px solid var(--c); font-size:23px; }
+.bs-tile b { font-size:14.5px; font-weight:900; text-transform:uppercase; letter-spacing:.02em; }
+.bs-tile small { font-size:12.5px; font-weight:700; line-height:1.35; color:var(--text-light); }
+.bs-tile em { position:absolute; top:10px; right:12px; font-style:normal; font-size:16px; }
+.bs-tile:focus-visible, .bs-back:focus-visible, .bs-lock button:focus-visible { outline:3px solid #FFB27A; outline-offset:2px; }
+.bs-tip { margin:18px 0 0; text-align:center; font-size:13px; font-weight:700; color:var(--text-light); }
+.bs-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.bs-top b { font-size:19px; font-weight:900; color:var(--text); }
+.bs-back { min-height:40px; padding:0 14px; border-radius:12px; border:2px solid var(--border); background:var(--surface,#fff); color:var(--text); font:inherit; font-size:14px; font-weight:900; box-shadow:0 3px 0 var(--border); cursor:pointer; }
+.bs-big.knox-sim { margin:0; }
+.bs-big.knox-sim canvas { min-height:340px; }
+@media (max-width: 600px) {
+  .bs-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .bs-tile { min-height:128px; padding:12px; }
+  .bs-big.knox-sim canvas { min-height:260px; }
+}
