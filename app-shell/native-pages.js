@@ -196,7 +196,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   w.knoxFlameFest?.applyFlameStyle?.(); // the student's own flame (Slime, Purple…) on the app pages too
   $('kmStreakNote').textContent=user?(lit?'Studied today. Nice!':count>0?'Study today to keep it':'Start your streak today'):'Sign in to start a streak';
   const theme=w.knoxTheme?.()||'light',mo=new Date().getMonth();
-  account.querySelectorAll('[data-look]').forEach(b=>{const selected=b.dataset.look===theme;b.setAttribute('aria-pressed',String(selected));b.querySelector('[data-selected-label]').textContent=selected?'✓':'';b.hidden=b.dataset.look==='seasonal'&&(mo<8||mo>10);});
+  account.querySelectorAll('[data-look]').forEach(b=>{const selected=b.dataset.look===theme;b.setAttribute('aria-pressed',String(selected));b.querySelector('[data-selected-label]').textContent=selected?'✓':'';b.hidden=b.dataset.look==='seasonal'; /* the app has Light and Dark only */});
   paintBeta();
   account.querySelectorAll('[data-reading]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.reading===reading)));
   const langPick=account.querySelector('[data-lang]');if(langPick&&langPick.value!==language)langPick.value=language;
