@@ -78,7 +78,7 @@ Happy studying! 🦊
   <div style="margin:22px 0;padding:26px 22px;border-radius:22px;background:linear-gradient(135deg,#FF6B00,#FF9500);color:#fff;text-align:center;box-shadow:0 6px 0 #CC5500;">
     <div style="font-size:40px;line-height:1;">🎁🦊</div>
     <div style="font-size:24px;font-weight:900;margin:10px 0 2px;">${label} of ${name}</div>
-    <div style="font-size:14px;font-weight:700;opacity:.9;">Knox Plus homework help, every day</div>
+    <div style="font-size:14px;font-weight:700;opacity:.9;">Unlimited homework help from Knox</div>
     <div style="margin:18px auto 6px;display:inline-block;padding:12px 18px;border-radius:14px;background:#fff;color:#18181B;font-family:'Courier New',monospace;font-size:20px;font-weight:900;letter-spacing:2px;">${pretty}</div>
   </div>
   <p style="font-size:15px;"><strong>To use it:</strong> go to <a href="${link}" style="color:#FF6B00;font-weight:700;">knoxknowsapp.com/redeem</a>, sign in (or make a free account), and enter the code.</p>

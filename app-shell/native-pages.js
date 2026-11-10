@@ -232,7 +232,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
  // as the pricing page, without leaving the app.
  const PRICE={plus:{monthly:'$9.99',yearly:'$79.99',perMonth:'$6.67',save:'33%'},mega:{monthly:'$12.99',yearly:'$99.99',perMonth:'$8.33',save:'36%'}};
  // Honest side-by-side (api/_plans.js LIMITS).
- const COMPARE=[['Same smart Knox AI','✓','✓','✓'],['Credits a day','5 (save 20)','50 (save 200)','Unlimited'],['Photos per message','1','1','Up to 5'],['Learn lesson length','20 msgs','30 msgs','50 msgs'],['Cards per AI deck','10','15','40'],['Photos per deck','5','5','10'],['File length','Standard','Standard','2× longer'],['Card styles & difficulty','—','—','✓']];
+ const COMPARE=[['Same smart Knox AI','✓','✓','✓'],['Questions','5 a day','Unlimited','Unlimited'],['Learn lesson length','20 msgs','30 msgs','50 msgs'],['Cards per AI deck','10','15','40'],['Photos per deck','5','5','10'],['File length','Standard','Standard','2× longer'],['Card styles & difficulty','—','—','✓']];
  let planBilling='monthly',planPick='';
  async function openPlans(){
   if(w.knoxNativeApp){plans();return;}

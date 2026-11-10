@@ -289,10 +289,6 @@ function syncFoxes(){document.querySelectorAll('.km-welcome-fox').forEach(f=>f.g
 (function foxOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(foxOnCards,800);return;}
  const add=()=>{const head=panel.querySelector('.fc-wrap:has(.fc-ways) .fc-head');if(head&&!head.querySelector('.km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.prepend(fox);syncFoxes();}};
  new MutationObserver(()=>{add();if(current==='flashcards')paint();}).observe(panel,{childList:true,subtree:true});add();})(); // the top badge and buttons change with the screen, no lag
-// Notes' home gets the same floating Knox; the top switch follows the screen.
-(function foxOnNotes(){const panel=$('notesPanel');if(!panel){setTimeout(foxOnNotes,800);return;}
- const add=()=>{const head=panel.querySelector('.nb-wrap:not(.nb-editor) > .nb-head');if(head&&!head.parentElement.querySelector(':scope > .km-welcome-fox')){const fox=document.createElement('img');fox.className='km-welcome-fox';fox.src='/knox-logo-square.jpg';fox.alt='';head.before(fox);syncFoxes();}};
- new MutationObserver(()=>{add();if(current==='notes')paint();}).observe(panel,{childList:true,subtree:true});add();})();
 $('appChatInput')?.setAttribute('enterkeyhint','enter');
 // Tapping into the box on an empty Ask/Learn tucks the topic buttons away (native.css).
 {const box=$('appChatInput'),R=document.documentElement;let off=0;
@@ -339,7 +335,7 @@ function restore(target){
  $('appImagePillName').textContent=slot.pillName||'';$('appImagePillThumb').src=slot.pillThumb||'';
  requestAnimationFrame(()=>{t.scrollTop=slot.scroll;});window.syncActiveHistoryRows?.();
 }
-const icons={chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/>',learn:'<path d="M12 7v14M3 3h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5v17h-5a4 4 0 0 0-4 1 4 4 0 0 0-4-1H3Z"/>',flashcards:'<path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M9 3v18"/><path d="M13 8h4M13 12h4"/>',calculator:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>'};
+const icons={chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/>',learn:'<path d="M12 7v14M3 3h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5v17h-5a4 4 0 0 0-4 1 4 4 0 0 0-4-1H3Z"/>',flashcards:'<rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/>',calculator:'<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>'};
 icons.home='<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>';
 icons.account='<circle cx="12" cy="8" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>';
 const pages=window.createKnoxMobilePages({navigate,note,dialog,button,icon:icons,pickStudyFile:()=>pick($('appFileInput'))});
@@ -355,7 +351,7 @@ const float=document.createElement('div');float.className='km-float';float.appen
 // Top left in Ask / Learn: which mode you're in; tap to go Home.
 const topFade=document.createElement('div');topFade.className='km-top-fade';topFade.setAttribute('aria-hidden','true');topFade.hidden=true;document.body.append(topFade);
 // Scrolled content fades out just below the top badge (native.css); nothing shows behind it.
-function topScroll(){const el=['chat','learn'].includes(current)?$('chatThread'):current==='flashcards'?document.querySelector('#flashcardsPanel .fc-scroll'):current==='notes'?document.querySelector('#notesPanel .nb-scroll'):current==='sims'?$('kmSimsScroll'):null;document.documentElement.classList.toggle('km-scrolled',!!el&&el.getClientRects().length>0&&el.scrollTop>2);}
+function topScroll(){const el=['chat','learn'].includes(current)?$('chatThread'):current==='flashcards'?document.querySelector('#flashcardsPanel .fc-scroll'):null;document.documentElement.classList.toggle('km-scrolled',!!el&&el.getClientRects().length>0&&el.scrollTop>2);}
 document.addEventListener('scroll',topScroll,{capture:true,passive:true});
 const modeChip=document.createElement('button');modeChip.type='button';modeChip.className='km-mode-chip km-press';modeChip.hidden=true;
 modeChip.innerHTML='<img src="/knox-logo-square.jpg" alt=""><b data-mode-label>Ask Knox</b>';modeChip.setAttribute('aria-label','Back to Home');
@@ -364,10 +360,10 @@ const strip=document.createElement('div');strip.className='km-statusfill';strip.
 for(const piece of [topFade,strip])piece?.insertAdjacentHTML('beforeend','<div class="harvest-sun"></div>'); // Fall's sun, so the top matches the scene
 const onBar=e=>{const action=e.target.closest('[data-study-action]')?.dataset.studyAction;if(current==='flashcards'&&action){const fc=window.knoxFlashcardsMobile;if(action==='new'){if(fc?.make)fc.make();else document.querySelector('#flashcardsPanel [data-action="make"]')?.click();}else fc?.showDecks?.();return;}if(action==='new')newStudy();else if(action==='history')window.openMobileHistory?.();else pages.action(e);};
 bar.addEventListener('click',onBar);float.addEventListener('click',onBar);
-const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',notes:'Notes',sims:'Simulations',calculator:'Calculator',account:'You'};
+const TITLES={home:'Knox Knows',chat:'Ask Knox',learn:'Learn',flashcards:'Flashcards',calculator:'Calculator',account:'You'};
 let themeMeta=document.querySelector('meta[name="theme-color"]');
 function paint(){
- const surface=current==='home'?$('knoxMobileHome'):current==='account'?$('knoxMobileAccount'):current==='flashcards'?$('flashcardsPanel'):current==='notes'?$('notesPanel'):current==='sims'?$('kmSimsPanel'):$('chatAndInput')||$('mainColumn');
+ const surface=current==='home'?$('knoxMobileHome'):current==='account'?$('knoxMobileAccount'):current==='flashcards'?$('flashcardsPanel'):$('chatAndInput')||$('mainColumn');
  let el=surface,bg='';
  while(el){bg=getComputedStyle(el).backgroundColor;if(bg&&!/rgba\(\d+, \d+, \d+, 0\)|transparent/.test(bg))break;el=el.parentElement;bg='';}
  bg=bg||getComputedStyle(document.body).backgroundColor;
@@ -379,15 +375,13 @@ function paint(){
  bar.dataset.tab=current;
  const study=['chat','learn'].includes(current);
  const cards=current==='flashcards'&&!!document.querySelector('#flashcardsPanel .fc-ways'); // only Flashcards' main screen; inner screens keep their own back button
- const binderHome=cards||(current==='notes'&&!document.querySelector('#notesPanel .nb-editor'))||(current==='sims'&&!document.querySelector('#kmSimsPanel .km-sim-big'));
- binderSwitch.hidden=!binderHome;binderSwitch.querySelectorAll('[data-to]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.to===current)));binderSwitch.querySelector('[data-to="sims"]').hidden=!simsAllowed();
- const startScreen=(study&&$('welcomeScreen')?.getClientRects().length>0)||binderHome;
+ const startScreen=(study&&$('welcomeScreen')?.getClientRects().length>0)||cards;
  fallScene(startScreen); // the branch only where the top-left is free
  // Reading or studying: the background goes quiet, in every look (native.css).
- document.documentElement.classList.toggle('km-focus',(study||['flashcards','notes','sims'].includes(current))&&!startScreen);
+ document.documentElement.classList.toggle('km-focus',(study||current==='flashcards')&&!startScreen);
  float.hidden=!(study||cards);float.querySelectorAll('button').forEach(b=>{b.hidden=false;});
  syncFoxes();topScroll();
- modeChip.hidden=!study;topFade.hidden=!(study||binderHome);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
+ modeChip.hidden=!(study||cards);topFade.hidden=!(study||cards);modeChip.dataset.mode=current;modeChip.querySelector('[data-mode-label]').textContent=current==='learn'?'Learn':current==='flashcards'?'Flashcards':'Ask Knox';
  float.querySelector('[data-study-action="new"]').setAttribute('aria-label',current==='flashcards'?'Make with Knox':current==='learn'?'New lesson':'New chat');float.querySelector('[data-study-action="history"]')?.setAttribute('aria-label',current==='flashcards'?'Your decks':'History');
  const drawerNew=document.querySelector('#mobileHistoryDrawer .sidebar-new-btn');if(drawerNew){drawerNew.textContent=current==='learn'?'+ New lesson':'+ New chat';drawerNew.setAttribute('aria-label',current==='learn'?'New lesson':'New chat');}
  document.documentElement.classList.toggle('km-hist-learn',current==='learn');
@@ -428,40 +422,8 @@ icons.camera='<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0
 // The live viewfinder lets you pick Ask or Learn after snapping; other cameras open from Ask.
 async function snap(){if(liveCamera()){viewfinder();return;}if(await navigate(current==='learn'?'learn':'chat'))openCamera();}
 window.knoxSnap=snap;
-// ═══ Binder: Flashcards, Notes and Simulations behind one island button ═══
-const simsAllowed=()=>window.userTier==='mega'||!window.knoxNativeApp; // the iPhone app shows no locked upsells
-function binderPick(){let t='flashcards';try{t=localStorage.getItem('knoxBinderTab')||t;}catch{}if(!['flashcards','notes','sims'].includes(t)||(t==='sims'&&!simsAllowed()))t='flashcards';return t;}
-const binderSwitch=document.createElement('div');binderSwitch.className='km-binder-switch';binderSwitch.setAttribute('role','group');binderSwitch.setAttribute('aria-label','Binder');binderSwitch.hidden=true;
-binderSwitch.innerHTML=[['flashcards','🗂️','Cards'],['notes','📝','Notes'],['sims','🎛️','Sims']].map(([to,icon,label])=>'<button type="button" class="km-press" data-to="'+to+'" aria-pressed="false"><span aria-hidden="true">'+icon+'</span>'+label+'</button>').join('');
-binderSwitch.addEventListener('click',async e=>{const b=e.target.closest('[data-to]');if(!b||b.dataset.to===current||busy)return;await navigate(b.dataset.to);sync();});
-document.body.append(binderSwitch);
-// Simulations: every Knox simulation to play with, each opening big (sims.js builds them).
-const SIMS=[['motion | a=60, b=75, head=30, unit=mi, time=h, who=car','🚗','Catch-up race','When does the faster car catch up?','orange'],['projectile | speed=20, angle=45, item=soccer','⚽','Launch a ball','How angle and speed change the distance','green'],['parabola | a=1, b=-2, c=-3','📈','Parabolas','Find the vertex and where it crosses','purple'],['line | m=2, b=1','📏','Lines','See slope and the y-intercept move','blue'],['probability | kind=coin, trials=100','🪙','Flip coins','Do the results match the odds?','gold'],['probability | kind=die, trials=300','🎲','Roll a die','Six sides, hundreds of rolls','pink'],['fraction | n=3, d=4','🍕','Fractions','Fraction, decimal and percent','orange'],['interest | p=1000, r=5, t=10','💰','Interest','Simple vs compound growth','green']];
-const simsPanel=document.createElement('section');simsPanel.id='kmSimsPanel';simsPanel.hidden=true;simsPanel.setAttribute('aria-label','Simulations');
-simsPanel.innerHTML='<div class="km-sims-scroll" id="kmSimsScroll"></div>';$('chatAndInput')?.append(simsPanel);
-const simsScroll=simsPanel.firstElementChild;
-function simsLibrary(){
- const mega=window.userTier==='mega';
- simsScroll.innerHTML='<div class="km-sims-wrap"><img class="km-welcome-fox" src="/knox-logo-square.jpg" alt=""><div class="km-sims-badge"><span aria-hidden="true">🎛️</span> Knox Simulations</div><h1 class="km-sims-title">Play with <span>the idea.</span></h1><p class="km-sims-sub">Move the sliders, press Play, and watch math and science happen.</p>'+
-  (mega?'':'<p class="km-sims-lock">💎 Simulations are a Mega Knox perk. Upgrade to play with all of them.</p>')+
-  '<div class="km-sims-grid">'+SIMS.map(([spec,icon,title,sub,flavor],i)=>'<button type="button" class="km-sim-tile km-press" data-flavor="'+flavor+'" data-sim-i="'+i+'"><span class="km-sim-ico" aria-hidden="true">'+icon+'</span><b>'+title+'</b><small>'+sub+'</small>'+(mega?'':'<em aria-label="Mega Knox">💎</em>')+'</button>').join('')+'</div></div>';
- simsScroll.scrollTop=0;syncFoxes();
-}
-function simOpen(i){
- const [spec,,title]=SIMS[i];
- simsScroll.innerHTML='<div class="km-sims-wrap km-sims-detail"><div class="km-sims-top"><button type="button" class="km-sims-back km-press" data-sims-back>← Simulations</button><b>'+title+'</b></div><div class="knox-sim km-sim-big" data-sim="'+spec.replace(/"/g,'&quot;')+'"></div></div>';
- simsScroll.scrollTop=0;
-}
-simsScroll.addEventListener('click',e=>{
- if(e.target.closest('[data-sims-back]')){simsLibrary();paint();return;}
- const t=e.target.closest('[data-sim-i]');if(!t)return;
- if(window.userTier!=='mega'){if(window.knoxNativeApp)return;document.querySelector('#kmAccountPlan [data-action="plans"]')?.click();return;}
- simOpen(+t.dataset.simI);paint();
-});
-function openSims(){document.body.classList.add('knox-sims');simsPanel.hidden=false;if(!simsScroll.querySelector('.km-sim-big'))simsLibrary();}
-function closeSims(){document.body.classList.remove('knox-sims');simsPanel.hidden=true;}
-for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Binder']]){
- const b=button(nav,label,async()=>{if(target==='camera')return snap();const dest=target==='flashcards'?binderPick():target;if(dest!==current&&!busy){showTab(target);await nextFrame();}let ok=false;try{ok=await navigate(dest);}finally{pendingTab=null;sync();}});b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
+for(const [target,label] of [['home','Home'],['chat','Ask'],['camera','Snap'],['learn','Learn'],['flashcards','Cards']]){
+ const b=button(nav,label,async()=>{if(target==='camera')return snap();if(target!==current&&!busy){showTab(target);await nextFrame();}let ok=false;try{ok=await navigate(target);}finally{pendingTab=null;sync();}});b.dataset.tab=target;if(target==='camera'){b.className='km-tab-snap';b.setAttribute('aria-label','Snap a question with the camera');}
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=icons[target];const tile=document.createElement('span');tile.className='km-tab-tile';tile.append(svg);b.prepend(tile);
 }
 document.body.append(nav);surface(deepStudy?null:initialSurface);
@@ -523,14 +485,6 @@ async function navigate(target){
   saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
   const from=current;
-  if(!['notes','sims'].includes(target)){window.closeNotes?.();typeof closeSims==='function'&&closeSims();}
-  if(['flashcards','notes','sims'].includes(target)){try{localStorage.setItem('knoxBinderTab',target);}catch{}}
-  if(target==='notes'||target==='sims'){
-   window.knoxFlashcardsMobile?.hide();window.closeCalc?.();
-   if(target==='notes'){typeof closeSims==='function'&&closeSims();if(!window.openNotes){note('Notes is still opening. Try again in a moment.');return;}await window.openNotes();}
-   else{window.closeNotes?.();typeof openSims==='function'&&openSims();}
-   surface(null);current=target;sync();quiet(p.haptics.selectionChanged());return true;
-  }
   if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
   if(target==='flashcards'){
    if(!window.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}
@@ -580,10 +534,10 @@ async function resumeDraft(target){
 let paintedFor=null;
 function sync(){
  const before=current;
- current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-notes')?'notes':document.body.classList.contains('knox-sims')?'sims':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
+ current=document.body.classList.contains('knox-mobile-home')?'home':document.body.classList.contains('knox-mobile-account')?'account':document.body.classList.contains('knox-flashcards')?'flashcards':$('calcModal')?.classList.contains('open')?'calculator':mode();
  if(current==='calculator'&&before!=='calculator')calculatorReturn=before;
- const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Binder',notes:'Binder',sims:'Binder'}[calculatorReturn]||'Home');
- const active=pendingTab||({notes:'flashcards',sims:'flashcards'}[current]||(current==='calculator'?calculatorReturn:current));
+ const back=document.querySelector('#calcModal [data-k="back"]');if(back)back.textContent='← Back to '+({home:'Home',account:'You',chat:'Ask',learn:'Learn',flashcards:'Cards'}[calculatorReturn]||'Home');
+ const active=pendingTab||(current==='calculator'?calculatorReturn:current);
  nav.querySelectorAll('button').forEach(b=>{if(b.dataset.tab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
  moveGlider();
  const locked=document.querySelector('.fc-nav.fc-locked');nav.querySelector('[data-tab="flashcards"]').hidden=!!locked;
@@ -701,7 +655,7 @@ if(historyPanel){
  const empty=document.createElement('p');empty.className='km-history-empty';empty.textContent='No matches in loaded history. Try another word or load more.';empty.hidden=true;body?.before(empty);
  search.addEventListener('input',filter);if(body)new MutationObserver(filter).observe(body,{childList:true,subtree:true,characterData:true});
 }
-window.knoxMobile={navigate,note,snap,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
+window.knoxMobile={navigate,note,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
  async calculatorBack(){window.closeCalc?.();if(['home','account'].includes(calculatorReturn))surface(calculatorReturn);else if(calculatorReturn==='flashcards')await window.knoxFlashcardsMobile?.show();sync();},
  async calculatorDraft(target,text){if(!(await navigate(target)))return;const input=$('appChatInput');input.value=input.value?input.value+'\n'+text:text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();},refreshHome:pages.render,drafts:()=>drafts.list(owner),resumeDraft,clearDrafts(){drafts.clear(owner);note('Unsent text drafts cleared. Saved chats and decks are unchanged.');pages.render();}};
 })();

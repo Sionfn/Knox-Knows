@@ -345,7 +345,7 @@ export default async function handler(req, res) {
   }
   if (charge.status === 429) return res.status(429).json({ error: `You've made ${limits.decksPerDay} decks with Knox today — that's the daily limit. Try again tomorrow!` });
   if (charge.status === 402) return res.status(402).json({
-    error: `Making a deck costs ${DECK_CREDIT_COST} credits — you have ${charge.remaining} left. You get 5 more every day, or get Knox Plus — its decks don't use credits.`,
+    error: `Making a deck costs ${DECK_CREDIT_COST} credits — you have ${charge.remaining} left. You get 5 more every day, or go unlimited with Knox Plus.`,
     upgrade: true, remaining: charge.remaining,
   });
   count = Math.min(count, charge.kind === "free" ? FREE_MAX_CARDS : limits.deckCards);

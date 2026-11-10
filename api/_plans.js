@@ -29,22 +29,6 @@ export const LIMITS = {
   mega: { deckCards: 40, deckPhotos: 10, decksPerDay: 100, docChars: 60000, askPer3h: 1000, learnTurns: 50 },
 };
 
-// Daily credit banks. Free and Knox Plus earn credits every 24 hours and save
-// unused ones for up to 4 days' worth; Mega Knox is unlimited (fair-use only).
-// A typed question costs 1, a photo or file 2; replies inside a Learn lesson are free.
-export const BANKS = {
-  free: { regen: 5,  max: 20,  start: 10, doc: "bank" },
-  plus: { regen: 50, max: 200, start: 50, doc: "plusBank" },
-};
-// Knox Plus moves to credits on Dec 1, 2026 (straight away on preview builds, to
-// test). A subscriber from before then keeps unlimited until their next renewal:
-// set `plusLegacyUntil` (ms) on their user doc to that renewal date.
-export const PLUS_CREDITS_START = Date.parse("2026-12-01T08:00:00Z");
-export function plusUsesCredits(d, now = Date.now()) {
-  if (Number(d?.plusLegacyUntil) > now) return false;
-  return now >= PLUS_CREDITS_START || process.env.VERCEL_ENV === "preview";
-}
-
 // The plan value a comped account falls back to when a subscription of theirs ends.
 export const compedPlan = d => d?.compedTier === "mega" ? MEGA_PLAN : PLUS_PLAN;
 

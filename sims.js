@@ -157,7 +157,7 @@
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
     let anim = 0, pos = null, stop = () => { cancelAnimationFrame(anim); anim = 0; };
     const render = t => {
-      const w = canvas.clientWidth || 320, h = el.classList.contains('km-sim-big') ? Math.round(Math.min(420, Math.max(240, w * 0.85))) : Math.round(Math.min(260, Math.max(170, w * 0.55))), dpr = Math.min(2, devicePixelRatio || 1);
+      const w = canvas.clientWidth || 320, h = Math.round(Math.min(260, Math.max(170, w * 0.55))), dpr = Math.min(2, devicePixelRatio || 1);
       if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.height = h + 'px'; }
       g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
       const c = { ...colors(), w, h }, text = tpl.draw(g, state, c, t == null && tpl.play ? 0 : t); // races and launches wait at the start until Play
