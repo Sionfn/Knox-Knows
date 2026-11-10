@@ -3,7 +3,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { advanceStudyStreak } from "./_streak.js";
-import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
+import { tierOf, LIMITS, MEGA_PLAN, BANKS, plusUsesCredits } from "./_plans.js";
 import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson, correctedLessonState } from "./_learn-progress.js";
 import { loadLearnReview, reviewGuidance, recordLearnReview } from './_learn-review.js';
 import { LEARN_RESPONSE_FORMAT, LEARN_OUTPUT_INSTRUCTION, decodeLearnOutput } from './_learn-output.js';
@@ -75,8 +75,9 @@ function planTier(plan) {
 // credits — 1 for a text question, PHOTO_CREDIT_COST for a photo — from
 // the SAME pool, rather than a separate daily photo cap. A Firestore
 // transaction keeps concurrent requests from double-spending.
-async function checkAndIncrementUsage(uid, plan, cost = 1) {
-  const tier = planTier(plan);
+async function checkAndIncrementUsage(uid, plan, cost = 1, bankName = null) {
+  const tier = bankName ? 'bank' : planTier(plan);
+  const bank = BANKS[bankName || 'free'];
   // Mega Knox gets the higher abuse-only ceiling (see api/_plans.js).
   const PAID_LIMIT = plan === MEGA_PLAN ? LIMITS.mega.askPer3h : PLUS_LIMIT;
   const usageRef = db.collection("users").doc(uid).collection("usage").doc("rolling");
@@ -103,26 +104,26 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
     }
   }
 
-  // FREE — daily-bank system, shared pool for questions and photos
-  const bankRef = db.collection("users").doc(uid).collection("usage").doc("bank");
+  // FREE and KNOX PLUS — daily-bank system, shared pool for questions and photos
+  const bankRef = db.collection("users").doc(uid).collection("usage").doc(bank.doc);
   try {
     const result = await db.runTransaction(async (tx) => {
       const snap = await tx.get(bankRef);
       let balance, lastRegenAt;
       if (!snap.exists) {
         // First-ever question from a brand-new free account.
-        balance = FREE_STARTING_BALANCE;
+        balance = bank.start;
         lastRegenAt = now;
       } else {
         const d = snap.data();
-        balance = typeof d.balance === "number" ? d.balance : FREE_STARTING_BALANCE;
+        balance = typeof d.balance === "number" ? d.balance : bank.start;
         lastRegenAt = d.lastRegenAt || now;
         // Regenerate once per full day elapsed since the last regen —
         // e.g. 3 days unused = +15 (capped), not an infinite backlog.
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) {
           // Never lowers a balance that's above the cap (Flame Fest bonus questions).
-          balance = Math.max(balance, Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN));
+          balance = Math.max(balance, Math.min(bank.max, balance + daysElapsed * bank.regen));
           lastRegenAt = lastRegenAt + daysElapsed * oneDayMs();
         }
       }
@@ -131,12 +132,12 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
         // Next regen lands 1 day after lastRegenAt.
         const retryAfterMs = Math.max(0, (lastRegenAt + oneDayMs()) - now);
         tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-        return { allowed: false, remaining: balance, limit: FREE_MAX_BALANCE, retryAfterMs, isDailyBank: true };
+        return { allowed: false, remaining: balance, limit: bank.max, regen: bank.regen, retryAfterMs, isDailyBank: true, bankName: bankName || 'free' };
       }
 
       balance -= cost;
       tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
-      return { allowed: true, remaining: balance, limit: FREE_MAX_BALANCE, isDailyBank: true, charge: { kind: 'free', cost } };
+      return { allowed: true, remaining: balance, limit: bank.max, isDailyBank: true, charge: { kind: bankName || 'free', cost } };
     });
     return result;
   } catch (err) {
@@ -147,7 +148,7 @@ async function checkAndIncrementUsage(uid, plan, cost = 1) {
 
 async function refundUsage(uid, charge) {
   if (!charge) return;
-  const usageRef = db.collection('users').doc(uid).collection('usage').doc(charge.kind === 'paid' ? 'rolling' : 'bank');
+  const usageRef = db.collection('users').doc(uid).collection('usage').doc(charge.kind === 'paid' ? 'rolling' : (BANKS[charge.kind] || BANKS.free).doc);
   await db.runTransaction(async tx => {
     const snap = await tx.get(usageRef);
     if (!snap.exists) return;
@@ -940,7 +941,7 @@ export default async function handler(req, res) {
   if (isBot && !isValidBotKey(req.headers['x-knox-bot-key'])) return res.status(401).json({ error: "Unauthorized" });
   const authHeader = isBot ? "" : (req.headers.authorization || "");
   if (typeof authHeader !== "string" || (authHeader && !authHeader.startsWith("Bearer "))) return res.status(401).json({ error: "Please sign in again." });
-  let uid, email, plan = "free", tier = "free";
+  let uid, email, plan = "free", tier = "free", plusCredits = false;
 
   if (authHeader.startsWith("Bearer ")) {
     try {
@@ -963,6 +964,7 @@ export default async function handler(req, res) {
         // Free / Knox Plus / Mega Knox — including comped accounts and gift or
         // Flame Fest time (api/_plans.js). Mega is plan 'max'.
         tier = tierOf(d);
+        plusCredits = tier === "plus" && plusUsesCredits(d);
         plan = tier === "mega" ? MEGA_PLAN : tier === "plus" ? (planTier(d.plan) === "paid" ? d.plan : "plus") : "free";
       }
     } catch {
@@ -989,7 +991,7 @@ export default async function handler(req, res) {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid request.' });
   }
-  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch, simulations, language } = req.body;
+  let { question = '', history = [], image, imageType, learnMode, learnStyle = 'teach', learnSessionId, localDay, document: doc, renewLearn, reviewSkillId, webSearch, simulations, language, pages } = req.body;
   if (webSearch != null && typeof webSearch !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
   if (simulations != null && typeof simulations !== 'boolean') return res.status(400).json({ error: 'Invalid request.' });
   if (language != null && (typeof language !== 'string' || !Object.hasOwn(ANSWER_LANGUAGES, language))) return res.status(400).json({ error: 'Invalid request.' });
@@ -1024,6 +1026,17 @@ export default async function handler(req, res) {
   const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
   if (image && (!ALLOWED_IMAGE_TYPES.includes(imageType) || !/^[A-Za-z0-9+/]+={0,2}$/.test(image))) {
     return res.status(400).json({ error: "Unsupported image type." });
+  }
+  // Mega Knox: up to 5 photos in one message (a multi-page worksheet). `image`
+  // is page 1; `pages` holds pages 2–5. Everyone else sends one photo.
+  if (pages != null) {
+    if (!Array.isArray(pages) || !image || pages.length > 4 || pages.some(p => !p || typeof p.data !== 'string' || !ALLOWED_IMAGE_TYPES.includes(p.type) || !/^[A-Za-z0-9+/]+={0,2}$/.test(p.data))) {
+      return res.status(400).json({ error: "Those pages couldn't be read. Try adding them again." });
+    }
+    if (image.length + pages.reduce((n, p) => n + p.data.length, 0) > 4_300_000) {
+      return res.status(400).json({ error: "Those pages are too large together. Try fewer pages." });
+    }
+    if (pages.length && tier !== 'mega') return res.status(403).json({ error: "Sending several pages at once is a Mega Knox feature." });
   }
 
   // ── Question length guard ──
@@ -1173,7 +1186,7 @@ export default async function handler(req, res) {
   if (uid && !casual) {
     if (!isLearnFollowUp) {
       const cost = learnMode ? 1 : ((image || doc) ? PHOTO_CREDIT_COST : 1);
-      const usage = await checkAndIncrementUsage(uid, plan, cost);
+      const usage = await checkAndIncrementUsage(uid, plan, cost, plusCredits ? 'plus' : null);
       if (usage.unavailable) return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' });
       if (!usage.allowed) {
         const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
@@ -1181,10 +1194,14 @@ export default async function handler(req, res) {
           ? `about ${Math.ceil(minutes / 60)} hour${minutes >= 120 ? 's' : ''}`
           : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
         let message;
-        if (usage.isDailyBank && (image || doc) && !learnMode) {
-          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited photos, files and questions.`;
+        if (usage.bankName === 'plus') {
+          message = (image || doc) && !learnMode && usage.remaining > 0
+            ? `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've got ${usage.remaining} left — ${usage.regen} more come in ${waitMsg}.`
+            : `You've used your credits for now — ${usage.regen} more come in ${waitMsg}.`;
+        } else if (usage.isDailyBank && (image || doc) && !learnMode) {
+          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets 50 credits a day.`;
         } else if (usage.isDailyBank) {
-          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited questions.`;
+          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets 50 credits a day.`;
         } else {
           message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
         }
@@ -1236,10 +1253,13 @@ export default async function handler(req, res) {
   }
 
   if (image) {
+    const extraPages = Array.isArray(pages) ? pages : [];
     messages.push({
       role: "user",
       content: [
         { type: "image_url", image_url: { url: `data:${imageType || "image/jpeg"};base64,${image}`, detail: "high" } },
+        ...extraPages.map(p => ({ type: "image_url", image_url: { url: `data:${p.type};base64,${p.data}`, detail: "high" } })),
+        ...(extraPages.length ? [{ type: "text", text: `These are ${extraPages.length + 1} pages of the same assignment, in order. Treat them as one worksheet.` }] : []),
         { type: "text", text: trimmedQuestion || (learnMode
           ? "Here's my homework. Help me learn how to do it — guide me step by step instead of solving it."
           : "Please look at this photo and help — solve it, check it, or explain it, whichever fits what I'm asking.") },

@@ -100,8 +100,8 @@ body.knox-notes #ksLauncher { display:none; }
 #simsPanel { flex:1; min-height:0; position:relative; overflow:hidden; color:var(--text); background:var(--cream); }
 #simsPanel[hidden] { display:none; }
 #simsPanel:not([hidden]) { display:block; }
-body.knox-sims #chatAndInput > :not(#simsPanel) { display:none !important; }
-body.knox-sims #ksLauncher { display:none; }
+body.knox-bsims #chatAndInput > :not(#simsPanel) { display:none !important; }
+body.knox-bsims #ksLauncher { display:none; }
 .binder-tabs button[data-binder="sims"][aria-selected="true"] { background:var(--blue); color:#fff; box-shadow:0 2px 0 var(--blue-dark); }
 .bs-wrap { max-width:760px; margin:0 auto; }
 .bs-head { text-align:center; margin-bottom:18px; }

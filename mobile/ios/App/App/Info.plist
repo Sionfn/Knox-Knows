@@ -39,6 +39,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Knox uses the camera so you can snap a photo of your homework.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Knox uses the microphone so you can ask your question out loud.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Knox opens your photos so you can send a picture of your homework.</string>
 	<key>UIApplicationSceneManifest</key>

@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+const source=readFileSync(new URL('../../app.html',import.meta.url),'utf8');const start=source.indexOf("  _ci.addEventListener('keydown', function(e) {");const end=source.indexOf('\n  });',start)+6;const code=source.slice(start,end);
+function setup(shell){let listener,sends=0,prevented=0;vm.runInNewContext(code,{_ci:{addEventListener:(_,fn)=>listener=fn},window:{knoxAppShell:shell,appHandleAsk:()=>sends++}});return{key:(event={})=>listener({key:'Enter',shiftKey:false,isComposing:false,preventDefault(){prevented++;},...event}),sends:()=>sends,prevented:()=>prevented};}
+test('Return stays a newline in the app so a photo/question is sent deliberately',()=>{const t=setup(true);t.key();assert.equal(t.sends(),0);assert.equal(t.prevented(),0);});
+test('ordinary website Enter-to-send behavior remains unchanged',()=>{const t=setup(false);t.key();assert.equal(t.sends(),1);assert.equal(t.prevented(),1);});
+test('composition and Shift+Return cannot submit a question in either version',()=>{for(const shell of [true,false]){const t=setup(shell);t.key({isComposing:true});t.key({keyCode:229});t.key({shiftKey:true});assert.equal(t.sends(),0);}});

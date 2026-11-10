@@ -31,7 +31,7 @@ const flavorOf=id=>{let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))
 let pendingMessage='';
 
 function load(){ identity=key(); session=null; editing=null; dirty=false; try{const raw=JSON.parse(localStorage.getItem(identity)||'[]'); if(!Array.isArray(raw))throw Error(); decks=raw.filter(d=>{try{validateDeck(d);return typeof d.id==='string';}catch{return false;}});}catch{decks=[];pendingMessage='Saved decks could not be read. Import a backup to recover them.';} }
-function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
+function save(next){try{stamp(decks,next);localStorage.setItem(identity,JSON.stringify(next));decks=next;schedulePush();if(window.knoxAppShell)window.dispatchEvent(new Event('knox-mobile-data'));return true;}catch(err){message(/quota/i.test(err?.name+' '+err?.message)?'Your browser’s storage for Knox is full. Remove some of your own uploaded pictures, or export and delete old decks, then try again.':'Your browser could not save. Export your decks before closing this page.');return false;}}
 
 // ── Decks in the student's account (window.knoxDeckStore in app.html) ──
 // This browser keeps the decks (fast, works offline). Every change is
@@ -141,7 +141,7 @@ const EXAMPLES=[
 ];
 const isPlus=()=>['super','max','plus'].includes(window.userPlan)||window.userComped===true;
 const EVERYONE=true; // launched Nov 1: everyone can use Flashcards
-// Making a deck with Knox: Knox Plus is unlimited (up to 20 cards); free
+// Making a deck with Knox: server-enforced plan limits apply; free
 // accounts spend DECK_COST credits per deck, up to FREE_MAX cards (the server
 // in api/generate-flashcards.js enforces both).
 const DECK_COST=2, FREE_MAX=10;
@@ -179,7 +179,8 @@ function makeView(){
       <p class="fc-cost">${mega?'💎 Mega Knox — up to 100 AI decks a day, up to 40 cards each, any style and difficulty.':plus?'⚡ Knox Plus — up to 40 AI decks a day, up to 15 cards each.':`Uses ${DECK_COST} of your daily credits · up to ${FREE_MAX} cards · <b>Knox Plus</b> makes up to 40 decks a day.`}</p>
       <p class="fc-note" style="margin-top:14px">Knox can make mistakes — read the cards over before you study them.</p>
     </div>`,true);
-  panel.querySelector('#fcMakeReq')?.focus();
+  // On phones the keyboard would cover the page as soon as it opens; let the student tap in.
+  if(!window.knoxAppShell)panel.querySelector('#fcMakeReq')?.focus();
 }
 // "Try a sample deck": Knox writes a brand-new deck on a random school topic —
 // random size, card style and pictures on or off — and saves it right away.
@@ -189,7 +190,7 @@ async function sampleDeck(){
   const user=window.currentUser;
   if(!user?.getIdToken){message('Sign in to try a sample deck.');window.openAuthModal?.();return;}
   const owner=key(),version=++generationVersion;
-  const options={request:pick(SAMPLE_TOPICS),count:pick([10,15,20]),style:pick(['qa','term']),pictures:Math.random()<0.5};
+  const options={request:pick(SAMPLE_TOPICS),count:Math.min(pick([10,15,20]),MAX_CARDS[tierNow()]),style:pick(['qa','term']),pictures:Math.random()<0.5};
   nextWay='make';frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is picking a surprise deck…</h2><p class="fc-sub">A random topic, ${options.count} cards${options.pictures?', with pictures':''}. This takes a few seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','back',{cls:'ghost small'})}</div></div>`,true);
   let data={},ok=false;
   try{
@@ -461,6 +462,9 @@ function study(){
 // per session (and again if the width changes) on hidden copies of each side.
 function evenCards(d){
   const card=panel.querySelector('.fc-card'),s=session;if(!card||!s)return;
+  // App reviews use a bounded scrolling face, not the tallest historical
+  // viewport. Retaining that measured minimum hid controls after rotation.
+  if(window.knoxAppShell){for(const face of card.querySelectorAll('.fc-face'))face.style.removeProperty('min-height');return;}
   const w=card.offsetWidth;
   if(s.evenWidth!==w){
     const box=document.createElement('div');
@@ -600,12 +604,12 @@ function exportView(target){
       <button type="button" class="fc-format fc-format-btn" data-action="export-text"><span class="fc-format-icon" aria-hidden="true">📋</span><div><b>Copy as text</b> <span class="fc-format-types">copy &amp; paste</span><p>Copies your cards, one per line — paste them into a doc, a spreadsheet or another study app.</p></div></button>
     </div>`,true);
 }
-function exportCsv(data){const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function exportCsv(data){if(window.knoxNativeExport)return window.knoxNativeExport('\uFEFF'+toCsv(data),(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv');const blob=new Blob(['\uFEFF'+toCsv(data)],{type:'text/csv'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(data.length===1?data[0].title.replace(/[^\w\- ]+/g,'').trim()||'knox-flashcards':'knox-flashcards')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
-function exportData(data){const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-async function open(){if(!canSee())return;if(dirty&&!(await confirmLeave()))return;window.closeCalc?.();window.closeNotes?.();window.closeSims?.();/* Notes, Simulations and Flashcards share the Binder: one shows at a time *//* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
+async function exportData(data){if(window.knoxNativeExport)return window.knoxNativeExport(JSON.stringify({version:1,decks:data},null,2),'knox-flashcards.json');const blob=new Blob([JSON.stringify({version:1,decks:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='knox-flashcards.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function open(){if(!canSee())return false;if(dirty&&!(await confirmLeave()))return false;window.knoxMobileReveal?.();window.closeCalc?.();window.closeNotes?.();window.closeSims?.();/* Notes and Flashcards share the Binder: one shows at a time *//* calculator open: close it first, or it stays on top */if(identity!==key())load();document.body.classList.add('knox-flashcards');panel.hidden=false;document.querySelectorAll('.sidebar-quicknav-link').forEach(b=>b.classList.toggle('sidebar-nav-active',b.classList.contains('fc-nav')));window.closeMobileHistory?.();home();panel.querySelector('.fc-title')?.focus();
  // Bring in decks from the account; redraw the deck list if still on it.
- pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});}
+ pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});return true;}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 // The Binder (notes.js) switches to Notes: close, asking first if a deck has unsaved edits.
 window.closeFlashcards=async()=>{if(dirty&&!(await confirmLeave()))return false;close();return true;};
@@ -613,9 +617,16 @@ window.closeFlashcards=async()=>{if(dirty&&!(await confirmLeave()))return false;
 let learnReturn=null;
 window.flashcardsMake=async (request,fromLearn=false)=>{
  if(!canSee())return false;
+ const owner=key();
+ if(window.knoxAppShell){
+  if(makeOpts.reading||panel.querySelector('.fc-loading')){message('Let Knox finish this step before starting a different deck.');return false;}
+  if(!dirty&&((makeOpts.request||'').trim()||makeOpts.files.length)&&!(await knoxConfirm({title:'Replace your Make with Knox draft?',body:'This starts a deck from the selected answer. Your current request and attached notes will be cleared. Saved decks stay safe.',ok:'Use this answer',cancel:'Keep my draft'})))return false;
+  if(owner!==key())return false;
+ }
  const origin=fromLearn&&window.currentUser&&window._currentConversationId?{uid:window.currentUser.uid,id:window._currentConversationId}:null;
  const lessonUrl=new URL(location.href);lessonUrl.searchParams.set('open','learn');
- await open();if(panel.hidden)return false;
+ if(!(await open())||owner!==key())return false;
+ if(window.knoxAppShell){documentReadVersion++;makeOpts.files=[];makeOpts.reading=false;}
  learnReturn=origin;makeOpts.request=String(request||'').slice(0,4000);
  if(origin){
   history.replaceState({...history.state,knoxLearnLesson:origin},'',lessonUrl.pathname+lessonUrl.search+lessonUrl.hash);
@@ -685,7 +696,7 @@ async function takeFiles(list){
         if(window.knoxIsPhoto?.(file)&&!window.knoxIsDocument?.(file)){const p=await window.knoxShrinkPhoto(file);if(stale())return;addPhoto(p);continue;}
         const doc=await window.knoxReadDocument(file);
         if(stale())return;
-        if(doc.kind==='image'){addPhoto(await window.knoxShrinkPhoto(doc.file),doc.name+' (page 1)');continue;} // scanned PDF
+        if(doc.kind==='image'){const photo=await window.knoxShrinkPhoto(doc.file);if(stale())return;addPhoto(photo,doc.name+' (page 1)');continue;} // scanned PDF
         const used=makeOpts.files.reduce((n,f)=>n+(f.kind==='text'?f.text.length+f.name.length+8:0),0),room=DOC_CHARS[tierNow()]-used-doc.name.length-8;
         if(room<500)throw Error(`That’s a lot of reading for one deck — make this one, then another with ${doc.name}.`);
         makeOpts.files.push({kind:'text',name:doc.name,text:doc.text.slice(0,room),truncated:doc.truncated||doc.text.length>room});
@@ -768,8 +779,8 @@ panel.addEventListener('click',async e=>{
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
  if(action==='export')exportView(decks.filter(d=>d.id===id));
  if(action==='export-all')exportView(decks);
- if(action==='export-json'&&exportTarget){exportData(exportTarget);message('Saved a Knox backup (.json).','ok');}
- if(action==='export-csv'&&exportTarget){exportCsv(exportTarget);message('Saved a spreadsheet (.csv).','ok');}
+ if(action==='export-json'&&exportTarget){const ok=await exportData(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a Knox backup (.json).','ok');}
+ if(action==='export-csv'&&exportTarget){const ok=await exportCsv(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a spreadsheet (.csv).','ok');}
  if(action==='export-text'&&exportTarget){try{await navigator.clipboard.writeText(toTabText(exportTarget));message(`Copied ${exportTarget.reduce((n,d)=>n+d.cards.length,0)} cards — paste them anywhere.`,'ok');}catch{message('Your browser blocked copying. Use the Spreadsheet option instead.');}}
  if(action==='import-paste'){const cards=parsePasted(panel.querySelector('#fcPaste')?.value);openCards(cards,'Pasted cards');}
  if(action==='import-to-make'&&importNote){const files=importNote.files;importNote=null;makeView();await takeFiles(files);}
@@ -779,7 +790,7 @@ panel.addEventListener('click',async e=>{
  if(action==='sample'){b.disabled=true;try{await sampleDeck();}finally{b.disabled=false;}}
  if(action==='due'||action==='practice')start(id,action==='due');
  if(action==='flip'&&session)flip();
- if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;if(s.reviewed===5||(!s.queue.length&&s.reviewed>=3))window.knoxFlameFest?.studied();study();}
+ if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;if(window.knoxAppShell&&window.currentUser?.uid)window.dispatchEvent(new CustomEvent('knox-study-completed',{detail:{uid:window.currentUser.uid,id:s.id+':'+(s.mobileId||=crypto.randomUUID())+':'+s.reviewed,kind:'review'}}));if(s.reviewed===5||(!s.queue.length&&s.reviewed>=3))window.knoxFlameFest?.studied();study();}
  if(action==='import')importView();
  }catch(err){message(err.message);}
 });
@@ -787,3 +798,28 @@ panel.addEventListener('click',async e=>{
 // already turns Space into a click, so leave that to the browser.
 document.addEventListener('keydown',e=>{if(e.target?.id==='fcMakeReq'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();panel.querySelector('[data-action="make-go"]')?.click();return;}if(!panel.hidden&&session&&e.key==='Escape'){e.preventDefault();home();return;}if(panel.hidden||!session||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'&&e.target.tagName==='BUTTON')return;const action=e.code==='Space'?'flip':({'1':'again','2':'good','3':'easy'}[e.key]);const b=action&&panel.querySelector(`[data-action="${action}"]`);if(b){e.preventDefault();b.click();}});
 load();
+
+// App tabs (iPhone app and home-screen version) suspend the panel without discarding an editor, files or review.
+if(window.knoxAppShell){
+ let mobileOpened=false;
+ window.knoxFlashcardsMobile={
+  async show(){if(!canSee())return false;if(!mobileOpened || identity!==key()){await open();mobileOpened=!panel.hidden;}else{document.body.classList.add('knox-flashcards');panel.hidden=false;}return !panel.hidden;},
+  hide(){if(!panel.hidden)mobileOpened=true;document.body.classList.remove('knox-flashcards');panel.hidden=true;},
+  addFiles:takeFiles,
+  // The app's top-right buttons: + starts Make with Knox, the clock goes down to your decks.
+  async make(){if(panel.querySelector('.fc-loading')||(dirty&&!(await confirmLeave())))return false;makeView();panel.querySelector('.fc-scroll')?.scrollTo(0,0);return true;},
+  async showDecks(){
+   if(panel.querySelector('.fc-loading')||(dirty&&!(await confirmLeave())))return false;
+   dirty=false;if(!panel.querySelector('#fcDecks'))home();
+   const scroller=panel.querySelector('.fc-scroll'),spot=panel.querySelector('.fc-search-wrap')||panel.querySelector('#fcDecks'),chip=document.querySelector('.km-mode-chip');
+   if(scroller&&spot){const room=(chip?.getBoundingClientRect().bottom||scroller.getBoundingClientRect().top+60)-scroller.getBoundingClientRect().top+12;scroller.scrollTo({top:scroller.scrollTop+spot.getBoundingClientRect().top-scroller.getBoundingClientRect().top-room,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
+   return true;
+  },
+  summary(){const uid=syncUid()||'guest';return {uid,decks:identity!==key()?[]:decks.map(d=>({id:d.id,title:d.title,count:d.cards.length,due:studyQueue(d.cards,true).length}))};},
+  async refreshSummary(){const uid=syncUid();if(identity!==key())load();if(uid&&!editing&&!session&&!makeOpts.reading&&!panel.querySelector('.fc-loading'))await pullDecks();return window.knoxFlashcardsMobile.summary();},
+  async review(id){if(!canSee())return false;if(identity!==key())load();if(!decks.some(d=>d.id===id))return false;if(!(await open()))return false;const deck=decks.find(d=>d.id===id);if(!deck)return false;start(id,studyQueue(deck.cards,true).length>0);return true;}
+ };
+ window.addEventListener('knox-auth-changed',()=>{mobileOpened=false;});
+ window.addEventListener('online',()=>{if(syncUid()){pushDecks();pullDecks();}});
+ window.dispatchEvent(new Event('knox-mobile-data'));
+}

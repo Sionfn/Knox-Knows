@@ -14,6 +14,7 @@
   const flame = (outer, inner, edge) => FILL(`<path d="M12 2c1 3.2 5.5 5.6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.6 1.3-4.4 2.6-5.6.2 1.7 1 2.8 2.1 3.2C10.6 7.8 11 4.6 12 2Z" fill="${outer}" stroke="${edge}" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12.5c1.2 1.3 2.6 2.4 2.6 4.3a2.6 2.6 0 0 1-5.2 0c0-1.4.8-2.4 1.6-3 .1.6.4 1 .9 1.2.1-1 .1-1.7.1-2.5Z" fill="${inner}"/>`, 'kk-flame');
 
   const L = {
+    chat: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6A8.4 8.4 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/>',
     cap: '<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/>',
     up: '<path d="M7 10v12M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 8a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.8a2 2 0 0 0 1.8-1.1L12 2a3.1 3.1 0 0 1 3 3.9Z"/>',
     down: '<path d="M17 14V2M9 18.1 10 14H4.2a2 2 0 0 1-1.9-2.6l2.3-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.8a2 2 0 0 0-1.8 1.1L13 22a3.1 3.1 0 0 1-3-3.9Z"/>',
@@ -96,7 +97,7 @@
     '✍': 'pencil', '⌨': 'keyboard', '🎟': 'ticket', '🐾': 'paw', '💳': 'card', '❌': 'xcircle', '😕': 'frown', '✂': 'scissors',
   };
   // Line icons get a color of their own where there's no better one around.
-  const TINT = { cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
+  const TINT = { chat: '#FF6B00', cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
 
   function KI(name, opts = {}) {
     if (F[name]) return F[name];

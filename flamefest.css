@@ -269,3 +269,19 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 :is(#streakPill, .discord-slime-badge, .ff-style) .knox-flame, #streakFlame, .ff-myflame-icon { display: inline-block; transition: scale .2s ease-out; }
 .fp-charging :is(#streakFlame, .knox-flame), .fp-charging:is(.knox-flame) { scale: 1.45; transition: scale 1.5s ease-in; }
 @media (prefers-reduced-motion: reduce) { .fp-charging :is(#streakFlame, .knox-flame), .fp-charging:is(.knox-flame) { scale: 1; } }
+
+/* Slime in the 3D peek: iPhone doesn't redraw animations inside the darkened
+   back layers, so only the front wobbled. Wobble every layer as one instead
+   (scale on the layer itself, which iPhone does redraw); the drips stay on the
+   front copy only. */
+.fp-layer .flame-slime .slime-body { animation: none; }
+.fp-layer.fp-depth .flame-slime .slime-drip { display: none; }
+.fp-layer:has(.flame-slime) { transform-origin: 50% 88%; animation: fpSlimeWobble 1.8s ease-in-out infinite; }
+@keyframes fpSlimeWobble {
+  0%, 100% { scale: 1 1; }
+  20% { scale: 1.1 .9; }
+  40% { scale: .93 1.08; }
+  60% { scale: 1.05 .96; }
+  80% { scale: .98 1.02; }
+}
+@media (prefers-reduced-motion: reduce) { .fp-layer:has(.flame-slime) { animation: none; } }

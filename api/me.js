@@ -7,11 +7,12 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
-import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
+import { tierOf, LIMITS, MEGA_PLAN, BANKS, plusUsesCredits } from "./_plans.js";
 import discordLink from "./_discord-link.js";
 import testerPlan from "./_tester-plan.js";
 import support from "./_support.js";
 import { learnReviewRoute } from "./_learn-review.js";
+import transcribe from "./_transcribe.js";
 import notes from "./_notes.js";
 
 if (!getApps().length) {
@@ -91,6 +92,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "tester-plan") return testerPlan(req, res);
   // Knox Support chat + the team's inbox (see api/_support.js).
   if (req.query?.route === "support") return support(req, res);
+  // Talk to Knox: a short recording becomes text (see api/_transcribe.js).
+  if (req.query?.route === "transcribe") return transcribe(req, res, { db, auth: adminAuth });
   // The Binder's notes (see api/_notes.js).
   if (req.query?.route === "notes") return notes(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -133,7 +136,8 @@ export default async function handler(req, res) {
 
     let used, limit, remaining, resetInMs;
 
-    if (tier === "paid") {
+    const plusCredits = planTierName === "plus" && plusUsesCredits(userData, now);
+    if (tier === "paid" && !plusCredits) {
       const usageSnap = await userRef.collection("usage").doc("rolling").get();
       const log    = usageSnap.exists ? (usageSnap.data().log || []) : [];
       const recent = log.filter(ts => now - ts < PLUS_WINDOW_MS);
@@ -153,28 +157,29 @@ export default async function handler(req, res) {
       // every page load with no existing record would invent a fresh
       // "starts now" countdown, which is why the timer looked like it kept
       // resetting to 24h — it genuinely was, because nothing was ever saved.
-      const bankRef = userRef.collection("usage").doc("bank");
+      const bank = BANKS[plusCredits ? "plus" : "free"];
+      const bankRef = userRef.collection("usage").doc(bank.doc);
       // The read and any regeneration must be atomic with /api/ask's spend;
       // otherwise a simultaneous page refresh can overwrite a new charge.
       const { balance, lastRegenAt } = await db.runTransaction(async tx => {
         const bankSnap = await tx.get(bankRef);
         if (!bankSnap.exists) {
-          tx.set(bankRef, { balance: FREE_STARTING_BALANCE, lastRegenAt: now, updatedAt: new Date().toISOString() });
-          return { balance: FREE_STARTING_BALANCE, lastRegenAt: now };
+          tx.set(bankRef, { balance: bank.start, lastRegenAt: now, updatedAt: new Date().toISOString() });
+          return { balance: bank.start, lastRegenAt: now };
         }
         const d = bankSnap.data();
-        let balance = typeof d.balance === 'number' ? d.balance : FREE_STARTING_BALANCE;
+        let balance = typeof d.balance === 'number' ? d.balance : bank.start;
         let lastRegenAt = d.lastRegenAt || now;
         const daysElapsed = Math.floor((now - lastRegenAt) / oneDayMs());
         if (daysElapsed > 0) {
-          balance = Math.max(balance, Math.min(FREE_MAX_BALANCE, balance + daysElapsed * FREE_DAILY_REGEN)); // keeps Flame Fest bonus questions
+          balance = Math.max(balance, Math.min(bank.max, balance + daysElapsed * bank.regen)); // keeps Flame Fest bonus questions
           lastRegenAt += daysElapsed * oneDayMs();
           tx.set(bankRef, { balance, lastRegenAt, updatedAt: new Date().toISOString() }, { merge: true });
         }
         return { balance, lastRegenAt };
       });
       remaining = balance;
-      limit     = FREE_MAX_BALANCE;
+      limit     = bank.max;
       used      = Math.max(0, limit - balance);
       resetInMs = balance < limit ? Math.max(0, (lastRegenAt + oneDayMs()) - now) : 0;
     }
@@ -197,7 +202,7 @@ export default async function handler(req, res) {
       tier: planTierName, // 'free' | 'plus' | 'mega'
       planStatus: userData.planStatus || "none",
       trialDenied: userData.trialDenied || null, // a repeat free trial was refused (see webhook.js)
-      usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" },
+      usage: { used, limit, remaining, resetInMs, isDailyBank: tier === "free" || plusCredits, plusCredits, regen: plusCredits ? BANKS.plus.regen : BANKS.free.regen },
       streak,
       studiedToday,
     });

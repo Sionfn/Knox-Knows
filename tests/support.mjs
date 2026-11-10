@@ -119,6 +119,27 @@ test('Newest conversations are selected after sorting the full student inbox', a
   assert.equal(r.body.chats.at(-1).id, 'c15');
 });
 
+test('in-app deletion request is authenticated, confirmed, idempotent and visible to the team without AI', async () => {
+ const s=await setup();
+ for(const body of [{action:'request-account-deletion'},{action:'request-account-deletion',confirmation:'delete'},
+  {action:'request-account-deletion',confirmation:'DELETE',uid:OTHER.uid}])assert.equal((await s.call(STUDENT,body)).code,400);
+ const body={action:'request-account-deletion',confirmation:'DELETE'};
+ const [a,b]=await Promise.all([s.call(STUDENT,body),s.call(STUDENT,body)]);
+ assert.equal(a.code,202);assert.equal(a.body.requestId,b.body.requestId);assert.equal(s.state.aiCalls,0);
+ const ticket=s.chat(a.body.requestId);assert.equal(ticket.uid,STUDENT.uid);assert.equal(ticket.status,'waiting');assert.equal(ticket.teamUnread,true);
+ assert.equal(ticket.accountDeletion.status,'requested');assert.equal(s.state.cancels.length,0);
+ assert.match(ticket.messages.at(-1).text,/remains active/);
+ assert.equal(s.store.get('accountDeletionRequests/'+STUDENT.uid).requestId,a.body.requestId);
+ const inbox=await s.call(OWNER,{action:'desk-list'});assert.ok(inbox.body.chats.some(c=>c.id===a.body.requestId));
+ const outsider=await s.call(OTHER,{action:'get',id:a.body.requestId});assert.equal(outsider.code,404);
+});
+test('deletion requests remain stored and visible when email delivery fails',async()=>{
+ const s=await setup();s.state.emailFails=true;
+ const r=await s.call(STUDENT,{action:'request-account-deletion',confirmation:'DELETE'});
+ assert.equal(r.code,202);assert.equal(s.chat(r.body.requestId).status,'waiting');
+ assert.ok([...s.store.keys()].some(k=>k.startsWith('supportNotifications/')));
+});
+
 test('Support email failures persist, recover on polling, and are not sent again', async () => {
   const s = await setup();
   s.state.emailFails = true;

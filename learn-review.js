@@ -64,11 +64,11 @@
     const p = panel(); if (!p) return;
     p.replaceChildren(); document.getElementById('welcomeScreen')?.classList.remove('has-learn-review');
     const n = data.items.length;
-    if (!n) { p.hidden = true; return; }
+    if (!n && !window.knoxAppShell) { p.hidden = true; return; }
     p.hidden = false;
     const b = document.createElement('button'); b.type = 'button'; b.className = 'lr-peek';
     b.setAttribute('aria-label', 'Show Review from your lessons');
-    b.append(icon(), Object.assign(document.createElement('span'), { textContent: n + (n === 1 ? ' review topic' : ' review topics') }));
+    b.append(icon(), Object.assign(document.createElement('span'), { textContent: n ? n + (n === 1 ? ' review topic' : ' review topics') : 'Show lesson review' }));
     b.onclick = () => {
       if (!same(user.uid, view, rev)) return;
       try { localStorage.removeItem(hideKey(user.uid)); } catch {}
@@ -119,9 +119,13 @@
       const review = document.createElement('button'); review.type = 'button'; review.className = 'lr-start'; review.textContent = 'Review →'; review.setAttribute('aria-label','Review ' + item.label);
       review.onclick = () => {
         if (!same(user.uid,view,rev)) return;
+        const input = field(); if (!input) return;
+        if (window.knoxAppShell && (input.value.trim() || window._appImage || window._appDoc)) {
+          status.textContent = 'Send or clear your current draft before starting a review.';
+          return;
+        }
         window.openLearnMode(); window._learnStyle = 'quiz';
         const text = 'Help me review ' + item.label + '. Start with one fresh application question, then adapt to my answer.';
-        const input = field(); if (!input) return;
         input.value = text; input.dispatchEvent(new Event('input',{bubbles:true})); input.focus();
         pending = {uid:user.uid,sessionId:window._learnSessionId,id:item.id,text};
       };

@@ -111,13 +111,13 @@
   });
   function openSims() {
     window.closeCalc?.();
-    document.body.classList.add('knox-sims');
+    document.body.classList.add('knox-bsims');
     simsPanel.hidden = false;
     setNavActive();
     window.closeMobileHistory?.();
     if (!simsView.querySelector('.bs-big') || !isMega()) simsHome();
   }
-  function closeSims() { document.body.classList.remove('knox-sims'); simsPanel.hidden = true; }
+  function closeSims() { document.body.classList.remove('knox-bsims'); simsPanel.hidden = true; }
   window.closeSims = closeSims;
   window.openSims = () => openBinder('sims');
   // Plan or account changes: redraw so the lock matches.

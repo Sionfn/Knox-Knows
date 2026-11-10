@@ -218,7 +218,7 @@
     const b = e.target.closest('[data-k]');
     if (!b || b.disabled) return;
     const k = b.dataset.k;
-    if (k === 'back') { window.closeCalc?.(); return; }
+    if (k === 'back') { if(window.knoxMobile)window.knoxMobile.calculatorBack();else window.closeCalc?.(); return; }
     if (k === 'clear-history') { st.history = []; store.set('knoxCalcHistory', []); render(); return; }
     if (k === 'copy' || k === 'send' || k === 'explain') return act(k);
     b.classList.add('kc-pressed'); setTimeout(() => b.classList.remove('kc-pressed'), 120);
@@ -229,6 +229,7 @@
     const answer = M.format(st.done.value), line = `${st.done.expr} = ${answer}`;
     if (k === 'copy') { navigator.clipboard?.writeText(answer).then(() => toast('Copied ' + answer), () => toast('Couldn’t copy — select the answer instead')); return; }
     const text = k === 'send' ? line : `Can you explain how to work out ${st.done.expr}? I got ${answer}.`;
+    if(window.knoxMobile){window.knoxMobile.calculatorDraft(k==='send'?'chat':'learn',text);return;}
     // Each button goes where its color says: Explain it → Learn (purple) teaches
     // the steps, Send to Knox → Ask Knox (orange). Already there? Stay in that chat.
     const switching = k === 'explain' ? !window._learnModeActive : !!window._learnModeActive;

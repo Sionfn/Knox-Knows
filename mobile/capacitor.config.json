@@ -3,19 +3,13 @@
   "appName": "Knox Knows",
   "webDir": "www",
   "server": {
-    "url": "https://www.knoxknowsapp.com/app",
-    "cleartext": false,
-    "allowNavigation": [
-      "knoxknowsapp.com",
-      "www.knoxknowsapp.com",
-      "knox-knows.firebaseapp.com",
-      "accounts.google.com",
-      "*.stripe.com"
-    ]
+    "hostname": "localhost",
+    "iosScheme": "capacitor",
+    "errorPath": "offline.html"
   },
   "ios": {
     "contentInset": "never",
-    "backgroundColor": "#FF6B00",
+    "backgroundColor": "#FFF8F0",
     "limitsNavigationsToAppBoundDomains": false
   },
   "plugins": {
@@ -23,13 +17,23 @@
       "skipNativeAuth": true,
       "providers": [
         "google.com",
-        "apple.com"
+        "apple.com",
+        "microsoft.com"
       ]
     },
     "StatusBar": {
       "overlaysWebView": false,
       "style": "DARK",
-      "backgroundColor": "#FF6B00"
+      "backgroundColor": "#FFF8F0"
+    },
+    "Keyboard": {
+      "resize": "native"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFF8F0",
+      "showSpinner": false
     }
   }
 }

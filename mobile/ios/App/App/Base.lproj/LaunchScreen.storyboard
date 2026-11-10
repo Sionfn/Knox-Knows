@@ -12,11 +12,22 @@
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <imageView key="view" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Splash" id="snD-IY-ifK">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                    </imageView>
+                    <view key="view" contentMode="scaleToFill" id="launch-view">
+                        <rect key="frame" x="0" y="0" width="375" height="667"/>
+                        <subviews>
+                          <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="KnoxLaunch" translatesAutoresizingMaskIntoConstraints="NO" id="launch-logo"><rect key="frame" x="119.5" y="249.5" width="136" height="136"/></imageView>
+                          <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Knox Knows" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="launch-name"><rect key="frame" x="95" y="405.5" width="185" height="34"/><fontDescription key="fontDescription" type="system" weight="heavy" pointSize="28"/><color key="textColor" red="0.22" green="0.16" blue="0.11" alpha="1" colorSpace="custom" customColorSpace="sRGB"/></label>
+                        </subviews>
+                        <color key="backgroundColor" red="1" green="0.97255" blue="0.94118" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                          <constraint firstItem="launch-logo" firstAttribute="centerX" secondItem="launch-view" secondAttribute="centerX" id="logo-x"/>
+                          <constraint firstItem="launch-logo" firstAttribute="centerY" secondItem="launch-view" secondAttribute="centerY" constant="-16" id="logo-y"/>
+                          <constraint firstItem="launch-logo" firstAttribute="width" constant="136" id="logo-w"/>
+                          <constraint firstItem="launch-logo" firstAttribute="height" constant="136" id="logo-h"/>
+                          <constraint firstItem="launch-name" firstAttribute="centerX" secondItem="launch-view" secondAttribute="centerX" id="name-x"/>
+                          <constraint firstItem="launch-name" firstAttribute="top" secondItem="launch-logo" secondAttribute="bottom" constant="20" id="name-y"/>
+                        </constraints>
+                    </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
@@ -24,7 +35,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="Splash" width="1366" height="1366"/>
+        <image name="KnoxLaunch" width="512" height="512"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>

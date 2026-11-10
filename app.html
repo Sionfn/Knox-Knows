@@ -64,6 +64,19 @@
     (function () {
       var cap = window.Capacitor;
       window.knoxNativeApp = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+      // The website opened from an iPhone home-screen icon gets the app's screens
+      // too (app-shell/); in a browser it stays the normal website. ?shell=1 previews it.
+      var force = /[?&]shell=1\b/.test(location.search), off = /[?&]shell=0\b/.test(location.search);
+      try { if (force) sessionStorage.setItem('knoxShell', '1'); if (off) sessionStorage.removeItem('knoxShell'); force = force || sessionStorage.getItem('knoxShell') === '1'; } catch (e) {}
+      var standalone = navigator.standalone === true || !!(window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+      var phone = !!(window.matchMedia && matchMedia('(max-width: 900px)').matches);
+      var webShell = !window.knoxNativeApp && !off && (force || (standalone && phone));
+      window.knoxAppShell = window.knoxNativeApp || webShell;
+      if (webShell) {
+        window.knoxMobileConfig = { version: 'web', apiOrigin: location.origin };
+        window.knoxShellBase = '/app-shell/';
+        document.documentElement.classList.add('native-app', 'web-shell');
+      }
       if (!window.knoxNativeApp) return;
       document.documentElement.classList.add('native-app');
       if (cap.getPlatform && cap.getPlatform() === 'ios') document.documentElement.classList.add('native-ios');
@@ -2563,6 +2576,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   #appHeader #appGuestBtns .header-signup-btn { padding-left: 9px; padding-right: 9px; font-size: 10px; }
 }
 </style>
+<script>
+  // Home-screen version: load the app's screens after the website's own styles (see the top of <head>).
+  if (window.knoxAppShell && !window.knoxNativeApp) document.write('<link rel="stylesheet" href="/app-shell/native.css"><script src="/app-shell/draft-store.js" defer><\/script><script src="/app-shell/native-pages.js" defer><\/script><script src="/app-shell/study-model.js" defer><\/script><script src="/app-shell/native-ui.js" defer><\/script><script src="/app-shell/extras.js" defer><\/script>');
+</script>
 </head>
 <body class="app-auth-pending">
 <div id="statusTint" aria-hidden="true"></div>
@@ -3272,6 +3289,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       'auth/account-exists-with-different-credential':
                                         'An account with this email exists with a different sign-in method.',
       'auth/missing-email':            'Please enter your email.',
+      'auth/operation-not-allowed':    'That sign-in option isn\u2019t turned on yet. Try another one.',
     };
     if (code in map) return map[code];
     return 'Something went wrong. Please try again.';
@@ -3493,7 +3511,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const cfg = window.userTier === 'mega'
           ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
           : planTier(plan) === 'paid'
-          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: '50 credits a day' }
           : { cls: 'free',  icon: '🪙', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
@@ -3657,11 +3675,14 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       usage.classList.add('unlimited');
       text.textContent = window.userTier === 'mega' ? (isCompact ? '💎 Mega' : '💎 Mega Knox') : (isCompact ? '⚡ Plus' : '⚡ Knox Plus'); // short on phones
       setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
-      return;
+      // Knox Plus moves to daily credits (Dec 1): the server says whether this
+      // account uses them, so Plus keeps going to read its balance.
+      if (window.userTier === 'mega') return;
+    } else {
+      usage.classList.remove('unlimited');
+      // Free from here on: never leave a Knox Plus "⚡" behind while the count loads.
+      setUsageShort(window._knoxUsageState?.tier === 'free' ? String(window._knoxUsageState.left) : '');
     }
-    usage.classList.remove('unlimited');
-    // Free from here on: never leave a Knox Plus "⚡" behind while the count loads.
-    setUsageShort(window._knoxUsageState?.tier === 'free' ? String(window._knoxUsageState.left) : '');
 
     try {
       // Read from /api/me instead of Firestore directly — it now creates
@@ -3684,7 +3705,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // The plan can finish loading while this request is in flight. If the
       // server says this is a paid account, show the Knox Plus pill — never the
       // abuse-only safety ceiling as if it were a question count.
-      if (window._viewAs !== 'free' && (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false)) {
+      if (window._viewAs !== 'free' && (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false) && !u.plusCredits) {
         usage.style.display = 'inline-flex';
         usage.classList.remove('danger');
         usage.classList.add('unlimited');
@@ -3692,12 +3713,23 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
         return;
       }
-      const left = window._viewAs === 'free' || typeof u.remaining !== 'number' ? FREE_STARTING_BALANCE : u.remaining;
+      const plusCredits = !!u.plusCredits && window._viewAs !== 'free';
+      const max = plusCredits ? (u.limit || 200) : FREE_MAX_BALANCE, regen = plusCredits ? (u.regen || 50) : FREE_DAILY_REGEN;
+      const left = window._viewAs === 'free' || typeof u.remaining !== 'number' ? (plusCredits ? regen : FREE_STARTING_BALANCE) : u.remaining;
       const now = Date.now();
       const lastRegenAt = now - ((oneDayMs()) - (u.resetInMs || 0)); // derive the real anchor from resetInMs
       // Stash the raw numbers so openUsageInfo() (triggered on click) can
       // build a full, live-ticking explanation panel without another call.
-      window._knoxUsageState = { tier: 'free', left, lastRegenAt, now };
+      window._knoxUsageState = { tier: plusCredits ? 'plus' : 'free', left, lastRegenAt, now, max, regen };
+      if (plusCredits) {
+        usage.style.display = 'inline-flex';
+        usage.classList.remove('unlimited');
+        usage.title = 'Tap to see how credits work';
+        text.textContent = isCompact ? `⚡ ${left}/${max}` : `⚡ ${left} credits left`;
+        setUsageShort(String(left));
+        usage.classList.toggle('danger', left <= 2);
+        return;
+      }
 
       usage.style.display = 'inline-flex';
       usage.title = 'Tap to see how questions work';
@@ -3773,6 +3805,26 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         </ul>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
       `;
+    } else if (tier === 'paid' && window._knoxUsageState?.tier === 'plus') {
+      // Knox Plus with daily credits (from Dec 1).
+      const st = window._knoxUsageState;
+      const atMax = st.left >= st.max;
+      html = `
+        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
+        <span class="usage-info-plan">⚡ Knox Plus</span>
+        <h3>${st.left} credit${st.left === 1 ? '' : 's'} left</h3>
+        <p class="usage-info-next">${atMax ? `You're at your max saved balance.` : `+${st.regen} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
+        <div class="usage-info-divider"></div>
+        <p><strong>How this works:</strong></p>
+        <ul>
+          <li>You get <strong>${st.regen} credits every 24 hours</strong> — exactly 24h after your last refill.</li>
+          <li>Unused credits save up, up to <strong>${st.max} total</strong> (4 days' worth) — so you have plenty for a big test night.</li>
+          <li>A typed question costs <strong>1 credit</strong>; a photo or file costs <strong>${PHOTO_CREDIT_COST}</strong>.</li>
+          <li>🎓 <strong>Learn mode</strong> charges once per topic, and the whole back-and-forth after that is free.</li>
+          <li>Flashcard decks up to 15 cards, longer Learn lessons and faster support.</li>
+        </ul>
+        ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">💎 Mega Knox is unlimited — see Mega</button>'}
+      `;
     } else if (tier === 'paid') {
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
@@ -3833,11 +3885,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // second, so it genuinely counts down (hh:mm:ss) instead of showing a
     // static snapshot that's only accurate the instant the panel opened.
     if (_usageCountdownInterval) clearInterval(_usageCountdownInterval);
-    if (tier !== 'paid') {
+    if (tier !== 'paid' || window._knoxUsageState?.tier === 'plus') {
       const st = window._knoxUsageState || {};
       const left = typeof st.left === 'number' ? st.left : FREE_STARTING_BALANCE;
       const nextRegenAt = (st.lastRegenAt || Date.now()) + oneDayMs();
-      if (left < FREE_MAX_BALANCE) {
+      if (left < (st.max || FREE_MAX_BALANCE)) {
         const tick = () => {
           const clockEl = document.getElementById('usageCountdownClock');
           if (!clockEl) { clearInterval(_usageCountdownInterval); return; } // panel closed
@@ -3935,6 +3987,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     }
     window.currentUser = user || null;
     window.dispatchEvent(new Event('knox-auth-changed'));
+    // Only Firebase's restored authenticated identity may unlock local decks.
+    // Do not wait for server-only plan/history reads when launching offline.
+    if (window.knoxNativeApp && navigator.onLine === false) {
+      window.userPlan = 'free'; window.userTier = 'free';
+      updatePlanUI(); resolvedAuthUid = user?.uid || null;
+      await window.knoxRestoreSection?.(); window.finishAppLoading(); return;
+    }
     if (user) {
       // The guest limit banner ("You've used your free question! Sign up
       // free...") has its own fixed div (#guestCta) that used to only get
@@ -4646,6 +4705,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   //    reads exactly like Claude's history: the full thread, not just the
   //    question re-typed into the box. ──
   window.openConversation = async function(conversationId) {
+  window.knoxMobileReveal?.();
     if (!window.currentUser) return;
     window.closeCalc?.();
     const viewVersion = ++window._appViewVersion;
@@ -4803,7 +4863,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window.settleLearnActions?.();
 
       window.showChatThread();
-      window.scrollChat();
+      if (window.knoxShowAnswer) window.knoxShowAnswer(); else window.scrollChat();
       return true;
     } catch (e) {
       if (window._appViewVersion === viewVersion && window.currentUser?.uid === uid) highlightNav(priorNav);
@@ -4943,6 +5003,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   function buildMessageActionsHtml(fbId, showFeedback) {
     let html = '<div class="feedback-bar">' +
       '<button class="fb-btn fb-copy" onclick="appCopyAnswer(\'' + fbId + '\', this)" aria-label="Copy answer" title="Copy">' + COPY_ICON + '</button>';
+    if (window.knoxNativeApp) html += '<button class="fb-btn" onclick="window.knoxNativeShareAnswer?.(\'' + fbId + '\')" aria-label="Share answer" title="Share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V3m-4 4 4-4 4 4M6 12H4v9h16v-9h-2"/></svg></button>';
     if (showFeedback) {
       html +=
         '<button class="fb-btn fb-up" onclick="appHandleFeedback(\'' + fbId + '\',1,this)" aria-label="Good answer" title="Good answer">' + THUMB_UP_ICON + '</button>' +
@@ -4950,6 +5011,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         '<span class="fb-thanks" aria-live="polite"></span>';
     }
     html += '</div>';
+    // In the app: one tap to keep studying from this answer.
+    if (window.knoxAppShell && showFeedback) html += '<div class="km-answer-actions">' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'simpler\')">' + (window.KI ? window.KI('spark', { tint: false }) : '') + ' Explain simpler</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'similar\')">' + (window.KI ? window.KI('refresh', { tint: false }) : '') + ' Similar problem</button>' +
+      '<button type="button" onclick="window.knoxAnswerAction?.(\'' + fbId + '\',\'cards\')">' + (window.KI ? window.KI('cards', { tint: false }) : '') + ' Make flashcards</button></div>';
     return html;
   }
   window.buildMessageActionsHtml = buildMessageActionsHtml;
@@ -5000,9 +5066,31 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     }
   }
 
+  // Popup sign-in shared by Microsoft and (outside the iPhone app) Apple.
+  async function popupSignIn(provider) {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      window.currentUser = result.user;
+      const isNew = result._tokenResponse?.isNewUser;
+      closeAuthModal();
+      if (isNew) {
+        sendWelcomeEmailCall(result.user);
+        showWelcomeModal(result.user.displayName);
+      }
+    } catch (e) {
+      const msg = authErrorMessage(e);
+      if (msg) showAuthError(msg);
+    }
+  }
+
   window.appHandleAppleLogin = async function() {
     clearAuthMsgs();
-    if (!nativeAuth) return;
+    if (!nativeAuth) {
+      // Home-screen app (and later the website): Apple's own popup.
+      const p = new OAuthProvider('apple.com');
+      p.addScope('email'); p.addScope('name');
+      return popupSignIn(p);
+    }
     try {
       const r = await nativeAuth.signInWithApple();
       const credential = new OAuthProvider('apple.com').credential({ idToken: r.credential?.idToken, rawNonce: r.credential?.nonce });
@@ -5048,21 +5136,19 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   window.appHandleMicrosoftLogin = async function() {
     clearAuthMsgs();
-    try {
-      const p = new OAuthProvider('microsoft.com');
-      p.setCustomParameters({ prompt: 'select_account' });
-      const result = await signInWithPopup(auth, p);
-      window.currentUser = result.user;
-      const isNew = result._tokenResponse?.isNewUser;
-      closeAuthModal();
-      if (isNew) {
-        sendWelcomeEmailCall(result.user);
-        showWelcomeModal(result.user.displayName);
+    if (nativeAuth?.signInWithMicrosoft) {
+      try {
+        const r = await nativeAuth.signInWithMicrosoft();
+        await finishNativeSignIn(new OAuthProvider('microsoft.com').credential({ idToken: r.credential?.idToken, accessToken: r.credential?.accessToken, rawNonce: r.credential?.nonce }), r.user?.displayName);
+      } catch (e) {
+        if (nativeCancelled(e)) return;
+        showAuthError(nativeAuthError(e, 'Microsoft'));
       }
-    } catch (e) {
-      const msg = authErrorMessage(e);
-      if (msg) showAuthError(msg);
+      return;
     }
+    const p = new OAuthProvider('microsoft.com');
+    p.setCustomParameters({ prompt: 'select_account' });
+    return popupSignIn(p);
   };
 
   window.appHandleEmailSignin = async function() {
@@ -5134,6 +5220,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window._conversation = [];
       updatePlanUI();
       if (window.appStartNewChat) window.appStartNewChat();
+      window.knoxMobile?.showHome?.();
     } catch (e) { /* silent */ }
   };
 
@@ -5150,7 +5237,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.sendWelcomeEmailCall = sendWelcomeEmailCall;
 
   // ── Payments ────────────────────────────────────────────────
-  window.goToPricing = function() { if (window.knoxNativeApp) return; window.location.href = '/about#pricing'; };
+  window.goToPricing = function() { if (window.knoxNativeApp) return; if (window.knoxOpenPlans) return window.knoxOpenPlans(); window.location.href = '/about#pricing'; }; // the home-screen version has its own Plans page
 
   function showPaymentSuccessModal() { window.showKnoxBillingStatus(); }
   window.showPaymentSuccessModal = showPaymentSuccessModal;
@@ -5335,6 +5422,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
                );
     del.style.cssText = 'display:block;text-align:center;padding:10px;font-size:12px;font-weight:700;color:#9CA3AF;text-decoration:none;';
     del.textContent = 'Delete my account';
+    if (window.knoxNativeApp) { del.href = '#'; del.onclick = e => { e.preventDefault(); window.knoxRequestAccountDeletion?.(); }; }
     delWrap.appendChild(del);
     el.appendChild(delWrap);
 
@@ -5415,7 +5503,7 @@ function showChatThread() {
 // One set of account/theme controls: sidebar on desktop, compact header on mobile.
 function placeAppControls() {
   const controls = document.querySelector('.header-right');
-  const destination = window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
+  const destination = !window.knoxAppShell && window.innerWidth > 900 ? $('sidebarControlsSlot') : $('appHeader');
   if (controls && destination && controls.parentElement !== destination) {
     destination.appendChild(controls);
     window.closeUserDropdown?.();
@@ -5429,7 +5517,7 @@ function placeAppControls() {
     // profile button). Desktop guests: no dock is shown, so keep the toggle
     // in the status row on the same line as the credit pill. Mobile: status row.
     const isGuest = document.body.classList.contains('app-guest');
-    const themeDestination = (window.innerWidth > 900 && !isGuest) ? dock : status;
+    const themeDestination = (!window.knoxAppShell && window.innerWidth > 900 && !isGuest) ? dock : status;
     if (theme && themeDestination && theme.parentElement !== themeDestination) themeDestination.appendChild(theme);
     if (settings && status && settings.parentElement !== status) status.appendChild(settings);
   }
@@ -5466,6 +5554,7 @@ window.showLearnBar = function() {
 };
 
 window.appStartNewChat = function() {
+  window.knoxMobileReveal?.();
   window._appViewVersion++;
   // Close the calculator if it's open — otherwise clicking Ask Knox while
   // the calculator is up left the calc modal covering the (reset) chat,
@@ -5502,6 +5591,7 @@ window.appStartNewChat = function() {
 // just flagged so every real question in this session gets Knox's Socratic
 // LEARN_PROMPT instead of the default direct-answer behavior. ──
 window.openLearnMode = function() {
+  window.knoxMobileReveal?.();
   // Guests can open Learn and look around; starting a lesson asks them to
   // sign up (free) — see learnNeedsAccount() in appHandleAsk.
   window._appViewVersion++;
@@ -5528,7 +5618,7 @@ window.openLearnMode = function() {
   const sub   = document.querySelector('.welcome-sub');
   if (badge) badge.innerHTML = '🎓 Learn with Knox';
   if (title) title.innerHTML = 'What do you want<br><span class="welcome-accent">to learn today?</span>';
-  if (sub)   sub.textContent = "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand." +
+  if (sub)   sub.textContent = (window.knoxAppShell ? "I'll guide you to the answer so you actually understand it." : "I'll guide you to the answer instead of just handing it over — ask about anything you want to actually understand.") +
     (window.currentUser ? '' : ' Sign up free to start a lesson.');
   updateSuggestionChipsForMode(true);
   window.learnReviewUI?.refresh();
@@ -5537,7 +5627,8 @@ window.openLearnMode = function() {
   const learnNav = document.querySelector('.sidebar-quicknav-link[data-nav="learn"]');
   if (learnNav) learnNav.classList.add('sidebar-nav-active');
 
-  document.getElementById('appChatInput')?.focus();
+  // In the app, opening Learn shows the lesson screen first; the keyboard waits for a tap.
+  if (!window.knoxAppShell) document.getElementById('appChatInput')?.focus();
 };
 
 // A guest in Learn who sends a question: every guest message counts toward 3
@@ -5561,7 +5652,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '<span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
+  if (badge) badge.innerHTML = '<span class="season-hide">' + (window.knoxAppShell && window.KI ? window.KI('chat') : '🦊') + ' Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>'; // the app uses Knox's chat icon
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);
@@ -5741,8 +5832,8 @@ window.closeMobileHistory = function() {
 // as one picked with the upload button — same size cap, same error
 // message, same attached-pill UI.
 let imageSelectionVersion = 0;
-async function fitImageForUpload(file) {
-  if (file.size <= 2_900_000) return file;
+async function fitImageForUpload(file, maxBytes = 2_900_000) {
+  if (file.size <= maxBytes) return file;
   const objectUrl = URL.createObjectURL(file);
   try {
     const image = new Image();
@@ -5753,15 +5844,15 @@ async function fitImageForUpload(file) {
     });
     // Most phone photos are larger than Vercel's safe JSON body size once
     // base64-encoded. Resize only those photos; leave smaller originals intact.
-    for (const maxEdge of [2600, 2200, 1800]) {
+    for (const maxEdge of (maxBytes < 1_000_000 ? [1800, 1500, 1200] : [2600, 2200, 1800])) {
       const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
       canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-      for (const quality of [0.9, 0.82, 0.72]) {
+      for (const quality of (maxBytes < 1_000_000 ? [0.8, 0.7, 0.6] : [0.9, 0.82, 0.72])) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-        if (blob && blob.size <= 2_900_000) {
+        if (blob && blob.size <= maxBytes) {
           const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
           return new File([blob], name, { type: 'image/jpeg' });
         }
@@ -5773,36 +5864,68 @@ async function fitImageForUpload(file) {
   }
 }
 
-async function handleImageFile(file, displayName, keepVersion) {
+async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
   if (!file) return;
   const selectionVersion = keepVersion || ++imageSelectionVersion;
+  const selectionUid = window.currentUser?.uid || null, selectionView = window._appViewVersion;
+  const obsolete = () => selectionVersion !== imageSelectionVersion || (window.currentUser?.uid || null) !== selectionUid || window._appViewVersion !== selectionView;
+  // Claim this selection before awaiting crop so older picks and old accounts cannot replace it.
+  if (window.knoxCropPhoto && !displayName && !keepVersion && /^image\/(jpeg|png|webp)$/.test(file.type)) {
+    file = await window.knoxCropPhoto(file, reviewOptions);
+    if (!file || obsolete()) return;
+  }
+  // App photo screen: "Solve it" sends as soon as the photo is attached, but only
+  // into an empty box. Typed text or another attachment means it's just attached.
+  // Mega Knox: a new page joins the photo already attached (up to 5 in one message).
+  const addPage = !!file.knoxAddPage && !!window._appImage && !window._appDoc && window.userTier === 'mega' && (window._appPages || []).length < 4;
+  const sendWhenReady = !!file.knoxSend && !window._appDoc && !$('appChatInput')?.value.trim() && (addPage || !window._appImage);
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
     return;
   }
   let uploadFile;
-  try { uploadFile = await fitImageForUpload(file); }
+  try {
+    uploadFile = await fitImageForUpload(file);
+    // Several pages travel in one request, so each is kept smaller.
+    if (addPage && uploadFile) {
+      uploadFile = await fitImageForUpload(uploadFile, 650_000);
+      const first = window._appImage;
+      if (first && !first.small && first.dataUrl) {
+        const smaller = await fitImageForUpload(new File([await (await fetch(first.dataUrl)).blob()], first.name || 'page-1.jpg', { type: first.type }), 650_000);
+        const url = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = no; r.readAsDataURL(smaller); });
+        if (window._appImage === first) window._appImage = { ...first, data: url.split(',')[1], type: smaller.type, dataUrl: url, small: true };
+      }
+    }
+  }
   catch (error) { console.error('Could not prepare photo:', error); }
-  if (selectionVersion !== imageSelectionVersion) return;
+  if (obsolete()) return;
   if (!uploadFile) {
     alert('Could not prepare this photo. Try a closer crop of the question or a different image.');
     return;
   }
   const reader = new FileReader();
   reader.onload = (ev) => {
-    if (selectionVersion !== imageSelectionVersion) return;
+    if (obsolete()) return;
     const dataUrl = String(ev.target.result);
     const base64  = dataUrl.split(',')[1];
-    window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
+    if (addPage && window._appImage) {
+      window._appPages = [...(window._appPages || []), { data: base64, type: uploadFile.type, name: uploadFile.name, dataUrl }].slice(0, 4);
+    } else {
+      window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
+      window._appPages = [];
+    }
     window._appDoc = null;
+    const pageCount = 1 + (window._appPages || []).length;
     const pill  = $('appImagePill');
     if (pill) pill.classList.remove('is-doc', 'is-reading');
     const thumb = $('appImagePillThumb');
     const name  = $('appImagePillName');
-    if (thumb) thumb.src = dataUrl;
-    if (name)  name.textContent  = displayName || uploadFile.name;
+    if (thumb) thumb.src = window._appImage.dataUrl;
+    if (name)  name.textContent  = pageCount > 1 ? pageCount + ' pages' : (displayName || uploadFile.name);
     if (pill)  pill.style.display = 'inline-flex';
+    if (sendWhenReady && !window._appAskBusy && !$('appChatInput')?.value.trim()) setTimeout(() => { if (!obsolete()) window.appHandleAsk?.(); }, 0);
+    else if (file.knoxAgain && pageCount < 5) setTimeout(() => { if (!obsolete()) window.knoxMobile?.snap?.(); }, 350); // next page
   };
   reader.readAsDataURL(uploadFile);
 }
@@ -5928,6 +6051,7 @@ window.appClearImage = function() {
   // can reappear after the student removes it or sends a different message.
   imageSelectionVersion++;
   window._appImage = null;
+  window._appPages = [];
   window._appDoc = null;
   const pill = $('appImagePill');
   if (pill) { pill.style.display = 'none'; pill.classList.remove('is-doc', 'is-reading'); }
@@ -5944,7 +6068,7 @@ if (_ci) {
     // Enter while an IME is composing (Chinese, Japanese, Korean keyboards)
     // confirms the character — it must not send a half-typed question.
     if (e.isComposing || e.keyCode === 229) return;
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !window.knoxAppShell) {
       e.preventDefault();
       window.appHandleAsk();
     }
@@ -6403,6 +6527,7 @@ window.appHandleAsk = async function() {
   if (sendBtn) sendBtn.disabled = true;
 
   showChatThread();
+  window.knoxMobile?.saveDraft?.();
   if (input) { input.value = ''; input.style.height = 'auto'; }
 
   // ── Build user message with optional image preview ─────────
@@ -6455,6 +6580,7 @@ window.appHandleAsk = async function() {
   scrollChat();
 
   const image = window._appImage;
+  const pages = image ? [...(window._appPages || [])] : []; // Mega multi-page photos
   const doc = window._appDoc;
   const historyPhoto = image?.dataUrl && requestUid ? window.knoxHistoryPhoto(image.dataUrl) : null;
   window.appClearImage();
@@ -6486,6 +6612,7 @@ window.appHandleAsk = async function() {
     }
     if (image && !window._appImage && imageSelectionVersion === clearedImageVersion) {
       window._appImage = image;
+      window._appPages = pages;
       $('appImagePillThumb').src = image.dataUrl;
       $('appImagePillName').textContent = image.name || 'Image attached';
       $('appImagePill').style.display = 'flex';
@@ -6517,6 +6644,7 @@ window.appHandleAsk = async function() {
         question:  q,
         image:     sendImage?.data,
         imageType: sendImage?.type,
+        pages:     pages.length && sendImage === source && source?.data === image?.data ? pages.map(p => ({ data: p.data, type: p.type })) : undefined,
         document:  sendDocument ? { name: sendDocument.name, text: sendDocument.text } : undefined,
         history,
         learnMode: requestLearnMode,
@@ -6526,6 +6654,7 @@ window.appHandleAsk = async function() {
         renewLearn: renewLearn || undefined,
         // Smart search: in Ask Knox, Knox searches the web when the question needs it.
         webSearch: !requestLearnMode || undefined,
+        language: window.knoxAnswerLanguage?.() || undefined,
         // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
         simulations: (!requestLearnMode && window.userTier === 'mega' && window.knoxSimsOn?.(requestUid)) || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
@@ -6619,6 +6748,8 @@ window.appHandleAsk = async function() {
     // Small talk is a one-line chat reply: no Copy / 👍 / 👎 icons under it.
     replaceThinking(thinkId, html, data.isCasual ? '' : window.buildMessageActionsHtml(fbId, !!window.currentUser), '');
 
+    if (window.knoxAppShell && requestUid && !data.isCasual && answer.trim()) window.dispatchEvent(new CustomEvent('knox-study-completed', {detail:{uid:requestUid,id:fbId,kind:'answer',lessonId:requestLearnSessionId,completed:requestLearnMode && !!parseLearnExtras(answer).recap,streak:Number(document.getElementById('streakCount')?.textContent)||0}}));
+
     // Track conversation
     // Keep the document's text in the conversation so follow-up questions
     // ("now explain question 3") can still see it.
@@ -6644,6 +6775,7 @@ window.appHandleAsk = async function() {
     const message = requestUser && !idToken ? 'Please sign in again before sending your question.' : 'Knox could not finish this request. Your draft is available below; check your connection and try again.';
     replaceThinking(thinkId, '<p style="color:var(--red);font-weight:800;">' + escHtml(message) + '</p>');
   } finally {
+    if (window._appViewVersion === requestView && (window.currentUser?.uid || null) === requestUid) window.knoxMobile?.saveDraft?.(true);
     clearTimeout(requestTimeout);
     slowNotes.forEach(clearTimeout);
     // Nothing was saved (an error, a limit…): a refresh clears the "just sent" History row.
@@ -6685,7 +6817,8 @@ function replaceThinking(thinkId, html, actionsHtml = '', modelLabel = '') {
     '</div>';
   thinking.replaceWith(row);
   settleLearnActions();
-  scrollChat();
+  // The app opens at the start of Knox's answer; the website keeps following the bottom.
+  if (window.knoxShowAnswer) window.knoxShowAnswer(row); else scrollChat();
 }
 
 // ── Render the upgrade card for rate-limit errors ──────────
@@ -7092,6 +7225,7 @@ document.addEventListener('keydown', (e) => {
 
 // ═══════ CALCULATOR ═══════════════════════════════════════════
 window.openCalc = function() {
+  window.knoxMobileReveal?.();
 
   // Remember which view was showing (welcome vs. an active chat) so
   // "Back to chat" can restore the right one, then swap to the calculator
@@ -7229,9 +7363,9 @@ if (savedQuestion) {
   finish();
 })();
 
-// In the native app the logo stays in the app instead of opening the
-// marketing page (it has pricing and checkout).
-if (window.knoxNativeApp) {
+// In the app (and the home-screen version) the logo stays in the app instead
+// of opening the marketing page.
+if (window.knoxAppShell) {
   document.querySelectorAll('a[href="/about"]').forEach(a => { a.href = '/app'; a.removeAttribute('title'); });
 }
 
@@ -7290,9 +7424,11 @@ window.addEventListener('pagehide', () => {
   const nav = document.querySelector('.sidebar-body .sidebar-quicknav');
   const calc = $('calcModal');
   const current = () => {
+    if (window.knoxAppShell && document.body.classList.contains('knox-mobile-home')) return 'home';
+    if (window.knoxAppShell && document.body.classList.contains('knox-mobile-account')) return 'account';
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
     if (document.body.classList.contains('knox-notes')) return 'notes';
-    if (document.body.classList.contains('knox-sims')) return 'sims';
+    if (document.body.classList.contains('knox-bsims')) return 'sims';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
   };
