@@ -258,8 +258,6 @@ function addMenu(){
   if(typeof open==='function')window.openAuthModal=function(){back=document.activeElement;const r=open.apply(this,arguments);requestAnimationFrame(()=>{if(!modal.contains(document.activeElement))x.focus({preventScroll:true});});return r;};
   if(typeof close==='function')window.closeAuthModal=function(){const was=modal.style.display!=='none';const r=close.apply(this,arguments);if(was&&back?.isConnected&&!back.matches('input,textarea'))back.focus?.({preventScroll:true});back=null;return r;};
  }}
-// The app has Light and Dark only (no Fall look).
-if(window.knoxTheme?.()==='seasonal')window.knoxSetTheme?.('light');
 // Every floating Knox bobs on the same clock, so switching between Ask, Learn
 // and Flashcards never shows it jump.
 // Fall look: the website's scene (sky, sun, drifting leaves, oak branch) sits
