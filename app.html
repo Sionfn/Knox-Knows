@@ -2536,12 +2536,14 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <script src="/theme.js" defer></script>
 <script src="/pumpkin-patch.js" defer></script>
 <link rel="stylesheet" href="/flamefest.css">
+<link rel="stylesheet" href="/sims.css">
 <script src="/flamefest.js" defer></script>
 <link rel="stylesheet" href="/tour.css">
 <script src="/tour.js" defer></script>
 <link rel="stylesheet" href="/learn-review.css">
 <script src="/learn-review.js" defer></script>
 <script src="/learn-visuals.js" defer></script>
+<script src="/sims.js" defer></script>
 <link rel="stylesheet" href="/gift.css">
 <script src="/gift.js" defer></script>
 <script src="/payment-status.js" defer></script>
@@ -5187,6 +5189,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.showWelcomeModal = showWelcomeModal;
 
   // ── Settings ────────────────────────────────────────────────
+  // Mega Knox "Simulations" (Beta, off by default, saved on this device).
+  window.knoxSimsOn = function(uid) {
+    try { return !!uid && localStorage.getItem('knoxSims:' + uid) === '1'; } catch (_) { return false; }
+  };
   window.openAppSettings = function() {
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
@@ -5220,6 +5226,29 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
 
+    const mega = window.userTier === 'mega';
+    if (mega || !window.knoxNativeApp) {
+      // Mega Knox: "Simulations" (off by default, saved on this device). With it
+      // on, Ask Knox can add a hands-on simulation with sliders to an answer.
+      const sm = document.createElement('div'); sm.className = 'settings-websearch';
+      sm.innerHTML = '<span class="ws-copy"><span class="settings-label">🎛️ Simulations <span class="ws-beta">Beta</span></span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
+      const smNote = sm.querySelector('small'), smSw = sm.querySelector('.settings-switch');
+      const showSm = on => {
+        smSw.setAttribute('aria-checked', String(on));
+        smNote.textContent = !mega ? '💎 Mega Knox — Knox adds a hands-on simulation with sliders when it helps.'
+          : on ? 'On — in Ask Knox, Knox adds a simulation you can play with when it helps (graphs, motion, probability, interest…).'
+          : 'Off — turn on so Knox can add a simulation with sliders to math and science answers.';
+      };
+      smSw.setAttribute('aria-label', 'Simulations');
+      showSm(mega && window.knoxSimsOn(u.uid));
+      smSw.onclick = () => {
+        if (!mega) { goToPricing(); closeAppSettings(); return; }
+        const on = smSw.getAttribute('aria-checked') !== 'true';
+        try { localStorage.setItem('knoxSims:' + u.uid, on ? '1' : '0'); } catch (_) {}
+        showSm(on);
+      };
+      el.appendChild(sm);
+    }
 
     // Connections: Discord (linked with /link in the Knox server). Shows whether
     // it's connected and lets the student disconnect or connect it here.
@@ -6497,6 +6526,8 @@ window.appHandleAsk = async function() {
         renewLearn: renewLearn || undefined,
         // Smart search: in Ask Knox, Knox searches the web when the question needs it.
         webSearch: !requestLearnMode || undefined,
+        // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
+        simulations: (!requestLearnMode && window.userTier === 'mega' && window.knoxSimsOn?.(requestUid)) || undefined,
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
       }),
@@ -6581,7 +6612,7 @@ window.appHandleAsk = async function() {
     // Small talk in Learn mode isn't a lesson step: no "Lesson" heading.
     const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
-    window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer, mode: requestLearnMode ? 'learn' : 'ask' };
+    window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer.replace(/^[ \t]*(?:\*\*)?Sim:.*$/gim, '').trim(), mode: requestLearnMode ? 'learn' : 'ask' };
 
     // Copy is always shown (works for guests too); the 👍/👎
     // only for signed-in users, same as before.
@@ -6948,7 +6979,12 @@ function renderAnswerHtml(text, kind = 'answer') {
   if (!text) return '';
   const learnX = kind === 'learn' ? parseLearnExtras(text) : null;
   if (learnX) text = learnX.clean;
-  let webSources = '';
+  let webSources = '', simCard = '';
+  // Mega "Simulations": one "Sim: type | key=value, …" line becomes a hands-on card (sims.js).
+  if (kind !== 'learn') {
+    const sim = /^[ \t]*(?:[-*•][ \t]+)?(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*(?:\|[^\n]{0,160})?)[ \t]*$/im.exec(text);
+    if (sim) { text = (text.slice(0, sim.index) + text.slice(sim.index + sim[0].length)).replace(/\n{3,}/g, '\n\n').trim(); simCard = '<div class="knox-sim" data-sim="' + escHtml(sim[1].trim()) + '"></div>'; }
+  }
   const web = kind === 'learn' ? null : /\n*🌐 Searched the web\n((?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)\s*$/.exec(text);
   if (web) { text = text.slice(0, web.index); webSources = webSourcesHtml(web[1]); }
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
@@ -7014,7 +7050,7 @@ function renderAnswerHtml(text, kind = 'answer') {
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
   return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap, learnX.practice, learnX.assessment) + learnPlanHtml(learnX) : '') +
-    '<div class="knox-response-body">' + html + '</div>' + webSources +
+    '<div class="knox-response-body">' + html + simCard + '</div>' + webSources +
     (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean, learnX.assessment)) : '');
 }
 
