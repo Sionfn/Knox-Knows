@@ -525,12 +525,12 @@ async function navigate(target){
   saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
   const from=current;
-  if(!['notes','sims'].includes(target)){window.closeNotes?.();closeSims();}
+  if(!['notes','sims'].includes(target)){window.closeNotes?.();typeof closeSims==='function'&&closeSims();}
   if(['flashcards','notes','sims'].includes(target)){try{localStorage.setItem('knoxBinderTab',target);}catch{}}
   if(target==='notes'||target==='sims'){
    window.knoxFlashcardsMobile?.hide();window.closeCalc?.();
-   if(target==='notes'){closeSims();if(!window.openNotes){note('Notes is still opening. Try again in a moment.');return;}await window.openNotes();}
-   else{window.closeNotes?.();openSims();}
+   if(target==='notes'){typeof closeSims==='function'&&closeSims();if(!window.openNotes){note('Notes is still opening. Try again in a moment.');return;}await window.openNotes();}
+   else{window.closeNotes?.();typeof openSims==='function'&&openSims();}
    surface(null);current=target;sync();quiet(p.haptics.selectionChanged());return true;
   }
   if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
