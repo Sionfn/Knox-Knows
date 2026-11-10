@@ -655,7 +655,7 @@ if(historyPanel){
  const empty=document.createElement('p');empty.className='km-history-empty';empty.textContent='No matches in loaded history. Try another word or load more.';empty.hidden=true;body?.before(empty);
  search.addEventListener('input',filter);if(body)new MutationObserver(filter).observe(body,{childList:true,subtree:true,characterData:true});
 }
-window.knoxMobile={navigate,note,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
+window.knoxMobile={navigate,note,snap,saveDraft,openConversation:openSaved,showHome(){surface('home');sync();},
  async calculatorBack(){window.closeCalc?.();if(['home','account'].includes(calculatorReturn))surface(calculatorReturn);else if(calculatorReturn==='flashcards')await window.knoxFlashcardsMobile?.show();sync();},
  async calculatorDraft(target,text){if(!(await navigate(target)))return;const input=$('appChatInput');input.value=input.value?input.value+'\n'+text:text;input.dispatchEvent(new Event('input',{bubbles:true}));input.focus();},refreshHome:pages.render,drafts:()=>drafts.list(owner),resumeDraft,clearDrafts(){drafts.clear(owner);note('Unsent text drafts cleared. Saved chats and decks are unchanged.');pages.render();}};
 })();

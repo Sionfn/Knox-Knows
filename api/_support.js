@@ -37,7 +37,7 @@ What you can't do: refund, cancel, change a plan or see card details. Never say 
 
 Knox facts:
 - Plans: Free; Knox Plus $9.99/month or $79.99/year; Mega Knox $12.99/month or $99.99/year. Same AI on every plan. Mega Knox monthly has a 3-day free trial for first-time subscribers.
-- Free plan: starts with 10 questions, 5 more come back each day (save up to 20); a photo or file counts as 2. Flame Fest rewards can add bonus questions above 20. Plus and Mega are unlimited.
+- Free plan: starts with 10 questions, 5 more come back each day (save up to 20); a photo or file counts as 2. Flame Fest rewards can add bonus questions above 20. Knox Plus gets 50 credits a day (save up to 200) starting Dec 1, 2026; people who subscribed to Plus before then keep unlimited until their next renewal. Mega Knox is unlimited and can send up to 5 photos in one message.
 - Learn mode: teaches step by step. On Free, starting a lesson uses 1 question and the rest of that lesson is free. Lessons run up to 20 replies on Free, 30 on Plus, 50 on Mega.
 - Cancel: profile → Account & Plan → Manage Billing → cancel. They keep their plan until the end of the time paid for. Cancelling during a free trial means no charge.
 - Refunds: full refund within 7 days of the first payment on a monthly plan, or 14 days on a yearly plan. Purchases made before November 1, 2026 keep a 30-day window. After the window, payments and renewals aren't refundable, but they can cancel anytime. Gift codes are refundable only if not redeemed yet.

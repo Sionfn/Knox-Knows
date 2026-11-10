@@ -3522,7 +3522,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const cfg = window.userTier === 'mega'
           ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
           : planTier(plan) === 'paid'
-          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: '50 credits a day' }
           : { cls: 'free',  icon: '🪙', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
@@ -3686,11 +3686,14 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       usage.classList.add('unlimited');
       text.textContent = window.userTier === 'mega' ? (isCompact ? '💎 Mega' : '💎 Mega Knox') : (isCompact ? '⚡ Plus' : '⚡ Knox Plus'); // short on phones
       setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
-      return;
+      // Knox Plus moves to daily credits (Dec 1): the server says whether this
+      // account uses them, so Plus keeps going to read its balance.
+      if (window.userTier === 'mega') return;
+    } else {
+      usage.classList.remove('unlimited');
+      // Free from here on: never leave a Knox Plus "⚡" behind while the count loads.
+      setUsageShort(window._knoxUsageState?.tier === 'free' ? String(window._knoxUsageState.left) : '');
     }
-    usage.classList.remove('unlimited');
-    // Free from here on: never leave a Knox Plus "⚡" behind while the count loads.
-    setUsageShort(window._knoxUsageState?.tier === 'free' ? String(window._knoxUsageState.left) : '');
 
     try {
       // Read from /api/me instead of Firestore directly — it now creates
@@ -3713,7 +3716,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // The plan can finish loading while this request is in flight. If the
       // server says this is a paid account, show the Knox Plus pill — never the
       // abuse-only safety ceiling as if it were a question count.
-      if (window._viewAs !== 'free' && (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false)) {
+      if (window._viewAs !== 'free' && (planTier(data.plan) === 'paid' || planTier(window.userPlan) === 'paid' || u.isDailyBank === false) && !u.plusCredits) {
         usage.style.display = 'inline-flex';
         usage.classList.remove('danger');
         usage.classList.add('unlimited');
@@ -3721,12 +3724,23 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         setUsageShort(window.userTier === 'mega' ? '💎' : '⚡');
         return;
       }
-      const left = window._viewAs === 'free' || typeof u.remaining !== 'number' ? FREE_STARTING_BALANCE : u.remaining;
+      const plusCredits = !!u.plusCredits && window._viewAs !== 'free';
+      const max = plusCredits ? (u.limit || 200) : FREE_MAX_BALANCE, regen = plusCredits ? (u.regen || 50) : FREE_DAILY_REGEN;
+      const left = window._viewAs === 'free' || typeof u.remaining !== 'number' ? (plusCredits ? regen : FREE_STARTING_BALANCE) : u.remaining;
       const now = Date.now();
       const lastRegenAt = now - ((oneDayMs()) - (u.resetInMs || 0)); // derive the real anchor from resetInMs
       // Stash the raw numbers so openUsageInfo() (triggered on click) can
       // build a full, live-ticking explanation panel without another call.
-      window._knoxUsageState = { tier: 'free', left, lastRegenAt, now };
+      window._knoxUsageState = { tier: plusCredits ? 'plus' : 'free', left, lastRegenAt, now, max, regen };
+      if (plusCredits) {
+        usage.style.display = 'inline-flex';
+        usage.classList.remove('unlimited');
+        usage.title = 'Tap to see how credits work';
+        text.textContent = isCompact ? `⚡ ${left}/${max}` : `⚡ ${left} credits left`;
+        setUsageShort(String(left));
+        usage.classList.toggle('danger', left <= 2);
+        return;
+      }
 
       usage.style.display = 'inline-flex';
       usage.title = 'Tap to see how questions work';
@@ -3803,6 +3817,26 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         </ul>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
       `;
+    } else if (tier === 'paid' && window._knoxUsageState?.tier === 'plus') {
+      // Knox Plus with daily credits (from Dec 1).
+      const st = window._knoxUsageState;
+      const atMax = st.left >= st.max;
+      html = `
+        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
+        <span class="usage-info-plan">⚡ Knox Plus</span>
+        <h3>${st.left} credit${st.left === 1 ? '' : 's'} left</h3>
+        <p class="usage-info-next">${atMax ? `You're at your max saved balance.` : `+${st.regen} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
+        <div class="usage-info-divider"></div>
+        <p><strong>How this works:</strong></p>
+        <ul>
+          <li>You get <strong>${st.regen} credits every 24 hours</strong> — exactly 24h after your last refill.</li>
+          <li>Unused credits save up, up to <strong>${st.max} total</strong> (4 days' worth) — so you have plenty for a big test night.</li>
+          <li>A typed question costs <strong>1 credit</strong>; a photo or file costs <strong>${PHOTO_CREDIT_COST}</strong>.</li>
+          <li>🎓 <strong>Learn mode</strong> charges once per topic, and the whole back-and-forth after that is free.</li>
+          <li>Flashcard decks up to 15 cards, longer Learn lessons and faster support.</li>
+        </ul>
+        ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">💎 Mega Knox is unlimited — see Mega</button>'}
+      `;
     } else if (tier === 'paid') {
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
@@ -3863,11 +3897,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // second, so it genuinely counts down (hh:mm:ss) instead of showing a
     // static snapshot that's only accurate the instant the panel opened.
     if (_usageCountdownInterval) clearInterval(_usageCountdownInterval);
-    if (tier !== 'paid') {
+    if (tier !== 'paid' || window._knoxUsageState?.tier === 'plus') {
       const st = window._knoxUsageState || {};
       const left = typeof st.left === 'number' ? st.left : FREE_STARTING_BALANCE;
       const nextRegenAt = (st.lastRegenAt || Date.now()) + oneDayMs();
-      if (left < FREE_MAX_BALANCE) {
+      if (left < (st.max || FREE_MAX_BALANCE)) {
         const tick = () => {
           const clockEl = document.getElementById('usageCountdownClock');
           if (!clockEl) { clearInterval(_usageCountdownInterval); return; } // panel closed
@@ -5834,8 +5868,8 @@ window.closeMobileHistory = function() {
 // as one picked with the upload button — same size cap, same error
 // message, same attached-pill UI.
 let imageSelectionVersion = 0;
-async function fitImageForUpload(file) {
-  if (file.size <= 2_900_000) return file;
+async function fitImageForUpload(file, maxBytes = 2_900_000) {
+  if (file.size <= maxBytes) return file;
   const objectUrl = URL.createObjectURL(file);
   try {
     const image = new Image();
@@ -5846,15 +5880,15 @@ async function fitImageForUpload(file) {
     });
     // Most phone photos are larger than Vercel's safe JSON body size once
     // base64-encoded. Resize only those photos; leave smaller originals intact.
-    for (const maxEdge of [2600, 2200, 1800]) {
+    for (const maxEdge of (maxBytes < 1_000_000 ? [1800, 1500, 1200] : [2600, 2200, 1800])) {
       const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
       canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-      for (const quality of [0.9, 0.82, 0.72]) {
+      for (const quality of (maxBytes < 1_000_000 ? [0.8, 0.7, 0.6] : [0.9, 0.82, 0.72])) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-        if (blob && blob.size <= 2_900_000) {
+        if (blob && blob.size <= maxBytes) {
           const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
           return new File([blob], name, { type: 'image/jpeg' });
         }
@@ -5878,14 +5912,28 @@ async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
   }
   // App photo screen: "Solve it" sends as soon as the photo is attached, but only
   // into an empty box. Typed text or another attachment means it's just attached.
-  const sendWhenReady = !!file.knoxSend && !window._appImage && !window._appDoc && !$('appChatInput')?.value.trim();
+  // Mega Knox: a new page joins the photo already attached (up to 5 in one message).
+  const addPage = !!file.knoxAddPage && !!window._appImage && !window._appDoc && window.userTier === 'mega' && (window._appPages || []).length < 4;
+  const sendWhenReady = !!file.knoxSend && !window._appDoc && !$('appChatInput')?.value.trim() && (addPage || !window._appImage);
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     alert('That file type isn\'t supported — please use a JPEG, PNG, GIF, or WEBP image.');
     return;
   }
   let uploadFile;
-  try { uploadFile = await fitImageForUpload(file); }
+  try {
+    uploadFile = await fitImageForUpload(file);
+    // Several pages travel in one request, so each is kept smaller.
+    if (addPage && uploadFile) {
+      uploadFile = await fitImageForUpload(uploadFile, 650_000);
+      const first = window._appImage;
+      if (first && !first.small && first.dataUrl) {
+        const smaller = await fitImageForUpload(new File([await (await fetch(first.dataUrl)).blob()], first.name || 'page-1.jpg', { type: first.type }), 650_000);
+        const url = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = no; r.readAsDataURL(smaller); });
+        if (window._appImage === first) window._appImage = { ...first, data: url.split(',')[1], type: smaller.type, dataUrl: url, small: true };
+      }
+    }
+  }
   catch (error) { console.error('Could not prepare photo:', error); }
   if (obsolete()) return;
   if (!uploadFile) {
@@ -5897,16 +5945,23 @@ async function handleImageFile(file, displayName, keepVersion, reviewOptions) {
     if (obsolete()) return;
     const dataUrl = String(ev.target.result);
     const base64  = dataUrl.split(',')[1];
-    window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
+    if (addPage && window._appImage) {
+      window._appPages = [...(window._appPages || []), { data: base64, type: uploadFile.type, name: uploadFile.name, dataUrl }].slice(0, 4);
+    } else {
+      window._appImage = { data: base64, type: uploadFile.type, name: displayName || uploadFile.name, dataUrl };
+      window._appPages = [];
+    }
     window._appDoc = null;
+    const pageCount = 1 + (window._appPages || []).length;
     const pill  = $('appImagePill');
     if (pill) pill.classList.remove('is-doc', 'is-reading');
     const thumb = $('appImagePillThumb');
     const name  = $('appImagePillName');
-    if (thumb) thumb.src = dataUrl;
-    if (name)  name.textContent  = displayName || uploadFile.name;
+    if (thumb) thumb.src = window._appImage.dataUrl;
+    if (name)  name.textContent  = pageCount > 1 ? pageCount + ' pages' : (displayName || uploadFile.name);
     if (pill)  pill.style.display = 'inline-flex';
     if (sendWhenReady && !window._appAskBusy && !$('appChatInput')?.value.trim()) setTimeout(() => { if (!obsolete()) window.appHandleAsk?.(); }, 0);
+    else if (file.knoxAgain && pageCount < 5) setTimeout(() => { if (!obsolete()) window.knoxMobile?.snap?.(); }, 350); // next page
   };
   reader.readAsDataURL(uploadFile);
 }
@@ -6032,6 +6087,7 @@ window.appClearImage = function() {
   // can reappear after the student removes it or sends a different message.
   imageSelectionVersion++;
   window._appImage = null;
+  window._appPages = [];
   window._appDoc = null;
   const pill = $('appImagePill');
   if (pill) { pill.style.display = 'none'; pill.classList.remove('is-doc', 'is-reading'); }
@@ -6560,6 +6616,7 @@ window.appHandleAsk = async function() {
   scrollChat();
 
   const image = window._appImage;
+  const pages = image ? [...(window._appPages || [])] : []; // Mega multi-page photos
   const doc = window._appDoc;
   const historyPhoto = image?.dataUrl && requestUid ? window.knoxHistoryPhoto(image.dataUrl) : null;
   window.appClearImage();
@@ -6591,6 +6648,7 @@ window.appHandleAsk = async function() {
     }
     if (image && !window._appImage && imageSelectionVersion === clearedImageVersion) {
       window._appImage = image;
+      window._appPages = pages;
       $('appImagePillThumb').src = image.dataUrl;
       $('appImagePillName').textContent = image.name || 'Image attached';
       $('appImagePill').style.display = 'flex';
@@ -6622,6 +6680,7 @@ window.appHandleAsk = async function() {
         question:  q,
         image:     sendImage?.data,
         imageType: sendImage?.type,
+        pages:     pages.length && sendImage === source && source?.data === image?.data ? pages.map(p => ({ data: p.data, type: p.type })) : undefined,
         document:  sendDocument ? { name: sendDocument.name, text: sendDocument.text } : undefined,
         history,
         learnMode: requestLearnMode,
