@@ -13,7 +13,7 @@
         // is built on dark, plus the .knox-seasonal class (see seasonal.css).
         var t = localStorage.getItem('knoxTheme');
         var mo = new Date().getMonth();
-        if (t === 'seasonal' && (mo < 8 || mo > 10)) t = 'light'; // fall mode rests Dec–Aug
+        if (t === 'seasonal') t = 'light'; // December update: Fall is over
         if (t === 'dark' || t === 'seasonal') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }

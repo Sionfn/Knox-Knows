@@ -21,7 +21,8 @@
 
   // Fall mode is offered September through November. After that it rests
   // until next year: anyone still on it goes back to Light (once, with a note).
-  const fallSeason = () => { const m = new Date().getMonth(); return m >= 8 && m <= 10; };
+  // December update: Fall is over, so Light and Dark only (anyone on Fall goes back to Light).
+  const fallSeason = () => false;
   if (!fallSeason()) MODES.splice(MODES.findIndex(m => m.id === 'seasonal'), 1);
   window.knoxSetTheme = function (mode) {
     if (!MODES.some(m => m.id === mode)) mode = 'light';
