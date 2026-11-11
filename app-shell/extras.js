@@ -196,7 +196,7 @@ w.knoxAskAiPermission=askAiPermission;
    if(!(await askAiPermission()))return release();
    document.activeElement?.blur?.();
    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
-  }catch{release();note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
+  }catch(err){release();if(w.knoxAccessOff&&(!err||/NotAllowed|Permission|Security/i.test(err.name||'')))w.knoxAccessOff('microphone');else note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
   if(uid()!==owner)return release();
   const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t));
   let rec;const chunks=[];

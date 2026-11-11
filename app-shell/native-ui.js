@@ -60,10 +60,25 @@ let cameraBusy=false;
 function dismissKeyboard(){document.activeElement?.blur();quiet(p.keyboard.hide?.());}
 const mediaViewport=()=>{const v=window.visualViewport;document.documentElement.style.setProperty('--km-media-height',(v?.height||innerHeight)+'px');document.documentElement.style.setProperty('--km-media-top',(v?.offsetTop||0)+'px');};
 window.visualViewport?.addEventListener('resize',mediaViewport);window.visualViewport?.addEventListener('scroll',mediaViewport);addEventListener('resize',mediaViewport);mediaViewport();
+// Camera / photos / microphone access. iOS asks once on its own; if access is
+// off, Knox explains and opens Knox's page in iPhone Settings in one tap.
+const ACCESS={camera:['📷','Camera','Turn on Camera for Knox so you can snap your homework.'],photos:['🖼️','Photos','Turn on Photos for Knox so you can send a picture of your homework.'],microphone:['🎤','Microphone','Turn on Microphone for Knox so you can ask out loud.']};
+function accessOff(kind){const [icon,name,why]=ACCESS[kind]||ACCESS.camera;const d=dialog(icon+' '+name+' is off for Knox',why+' Tap Open Settings, turn on '+name+', then come back.');button(d,'Open Settings',()=>{d.close();try{location.href='app-settings:';}catch{}},'primary');button(d,'Close',()=>d.close());d.showModal();}
+window.knoxAccessOff=accessOff;
+async function cameraAccess(kind){
+ if(!native||!p.camera.checkPermissions)return true;
+ try{
+  let v=(await p.camera.checkPermissions())?.[kind];
+  if(v==='prompt'||v==='prompt-with-rationale')v=(await p.camera.requestPermissions({permissions:[kind]}))?.[kind];
+  if(v==='denied'){accessOff(kind);return false;}
+ }catch{}
+ return true;
+}
 async function takePhoto(source,intoCards=false){
  if(cameraBusy||window._appAskBusy){note('Let Knox finish this step before adding a photo.');return;}cameraBusy=true;dismissKeyboard();
  const uid=window.currentUser?.uid, version=window._appViewVersion;
  try{
+  if(source==='CAMERA'&&!(await cameraAccess('camera')))return;
   const photo=await p.camera.getPhoto({source,resultType:'uri',quality:85,width:2200,height:2200,correctOrientation:true});
   if(uid!==window.currentUser?.uid || version!==window._appViewVersion)return;
   const blob=await (await fetch(photo.webPath)).blob();
@@ -71,7 +86,7 @@ async function takePhoto(source,intoCards=false){
   const type=blob.type||'image/jpeg',ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg';
   const file=new File([blob],'Knox photo.'+ext,{type});
   if(intoCards)await window.knoxFlashcardsMobile?.addFiles([file]);else await window.handleImageFile?.(file);
- }catch(err){if(!/cancel|dismiss/i.test(err?.message||''))note('Could not open photos. Check Knox’s camera/photo access in iPhone Settings.');}
+ }catch(err){const m=err?.message||'';if(/cancel|dismiss/i.test(m))return;if(/permission|denied|access|authoriz/i.test(m))accessOff(source==='CAMERA'?'camera':'photos');else note('Knox couldn’t open '+(source==='CAMERA'?'the camera':'your photos')+'. Try again.');}
  finally{cameraBusy=false;}
 }
 function attachments(intoCards=false){
@@ -584,21 +599,23 @@ quiet(p.network.getStatus().then(connection));quiet(p.network.addListener('netwo
 window.addEventListener('offline',()=>{offline.hidden=false;document.documentElement.classList.add('native-offline');});window.addEventListener('online',()=>{offline.hidden=true;document.documentElement.classList.remove('native-offline');window.knoxRefreshPlan?.();});
 // The web shell uses actual visualViewport changes in extras.js; focusing a
 // field with a hardware keyboard must not collapse the whole study screen.
-// iPhone app: the web view keeps its size (Keyboard resize "none") and the
-// layout makes room for the keyboard by animating --kb alongside it, the way
-// native apps move their text bar, instead of the whole screen jumping.
-const KR=document.documentElement,setKb=h=>KR.style.setProperty('--kb',Math.max(0,Math.round(h||0))+'px');
+// The keyboard makes room the original way (the app screen gets shorter), so the
+// text box always sits right above it. Extras for the iPhone app: no form bar,
+// and tapping outside the text box or swiping down closes the keyboard.
+const KR=document.documentElement;
+for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>KR.classList.add('native-keyboard')));
+quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
 if(window.knoxNativeApp){
  quiet(p.keyboard.setAccessoryBarVisible?.({isVisible:false}));
- quiet(p.keyboard.addListener('keyboardWillShow',info=>{KR.classList.add('native-keyboard');setKb(info?.keyboardHeight);if(scrollY)scrollTo(0,0);}));
- quiet(p.keyboard.addListener('keyboardDidShow',info=>{KR.classList.add('native-keyboard');setKb(info?.keyboardHeight);if(scrollY)scrollTo(0,0);}));
- quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setKb(0);}));
- // iOS may still nudge the page to show a focused field; the app screen itself never scrolls.
- window.addEventListener('scroll',()=>{if(scrollY||scrollX)scrollTo(0,0);},{passive:true});
-}else{
- for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>KR.classList.add('native-keyboard')));
- quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
+ const typing=()=>KR.classList.contains('native-keyboard')&&document.activeElement?.matches?.('input,textarea,[contenteditable="true"]');
+ const close=()=>{document.activeElement?.blur?.();quiet(p.keyboard.hide?.());};
+ document.addEventListener('touchstart',e=>{if(typing()&&!e.target.closest('#inputOuter,input,textarea,[contenteditable="true"],dialog,button,a,[role="button"]'))close();},{capture:true,passive:true});
+ let y0=null;document.addEventListener('touchstart',e=>{y0=typing()&&!e.target.closest('#inputOuter')?e.touches[0].clientY:null;},{passive:true});
+ document.addEventListener('touchmove',e=>{if(y0!==null&&e.touches[0].clientY-y0>28){y0=null;close();}},{passive:true});
 }
+// Background spots are placed against the phone's full height, so they stay still when the keyboard opens.
+{const stage=()=>{if(!KR.classList.contains('native-keyboard'))KR.style.setProperty('--km-stage',innerHeight+'px');};stage();addEventListener('orientationchange',()=>setTimeout(stage,400));}
+
 // The status bar sits over the app header (same color), with light text in Dark mode.
 quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
 function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}

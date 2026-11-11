@@ -9,6 +9,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = CAPBridgeViewController()
+        // Behind the app (e.g. at the keyboard's rounded corners) show Knox's background, not black.
+        let knoxBackground = UIColor(named: "LaunchBackground") ?? UIColor(red: 1, green: 0.973, blue: 0.941, alpha: 1)
+        window?.backgroundColor = knoxBackground
+        window?.rootViewController?.view.backgroundColor = knoxBackground
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)

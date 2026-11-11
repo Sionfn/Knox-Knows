@@ -28,8 +28,7 @@
       "backgroundColor": "#FFF8F0"
     },
     "Keyboard": {
-      "resize": "none",
-      "resizeOnFullScreen": false
+      "resize": "native"
     },
     "SplashScreen": {
       "launchShowDuration": 10000,

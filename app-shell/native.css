@@ -1979,10 +1979,27 @@ html.native-app:not(.web-shell) #appLoading .app-loading-content { background:tr
 html.native-app:not(.web-shell) #appLoading :is(.app-loading-logo, .app-loading-title, .app-loading-status) { display:none!important; }
 html.native-app:not(.web-shell) body.app-loading-slow #appLoading .app-loading-status { display:block!important; }
 
-/* Keyboard (iPhone app): the screen shrinks by the keyboard height in step with
-   the keyboard's own slide (iOS curve), so the text bar rides on top of it. */
-html.native-app:not(.web-shell) body { box-sizing:border-box; padding-bottom:var(--kb, 0px); transition:padding-bottom .25s cubic-bezier(.38,.7,.125,1); }
-html.native-app:not(.web-shell) .knox-app-tabs, html.native-app:not(.web-shell) .km-dock-fade { transition:opacity .15s; }
-@media (prefers-reduced-motion:reduce) { html.native-app:not(.web-shell) body { transition:none; } }
+/* Typing: the topic boxes fade and slide (GPU only) instead of collapsing, so
+   nothing else on the page jumps or stutters. */
+html.native-app:not(.web-shell) #welcomeScreen .suggestion-grid { max-height:none!important; transition:opacity .2s ease, transform .3s cubic-bezier(.2,.8,.2,1)!important; }
+html.native-app:not(.web-shell).km-typing #welcomeScreen .suggestion-grid { max-height:none!important; opacity:0; transform:translateY(12px) scale(.98); pointer-events:none; }
+@media (prefers-reduced-motion:reduce) { html.native-app:not(.web-shell) #welcomeScreen .suggestion-grid { transition:none!important; } }
+/* Ask/Learn background: the blue ball is placed against the full phone height. */
+html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) calc((var(--km-stage,874px) - 160px) * .66),color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),var(--surface); }
+html.native-app[data-theme="dark"]:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange) 10%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) calc((var(--km-stage,874px) - 160px) * .66),color-mix(in srgb,var(--blue) 9%,transparent) 0 190px,transparent 191px),var(--surface); }
 
 html.native-app { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+/* Home: "Help & about" section (same heading style as the rest of Home). */
+.km-home-foot { text-align:center; }
+.km-home-foot > .km-section-heading { text-align:left; }
+.km-about-card { display:flex; align-items:center; gap:12px; margin:0 0 12px; padding:14px; border:2px solid var(--orange); border-radius:20px; background:var(--surface); box-shadow:0 4px 0 var(--orange-dark); text-align:left; }
+.km-about-card img { flex:none; width:48px; height:48px; border-radius:14px; border:2px solid var(--orange); }
+.km-about-card p { margin:0; font:700 13.5px/1.45 Nunito,sans-serif; color:var(--text-light); }
+.km-about-card b { color:var(--text); font-weight:900; }
+
+/* Plans sheet: the way out is always obvious, a solid ✕ up top and a Done button at the end. */
+.km-pw-close { background:var(--surface)!important; color:var(--text)!important; border:2px solid var(--border)!important; box-shadow:0 3px 0 var(--border)!important; z-index:3; }
+.km-pw-close svg { width:20px; height:20px; }
+.km-pw-done { display:block; width:100%; min-height:52px; margin:18px 0 calc(8px + env(safe-area-inset-bottom,0px)); border-radius:16px; border:2px solid var(--border); background:var(--surface); color:var(--text); font:900 16px Nunito,sans-serif; box-shadow:0 4px 0 var(--border); }
+.km-pw-done:active { transform:translateY(3px); box-shadow:0 1px 0 var(--border); }
