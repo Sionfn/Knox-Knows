@@ -10,7 +10,8 @@
   "ios": {
     "contentInset": "never",
     "backgroundColor": "#FFF8F0",
-    "limitsNavigationsToAppBoundDomains": false
+    "limitsNavigationsToAppBoundDomains": false,
+    "scrollEnabled": false
   },
   "plugins": {
     "FirebaseAuthentication": {
@@ -27,13 +28,15 @@
       "backgroundColor": "#FFF8F0"
     },
     "Keyboard": {
-      "resize": "native"
+      "resize": "none",
+      "resizeOnFullScreen": false
     },
     "SplashScreen": {
-      "launchShowDuration": 1200,
-      "launchAutoHide": true,
+      "launchShowDuration": 10000,
+      "launchAutoHide": false,
       "backgroundColor": "#FFF8F0",
-      "showSpinner": false
+      "showSpinner": false,
+      "launchFadeOutDuration": 250
     }
   }
 }

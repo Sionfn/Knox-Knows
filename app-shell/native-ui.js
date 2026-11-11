@@ -584,8 +584,21 @@ quiet(p.network.getStatus().then(connection));quiet(p.network.addListener('netwo
 window.addEventListener('offline',()=>{offline.hidden=false;document.documentElement.classList.add('native-offline');});window.addEventListener('online',()=>{offline.hidden=true;document.documentElement.classList.remove('native-offline');window.knoxRefreshPlan?.();});
 // The web shell uses actual visualViewport changes in extras.js; focusing a
 // field with a hardware keyboard must not collapse the whole study screen.
-for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>document.documentElement.classList.add('native-keyboard')));
-quiet(p.keyboard.addListener('keyboardWillHide',()=>{document.documentElement.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
+// iPhone app: the web view keeps its size (Keyboard resize "none") and the
+// layout makes room for the keyboard by animating --kb alongside it, the way
+// native apps move their text bar, instead of the whole screen jumping.
+const KR=document.documentElement,setKb=h=>KR.style.setProperty('--kb',Math.max(0,Math.round(h||0))+'px');
+if(window.knoxNativeApp){
+ quiet(p.keyboard.setAccessoryBarVisible?.({isVisible:false}));
+ quiet(p.keyboard.addListener('keyboardWillShow',info=>{KR.classList.add('native-keyboard');setKb(info?.keyboardHeight);if(scrollY)scrollTo(0,0);}));
+ quiet(p.keyboard.addListener('keyboardDidShow',info=>{KR.classList.add('native-keyboard');setKb(info?.keyboardHeight);if(scrollY)scrollTo(0,0);}));
+ quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setKb(0);}));
+ // iOS may still nudge the page to show a focused field; the app screen itself never scrolls.
+ window.addEventListener('scroll',()=>{if(scrollY||scrollX)scrollTo(0,0);},{passive:true});
+}else{
+ for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>KR.classList.add('native-keyboard')));
+ quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
+}
 // The status bar sits over the app header (same color), with light text in Dark mode.
 quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
 function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
@@ -620,8 +633,12 @@ if(native)window.knoxRequestAccountDeletion=function(){
   }catch(err){status.textContent=err.message||'Could not submit your request. Please try again.';submit.disabled=false;}
  },'danger');submit.disabled=true;input.oninput=()=>{submit.disabled=input.value.trim()!=='DELETE';};const cancel=button(d,'Cancel',()=>d.close());d.showModal();
 };
-// Splash is also bounded natively; this merely ends it promptly once UI exists.
-quiet(p.splash.hide());
+// The native launch screen (Knox logo) stays up until the app has finished
+// loading the account, then fades straight into the app: no web loading card
+// in between. If loading stalls, it still lifts after 10 s so Try again shows.
+{let done=false;const hide=()=>{if(done)return;done=true;quiet(p.splash.hide({fadeOutDuration:250}));};
+ const ready=()=>!document.body.classList.contains('app-auth-pending');
+ if(ready())hide();else{const mo=new MutationObserver(()=>{if(ready()){mo.disconnect();requestAnimationFrame(()=>requestAnimationFrame(hide));}});mo.observe(document.body,{attributes:true,attributeFilter:['class']});setTimeout(()=>{mo.disconnect();hide();},10000);}}
 document.addEventListener('click',e=>{
  const fresh=e.target.closest('#mobileHistoryDrawer .sidebar-new-btn');if(fresh){e.preventDefault();e.stopImmediatePropagation();window.closeMobileHistory?.();newStudy();return;}
  const row=e.target.closest('#mobileHistoryList .sidebar-history-item[data-conversation-id]');

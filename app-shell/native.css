@@ -1950,3 +1950,39 @@ html.native-app.km-hist-learn #mobileHistoryDrawer .drawer-panel { border-top-co
 .km-beta-ico svg { width:20px; height:20px; }
 .km-beta-copy em { margin-left:0; }
 .km-beta-copy small { margin-top:6px; font-size:13px; line-height:1.45; }
+
+/* ── iPhone app fit (final word) ───────────────────────────────────────────
+   Sized like Apple's floating tab bar: a 64pt capsule that sits just above the
+   home indicator, 16pt in from the edges; page padding follows it. */
+html.native-app { --km-dock-h:64px; --km-dock-b:max(10px, calc(env(safe-area-inset-bottom, 0px) - 12px)); }
+html.native-app:not(.native-keyboard) { --mobile-tabs:calc(var(--km-dock-h) + var(--km-dock-b) + 10px - env(safe-area-inset-bottom, 0px)); }
+.knox-app-tabs { height:var(--km-dock-h)!important; bottom:var(--km-dock-b)!important; left:max(16px, env(safe-area-inset-left))!important; right:max(16px, env(safe-area-inset-right))!important; border-radius:32px!important; padding:0 6px!important; }
+html.native-app .knox-app-tabs button, html.native-app .knox-app-tabs button[aria-current="page"] { font-size:10.5px; gap:2px; }
+.knox-app-tabs button:not(.km-tab-snap) .km-tab-tile { width:36px!important; height:30px!important; }
+.knox-app-tabs button:not(.km-tab-snap) .km-tab-tile svg { width:22px!important; height:22px!important; }
+.knox-app-tabs .km-tab-snap { flex:0 0 56px!important; margin-right:2px!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile { width:48px!important; height:48px!important; }
+.knox-app-tabs .km-tab-snap .km-tab-tile svg { width:23px!important; height:23px!important; }
+.km-dock-fade { height:calc(var(--km-dock-b) + var(--km-dock-h) + 10px)!important; }
+@media (max-width:350px) { .knox-app-tabs { left:10px!important; right:10px!important; } .knox-app-tabs .km-tab-snap { flex-basis:50px!important; } .knox-app-tabs .km-tab-snap .km-tab-tile { width:44px!important; height:44px!important; } }
+
+/* App, not web page: no long-press link/image callouts or text selection on
+   controls (answers, notes and inputs stay selectable). */
+html.native-app { -webkit-touch-callout:none; }
+html.native-app :is(button, a, [role="button"], [role="tab"], img, .knox-app-tabs, .km-tool, .km-tab-tile) { -webkit-user-select:none; user-select:none; }
+html.native-app :is(input, textarea, [contenteditable="true"], .msg-knox-bubble, .msg-user-bubble) { -webkit-touch-callout:default; -webkit-user-select:text; user-select:text; }
+
+/* The iPhone app shows its native launch screen while loading, so the web
+   loading card is never needed; account switches show just a quiet spinner. */
+html.native-app:not(.web-shell) #appLoading { background:var(--cream)!important; }
+html.native-app:not(.web-shell) #appLoading .app-loading-content { background:transparent!important; border:0!important; box-shadow:none!important; }
+html.native-app:not(.web-shell) #appLoading :is(.app-loading-logo, .app-loading-title, .app-loading-status) { display:none!important; }
+html.native-app:not(.web-shell) body.app-loading-slow #appLoading .app-loading-status { display:block!important; }
+
+/* Keyboard (iPhone app): the screen shrinks by the keyboard height in step with
+   the keyboard's own slide (iOS curve), so the text bar rides on top of it. */
+html.native-app:not(.web-shell) body { box-sizing:border-box; padding-bottom:var(--kb, 0px); transition:padding-bottom .25s cubic-bezier(.38,.7,.125,1); }
+html.native-app:not(.web-shell) .knox-app-tabs, html.native-app:not(.web-shell) .km-dock-fade { transition:opacity .15s; }
+@media (prefers-reduced-motion:reduce) { html.native-app:not(.web-shell) body { transition:none; } }
+
+html.native-app { -webkit-text-size-adjust:100%; text-size-adjust:100%; }

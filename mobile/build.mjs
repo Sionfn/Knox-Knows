@@ -22,7 +22,7 @@ for(const dir of ['assets','vendor','fonts']) {
 }
 let html=await readFile(path.join(root,'app.html'),'utf8');
 html=html.replace('<script src="/desktop-fit.js"></script>','');
-html=html.replace('width=device-width, initial-scale=1.0','width=device-width, initial-scale=1.0, viewport-fit=cover');
+html=html.replace('width=device-width, initial-scale=1.0','width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
 html=html.replace(/https:\/\/www\.gstatic\.com\/firebasejs\/10\.7\.0\/(firebase-[\w-]+\.js)/g,'/vendor/$1');
 html=html.replace(/<link href="https:\/\/fonts\.googleapis\.com[^>]+>/,'<link rel="stylesheet" href="/assets/fonts.css">');
 html=html.replace('<head>','<head>\n<script src="/assets/app-config.js"></script>\n<script src="/assets/native-transport.js"></script>');
