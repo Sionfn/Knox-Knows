@@ -15,7 +15,7 @@
         // is built on dark, plus the .knox-seasonal class (see seasonal.css).
         var t = localStorage.getItem('knoxTheme');
         var mo = new Date().getMonth();
-        if (t === 'seasonal' && (mo < 8 || mo > 10)) t = 'light'; // fall mode rests Dec–Aug
+        if (t === 'seasonal') t = 'light'; // December update: Fall is over
         if (t === 'dark' || t === 'seasonal') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
@@ -30,7 +30,7 @@
     (function() {
       try {
         var v = new URLSearchParams(location.search).get('open');
-        if (v === 'learn' || v === 'calculator' || v === 'flashcards' || v === 'notes') {
+        if (v === 'learn' || v === 'calculator' || v === 'flashcards' || v === 'notes' || v === 'sims') {
           var root = document.documentElement;
           root.classList.add('knox-restoring');
           setTimeout(function() { root.classList.remove('knox-restoring'); }, 5000);
@@ -1677,17 +1677,6 @@
     .kws-title { grid-row: 2; font-size: 14px; font-weight: 800; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
     .kws-arrow { grid-row: 1 / 3; grid-column: 2; align-self: center; color: var(--text-light); }
     @media (max-width: 600px) { .knox-web-sources { margin: 0 15px 15px; } }
-    .knox-web-note { margin: 0 20px 14px; padding: 8px 12px; border-radius: 12px; background: var(--cream-warm, #FFF3E8); color: var(--text-light); font-size: 13px; font-weight: 700; }
-    .settings-switch { position: relative; flex-shrink: 0; width: 46px; height: 28px; border-radius: 99px; border: 2px solid var(--border); background: var(--border); cursor: pointer; padding: 0; transition: background .15s, border-color .15s; }
-    .settings-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .15s; }
-    .settings-switch[aria-checked="true"] { background: #F2B705; border-color: #B38600; }
-    .settings-switch[aria-checked="true"]::after { transform: translateX(18px); }
-    .settings-switch:disabled { opacity: .55; cursor: pointer; }
-    .settings-websearch { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border); }
-    .settings-websearch .ws-copy { flex: 1; min-width: 0; }
-    .settings-websearch .ws-beta { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 99px; background: #FFF3C4; border: 1.5px solid #F2B705; color: #7A5A00; font-size: 10.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
-    html[data-theme="dark"] .settings-websearch .ws-beta { background: color-mix(in srgb, #F2B705 22%, var(--surface)); color: #FFD84D; }
-    .settings-websearch .ws-copy small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
     .knox-response-body > :first-child { margin-top: 0 !important; }
     .knox-response-body > :last-child { margin-bottom: 0 !important; }
     .knox-response-body > .knox-section-card:first-child { margin-top: 0; }
@@ -3268,7 +3257,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.selectLearnSource = selectLearnSource;
   import { initializeApp } from "/vendor/firebase-app.js";
   import {
-    getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
+    getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, signInWithPopup, GoogleAuthProvider, OAuthProvider,
     signInWithCredential, getAdditionalUserInfo, signInWithEmailAndPassword, createUserWithEmailAndPassword,
     sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "/vendor/firebase-auth.js";
@@ -3287,7 +3276,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   };
 
   const fbApp = initializeApp(firebaseConfig);
-  const auth  = getAuth(fbApp);
+  // Inside the iPhone app, getAuth() waits forever for Firebase's hidden web
+  // sign-in frame (it can't load in the app's web view), so the loading screen
+  // never ends. The app keeps the session on the device instead; sign-in itself
+  // goes through the native Google/Apple/Microsoft plugin.
+  const auth  = window.knoxNativeApp
+    ? initializeAuth(fbApp, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })
+    : getAuth(fbApp);
   const db    = getFirestore(fbApp);
 
   // ── Friendly Firebase error messages ─────────────────────────
@@ -3818,7 +3813,6 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <p>Unlimited questions, no daily cap, no waiting — plus the most Knox can do.</p>
         <ul>
           <li><strong>Flashcard decks up to 40 cards</strong> — pick the difficulty, fill-in-the-blank or true/false cards.</li>
-          <li><strong>Search the web</strong> — turn it on in Account &amp; Plan and Knox checks real websites and links its sources.</li>
           <li><strong>The highest limits</strong> — files twice as long, 10 photos per deck, the longest Learn sessions.</li>
           <li><strong>Early access</strong> to new features before anyone else.</li>
           <li><strong>Fastest support</strong> and the private Mega lounge on <a href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer">Discord</a> — talk to the founder and vote on what's next.</li>
@@ -5296,9 +5290,6 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.showWelcomeModal = showWelcomeModal;
 
   // ── Settings ────────────────────────────────────────────────
-  window.knoxWebSearchOn = function(uid) {
-    try { return !!uid && localStorage.getItem('knoxWebSearch:' + uid) === '1'; } catch (_) { return false; }
-  };
   // Mega Knox "Simulations" (Beta, off by default, saved on this device).
   window.knoxSimsOn = function(uid) {
     try { return !!uid && localStorage.getItem('knoxSims:' + uid) === '1'; } catch (_) { return false; }
@@ -5336,29 +5327,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
 
-    // Mega Knox: "Search the web" (off by default, saved on this device). With it
-    // on, Ask Knox looks things up online and links its sources.
     const mega = window.userTier === 'mega';
     if (mega || !window.knoxNativeApp) {
-      const ws = document.createElement('div'); ws.className = 'settings-websearch';
-      ws.innerHTML = '<span class="ws-copy"><span class="settings-label">🌐 Search the web <span class="ws-beta">Beta</span></span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
-      const note = ws.querySelector('small'), sw = ws.querySelector('.settings-switch');
-      const show = on => {
-        sw.setAttribute('aria-checked', String(on));
-        note.textContent = !mega ? '💎 Mega Knox — Knox checks real websites and links its sources.'
-          : on ? 'On — in Ask Knox, Knox checks real websites and links its sources. Answers can take a little longer.'
-          : 'Off — turn on so Knox checks real websites and links its sources (great for essays and citations).';
-      };
-      sw.setAttribute('aria-label', 'Search the web');
-      show(mega && window.knoxWebSearchOn(u.uid));
-      sw.onclick = () => {
-        if (!mega) { goToPricing(); closeAppSettings(); return; }
-        const on = sw.getAttribute('aria-checked') !== 'true';
-        try { localStorage.setItem('knoxWebSearch:' + u.uid, on ? '1' : '0'); } catch (_) {}
-        show(on);
-      };
-      el.appendChild(ws);
-
       // Mega Knox: "Simulations" (off by default, saved on this device). With it
       // on, Ask Knox can add a hands-on simulation with sliders to an answer.
       const sm = document.createElement('div'); sm.className = 'settings-websearch';
@@ -6696,8 +6666,8 @@ window.appHandleAsk = async function() {
         learnSessionId: requestLearnSessionId,
         reviewSkillId: requestReviewSkillId,
         renewLearn: renewLearn || undefined,
-        // Mega Knox's "Search the web" setting (Account & Plan); the server checks the plan.
-        webSearch: (!requestLearnMode && window.userTier === 'mega' && window.knoxWebSearchOn?.(requestUid)) || undefined,
+        // Smart search: in Ask Knox, Knox searches the web when the question needs it.
+        webSearch: !requestLearnMode || undefined,
         language: window.knoxAnswerLanguage?.() || undefined,
         // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
         simulations: (!requestLearnMode && window.userTier === 'mega' && window.knoxSimsOn?.(requestUid)) || undefined,
@@ -6783,8 +6753,7 @@ window.appHandleAsk = async function() {
 
     const answer = data.answer || '';
     // Small talk in Learn mode isn't a lesson step: no "Lesson" heading.
-    const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer') +
-      (data.webSearch === 'unavailable' ? '<div class="knox-web-note">🌐 Knox couldn’t search the web this time, so this answer is without online sources. Try again for sources.</div>' : '');
+    const html   = renderAnswerHtml(answer, requestLearnMode && !data.isCasual ? 'learn' : 'answer');
     const fbId   = 'fb_' + Math.random().toString(36).slice(2, 8);
     window._fbPayloads[fbId] = { question: askLabel, answer: requestLearnMode ? window.knoxLearnClean(answer) : answer.replace(/^[ \t]*(?:\*\*)?Sim:.*$/gim, '').trim(), mode: requestLearnMode ? 'learn' : 'ask' };
 
@@ -7420,7 +7389,7 @@ if (window.knoxAppShell) {
 // which would otherwise close it again) but before the loading screen lifts,
 // so the section is already showing when the page appears.
 const openTarget = new URLSearchParams(location.search).get('open');
-if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards' || openTarget === 'notes') {
+if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'flashcards' || openTarget === 'notes' || openTarget === 'sims') {
   let restored = false;
   window.knoxRestoreSection = async function() {
     if (restored) return;
@@ -7435,6 +7404,7 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
       } else window.openLearnMode?.();
     }
     else if (openTarget === 'notes') { if (window.openNotes) window.openNotes(); else window.__knoxOpenNotesWhenReady = true; }
+    else if (openTarget === 'sims') { if (window.openSims) window.openSims(); else window.__knoxOpenSimsWhenReady = true; }
     else if (window.openFlashcards) window.openFlashcards();
     else window.__knoxOpenFlashcardsWhenReady = true; // flashcards.js picks this up when it loads
     document.documentElement.classList.remove('knox-restoring');
@@ -7472,6 +7442,7 @@ window.addEventListener('pagehide', () => {
     if (window.knoxAppShell && document.body.classList.contains('knox-mobile-account')) return 'account';
     if (document.body.classList.contains('knox-flashcards')) return 'flashcards';
     if (document.body.classList.contains('knox-notes')) return 'notes';
+    if (document.body.classList.contains('knox-bsims')) return 'sims';
     if (calc?.classList.contains('open')) return 'calculator';
     return nav?.querySelector('.sidebar-nav-active')?.dataset.nav === 'learn' ? 'learn' : '';
   };
