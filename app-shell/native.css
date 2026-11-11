@@ -2020,3 +2020,8 @@ html[data-theme="dark"]:not(.knox-seasonal) .km-pw-webdeal small { color:#D8C4FF
 html.native-app :is(.ff-modal, .fc-modal) { padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 14px)!important; }
 html.native-app :is(.ff-card, .fc-modal-card) { max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 28px)!important; overflow:auto; overscroll-behavior:contain; }
 html.native-app #authModal .auth-card { max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px)!important; }
+
+/* Typing on the Ask/Learn start screen: Knox (full size) and the heading sit
+   right above the text box instead of leaving a gap under them. */
+html.native-app:not(.web-shell).native-keyboard #welcomeScreen { justify-content:flex-end!important; padding-top:12px!important; padding-bottom:14px!important; }
+html.native-app:not(.web-shell).native-keyboard #welcomeScreen > .km-welcome-fox { width:72px!important; height:72px!important; border-radius:22px!important; margin-bottom:14px!important; }
