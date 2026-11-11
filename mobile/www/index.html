@@ -3400,7 +3400,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const d = snap.exists() ? snap.data() : {}, now = Date.now();
       const megaComp = d.comped === true && d.compedTier === 'mega';
       const ownTier = d.plan === 'max' || megaComp ? 'mega' : (planTier(d.plan) === 'paid' || d.comped === true) ? 'plus' : 'free';
-      const realTier = ownTier === 'mega' || Number(d.megaUntil) > now ? 'mega' : ownTier === 'plus' || Number(d.plusUntil) > now ? 'plus' : 'free';
+      // App Store subscriptions (api/_apple.js) count while appleUntil is ahead.
+      const appleTier = Number(d.appleUntil) > now ? d.appleTier : null;
+      const realTier = ownTier === 'mega' || Number(d.megaUntil) > now || appleTier === 'mega' ? 'mega' : ownTier === 'plus' || Number(d.plusUntil) > now || appleTier === 'plus' ? 'plus' : 'free';
+      window.userAppleSub = appleTier ? { tier: appleTier, until: Number(d.appleUntil), productId: d.appleProductId || '' } : null;
       window.userTierReal = realTier;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.

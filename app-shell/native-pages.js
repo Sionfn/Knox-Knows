@@ -234,11 +234,20 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
  // Honest side-by-side (api/_plans.js LIMITS).
  const COMPARE=[['Same smart Knox AI','✓','✓','✓'],['Questions','5 a day','Unlimited','Unlimited'],['Learn lesson length','20 msgs','30 msgs','50 msgs'],['Cards per AI deck','10','15','40'],['Photos per deck','5','5','10'],['File length','Standard','Standard','2× longer'],['Card styles & difficulty','—','—','✓']];
  let planBilling='monthly',planPick='';
+ // App Store plans (iPhone app). Apple shows its own prices; the website's are lower.
+ const APPLE_IDS={plus:{monthly:'com.knoxknowsapp.plus.monthly',yearly:'com.knoxknowsapp.plus.yearly'},mega:{monthly:'com.knoxknowsapp.mega.monthly',yearly:'com.knoxknowsapp.mega.yearly'}};
+ const appleStore=()=>w.Capacitor?.Plugins?.KnoxStore;
+ const appleProduct=(id,billing)=>w._knoxAppleProducts?.[APPLE_IDS[id]?.[billing]];
+ async function loadAppleProducts(){
+  if(w._knoxAppleProducts||!appleStore()?.products)return;
+  try{const r=await Promise.race([appleStore().products({ids:Object.values(APPLE_IDS).flatMap(o=>Object.values(o))}),new Promise(ok=>setTimeout(()=>ok(null),5000))]);if(r?.products?.length)w._knoxAppleProducts=Object.fromEntries(r.products.map(x=>[x.id,x]));}catch{}
+ }
  async function openPlans(){
   const inApp=!!w.knoxNativeApp; // App Store build: same Knox sheet, no in-app checkout (Apple rules)
   // US App Store only: Apple allows a link to buy on the website (with its own bonus).
   if(inApp&&w._knoxUSStore===undefined){try{const r=await Promise.race([w.Capacitor?.Plugins?.KnoxStore?.storefront?.(),new Promise(ok=>setTimeout(()=>ok(null),900))]);w._knoxUSStore=r?.countryCode==='USA';}catch{w._knoxUSStore=false;}}
   const webDeal=inApp&&w._knoxUSStore;
+  if(inApp)await loadAppleProducts();
   const {planDetails}=await model,plan=planDetails(w.userTier),cur=plan.current.id;
   let device=false;try{device=localStorage.getItem('knoxMegaTrialDevice')==='1';}catch(_){}
   const trial=!w.currentUser||(cur==='free'&&!w.megaTrialUsed&&!device);
@@ -248,10 +257,11 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   const byId=Object.fromEntries(plan.plans.map(p=>[p.id,p]));
   const draw=()=>{
    const p=byId[planPick],yearly=planBilling==='yearly',price=PRICE[p.id],showTrial=!inApp&&p.id==='mega'&&trial&&!yearly;
+   const apple=inApp?appleProduct(p.id,planBilling):null,appleTrial=!!(apple?.trialDays&&apple?.trialEligible);
    let cta;
    if(p.id===cur&&w.currentUser)cta=`<button type="button" class="km-pw-cta" disabled>✓ This is your plan</button>`;
    else if(cur==='mega'&&p.id==='plus')cta=`<button type="button" class="km-pw-cta" disabled>✓ Included in your Mega Knox</button>`;
-   else if(inApp)cta='';
+   else if(inApp)cta=apple?`<button type="button" class="km-pw-cta go km-press" data-apple="${esc(apple.id)}"><span class="km-pw-cta-shine" aria-hidden="true"></span>${appleTrial?'Start my '+apple.trialDays+'-day free trial':(cur==='plus'&&p.id==='mega'?'Upgrade to Mega Knox':'Subscribe')+' · '+esc(apple.displayPrice)+'/'+apple.period}</button>`:`<button type="button" class="km-pw-cta" disabled>App Store plans are on the way</button>`;
    else cta=`<button type="button" class="km-pw-cta go km-press" data-buy="${p.id}"><span class="km-pw-cta-shine" aria-hidden="true"></span>${p.id==='mega'?(showTrial?'Start my free trial':cur==='plus'?'Upgrade to Mega Knox':'Get Mega Knox'):'Get Knox Plus'}</button>`;
    sheet.dataset.tier=p.id;
    sheet.innerHTML=`<div class="km-pw-hero"><button type="button" class="km-pw-close km-press" data-close aria-label="Close">${svg('close')}</button>
@@ -260,9 +270,10 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
    <div class="km-pw-body">
     <div class="km-pw-switch" role="group" aria-label="Choose a plan">${['plus','mega'].map(id=>`<button type="button" data-pick="${id}" aria-pressed="${planPick===id}" data-tier="${id}">${TIER[id]} ${esc(byId[id].name)}${id===cur&&w.currentUser?'<small>Your plan</small>':''}</button>`).join('')}</div>
     <article class="km-pw-card" data-tier="${p.id}">${showTrial?'<span class="km-pw-ribbon">3 DAYS FREE</span>':''}
-     ${inApp?'':`<div class="km-billing" role="group" aria-label="Billing">${['monthly','yearly'].map(b=>`<button type="button" data-billing="${b}" aria-pressed="${planBilling===b}">${b==='monthly'?'Monthly':'Yearly <em>−'+price.save+'</em>'}</button>`).join('')}</div>
+     ${inApp?(apple?`<div class="km-billing" role="group" aria-label="Billing">${['monthly','yearly'].map(b=>`<button type="button" data-billing="${b}" aria-pressed="${planBilling===b}">${b==='monthly'?'Monthly':'Yearly'}</button>`).join('')}</div>
+     <div class="km-pw-price"><b>${esc(apple.displayPrice)}</b><span>/${apple.period}</span></div>`:''):`<div class="km-billing" role="group" aria-label="Billing">${['monthly','yearly'].map(b=>`<button type="button" data-billing="${b}" aria-pressed="${planBilling===b}">${b==='monthly'?'Monthly':'Yearly <em>−'+price.save+'</em>'}</button>`).join('')}</div>
      <div class="km-pw-price"><b>${yearly?price.yearly:price.monthly}</b><span>${yearly?'/year':'/month'}</span></div>`}
-     ${inApp?`<p class="km-pw-sub">${p.id==='mega'?'Everything Knox can do, with the highest limits.':'More questions and bigger study tools.'}</p>`:`<p class="km-pw-sub">${showTrial?'Free for 3 days, then '+price.monthly+'/month. Cancel anytime.':yearly?'Just '+price.perMonth+'/month, billed once a year.':'Billed monthly. Cancel anytime.'}</p>`}
+     ${inApp?`<p class="km-pw-sub">${appleTrial?'Free for '+apple.trialDays+' days, then '+esc(apple.displayPrice)+'/'+apple.period+'. Cancel anytime.':p.id==='mega'?'Everything Knox can do, with the highest limits.':'More questions and bigger study tools.'}</p>`:`<p class="km-pw-sub">${showTrial?'Free for 3 days, then '+price.monthly+'/month. Cancel anytime.':yearly?'Just '+price.perMonth+'/month, billed once a year.':'Billed monthly. Cancel anytime.'}</p>`}
      <ul class="km-pw-features">${p.features.map(f=>`<li>${svg('check')}<span>${esc(f)}</span></li>`).join('')}</ul>
      ${cta}
     </article>
@@ -270,7 +281,9 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
     <section class="km-pw-compare" aria-label="Compare plans"><h2>Compare plans</h2><div class="km-pw-table" role="table"><div role="row" class="km-pw-head"><span role="columnheader"></span>${['free','plus','mega'].map(id=>`<span role="columnheader" data-tier="${id}"${id===planPick?' class="on"':''}>${TIER[id]}<b>${id==='free'?'Free':id==='plus'?'Plus':'Mega'}</b></span>`).join('')}</div>${COMPARE.map(([label,...v])=>`<div role="row"><span role="rowheader">${esc(label)}</span>${v.map((x,i)=>`<span role="cell"${['free','plus','mega'][i]===planPick?' class="on"':''}>${x==='✓'?`<i class="km-pw-yes" aria-label="Included">${svg('check')}</i>`:x==='—'?'<i class="km-pw-no" aria-label="Not included">—</i>':esc(x)}</span>`).join('')}</div>`).join('')}</div><p class="km-pw-fine">Unlimited questions have a very high fair-use limit to stop automated abuse. Real studying never gets near it.</p></section>
     ${inApp?'':w.hasBillingAccount&&w.currentUser?'<button type="button" class="km-plan-manage km-press" data-manage>Manage billing</button>':''}
     ${inApp?'':`<p class="km-plan-note">${trial?'One free trial per person. ':''}Cancel anytime · Secure checkout with Stripe</p>`}
-    ${webDeal&&!(p.id===cur&&w.currentUser)&&!(cur==='mega'&&p.id==='plus')?`<section class="km-pw-webdeal" aria-label="Upgrade on the website"><span class="km-pw-webflame knox-flame" data-look="galaxy" aria-hidden="true">🔥</span><div><b>Get ${esc(p.name)} on knoxknows.com</b><small>Website subscribers also get the animated <strong>🌌 Galaxy Flame</strong>, only on the website.</small></div><button type="button" class="km-pw-webgo km-press" data-web="${p.id}">Upgrade on the website</button></section>`:''}
+    ${inApp?`<div class="km-pw-applelinks"><button type="button" class="km-press" data-restore>Restore purchases</button>${w.userAppleSub?'<button type="button" class="km-press" data-applemanage>Manage subscription</button>':''}</div>
+    <p class="km-plan-note km-pw-legal">Payment is charged to your Apple ID when you confirm. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period, and renewal is charged within the 24 hours before it ends. Manage or cancel anytime in your App Store account settings. <a href="https://knoxknows.com/terms" data-ext>Terms of Use</a> · <a href="https://knoxknows.com/privacy" data-ext>Privacy Policy</a></p>`:''}
+    ${webDeal&&!(p.id===cur&&w.currentUser)&&!(cur==='mega'&&p.id==='plus')?`<section class="km-pw-webdeal" aria-label="Upgrade on the website"><span class="km-pw-webflame knox-flame" data-look="galaxy" aria-hidden="true">🔥</span><div><b>Cheaper on knoxknows.com</b><small>Get ${esc(p.name)} for less on the website, plus the animated <strong>🌌 Galaxy Flame</strong> (website only).</small></div><button type="button" class="km-pw-webgo km-press" data-web="${p.id}">Upgrade on the website</button></section>`:''}
     <button type="button" class="km-pw-done km-press" data-close>Done</button></div>`;
   };
   const drawn=()=>{draw();w.knoxFlameFest?.applyFlameStyle?.();};
@@ -281,6 +294,34 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
    if(b.dataset.pick){planPick=b.dataset.pick;drawn();sheet.querySelector(`[data-pick="${planPick}"]`)?.focus({preventScroll:true});return;}
    if(b.dataset.billing){planBilling=b.dataset.billing;drawn();sheet.querySelector(`[data-billing="${planBilling}"]`)?.focus({preventScroll:true});return;}
    if(b.hasAttribute('data-manage')){w.openBillingPortal?.(b);return;}
+   if(b.dataset.apple){
+    if(!w.currentUser){sheet.remove();w.openAuthModal?.('signup');return;}
+    const label=b.innerHTML;b.disabled=true;b.textContent='Opening the App Store…';
+    try{
+     const token=await w.currentUser.getIdToken();
+     const t=await fetch('/api/me?route=apple',{method:'POST',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({action:'token'})}).then(r=>r.json()).catch(()=>({}));
+     if(!t.accountToken)throw Error(t.error||'Could not start the purchase. Check your connection and try again.');
+     const r=await appleStore().purchase({id:b.dataset.apple,accountToken:t.accountToken});
+     if(r?.status==='purchased'){
+      b.textContent='Unlocking your plan…';
+      const v=await w.knoxAppleSync?.([r.jws]);
+      if(v?.tier){sheet.remove();note('🎉 Welcome to '+(v.tier==='mega'?'Mega Knox':'Knox Plus')+'!');return;}
+      throw Error(v?.error||'Your purchase went through. If your plan doesn’t show, tap Restore purchases.');
+     }
+     if(r?.status==='pending')note('Waiting for approval. Your plan unlocks as soon as it’s approved.');
+    }catch(err){note(err?.message||'Could not complete the purchase.');}
+    b.disabled=false;b.innerHTML=label;return;
+   }
+   if(b.hasAttribute('data-restore')){
+    if(!w.currentUser){sheet.remove();w.openAuthModal?.('signin');return;}
+    b.disabled=true;const was=b.textContent;b.textContent='Checking the App Store…';
+    const r=await appleStore()?.entitlements?.({sync:true}).catch(()=>null);
+    const v=r?.transactions?.length?await w.knoxAppleSync?.(r.transactions):null;
+    b.disabled=false;b.textContent=was;
+    if(v?.tier){sheet.remove();note('✅ Restored your '+(v.tier==='mega'?'Mega Knox':'Knox Plus')+'.');}else note(v?.error||'No active App Store subscription for this Apple ID.');
+    return;
+   }
+   if(b.hasAttribute('data-applemanage')){appleStore()?.manage?.();return;}
    if(b.dataset.web){const url='https://knoxknows.com/about?plan='+encodeURIComponent(b.dataset.web)+'#pricing';try{await w.Capacitor?.Plugins?.Browser?.open?.({url});}catch{location.href=url;}return;}
    if(!b.dataset.buy)return;
    if(!w.currentUser){sheet.remove();w.openAuthModal?.('signup');return;}
@@ -294,6 +335,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
     location.href=data.url;
    }catch(err){note(err.name==='TimeoutError'?'Checkout took too long to open. Please try again.':err.message);b.disabled=false;b.textContent=label;}
   });
+  sheet.addEventListener('click',e=>{const a=e.target.closest('a[data-ext]');if(!a)return;e.preventDefault();const url=a.href;Promise.resolve(w.Capacitor?.Plugins?.Browser?.open?.({url})).catch(()=>{location.href=url;});});
   sheet.addEventListener('keydown',e=>{if(e.key==='Escape')sheet.remove();});
   document.body.append(sheet);w.knoxFlameFest?.applyFlameStyle?.();sheet.querySelector('[data-close]').focus({preventScroll:true});
  }
@@ -355,3 +397,22 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
  new MutationObserver(()=>{if(!account.hidden)render();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});
  return {show,render,refreshDecks,home,account,action,openPlans};
 };
+
+// App Store subscriptions (iPhone app): the server checks Apple's signature and
+// saves the plan on the account; renewals and Restore come through here too.
+(function(w){
+ if(!w.knoxNativeApp)return;
+ const store=()=>w.Capacitor?.Plugins?.KnoxStore;
+ w.knoxAppleSync=async jws=>{
+  const user=w.currentUser;if(!user||!jws?.length)return null;
+  try{
+   const r=await fetch('/api/me?route=apple',{method:'POST',signal:AbortSignal.timeout(20000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+await user.getIdToken()},body:JSON.stringify({action:'verify',transactions:jws})});
+   const data=await r.json().catch(()=>({}));
+   if(r.ok)await w.knoxRefreshPlan?.();
+   return r.ok?data:{error:data.error||'Could not check your App Store subscription.'};
+  }catch{return {error:'Could not reach Knox. Check your connection and try again.'};}
+ };
+ const quietSync=async()=>{if(!w.currentUser||!store()?.entitlements)return;try{const r=await store().entitlements({sync:false});if(r?.transactions?.length)await w.knoxAppleSync(r.transactions);}catch{}};
+ w.addEventListener('knox-auth-changed',()=>setTimeout(quietSync,1500));
+ try{store()?.addListener?.('transaction',e=>{if(e?.jws)w.knoxAppleSync([e.jws]);});}catch{}
+})(window);
