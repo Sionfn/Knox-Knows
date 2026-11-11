@@ -3260,7 +3260,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.selectLearnSource = selectLearnSource;
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
   import {
-    getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
+    getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, signInWithPopup, GoogleAuthProvider, OAuthProvider,
     signInWithCredential, getAdditionalUserInfo, signInWithEmailAndPassword, createUserWithEmailAndPassword,
     sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
@@ -3279,7 +3279,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   };
 
   const fbApp = initializeApp(firebaseConfig);
-  const auth  = getAuth(fbApp);
+  // Inside the iPhone app, getAuth() waits forever for Firebase's hidden web
+  // sign-in frame (it can't load in the app's web view), so the loading screen
+  // never ends. The app keeps the session on the device instead; sign-in itself
+  // goes through the native Google/Apple/Microsoft plugin.
+  const auth  = window.knoxNativeApp
+    ? initializeAuth(fbApp, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })
+    : getAuth(fbApp);
   const db    = getFirestore(fbApp);
 
   // ── Friendly Firebase error messages ─────────────────────────
