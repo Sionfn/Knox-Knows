@@ -76,6 +76,7 @@ const REWARDS = [
 const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy"];
 // 🌌 Galaxy Flame: for students who subscribe on the website (Stripe). Theirs to keep
 // once a website payment went through (an active subscription or a renewal).
+const GALAXY_GIFTED = ["sion22comp@gmail.com"];
 const webSupporter = data => typeof data.stripeCustomerId === "string" && !!data.stripeCustomerId && ((data.planStatus === "active" && !!data.stripeSubscription) || !!data.planRenewedAt || data.galaxyFlame === true);
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
@@ -136,6 +137,10 @@ export default async function handler(req, res) {
   // including the Chrome extension.
   const tester = isTester(decoded) && String(req.headers["x-knox-flame-test"] || "") === "1";
   const userRef = db.collection("users").doc(uid);
+  // The owner's account has the 🌌 Galaxy Flame (given by hand; verified email only).
+  if (decoded.email_verified === true && GALAXY_GIFTED.includes(String(decoded.email || "").toLowerCase())) {
+    await userRef.set({ galaxyFlame: true }, { merge: true }).catch(() => {});
+  }
   // testerReady: false when this deployment has no ADMIN_UID (so ?flamefest=test
   // can say why tester mode is missing).
   const testerReady = !!(process.env.ADMIN_UID || "").trim();
