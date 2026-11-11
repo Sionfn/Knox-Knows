@@ -235,7 +235,10 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
  const COMPARE=[['Same smart Knox AI','✓','✓','✓'],['Questions','5 a day','Unlimited','Unlimited'],['Learn lesson length','20 msgs','30 msgs','50 msgs'],['Cards per AI deck','10','15','40'],['Photos per deck','5','5','10'],['File length','Standard','Standard','2× longer'],['Card styles & difficulty','—','—','✓']];
  let planBilling='monthly',planPick='';
  async function openPlans(){
-  const inApp=!!w.knoxNativeApp; // App Store build: same Knox sheet, no prices or checkout (Apple rules)
+  const inApp=!!w.knoxNativeApp; // App Store build: same Knox sheet, no in-app checkout (Apple rules)
+  // US App Store only: Apple allows a link to buy on the website (with its own bonus).
+  if(inApp&&w._knoxUSStore===undefined){try{const r=await Promise.race([w.Capacitor?.Plugins?.KnoxStore?.storefront?.(),new Promise(ok=>setTimeout(()=>ok(null),900))]);w._knoxUSStore=r?.countryCode==='USA';}catch{w._knoxUSStore=false;}}
+  const webDeal=inApp&&w._knoxUSStore;
   const {planDetails}=await model,plan=planDetails(w.userTier),cur=plan.current.id;
   let device=false;try{device=localStorage.getItem('knoxMegaTrialDevice')==='1';}catch(_){}
   const trial=!w.currentUser||(cur==='free'&&!w.megaTrialUsed&&!device);
@@ -267,15 +270,18 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
     <section class="km-pw-compare" aria-label="Compare plans"><h2>Compare plans</h2><div class="km-pw-table" role="table"><div role="row" class="km-pw-head"><span role="columnheader"></span>${['free','plus','mega'].map(id=>`<span role="columnheader" data-tier="${id}"${id===planPick?' class="on"':''}>${TIER[id]}<b>${id==='free'?'Free':id==='plus'?'Plus':'Mega'}</b></span>`).join('')}</div>${COMPARE.map(([label,...v])=>`<div role="row"><span role="rowheader">${esc(label)}</span>${v.map((x,i)=>`<span role="cell"${['free','plus','mega'][i]===planPick?' class="on"':''}>${x==='✓'?`<i class="km-pw-yes" aria-label="Included">${svg('check')}</i>`:x==='—'?'<i class="km-pw-no" aria-label="Not included">—</i>':esc(x)}</span>`).join('')}</div>`).join('')}</div><p class="km-pw-fine">Unlimited questions have a very high fair-use limit to stop automated abuse. Real studying never gets near it.</p></section>
     ${inApp?'':w.hasBillingAccount&&w.currentUser?'<button type="button" class="km-plan-manage km-press" data-manage>Manage billing</button>':''}
     ${inApp?'':`<p class="km-plan-note">${trial?'One free trial per person. ':''}Cancel anytime · Secure checkout with Stripe</p>`}
+    ${webDeal&&!(p.id===cur&&w.currentUser)&&!(cur==='mega'&&p.id==='plus')?`<section class="km-pw-webdeal" aria-label="Upgrade on the website"><span class="km-pw-webflame knox-flame" data-look="galaxy" aria-hidden="true">🔥</span><div><b>Get ${esc(p.name)} on knoxknows.com</b><small>Website subscribers also get the animated <strong>🌌 Galaxy Flame</strong>, only on the website.</small></div><button type="button" class="km-pw-webgo km-press" data-web="${p.id}">Upgrade on the website</button></section>`:''}
     <button type="button" class="km-pw-done km-press" data-close>Done</button></div>`;
   };
-  draw();
+  const drawn=()=>{draw();w.knoxFlameFest?.applyFlameStyle?.();};
+  drawn();
   sheet.addEventListener('click',async e=>{
    const b=e.target.closest('button');if(!b)return;
    if(b.hasAttribute('data-close')){sheet.remove();return;}
-   if(b.dataset.pick){planPick=b.dataset.pick;draw();sheet.querySelector(`[data-pick="${planPick}"]`)?.focus({preventScroll:true});return;}
-   if(b.dataset.billing){planBilling=b.dataset.billing;draw();sheet.querySelector(`[data-billing="${planBilling}"]`)?.focus({preventScroll:true});return;}
+   if(b.dataset.pick){planPick=b.dataset.pick;drawn();sheet.querySelector(`[data-pick="${planPick}"]`)?.focus({preventScroll:true});return;}
+   if(b.dataset.billing){planBilling=b.dataset.billing;drawn();sheet.querySelector(`[data-billing="${planBilling}"]`)?.focus({preventScroll:true});return;}
    if(b.hasAttribute('data-manage')){w.openBillingPortal?.(b);return;}
+   if(b.dataset.web){const url='https://knoxknows.com/about?plan='+encodeURIComponent(b.dataset.web)+'#pricing';try{await w.Capacitor?.Plugins?.Browser?.open?.({url});}catch{location.href=url;}return;}
    if(!b.dataset.buy)return;
    if(!w.currentUser){sheet.remove();w.openAuthModal?.('signup');return;}
    const label=b.textContent;b.disabled=true;b.textContent='Opening Stripe…';
@@ -289,7 +295,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
    }catch(err){note(err.name==='TimeoutError'?'Checkout took too long to open. Please try again.':err.message);b.disabled=false;b.textContent=label;}
   });
   sheet.addEventListener('keydown',e=>{if(e.key==='Escape')sheet.remove();});
-  document.body.append(sheet);sheet.querySelector('[data-close]').focus({preventScroll:true});
+  document.body.append(sheet);w.knoxFlameFest?.applyFlameStyle?.();sheet.querySelector('[data-close]').focus({preventScroll:true});
  }
  // Fill the typing box in Ask or Learn (nothing is sent until the student taps Send).
  // Runs inside the tap (Ask/Learn switch synchronously) so the keyboard opens right away.

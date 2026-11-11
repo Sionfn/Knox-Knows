@@ -10,7 +10,7 @@
 //
 // GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
-// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' | 'diamond' } → pick an unlocked flame look
+// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' | 'diamond' | 'galaxy' } → pick an unlocked flame look
 //   (🟢 Slime Flame: anyone who links their Discord with /link in the Knox server)
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
 //
@@ -73,7 +73,10 @@ const REWARDS = [
     // Mega Knox members already have Mega: a week to gift a friend instead.
     mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" }, },
 ];
-const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond"];
+const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy"];
+// 🌌 Galaxy Flame: for students who subscribe on the website (Stripe). Theirs to keep
+// once a website payment went through (an active subscription or a renewal).
+const webSupporter = data => typeof data.stripeCustomerId === "string" && !!data.stripeCustomerId && ((data.planStatus === "active" && !!data.stripeSubscription) || !!data.planRenewedAt || data.galaxyFlame === true);
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
 // Flame Fest week still gets the free-member prizes. Mega is plan 'max', or a
@@ -109,7 +112,7 @@ function status(data, tester = false) {
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
     shields: Math.max(0, Math.floor(Number(data.flameShields) || 0)),
     flameStyle: STYLES.includes(data.flameStyle) ? data.flameStyle : "classic",
-    flameStyles: [...new Set(["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : []), ...(typeof data.discordId === "string" && data.discordId ? ["slime"] : [])])],
+    flameStyles: [...new Set(["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : []), ...(typeof data.discordId === "string" && data.discordId ? ["slime"] : []), ...(webSupporter(data) ? ["galaxy"] : [])])],
     plusUntil: Number(data.plusUntil) || 0,
     megaUntil: Number(data.megaUntil) || 0,
     giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",

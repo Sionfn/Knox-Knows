@@ -285,3 +285,23 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
   80% { scale: .98 1.02; }
 }
 @media (prefers-reduced-motion: reduce) { .fp-layer:has(.flame-slime) { animation: none; } }
+
+/* 🌌 Galaxy Flame (website subscribers): flickers, its nebula colors drift,
+   stars twinkle inside and two sparks orbit it. */
+:is(#streakFlame, .knox-flame).flame-galaxy { display:inline-flex; line-height:1; }
+.galaxy-flame { width:1.05em; height:1.4em; overflow:visible; vertical-align:-.3em; filter:drop-shadow(0 0 .18em rgba(180,85,255,.55)); }
+.galaxy-flame .galaxy-body { transform-box:fill-box; transform-origin:50% 100%; animation:galaxyFlicker 2.2s ease-in-out infinite; }
+.galaxy-flame .galaxy-body > path { animation:galaxyHue 6s linear infinite; }
+.galaxy-flame .galaxy-core { animation:galaxyCore 1.6s ease-in-out infinite; transform-box:fill-box; transform-origin:50% 60%; }
+.galaxy-flame .galaxy-star { transform-box:fill-box; transform-origin:center; animation:galaxyTwinkle 1.8s ease-in-out infinite; }
+.galaxy-flame .s2 { animation-delay:.4s; } .galaxy-flame .s3 { animation-delay:.9s; } .galaxy-flame .s4 { animation-delay:1.3s; } .galaxy-flame .s5 { animation-delay:.6s; animation-duration:2.4s; }
+.galaxy-flame .galaxy-orbit { transform-origin:12px 16px; animation:galaxyOrbit 4s linear infinite; }
+@keyframes galaxyFlicker { 0%,100% { transform:scale(1,1) rotate(0); } 30% { transform:scale(.96,1.05) rotate(-2deg); } 60% { transform:scale(1.03,.97) rotate(1.5deg); } }
+@keyframes galaxyHue { 0%,100% { filter:hue-rotate(0deg) saturate(1.15); } 33% { filter:hue-rotate(28deg) saturate(1.35); } 66% { filter:hue-rotate(-22deg) saturate(1.25); } }
+.galaxy-flame .galaxy-swirl { transform-box:fill-box; transform-origin:center; animation:galaxySwirl 3.2s ease-in-out infinite; }
+.galaxy-flame .galaxy-swirl.g2 { animation-duration:2.6s; animation-direction:reverse; }
+@keyframes galaxySwirl { 0%,100% { transform:rotate(-24deg) scaleX(1); opacity:.55; } 50% { transform:rotate(-8deg) scaleX(.82); opacity:.8; } }
+@keyframes galaxyCore { 0%,100% { opacity:.75; transform:scale(.92); } 50% { opacity:1; transform:scale(1.06); } }
+@keyframes galaxyTwinkle { 0%,100% { opacity:.25; transform:scale(.6); } 50% { opacity:1; transform:scale(1.25); } }
+@keyframes galaxyOrbit { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .galaxy-flame *, .galaxy-flame { animation:none!important; } }
