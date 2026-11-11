@@ -600,13 +600,12 @@ window.addEventListener('offline',()=>{offline.hidden=false;document.documentEle
 // The web shell uses actual visualViewport changes in extras.js; focusing a
 // field with a hardware keyboard must not collapse the whole study screen.
 // The keyboard makes room the original way (the app screen gets shorter), so the
-// text box always sits right above it. Extras for the iPhone app: no form bar,
-// and tapping outside the text box or swiping down closes the keyboard.
+// text box always sits right above it (with iOS's own bar and Done button, like
+// the website). Tapping outside the text box or swiping down also closes it.
 const KR=document.documentElement;
 for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>KR.classList.add('native-keyboard')));
 quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
 if(window.knoxNativeApp){
- quiet(p.keyboard.setAccessoryBarVisible?.({isVisible:false}));
  const typing=()=>KR.classList.contains('native-keyboard')&&document.activeElement?.matches?.('input,textarea,[contenteditable="true"]');
  const close=()=>{document.activeElement?.blur?.();quiet(p.keyboard.hide?.());};
  document.addEventListener('touchstart',e=>{if(typing()&&!e.target.closest('#inputOuter,input,textarea,[contenteditable="true"],dialog,button,a,[role="button"]'))close();},{capture:true,passive:true});
