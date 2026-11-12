@@ -30,6 +30,10 @@
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
   const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame', diamond: '💎 Diamond Flame', galaxy: '🌌 Galaxy Flame' };
   // In the flame picker each look shows its real flame instead of an emoji dot.
+  // Rarity: how special a flame is, shown with its own color (not all orange).
+  const RARITY = { classic: 'common', purple: 'rare', blue: 'rare', gold: 'epic', diamond: 'epic', slime: 'legendary', galaxy: 'legendary' }; // the animated ones are Legendary
+  const RARITY_NAMES = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+  const rarityOf = s => RARITY[s] || 'common';
   const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame', diamond: 'Diamond Flame', galaxy: 'Galaxy Flame' };
   const flameOf = look => `<span class="knox-flame"${look ? ` data-look="${look}"` : ''} aria-hidden="true">🔥</span>`;
 
@@ -123,7 +127,7 @@
     const giftUrl = state.giftCode ? `${location.origin}/redeem?code=${state.giftCode}` : '';
     const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Mega Knox week to give</b><span>Send this link to a friend who doesn’t have Mega Knox — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.megaUntil > Date.now() ? `<div class="ff-note">💎 Your free Mega Knox week runs until ${new Date(state.megaUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
-    const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}">${flameOf(s)}${STYLE_LABELS[s]}</button>`).join('')}</div>` : '';
+    const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style ff-r-${rarityOf(s)}${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}" aria-label="${STYLE_LABELS[s]} (${RARITY_NAMES[rarityOf(s)]})">${flameOf(s)}<span class="ff-style-name">${STYLE_LABELS[s]}<small class="ff-rarity">${RARITY_NAMES[rarityOf(s)]}</small></span></button>`).join('')}</div>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 November event${state.tier === 'mega' ? ' · 💎 Mega Knox rewards' : state.plus ? ' · ⚡ Knox Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
@@ -312,11 +316,11 @@
     const layers = [6, 5, 4, 3, 2, 1, 0].map(z => `<span class="fp-layer${z ? ' fp-depth' : ''}" style="--z:${z}">${flameOf(look)}</span>`).join('');
     const embers = Array.from({ length: 7 }, (_, i) => `<i style="--x:${(i * 37) % 70 - 35}px;--d:${(i * 0.43).toFixed(2)}s;--s:${3 + (i % 3)}px"></i>`).join('');
     peek = document.createElement('div');
-    peek.className = 'flame-peek';
+    peek.className = 'flame-peek fp-r-' + rarityOf(look);
     peek.setAttribute('aria-hidden', 'true');
     peek.style.setProperty('--fp-glow', GLOW[look] || GLOW.classic);
     peek.innerHTML = `<div class="fp-stage"><div class="fp-halo"></div><div class="fp-embers">${embers}</div><div class="fp-rotor">${layers}</div><div class="fp-floor"></div></div>
-      <b>${esc(STYLE_LABELS[look] || STYLE_LABELS.classic)}</b>${streak !== null ? `<span>${streak}-day streak</span>` : ''}`;
+      <b>${esc(STYLE_LABELS[look] || STYLE_LABELS.classic)}</b><small class="ff-rarity fp-rarity ff-r-${rarityOf(look)}">${RARITY_NAMES[rarityOf(look)]}</small>${streak !== null ? `<span>${streak}-day streak</span>` : ''}`;
     document.body.append(peek);
     applyFlameStyle();
     // Beside the flame when there's room (the sidebar), otherwise above or below it.

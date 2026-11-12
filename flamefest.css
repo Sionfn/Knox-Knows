@@ -319,3 +319,22 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
   .ff-x:hover { transform:none; box-shadow:none; color:var(--text-light); }
   .ff-card button:hover { transform:none; }
 }
+
+/* Flame rarity: Common (gray), Rare (blue), Epic (purple), Legendary (gold). */
+.ff-style { --r:#9CA3AF; --r-dark:#6B7280; --r-light:#F3F4F6; }
+.ff-style.ff-r-rare { --r:#2E9BFF; --r-dark:#0A6FCC; --r-light:#E3F1FF; }
+.ff-style.ff-r-epic { --r:#A35BFF; --r-dark:#7330D6; --r-light:#F2E8FF; }
+.ff-style.ff-r-legendary { --r:#F2B705; --r-dark:#B98800; --r-light:#FFF6D6; }
+.ff-style { border-color:var(--r)!important; background:var(--r-light)!important; box-shadow:0 3px 0 var(--r-dark)!important; color:var(--text)!important; }
+.ff-style.on { outline:3px solid var(--r); outline-offset:2px; }
+.ff-style.ff-r-legendary { background:linear-gradient(135deg,#FFF6D6,#FFE69A)!important; }
+.ff-style-name { display:inline-flex; flex-direction:column; align-items:flex-start; line-height:1.1; }
+.ff-rarity { font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--r-dark); }
+html[data-theme="dark"]:not(.knox-seasonal) .ff-style { background:color-mix(in srgb,var(--r) 16%,var(--surface))!important; }
+html[data-theme="dark"]:not(.knox-seasonal) .ff-rarity { color:var(--r); }
+.fp-rarity { display:inline-block; margin-top:3px; padding:2px 8px; border-radius:999px; background:var(--r-light); border:1.5px solid var(--r); }
+.fp-rarity.ff-r-common { --r:#9CA3AF; --r-dark:#6B7280; --r-light:#F3F4F6; }
+.fp-rarity.ff-r-rare { --r:#2E9BFF; --r-dark:#0A6FCC; --r-light:#E3F1FF; }
+.fp-rarity.ff-r-epic { --r:#A35BFF; --r-dark:#7330D6; --r-light:#F2E8FF; }
+.fp-rarity.ff-r-legendary { --r:#F2B705; --r-dark:#B98800; --r-light:#FFF6D6; }
+.flame-peek.fp-r-legendary { border-color:#F2B705!important; box-shadow:0 6px 0 #B98800, 0 0 24px rgba(242,183,5,.45); }
