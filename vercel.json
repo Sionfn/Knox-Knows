@@ -20,7 +20,7 @@
     { "source": "/api/discord-link", "destination": "/api/me?route=discord-link" }
   ],
   "functions": {
-    "api/me.js": { "maxDuration": 60 },
+    "api/me.js": { "maxDuration": 60, "includeFiles": "api/certs/AppleRootCA-G3.cer" },
     "api/ask.js":                     { "maxDuration": 60 },
     "api/generate-flashcards.js":     { "maxDuration": 60 },
     "api/create-checkout-session.js": { "maxDuration": 30 },
@@ -37,7 +37,7 @@
         { "key": "X-Frame-Options",           "value": "SAMEORIGIN" },
         { "key": "Referrer-Policy",           "value": "strict-origin-when-cross-origin" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Permissions-Policy",        "value": "camera=(), microphone=(), geolocation=()" }
+        { "key": "Permissions-Policy",        "value": "camera=(self), microphone=(self), geolocation=()" }
       ]
     },
     {

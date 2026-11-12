@@ -10,13 +10,22 @@
 //
 // Comped accounts carry the same plan values (plus `comped: true`; Knox
 // Ambassadors also `ambassador: true`). Gift codes and Flame Fest add
-// time-limited Plus (`plusUntil`) or Mega (`megaUntil`), in ms.
+// time-limited Plus (`plusUntil`) or Mega (`megaUntil`), in ms. App Store
+// subscriptions set appleTier + appleUntil (api/_apple.js).
 export const MEGA_PLAN = "max";
 export const PLUS_PLAN = "super";
 
+export function activeAppleTier(d, now = Date.now()) {
+  const legacy = Number(d?.appleUntil) > now ? d?.appleTier : null;
+  if (Number(d?.appleMegaUntil) > now || legacy === "mega") return "mega";
+  if (Number(d?.applePlusUntil) > now || legacy === "plus") return "plus";
+  return null;
+}
+
 export function tierOf(d, now = Date.now()) {
-  if (d?.plan === MEGA_PLAN || Number(d?.megaUntil) > now || (d?.comped === true && d?.compedTier === "mega")) return "mega";
-  if (d?.plan === "super" || d?.plan === "plus" || d?.comped === true || Number(d?.plusUntil) > now) return "plus";
+  const apple = activeAppleTier(d, now);
+  if (d?.plan === MEGA_PLAN || Number(d?.megaUntil) > now || (d?.comped === true && d?.compedTier === "mega") || apple === "mega") return "mega";
+  if (d?.plan === "super" || d?.plan === "plus" || d?.comped === true || Number(d?.plusUntil) > now || apple === "plus") return "plus";
   return "free";
 }
 export const isPaidTier = tier => tier === "plus" || tier === "mega";

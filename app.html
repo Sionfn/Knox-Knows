@@ -3368,7 +3368,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const d = snap.exists() ? snap.data() : {}, now = Date.now();
       const megaComp = d.comped === true && d.compedTier === 'mega';
       const ownTier = d.plan === 'max' || megaComp ? 'mega' : (planTier(d.plan) === 'paid' || d.comped === true) ? 'plus' : 'free';
-      const realTier = ownTier === 'mega' || Number(d.megaUntil) > now ? 'mega' : ownTier === 'plus' || Number(d.plusUntil) > now ? 'plus' : 'free';
+      const appleTier = Number(d.appleMegaUntil) > now ? 'mega' :
+        Number(d.appleUntil) > now ? d.appleTier : Number(d.applePlusUntil) > now ? 'plus' : null;
+      const realTier = ownTier === 'mega' || Number(d.megaUntil) > now || appleTier === 'mega' ? 'mega' :
+        ownTier === 'plus' || Number(d.plusUntil) > now || appleTier === 'plus' ? 'plus' : 'free';
       window.userTierReal = realTier;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.
