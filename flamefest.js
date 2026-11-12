@@ -72,14 +72,17 @@
       throw error;
     }
   }
-  async function load(quiet = false) {
+  async function load() {
     if (demo) { state = state || demoState(); return; }
-    const generation = accountGeneration;
+    const generation = accountGeneration, quiet = quietLoad; quietLoad = false;
     loading = true; error = ''; if (!quiet) render();
     try { const saved = await api('GET'); if (generation === accountGeneration) state = saved; }
     catch (e) { if (generation === accountGeneration && e.name !== 'AbortError') error = e.message; }
     if (generation === accountGeneration) loading = false;
-  }
+  }  // A background refresh: no redraw while it loads (a redraw restarts the animated flames).
+  let quietLoad = false;
+  const loadQuietly = () => { quietLoad = true; return load(); };
+
 
   // ── Calendar ────────────────────────────────────────────────────────────
   let wrap = null, lastFocus = null;
@@ -284,7 +287,7 @@
     focusCard(wrap.querySelector('.ff-card'));
     // Saved data shows at once (refreshed quietly behind it); only the very first open waits.
     // Refresh quietly; redraw only if something changed (a redraw restarts the animated flames).
-    if (!state) await load(); else if (!demo) { const was = JSON.stringify(state); load(true).then(() => { if (wrap && JSON.stringify(state) !== was) render(); }); }
+    if (!state) await load(); else if (!demo) { const was = JSON.stringify(state); loadQuietly().then(() => { if (wrap && JSON.stringify(state) !== was) render(); }); }
     render();
   }
 
@@ -462,7 +465,7 @@
   addEventListener('knox-auth-changed', () => { accountGeneration++; state = null; error = ''; loading = false; styleSeq++; close(); applyFlameStyle('classic'); });
   addEventListener('knox-auth-changed', () => { clearTimeout(introTimer); introTimer = setTimeout(intro, 1500); });
   // Load Flame Fest in the background after sign-in, so it opens instantly.
-  addEventListener('knox-auth-changed', () => { if (window.currentUser && active()) setTimeout(() => { if (window.currentUser && !state && !loading) load(true).catch(() => {}); }, 3000); });
+  addEventListener('knox-auth-changed', () => { if (window.currentUser && active()) setTimeout(() => { if (window.currentUser && !state && !loading) loadQuietly().catch(() => {}); }, 3000); });
   if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 
   window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true) };
