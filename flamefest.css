@@ -328,7 +328,11 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 .ff-style.ff-r-epic { --r:#A35BFF; --r-dark:#7330D6; --r-light:#F2E8FF; }
 .ff-style.ff-r-legendary { --r:#F2B705; --r-dark:#B98800; --r-light:#FFF6D6; }
 .ff-style { border-color:var(--r)!important; background:var(--r-light)!important; box-shadow:0 3px 0 var(--r-dark)!important; color:var(--text)!important; }
-.ff-style.on { outline:none; border-width:3px!important; transform:translateY(-2px); box-shadow:0 5px 0 var(--r-dark)!important; }
+/* Like before rarities: the other flames lie flat; only the chosen one is the
+   raised 3D button. No focus ring after a click (keyboard focus still shows). */
+.ff-style:not(.on) { box-shadow:none!important; transform:none!important; }
+.ff-style.on { outline:none; transform:translateY(-2px); box-shadow:0 4px 0 var(--r-dark)!important; }
+.ff-style:focus, .ff-style:focus-visible { outline:none!important; }
 .ff-style.ff-r-legendary { background:linear-gradient(135deg,#FFF6D6,#FFE69A)!important; }
 .ff-style-name { display:inline-flex; flex-direction:column; align-items:flex-start; line-height:1.1; }
 .ff-rarity { font-size:10px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--r-dark); }
