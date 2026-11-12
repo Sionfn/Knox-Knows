@@ -344,3 +344,14 @@ html[data-theme="dark"]:not(.knox-seasonal) .ff-rarity { color:var(--r); }
 .fp-rarity.ff-r-epic { --r:#A35BFF; --r-dark:#7330D6; --r-light:#F2E8FF; }
 .fp-rarity.ff-r-legendary { --r:#F2B705; --r-dark:#B98800; --r-light:#FFF6D6; }
 .flame-peek.fp-r-legendary { border-color:#F2B705!important; box-shadow:0 6px 0 #B98800, 0 0 24px rgba(242,183,5,.45); }
+
+/* Smooth picks: a quick press, and the small icons in the buttons stay still
+   (only your big flame animates), so nothing stutters. */
+.ff-style { transition:transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease; }
+.ff-style:active { transform:translateY(2px)!important; box-shadow:0 1px 0 var(--r-dark)!important; }
+.ff-style .knox-flame, .ff-style .knox-flame * { animation:none!important; }
+.ff-style .galaxy-flame { filter:none; }
+/* Animated flames: keep motion on the GPU and drop the costly color-filter
+   animation that made the Galaxy Flame stutter. */
+.slime-flame, .galaxy-flame { will-change:transform; }
+.galaxy-flame .galaxy-body > path { animation:none!important; }

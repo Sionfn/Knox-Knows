@@ -204,14 +204,23 @@
   async function pickStyle(style) {
     if (!state || state.flameStyle === style) return;
     const before = state.flameStyle, seq = ++styleSeq;
-    state.flameStyle = style; render(); applyFlameStyle(style);
+    // Update just the buttons and your flame in place (no full redraw), so
+    // picking feels instant and the animated flames don't restart.
+    const show = look => {
+      if (wrap) {
+        wrap.querySelectorAll('.ff-style').forEach(b => { const on = b.dataset.style === look; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+        const name = wrap.querySelector('.ff-myflame-copy > b'); if (name) name.textContent = STYLE_LABELS[look] || STYLE_LABELS.classic;
+      }
+      applyFlameStyle(look);
+    };
+    state.flameStyle = style; show(style);
     if (demo) return;
     try {
       const saved = await api('POST', { style });
-      if (seq === styleSeq) { state = saved; render(); applyFlameStyle(state.flameStyle); }
+      if (seq === styleSeq) { state = saved; if (state.flameStyle !== style) show(state.flameStyle); }
     } catch (e) {
       if (seq !== styleSeq || e.name === 'AbortError') return;
-      state.flameStyle = before; render(); applyFlameStyle(before); toast(e.message);
+      state.flameStyle = before; show(before); toast(e.message);
     }
   }
   function celebrate(r) {
