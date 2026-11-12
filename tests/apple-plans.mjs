@@ -1,130 +1,146 @@
-// App Store plans (api/_apple.js): only Apple-signed purchases count, only for the
-// Knox account that bought them, and only while the subscription is active.
-// The certificates below are a throwaway test chain (not Apple's), used with a
-// test root fingerprint so the real check can be exercised end to end.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import crypto from 'node:crypto';
-import apple, { verifyAppleJws, appleAccountToken, appleState, APPLE_BUNDLE_ID } from '../api/_apple.js';
+import { VerificationStatus } from '@apple/app-store-server-library';
+import apple, { appleAccountToken, appleState, APPLE_BUNDLE_ID } from '../api/_apple.js';
 import { tierOf } from '../api/_plans.js';
 
-const ROOT = `-----BEGIN CERTIFICATE-----
-MIIBQjCB6KADAgECAgkAohg7R+3wFAQwCgYIKoZIzj0EAwIwFDESMBAGA1UEAwwJ
-VGVzdCBSb290MB4XDTI2MTExMTIzMzAxMVoXDTM2MTEwODIzMzAxMVowFDESMBAG
-A1UEAwwJVGVzdCBSb290MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQo73nHpI
-fbaFYTHG/YGjJAPGzIoVGuM8P69mkH95OJOcwW1KpUKtYmbLCXmW7agMgOOvOVsO
-WvZciu3bWvJenaMjMCEwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAQYw
-CgYIKoZIzj0EAwIDSQAwRgIhAL2mlfBtjDaGtZ15HUfn9Fsso+ddnhsTXTtVphUV
-tuDMAiEApdnw45pwdyun7sHKxjqVugP3P/4vIQq/kka+9PsaLoY=
------END CERTIFICATE-----`;
-const INT = `-----BEGIN CERTIFICATE-----
-MIIBSDCB76ADAgECAgkAsmLXC7F+/9gwCQYHKoZIzj0EATAUMRIwEAYDVQQDDAlU
-ZXN0IFJvb3QwHhcNMjYxMTExMjMzMDExWhcNMzYxMTA4MjMzMDExWjAcMRowGAYD
-VQQDDBFUZXN0IEludGVybWVkaWF0ZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IA
-BK8nevHi4jaoVCZNrGGBApRWCyDOGb0JsmnyJtfjYfhWxTJrKtIi4yAM7C1OmuZe
-wNpa7kl3ePl+y+rMiFXx4fWjIzAhMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/
-BAQDAgEGMAkGByqGSM49BAEDSQAwRgIhAPnlk+bJsOsxRcfEcm1N3PKOOXEGCJLB
-ZecmpJktPbDmAiEAxkZfEajG61v9DFvQuk5BCPQGaU2jA17RjTe1gwMe4mY=
------END CERTIFICATE-----`;
-const LEAF = `-----BEGIN CERTIFICATE-----
-MIIBHDCBxQIJAM/IGwS5V8c+MAkGByqGSM49BAEwHDEaMBgGA1UEAwwRVGVzdCBJ
-bnRlcm1lZGlhdGUwHhcNMjYxMTExMjMzMDExWhcNMzYxMTA4MjMzMDExWjAUMRIw
-EAYDVQQDDAlUZXN0IExlYWYwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATxzSSU
-KfJvXr5myZPHozVFRmrKtwUYPyeMubLDcBur/qM7FNSmrnsux8S/YZQ6NBZNqD48
-+OpyQ3niEBQVgZGIMAkGByqGSM49BAEDRwAwRAIgVrO5KSN8i2xalHMm2WyezSAh
-YDJuHmMRyhjjXtwpHzcCIDlsXWQEnXQlx2hXE1eh6QpNBEmDuHDqnvs+KgV/nvLr
------END CERTIFICATE-----`;
-const LEAF_KEY = `-----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgT83sF04Alr4Zzgn6
-ra9xpz4BX6jc5k0Dtz0tSyn75ruhRANCAATxzSSUKfJvXr5myZPHozVFRmrKtwUY
-PyeMubLDcBur/qM7FNSmrnsux8S/YZQ6NBZNqD48+OpyQ3niEBQVgZGI
------END PRIVATE KEY-----`;
-const der = pem => new crypto.X509Certificate(pem).raw.toString('base64');
-const ROOT_SHA = new crypto.X509Certificate(ROOT).fingerprint256.replace(/:/g, '');
-const b64u = b => Buffer.from(b).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
-function sign(payload, { chain = [LEAF, INT, ROOT] } = {}) {
-  const head = b64u(JSON.stringify({ alg: 'ES256', x5c: chain.map(der) }));
-  const body = b64u(JSON.stringify(payload));
-  const sig = crypto.sign('sha256', Buffer.from(head + '.' + body), { key: LEAF_KEY, dsaEncoding: 'ieee-p1363' });
-  return head + '.' + body + '.' + b64u(sig);
-}
-
-test('Apple signatures: a real chain passes; a tampered payload, a wrong root or a short chain fail', () => {
-  const jws = sign({ productId: 'x', n: 1 });
-  assert.deepEqual(verifyAppleJws(jws, { rootSha256: ROOT_SHA }), { productId: 'x', n: 1 });
-  assert.throws(() => verifyAppleJws(jws), /Not signed by Apple/, 'the real Apple root is required by default');
-  const [h, , s] = jws.split('.');
-  assert.throws(() => verifyAppleJws(h + '.' + b64u(JSON.stringify({ productId: 'x', n: 2 })) + '.' + s, { rootSha256: ROOT_SHA }), /does not match/);
-  assert.throws(() => verifyAppleJws(sign({ a: 1 }, { chain: [LEAF] }), { rootSha256: ROOT_SHA }), /format/);
-  assert.throws(() => verifyAppleJws(sign({ a: 1 }, { chain: [LEAF, ROOT] }), { rootSha256: ROOT_SHA }), /chain/);
-  assert.throws(() => verifyAppleJws('nope'), /Not a signed/);
+const NOW = 1_800_000_000_000;
+const day = 86400000;
+const mega = 'com.knoxknowsapp.mega.monthly';
+const plus = 'com.knoxknowsapp.plus.yearly';
+const receipt = (uid, extra = {}) => ({
+  bundleId: APPLE_BUNDLE_ID, productId: mega, originalTransactionId: '100',
+  transactionId: '101', purchaseDate: NOW - day, signedDate: NOW - day,
+  expiresDate: NOW + day, appAccountToken: appleAccountToken(uid),
+  environment: 'Production', ...extra,
 });
 
-test('App Store plans: account token, active/expired/refunded, and tierOf', () => {
-  const t = appleAccountToken('uid-1');
-  assert.match(t, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-  assert.equal(appleAccountToken('uid-1'), t);
-  assert.notEqual(appleAccountToken('uid-2'), t);
-  const now = 1_800_000_000_000;
-  assert.deepEqual(appleState({ productId: 'com.knoxknowsapp.mega.monthly', expiresDate: now + 1000 }, now), { tier: 'mega', active: true, until: now + 1000 });
-  assert.equal(appleState({ productId: 'com.knoxknowsapp.mega.monthly', expiresDate: now - 1 }, now).active, false);
-  assert.equal(appleState({ productId: 'com.knoxknowsapp.plus.yearly', expiresDate: now + 1000, revocationDate: now - 5 }, now).active, false);
-  assert.equal(appleState({ productId: 'com.other.app', expiresDate: now + 1000 }, now).active, false);
-  assert.equal(tierOf({ appleTier: 'mega', appleUntil: now + 1 }, now), 'mega');
-  assert.equal(tierOf({ appleTier: 'plus', appleUntil: now + 1 }, now), 'plus');
-  assert.equal(tierOf({ appleTier: 'mega', appleUntil: now - 1 }, now), 'free');
-});
-
-// A tiny Firestore stand-in.
-function fakeDb() {
-  const data = new Map();
-  const ref = (col, id) => ({ id, async get() { const v = data.get(col + '/' + id); return { exists: !!v, data: () => v, id }; }, async set(v, o) { data.set(col + '/' + id, o?.merge ? { ...(data.get(col + '/' + id) || {}), ...v } : v); } });
-  return {
-    data,
-    collection: col => ({
-      doc: id => ref(col, id),
-      where: (f, op, val) => ({ limit: () => ({ async get() { return { docs: [...data].filter(([k, v]) => k.startsWith(col + '/') && v[f] === val).map(([k]) => ({ id: k.split('/')[1] })) }; } }) }),
+function setup(overrides = {}) {
+  const data = new Map([['users/amy', {}], ['users/bob', {}]]);
+  function ref(path) {
+    return {
+      id: path.split('/').at(-1),
+      async get() { return { exists: data.has(path), data: () => data.get(path) }; },
+      async set(v, o) { data.set(path, o?.merge ? { ...data.get(path), ...v } : v); },
+      async update(v) {
+        if (!data.has(path)) throw Error('Missing document');
+        data.set(path, { ...data.get(path), ...v });
+      },
+    };
+  }
+  const db = {
+    collection: collection => ({
+      doc: key => ref(collection + '/' + key),
+      where: (field, _, value) => ({ limit: () => ({
+        async get() {
+          return { docs: [...data].filter(([path, item]) => path.startsWith(collection + '/') && item[field] === value).map(([path]) => ref(path)) };
+        },
+      }) }),
     }),
-    async runTransaction(fn) { return fn({ get: r => r.get(), set: (r, v, o) => r.set(v, o) }); },
+    async runTransaction(fn) {
+      const writes = [];
+      const result = await fn({ get: r => r.get(), set: (...args) => writes.push(args) });
+      for (const [r, value, options] of writes) await r.set(value, options);
+      return result;
+    },
   };
-}
-
-test('App Store plans endpoint: unlocks only the buyer\'s account, refuses others, and Apple notices update it', async () => {
-  // The handler checks against Apple's real root, so route our test chain through a wrapper.
-  const mod = await import('../api/_apple.js');
-  const now = 1_800_000_000_000;
-  const db = fakeDb();
-  const auth = { async verifyIdToken(t) { if (t === 'amy-token') return { uid: 'amy' }; if (t === 'bob-token') return { uid: 'bob' }; throw Error('bad'); } };
-  const call = async (body, headers = {}, query = { route: 'apple' }) => {
-    const res = { code: 0, body: null, setHeader() {}, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
-    await apple({ method: 'POST', query, headers, body }, res, { db, auth, now, rootSha256: ROOT_SHA });
+  const auth = { async verifyIdToken(t) { if (!['amy','bob'].includes(t)) throw Error('bad token');return { uid:t }; } };
+  // These tests exercise reconciliation after cryptographic verification. A
+  // separate test calls the real verifier to ensure fake receipts are rejected.
+  const decoded = new Map();
+  const sign = payload => { const key = 'verified-fixture-' + decoded.size;decoded.set(key,payload);return key; };
+  const verify = async key => { if (!decoded.has(key)) throw Error('Invalid signature');return decoded.get(key); };
+  const call = async (body, uid = 'amy', route = 'apple', method = 'POST') => {
+    const res = { code: 0, body: null, setHeader() {}, status(c) { this.code=c;return this; }, json(b) { this.body=b;return this; } };
+    await apple({ method, body, query:{route}, headers:uid?{authorization:'Bearer '+uid}:{} },res,
+      { db, auth, now:NOW, enabled:true, verifyTransaction:verify, verifyNotification:verify, verifyRenewal:verify, ...overrides });
     return res;
   };
-  const tx = (uid, extra = {}) => sign({ bundleId: APPLE_BUNDLE_ID, productId: 'com.knoxknowsapp.mega.monthly', originalTransactionId: '1000', expiresDate: now + 86400000, appAccountToken: appleAccountToken(uid), environment: 'Sandbox', ...extra });
+  const sync = (uid, ...receipts) => call({action:'verify',transactions:receipts.map(sign)},uid);
+  const notice = (tx, kind, date = NOW, extra = {}) => call({signedPayload:sign({
+    signedDate:date, notificationType:kind,
+    data:{ environment:tx.environment, signedTransactionInfo:sign(tx), ...extra },
+  })}, null, 'apple-notify');
+  return { data, call, sync, notice };
+}
 
-  assert.equal((await call({ action: 'token' })).code, 401, 'signed in only');
-  const tok = await call({ action: 'token' }, { authorization: 'Bearer amy-token' });
-  assert.equal(tok.body.accountToken, appleAccountToken('amy'));
+test('Apple plans validate account tokens and ignore expired, refunded and upgraded receipts', () => {
+  assert.match(appleAccountToken('amy'), /^[0-9a-f-]{36}$/);
+  assert.notEqual(appleAccountToken('amy'), appleAccountToken('bob'));
+  assert.equal(appleState(receipt('amy'), NOW).tier,'mega');
+  assert.equal(appleState(receipt('amy',{revocationDate:NOW-1}), NOW).active,false);
+  assert.equal(appleState(receipt('amy',{expiresDate:NOW-1}), NOW).active,false);
+  assert.equal(appleState(receipt('amy',{isUpgraded:true}), NOW).active,false);
+  assert.equal(appleState(receipt('amy',{productId:'constructor'}), NOW).active,false);
+});
 
-  let r = await call({ action: 'verify', transactions: [tx('amy')] }, { authorization: 'Bearer amy-token' });
-  assert.equal(r.body.tier, 'mega');
-  assert.equal(tierOf(db.data.get('users/amy'), now), 'mega');
+test('StoreKit starts only when enabled and only signs in the current Knox account', async () => {
+  const {call} = setup({enabled:false,allowSandbox:uid=>uid==='amy'});
+  assert.equal((await call({}, null,'apple','GET')).body.purchasesAvailable,false);
+  assert.equal((await call({action:'token'},null)).code,401);
+  assert.equal((await call({action:'token'},'bob')).code,503);
+  assert.equal((await call({action:'token'},'amy')).body.accountToken,appleAccountToken('amy'));
+});
 
-  // Bob can't use Amy's purchase (wrong account token), nor claim her subscription.
-  r = await call({ action: 'verify', transactions: [tx('amy')] }, { authorization: 'Bearer bob-token' });
-  assert.equal(r.body.tier, null);
-  r = await call({ action: 'verify', transactions: [tx('bob')] }, { authorization: 'Bearer bob-token' });
-  assert.equal(r.code, 409, 'subscription 1000 already belongs to Amy');
-  assert.equal(tierOf(db.data.get('users/bob') || {}, now), 'free');
+test('a current website subscriber cannot start a second App Store subscription', async () => {
+  const {call,data} = setup();
+  data.set('users/amy', {stripeSubscription:'sub_qa',planStatus:'trialing'});
+  const blocked = await call({action:'token'});
+  assert.equal(blocked.code,409);
+  assert.equal(data.get('users/amy').appleAccountToken,undefined);
+  data.set('users/amy', {stripeSubscription:'sub_qa',planStatus:'cancelled'});
+  assert.equal((await call({action:'token'})).code,200);
+});
 
-  // Forged or other-app purchases are ignored.
-  r = await call({ action: 'verify', transactions: ['a.b.c', tx('amy', { bundleId: 'com.other' })] }, { authorization: 'Bearer amy-token' });
-  assert.equal(r.body.tier, null);
+test('restore acknowledges only signed receipts tied to that Knox account and subscription owner', async () => {
+  const {sync,data} = setup();
+  assert.deepEqual((await sync('amy',receipt('amy'))).body.acceptedTransactionIds,['101']);
+  assert.equal((await sync('bob',receipt('amy'))).body.tier,null);
+  assert.equal((await sync('bob',receipt('bob'))).code,409);
+  assert.equal((await sync('bob',receipt('bob',{originalTransactionId:'200',bundleId:'com.other'}))).body.tier,null);
+  assert.equal(tierOf(data.get('users/bob'),NOW),'free');
+});
 
-  // Apple says it was refunded: Amy is back to free.
-  const notice = sign({ notificationType: 'REFUND', data: { bundleId: APPLE_BUNDLE_ID, signedTransactionInfo: tx('amy', { revocationDate: now - 10 }) } });
-  r = await call({ signedPayload: notice }, {}, { route: 'apple-notify' });
-  assert.equal(r.code, 200);
-  assert.equal(tierOf(db.data.get('users/amy'), now), 'free');
-  assert.equal((await call({ signedPayload: 'forged' }, {}, { route: 'apple-notify' })).code, 400);
+test('the real verifier rejects forged and malformed JWS receipts', async () => {
+  const {call} = setup({verifyTransaction:undefined,verifyNotification:undefined});
+  assert.deepEqual((await call({action:'verify',transactions:['a.b.c']})).body.acceptedTransactionIds,[]);
+  assert.equal((await call({signedPayload:'a.b.c'},null,'apple-notify')).code,400);
+});
+
+test('sandbox receipts cannot unlock production accounts or replace a production chain', async () => {
+  const {sync,data} = setup({allowSandbox:uid=>uid==='amy'});
+  assert.equal((await sync('bob',receipt('bob',{environment:'Sandbox'}))).body.tier,null);
+  await sync('amy',receipt('amy'));
+  await sync('amy',receipt('amy',{environment:'Sandbox',productId:plus,transactionId:'104'}));
+  assert.equal(tierOf(data.get('users/amy'),NOW),'mega');
+  assert.equal(data.get('appleSubscriptions/100').environment,'Production');
+  assert.equal(data.get('appleSubscriptions/sandbox-100').environment,'Sandbox');
+});
+
+test('renewal order, refund replay, and unrelated refunds preserve the effective tier', async () => {
+  const {sync,data,notice} = setup();
+  const older = receipt('amy');
+  const renewal = receipt('amy',{transactionId:'102',purchaseDate:NOW-1000,signedDate:NOW-999,expiresDate:NOW+2*day});
+  const second = receipt('amy',{originalTransactionId:'300',transactionId:'301',productId:plus,expiresDate:NOW+3*day});
+  await sync('amy',older,second);
+  await notice(renewal,'DID_RENEW');
+  assert.equal((await sync('amy',older)).body.until,NOW+2*day);
+  await notice({...older,revocationDate:NOW},'REFUND');
+  assert.equal(tierOf(data.get('users/amy'),NOW),'mega');
+  await notice({...renewal,revocationDate:NOW},'REFUND');
+  assert.equal((await sync('amy',renewal)).body.tier,'plus','replaying a pre-refund receipt cannot restore Mega');
+  assert.equal(tierOf(data.get('users/amy'),NOW),'plus');
+  await notice({...renewal,signedDate:NOW+10},'REFUND_REVERSED',NOW+10);
+  assert.equal(tierOf(data.get('users/amy'),NOW),'mega');
+  assert.equal(tierOf(data.get('users/amy'),NOW+2*day+1),'plus','an independent Plus plan remains usable after Mega expires');
+});
+
+test('failed notification verification retries and deletion does not recreate a user', async () => {
+  const {notice,sync,data} = setup();
+  await sync('amy',receipt('amy'));
+  data.delete('users/amy');
+  assert.equal((await notice(receipt('amy'),'DID_RENEW')).code,200);
+  assert.equal(data.has('users/amy'),false);
+  const failed=setup({verifyNotification:async()=>{throw {status:VerificationStatus.RETRYABLE_VERIFICATION_FAILURE};}});
+  assert.equal((await failed.notice(receipt('amy'),'DID_RENEW')).code,503);
 });

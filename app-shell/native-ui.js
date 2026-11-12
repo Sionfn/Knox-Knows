@@ -63,7 +63,7 @@ window.visualViewport?.addEventListener('resize',mediaViewport);window.visualVie
 // Camera / photos / microphone access. iOS asks once on its own; if access is
 // off, Knox explains and opens Knox's page in iPhone Settings in one tap.
 const ACCESS={camera:['📷','Camera','Turn on Camera for Knox so you can snap your homework.'],photos:['🖼️','Photos','Turn on Photos for Knox so you can send a picture of your homework.'],microphone:['🎤','Microphone','Turn on Microphone for Knox so you can ask out loud.']};
-function accessOff(kind){const [icon,name,why]=ACCESS[kind]||ACCESS.camera;const d=dialog(icon+' '+name+' is off for Knox',why+' Tap Open Settings, turn on '+name+', then come back.');button(d,'Open Settings',()=>{d.close();try{location.href='app-settings:';}catch{}},'primary');button(d,'Close',()=>d.close());d.showModal();}
+function accessOff(kind){const [icon,name,why]=ACCESS[kind]||ACCESS.camera;const d=dialog(icon+' '+name+' is off for Knox',why+' Tap Open Settings, turn on '+name+', then come back.');button(d,'Open Settings',async()=>{try{await plugin('KnoxDevice').openSettings();d.close();}catch{d.querySelector('p').textContent='Open iPhone Settings, select Knox Knows, then enable '+name+'.';}},'primary');button(d,'Close',()=>d.close());d.showModal();}
 window.knoxAccessOff=accessOff;
 async function cameraAccess(kind){
  if(!native||!p.camera.checkPermissions)return true;
@@ -79,6 +79,7 @@ async function takePhoto(source,intoCards=false){
  const uid=window.currentUser?.uid, version=window._appViewVersion;
  try{
   if(source==='CAMERA'&&!(await cameraAccess('camera')))return;
+  if(uid!==window.currentUser?.uid || version!==window._appViewVersion)return;
   const photo=await p.camera.getPhoto({source,resultType:'uri',quality:85,width:2200,height:2200,correctOrientation:true});
   if(uid!==window.currentUser?.uid || version!==window._appViewVersion)return;
   const blob=await (await fetch(photo.webPath)).blob();
@@ -638,6 +639,7 @@ if(native)document.addEventListener('click',e=>{
 // Do not label a queued request as a completed deletion.
 if(native)window.knoxRequestAccountDeletion=function(){
  const user=window.currentUser;if(!user)return;
+ window.closeAppSettings?.();
  const d=dialog('Delete your account','This requests deletion of your Knox account and associated personal data. The Knox team processes it manually; it is not instant. Required payment records may be retained. A subscription must also be cancelled to stop future charges. Type DELETE to confirm.');
  const label=document.createElement('label');label.textContent='Confirmation';label.htmlFor='knoxDeleteConfirm';const input=document.createElement('input');input.id='knoxDeleteConfirm';input.autocomplete='off';input.spellcheck=false;label.append(input);d.append(label);
  const status=document.createElement('p');status.setAttribute('role','status');d.append(status);

@@ -173,6 +173,17 @@ function checkoutStripe() {
   return { stripe, sessions, counts: () => ({ customerCount, sessionCount }) };
 }
 
+test('An App Store subscriber cannot open a second paid checkout through Stripe', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { appleTier: 'plus', appleUntil: Date.now() + 60000 });
+  const mock = checkoutStripe();
+  const handler = await load('api/create-checkout-session.js', { db, stripe: mock.stripe });
+  const res = response();
+  await handler(askRequest({ plan: 'super', billing: 'monthly' }), res);
+  assert.equal(res.code, 409);
+  assert.deepEqual(mock.counts(), { customerCount: 0, sessionCount: 0 });
+});
+
 test('Concurrent checkout is serialized; retries reuse an open session', async () => {
   const { db, store } = memoryDb();
   const mock = checkoutStripe();

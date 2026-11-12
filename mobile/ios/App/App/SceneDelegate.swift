@@ -41,7 +41,8 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "products", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "entitlements", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "manage", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "manage", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise)
     ]
     private var updates: Task<Void, Never>?
 
@@ -49,8 +50,7 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
         // Renewals and purchases finished outside the app (e.g. Ask to Buy).
         updates = Task { [weak self] in
             for await result in Transaction.updates {
-                if case .verified(let transaction) = result {
-                    await transaction.finish()
+                if case .verified = result {
                     self?.notifyListeners("transaction", data: ["jws": result.jwsRepresentation])
                 }
             }
@@ -90,15 +90,17 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func purchase(_ call: CAPPluginCall) {
         guard let id = call.getString("id") else { call.reject("Missing plan."); return }
-        let token = call.getString("accountToken").flatMap { UUID(uuidString: $0) }
+        guard let value = call.getString("accountToken"), let token = UUID(uuidString: value) else {
+            call.reject("Sign in to your Knox account before subscribing.")
+            return
+        }
         Task {
             do {
                 guard let product = try await Product.products(for: [id]).first else { call.reject("That plan isn't available right now."); return }
-                let result = try await product.purchase(options: token.map { [.appAccountToken($0)] } ?? [])
+                let result = try await product.purchase(options: [.appAccountToken(token)])
                 switch result {
                 case .success(let verification):
-                    if case .verified(let transaction) = verification {
-                        await transaction.finish()
+                    if case .verified = verification {
                         call.resolve(["status": "purchased", "jws": verification.jwsRepresentation])
                     } else {
                         call.reject("The App Store couldn't confirm this purchase.")
@@ -119,19 +121,65 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func entitlements(_ call: CAPPluginCall) {
         let sync = call.getBool("sync") ?? false
         Task {
-            if sync { try? await AppStore.sync() } // "Restore purchases"
-            var list: [String] = []
-            for await result in Transaction.currentEntitlements {
-                if case .verified = result { list.append(result.jwsRepresentation) }
+            do {
+                if sync { try await AppStore.sync() }
+                var receipts: [UInt64: String] = [:]
+                for await result in Transaction.currentEntitlements {
+                    if case .verified(let transaction) = result { receipts[transaction.id] = result.jwsRepresentation }
+                }
+                for await result in Transaction.unfinished {
+                    if case .verified(let transaction) = result { receipts[transaction.id] = result.jwsRepresentation }
+                }
+                call.resolve(["transactions": Array(receipts.values)])
+            } catch {
+                call.reject("Could not restore purchases from the App Store. Try again.")
             }
-            call.resolve(["transactions": list])
+        }
+    }
+
+    // Finish only transactions whose receipt the Knox server accepted and saved.
+    @objc func finish(_ call: CAPPluginCall) {
+        let ids = Set((call.getArray("transactionIds", String.self) ?? []).compactMap { UInt64($0) })
+        Task {
+            for await result in Transaction.unfinished {
+                if case .verified(let transaction) = result, ids.contains(transaction.id) {
+                    await transaction.finish()
+                }
+            }
+            call.resolve()
         }
     }
 
     @objc func manage(_ call: CAPPluginCall) {
         Task { @MainActor in
-            if let scene = self.bridge?.viewController?.view.window?.windowScene {
-                try? await AppStore.showManageSubscriptions(in: scene)
+            guard let scene = self.bridge?.viewController?.view.window?.windowScene else {
+                call.reject("Subscription settings are unavailable right now.")
+                return
+            }
+            do {
+                try await AppStore.showManageSubscriptions(in: scene)
+                call.resolve()
+            } catch {
+                call.reject("Could not open subscription settings. Open Subscriptions in the App Store.")
+            }
+        }
+    }
+}
+
+@objc(KnoxDevicePlugin)
+public class KnoxDevicePlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "KnoxDevicePlugin"
+    public let jsName = "KnoxDevice"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise)
+    ]
+
+    @objc func openSettings(_ call: CAPPluginCall) {
+        Task { @MainActor in
+            guard let url = URL(string: UIApplication.openSettingsURLString),
+                  await UIApplication.shared.open(url) else {
+                call.reject("Open Settings and select Knox Knows.")
+                return
             }
             call.resolve()
         }
@@ -141,5 +189,6 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
 class KnoxBridgeViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(KnoxStorePlugin())
+        bridge?.registerPluginInstance(KnoxDevicePlugin())
     }
 }

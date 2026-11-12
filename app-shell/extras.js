@@ -174,7 +174,17 @@ w.knoxAskAiPermission=askAiPermission;
 // where the browser's own speech button doesn't.
 {
  const MAX_MS=60000,QUIET_MS=1600,NO_SPEECH_MS=9000,LOUD=.025;
- let talking=false;
+ let talking=false,readyUntil=0;
+ const voiceAvailable=async()=>{
+  if(Date.now()<readyUntil)return true;
+  try{
+   const reply=await fetch('/api/me?route=transcribe',{signal:AbortSignal.timeout(4000)});
+   if(reply.ok&&(await reply.json()).transcriptionAvailable===true){
+    readyUntil=Date.now()+60000;return true;
+   }
+  }catch{}
+  return false;
+ };
  const toBase64=blob=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]||'');r.onerror=no;r.readAsDataURL(blob);});
  function deliver(text){
   const box=$('appChatInput');if(!box)return;
@@ -188,16 +198,20 @@ w.knoxAskAiPermission=askAiPermission;
   if(w._appAskBusy&&done===deliver){note('Let Knox finish this step first.');return;}
   if(!w.currentUser){w.openAuthModal?.('signup');return;}
   if(!navigator.mediaDevices?.getUserMedia||!w.MediaRecorder){note('Talking isn’t available here. Tap the 🎤 on your keyboard instead.');return;}
-  const Ctx=w.AudioContext||w.webkitAudioContext,audio=Ctx?new Ctx():null; // made during the tap, or iPhone keeps it silent
+  let audio=null;
+  try{const Ctx=w.AudioContext||w.webkitAudioContext;audio=Ctx?new Ctx():null;}catch{}
   talking=true;
-  const owner=uid();let stream=null;
-  const release=()=>{stream?.getTracks().forEach(t=>t.stop());audio?.close?.().catch?.(()=>{});talking=false;};
+  const owner=uid(),view=w._appViewVersion;let stream=null,released=false;
+  const current=()=>uid()===owner&&w._appViewVersion===view;
+  const release=()=>{if(released)return;released=true;stream?.getTracks().forEach(t=>t.stop());audio?.close?.().catch?.(()=>{});talking=false;};
+  if(!(await voiceAvailable())){release();if(current())note('Talk to Knox is temporarily unavailable. You can use your keyboard’s dictation or type.');return;}
+  if(!current())return release();
   try{
-   if(!(await askAiPermission()))return release();
+   if(!(await askAiPermission())||!current())return release();
    document.activeElement?.blur?.();
    stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
   }catch(err){release();if(w.knoxAccessOff&&(!err||/NotAllowed|Permission|Security/i.test(err.name||'')))w.knoxAccessOff('microphone');else note('Knox needs your microphone to hear you. Turn it on in Settings, then try again.');return;}
-  if(uid()!==owner)return release();
+  if(!current())return release();
   const type=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg'].find(t=>MediaRecorder.isTypeSupported?.(t));
   let rec;const chunks=[];
   try{rec=new MediaRecorder(stream,type?{mimeType:type}:undefined);}
@@ -208,10 +222,18 @@ w.knoxAskAiPermission=askAiPermission;
   d.querySelector('p').textContent=hint;
   let timer=0,cancelled=false,stopped=false,heard=false,lastLoud=Date.now();const began=Date.now();
   const bars=[...d.querySelectorAll('.km-voice-bars i')];
-  const meter=audio?audio.createAnalyser():null,wave=meter?new Uint8Array(meter.fftSize=512):null;
-  if(meter){audio.resume?.();audio.createMediaStreamSource(stream).connect(meter);}
+  let meter=null,wave=null;
+  try{
+   if(audio){
+    meter=audio.createAnalyser();
+    wave=new Uint8Array(meter.fftSize=512);
+    audio.createMediaStreamSource(stream).connect(meter);
+    audio.resume?.().catch(()=>{meter=null;});
+   }
+  }catch{meter=null;}
   const finish=()=>{if(stopped)return;stopped=true;clearInterval(timer);if(rec.state!=='inactive')rec.stop();};
   timer=setInterval(()=>{
+   if(!current()){cancelled=true;finish();if(d.open)d.close();return;}
    const now=Date.now();
    if(meter){meter.getByteTimeDomainData(wave);let sum=0;for(const v of wave)sum+=((v-128)/128)**2;const level=Math.sqrt(sum/wave.length);if(level>LOUD){heard=true;lastLoud=now;}bars.forEach((b,i)=>{b.style.transform='scaleY('+Math.min(1,.18+level*(5+i%3*3)).toFixed(2)+')';});}
    if(now-began>MAX_MS||(meter&&heard&&now-lastLoud>QUIET_MS))finish();
@@ -224,19 +246,19 @@ w.knoxAskAiPermission=askAiPermission;
   rec.onerror=()=>{cancelled=true;finish();if(d.open)d.close();release();note('Knox couldn’t record that. Try again, or type your question.');};
   rec.onstop=async()=>{
    stream.getTracks().forEach(t=>t.stop());
-   if(cancelled){if(d.open)d.close();d.remove();return release();}
+   if(cancelled||!current()){if(d.open)d.close();d.remove();return release();}
    d.classList.add('sending');say('Got it!','Knox is writing that down…');d.querySelectorAll('button').forEach(b=>{b.disabled=true;});
    try{
     const blob=new Blob(chunks,{type:rec.mimeType||type||'audio/mp4'});
     if(blob.size<800)throw Error('empty');
-    const res=await fetch('/api/me?route=transcribe',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await w.currentUser.getIdToken()},body:JSON.stringify({audio:await toBase64(blob),type:blob.type})});
+    const res=await fetch('/api/me?route=transcribe',{method:'POST',signal:AbortSignal.timeout(55000),headers:{'Content-Type':'application/json',Authorization:'Bearer '+await w.currentUser.getIdToken()},body:JSON.stringify({audio:await toBase64(blob),type:blob.type})});
     const data=await res.json().catch(()=>({}));
-    if(uid()!==owner)return;
+    if(!current())return;
     if(!res.ok)return note(data.error||'Knox couldn’t hear that. Try again, or type your question.');
     if(!data.text)return note('Knox didn’t catch that. Try again.');
     if(d.open)d.close();done(data.text);
-   }catch{note('Knox couldn’t hear that. Try again, or type your question.');}
-   finally{if(d.open)d.close();release();}
+   }catch{if(current())note('Knox couldn’t hear that. Try again, or type your question.');}
+   finally{if(d.open)d.close();d.remove();release();}
   };
   document.body.append(d);
   try{d.showModal();rec.start();}

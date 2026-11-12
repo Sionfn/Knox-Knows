@@ -9,7 +9,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from 'firebase-admin/firestore';
 import { GIFTS } from './_gifts.js';
-import { MEGA_PLAN, compedPlan, megaPrices } from './_plans.js';
+import { MEGA_PLAN, compedPlan, megaPrices, activeAppleTier } from './_plans.js';
 
 if (!getApps().length) {
   initializeApp({
@@ -148,6 +148,9 @@ export default async function handler(req, res) {
     // Reuse only this user's customer record. Email alone is not proof that a
     // Stripe customer belongs to the same Firebase account.
     const userSnap = await db.collection('users').doc(verifiedUid).get();
+    if (activeAppleTier(userSnap.data())) {
+      return res.status(409).json({ error: 'Your Knox subscription is billed through Apple. Manage or change your plan in the Knox iPhone app.' });
+    }
     const customerId = userSnap.exists ? userSnap.data().stripeCustomerId : null;
     const subscriptionId = userSnap.exists ? userSnap.data().stripeSubscription : null;
     if (subscriptionId) {

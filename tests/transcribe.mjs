@@ -11,6 +11,13 @@ const realFetch = globalThis.fetch;
 test.afterEach(() => { globalThis.fetch = realFetch; });
 const okModel = text => { globalThis.fetch = async () => new Response(JSON.stringify({ text }), { status: 200 }); };
 
+test('voice availability is readable before asking for microphone access', async () => {
+  const res = reply();
+  await transcribe({ method: 'GET' }, res, {});
+  assert.equal(res.code, 200);
+  assert.equal(res.body.transcriptionAvailable, Boolean(process.env.OPENAI_API_KEY));
+});
+
 test('a signed-in student gets their words back and the use is counted', async () => {
   okModel(' What is 2 + 2? '); const store = {}, res = reply();
   await transcribe(req({ audio, type: 'audio/mp4;codecs=mp4a.40.2' }), res, { db: fakeDb(store), auth });

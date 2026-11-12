@@ -77,12 +77,22 @@ const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy
 // 🌌 Galaxy Flame: for students who subscribe on the website (Stripe). Theirs to keep
 // once a website payment went through (an active subscription or a renewal).
 const GALAXY_GIFTED = ["sion22comp@gmail.com"];
-const webSupporter = data => typeof data.stripeCustomerId === "string" && !!data.stripeCustomerId && ((data.planStatus === "active" && !!data.stripeSubscription) || !!data.planRenewedAt || data.galaxyFlame === true);
+const webSupporter = data => data.galaxyFlame === true ||
+  (typeof data.stripeCustomerId === "string" && !!data.stripeCustomerId &&
+    ((data.planStatus === "active" && !!data.stripeSubscription) || !!data.planRenewedAt));
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
 // Flame Fest week still gets the free-member prizes. Mega is plan 'max', or a
 // Mega comp (a paying Plus subscriber keeps plan 'super' with compedTier 'mega').
-const prizeTier = d => d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
+function prizeTier(d) {
+  const now = Date.now();
+  const apple = Number(d?.appleUntil) > now ? d?.appleTier : null;
+  if (d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ||
+      apple === "mega" || Number(d?.appleMegaUntil) > now) return "mega";
+  if (["super", "plus"].includes(d?.plan) || d?.comped === true ||
+      apple === "plus" || Number(d?.applePlusUntil) > now) return "plus";
+  return "free";
+}
 const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
 const DAY_MS = 86400000;

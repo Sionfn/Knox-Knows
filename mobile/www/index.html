@@ -3401,9 +3401,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const megaComp = d.comped === true && d.compedTier === 'mega';
       const ownTier = d.plan === 'max' || megaComp ? 'mega' : (planTier(d.plan) === 'paid' || d.comped === true) ? 'plus' : 'free';
       // App Store subscriptions (api/_apple.js) count while appleUntil is ahead.
-      const appleTier = Number(d.appleUntil) > now ? d.appleTier : null;
+      const appleTier = Number(d.appleMegaUntil) > now ? 'mega' :
+        Number(d.appleUntil) > now ? d.appleTier : Number(d.applePlusUntil) > now ? 'plus' : null;
       const realTier = ownTier === 'mega' || Number(d.megaUntil) > now || appleTier === 'mega' ? 'mega' : ownTier === 'plus' || Number(d.plusUntil) > now || appleTier === 'plus' ? 'plus' : 'free';
-      window.userAppleSub = appleTier ? { tier: appleTier, until: Number(d.appleUntil), productId: d.appleProductId || '' } : null;
+      window.userAppleSub = appleTier ? { tier: appleTier, until: Number(d[appleTier === 'mega' ? 'appleMegaUntil' : 'applePlusUntil']) || Number(d.appleUntil), productId: d.appleProductId || '' } : null;
+      window.userStripeSub = !!d.stripeSubscription && !['cancelled', 'canceled', 'expired', 'incomplete_expired'].includes(d.planStatus);
       window.userTierReal = realTier;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.
@@ -3962,6 +3964,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       if (draft && resolvedAuthUid !== undefined) { draft.value = ''; draft.style.height = 'auto'; }
       window._fbPayloads = {};
       window.hasBillingAccount = false;
+      window.userAppleSub = null;
+      window.userStripeSub = false;
       window.userComped = false;
       document.getElementById('settingsContent')?.replaceChildren();
       window.closeAppSettings?.();

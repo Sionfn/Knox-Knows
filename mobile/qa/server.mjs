@@ -13,6 +13,14 @@ const server=http.createServer((req,res)=>{
   res.setHeader('Content-Type','application/json');let body='';req.on('data',d=>body+=d);req.on('end',()=>{
    const request=JSON.parse(body||'{}');let result={};
    if(u.pathname==='/api/me')result=u.searchParams.get('route')==='tester-plan'?{available:false}:u.searchParams.get('route')==='learn-review'?{items:[],enabled:true}:request.action==='request-account-deletion'?{requestId:'qa-request',status:'requested'}:{plan:req.headers['x-qa-plan']==='mega'?'max':req.headers['x-qa-plan']==='free'?'free':'super',tier:req.headers['x-qa-plan']||'plus',usage:{remaining:10,isDailyBank:req.headers['x-qa-plan']==='free'}};
+   if(u.pathname==='/api/me'&&u.searchParams.get('route')==='apple'){
+    if(request.action==='token')result={accountToken:'11111111-1111-4111-8111-111111111111'};
+    else if(request.action==='verify')result={tier:'mega',acceptedTransactionIds:['301']};
+    else result={purchasesAvailable:req.headers['x-qa-store']!=='off'};
+   }
+   if(u.pathname==='/api/me'&&u.searchParams.get('route')==='transcribe'){
+    result=req.method==='GET'?{transcriptionAvailable:req.headers['x-qa-voice']!=='off'}:{text:'What is two plus three?'};
+   }
    if(u.pathname==='/api/ask'){
     if(String(request.question).includes('[QA fail]')){res.statusCode=503;result={error:'QA simulated server failure'};}
     else if(String(request.question).includes('[QA casual]'))result={answer:'Hello!',isCasual:true,model:'qa-fixture'};
