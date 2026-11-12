@@ -170,7 +170,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   const activity=homeSummary({uid,sourceUid:source.uid,decks:source.decks,history:historyRows()}),plan=planDetails(w.userTier);
   const first=user?.displayName?.trim().split(/\s+/)[0]?.slice(0,30);
   block('kmGreeting',greeting(first));
-  const pill=$('kmPlanPill');if(pill){pill.textContent=TIER[plan.current.id]+' '+(user?plan.current.name:'Free');pill.dataset.tier=plan.current.id;pill.hidden=!!w.knoxNativeApp&&plan.current.id==='free';}
+  const pill=$('kmPlanPill');if(pill){pill.textContent=TIER[plan.current.id]+' '+(user?plan.current.name:'Free');pill.dataset.tier=plan.current.id;pill.hidden=false;}
   // Cards in the dock shows how many cards are due.
   const cardsTab=document.querySelector('.knox-app-tabs [data-tab="flashcards"]');if(cardsTab){if(activity.due>0){cardsTab.dataset.badge=activity.due>99?'99+':String(activity.due);cardsTab.setAttribute('aria-label','Cards, '+activity.due+' due');}else{delete cardsTab.dataset.badge;cardsTab.removeAttribute('aria-label');}}
   block('kmDrafts',(w.knoxMobile?.drafts?.()||[]).map(d=>`<button type="button" class="km-draft km-press" data-draft="${d.mode}">${tile(d.mode,d.mode)}<span><b>Continue your ${d.mode==='learn'?'Learn':'Ask'} draft</b><small>${esc(d.text.slice(0,75))}${d.text.length>75?'…':''}</small></span><span aria-hidden="true">→</span></button>`).join(''));
@@ -178,7 +178,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   block('kmResume',recentLesson?`<button type="button" class="km-resume km-press km-rise" data-conversation="${esc(recentLesson.id)}"><span class="km-resume-badge" aria-hidden="true">${svg('learn')}</span><span><span class="km-eyebrow">PICK UP WHERE YOU LEFT OFF</span><h2>${esc(recentLesson.title)}</h2></span><span class="km-resume-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
   block('kmReview',activity.decks.length?`<div class="km-review-hero${activity.due?' due':''}"><span class="km-review-count"><b>${activity.due||'✓'}</b><small>${activity.due?'card'+(activity.due===1?'':'s')+' due':'all caught up'}</small></span><span class="km-review-copy"><b>${activity.due?'Time for a quick review':'Nice! Nothing due right now'}</b><small>${activity.decks.length} deck${activity.decks.length===1?'':'s'} · ${activity.totalCards} cards</small></span>${activity.due?`<button type="button" class="km-review-go km-press" data-deck="${esc(activity.decks[0].id)}">Review</button>`:''}</div><div class="km-deck-list km-list" id="kmDeckRow">${activity.decks.slice(0,8).map((d,i)=>`<button type="button" class="km-deck km-press" data-deck="${esc(d.id)}"${i>=SHOW?' hidden':''}>${tile('flashcards','flashcards')}<span><b>${esc(d.title)}</b><small>${d.due?d.due+' due':d.count+' cards'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div>${moreBtn('kmDeckRow','decks',Math.min(8,activity.decks.length))}`:`<button type="button" class="km-empty km-press" data-go="flashcards">${tile('flashcards','flashcards')}<span><b>Make your first deck</b><small>Turn a topic, your notes or a photo into flashcards.</small></span><span aria-hidden="true">→</span></button>`);
   block('kmRecent',activity.history.length?`<div class="km-recent-list">${activity.history.slice(0,3).map(r=>`<button type="button" class="km-recent km-press" data-conversation="${esc(r.id)}">${r.kind==='learn'?tile('learn','learn'):tile('chat','chat')}<span><b>${esc(r.title)}</b><small>${r.kind==='learn'?'Learn lesson':'Ask Knox'}</small></span><span aria-hidden="true">›</span></button>`).join('')}</div>`:`<div class="km-empty km-empty-small"><span><b>${user?'Your work shows up here':'Keep your work together'}</b><small>${user?'Ask a question or start a lesson to begin.':'Sign in to keep your chats, lessons and decks.'}</small></span>${user?'':`<button type="button" class="km-inline-action" data-action="signin">Sign in →</button>`}</div>`);
-  block('kmHomePlan',plan.suggested&&!w.knoxNativeApp?`<button type="button" class="km-upsell km-press km-rise" data-action="plans" data-tier="${plan.suggested.id}"><span class="km-upsell-shine" aria-hidden="true"></span><span class="km-upsell-gem" aria-hidden="true">${plan.suggested.id==='mega'?'💎':'⚡'}</span><span><small>${plan.suggested.id==='mega'?'GO BIGGER':'LEVEL UP'}</small><b>${esc(plan.suggested.name)}</b><span>${plan.suggested.id==='mega'?'40-card decks, longer files and the most of everything.':'Unlimited questions and full Learn lessons.'}</span></span><span class="km-upsell-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
+  block('kmHomePlan',plan.suggested?`<button type="button" class="km-upsell km-press km-rise" data-action="plans" data-tier="${plan.suggested.id}"><span class="km-upsell-shine" aria-hidden="true"></span><span class="km-upsell-gem" aria-hidden="true">${plan.suggested.id==='mega'?'💎':'⚡'}</span><span><small>${plan.suggested.id==='mega'?'GO BIGGER':'LEVEL UP'}</small><b>${esc(plan.suggested.name)}</b><span>${plan.suggested.id==='mega'?'40-card decks, longer files and the most of everything.':'Unlimited questions and full Learn lessons.'}</span></span><span class="km-upsell-go" aria-hidden="true">${svg('arrow')}</span></button>`:'');
   const initials=(user?.displayName||user?.email||'K').slice(0,1).toUpperCase();
   const own=user?looks.get('Avatar',user.uid):null;
   const photo=own&&/^data:image\/jpeg;base64,/.test(own)?`<img src="${own}" alt="">`:user?.photoURL&&/^https:\/\//.test(user.photoURL)?`<img src="${esc(user.photoURL)}" alt="" referrerpolicy="no-referrer">`:esc(initials);
@@ -339,6 +339,28 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   sheet.addEventListener('keydown',e=>{if(e.key==='Escape')sheet.remove();});
   document.body.append(sheet);w.knoxFlameFest?.applyFlameStyle?.();sheet.querySelector('[data-close]').focus({preventScroll:true});
  }
+ // Now and then (every 3 days, never on someone's first day, signed-in Free
+ // only), Home suggests Plus and Mega in a Knox popup. "See plans" opens the
+ // plans sheet (App Store purchase in the iPhone app).
+ function maybePromo(){
+  const user=w.currentUser;
+  if(!user||w.userTier!=='free'||document.querySelector('dialog[open], .km-plans, .ff-modal'))return;
+  if(!document.body.classList.contains('knox-mobile-home'))return;
+  const key='knoxPromo:'+user.uid,now=Date.now();
+  let seen={};try{seen=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch{}
+  if(!seen.first){seen.first=now;try{localStorage.setItem(key,JSON.stringify(seen));}catch{}return;}
+  if(now-seen.first<86400000||now-(seen.last||0)<3*86400000)return;
+  seen.last=now;try{localStorage.setItem(key,JSON.stringify(seen));}catch{}
+  const d=dialog('💎 Study with more Knox','Free gets you started. Plus and Mega give you room to really study.');
+  d.classList.add('km-promo');
+  const list=document.createElement('ul');list.className='km-promo-list';
+  list.innerHTML=['⚡ Unlimited questions with Plus','📘 Longer Learn lessons','🗂️ Bigger flashcard decks (up to 40 cards on Mega)','🌐 Web search + 🎛️ Simulations on Mega'].map(t=>'<li>'+t+'</li>').join('');
+  d.querySelector('p')?.after(list);
+  button(d,'See plans',()=>{d.close();openPlans();},'primary');
+  button(d,'Not now',()=>d.close());
+  d.showModal();
+ }
+ w.addEventListener('knox-plan-changed',()=>setTimeout(maybePromo,2500));
  // Fill the typing box in Ask or Learn (nothing is sent until the student taps Send).
  // Runs inside the tap (Ask/Learn switch synchronously) so the keyboard opens right away.
  function prefill(target,text){

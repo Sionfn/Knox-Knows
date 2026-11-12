@@ -297,8 +297,10 @@ function syncFoxes(){document.querySelectorAll('.km-welcome-fox').forEach(f=>f.g
   if(!over())ws.scrollTop=0;};
  const later=()=>{clearTimeout(soon);soon=setTimeout(fit,50);};
  window.knoxFitWelcome=fit;addEventListener('resize',later);
- if(ws)new MutationObserver(later).observe(ws,{childList:true,subtree:true,characterData:true});
- new MutationObserver(later).observe(document.body,{attributes:true,attributeFilter:['class']});
+ // Content or screen changes re-fit before the next frame (no visible shift).
+ let queued=false;const now=()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;fit();});};
+ if(ws)new MutationObserver(now).observe(ws,{childList:true,subtree:true,characterData:true});
+ new MutationObserver(now).observe(document.body,{attributes:true,attributeFilter:['class']});
  later();}
 // Flashcards' main screen: Knox floats above the heading, like Ask and Learn.
 (function foxOnCards(){const panel=$('flashcardsPanel');if(!panel){setTimeout(foxOnCards,800);return;}
@@ -512,7 +514,10 @@ async function navigate(target){
     if(mode()!==target){remember();if(target==='learn')window.openLearnMode?.();else window.appStartNewChat?.();restore(target);}
    }
   }
-  surface(null);current=target;sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;
+  surface(null);current=target;sync();
+  // Fit the Ask/Learn start screen before it's drawn, so the titles don't shift a moment later.
+  window.knoxFitWelcome?.();
+  if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;
  }finally{busy=false;}
 }
 async function newStudy(){

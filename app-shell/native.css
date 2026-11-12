@@ -2025,3 +2025,8 @@ html.native-app #authModal .auth-card { max-height:calc(100dvh - env(safe-area-i
    right above the text box instead of leaving a gap under them. */
 html.native-app:not(.web-shell).native-keyboard #welcomeScreen { justify-content:flex-end!important; padding-top:12px!important; padding-bottom:14px!important; }
 html.native-app:not(.web-shell).native-keyboard #welcomeScreen > .km-welcome-fox { width:72px!important; height:72px!important; border-radius:22px!important; margin-bottom:14px!important; }
+
+/* Plus/Mega suggestion popup on Home. */
+.knox-native-dialog.km-promo h2 { color:var(--text); }
+.km-promo-list { list-style:none; margin:4px 0 16px; padding:0; display:grid; gap:8px; text-align:left; }
+.km-promo-list li { padding:10px 12px; border-radius:14px; background:var(--cream); border:2px solid var(--border); font:800 14px/1.35 Nunito,sans-serif; color:var(--text); }
