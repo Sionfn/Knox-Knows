@@ -246,7 +246,7 @@ function home(query=''){
   session=null; editing=null; dirty=false; importNote=null;
   frame({badge:badge('🗂️ Knox Flashcards','🍂 Cozy fall study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
-   `<div class="fc-ways${decks.length?' has-decks':''}">
+   `<div class="fc-ways has-decks">
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
       ${way('create','green','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
       ${way('import','blue','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
