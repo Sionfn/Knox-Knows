@@ -1972,12 +1972,6 @@ html.native-app { -webkit-touch-callout:none; }
 html.native-app :is(button, a, [role="button"], [role="tab"], img, .knox-app-tabs, .km-tool, .km-tab-tile) { -webkit-user-select:none; user-select:none; }
 html.native-app :is(input, textarea, [contenteditable="true"], .msg-knox-bubble, .msg-user-bubble) { -webkit-touch-callout:default; -webkit-user-select:text; user-select:text; }
 
-/* The iPhone app shows its native launch screen while loading, so the web
-   loading card is never needed; account switches show just a quiet spinner. */
-html.native-app:not(.web-shell) #appLoading { background:var(--cream)!important; }
-html.native-app:not(.web-shell) #appLoading .app-loading-content { background:transparent!important; border:0!important; box-shadow:none!important; }
-html.native-app:not(.web-shell) #appLoading :is(.app-loading-logo, .app-loading-title, .app-loading-status) { display:none!important; }
-html.native-app:not(.web-shell) body.app-loading-slow #appLoading .app-loading-status { display:block!important; }
 
 /* Ask/Learn background: the blue ball is placed against the full phone height. */
 html.native-app:not(.knox-seasonal) #chatAndInput { background:radial-gradient(circle at -70px 300px,color-mix(in srgb,var(--orange-light) 70%,transparent) 0 200px,transparent 201px),radial-gradient(circle at calc(100% + 50px) calc((var(--km-stage,874px) - 160px) * .66),color-mix(in srgb,var(--blue-light) 70%,transparent) 0 190px,transparent 191px),var(--surface); }
@@ -2047,3 +2041,26 @@ dialog.km-plans {
 dialog.km-plans:not([open]) { display:none; }
 .km-pw-close { left:max(14px, env(safe-area-inset-left)); }
 .km-billing button:disabled { opacity:.55; }
+
+/* Plans sheet: one clear way out, a Knox top button (like History / New), and
+   the Galaxy Flame sits centered in its tile. */
+html.native-app .km-pw-close { top:calc(10px + env(safe-area-inset-top,0px))!important; left:auto!important; right:max(14px, env(safe-area-inset-right))!important; width:44px!important; height:44px!important; border-radius:14px!important; background:var(--surface)!important; color:var(--text)!important; border:2px solid var(--border)!important; box-shadow:0 3px 0 var(--border)!important; display:grid!important; place-items:center!important; padding:0!important; }
+html.native-app .km-pw-close svg { width:20px!important; height:20px!important; display:block; }
+.km-pw-webdeal .km-pw-webflame { font-size:0; line-height:0; }
+.km-pw-webdeal .km-pw-webflame .galaxy-flame { width:26px; height:34px; vertical-align:0; display:block; }
+.km-pw-webdeal .km-pw-webflame.knox-flame { display:grid!important; place-items:center; }
+
+/* Empty history: a friendly Knox card, not plain gray text. */
+.km-history-empty { margin:6px 16px 12px!important; padding:18px 16px!important; border:2px dashed var(--border); border-radius:18px; background:var(--surface); text-align:center; font:800 14.5px/1.45 Nunito,sans-serif!important; color:var(--text-light)!important; }
+.km-history-empty::before { content:"🦊"; display:block; font-size:28px; margin-bottom:6px; }
+
+/* Home streak box: drawn flames (Slime, Galaxy) sit centered inside the orange
+   tile instead of spilling out. */
+.km-streak-card > span:first-child { overflow:hidden; }
+.km-streak-card > span:first-child .knox-flame { display:grid!important; place-items:center; width:100%; height:100%; }
+.km-streak-card > span:first-child :is(.slime-flame, .galaxy-flame) { width:30px; height:40px; vertical-align:0; }
+.km-flame-pill :is(.slime-flame, .galaxy-flame) { width:17px; height:22px; vertical-align:-4px; }
+
+/* History in Learn: the close ✕ is purple like the rest of Learn. */
+html.native-app.km-hist-learn #mobileHistoryDrawer .drawer-close { color:var(--purple-dark)!important; border-color:var(--purple)!important; background:var(--purple-light)!important; box-shadow:0 3px 0 var(--purple-dark)!important; }
+html[data-theme="dark"]:not(.knox-seasonal).native-app.km-hist-learn #mobileHistoryDrawer .drawer-close { color:var(--purple)!important; background:color-mix(in srgb,var(--purple) 18%,var(--surface))!important; }

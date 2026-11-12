@@ -75,7 +75,17 @@ async function cameraAccess(kind){
  return true;
 }
 async function takePhoto(source,intoCards=false){
- if(cameraBusy||window._appAskBusy){note('Let Knox finish this step before adding a photo.');return;}cameraBusy=true;dismissKeyboard();
+ if(cameraBusy||window._appAskBusy){note('Let Knox finish this step before adding a photo.');return;}
+ // Photo library: iOS's private photo picker (no permission needed, so "Limited
+ // Access" or a denied library can't block it).
+ if(source==='PHOTOS'){
+  dismissKeyboard();const uid=window.currentUser?.uid,version=window._appViewVersion;
+  const input=document.createElement('input');input.type='file';input.accept='image/*';input.hidden=true;
+  input.onchange=async()=>{const file=input.files?.[0];input.remove();if(!file||uid!==window.currentUser?.uid||version!==window._appViewVersion)return;
+   try{if(intoCards)await window.knoxFlashcardsMobile?.addFiles([file]);else await window.handleImageFile?.(file);}catch{note('Knox couldn’t open that picture. Try another one.');}};
+  document.body.append(input);input.click();setTimeout(()=>input.isConnected&&!input.files?.length&&input.remove(),120000);return;
+ }
+ cameraBusy=true;dismissKeyboard();
  const uid=window.currentUser?.uid, version=window._appViewVersion;
  try{
   if(source==='CAMERA'&&!(await cameraAccess('camera')))return;
@@ -503,6 +513,8 @@ async function navigate(target){
   saveDraft();
   document.activeElement?.blur();window.closeMobileHistory?.();window.closeUserDropdown?.();
   const from=current;
+  // Leaving You (profile & settings): it opens at the top next time.
+  if(from==='account'&&target!=='account'){const you=$('knoxMobileAccount');if(you)you.scrollTop=0;}
   if(target==='home'||target==='account'){window.knoxFlashcardsMobile?.hide();surface(target);sync();if(typeof slideIn==='function')slideIn(from,target);quiet(p.haptics.selectionChanged());return true;}
   if(target==='flashcards'){
    if(!window.knoxFlashcardsMobile){note('Flashcards is still opening. Try again in a moment.');return;}
@@ -609,7 +621,13 @@ window.addEventListener('offline',()=>{offline.hidden=false;document.documentEle
 // text box always sits right above it (with iOS's own bar and Done button, like
 // the website). Tapping outside the text box or swiping down also closes it.
 const KR=document.documentElement;
-for(const event of ['keyboardWillShow','keyboardDidShow'])quiet(p.keyboard.addListener(event,()=>KR.classList.add('native-keyboard')));
+// The typing layout switches on in the same frame the screen shrinks for the
+// keyboard (not a moment before), so nothing drops behind the keyboard first.
+{let tall=0;const on=()=>KR.classList.add('native-keyboard');
+ addEventListener('resize',()=>{if(tall&&innerHeight<tall-80){tall=0;on();}});
+ quiet(p.keyboard.addListener('keyboardWillShow',()=>{if(KR.classList.contains('native-keyboard'))return;tall=innerHeight;setTimeout(()=>{if(tall){tall=0;on();}},450);}));
+ quiet(p.keyboard.addListener('keyboardDidShow',()=>{tall=0;on();}));
+ quiet(p.keyboard.addListener('keyboardWillHide',()=>{tall=0;}));}
 quiet(p.keyboard.addListener('keyboardWillHide',()=>{KR.classList.remove('native-keyboard');setTimeout(()=>{if(scrollY)scrollTo(0,0);},300);}));
 if(window.knoxNativeApp){
  const typing=()=>KR.classList.contains('native-keyboard')&&document.activeElement?.matches?.('input,textarea,[contenteditable="true"]');
@@ -623,7 +641,7 @@ if(window.knoxNativeApp){
 
 // The status bar sits over the app header (same color), with light text in Dark mode.
 quiet(plugin('StatusBar').setOverlaysWebView?.({overlay:true}));
-function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
+function chrome(){const dark=document.documentElement.dataset.theme==='dark'&&!document.documentElement.classList.contains('knox-seasonal');try{const bg=getComputedStyle(document.body).backgroundColor.match(/\d+/g);const hex=bg&&bg.length>=3?'#'+bg.slice(0,3).map(n=>(+n).toString(16).padStart(2,'0')).join(''):'';if(hex&&hex!==chrome.bg){chrome.bg=hex;quiet(window.Capacitor?.Plugins?.KnoxStore?.setBackground?.({color:hex}));}}catch{}quiet(p.keyboard.setStyle({style:dark?'DARK':'LIGHT'}));quiet(plugin('StatusBar').setStyle({style:dark?'DARK':'LIGHT'}));setTimeout(paint,0);}
 new MutationObserver(chrome).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class']});chrome();
 let resumedAt=0;
 quiet(p.app.addListener('appStateChange',({isActive})=>{if(isActive){quiet(p.network.getStatus().then(status=>{connection(status);if(status.connected&&Date.now()-resumedAt>30000){resumedAt=Date.now();quiet(window.knoxRefreshPlan?.());quiet(pages.refreshDecks());}}));window.updateUsageIndicator?.();}else saveDraft();}));

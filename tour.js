@@ -94,11 +94,11 @@
     const list = news ? whatsNewSteps(first) : steps(first);
     // The app (and the website's home-screen version) has a tab bar instead of the sidebar.
     if (window.knoxAppShell) for (const step of list) {
-      if (step.target?.includes('data-nav="learn"')) step.target = '.knox-app-tabs [data-tab="learn"]';
-      if (step.target?.includes('.fc-nav')) step.target = '.knox-app-tabs [data-tab="flashcards"]';
-      if (step.target?.includes('data-nav="calculator"')) { step.target = '.knox-app-tabs [data-tab="home"]'; step.text = 'Calculator lives on Home and beside your typing area. Work out the numbers, then tap Explain it to learn why.'; }
-      if (step.target === '#inputOuter') step.target = '.knox-app-tabs [data-tab="chat"]';
-      if (step.target?.includes('#sidebarControlsSlot') || step.target?.includes('#appUpgradeBtn')) { step.target = '.knox-app-tabs [data-tab="home"]'; if (step.title !== 'Meet Mega Knox') step.text = 'Tap your picture at the top of Home for your account, plan, progress and badges. Choose your favorite look there too.'; }
+      if (step.target?.includes('data-nav="learn"')) step.target = '.knox-app-tabs [data-tab="learn"] .km-tab-tile';
+      if (step.target?.includes('.fc-nav')) step.target = '.knox-app-tabs [data-tab="flashcards"] .km-tab-tile';
+      if (step.target?.includes('data-nav="calculator"')) { step.target = '#knoxMobileHome [data-go="calculator"]'; step.text = 'Calculator lives on Home and beside your typing area. Work out the numbers, then tap Explain it to learn why.'; }
+      if (step.target === '#inputOuter') step.target = '.knox-app-tabs [data-tab="chat"] .km-tab-tile';
+      if (step.target?.includes('#sidebarControlsSlot') || step.target?.includes('#appUpgradeBtn')) { step.target = step.title === 'Meet Mega Knox' ? '#kmPlanPill' : '.km-flame-pill, #kmPlanPill'; if (step.title !== 'Meet Mega Knox') step.text = 'Tap your picture at the top of Home for your account, plan, progress and badges. Choose your favorite look there too.'; }
       if (step.title === 'You’re all set!') step.text = 'Tap your picture on Home for settings, your streak, appearance and Help & support. The orange camera button snaps a question from anywhere.';
       if (window.knoxNativeApp) {
         delete step.extra;
@@ -121,6 +121,8 @@
 
     function place() {
       const s = list[i];
+      // In the app, bring a step's item into view first (e.g. Calculator lower on Home).
+      if (window.knoxAppShell && s.target && !pick(s.target)) { const far = document.querySelector(s.target); if (far && far.offsetParent) far.scrollIntoView({ block: 'center' }); }
       const target = s.target ? pick(s.target) : null;
       if (spot) { spot.remove(); spot = null; }
       layer.classList.toggle('kt-dim', !target);
@@ -200,9 +202,12 @@
     const forced = /[?&]tour=1\b/.test(location.search);
     if (!u || running || waiting) return;
     const made = Date.parse(u.metadata?.creationTime || '');
-    const isNew = forced || (made && Date.now() - made < 3 * DAY && !seen());
-    // Older accounts: once, during November, the "What's new" walkthrough instead.
-    const news = !forced && !(made && Date.now() - made < 3 * DAY) && today() >= '2026-11-01' && today() <= '2026-11-30' && !newsSeen();
+    // In the app: the tour the first time each account opens the app (right after
+    // sign-in), never the website's "What's new" walkthrough (it's about the website).
+    const app = !!window.knoxAppShell;
+    const isNew = forced || (app ? !seen() : (made && Date.now() - made < 3 * DAY && !seen()));
+    // Older accounts on the website: once, during November, the "What's new" walkthrough instead.
+    const news = !app && !forced && !(made && Date.now() - made < 3 * DAY) && today() >= '2026-11-01' && today() <= '2026-11-30' && !newsSeen();
     if (!isNew && !news) return;
     if (!forced && /[?&]open=/.test(location.search)) return; // came here for something specific
     whenReady(news ? { kind: 'news' } : {});

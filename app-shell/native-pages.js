@@ -314,7 +314,7 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
     ${inApp?`<div class="km-pw-applelinks"><button type="button" class="km-press" data-restore>Restore purchases</button>${w.userAppleSub?'<button type="button" class="km-press" data-applemanage>Manage subscription</button>':''}</div>
     <p class="km-plan-note km-pw-legal">Payment is charged to your Apple ID when you confirm. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period, and renewal is charged within the 24 hours before it ends. Manage or cancel anytime in your App Store account settings. <a href="https://knoxknows.com/terms" data-ext>Terms of Use</a> · <a href="https://knoxknows.com/privacy" data-ext>Privacy Policy</a></p>`:''}
     ${webDeal&&!w.userAppleSub&&!(p.id===cur&&w.currentUser)&&!(cur==='mega'&&p.id==='plus')?`<section class="km-pw-webdeal" aria-label="Upgrade on the website"><span class="km-pw-webflame knox-flame" data-look="galaxy" aria-hidden="true">🔥</span><div><b>Cheaper on knoxknows.com</b><small>Get ${esc(p.name)} for less on the website, plus the animated <strong>🌌 Galaxy Flame</strong> (website only).</small></div><button type="button" class="km-pw-webgo km-press" data-web="${p.id}">Upgrade on the website</button></section>`:''}
-    <button type="button" class="km-pw-done km-press" data-close>Done</button></div>`;
+    </div>`;
   };
   const drawn=()=>{draw();w.knoxFlameFest?.applyFlameStyle?.();};
   drawn();
@@ -407,7 +407,8 @@ window.createKnoxMobilePages=function({navigate,note,dialog,button,icon,pickStud
   button(d,'Not now',()=>d.close());
   d.showModal();
  }
- w.addEventListener('knox-plan-changed',()=>setTimeout(maybePromo,2500));
+ // After the tour (and Flame Fest's intro) on a first visit; otherwise a moment after Home shows.
+ w.addEventListener('knox-plan-changed',()=>setTimeout(()=>{if(w.knoxTour?.pending?.())w.addEventListener('knox-tour-done',()=>setTimeout(maybePromo,4000),{once:true});else maybePromo();},2500));
  // Fill the typing box in Ask or Learn (nothing is sent until the student taps Send).
  // Runs inside the tap (Ask/Learn switch synchronously) so the keyboard opens right away.
  function prefill(target,text){

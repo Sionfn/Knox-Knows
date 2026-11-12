@@ -243,14 +243,20 @@
       else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
     }
   }
+  let opening = false;
   async function open() {
     if (!window.currentUser && !demo) { window.openAuthModal?.(); return; }
-    if (wrap) return;
+    if (wrap || opening) return;
+    // No loading screen: Flame Fest opens once its data is here (usually already
+    // loaded in the background after sign-in).
+    if (!state && !demo) { opening = true; try { await load(); } catch {} opening = false; if (wrap) return; }
     lastFocus = document.activeElement;
     wrap = document.createElement('div');
     wrap.className = 'ff-modal';
     wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'ffTitle');
     wrap.innerHTML = '<div class="ff-card"><button type="button" class="ff-x" aria-label="Close Flame Fest">×</button><div class="ff-body"></div><div class="ff-toast" role="status"></div></div>';
+    // The ✕ closes on the first touch (no waiting for a click iOS may hold back).
+    wrap.addEventListener('pointerup', e => { if (e.target.closest('.ff-x')) { e.preventDefault(); close(); } });
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('.ff-x')) { close(); return; }
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
@@ -263,7 +269,8 @@
     document.addEventListener('keydown', onKey, true);
     document.body.append(wrap);
     focusCard(wrap.querySelector('.ff-card'));
-    if (!state || !demo) await load();
+    // Saved data shows at once (refreshed quietly behind it); only the very first open waits.
+    if (!state) await load(); else if (!demo) load().then(() => { if (wrap) render(); });
     render();
   }
 
@@ -273,7 +280,7 @@
   const SLIME = '<svg class="slime-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="slimeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9F86E"/><stop offset=".55" stop-color="#6FD83C"/><stop offset="1" stop-color="#33A52A"/></linearGradient></defs><ellipse class="slime-drip" cx="15.2" cy="23.5" rx="1.7" ry="2.1" fill="#5BCB34" stroke="#2A8F22" stroke-width=".8"/><ellipse class="slime-drip slime-drip-2" cx="8.6" cy="22.8" rx="1.3" ry="1.6" fill="#5BCB34" stroke="#2A8F22" stroke-width=".7"/><g class="slime-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#slimeFill)" stroke="#2A8F22" stroke-width="1.3" stroke-linejoin="round"/><ellipse cx="8.9" cy="16.2" rx="1.5" ry="2.7" fill="#fff" opacity=".6"/><circle cx="15.3" cy="19.4" r="1" fill="#fff" opacity=".45"/><circle cx="12.4" cy="13.2" r=".7" fill="#fff" opacity=".4"/></g></svg>';
   // 🌌 Galaxy Flame (website subscribers): a drawn flame of deep space, nebula colors
   // drifting through it, stars twinkling inside and sparks orbiting it.
-  const GALAXY = '<svg class="galaxy-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="galaxyFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7AD9"/><stop offset=".45" stop-color="#8B4FFF"/><stop offset="1" stop-color="#1E2A8C"/></linearGradient><radialGradient id="galaxyCore" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset=".35" stop-color="#7FE3FF" stop-opacity=".7"/><stop offset="1" stop-color="#7FE3FF" stop-opacity="0"/></radialGradient></defs><g class="galaxy-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#galaxyFill)" stroke="#3A1C8F" stroke-width="1.2" stroke-linejoin="round"/><ellipse class="galaxy-swirl" cx="12" cy="15.6" rx="6" ry="1.7" fill="#FF7AD9" opacity=".6"/><ellipse class="galaxy-swirl g2" cx="12" cy="18.4" rx="4.8" ry="1.2" fill="#FFD36E" opacity=".45"/><ellipse class="galaxy-core" cx="12" cy="17.5" rx="4.6" ry="5.4" fill="url(#galaxyCore)"/><circle class="galaxy-star s1" cx="9.2" cy="14" r=".85" fill="#fff"/><circle class="galaxy-star s2" cx="14.6" cy="11.8" r=".6" fill="#fff"/><circle class="galaxy-star s3" cx="15.4" cy="19.6" r=".7" fill="#FFE38A"/><circle class="galaxy-star s4" cx="10.4" cy="20.4" r=".5" fill="#fff"/><path class="galaxy-star s5" d="M12.3 7.2l.45 1.05 1.05.45-1.05.45-.45 1.05-.45-1.05-1.05-.45 1.05-.45z" fill="#fff"/></g><g class="galaxy-orbit"><circle cx="21.2" cy="13" r=".9" fill="#FFE38A"/><circle cx="2.6" cy="20" r=".7" fill="#7FE3FF"/></g></svg>';
+  const GALAXY = '<svg class="galaxy-flame" viewBox="0 0 24 32" aria-hidden="true"><defs><linearGradient id="galaxyFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF6FD8"/><stop offset=".4" stop-color="#7B3FF2"/><stop offset="1" stop-color="#141B5E"/></linearGradient><radialGradient id="galaxyCore" cx=".5" cy=".62" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset=".35" stop-color="#7FE3FF" stop-opacity=".7"/><stop offset="1" stop-color="#7FE3FF" stop-opacity="0"/></radialGradient></defs><g class="galaxy-body"><path d="M12.6 1C14 5.4 19.8 8.6 19.8 16.2c0 4.6-3.5 8-7.8 8s-7.8-3.4-7.8-8c0-4.3 2.2-6.9 3.6-9.8.3 2.8 1.3 4.4 2.6 5.1-.4-4 .3-7.4 2-10.5z" fill="url(#galaxyFill)" stroke="#8FE9FF" stroke-width=".8" stroke-linejoin="round"/><ellipse class="galaxy-swirl" cx="12" cy="15.6" rx="6" ry="1.7" fill="#FF7AD9" opacity=".6"/><ellipse class="galaxy-swirl g2" cx="12" cy="18.4" rx="4.8" ry="1.2" fill="#FFD36E" opacity=".45"/><ellipse class="galaxy-core" cx="12" cy="17.5" rx="4.6" ry="5.4" fill="url(#galaxyCore)"/><circle class="galaxy-star s1" cx="9.2" cy="14" r=".85" fill="#fff"/><circle class="galaxy-star s2" cx="14.6" cy="11.8" r=".6" fill="#fff"/><circle class="galaxy-star s3" cx="15.4" cy="19.6" r=".7" fill="#FFE38A"/><circle class="galaxy-star s4" cx="10.4" cy="20.4" r=".5" fill="#fff"/><path class="galaxy-star s5" d="M12.3 7.2l.45 1.05 1.05.45-1.05.45-.45 1.05-.45-1.05-1.05-.45 1.05-.45z" fill="#fff"/></g><g class="galaxy-rise"><circle class="gr1" cx="9" cy="6" r=".75" fill="#FFE38A"/><circle class="gr2" cx="15.5" cy="8" r=".6" fill="#8FE9FF"/><circle class="gr3" cx="12.4" cy="3" r=".5" fill="#fff"/></g></svg>';
   let currentStyle = 'classic', slimeCount = 0, galaxyCount = 0;
   function applyFlameStyle(style) {
     if (style) currentStyle = style;
@@ -320,8 +327,13 @@
     let x, y;
     if (r.right + gap + w <= W - 8) { x = r.right + gap; y = r.top + r.height / 2 - h / 2; }
     else { x = r.left + r.width / 2 - w / 2; y = r.top - gap - h >= 8 ? r.top - gap - h : r.bottom + gap; }
+    // Keep it clear of the notch / Dynamic Island and the home bar (iPhone app).
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.append(probe); const cs = getComputedStyle(probe), safeTop = parseFloat(cs.paddingTop) || 0, safeBottom = parseFloat(cs.paddingBottom) || 0; probe.remove();
+    if (y < safeTop + 8 && r.bottom + gap + h <= H - safeBottom - 8) y = r.bottom + gap;
     peek.style.left = Math.max(8, Math.min(x, W - w - 8)) + 'px';
-    peek.style.top = Math.max(8, Math.min(y, H - h - 8)) + 'px';
+    peek.style.top = Math.max(safeTop + 8, Math.min(y, H - h - safeBottom - 8)) + 'px';
     // The native "Your study streak" tooltip would sit on top of it.
     if (host.title) { host.dataset.peekTitle = host.title; host.removeAttribute('title'); }
     peekFor = host;
@@ -435,6 +447,8 @@
   // starts on the classic flame; the next streak read paints its own look.
   addEventListener('knox-auth-changed', () => { accountGeneration++; state = null; error = ''; loading = false; styleSeq++; close(); applyFlameStyle('classic'); });
   addEventListener('knox-auth-changed', () => { clearTimeout(introTimer); introTimer = setTimeout(intro, 1500); });
+  // Load Flame Fest in the background after sign-in, so it opens instantly.
+  addEventListener('knox-auth-changed', () => { if (window.currentUser && active()) setTimeout(() => { if (window.currentUser && !state && !loading) load().catch(() => {}); }, 3000); });
   if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 
   window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true) };

@@ -42,7 +42,8 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "purchase", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "entitlements", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "manage", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "finish", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setBackground", returnType: CAPPluginReturnPromise)
     ]
     private var updates: Task<Void, Never>?
 
@@ -150,6 +151,20 @@ public class KnoxStorePlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    // The color behind the app (e.g. the keyboard's rounded corners) matches
+    // Knox's current look, not the phone's light/dark setting.
+    @objc func setBackground(_ call: CAPPluginCall) {
+        let hex = (call.getString("color") ?? "").trimmingCharacters(in: CharacterSet(charactersIn: "#"))
+        guard hex.count == 6, let value = UInt32(hex, radix: 16) else { call.reject("Use a #RRGGBB color."); return }
+        let color = UIColor(red: CGFloat((value >> 16) & 0xFF) / 255, green: CGFloat((value >> 8) & 0xFF) / 255, blue: CGFloat(value & 0xFF) / 255, alpha: 1)
+        DispatchQueue.main.async {
+            let view = self.bridge?.viewController?.view
+            view?.window?.backgroundColor = color
+            view?.backgroundColor = color
+            call.resolve()
+        }
+    }
+
     @objc func manage(_ call: CAPPluginCall) {
         Task { @MainActor in
             guard let scene = self.bridge?.viewController?.view.window?.windowScene else {
@@ -189,6 +204,12 @@ public class KnoxDevicePlugin: CAPPlugin, CAPBridgedPlugin {
 class KnoxBridgeViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(KnoxStorePlugin())
+        // iOS 26 blurs whatever scrolls under the status bar and home bar. Knox
+        // draws its own top and bottom, so turn that effect off.
+        if #available(iOS 26.0, *), let scroll = webView?.scrollView {
+            scroll.topEdgeEffect.isHidden = true
+            scroll.bottomEdgeEffect.isHidden = true
+        }
         bridge?.registerPluginInstance(KnoxDevicePlugin())
     }
 }
