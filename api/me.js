@@ -13,6 +13,7 @@ import testerPlan from "./_tester-plan.js";
 import support from "./_support.js";
 import { learnReviewRoute } from "./_learn-review.js";
 import notes from "./_notes.js";
+import shareDeck from "./_share-deck.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -93,6 +94,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "support") return support(req, res);
   // The Binder's notes (see api/_notes.js).
   if (req.query?.route === "notes") return notes(req, res);
+  // Flashcard decks shared by link (see api/_share-deck.js).
+  if (req.query?.route === "share-deck") return shareDeck(req, res);
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");

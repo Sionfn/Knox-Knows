@@ -3994,6 +3994,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       // covers the page, so it appears already in place — just like Ask Knox.
       await window.knoxRestoreSection?.();
       window.finishAppLoading();
+      window.knoxAfterAccount?.(user);
     }
   });
 
@@ -7263,6 +7264,22 @@ if (openTarget === 'calculator' || openTarget === 'learn' || openTarget === 'fla
   };
   // Sign-in already finished before this ran: open right away.
   if (!document.body.classList.contains('app-auth-pending')) window.knoxRestoreSection();
+}
+
+// /app?add_deck=<id>: "Add to my decks" on a shared deck's page (/deck/<id>).
+// Once the account is known it's copied into your decks; guests are asked to
+// sign up first, and it's added as soon as they do.
+const sharedDeckId = new URLSearchParams(location.search).get('add_deck');
+if (sharedDeckId && /^[A-Za-z0-9]{12}$/.test(sharedDeckId)) {
+  let addedDeck = false, askedToSignIn = false;
+  window.knoxAfterAccount = function (user) {
+    if (addedDeck) return;
+    if (!user) { if (!askedToSignIn) { askedToSignIn = true; setTimeout(() => window.openAuthModal?.('signup'), 500); } return; }
+    addedDeck = true;
+    try { history.replaceState(null, '', location.pathname); } catch {}
+    const run = (tries = 0) => window.addSharedDeck ? window.addSharedDeck(sharedDeckId) : tries < 50 && setTimeout(() => run(tries + 1), 200);
+    run();
+  };
 }
 
 // /app?open=flamefest (the Chrome extension's Flame Fest button): open the
