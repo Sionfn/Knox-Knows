@@ -8,6 +8,16 @@
   // "Coming soon to the App Store". Set it once and every button uses it.
   var APP_STORE_URL = '';
 
+  // Opening the page always starts at the top, so the hero is never half under the
+  // header (browsers bring back an old scroll spot on reload). Links to a section
+  // (#pricing…) and coming back from Privacy/Terms keep their place.
+  try {
+    if (!location.hash && sessionStorage.getItem('knoxLandingReturnPending') !== '1') {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+    }
+  } catch (_) {}
+
   var reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
