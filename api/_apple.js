@@ -128,6 +128,11 @@ export default async function apple(req, res, {
   db, auth, now = Date.now(),
   enabled = process.env.APPLE_PURCHASES_ENABLED === "1",
   allowSandbox = sandboxAllowed,
+  // App Review buys in Apple's sandbox with Apple's own accounts: with this on,
+  // any account's sandbox purchase counts (only reviewers and invited TestFlight
+  // testers can make one, and those renew fast and lapse on their own). It never
+  // opens purchasing by itself — APPLE_PURCHASES_ENABLED still decides that.
+  acceptSandbox = process.env.APPLE_ACCEPT_SANDBOX === "1",
   verifyTransaction = jws => verifyWithApple("verifyAndDecodeTransaction", jws),
   verifyNotification = jws => verifyWithApple("verifyAndDecodeNotification", jws),
   verifyRenewal = jws => verifyWithApple("verifyAndDecodeRenewalInfo", jws),
@@ -163,7 +168,7 @@ export default async function apple(req, res, {
         const found = await db.collection("users").where("appleAccountToken", "==", String(tx.appAccountToken).toLowerCase()).limit(1).get();
         uid = found.docs[0]?.id;
       }
-      if (uid && allowEnvironment(tx.environment, uid, allowSandbox)) {
+      if (uid && allowEnvironment(tx.environment, uid, u => acceptSandbox || allowSandbox(u))) {
         await apply(db, uid, [{ tx, graceUntil, eventDate: note.signedDate, refundReversed: note.notificationType === "REFUND_REVERSED" }], now);
       }
       return res.status(200).json({ ok: true });
@@ -206,7 +211,7 @@ export default async function apple(req, res, {
       if (error.status === VerificationStatus.RETRYABLE_VERIFICATION_FAILURE) return unavailable();
       continue;
     }
-    if (!validTransaction(tx) || !allowEnvironment(tx.environment, uid, allowSandbox)) continue;
+    if (!validTransaction(tx) || !allowEnvironment(tx.environment, uid, u => acceptSandbox || allowSandbox(u))) continue;
     if (String(tx.appAccountToken || "").toLowerCase() !== accountToken) continue;
     updates.push({ tx });
   }

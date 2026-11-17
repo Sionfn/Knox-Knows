@@ -117,6 +117,21 @@ test('sandbox receipts cannot unlock production accounts or replace a production
   assert.equal(data.get('appleSubscriptions/sandbox-100').environment,'Sandbox');
 });
 
+test('App Review: with APPLE_ACCEPT_SANDBOX on, any account\'s sandbox purchase unlocks its plan', async () => {
+  const {sync,data,notice} = setup({acceptSandbox:true});
+  assert.equal((await sync('bob',receipt('bob',{environment:'Sandbox'}))).body.tier,'mega');
+  assert.equal(tierOf(data.get('users/bob'),NOW),'mega');
+  assert.equal(data.get('appleSubscriptions/sandbox-100').environment,'Sandbox');
+  // Apple's sandbox renewal notices keep it current too.
+  assert.equal((await notice(receipt('bob',{environment:'Sandbox',transactionId:'102',expiresDate:NOW+2*day}),'DID_RENEW')).code,200);
+});
+
+test('APPLE_ACCEPT_SANDBOX never opens purchasing while App Store purchases are off', async () => {
+  const {call} = setup({enabled:false,acceptSandbox:true});
+  assert.equal((await call({action:'token'},'bob')).code,503);
+  assert.equal((await call({action:'status'},'bob')).body.purchasesAvailable,false);
+});
+
 test('renewal order, refund replay, and unrelated refunds preserve the effective tier', async () => {
   const {sync,data,notice} = setup();
   const older = receipt('amy');
