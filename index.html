@@ -2236,6 +2236,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   <link rel="stylesheet" href="/harvest.css">
   <link rel="stylesheet" href="/pumpkin-patch.css">
 <link rel="stylesheet" href="/hover-steady.css">
+  <link rel="stylesheet" href="./landing.css">
 </head>
 <body class="landing-loading">
 
@@ -2391,6 +2392,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <a class="ln-link" href="#subjects" onclick="closeMobileNav();smoothScroll('subjects',event);">
         <span class="ln-icon ln-subj" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/></svg></span><span>Subjects</span>
       </a>
+      <a class="ln-link" href="#get-the-app" onclick="closeMobileNav();smoothScroll('get-the-app',event);">
+        <span class="ln-icon ln-how" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg></span><span>iPhone app</span>
+      </a>
       <a class="ln-link" href="#pricing" onclick="closeMobileNav();smoothScroll('pricing',event);">
         <span class="ln-icon ln-price" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="8" cy="8" r="1.5"/></svg></span><span>Pricing</span>
       </a>
@@ -2427,245 +2431,425 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   </div>
 </div>
 
+<!-- ===================== LANDING (December 2026) =====================
+     The hero tour, a live preview of every mode, every grade and the iPhone
+     app. Styles: landing.css · behavior: landing.js -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="kli-camera" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></g></symbol>
+    <symbol id="kli-ask" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 13v3a3 3 0 0 1-3 3H8l-4 3V8a3 3 0 0 1 3-3h5"/><path d="m18 2 1.4 3.6L23 7l-3.6 1.4L18 12l-1.4-3.6L13 7l3.6-1.4L18 2Z"/><path d="M8 13h4"/></g></symbol>
+    <symbol id="kli-learn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></g></symbol>
+    <symbol id="kli-cards" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="14" height="15" rx="3"/><path d="M7 3h11a3 3 0 0 1 3 3v11"/><path d="M7 11h6M7 15h4"/></g></symbol>
+    <symbol id="kli-home" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2V18a3 3 0 0 1-3 3h-3.5v-5a2.5 2.5 0 0 0-5 0v5H6a3 3 0 0 1-3-3Z"/></g></symbol>
+    <symbol id="kli-calc" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></g></symbol>
+    <symbol id="kli-history" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></g></symbol>
+    <symbol id="kli-plus" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></g></symbol>
+    <symbol id="kli-send" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12 16-8-6 16-3-7Z"/></g></symbol>
+    <symbol id="kli-spark" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7Z"/></g></symbol>
+    <symbol id="kli-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></g></symbol>
+    <symbol id="kli-chrome" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5h8.2M9 13.8 4.9 6.7M15 13.8l-4.1 7.1"/></g></symbol>
+    <symbol id="kli-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></g></symbol>
+    <symbol id="kli-apple" viewBox="0 0 22 24"><path fill="currentColor" d="M16.37 1.43c0 1.14-.47 2.26-1.24 3.06-.8.85-2.1 1.5-3.18 1.41-.13-1.1.42-2.27 1.17-3.04.83-.86 2.24-1.48 3.25-1.43ZM20.5 17.26c-.55 1.27-.82 1.84-1.53 2.96-.99 1.56-2.39 3.5-4.12 3.52-1.54.01-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06 1-1.73-.02-3.05-1.77-4.04-3.33C-.04 16.06-.33 11.03 1.4 8.4c1.23-1.87 3.17-2.96 4.99-2.96 1.86 0 3.03 1.02 4.56 1.02 1.49 0 2.4-1.02 4.55-1.02 1.62 0 3.34.88 4.57 2.41-4.01 2.2-3.36 7.93.43 9.41Z"/></symbol>
+    <symbol id="kli-discord" viewBox="0 0 24 24"><path fill="currentColor" d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0c-.17-.4-.41-.87-.62-1.25a19.7 19.7 0 0 0-4.92 1.53C.53 9.05-.32 13.58.1 18.06a19.9 19.9 0 0 0 6.02 3.06c.46-.63.87-1.29 1.23-1.99-.66-.25-1.29-.55-1.89-.9l.37-.3c3.93 1.8 8.18 1.8 12.06 0l.37.3c-.6.35-1.23.65-1.89.9.36.7.78 1.36 1.23 1.99a19.8 19.8 0 0 0 6.03-3.06c.5-5.18-.84-9.67-3.31-13.69ZM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42Z"/></symbol>
+    <symbol id="kli-flame" viewBox="0 0 32 32"><path d="M16 2.5c2.2 5.2 9 8.4 9 16.3A9 9 0 0 1 16 28a9 9 0 0 1-9-9.2c0-4.2 2-6.9 4-8.9.4 2.8 1.7 4.7 3.6 5.6C13.9 11.4 14.2 6.6 16 2.5Z" fill="var(--fl1, #FF6B00)"/><path d="M16 14c1.2 2.6 4.4 4.2 4.4 8a4.4 4.4 0 0 1-8.8 0c0-2 1-3.3 2-4.2.3 1.1.9 1.9 1.7 2.3-.2-2.2.1-4.2.7-6.1Z" fill="var(--fl2, #FFD900)"/></symbol>
+    <symbol id="kli-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/></g></symbol>
+    <symbol id="kli-widget" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></g></symbol>
+    <symbol id="kli-sync" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></g></symbol>
+    <symbol id="kli-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></g></symbol>
+    <symbol id="kli-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></g></symbol>
+    <symbol id="kli-graph" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M6 15c3-8 6-8 9 0 1.2 3 2.6 3 4 0"/></g></symbol>
+    <symbol id="kli-sim" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="18.5" r="2"/><path d="M7 17C10 9 15 6 21 6.5"/><path d="M17.5 3.5 21 6.5l-3 3.3"/></g></symbol>
+    <symbol id="kli-binder" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6Z"/><path d="M6 3v18M3 7h3M3 12h3M3 17h3M10 8h6M10 12h6"/></g></symbol>
+    <symbol id="kli-file" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></g></symbol>
+    <symbol id="kli-shield" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/></g></symbol>
+  </defs>
+</svg>
+
 <!-- ===================== HERO ===================== -->
-<section id="home" style="background:var(--surface);padding:72px 24px 64px;text-align:center;position:relative;overflow:hidden;">
-  <div class="hero-blob" style="position:absolute;top:-100px;left:-80px;width:400px;height:400px;border-radius:50%;background:var(--orange-light);opacity:0.35;pointer-events:none;"></div>
-  <div class="hero-blob" style="position:absolute;bottom:-80px;right:-60px;width:360px;height:360px;border-radius:50%;background:var(--blue-light);opacity:0.35;pointer-events:none;"></div>
-
-  <div style="position:relative;z-index:1;max-width:900px;margin:0 auto;">
-    <!-- Knox laptop character - official logo -->
-
-    <div style="margin-bottom:8px;">
-      <img class="hero-mascot" src="./knox-logo.jpg" alt="Knox the Fox" draggable="false" style="width:200px;height:200px;object-fit:cover;border-radius:50%;filter:drop-shadow(0 8px 20px rgba(255,107,0,0.25));" onerror="this.outerHTML='<div style=\'font-size:120px;\'>🦊</div>'">
-    </div>
-
-    <!-- Knox wave badge -->
-    <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange-light);border:2px solid var(--orange);border-radius:999px;padding:7px 18px;font-size:14px;font-weight:800;color:var(--orange);margin-bottom:24px;">
-      <span class="season-hide">Your AI study companion 🦊</span><span class="season-only"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5-6"/></svg> Cozy fall study buddy</span>
-    </div>
-
-    <h1 style="font-size:clamp(38px,calc(6.5vw / var(--kz, 1)),74px);font-weight:900;line-height:1.05;letter-spacing:-0.02em;color:var(--text);">
-      Stop Guessing.<br>
-      <span class="hero-accent" style="color:var(--orange);">Start Knowing.</span>
-    </h1>
-
-    <p style="font-size:18px;font-weight:600;color:var(--text-body);line-height:1.65;max-width:520px;margin:18px auto 0;">
-      The homework AI that talks like a real tutor, not a form to fill out. Get a straight answer, learn it step by step, or turn your notes into flashcards — and free gets the same AI as paid.
-    </p>
-
-    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:36px;">
-      <button class="btn-orange" style="font-size:17px;padding:17px 40px;" onclick="window.location.href='/app'">Try Knox free →</button>
-    </div>
-    <a href="#how-it-works" onclick="smoothScroll('how-it-works',event)" style="display:inline-block;margin-top:14px;font-size:14px;font-weight:700;color:var(--text-light);text-decoration:underline;text-underline-offset:3px;">See how it works</a>
-
-    <p style="font-size:13px;font-weight:800;color:var(--green-dark);margin-top:16px;">✔ Free forever · no credit card · sign up in seconds</p>
-
-    <!-- Social proof row -->
-    <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:16px;margin-top:32px;">
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="display:flex;color:var(--orange);"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/></svg></span> Every subject K-12 → College
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="display:flex;color:var(--blue);"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></span> Snap a photo, done
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text-light);">
-          <span style="display:flex;color:#7C3AED;"><svg class="kk-ic" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/></svg></span> Teaches, doesn't just tell
-        </div>
+<section id="home" class="kl-hero">
+  <div class="kl-wrap kl-hero-grid">
+    <div class="kl-hero-copy">
+      <a class="kl-pill" href="#get-the-app" onclick="smoothScroll('get-the-app',event)">
+        <span class="kl-pill-ic"><svg><use href="#kli-apple"/></svg></span>
+        <span><b>New</b> · Knox Knows for iPhone</span><span aria-hidden="true">→</span>
+      </a>
+      <h1 class="kl-h1"><span class="kl-line"><span class="kl-c-orange">Snap</span> it.</span><span class="kl-line"><span class="kl-c-purple">Learn</span> it.</span><span class="kl-line"><span class="kl-c-green">Remember</span> it.</span></h1>
+      <p class="kl-lead">Knox Knows is the AI tutor that teaches instead of just telling. Snap any homework question, get it explained step by step, then lock it in with flashcards timed for right before you'd forget. Free on the web and on iPhone.</p>
+      <div class="kl-cta-row">
+        <a class="kl-btn kl-btn-orange" href="/app">Try Knox free <span aria-hidden="true">→</span></a>
+        <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== WHY KNOX IS DIFFERENT ===================== -->
-<section id="why-knox" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1050px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Why Knox is different</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:560px;margin:0 auto;">Every AI homework app promises "answers." Here's what we actually did differently.</p>
-    </div>
-
-    <div class="rg-2col">
-      <!-- Same quality free -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:15px;background:var(--green-light);color:var(--green);border:2px solid var(--green);box-shadow:0 4px 0 #3D9900;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 14.06 5 19M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/><path d="M19 15v4M17 17h4"/></svg></div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Free gets the same quality as paid</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Every plan uses the same AI. Start free, then upgrade for more questions, files and study tools.</p>
-      </div>
-
-      <!-- Learn mode -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:15px;background:var(--purple-light);color:#7C3AED;border:2px solid #7C3AED;box-shadow:0 4px 0 #5B21B6;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg></div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Learn mode teaches, not tells</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Learn with worked examples, one-step questions and hints. Knox teaches a small piece, then helps you try it yourself.</p>
-      </div>
-
-      <!-- Talks like a person -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:15px;background:var(--blue-light);color:var(--blue);border:2px solid var(--blue);box-shadow:0 4px 0 #0A85C2;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg></div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Talks like a tutor, not a template</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Ask in your own words. Knox gives a direct explanation, and you can ask follow-up questions whenever something doesn’t click.</p>
-      </div>
-
-      <!-- Snap a photo -->
-      <div class="reveal delay-4" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:32px 28px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
-          <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></div>
-          <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;">Snap a photo or drop in a file</h3>
-        </div>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Bring a worksheet photo, handwritten notes, PDF, Word document or PowerPoint. Knox reads what you share and helps you work through it.</p>
+      <p class="kl-fine">✔ Free forever · no credit card · every subject, every grade</p>
+      <div class="kl-platforms" aria-label="Knox Knows works on">
+        <span><svg><use href="#kli-phone"/></svg>iPhone</span>
+        <span><svg><use href="#kli-globe"/></svg>Web</span>
+        <span><svg><use href="#kli-chrome"/></svg>Chrome</span>
+        <span><svg><use href="#kli-discord"/></svg>Discord</span>
       </div>
     </div>
 
+    <div class="kl-hero-demo">
+      <div class="kl-demo kl-card" id="klTour" aria-label="A quick tour of Knox Knows on iPhone">
+        <div class="kl-phone" aria-hidden="true">
+          <div class="kl-screen">
+            <div class="kl-status"><span>9:41</span><i></i></div>
+
+            <!-- 1 · Snap -->
+            <div class="kl-scene kl-s-snap" data-dur="4300" data-tab="">
+              <div class="kl-paper"><h5>Algebra · Worksheet 4</h5><p><b>1.</b>4x = 28</p><p><b>2.</b>Solve 2x + 7 = 19</p><p><b>3.</b>Factor x² − 9</p><p><b>4.</b>5 − 3x = 11</p></div>
+              <div class="kl-crop"><i></i><i></i><i></i><i></i><span class="kl-scanline"></span></div>
+              <div class="kl-cam-hint"><img src="./knox-logo-square.jpg" alt="">Fit one question in the box</div>
+              <div class="kl-cam-modes"><span class="on">Ask Knox</span><span>Learn</span></div>
+              <div class="kl-shutter"></div>
+              <div class="kl-flash"></div>
+              <div class="kl-tap" data-target=".kl-shutter" style="--delay:1.75s"></div>
+            </div>
+
+            <!-- 2 · Ask Knox answers -->
+            <div class="kl-scene kl-s-ask m-orange" data-dur="5600" data-tab="ask">
+              <div class="kl-appbar"><span class="kl-chip m-orange"><img src="./knox-logo-square.jpg" alt="">Ask Knox</span><span class="kl-sq"><svg><use href="#kli-history"/></svg></span><span class="kl-sq"><svg><use href="#kli-plus"/></svg></span></div>
+              <div class="kl-me"><div class="kl-photo"><small>📷 Your photo</small>2. Solve 2x + 7 = 19</div><div class="kl-bubble">Help me with this.</div></div>
+              <div class="kl-knox"><img class="kl-av" src="./knox-logo-square.jpg" alt=""><div><span class="kl-label">KNOX</span>
+                <div class="kl-stack"><div class="kl-dots"><i></i><i></i><i></i></div>
+                  <div class="kl-answer"><p>Get <b>x</b> by itself.</p><p>1. <b>Subtract 7</b> from both sides: 2x = 12</p><p>2. <b>Divide by 2</b>: x = 6</p><div class="kl-ansbox"><span>ANSWER</span>x = 6</div></div></div>
+              </div></div>
+              <div class="kl-typebar"><span class="kl-plus">+</span><span>Ask Knox anything…</span><span class="kl-send"><svg><use href="#kli-send"/></svg></span></div>
+            </div>
+
+            <!-- 3 · Learn -->
+            <div class="kl-scene kl-s-learn m-purple" data-dur="4700" data-tab="learn">
+              <div class="kl-appbar"><span class="kl-chip m-purple"><span class="kl-chip-ic"><svg><use href="#kli-learn"/></svg></span>Learn</span><span class="kl-sq"><svg><use href="#kli-history"/></svg></span><span class="kl-sq"><svg><use href="#kli-plus"/></svg></span></div>
+              <div class="kl-knox"><img class="kl-av" src="./knox-logo-square.jpg" alt=""><div><span class="kl-label">KNOX</span>
+                <div class="kl-answer"><p>Nice work! Now you try one.</p>
+                  <div class="kl-turn"><span class="kl-turn-label">YOUR TURN</span><p>First step to solve <b>3x − 4 = 11</b>?</p>
+                    <div class="kl-choice ok">Add 4 to both sides</div><div class="kl-choice">Divide both sides by 3</div><div class="kl-choice">Subtract 11</div></div>
+                  <div class="kl-feedback">✓ Correct! Now it's 3x = 15</div>
+                  <div class="kl-progress"><i class="on"></i><i class="next"></i><i></i><span>Step 2 of 3</span></div>
+                </div>
+              </div></div>
+              <div class="kl-tap" data-target=".kl-choice.ok" style="--delay:1.45s"></div>
+            </div>
+
+            <!-- 4 · Flashcards -->
+            <div class="kl-scene kl-s-cards m-green" data-dur="6200" data-tab="cards">
+              <div class="kl-appbar"><span class="kl-chip m-green"><span class="kl-chip-ic"><svg><use href="#kli-cards"/></svg></span>Biology basics</span></div>
+              <div class="kl-prog"><div><span>8 REVIEWED</span><span>1 TO GO</span></div><div class="kl-bar"><i style="width:88%"></i></div></div>
+              <div class="kl-flip"><div class="kl-flip-in">
+                <div class="kl-face"><span class="kl-face-label">QUESTION</span><p>What does the mitochondria do?</p></div>
+                <div class="kl-face back"><span class="kl-face-label">ANSWER</span><p>Makes energy for the cell</p></div>
+              </div></div>
+              <div class="kl-grades"><span class="g-again">Again<small>Show again</small></span><span class="g-good">Good<small>Got it</small></span><span class="g-easy">Easy<small>Knew it!</small></span></div>
+              <div class="kl-done"><h5>Deck done!</h5><div class="kl-ring"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg><b>92%<small>FIRST TRY</small></b></div><div class="kl-gchips"><span class="g-easy">Easy 5</span><span class="g-good">Good 4</span><span class="g-again">Again 1</span></div></div>
+              <div class="kl-tap" data-target=".kl-flip" style="--delay:.5s"></div>
+              <div class="kl-tap" data-target=".g-easy" style="--delay:2.4s"></div>
+            </div>
+
+            <!-- 5 · Streak -->
+            <div class="kl-scene kl-s-home" data-dur="4800" data-tab="home">
+              <div class="kl-homehead"><span class="kl-avatar">K</span><span class="kl-pillstat"><svg style="--fl1:#FF6B00;--fl2:#FFD900"><use href="#kli-flame"/></svg>13</span><span class="kl-pillstat" style="color:#B07F00">💎 Mega</span></div>
+              <div class="kl-herocard"><small>Good evening 👋</small><h4>What are we solving today?</h4><div class="kl-snaprow"><span><svg><use href="#kli-camera"/></svg></span>Snap a question</div></div>
+              <div class="kl-tiles">
+                <div class="kl-tile"><div class="kl-flame"><svg><use href="#kli-flame"/></svg></div><b><span class="kl-days"><span>12</span><span>13</span></span> days</b><em>Studied today. Nice!</em></div>
+                <div class="kl-tile"><svg class="kl-goal" viewBox="0 0 40 40"><circle class="bg" cx="20" cy="20" r="14"/><circle class="fg" cx="20" cy="20" r="14"/></svg><b style="font-size:12px">Daily goal</b><span class="kl-goaltext">Done for today! 🎯</span></div>
+              </div>
+              <div class="kl-tools">
+                <span class="m-purple"><i><svg><use href="#kli-learn"/></svg></i>Learn</span>
+                <span class="m-green"><i><svg><use href="#kli-cards"/></svg></i>Flashcards</span>
+                <span class="m-orange"><i><svg><use href="#kli-ask"/></svg></i>Ask</span>
+                <span class="m-blue"><i><svg><use href="#kli-calc"/></svg></i>Calculator</span>
+              </div>
+            </div>
+
+            <!-- The app's island -->
+            <div class="kl-tabbar">
+              <span class="kl-tab m-orange" data-tab="home"><svg><use href="#kli-home"/></svg>Home</span>
+              <span class="kl-tab m-orange" data-tab="ask"><svg><use href="#kli-ask"/></svg>Ask</span>
+              <span class="kl-tab m-purple" data-tab="learn"><svg><use href="#kli-learn"/></svg>Learn</span>
+              <span class="kl-tab m-green" data-tab="cards"><svg><use href="#kli-cards"/></svg>Cards</span>
+              <span class="kl-tabcam"><svg><use href="#kli-camera"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kl-demo-side">
+          <ol class="kl-steps">
+            <li><button class="kl-step m-orange" data-step="0"><span class="kl-step-num">1</span><span><strong>Snap it</strong><em>Point your camera at any question and fit it in the box.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-orange" data-step="1"><span class="kl-step-num">2</span><span><strong>Get it explained</strong><em>Knox walks you through it, step by step.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-purple" data-step="2"><span class="kl-step-num">3</span><span><strong>Learn it</strong><em>Learn mode has you try each step yourself.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-green" data-step="3"><span class="kl-step-num">4</span><span><strong>Remember it</strong><em>Flashcards bring it back right before you'd forget.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-orange" data-step="4"><span class="kl-step-num">5</span><span><strong>Keep your streak</strong><em>A little every day — and it sticks.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+          </ol>
+          <p class="kl-caption" aria-live="polite"></p>
+          <button class="kl-next" id="klNext">Next step <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ===================== HOW IT WORKS ===================== -->
-<section id="how-it-works" style="background:var(--surface);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1000px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Everything you need to study</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);max-width:600px;margin:0 auto;">Ask Knox the way you'd ask a friend — or turn on Learn mode to be taught step by step. Real examples:</p>
+<section id="how-it-works" class="kl-section kl-alt">
+  <div class="kl-wrap">
+    <header class="kl-head reveal">
+      <span class="kl-eyebrow">How Knox works</span>
+      <h2 class="kl-h2">One app for <em>every part</em> of studying</h2>
+      <p class="kl-sub">Ask a question, learn it step by step, remember it with flashcards and keep a streak going — on the web and on iPhone. Here's each part, for real. Tap around.</p>
+    </header>
+    <nav class="kl-modes reveal" aria-label="Knox modes">
+      <a class="kl-mode m-orange" href="#ask" onclick="smoothScroll('ask',event)"><i><svg><use href="#kli-ask"/></svg></i>Ask Knox</a>
+      <a class="kl-mode m-purple" href="#learn" onclick="smoothScroll('learn',event)"><i><svg><use href="#kli-learn"/></svg></i>Learn</a>
+      <a class="kl-mode m-orange" href="#snap" onclick="smoothScroll('snap',event)"><i><svg><use href="#kli-camera"/></svg></i>Snap</a>
+      <a class="kl-mode m-green" href="#flashcards" onclick="smoothScroll('flashcards',event)"><i><svg><use href="#kli-cards"/></svg></i>Flashcards</a>
+      <a class="kl-mode m-blue" href="#tools" onclick="smoothScroll('tools',event)"><i><svg><use href="#kli-calc"/></svg></i>Calculator &amp; more</a>
+      <a class="kl-mode m-red" href="#streaks" onclick="smoothScroll('streaks',event)"><i><svg style="--fl1:#FF4B4B;--fl2:#FFB3B3"><use href="#kli-flame"/></svg></i>Streaks</a>
+    </nav>
+  </div>
+</section>
+
+<!-- ===================== ASK KNOX ===================== -->
+<section id="ask" class="kl-section kl-feature m-orange">
+  <div class="kl-wrap kl-feature-grid">
+    <div class="kl-copy reveal-left">
+      <span class="kl-eyebrow"><svg><use href="#kli-ask"/></svg>Ask Knox</span>
+      <h2 class="kl-h2">Ask anything. <em>Get it explained</em> like a tutor would.</h2>
+      <p>Type it, snap it or drop in your worksheet. Knox explains it step by step, puts the key ideas in bold and gives you the answer — then you can keep asking until it clicks.</p>
+      <ul class="kl-checks">
+        <li>Every subject: math, science, history, English, languages and more</li>
+        <li>Photos, PDFs, Word and PowerPoint files</li>
+        <li>One tap for an easier explanation, a similar problem or flashcards</li>
+        <li>Free gets the same AI as paid</li>
+      </ul>
+      <a class="kl-btn kl-btn-mode" href="/app">Ask Knox a question <span aria-hidden="true">→</span></a>
     </div>
-
-    <div class="rg-3col">
-
-      <!-- SOLVE IT — orange -->
-      <div class="reveal delay-1" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--orange-light);color:var(--orange);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg> Solve it</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"What's the derivative of 3x² + 5x − 2?"</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:var(--text-body);line-height:1.55;flex:1;">The derivative is <strong style="color:var(--orange);">6x + 5</strong>. Power rule — bring the exponent down, subtract one. Constants disappear.</p>
+    <div class="kl-stage reveal-right">
+      <div class="kl-window kl-card" id="klAsk">
+        <div class="kl-window-bar">
+          <span class="kl-chip m-orange"><img src="./knox-logo-square.jpg" alt="">Ask Knox</span>
+          <div class="kl-tabs" role="tablist" aria-label="Example questions">
+            <button class="on" data-ex="math" role="tab">Math</button>
+            <button data-ex="science" role="tab">Science</button>
+            <button data-ex="history" role="tab">History</button>
+            <button data-ex="writing" role="tab">Writing</button>
+          </div>
+        </div>
+        <div class="kl-window-body" aria-live="polite"></div>
       </div>
-
-      <!-- LEARN MODE — purple -->
-      <div class="reveal delay-2" style="background:var(--surface);border-radius:22px;border:3px solid #7C3AED;box-shadow:0 6px 0 #5B21B6;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #5B21B6'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #5B21B6'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--purple-light);color:#7C3AED;font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C9 4 5 4 2 5v14c4-1 7 0 10 2 3-2 6-3 10-2V5c-3-1-7-1-10 2v14Z"/><path d="M6 9h2M6 13h2M16 9h2M16 13h2"/></svg> Learn mode</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"Why do leaves change color in the fall?"</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:var(--text-body);line-height:1.55;flex:1;">Let’s figure it out together. Leaves are green because of a pigment that helps them use sunlight. <strong style="color:#7C3AED;">Do you know what it’s called?</strong> <span style="display:inline-block;margin-top:8px;font-size:12.5px;font-weight:800;color:var(--text-light);">Tap an answer · <svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4"/><path d="M15.1 14c.2-1 .7-1.7 1.4-2.5A5 5 0 1 0 7.5 11.5c.7.8 1.2 1.5 1.4 2.5"/></svg> Hint · step 1 of 3</span></p>
-      </div>
-
-      <!-- CHECK MY WORK — green -->
-      <div class="reveal delay-3" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:26px 24px;display:flex;flex-direction:column;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green-dark);font-size:11px;font-weight:900;letter-spacing:0.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;align-self:flex-start;margin-bottom:14px;">✓ Check my work</div>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">You say</div>
-        <p style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;">"I got 6x + 5x. Is that right?"</p>
-        <div style="font-size:12px;font-weight:800;color:var(--text-light);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Knox says</div>
-        <p style="font-size:14.5px;font-weight:600;color:var(--text-body);line-height:1.55;flex:1;">Close — one slip. First term's right. But 5x becomes <strong style="color:var(--green-dark);">5</strong>, not 5x — x¹ turns into x⁰ = 1.</p>
-      </div>
-
-    </div>
-
-    <div style="text-align:center;margin:48px 0 22px;">
-      <h3 class="reveal" style="font-size:22px;font-weight:900;color:var(--text);">And more ways to study</h3>
-    </div>
-    <div class="rg-3col">
-      <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--green);box-shadow:0 6px 0 #3D9900;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #3D9900'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #3D9900'">
-        <div style="width:52px;height:52px;border-radius:15px;background:var(--green-light);color:var(--green);border:2px solid var(--green);box-shadow:0 4px 0 #3D9900;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="15" height="15" rx="3"/><path d="M17 3H6a3 3 0 0 0-3 3v11M10 11h7M10 15h5"/></svg></div>
-        <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Flashcards</h3>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Tell Knox what you’re studying — or drop in your notes, slides or a photo — and it makes a deck with pictures (2 credits on the free plan, up to 40 a day with Knox Plus). Smart review brings back the cards you miss.</p>
-      </div>
-      <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--blue);box-shadow:0 6px 0 #0A85C2;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #0A85C2'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #0A85C2'">
-        <div style="width:52px;height:52px;border-radius:15px;background:var(--blue-light);color:var(--blue);border:2px solid var(--blue);box-shadow:0 4px 0 #0A85C2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/></svg></div>
-        <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Knox Calculator</h3>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">A full scientific calculator built in — trig, powers, roots, logs and more. Stuck on why? Tap Explain it and Knox walks you through the math.</p>
-      </div>
-      <div class="reveal" style="background:var(--surface);border-radius:22px;border:3px solid var(--orange);box-shadow:0 6px 0 #CC5500;padding:28px 24px;transition:transform 0.2s,box-shadow 0.2s;cursor:default;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 6px 0 #CC5500'">
-        <div style="width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;display:flex;align-items:center;justify-content:center;margin-bottom:16px;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></svg></div>
-        <h3 style="font-size:20px;font-weight:900;color:var(--text);line-height:1.2;margin-bottom:8px;">Your work follows you</h3>
-        <p style="font-size:15px;font-weight:600;color:var(--text-body);line-height:1.6;">Chats, Learn lessons and flashcard decks save to your account, so you can start on your laptop and finish on your phone.</p>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-top:36px;">
-      <button class="btn-orange" onclick="window.location.href='/app'" style="font-size:16px;padding:15px 32px;">Try it yourself →</button>
-      <p style="margin-top:12px;font-size:13px;font-weight:700;color:var(--text-light);">Free forever · no credit card</p>
     </div>
   </div>
 </section>
 
-<!-- ===================== SUBJECTS ===================== -->
-<section id="subjects" style="background:var(--gray);padding:80px 24px;border-top:2px solid var(--border);">
-  <div style="max-width:1100px;margin:0 auto;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <h2 class="section-title section-title-underline reveal" style="display:inline-block;margin-bottom:12px;">Every subject. Every grade.</h2>
-      <p style="font-size:17px;font-weight:600;color:var(--text-light);">From 4th grade math to college organic chem — Knox has you covered.</p>
+<!-- ===================== LEARN ===================== -->
+<section id="learn" class="kl-section kl-alt kl-feature flip m-purple">
+  <div class="kl-wrap kl-feature-grid">
+    <div class="kl-copy reveal-right">
+      <span class="kl-eyebrow"><svg><use href="#kli-learn"/></svg>Learn mode</span>
+      <h2 class="kl-h2">Learn mode <em>teaches you</em>. It doesn't just tell you.</h2>
+      <p>Knox explains one small piece, then asks you to try the next step. Get it wrong and you get a hint — not the answer. The lesson on the left is the real thing: give it a try.</p>
+      <ul class="kl-checks">
+        <li>One step at a time, with hints when you're stuck</li>
+        <li>Checks your answer and explains the mistake</li>
+        <li>Start from a photo or a file of your homework</li>
+        <li>Review what you learned in earlier lessons</li>
+      </ul>
+      <a class="kl-btn kl-btn-mode" href="/app?open=learn">Start a lesson <span aria-hidden="true">→</span></a>
     </div>
-
-    <div class="rg-4col">
-      <!-- Math — orange -->
-      <div class="subject-card subject-showcase-card math reveal delay-1">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 20 4v16Z"/><path d="M20 14h-3M20 17h-2M14 20v-3M11 20v-2"/></svg></div>
-        <div class="subject-name">Math</div>
-        <div class="subject-tags">Algebra · Geometry · Calculus · Stats</div>
-      </div>
-
-      <!-- Science — green -->
-      <div class="subject-card subject-showcase-card science reveal delay-2">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg></div>
-        <div class="subject-name">Science</div>
-        <div class="subject-tags">Biology · Chemistry · Physics</div>
-      </div>
-
-      <!-- History — purple -->
-      <div class="subject-card subject-showcase-card history reveal delay-3">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 18h14M6 18v-7M10 18v-7M14 18v-7M18 18v-7M3 11h18L12 4Z"/></svg></div>
-        <div class="subject-name">History</div>
-        <div class="subject-tags">World · US · AP · Geography</div>
-      </div>
-
-      <!-- English — blue -->
-      <div class="subject-card subject-showcase-card english reveal delay-4">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/></svg></div>
-        <div class="subject-name">English</div>
-        <div class="subject-tags">Essays · Grammar · Literature</div>
-      </div>
-
-      <!-- Computer Science — pink -->
-      <div class="subject-card subject-showcase-card computer-science reveal delay-1">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></div>
-        <div class="subject-name">Computer Science</div>
-        <div class="subject-tags">Python · Java · Algorithms</div>
-      </div>
-
-      <!-- Languages — teal -->
-      <div class="subject-card subject-showcase-card languages reveal delay-2">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg></div>
-        <div class="subject-name">Languages</div>
-        <div class="subject-tags">Spanish · French · German · Latin</div>
-      </div>
-
-      <!-- Economics — amber/yellow -->
-      <div class="subject-card subject-showcase-card economics reveal delay-3">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg></div>
-        <div class="subject-name">Economics</div>
-        <div class="subject-tags">Micro · Macro · Accounting</div>
-      </div>
-
-      <!-- Test Prep — red -->
-      <div class="subject-card subject-showcase-card test-prep reveal delay-4">
-        <div class="subject-icon"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 3 9 3 12 0v-5M22 10v6"/></svg></div>
-        <div class="subject-name">Test Prep</div>
-        <div class="subject-tags">SAT · ACT · AP · GRE · LSAT</div>
+    <div class="kl-stage reveal-left">
+      <div class="kl-window kl-card kl-lesson" id="klLesson">
+        <div class="kl-window-bar">
+          <span class="kl-chip m-purple"><span class="kl-chip-ic"><svg><use href="#kli-learn"/></svg></span>Learn</span>
+          <span style="margin-left:auto;font-size:13px;font-weight:900;color:var(--text-light)">Solving equations</span>
+        </div>
+        <div class="kl-window-body" aria-live="polite"></div>
       </div>
     </div>
-
-    <!-- Reassurance line for anyone whose subject isn't listed -->
-    <p style="text-align:center;font-size:14px;font-weight:700;color:var(--text-light);margin-top:36px;">Not on the list? Knox handles it anyway. Just ask.</p>
   </div>
 </section>
 
-<!-- ===================== ASK AI ===================== -->
-<!-- ===================== PRICING ===================== -->
+<!-- ===================== SNAP ===================== -->
+<section id="snap" class="kl-section kl-feature m-orange">
+  <div class="kl-wrap kl-feature-grid">
+    <div class="kl-copy reveal-left">
+      <span class="kl-eyebrow"><svg><use href="#kli-camera"/></svg>Snap it</span>
+      <h2 class="kl-h2">Stuck on a worksheet? <em>Snap it.</em></h2>
+      <p>Point your camera at a question — or the whole page. Fit one question in the box, or turn the crop off and let Knox find it. Handwriting, worksheets and textbooks all work.</p>
+      <ul class="kl-checks">
+        <li>Crop to one question, or send the whole photo</li>
+        <li>Pick Ask Knox for the answer, or Learn to work it out</li>
+        <li>Right from the iPhone camera — or upload a photo on the web</li>
+      </ul>
+      <div class="kl-cta-row" style="margin-top:0">
+        <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
+      </div>
+    </div>
+    <div class="kl-stage reveal-right">
+      <div class="kl-camstage" id="klSnap" aria-label="Snap a question with the camera">
+        <div class="kl-paper"><h5>Algebra · Worksheet 4</h5><p><b>1.</b>4x = 28</p><p><b>2.</b>Solve 2x + 7 = 19</p><p><b>3.</b>Factor x² − 9</p><p><b>4.</b>5 − 3x = 11</p></div>
+        <div class="kl-crop"><i></i><i></i><i></i><i></i><span class="kl-scanline"></span></div>
+        <div class="kl-cam-hint"><img src="./knox-logo-square.jpg" alt="">Fit one question in the box</div>
+        <div class="kl-cam-modes"><span class="on">Ask Knox</span><span>Learn</span></div>
+        <div class="kl-shutter"></div>
+        <div class="kl-flash"></div>
+        <div class="kl-snapout m-orange">
+          <div class="kl-knox"><img class="kl-av" src="./knox-logo-square.jpg" alt=""><div style="flex:1"><span class="kl-label">KNOX</span>
+            <div class="kl-answer" style="font-size:15px;padding:14px 16px"><p>Found it: <b>Solve 2x + 7 = 19</b>.</p><p>1. <b>Subtract 7</b> from both sides: 2x = 12</p><p>2. <b>Divide by 2</b>: x = 6</p><div class="kl-ansbox" style="font-size:15px"><span>ANSWER</span>x = 6</div></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FLASHCARDS ===================== -->
+<section id="flashcards" class="kl-section kl-alt kl-feature flip m-green">
+  <div class="kl-wrap kl-feature-grid">
+    <div class="kl-copy reveal-right">
+      <span class="kl-eyebrow"><svg><use href="#kli-cards"/></svg>Flashcards</span>
+      <h2 class="kl-h2">Remember it with flashcards that <em>know when you'll forget</em>.</h2>
+      <p>Tell Knox what you're studying — or drop in notes, slides or a photo — and it makes a deck with pictures. Grade yourself as you go, and Knox brings each card back right before you'd forget it. Flip the cards on the left.</p>
+      <ul class="kl-checks">
+        <li>Make with Knox, write your own (with your photos or Wikipedia pictures), or import from a spreadsheet</li>
+        <li>Again, Good and Easy decide when each card comes back</li>
+        <li>A score every time you finish a deck</li>
+      </ul>
+      <a class="kl-btn kl-btn-mode" href="/app">Make a deck <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="kl-stage reveal-left">
+      <div class="kl-window kl-card" id="klDeck">
+        <div class="kl-window-bar">
+          <span class="kl-chip m-green"><span class="kl-chip-ic"><svg><use href="#kli-cards"/></svg></span>Biology basics</span>
+          <span style="margin-left:auto;font-size:13px;font-weight:900;color:var(--text-light)">Tap the card to flip it</span>
+        </div>
+        <div class="kl-window-body kl-deck"></div>
+      </div>
+      <div class="kl-card kl-curve" id="klCurve">
+        <h4>How much you'll remember</h4>
+        <p>Learn something once and most of it is gone in a week. Short reviews at the right time keep it.</p>
+        <svg viewBox="0 0 520 190" role="img" aria-label="With Knox reviews, memory stays high; without them it fades within a week.">
+          <line class="grid" x1="30" y1="20" x2="510" y2="20"/><line class="grid" x1="30" y1="90" x2="510" y2="90"/><line class="grid" x1="30" y1="160" x2="510" y2="160"/>
+          <text x="0" y="24">100%</text><text x="6" y="164">0%</text>
+          <g class="kl-curves">
+            <path class="without" d="M30 20 C 70 95, 120 130, 200 145 S 400 158, 510 159"/>
+            <path class="with" d="M30 20 C 50 52, 70 62, 90 66 L 90 22 C 120 46, 150 54, 180 56 L 180 22 C 230 40, 280 46, 310 47 L 310 22 C 380 34, 450 38, 510 39"/>
+            <circle class="dot" cx="90" cy="22" r="6"/><circle class="dot" cx="180" cy="22" r="6"/><circle class="dot" cx="310" cy="22" r="6"/>
+          </g>
+          <text x="74" y="184">Day 1</text><text x="164" y="184">Day 3</text><text x="294" y="184">Day 7</text><text x="470" y="184">Day 30</text>
+        </svg>
+        <div class="kl-legend"><span>With Knox reviews</span><span class="w">Without</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TOOLS ===================== -->
+<section id="tools" class="kl-section">
+  <div class="kl-wrap">
+    <header class="kl-head reveal">
+      <span class="kl-eyebrow" style="--m:var(--blue)">And more tools</span>
+      <h2 class="kl-h2">A calculator, simulations and a binder — <em style="color:var(--blue)">all built in</em></h2>
+      <p class="kl-sub">Everything you need for homework in one place, no other tabs.</p>
+    </header>
+    <div class="kl-toolgrid">
+      <div class="kl-card kl-tool m-blue reveal">
+        <span class="kl-ic"><svg><use href="#kli-calc"/></svg></span>
+        <h3>Knox Calculator</h3>
+        <p>A full scientific calculator with graphs. Stuck on why? Tap <b>Explain it</b> and Knox walks you through the math.</p>
+        <div class="kl-viz"><canvas id="klGraph" aria-label="A graph of y equals x squared minus 4 being drawn"></canvas></div>
+      </div>
+      <div class="kl-card kl-tool m-gold reveal">
+        <span class="kl-ic"><svg><use href="#kli-sim"/></svg></span>
+        <h3>Simulations</h3>
+        <p>Watch physics and math move. Drag the slider and see what changes. <span class="kl-tag" style="vertical-align:middle">💎 Mega Knox</span></p>
+        <div class="kl-viz"><canvas id="klSim" aria-label="A ball launched at an angle, flying in an arc"></canvas></div>
+        <label class="kl-slider">Angle <input type="range" id="klSimAngle" min="15" max="75" value="45" aria-label="Launch angle"><b id="klSimAngleOut">45°</b></label>
+      </div>
+      <div class="kl-card kl-tool m-blue reveal">
+        <span class="kl-ic"><svg><use href="#kli-binder"/></svg></span>
+        <h3>Binder</h3>
+        <p>Your notes and flashcards in one place — with subject tabs, checklists, and one tap to turn a note into flashcards.</p>
+        <div class="kl-viz"><div class="kl-note">
+          <h6>Biology · Chapter 3 notes</h6>
+          <label><i class="on"></i>Cell parts and what they do</label>
+          <label><i class="on"></i>Photosynthesis vs. respiration</label>
+          <label><i></i>Review for Friday's quiz</label>
+          <div class="kl-mini"><span class="m-green" style="--ml:var(--green-light);border-color:var(--green)">Make flashcards</span><span class="m-orange" style="--ml:var(--orange-light);border-color:var(--orange)">Ask Knox</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STREAKS ===================== -->
+<section id="streaks" class="kl-section kl-alt m-red">
+  <div class="kl-wrap">
+    <header class="kl-head reveal">
+      <span class="kl-eyebrow" style="--m:#FF4B4B">Streaks</span>
+      <h2 class="kl-h2">A little every day, <em style="color:#FF4B4B">and it sticks</em></h2>
+      <p class="kl-sub">Study once a day to light your flame. Set a daily goal, earn Flame Shields for the days you miss, unlock new flame looks and join events like Flame Fest.</p>
+    </header>
+    <div class="kl-flames reveal">
+      <div class="kl-card kl-flamecard m-orange"><svg style="--fl1:#FF6B00;--fl2:#FFD900"><use href="#kli-flame"/></svg><b>Classic</b><small>Everyone's first flame</small></div>
+      <div class="kl-card kl-flamecard m-purple"><svg style="--fl1:#8B5CF6;--fl2:#F0ABFC"><use href="#kli-flame"/></svg><b>Galaxy</b><small>A Mega Knox flame</small></div>
+      <div class="kl-card kl-flamecard m-green"><svg style="--fl1:#58CC02;--fl2:#D7FFB8"><use href="#kli-flame"/></svg><b>Slime</b><small>Join the Knox Discord</small></div>
+    </div>
+    <div class="kl-streak-grid">
+      <div class="kl-card m-green reveal"><span class="kl-ic"><svg><use href="#kli-target"/></svg></span><h3>Daily goal</h3><p>Pick how much to study each day. Your goal ring fills as you go.</p></div>
+      <div class="kl-card m-blue reveal"><span class="kl-ic"><svg><use href="#kli-shield"/></svg></span><h3>Flame Shields</h3><p>Missed a day? A shield keeps your streak safe.</p></div>
+      <div class="kl-card m-orange reveal"><span class="kl-ic"><svg><use href="#kli-bell"/></svg></span><h3>Reminders</h3><p>The iPhone app can remind you before your flame goes out.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== EVERY GRADE ===================== -->
+<section id="subjects" class="kl-section">
+  <div class="kl-wrap">
+    <header class="kl-head reveal">
+      <span class="kl-eyebrow">Every grade</span>
+      <h2 class="kl-h2">Every subject. <em>Every grade.</em></h2>
+      <p class="kl-sub">From your first algebra class to college finals. Pick your level and see the kind of questions Knox helps with.</p>
+    </header>
+    <div class="kl-grade-tabs reveal" role="tablist" aria-label="School level">
+      <button class="on" data-grade="middle" role="tab">Middle school</button>
+      <button data-grade="high" role="tab">High school</button>
+      <button data-grade="ap" role="tab">AP &amp; Honors</button>
+      <button data-grade="college" role="tab">College</button>
+    </div>
+    <div class="kl-qgrid" id="klGrades" aria-live="polite"></div>
+    <div class="kl-subjects reveal">
+      <span>Algebra</span><span>Geometry</span><span>Calculus</span><span>Statistics</span><span>Biology</span><span>Chemistry</span><span>Physics</span><span>Earth science</span><span>US history</span><span>World history</span><span>English</span><span>Essays</span><span>Spanish</span><span>French</span><span>Computer science</span><span>Economics</span><span>Psychology</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THE IPHONE APP ===================== -->
+<section id="get-the-app" class="kl-section kl-app">
+  <div class="kl-wrap">
+    <div class="kl-app-grid">
+      <div class="reveal-left">
+        <span class="kl-eyebrow"><svg><use href="#kli-apple"/></svg>Knox Knows for iPhone</span>
+        <h2 class="kl-h2">Knox in your pocket.</h2>
+        <p class="kl-sub">The whole Knox Knows app, made for iPhone. Snap questions with your camera, keep your flame on your Home Screen, and pick up right where you left off on the web.</p>
+        <div class="kl-app-feats">
+          <div class="kl-app-feat"><i><svg><use href="#kli-camera"/></svg></i><div><b>Snap with your camera</b><span>Crop to one question in a tap.</span></div></div>
+          <div class="kl-app-feat"><i><svg><use href="#kli-widget"/></svg></i><div><b>Home Screen widgets</b><span>Your streak and today's goal at a glance.</span></div></div>
+          <div class="kl-app-feat"><i><svg><use href="#kli-bell"/></svg></i><div><b>Study reminders</b><span>Before your flame goes out.</span></div></div>
+          <div class="kl-app-feat"><i><svg><use href="#kli-sync"/></svg></i><div><b>One account</b><span>Chats, lessons and decks on every device.</span></div></div>
+        </div>
+        <div class="kl-cta-row">
+          <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
+          <a class="kl-btn kl-btn-plain" href="/app">Use it on the web</a>
+        </div>
+      </div>
+      <div class="kl-app-phones reveal-right" aria-hidden="true" id="klAppPhones"></div>
+    </div>
+
+    <div class="kl-platform-grid">
+      <a class="kl-card kl-platform m-orange reveal" href="/app"><span class="kl-ic"><svg><use href="#kli-globe"/></svg></span><div><h3>On the web</h3><p>Every feature in your browser — on a laptop, a Chromebook or any phone.</p><span class="go">Open Knox →</span></div></a>
+      <a class="kl-card kl-platform m-blue reveal" href="https://chromewebstore.google.com/detail/knox-knows-%E2%80%94-ai-homework/pjhciemclfgmgfapnecoageieniegfnp" target="_blank" rel="noopener noreferrer"><span class="kl-ic"><svg><use href="#kli-chrome"/></svg></span><div><h3>In Chrome</h3><p>Ask Knox from a side panel while you do your homework online.</p><span class="go">Get the extension ↗</span></div></a>
+      <a class="kl-card kl-platform m-purple reveal" href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer"><span class="kl-ic"><svg><use href="#kli-discord"/></svg></span><div><h3>On Discord</h3><p>Ask and learn with the Knox bot, and unlock the Slime flame.</p><span class="go">Join the server ↗</span></div></a>
+    </div>
+  </div>
+</section>
+
 <section id="pricing" style="background:var(--surface);padding:80px 24px;border-top:2px solid var(--border);">
   <div style="max-width:1000px;margin:0 auto;">
 
@@ -2984,15 +3168,14 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
 
 <!-- ===================== CTA BANNER ===================== -->
-<section style="background:var(--orange);padding:80px 24px;text-align:center;position:relative;overflow:hidden;">
-  <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:rgba(255,255,255,0.06);pointer-events:none;"></div>
-  <div style="position:relative;z-index:1;max-width:600px;margin:0 auto;">
-    <div style="width:100px;height:100px;border-radius:50%;overflow:hidden;border:4px solid rgba(255,255,255,0.4);margin:0 auto 16px;background:rgba(255,255,255,0.2);"><img src="./knox-logo.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'"></div>
-    <h2 style="font-size:clamp(28px,calc(5vw / var(--kz, 1)),52px);font-weight:900;color:white;letter-spacing:-0.02em;">Ready to stop guessing?</h2>
-    <p style="font-size:18px;font-weight:600;color:rgba(255,255,255,0.85);margin:12px auto 0;max-width:440px;">Join students who already use Knox to ace their homework. Free to start — no credit card needed.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:32px;">
-      <button class="btn-white" style="font-size:17px;padding:17px 32px;" onclick="window.location.href='/app'">Open Knox now</button>
-      <button onclick="scrollToPricing()" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.5);border-radius:16px;padding:15px 28px;font-size:17px;font-weight:800;cursor:pointer;transition:all 0.15s;font-family:inherit;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">View Plans →</button>
+<section class="kl-section kl-final">
+  <div class="kl-wrap reveal">
+    <img src="./knox-logo-square.jpg" alt="Knox the fox">
+    <h2 class="kl-h2">Stop guessing. <em>Start knowing.</em></h2>
+    <p class="kl-sub" style="max-width:620px;margin:0 auto">Free forever, no credit card. On the web, on iPhone and in Chrome.</p>
+    <div class="kl-cta-row">
+      <a class="kl-btn kl-btn-orange" href="/app">Try Knox free <span aria-hidden="true">→</span></a>
+      <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
     </div>
   </div>
 </section>
@@ -3028,6 +3211,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         <div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin-bottom:14px;">Product</div>
         <a href="#how-it-works" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">How it works</a>
         <a href="#subjects" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Subjects</a>
+        <a href="#get-the-app" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">iPhone app</a>
         <a href="#pricing" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Pricing</a>
         <a href="#faq" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">FAQ</a>
         <a href="/reviews" style="display:block;font-size:14px;font-weight:600;color:#aaa;text-decoration:none;margin-bottom:10px;transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#aaa'">Student Reviews</a>
@@ -5762,6 +5946,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
 <!-- Floating back-to-app button -->
 <a id="appFab" href="/app" aria-label="Open Knox app">Open Knox<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+<script src="./landing.js" defer></script>
 </body>
 </html>
 
