@@ -15,6 +15,7 @@
     { "source": "/terms",        "destination": "/terms.html"   },
     { "source": "/refund",       "destination": "/refund.html"  },
     { "source": "/updates",      "destination": "/updates.html" },
+    { "source": "/deck/:id",     "destination": "/deck.html"    },
     { "source": "/sitemap.xml",  "destination": "/sitemap.xml"  },
     { "source": "/robots.txt",   "destination": "/robots.txt"   },
     { "source": "/api/discord-link", "destination": "/api/me?route=discord-link" }

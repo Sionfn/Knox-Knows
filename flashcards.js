@@ -277,7 +277,7 @@ function renderDecks(query){
         <div style="min-width:0"><h2 class="fc-deck-name">${esc(d.title)}</h2>
         <div class="fc-pills"><span class="fc-pill">${d.cards.length} card${d.cards.length===1?'':'s'}</span>${due?`<span class="fc-pill due">${due} due</span>`:'<span class="fc-pill done">✓ Caught up</span>'}</div></div></div>
       <div class="fc-deck-actions">${btn('Review due','due',{cls:'primary small',attrs:`data-id="${esc(d.id)}" ${due?'':'disabled'}`})}${btn('Practice all','practice',{cls:'small',attrs:`data-id="${esc(d.id)}"`})}</div>
-      <div class="fc-deck-more">${btn('Edit','edit',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Export','export',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Delete','delete',{cls:'ghost small danger',attrs:`data-id="${esc(d.id)}"`})}</div>
+      <div class="fc-deck-more">${btn('Edit','edit',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Share','share',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Export','export',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Delete','delete',{cls:'ghost small danger',attrs:`data-id="${esc(d.id)}"`})}</div>
     </article>`;}).join('');
 }
 
@@ -611,6 +611,33 @@ async function open(){if(!canSee())return false;if(dirty&&!(await confirmLeave()
  // Bring in decks from the account; redraw the deck list if still on it.
  pullDecks().then(changed=>{if(changed&&!panel.hidden&&!session&&!editing&&panel.querySelector('.fc-ways'))home();});return true;}
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
+// Share a deck by link (knoxknowsapp.com/deck/<id>): anyone with it can see the deck, add it to their
+// own decks, or open it in the iPhone app. Sharing the same deck again keeps the same link.
+async function shareDeck(d,b){
+ const user=window.currentUser;if(!user?.getIdToken){window.openAuthModal?.('signup');return;}
+ const label=b.textContent;b.disabled=true;b.textContent='Sharing…';
+ try{
+  const token=await user.getIdToken();
+  const cards=d.cards.map(c=>({front:c.front,back:c.back,...(c.image?{image:c.image}:{}),...(c.imageCredit?{imageCredit:c.imageCredit}:{})}));
+  const r=await fetch('/api/me?route=share-deck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({action:'share',deckId:d.id,title:d.title,cards})});
+  const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw Error(j.error||'The deck couldn’t be shared. Please try again.');
+  if(navigator.share&&/iPhone|iPad|Android/i.test(navigator.userAgent)){try{await navigator.share({title:d.title,text:'Study my Knox Knows flashcards: '+d.title,url:j.url});}catch{}}
+  else{await navigator.clipboard.writeText(j.url);message('Link copied! Anyone with it can add “'+d.title+'” to their decks.','ok');}
+ }catch(err){message(err.message||'The deck couldn’t be shared. Please try again.');}
+ finally{b.disabled=false;b.textContent=label;}
+}
+// A deck someone shared by link (/deck/<id> → Add to my decks → /app?add_deck=<id>): your own copy.
+window.addSharedDeck=async function(id){
+ if(!/^[A-Za-z0-9]{12}$/.test(String(id||'')))return;
+ if(identity!==key())load();
+ let shared;
+ try{const r=await fetch('/api/me?route=share-deck&id='+encodeURIComponent(id));const j=await r.json();if(!r.ok)throw Error(j.error||'That deck couldn’t be opened.');shared=j.deck;}
+ catch(err){await open();message(err.message||'That deck couldn’t be opened.');return;}
+ let clean;
+ try{clean=validateDeck({title:shared.title,cards:shared.cards});}catch{await open();message('That deck couldn’t be added.');return;}
+ const copy={id:crypto.randomUUID(),title:clean.title,cards:clean.cards};
+ if(save([copy,...decks])){await open();message('“'+copy.title+'” is in your decks now.','ok');}
+};
 // The Binder (notes.js) switches to Notes: close, asking first if a deck has unsaved edits.
 window.closeFlashcards=async()=>{if(dirty&&!(await confirmLeave()))return false;close();return true;};
 // From a finished Learn lesson: open Make with Knox with the lesson filled in.
@@ -778,6 +805,7 @@ panel.addEventListener('click',async e=>{
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
  if(action==='export')exportView(decks.filter(d=>d.id===id));
+ if(action==='share'){const d=decks.find(x=>x.id===id);if(d)shareDeck(d,b);}
  if(action==='export-all')exportView(decks);
  if(action==='export-json'&&exportTarget){const ok=await exportData(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a Knox backup (.json).','ok');}
  if(action==='export-csv'&&exportTarget){const ok=await exportCsv(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a spreadsheet (.csv).','ok');}
