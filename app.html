@@ -1206,7 +1206,7 @@
     html.native-app [onclick*="goToPricing"],
     html.native-app #sidebarUpgradeCard { display: none !important; }
     html.native-app #authMicrosoftBtn { display: none !important; }
-    html:not(.native-ios) #authAppleBtn { display: none !important; }
+    html.native-app:not(.native-ios) #authAppleBtn { display: none !important; }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
@@ -5003,7 +5003,25 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   window.appHandleAppleLogin = async function() {
     clearAuthMsgs();
-    if (!nativeAuth) return;
+    if (!nativeAuth) {
+      // Website: Apple's own sign-in popup.
+      try {
+        const p = new OAuthProvider('apple.com');
+        p.addScope('email'); p.addScope('name');
+        const result = await signInWithPopup(auth, p);
+        window.currentUser = result.user;
+        const isNew = result._tokenResponse?.isNewUser;
+        closeAuthModal();
+        if (isNew) {
+          sendWelcomeEmailCall(result.user);
+          showWelcomeModal(result.user.displayName);
+        }
+      } catch (e) {
+        const msg = authErrorMessage(e);
+        if (msg) showAuthError(msg);
+      }
+      return;
+    }
     try {
       const r = await nativeAuth.signInWithApple();
       const credential = new OAuthProvider('apple.com').credential({ idToken: r.credential?.idToken, rawNonce: r.credential?.nonce });
