@@ -3171,7 +3171,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged, updateProfile, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, collection, addDoc, getDocs, query, where, orderBy, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -3186,6 +3186,23 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
+
+  // Opened from the iPhone app (?handoff=<one-time code>): sign in as the same
+  // account. The code leaves the address bar right away and works only once.
+  (async function appHandoff() {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('handoff');
+    if (!code) return;
+    params.delete('handoff');
+    try { history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash); } catch (e) {}
+    try {
+      const r = await fetch('/api/me?route=handoff-redeem', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.customToken) return;
+      await auth.authStateReady();
+      if (auth.currentUser?.uid !== d.uid) await signInWithCustomToken(auth, d.customToken);
+    } catch (e) { console.warn('Knox: the app sign-in link could not be used.', e); }
+  })();
 
   // Plain-language auth errors (same wording as the app) instead of raw
   // Firebase strings like "Firebase: Error (auth/too-many-requests)."

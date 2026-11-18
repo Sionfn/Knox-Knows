@@ -93,6 +93,11 @@ export default async function handler(req, res) {
   if (req.query?.route === "support") return support(req, res);
   // Talk to Knox: a short recording becomes text (see api/_transcribe.js).
   if (req.query?.route === "transcribe") return transcribe(req, res, { db, auth: adminAuth });
+  // The iPhone app opening the website signed in as the same account (see api/_handoff.js).
+  if (req.query?.route === "handoff" || req.query?.route === "handoff-redeem") {
+    const { default: handoff } = await import("./_handoff.js");
+    return handoff(req, res, { db, auth: adminAuth });
+  }
   // Plans bought in the iPhone app (see api/_apple.js).
   if (req.query?.route === "apple" || req.query?.route === "apple-notify") {
     const { default: apple } = await import("./_apple.js");
