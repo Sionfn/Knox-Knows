@@ -28,7 +28,8 @@
   let waiting = false, running = false, checked = false;
 
   const visible = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth && getComputedStyle(el).visibility !== 'hidden'; };
-  const pick = sel => [...document.querySelectorAll(sel)].find(visible) || null;
+  // A sidebar tool you hid lives under "More", so point there instead.
+  const pick = sel => [...document.querySelectorAll(sel)].find(visible) || (sel.includes('sidebar-quicknav-link') ? [...document.querySelectorAll('#rightSidebar .sq-more')].find(visible) : null) || null;
   const navIcon = nav => { const i = document.querySelector(`.sidebar-quicknav-link${nav} .sq-icon`); return i ? i.outerHTML : ''; };
 
   function steps(name) {
