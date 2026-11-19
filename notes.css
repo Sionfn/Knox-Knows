@@ -8,7 +8,8 @@ body.knox-notes #ksLauncher { display:none; }
 
 /* ── Binder tabs: 📝 Notes | 🗂️ Flashcards, at the top of both panels ── */
 .binder-tabs { position:absolute; z-index:6; top:16px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:4px; padding:4px; border-radius:999px; background:var(--surface); border:2px solid var(--border); box-shadow:0 3px 0 var(--border); white-space:nowrap; }
-.binder-label { padding:0 10px 0 8px; font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--text-light); }
+.binder-label { padding:0 10px 0 8px; font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:#A0662E; }
+html[data-theme="dark"] .binder-label { color:#E0A86E; }
 .binder-tabs button { display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; font:inherit; font-size:14px; font-weight:900; color:var(--text-light); padding:8px 16px; border-radius:999px; cursor:pointer; transition:background .15s, color .15s; }
 .binder-tabs button:hover { color:var(--text); background:var(--cream-warm); }
 .binder-tabs button[data-binder="notes"][aria-selected="true"] { background:var(--orange); color:#fff; box-shadow:0 2px 0 var(--orange-dark); }
