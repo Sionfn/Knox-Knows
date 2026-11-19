@@ -550,3 +550,86 @@ html[data-theme="dark"] .kl-msg.good { color:var(--green); } html[data-theme="da
 .kl-still .kl-days span { transform:translateY(-18px); }
 .kl-still .kl-tile em, .kl-still .kl-goaltext { opacity:1; }
 .kl-still .kl-goal .fg { stroke-dashoffset:0; }
+
+/* ═══ Dec 1 polish (Nov 19) ═══════════════════════════════════════════════ */
+
+/* Section colors: white, alternating with Knox cream (dark mode keeps its gray). */
+:root { --kl-alt:#FFF8EC; }
+html[data-theme="dark"] { --kl-alt:var(--gray); }
+.kl-section.kl-alt { background:var(--kl-alt); }
+.kl-final { background:var(--surface); }
+#faq { background:var(--kl-alt) !important; }
+.kl-platforms span, .kl-step-num { background:var(--kl-alt); }
+.kl-step:hover { background:var(--kl-alt); }
+
+/* "How Knox works" buttons: an old site-wide rule clipped anything inside a
+   <nav>, which cut off the buttons' bottom edges. */
+nav.kl-modes { overflow:visible; padding-bottom:6px; }
+.kl-emoji-flame { font-size:18px; line-height:1; }
+.m-yellow { --m:#F2B705; --md:#B98500; --ml:#FFF4CC; }
+
+/* App Store buttons: a chunky Knox card like the other buttons (2px border and
+   a solid bottom edge), not a flat black badge. */
+.kl-store, html[data-theme="dark"] .kl-store { background:var(--surface); color:var(--text); border:2px solid var(--border); box-shadow:0 5px 0 var(--border); }
+.kl-store svg { color:var(--text); }
+.kl-store:hover { filter:brightness(.98); }
+.kl-store:active { box-shadow:0 2px 0 var(--border); }
+.kl-store small { opacity:.75; }
+.kl-app .kl-store, html[data-theme="dark"] .kl-app .kl-store { background:#fff; color:#3C2A1E; border-color:#fff; box-shadow:0 5px 0 #A34400; }
+.kl-app .kl-store svg { color:#3C2A1E; }
+.kl-app .kl-store:active { box-shadow:0 2px 0 #A34400; }
+
+/* Phones that play real recordings of the app (the recording has its own
+   status bar, Dynamic Island and tab bar). */
+.kl-rec-phone::after { display:none; }
+.kl-rec-phone .kl-scene { padding:0; }
+.kl-rec { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; background:#FFF8EC; }
+.kl-rec-stage { display:flex; justify-content:center; }
+.kl-widget .kl-emoji-flame { font-size:36px; }
+
+/* Streaks: the real flame looks from the app. */
+.kl-flamecard .kl-realflame { display:flex; align-items:center; justify-content:center; height:86px; font-size:58px; line-height:1; }
+.kl-flamecard .kl-realflame svg { animation:none; }
+.kl-flamecard .kl-realflame[data-look="classic"] { animation:klFlicker 2.4s ease-in-out infinite; transform-origin:50% 90%; }
+.kl-flamecard.m-yellow { border-color:#F2B705; box-shadow:0 5px 0 #B98500; }
+
+/* ── PRICING, Knox style: white cards in each plan's color ── */
+.kl-pricing { background:var(--surface); }
+.kl-pricing .pt-free { --p:#1CB0F6; --pd:#0A85C2; --pl:#DDF4FF; --pt:#0A6E9E; }
+.kl-pricing .pt-plus { --p:#58CC02; --pd:#46A302; --pl:#E5F8D6; --pt:#2D6A00; }
+.kl-pricing .pt-mega { --p:#FFC800; --pd:#D9A300; --pl:#FFF4CC; --pt:#8A5A00; }
+html[data-theme="dark"] .kl-pricing .pt-free { --pl:rgba(28,176,246,.16); --pt:#6FD0FF; }
+html[data-theme="dark"] .kl-pricing .pt-plus { --pl:rgba(88,204,2,.16); --pt:#8BE04E; }
+html[data-theme="dark"] .kl-pricing .pt-mega { --pl:rgba(255,200,0,.14); --pt:#FFD45C; }
+.kp-toolbar { display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; margin:-8px 0 44px; }
+.kp-toggle { display:inline-flex; gap:4px; padding:4px; border-radius:16px; background:var(--surface); border:2px solid var(--border); box-shadow:0 3px 0 var(--border); }
+.kp-toggle button { display:inline-flex; align-items:center; gap:8px; height:42px; padding:0 22px; border-radius:12px; border:none; background:transparent; color:var(--text-light); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer; transition:background .15s, color .15s; }
+.kp-toggle button.on { background:var(--orange); color:#fff; box-shadow:0 3px 0 #CC5500; }
+.kp-save { font-size:11px; font-weight:900; background:var(--green); color:#fff; border-radius:8px; padding:3px 8px; white-space:nowrap; }
+#pricing.kl-pricing .pt-cards { gap:20px !important; margin-bottom:0; align-items:stretch; }
+#pricing.kl-pricing .pt-card { text-align:left; color:var(--text); background:var(--surface); border:3px solid var(--p); box-shadow:0 6px 0 var(--pd); border-radius:26px; padding:28px 24px 24px; }
+#pricing.kl-pricing .pt-mega { background:color-mix(in srgb, var(--p) 9%, var(--surface)); }
+#pricing.kl-pricing .kp-plan { display:flex; align-items:center; gap:12px; }
+#pricing.kl-pricing .kp-ic { display:grid; place-items:center; width:44px; height:44px; flex-shrink:0; border-radius:14px; background:var(--pl); border:2px solid var(--p); box-shadow:0 3px 0 var(--pd); font-size:22px; line-height:1; }
+#pricing.kl-pricing .kp-ic .kk-ic { width:24px; height:24px; }
+#pricing.kl-pricing .pt-name { margin:0; font-size:21px; font-weight:900; letter-spacing:-.01em; text-transform:none; opacity:1; color:var(--text); }
+#pricing.kl-pricing .pt-price { margin-top:18px; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+#pricing.kl-pricing .pt-price span { font-size:48px; font-weight:900; letter-spacing:-.02em; color:var(--text); }
+#pricing.kl-pricing .pt-price em { font-size:15px; font-weight:800; color:var(--text-light); opacity:1; }
+#pricing.kl-pricing .pt-sub { margin-top:6px; font-size:14px; font-weight:800; color:var(--pt); opacity:1; }
+#pricing.kl-pricing .kp-list { list-style:none; margin:20px 0 0; padding:18px 0 0; border-top:2px solid var(--border); display:flex; flex-direction:column; gap:11px; }
+#pricing.kl-pricing .kp-list li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; font-weight:700; line-height:1.4; color:var(--text-body, var(--text)); }
+#pricing.kl-pricing .kp-list li i { flex-shrink:0; display:grid; place-items:center; width:21px; height:21px; margin-top:-1px; border-radius:50%; background:var(--pl); color:var(--pt); font-style:normal; font-size:12px; font-weight:900; }
+#pricing.kl-pricing .pt-space { min-height:24px; }
+#pricing.kl-pricing .pt-btn { height:54px; padding:0 14px; border-radius:16px; border:none; background:var(--p); color:#fff; font-size:16px; font-weight:900; box-shadow:0 4px 0 var(--pd); transition:filter .15s; }
+#pricing.kl-pricing .pt-mega .pt-btn { color:#3D2800; }
+#pricing.kl-pricing .pt-btn:hover:not(:disabled) { transform:none; filter:brightness(1.05); box-shadow:0 4px 0 var(--pd); }
+#pricing.kl-pricing .pt-btn:active:not(:disabled) { transform:translateY(3px); box-shadow:0 1px 0 var(--pd); }
+#pricing.kl-pricing .kp-fine { margin-top:10px; font-size:12px; font-weight:700; color:var(--text-light); text-align:center; }
+.kp-compare-title { text-align:center; font-size:26px; font-weight:900; color:var(--text); margin:64px 0 20px; letter-spacing:-.01em; }
+#pricing.kl-pricing .pt-table { border-radius:24px; box-shadow:0 5px 0 var(--border); }
+#pricing.kl-pricing .pt-head { background:var(--kl-alt); }
+#pricing.kl-pricing .pt-head > div:nth-child(2) { color:#0A85C2; } #pricing.kl-pricing .pt-head > div:nth-child(3) { color:#2D6A00; } #pricing.kl-pricing .pt-head > div:nth-child(4) { color:#8A5A00; }
+.kp-cta { text-align:center; margin-top:36px; }
+.kp-cta p { margin-top:14px; font-size:13px; font-weight:700; color:var(--text-light); }
+@media (max-width:900px) { #pricing.kl-pricing .pt-cards { gap:26px !important; } }

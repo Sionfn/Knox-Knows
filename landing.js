@@ -4,9 +4,9 @@
 (function () {
   'use strict';
 
-  // The App Store link. Empty until the app is live: the buttons then say
-  // "Coming soon to the App Store". Set it once and every button uses it.
-  var APP_STORE_URL = '';
+  // The App Store link (Knox Knows, app id 6833644500). Every App Store button
+  // uses it. Emptying it turns the buttons back into "Coming soon to the App Store".
+  var APP_STORE_URL = 'https://apps.apple.com/app/id6833644500';
 
   // Opening the page always starts at the top, so the hero is never half under the
   // header (browsers bring back an old scroll spot on reload). Links to a section
@@ -75,50 +75,45 @@
     return { x: x, y: y };
   }
 
-  // ── HERO TOUR ──────────────────────────────────────────────────────────
+  // ── HERO TOUR (real recordings of the iPhone app) ──────────────────────
+  // One recording per step. Only the playing one is loaded and played; the
+  // others wait (preload="none"), so the page stays light.
+  var playClip = function (v) {
+    if (!v) return;
+    try { v.currentTime = 0; } catch (_) {}
+    var p = v.play(); if (p && p.catch) p.catch(function () {});
+  };
   var tour = document.getElementById('klTour');
   if (tour) {
-    var screen = $('.kl-screen', tour);
-    var scenes = $$('.kl-scene', tour), steps = $$('.kl-step', tour), tabs = $$('.kl-tab', tour);
-    var tabbar = $('.kl-tabbar', tour), status = $('.kl-status', tour), nextBtn = $('#klNext'), caption = $('.kl-caption', tour);
-    var at = -1, timer = null, sceneTimers = [], seen = false, inView = false, hovering = false;
-
-    var placeTaps = function (scene) {
-      $$('.kl-tap[data-target]', scene).forEach(function (t) {
-        var target = $(t.dataset.target, scene); if (!target) return;
-        var o = offsetIn(target, screen);
-        t.style.setProperty('--tx', (o.x + target.offsetWidth / 2) + 'px');
-        t.style.setProperty('--ty', (o.y + target.offsetHeight / 2) + 'px');
-      });
-    };
-    var running = function () { return !reduced && inView && !hovering && !document.hidden; };
+    var scenes = $$('.kl-scene', tour), steps = $$('.kl-step', tour), nextBtn = $('#klNext'), caption = $('.kl-caption', tour);
+    var at = -1, timer = null, seen = false, inView = false, hovering = false;
+    var running = function () { return inView && !hovering && !document.hidden; };
     var schedule = function () {
       clearTimeout(timer);
       steps.forEach(function (b) { b.classList.remove('running'); });
-      if (!running() || at < 0) return;
+      var v = at >= 0 ? $('video', scenes[at]) : null;
+      if (!running() || at < 0) { if (v) v.pause(); return; }
+      if (v && v.paused && !v.ended) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
       void steps[at].offsetWidth;
       steps[at].classList.add('running');
-      timer = setTimeout(function () { show(at + 1); }, +scenes[at].dataset.dur || 5000);
+      timer = setTimeout(function () { show(at + 1); }, +scenes[at].dataset.dur || 7000);
     };
     var show = function (n) {
       at = (n + scenes.length) % scenes.length;
-      sceneTimers.forEach(clearTimeout); sceneTimers = [];
-      scenes.forEach(function (s, k) { s.classList.toggle('on', k === at); s.classList.remove('play'); });
-      var s = scenes[at];
-      placeTaps(s);
-      void s.offsetWidth;                       // restart its animations
-      if (!reduced) s.classList.add('play');
+      scenes.forEach(function (s, k) {
+        s.classList.toggle('on', k === at);
+        var v = $('video', s); if (v && k !== at) v.pause();
+      });
+      // The next clip starts loading while this one plays.
+      var next = $('video', scenes[(at + 1) % scenes.length]); if (next && next.preload === 'none') next.preload = 'auto';
+      if (reduced) { var still = $('video', scenes[at]); if (still) still.preload = 'auto'; }
+      else playClip($('video', scenes[at]));
       steps.forEach(function (b, k) { b.classList.toggle('on', k === at); b.setAttribute('aria-current', k === at ? 'step' : 'false'); });
-      steps[at].style.setProperty('--dur', (+s.dataset.dur || 5000) + 'ms');
+      steps[at].style.setProperty('--dur', (+scenes[at].dataset.dur || 7000) + 'ms');
       var mode = Array.prototype.find.call(steps[at].classList, function (c) { return c.indexOf('m-') === 0; });
       nextBtn.className = 'kl-next ' + mode;
       caption.textContent = $('strong', steps[at]).textContent + ' — ' + $('em', steps[at]).textContent;
-      var tab = s.dataset.tab;
-      tabbar.classList.toggle('hide', !tab);
-      tabs.forEach(function (t) { t.classList.toggle('on', t.dataset.tab === tab); });
-      status.style.color = at === 0 ? '#fff' : '';
-      if (!reduced && s.classList.contains('kl-s-cards')) sceneTimers.push(setTimeout(function () { confetti(screen, 46); }, 3500));
-      if (!reduced && s.classList.contains('kl-s-home')) sceneTimers.push(setTimeout(function () { confetti(screen, 46); }, 2000));
+      if (reduced) { clearTimeout(timer); return; }
       schedule();
     };
     steps.forEach(function (b, k) { b.addEventListener('click', function () { show(k); }); });
@@ -129,6 +124,13 @@
     document.addEventListener('visibilitychange', schedule);
     whenSeen(tour, function () { inView = true; if (!seen) { seen = true; show(0); } else schedule(); }, function () { inView = false; schedule(); }, 0.25);
   }
+
+  // A looping recording that plays only while it's on screen.
+  var loopWhenSeen = function (v) {
+    if (!v) return;
+    if (reduced) { v.preload = 'auto'; return; }
+    whenSeen(v, function () { v.preload = 'auto'; var p = v.play(); if (p && p.catch) p.catch(function () {}); }, function () { v.pause(); }, 0.3);
+  };
 
   // ── ASK KNOX (examples that type, think and answer) ────────────────────
   var EXAMPLES = {
@@ -243,13 +245,8 @@
     renderStep();
   }
 
-  // ── SNAP (camera) ──────────────────────────────────────────────────────
-  var snap = document.getElementById('klSnap');
-  if (snap && !reduced) {
-    var snapTimer = null;
-    var replay = function () { snap.classList.remove('play'); void snap.offsetWidth; snap.classList.add('play'); clearTimeout(snapTimer); snapTimer = setTimeout(replay, 9000); };
-    whenSeen(snap, replay, function () { clearTimeout(snapTimer); }, 0.4);
-  } else if (snap) { snap.classList.add('play'); }
+  // ── SNAP (a real recording of the camera in the app) ───────────────────
+  loopWhenSeen($('#klSnap video'));
 
   // ── FLASHCARDS (flip, grade, score) ────────────────────────────────────
   var CARDS = [
@@ -370,6 +367,7 @@
 
   // ── EVERY GRADE ────────────────────────────────────────────────────────
   var GRADES = {
+    elementary: [['Math', 'orange', 'How do I add 3/8 + 1/4?'], ['Science', 'green', 'Why does the moon change shape?'], ['Reading', 'purple', 'What is the main idea of a story?'], ['Social studies', 'blue', 'What are the three branches of government?']],
     middle: [['Math', 'orange', 'What is 3/4 + 2/3?'], ['Science', 'green', 'What’s the difference between weather and climate?'], ['English', 'purple', 'What is a metaphor? Give me an example.'], ['History', 'blue', 'Why did the colonies want independence from Britain?']],
     high: [['Algebra', 'orange', 'How do I solve x² − 5x + 6 = 0?'], ['Chemistry', 'green', 'How do I balance H₂ + O₂ → H₂O?'], ['English', 'purple', 'Help me write a thesis about The Great Gatsby.'], ['Spanish', 'blue', 'When do I use ser and when do I use estar?']],
     ap: [['AP Calculus', 'orange', 'Find the derivative of sin(x²).'], ['AP Biology', 'green', 'How does the electron transport chain make ATP?'], ['AP US History', 'blue', 'What were the causes and effects of the New Deal?'], ['AP Lang', 'purple', 'How do I analyze rhetorical choices in a speech?']],
@@ -388,25 +386,21 @@
     showGrade('middle');
   }
 
-  // ── THE IPHONE APP (two phones from the tour, finished) ────────────────
+  // ── THE IPHONE APP (two phones playing real recordings) ───────────────
   var phones = document.getElementById('klAppPhones');
-  if (phones && tour) {
-    var src = $('.kl-phone', tour);
-    var make = function (keep, tab, cls) {
-      var p = src.cloneNode(true);
-      p.classList.add(cls);
-      $$('.kl-scene', p).forEach(function (s) { if (!s.classList.contains(keep)) s.remove(); else { s.classList.add('on', 'kl-still'); s.classList.remove('play'); } });
-      $$('.kl-tap', p).forEach(function (t) { t.remove(); });
-      $$('.kl-tab', p).forEach(function (t) { t.classList.toggle('on', t.dataset.tab === tab); });
-      $('.kl-tabbar', p).classList.remove('hide');
-      return p;
+  if (phones) {
+    var phone = function (clip, cls) {
+      var p = document.createElement('div');
+      p.className = 'kl-phone kl-rec-phone ' + cls;
+      p.innerHTML = '<div class="kl-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/' + clip + '.jpg" src="/media/landing/' + clip + '.mp4"></video></div>';
+      phones.appendChild(p);
+      return $('video', p);
     };
-    phones.appendChild(make('kl-s-ask', 'ask', 'back'));
-    var front = make('kl-s-home', 'home', 'front');
-    phones.appendChild(front);
+    var backClip = phone('3-learn', 'back'), frontClip = phone('5-home', 'front');
     var widget = document.createElement('div');
     widget.className = 'kl-widget';
-    widget.innerHTML = '<svg style="--fl1:#FF6B00;--fl2:#FFD900"><use href="#kli-flame"/></svg><b>13</b><small>day streak</small>';
+    widget.innerHTML = '<span class="kl-emoji-flame" aria-hidden="true">🔥</span><b>18</b><small>day streak</small>';
     phones.appendChild(widget);
+    loopWhenSeen(backClip); loopWhenSeen(frontClip);
   }
 })();
