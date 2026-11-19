@@ -95,6 +95,7 @@
     if (!menu) buildMenu();
     anchor = btn || document.getElementById('darkModeToggle');
     syncMenu();
+    window.knoxModeBgMenu?.(menu); // the web app adds a Background section (mode-bg.js)
     menu.hidden = false;
     anchor?.setAttribute('aria-expanded', 'true');
     place();
