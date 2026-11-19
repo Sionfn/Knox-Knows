@@ -3525,7 +3525,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const cfg = window.userTier === 'mega'
           ? { cls: 'mega',  icon: '💎', name: 'Mega Knox', tag: window.userAmbassador ? 'Knox Ambassador · everything Knox has' : 'Everything Knox has' }
           : planTier(plan) === 'paid'
-          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: '50 credits a day' }
+          ? { cls: 'super', icon: '⚡', name: 'Knox Plus', tag: 'Unlimited questions' }
           : { cls: 'free',  icon: '🪙', name: 'Free',      tag: '5 free/day, up to 20 saved' };
         ddPlan.innerHTML = '';
         const card = document.createElement('div');
@@ -3738,8 +3738,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       if (plusCredits) {
         usage.style.display = 'inline-flex';
         usage.classList.remove('unlimited');
-        usage.title = 'Tap to see how credits work';
-        text.textContent = isCompact ? `⚡ ${left}/${max}` : `⚡ ${left} credits left`;
+        usage.title = 'Typed questions are unlimited. Tap to see how photo credits work';
+        text.textContent = isCompact ? `⚡ ${left}/${max}` : `⚡ ${left} photo credits`;
         setUsageShort(String(left));
         usage.classList.toggle('danger', left <= 2);
         return;
@@ -3826,15 +3826,16 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       html = `
         <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
         <span class="usage-info-plan">⚡ Knox Plus</span>
-        <h3>${st.left} credit${st.left === 1 ? '' : 's'} left</h3>
+        <h3>${st.left} photo credit${st.left === 1 ? '' : 's'} left</h3>
         <p class="usage-info-next">${atMax ? `You're at your max saved balance.` : `+${st.regen} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
         <div class="usage-info-divider"></div>
         <p><strong>How this works:</strong></p>
         <ul>
+          <li><strong>Typed questions are unlimited</strong> — they never use credits.</li>
+          <li>Photos and files use credits: each one costs <strong>${PHOTO_CREDIT_COST}</strong>.</li>
           <li>You get <strong>${st.regen} credits every 24 hours</strong> — exactly 24h after your last refill.</li>
           <li>Unused credits save up, up to <strong>${st.max} total</strong> (4 days' worth) — so you have plenty for a big test night.</li>
-          <li>A typed question costs <strong>1 credit</strong>; a photo or file costs <strong>${PHOTO_CREDIT_COST}</strong>.</li>
-          <li>🎓 <strong>Learn mode</strong> charges once per topic, and the whole back-and-forth after that is free.</li>
+          <li>🎓 <strong>Learn mode</strong>: typed lessons are free, and a lesson started from a photo costs just 1 credit.</li>
           <li>Flashcard decks up to 15 cards, longer Learn lessons and faster support.</li>
         </ul>
         ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">💎 Mega Knox is unlimited — see Mega</button>'}

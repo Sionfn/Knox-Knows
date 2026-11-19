@@ -1186,7 +1186,10 @@ export default async function handler(req, res) {
   if (uid && !casual) {
     if (!isLearnFollowUp) {
       const cost = learnMode ? 1 : ((image || doc) ? PHOTO_CREDIT_COST : 1);
-      const usage = await checkAndIncrementUsage(uid, plan, cost, plusCredits ? 'plus' : null);
+      // Knox Plus: typed questions are unlimited; only photos and files use its
+      // 50-a-day credit bank. Typed questions stay on the normal Plus fair-use limit.
+      const usePlusBank = plusCredits && !!(image || doc);
+      const usage = await checkAndIncrementUsage(uid, plan, cost, usePlusBank ? 'plus' : null);
       if (usage.unavailable) return res.status(503).json({ error: 'Usage service is temporarily unavailable. Please try again.' });
       if (!usage.allowed) {
         const minutes = Math.max(1, Math.ceil((usage.retryAfterMs || 0) / 60000));
@@ -1195,13 +1198,13 @@ export default async function handler(req, res) {
           : `about ${minutes} minute${minutes === 1 ? '' : 's'}`;
         let message;
         if (usage.bankName === 'plus') {
-          message = (image || doc) && !learnMode && usage.remaining > 0
-            ? `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've got ${usage.remaining} left — ${usage.regen} more come in ${waitMsg}.`
-            : `You've used your credits for now — ${usage.regen} more come in ${waitMsg}.`;
+          message = !learnMode && usage.remaining > 0
+            ? `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've got ${usage.remaining} left — ${usage.regen} more come in ${waitMsg}. Typed questions are still unlimited.`
+            : `You've used your photo credits for now — ${usage.regen} more come in ${waitMsg}. Typed questions are still unlimited.`;
         } else if (usage.isDailyBank && (image || doc) && !learnMode) {
-          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets 50 credits a day.`;
+          message = `A ${doc ? 'file' : 'photo'} costs ${PHOTO_CREDIT_COST} credits and you've only got ${usage.remaining} left — more opens up in ${waitMsg}. Knox Plus gets unlimited typed questions and 50 photo credits a day.`;
         } else if (usage.isDailyBank) {
-          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets 50 credits a day.`;
+          message = `You're out of free credits for now — you'll get ${FREE_DAILY_REGEN} more in ${waitMsg}. Knox Plus gets unlimited typed questions.`;
         } else {
           message = `You're all caught up for now — more opens back up in ${waitMsg}.`;
         }

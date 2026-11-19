@@ -28,5 +28,10 @@ test('Multi-page photos are Mega only, at most 5 pages, and bounded in size', ()
   assert.match(ask, /pages\.length > 4/);
   assert.match(ask, /pages\.length && tier !== 'mega'/);
   assert.match(ask, /> 4_300_000/);
-  assert.match(ask, /checkAndIncrementUsage\(uid, plan, cost, plusCredits \? 'plus' : null\)/);
+});
+
+test('Knox Plus typed questions are unlimited; only photos and files use the Plus credit bank', () => {
+  const ask = readFileSync(new URL('../api/ask.js', import.meta.url), 'utf8');
+  assert.match(ask, /const usePlusBank = plusCredits && !!\(image \|\| doc\);/);
+  assert.match(ask, /checkAndIncrementUsage\(uid, plan, cost, usePlusBank \? 'plus' : null\)/);
 });
