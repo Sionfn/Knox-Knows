@@ -66,7 +66,7 @@
   async function openRedeem(code = '') {
     if (!window.currentUser) return needSignIn('redeem', code);
     const m = show(`<div class="ff-pop-flame" aria-hidden="true">🎁</div><h2 id="kgTitle">Redeem a code</h2>
-      <p>Got a Knox Plus or Mega Knox gift card? Enter the code to add it to your account.</p>
+      <p>Got a Knox Plus, Mega Knox or flame gift code? Enter it to add it to your account.</p>
       <form class="kg-form" autocomplete="off"><input class="kg-input" id="kgCode" placeholder="KNOX-XXXX-XXXX-XXXX" value="${esc(code)}" aria-label="Gift code" autocapitalize="characters" spellcheck="false" maxlength="40"><button type="submit" class="ff-claim">Redeem</button></form>
       <div class="kg-msg" role="status"></div>
       <div class="kg-bought"></div>
@@ -80,6 +80,14 @@
       btn.disabled = true; msg.className = 'kg-msg'; msg.textContent = 'Checking…';
       try {
         const r = await api('/api/redeem', 'POST', { code: input.value });
+        if (r.flame) {
+          window.knoxFlameFest?.applyFlameStyle?.(r.flame);
+          const fname = r.flame === 'galaxy' ? 'Galaxy Flame' : 'Slime Flame';
+          show(`<div class="ff-pop-flame" aria-hidden="true">${r.flame === 'galaxy' ? '🌌' : '🟢'}</div><h2 id="kgTitle">You unlocked the ${fname}!</h2>
+            <p>It's on now — your streak flame has the new look. It's yours to keep, and you can switch looks anytime in Flame Fest. 🔥</p>
+            <div class="ff-pop-actions"><button type="button" class="ff-claim" data-ok>Let’s go</button></div>`).querySelector('[data-ok]').addEventListener('click', close);
+          return;
+        }
         window.knoxRefreshPlan?.();
         const until = new Date(r.until || r.plusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
         const name = r.tier === 'mega' ? 'Mega Knox' : 'Knox Plus';

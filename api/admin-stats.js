@@ -206,7 +206,7 @@ async function getGiftStats() {
       if (g.disabled) { out.refunded++; return; }
       out.sold++; out.soldCents += GIFTS[g.gift]?.cents || 0;
       if (g.redeemedBy) out.soldRedeemed++;
-    } else if (g.source === "admin") { out.made++; if (g.redeemedBy) out.madeRedeemed++; }
+    } else if (g.source === "admin") { out.made++; out.madeRedeemed += Number(g.uses) || (g.redeemedBy ? 1 : 0); } // codes can be for many people
     else if (g.source === "flamefest") { out.flameFest++; if (g.redeemedBy) out.flameFestRedeemed++; }
   });
   return out;
