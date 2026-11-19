@@ -19,6 +19,35 @@ html[data-theme="dark"] .st-name small { color:#FFD45C; }
 .st-row[aria-pressed="true"] .st-check { background:var(--orange); border-color:#CC5500; }
 .st-row[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
 .st-note { margin:4px 8px 2px; font-size:11.5px; font-weight:700; color:var(--text-light); }
-.st-row[data-tool="cards"] .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); }
-.st-row[data-tool="sims"] .sq-icon { color:#B98500; background:#FFF4CC; border-color:#F2B705; }
-html[data-theme="dark"] .st-row[data-tool="sims"] .sq-icon { color:#FFD45C; background:rgba(242,183,5,.16); }
+.st-row[data-tool="cards"] .sq-icon, .st-row[data-go="cards"] .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); }
+.st-row[data-tool="sims"] .sq-icon, .st-row[data-go="sims"] .sq-icon { color:#B98500; background:#FFF4CC; border-color:#F2B705; }
+html[data-theme="dark"] .st-row[data-tool="sims"] .sq-icon, html[data-theme="dark"] .st-row[data-go="sims"] .sq-icon { color:#FFD45C; background:rgba(242,183,5,.16); }
+/* "··· More" under your 4: smaller and quieter than the tools above it. */
+.sq-more { display:flex; align-items:center; gap:10px; width:100%; padding:5px 12px; border:0; border-radius:10px; background:transparent; font:inherit; font-size:12.5px; font-weight:800; color:var(--text-light); cursor:pointer; text-align:left; transition:background .15s, color .15s; --c:var(--text-light); --cl:transparent; --ct:var(--text-light); }
+.sq-more[hidden] { display:none; }
+.sq-more .sq-icon { flex:0 0 32px; width:32px; height:24px; border-radius:9px; display:flex; align-items:center; justify-content:center; border:1.5px dashed var(--border); color:var(--text-light); background:transparent; }
+.sq-more .sq-icon svg { width:16px; height:16px; }
+.sq-more small { font-size:inherit; font-weight:900; }
+.sq-more:hover { color:var(--text); background:color-mix(in srgb, var(--text-light) 10%, transparent); }
+.sq-more[data-on="chat"] { --c:var(--orange); --cl:var(--orange-light); --ct:var(--orange); }
+.sq-more[data-on="learn"] { --c:var(--purple); --cl:var(--purple-light); --ct:var(--purple); }
+.sq-more[data-on="cards"] { --c:var(--green); --cl:var(--green-light); --ct:var(--green-dark); }
+.sq-more[data-on="calc"] { --c:var(--blue); --cl:var(--blue-light); --ct:var(--blue); }
+.sq-more[data-on="sims"] { --c:#F2B705; --cl:#FFF4CC; --ct:#8A6300; }
+html[data-theme="dark"] .sq-more[data-on="cards"] { --ct:var(--green); }
+html[data-theme="dark"] .sq-more[data-on="sims"] { --cl:rgba(242,183,5,.16); --ct:#FFD45C; }
+.sq-more[data-on], .sq-more[data-on]:hover { color:var(--ct); background:color-mix(in srgb, var(--c) var(--nav-hl), transparent); }
+.sq-more[data-on] .sq-icon { border-style:solid; border-color:var(--c); color:var(--ct); background:var(--cl); }
+body.app-sidebar-collapsed .sq-more { justify-content:center; gap:0; padding-left:0; padding-right:0; }
+#mobileHistoryDrawer .sq-more { font-size:13.5px; padding:7px 12px; }
+/* The tool that's open right now, in its own color. */
+.st-go { --c:var(--orange); --cd:var(--orange-dark); }
+.st-go[data-go="learn"] { --c:var(--purple); --cd:var(--purple-dark); }
+.st-go[data-go="cards"] { --c:var(--green); --cd:var(--green-dark); }
+.st-go[data-go="calc"] { --c:var(--blue); --cd:var(--blue-dark); }
+.st-go[data-go="sims"] { --c:#F2B705; --cd:#B98500; }
+.st-row.st-go[aria-current="true"] { border-color:var(--c); box-shadow:0 2px 0 var(--cd); }
+.st-open { font-size:11px; font-weight:900; color:var(--cd); }
+html[data-theme="dark"] .st-open { color:var(--c); }
+.st-editlink { display:block; width:calc(100% + 16px); margin:6px -8px -8px; padding:10px 8px; border:0; border-top:1.5px solid var(--border); border-radius:0 0 14px 14px; background:transparent; font:inherit; font-size:12.5px; font-weight:900; color:var(--text-light); cursor:pointer; }
+.st-editlink:hover { color:var(--orange); }
