@@ -902,8 +902,9 @@
       <div class="card card-lg">
         <div class="metric-label">Make codes that unlock a flame look</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
-          For giveaways. Each code works once, never expires and works on any plan — they enter it at knoxknowsapp.com/redeem
-          and the flame is theirs to keep (it turns on right away). Someone who already has that flame is told to give the code to a friend.
+          For giveaways. Codes never expire and work on any plan — they enter it at knoxknowsapp.com/redeem and the flame is theirs
+          to keep (it turns on right away). "People per code" is how many different people can use each code before it stops working
+          (1 = a one-time code; e.g. 100 for the first 100 people). Each person can use a code once.
         </p>
         <form class="pick-form" id="flameForm" autocomplete="off">
           <div class="pick-row">
@@ -921,6 +922,10 @@
                 <input id="flameCount" type="number" min="1" max="50" value="1" aria-labelledby="flameCountLabel">
                 <button type="button" data-fstep="1" aria-label="One more">+</button>
               </div>
+            </div>
+            <div class="pick-row" style="gap:6px">
+              <span class="pick-label" id="flameUsesLabel">People per code</span>
+              <input id="flameUses" type="number" min="1" max="100000" value="1" aria-labelledby="flameUsesLabel" style="width:110px">
             </div>
             <div class="pick-row" style="gap:6px;flex:1 1 240px">
               <span class="pick-label">Note <span style="text-transform:none;letter-spacing:0">(optional)</span></span>
@@ -970,10 +975,11 @@
 
     // Flame codes.
     const flameCount = () => { const n = Math.round(Number(document.getElementById('flameCount').value)); return Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 1; };
+    const flameUses = () => { const n = Math.round(Number(document.getElementById('flameUses').value)); return Number.isFinite(n) ? Math.min(100000, Math.max(1, n)) : 1; };
     const syncFlame = () => {
-      const n = flameCount(), galaxy = picked('flameKind') === 'galaxy';
+      const n = flameCount(), galaxy = picked('flameKind') === 'galaxy', u = flameUses();
       const go = document.getElementById('flameSubmit');
-      go.textContent = `Make ${n} ${galaxy ? 'Galaxy' : 'Slime'} Flame code${n === 1 ? '' : 's'}`; go.classList.toggle('mega', galaxy);
+      go.textContent = `Make ${n} ${galaxy ? 'Galaxy' : 'Slime'} Flame code${n === 1 ? '' : 's'}` + (u > 1 ? ` · ${u.toLocaleString()} people each` : ''); go.classList.toggle('mega', galaxy);
       document.querySelectorAll('#flameForm [data-fstep]').forEach(b => { b.disabled = b.dataset.fstep === '-1' ? n <= 1 : n >= 50; });
     };
     document.querySelectorAll('#flameForm [data-fstep]').forEach(b => b.addEventListener('click', () => {
@@ -981,13 +987,14 @@
       syncFlame();
     }));
     document.getElementById('flameCount').addEventListener('input', syncFlame);
+    document.getElementById('flameUses').addEventListener('input', syncFlame);
     document.querySelector('#flameForm .choices').addEventListener('click', () => setTimeout(syncFlame));
     document.getElementById('flameForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('flameSubmit'), msg = document.getElementById('flameMsg'), out = document.getElementById('flameCodes');
       btn.disabled = true; msg.textContent = '';
       try {
-        const r = await compFetch('POST', { action: 'flame-codes', flame: picked('flameKind') || 'slime', count: flameCount(), note: document.getElementById('flameNote').value.trim() });
+        const r = await compFetch('POST', { action: 'flame-codes', flame: picked('flameKind') || 'slime', count: flameCount(), uses: flameUses(), note: document.getElementById('flameNote').value.trim() });
         showGiftCodes(out, r.codes, r.label);
         msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'}: ${r.label}. Copy them now; they aren't shown again.`; msg.className = 'comp-msg ok';
       } catch (err) { msg.textContent = err.message; msg.className = 'comp-msg err'; }

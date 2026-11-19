@@ -72,18 +72,24 @@ export default async function handler(req, res) {
       if (!gift.exists) return { error: "That code isn't valid. Check it and try again.", code: 404 };
       const g = gift.data();
       if (g.disabled) return { error: "This gift code was canceled. Ask the person who gave it to you.", code: 410 };
-      if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
-      // A flame code unlocks a flame look (any plan) and turns it on.
+      // A flame code unlocks a flame look (any plan) and turns it on. It can be
+      // made for many people (maxUses): each person once, until it's used up.
       if (g.flame === "slime" || g.flame === "galaxy") {
+        const maxUses = Math.max(1, Math.floor(Number(g.maxUses) || 1)), uses = Math.max(0, Math.floor(Number(g.uses) || 0));
+        const mine = await tx.get(giftRef.collection("redeemers").doc(uid));
+        if (mine.exists || g.redeemedBy === uid) return { error: "You already used this code.", code: 409 };
+        if (g.redeemedBy || uses >= maxUses) return { error: maxUses > 1 ? "This code has been used by everyone it was for." : "This code was already used.", code: 409 };
         const styles = Array.isArray(data.flameStyles) ? data.flameStyles : [];
         const has = styles.includes(g.flame) || (g.flame === "slime" && typeof data.discordId === "string" && !!data.discordId) ||
           (g.flame === "galaxy" && data.galaxyFlame === true);
-        if (has) return { error: `You already have the ${g.flame === "slime" ? "🟢 Slime" : "🌌 Galaxy"} Flame! Give this code to a friend — it never expires.`, code: 409 };
-        const at = new Date().toISOString();
-        tx.set(giftRef, { redeemedBy: uid, redeemedAt: at }, { merge: true });
+        if (has) return { error: `You already have the ${g.flame === "slime" ? "🟢 Slime" : "🌌 Galaxy"} Flame! Give this code to a friend.`, code: 409 };
+        const at = new Date().toISOString(), used = uses + 1;
+        tx.set(giftRef.collection("redeemers").doc(uid), { at });
+        tx.set(giftRef, { uses: used, ...(used >= maxUses ? { redeemedBy: uid, redeemedAt: at } : { lastRedeemedAt: at }) }, { merge: true });
         tx.set(userRef, { flameStyles: [...new Set([...styles, g.flame])], flameStyle: g.flame }, { merge: true });
         return { flame: g.flame };
       }
+      if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
       const flameLink = g.source === "flamefest";
       if (flameLink && g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
       // A Plus gift needs a free account; a Mega gift works for free and Plus.
