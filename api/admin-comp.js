@@ -5,6 +5,8 @@
 //   POST { action: 'revoke', uid }          → take it back
 //   POST { action: 'gift-codes', gift: '1m'|'3m'|'12m', count, note? }
 //        → make Knox Plus gift codes (giveaways; see api/_gifts.js)
+//   POST { action: 'flame-codes', flame: 'slime'|'galaxy', count, note? }
+//        → make codes that unlock a flame look (giveaways)
 //
 // A comped user is stored as plan 'super' (what the rest of the app treats
 // as Knox Plus) plus comped: true. The webhook keeps Knox Plus for comped users
@@ -16,7 +18,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { GIFTS, createGiftCodes, formatCode } from "./_gifts.js";
+import { GIFTS, FLAME_GIFTS, createGiftCodes, formatCode } from "./_gifts.js";
 import { MEGA_PLAN, PLUS_PLAN } from "./_plans.js";
 
 if (!getApps().length) {
@@ -67,6 +69,14 @@ export default async function handler(req, res) {
       const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
       const codes = await createGiftCodes(db, { days: g.days, tier: g.tier, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
       return res.status(200).json({ codes: codes.map(formatCode), label: `${g.name} · ${g.label}` });
+    }
+    if (body.action === "flame-codes") {
+      const f = Object.hasOwn(FLAME_GIFTS, body.flame) ? FLAME_GIFTS[body.flame] : null;
+      const count = Math.floor(Number(body.count) || 1);
+      if (!f || count < 1 || count > 50) return res.status(400).json({ error: "Choose the Slime or Galaxy Flame and 1–50 codes." });
+      const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
+      const codes = await createGiftCodes(db, { days: 0, flame: body.flame, count, source: "admin", gift: "flame-" + body.flame, note, createdBy: decoded.uid });
+      return res.status(200).json({ codes: codes.map(formatCode), label: f.name });
     }
     return res.status(400).json({ error: "Unknown action." });
   } catch (err) {

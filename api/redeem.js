@@ -73,6 +73,17 @@ export default async function handler(req, res) {
       const g = gift.data();
       if (g.disabled) return { error: "This gift code was canceled. Ask the person who gave it to you.", code: 410 };
       if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
+      // A flame code unlocks a flame look (any plan) and turns it on.
+      if (g.flame === "slime" || g.flame === "galaxy") {
+        const styles = Array.isArray(data.flameStyles) ? data.flameStyles : [];
+        const has = styles.includes(g.flame) || (g.flame === "slime" && typeof data.discordId === "string" && !!data.discordId) ||
+          (g.flame === "galaxy" && data.galaxyFlame === true);
+        if (has) return { error: `You already have the ${g.flame === "slime" ? "🟢 Slime" : "🌌 Galaxy"} Flame! Give this code to a friend — it never expires.`, code: 409 };
+        const at = new Date().toISOString();
+        tx.set(giftRef, { redeemedBy: uid, redeemedAt: at }, { merge: true });
+        tx.set(userRef, { flameStyles: [...new Set([...styles, g.flame])], flameStyle: g.flame }, { merge: true });
+        return { flame: g.flame };
+      }
       const flameLink = g.source === "flamefest";
       if (flameLink && g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
       // A Plus gift needs a free account; a Mega gift works for free and Plus.
@@ -90,6 +101,7 @@ export default async function handler(req, res) {
       return { until, days, tier: giftTier };
     });
     if (out.error) return res.status(out.code).json({ error: out.error });
+    if (out.flame) return res.status(200).json({ redeemed: true, flame: out.flame });
     return res.status(200).json({ redeemed: true, days: out.days, tier: out.tier, until: out.until, plusUntil: out.until });
   } catch (err) {
     console.error("Redeem error:", err?.message);
