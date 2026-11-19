@@ -202,7 +202,10 @@
     var backClip = phone('learn-full', 'back'), frontClip = phone('app-home', 'front');
     var widget = document.createElement('div');
     widget.className = 'kl-widget';
-    widget.innerHTML = '<span class="kl-emoji-flame" aria-hidden="true">🔥</span><b>18</b><small>day streak</small>';
+    // The same galaxy flame as the Home screen in the phone beside it (18 days).
+    var galaxy = document.querySelector('.kl-flamecard .galaxy-flame');
+    widget.innerHTML = '<span class="kl-emoji-flame kl-widget-flame" aria-hidden="true"></span><b>18</b><small>day streak</small>';
+    if (galaxy) $('.kl-widget-flame', widget).appendChild(galaxy.cloneNode(true)); else $('.kl-widget-flame', widget).textContent = '🔥';
     phones.appendChild(widget);
     loopWhenSeen(backClip); loopWhenSeen(frontClip);
   }
