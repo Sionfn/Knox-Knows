@@ -1,0 +1,24 @@
+/* sidebar-tools.css — "Your tools · Edit" and the picker (sidebar-tools.js). */
+.sidebar-quicknav-link.sq-off { display:none !important; }
+.sq-head { display:flex; align-items:center; justify-content:space-between; padding:0 4px 4px 12px; font-size:11px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--text-light); }
+.sq-edit { border:1.5px solid var(--border); background:var(--surface); color:var(--text-light); font:inherit; font-size:11.5px; font-weight:900; letter-spacing:0; text-transform:none; padding:3px 10px; border-radius:999px; cursor:pointer; box-shadow:0 2px 0 var(--border); }
+.sq-edit:hover { color:var(--orange); border-color:var(--orange); }
+body.app-sidebar-collapsed .sq-head { display:none; }
+.st-pop { position:fixed; z-index:10060; width:250px; padding:8px; background:var(--surface); border:2px solid var(--border); border-radius:16px; box-shadow:0 6px 0 var(--border), 0 18px 40px rgba(0,0,0,.22); font-family:inherit; }
+.st-pop[hidden] { display:none; }
+.st-title { padding:4px 8px 0; font-size:15px; font-weight:900; color:var(--text); }
+.st-sub { margin:2px 8px 8px; font-size:12px; font-weight:700; color:var(--text-light); }
+.st-row { display:flex; align-items:center; gap:10px; width:100%; padding:7px 8px; margin:0 0 4px; border:2px solid var(--border); border-radius:12px; background:var(--surface); font:inherit; font-size:14px; font-weight:800; color:var(--text); cursor:pointer; text-align:left; }
+.st-row .sq-icon { flex:0 0 30px; width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; border:1.5px solid; }
+.st-row .sq-icon svg { width:19px; height:19px; }
+.st-name { flex:1; }
+.st-name small { font-size:10.5px; font-weight:900; color:#8A5A00; margin-left:4px; }
+html[data-theme="dark"] .st-name small { color:#FFD45C; }
+.st-check { width:22px; height:22px; border-radius:7px; border:2px solid var(--border); display:grid; place-items:center; font-size:13px; font-weight:900; color:#fff; }
+.st-row[aria-pressed="true"] { border-color:var(--orange); box-shadow:0 2px 0 #CC5500; }
+.st-row[aria-pressed="true"] .st-check { background:var(--orange); border-color:#CC5500; }
+.st-row[aria-disabled="true"] { opacity:.45; cursor:not-allowed; }
+.st-note { margin:4px 8px 2px; font-size:11.5px; font-weight:700; color:var(--text-light); }
+.st-row[data-tool="cards"] .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); }
+.st-row[data-tool="sims"] .sq-icon { color:#B98500; background:#FFF4CC; border-color:#F2B705; }
+html[data-theme="dark"] .st-row[data-tool="sims"] .sq-icon { color:#FFD45C; background:rgba(242,183,5,.16); }
