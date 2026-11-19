@@ -941,3 +941,24 @@ html[data-theme="dark"] #pricing .kp-toggle, html[data-theme="dark"] #pricing .m
 .kl-reviews-foot { display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:30px; text-align:center; }
 .kl-reviews-foot p { font-size:12.5px; font-weight:700; color:var(--text-light); max-width:560px; }
 @media (max-width:900px) { .kl-reviews-grid { grid-template-columns:1fr; max-width:520px; margin:0 auto; } }
+
+/* ═══ Round 6 ══════════════════════════════════════════════════════════════ */
+/* Circles only on colored panels: the white hero stays plain too (its big
+   phone tour is the picture). */
+.kl-hero::before, .kl-hero::after { display:none; }
+
+/* The "18 day streak" widget wears the galaxy flame, like the Home screen beside it. */
+.kl-widget-flame { display:inline-flex; width:40px; height:48px; align-items:center; justify-content:center; }
+.kl-widget-flame svg { width:auto; height:46px; }
+
+/* Footer in Knox dark brown (the app's text color) with cream text, instead
+   of black: the page ends on-brand. (The links carry inline colors, hence
+   !important.) */
+body > footer { background:#3C2A1E !important; color:#FFF8EC; }
+body > footer a { color:#EBDCC8 !important; }
+body > footer a:hover { color:#fff !important; }
+body > footer [style*="color:white"], body > footer [style*="color:#fff"] { color:#FFF8EC !important; }
+body > footer [style*="color:#888"], body > footer [style*="color:#aaa"] { color:#D9C6AF !important; }
+body > footer [style*="color:#555"], body > footer [style*="color:#666"] { color:#C2A988 !important; }
+body > footer [style*="border-top:1px solid #333"] { border-top-color:rgba(255,248,236,.16) !important; }
+body > footer [style*="border:1px solid #333"] { border-color:rgba(255,248,236,.22) !important; }
