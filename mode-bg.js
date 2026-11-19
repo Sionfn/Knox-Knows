@@ -2,14 +2,14 @@
 // Appearance menu (theme.js calls window.knoxModeBgMenu(menu) when it opens).
 // Ask Knox and Learn have two: the home screen and the chat with Knox.
 // Saved on this device, for Light and Dark separately:
-//   localStorage 'knoxModeBg.v1' = { light: { ask: { home, chat }, learn: { home, chat }, cards, calc, binder }, dark: { … } }
+//   localStorage 'knoxModeBg.v1' = { light: { ask: { home, chat }, learn: { home, chat }, cards, calc, sims }, dark: { … } }
 //   (an older plain string for ask/learn means the same look on both screens)
 //   plus { custom: { 'light|ask|home': { color } } } for Mega Knox's own color;
 //   Mega's own photos live in IndexedDB ('knoxModeBg' › 'photos', same key).
 // mode-bg.css paints body[data-mb] behind whatever is showing.
 (function () {
   const KEY = 'knoxModeBg.v1';
-  const PARTS = [['ask', 'Ask Knox'], ['learn', 'Learn'], ['cards', 'Flashcards'], ['calc', 'Calculator'], ['binder', 'Binder']];
+  const PARTS = [['ask', 'Ask Knox'], ['learn', 'Learn'], ['cards', 'Flashcards'], ['calc', 'Calculator'], ['sims', 'Simulations']];
   const TWO_SCREENS = { ask: true, learn: true };
   const LOOKS = {
     light: [['classic', 'Classic'], ['white', 'White'], ['orange', 'Orange'], ['purple', 'Purple'], ['green', 'Green'], ['blue', 'Blue'], ['yellow', 'Yellow'], ['red', 'Red']],
@@ -23,7 +23,8 @@
     const c = document.body.classList;
     if ($('calcModal')?.classList.contains('open')) return 'calc';
     if (c.contains('knox-flashcards')) return 'cards';
-    if (c.contains('knox-notes') || c.contains('knox-sims')) return 'binder';
+    if (c.contains('knox-sims')) return 'sims';
+    if (c.contains('knox-notes')) return 'cards';
     return c.contains('knox-learn-mode') ? 'learn' : 'ask';
   };
   const screen = () => { const ws = $('welcomeScreen'); return ws && ws.style.display === 'none' ? 'chat' : 'home'; };

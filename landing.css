@@ -1003,3 +1003,9 @@ html[data-theme="dark"] #pricing.kl-pricing .pt-head > div:nth-child(4) { backgr
 .kl-grade-tabs button { position:relative; overflow:hidden; }
 .kl-grade-tabs button.on.auto::after { content:''; position:absolute; left:12px; right:12px; bottom:6px; height:3px; border-radius:3px; background:rgba(255,255,255,.8); transform-origin:left center; animation:klGradeFill var(--gdur, 4.2s) linear forwards; }
 @keyframes klGradeFill { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+
+/* Tools: "Make Knox yours" shows the background choices. */
+.kl-looks { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; padding:14px; }
+.kl-looks i { display:block; border-radius:12px; border:2px solid var(--border); box-shadow:0 3px 0 var(--border);
+  background:radial-gradient(circle at 88% 12%, var(--c1) 0 26%, transparent 27%), radial-gradient(circle at 10% 90%, var(--c2) 0 22%, transparent 23%), var(--bg); }
+.kl-looks i:nth-child(7), .kl-looks i:nth-child(8) { background:radial-gradient(circle at 88% 12%, var(--c1) 0 24%, color-mix(in srgb, var(--c1) 70%, #fff) 25%, transparent 34%), radial-gradient(circle at 10% 90%, var(--c2) 0 20%, color-mix(in srgb, var(--c2) 70%, #fff) 21%, transparent 30%), var(--bg); }

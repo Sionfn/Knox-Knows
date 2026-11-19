@@ -1,16 +1,14 @@
-// notes.js — the Binder: 📝 Notes and 🗂️ Flashcards in one place.
+// notes.js — 🎛️ Simulations (and the old Notes code, no longer shown).
 //
-// The sidebar's Binder button (made by flashcards.js) opens the tab used last.
-// A tab strip at the top of both panels switches between Notes (this file)
-// and Flashcards (flashcards.js). Notes are saved to the account through
-// /api/me?route=notes (api/_notes.js); each note has a subject, and the
-// subject tabs work like a real binder's dividers.
+// Notes were removed from the web app (Nov 19 2026): nothing opens them now and
+// saved notes stay untouched in the account. Flashcards and Simulations each
+// have their own sidebar button; sidebar-tools.js decides which 4 tools show.
+// Simulations lists every Knox simulation (sims.js builds them); playing them
+// is a Mega Knox perk, others see them with a 💎 lock.
 //
-// A third tab, 🎛️ Simulations, lists every Knox simulation (sims.js builds
-// them); playing them is a Mega Knox perk, others see them with a 💎 lock.
-//
-//   window.openBinder(tab?) — 'notes' | 'flashcards' | 'sims' (default: the last one)
-//   window.openNotes()      — the Notes tab
+//   window.openBinder(tab?) — 'flashcards' | 'sims' (anything else opens Flashcards)
+//   window.openSims()       — Simulations
+//   window.openNotes()      — old links: opens Flashcards
 (function () {
   const TAB_KEY = 'knoxBinderTab';
   const SUBJECTS = ['Math', 'Science', 'Biology', 'Chemistry', 'Physics', 'History', 'English', 'Spanish', 'Other'];
@@ -59,18 +57,6 @@
   }
   const textOf = html => { const box = document.createElement('div'); box.innerHTML = html.replace(/<\/?(p|div|li|ul|ol|h2|h3)\b[^>]*>/gi, m => /^<\/|^<(ul|ol)/i.test(m) ? '\n' : '\n' + m).replace(/<br\s*\/?>/gi, '\n'); return box.textContent.replace(/\n{3,}/g, '\n\n').trim(); };
 
-  // ── Binder tabs (on both panels) ──
-  function strip(active) {
-    const el = document.createElement('div');
-    el.className = 'binder-tabs'; el.setAttribute('role', 'tablist'); el.setAttribute('aria-label', 'Binder');
-    el.innerHTML = `<span class="binder-label" aria-hidden="true">📒 Binder</span>
-      <button type="button" role="tab" data-binder="notes" aria-selected="${active === 'notes'}"><span aria-hidden="true">📝</span> Notes</button>
-      <button type="button" role="tab" data-binder="flashcards" aria-selected="${active === 'flashcards'}"><span aria-hidden="true">🗂️</span> Flashcards</button>
-      <button type="button" role="tab" data-binder="sims" aria-selected="${active === 'sims'}"><span aria-hidden="true">🎛️</span> Simulations</button>`;
-    el.addEventListener('click', e => { const b = e.target.closest('[data-binder]'); if (b) openBinder(b.dataset.binder); });
-    return el;
-  }
-  panel.prepend(strip('notes'));
 
   // ── Simulations tab ──
   const SIMS = [
@@ -86,7 +72,7 @@
   const simsPanel = document.createElement('section');
   simsPanel.id = 'simsPanel'; simsPanel.hidden = true; simsPanel.setAttribute('aria-label', 'Simulations');
   const simsView = document.createElement('div'); simsView.className = 'nb-scroll bs-scroll';
-  simsPanel.append(strip('sims'), simsView);
+  simsPanel.append(simsView);
   document.querySelector('#chatAndInput')?.append(simsPanel);
   const isMega = () => window.userTier === 'mega';
   function simsHome() {
@@ -123,21 +109,24 @@
   // Plan or account changes: redraw so the lock matches.
   window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) simsHome(); });
   window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.bs-big')) simsHome(); });
-  // Flashcards' panel gets the same strip once it exists.
-  (function addToFlashcards(tries = 0) {
-    const fc = document.getElementById('flashcardsPanel');
-    if (fc && !fc.querySelector('.binder-tabs')) { fc.prepend(strip('flashcards')); return; }
-    if (!fc && tries < 100) setTimeout(() => addToFlashcards(tries + 1), 100);
-  })();
+  // Simulations has its own sidebar button (Notes and the Binder strip are gone).
+  const SIMS_ICON = '<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 17c3-9 11-9 14 0"/><circle cx="12" cy="9" r="2.2"/></svg></span>';
+  document.querySelectorAll('.sidebar-quicknav').forEach(nav => {
+    const b = document.createElement('button');
+    b.className = 'sidebar-quicknav-link sims-nav'; b.type = 'button'; b.setAttribute('aria-label', 'Simulations');
+    b.innerHTML = SIMS_ICON + '<span class="sidebar-collapsible">Simulations</span>';
+    b.addEventListener('click', () => { openBinder('sims'); window.closeMobileHistory?.(); });
+    nav.append(b);
+  });
 
   function setNavActive() {
-    document.querySelectorAll('.sidebar-quicknav-link').forEach(b => b.classList.toggle('sidebar-nav-active', b.classList.contains('fc-nav')));
+    document.querySelectorAll('.sidebar-quicknav-link').forEach(b => b.classList.toggle('sidebar-nav-active', b.classList.contains('sims-nav')));
   }
 
   async function openBinder(tab) {
     let pick = tab;
     if (!pick) { try { pick = localStorage.getItem(TAB_KEY); } catch {} }
-    if (pick !== 'flashcards' && pick !== 'sims') pick = 'notes';
+    if (pick !== 'sims') pick = 'flashcards'; // Notes is gone: old links to it open Flashcards
     try { localStorage.setItem(TAB_KEY, pick); } catch {}
     if (pick === 'flashcards') {
       if (!panel.hidden && !(await leaveEditor())) return;
@@ -148,9 +137,8 @@
     if (document.body.classList.contains('knox-flashcards')) {
       if (window.closeFlashcards && !(await window.closeFlashcards())) return; // unsaved deck: they chose to stay
     }
-    if (pick === 'sims') { if (!panel.hidden) closeNotes(); openSims(); return; }
-    closeSims();
-    openNotes();
+    if (!panel.hidden) closeNotes();
+    openSims();
   }
 
   function openNotes() {
@@ -168,13 +156,13 @@
     panel.hidden = true;
   }
   window.openBinder = openBinder;
-  window.openNotes = () => openBinder('notes');
+  window.openNotes = () => openBinder('flashcards');
   window.closeNotes = closeNotes;
 
   // Leaving Notes from the sidebar (another section, a chat, New chat) closes it.
   document.addEventListener('click', e => {
     if (panel.hidden && simsPanel.hidden) return;
-    const nav = e.target.closest('.sidebar-quicknav-link:not(.fc-nav), .sidebar-new-btn, .sidebar-history-item');
+    const nav = e.target.closest('.sidebar-quicknav-link:not(.fc-nav):not(.sims-nav), .sidebar-new-btn, .sidebar-history-item');
     if (nav) { if (!panel.hidden) closeNotes(); closeSims(); }
   }, true);
   // Signing in or out: start over with that account's notes.

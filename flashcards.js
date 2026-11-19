@@ -676,9 +676,9 @@ window.addEventListener('popstate',async e=>{
 });
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
 function close(){generationVersion++;documentReadVersion++;makeOpts.reading=false;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
-// The sidebar's Binder button: Notes and Flashcards (notes.js picks the tab).
-const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M9 3v18"/><path d="M4 8h3M4 12h3M4 16h3"/><path d="M13 8h4M13 12h4"/></svg></span>';
-document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Binder: notes and flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Binder</span>';b.addEventListener('click',()=>window.openBinder?window.openBinder():open());nav.append(b);});
+// The sidebar's Flashcards button (sidebar-tools.js decides which 4 tools show).
+const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="13" height="14" rx="2.5"/><path d="M8 3.5h10a2.5 2.5 0 0 1 2.5 2.5v11"/><path d="M7 12h6M7 16h4"/></svg></span>';
+document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span>';b.addEventListener('click',()=>{window.openBinder?window.openBinder('flashcards'):open();window.closeMobileHistory?.();});nav.append(b);});
 // Visibility (see EVERYONE): if Flashcards is ever limited to Knox Plus again, the tab stays hidden until the plan is known to be Knox Plus,
 // and closes if the account changes to one without Knox Plus (e.g. sign-out).
 function syncAccess(){const ok=canSee();document.querySelectorAll('.fc-nav').forEach(b=>b.classList.toggle('fc-locked',!ok));if(!ok&&document.body.classList.contains('knox-flashcards'))close();}

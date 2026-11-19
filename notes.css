@@ -135,3 +135,12 @@ body.knox-bsims #ksLauncher { display:none; }
   .bs-tile { min-height:128px; padding:12px; }
   .bs-big.knox-sim canvas { min-height:260px; }
 }
+
+/* Simulations' sidebar button: Knox gold, like its landing page card. */
+.sims-nav .sq-icon { color:#B98500; background:#FFF4CC; border-color:#F2B705; box-shadow:0 3px 0 #B98500; }
+.sidebar-quicknav-link.sims-nav:hover, .sidebar-quicknav-link.sims-nav.sidebar-nav-active { color:#8A6300; background:color-mix(in srgb, #F2B705 var(--nav-hl), transparent); }
+html[data-theme="dark"] .sims-nav .sq-icon { color:#FFD45C; background:rgba(242,183,5,.16); }
+html[data-theme="dark"] .sidebar-quicknav-link.sims-nav:hover, html[data-theme="dark"] .sidebar-quicknav-link.sims-nav.sidebar-nav-active { color:#FFD45C; }
+/* No Binder strip at the top any more: Simulations starts closer to the top. */
+#simsPanel .nb-scroll { padding-top:36px; }
+@media (max-width:640px) { #simsPanel .nb-scroll { padding-top:24px; } }

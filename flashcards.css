@@ -173,11 +173,9 @@ html[data-theme="dark"] .fc-grade.easy { color:var(--blue); }
 .fc-toast.ok { border-color:var(--green); box-shadow:0 3px 0 var(--green-dark); }
 
 /* ── Sidebar entry (green, like History in the extension) ── */
-/* The Binder is brown, like a real binder (and the landing page's Binder card). */
-.fc-nav .sq-icon { color:#A0662E; background:#F6EAD9; border-color:#A0662E; box-shadow:0 3px 0 #76461A; }
-.sidebar-quicknav-link.fc-nav:hover, .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:#76461A; background:color-mix(in srgb, #A0662E var(--nav-hl), transparent); }
-html[data-theme="dark"] .fc-nav .sq-icon { color:#E0A86E; background:rgba(160,102,46,.22); border-color:#B9773A; box-shadow:0 3px 0 #76461A; }
-html[data-theme="dark"] .sidebar-quicknav-link.fc-nav:hover, html[data-theme="dark"] .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:#E0A86E; }
+.fc-nav .sq-icon { color:var(--green); background:var(--green-light); border-color:var(--green); box-shadow:0 3px 0 var(--green-dark); }
+.sidebar-quicknav-link.fc-nav:hover, .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green-dark); background:color-mix(in srgb, var(--green) var(--nav-hl), transparent); }
+html[data-theme="dark"] .sidebar-quicknav-link.fc-nav:hover, html[data-theme="dark"] .sidebar-quicknav-link.fc-nav.sidebar-nav-active { color:var(--green); }
 
 @media (max-width:640px) {
   .fc-fields { grid-template-columns:1fr; }
