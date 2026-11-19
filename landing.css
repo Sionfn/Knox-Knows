@@ -887,3 +887,57 @@ html[data-theme="dark"] #ask.kl-section::after, html[data-theme="dark"] #learn.k
 #pricing.kl-pricing .pt-save-off { border-left:0; padding-left:0; margin-left:0; opacity:.9; }
 #pricing.kl-pricing .pt-save-off::before { content:'·'; margin:0 6px 0 0; }
 #pricing.kl-pricing .yearly-note { background:none; border:0; padding:0; margin-top:4px; color:var(--text-light); font-size:13.5px; font-weight:800; animation:none; }
+
+/* ═══ Round 5 (Nov 19): one rule for backgrounds ═══════════════════════════
+   Colored panels get flat Knox circles; white and cream panels stay plain
+   (the hero keeps its circles: it's the welcome screen, like the app's Home).
+   Each mode section wears its own light color: Ask orange, Learn purple,
+   Flashcards green, Streaks red. Orange "Get the app" is the one bold panel;
+   Plans is light Knox blue. */
+#ask.kl-section { background:#FFF4EA; }
+#ask.kl-section::before { background:#FFE2C6; } #ask.kl-section::after { background:#E3F4FD; }
+#streaks.kl-section { background:#FFF1F1; }
+#streaks.kl-section::before { background:#FFDDDD; } #streaks.kl-section::after { background:#FFE7CC; }
+html[data-theme="dark"] #ask.kl-section { background:var(--kl-alt); }
+.kl-app { isolation:isolate; }
+.kl-app::before, .kl-app::after { content:''; position:absolute; z-index:-1; border-radius:50%; background:rgba(255,255,255,.1); pointer-events:none; }
+.kl-app::before { width:560px; height:560px; left:-220px; top:-200px; }
+.kl-app::after { width:640px; height:640px; right:-260px; bottom:-300px; }
+@media (max-width:900px) { .kl-app::before { width:300px; height:300px; left:-150px; top:-120px; } .kl-app::after { width:340px; height:340px; right:-170px; bottom:-170px; } }
+
+/* Plans on light Knox blue (calmer right where people choose a plan). */
+#pricing.kl-pricing { background:#EAF7FE; border-top-color:var(--border); }
+html[data-theme="dark"] #pricing.kl-pricing { background:var(--kl-alt); }
+#pricing .kp-bg i { background:#D2EEFC; }
+#pricing .kp-bg .b3 { background:#DDF5C9; } #pricing .kp-bg .b4 { background:#FFEFC2; }
+html[data-theme="dark"] #pricing .kp-bg i { background:rgba(255,255,255,.035); }
+#pricing .kl-eyebrow { color:#0A85C2; }
+#pricing .kl-h2 { color:var(--text); }
+#pricing .kl-h2 em { color:var(--orange); }
+#pricing .kl-sub { color:var(--text-body); }
+#pricing .kp-toggle { border-color:#CDEBFA; box-shadow:0 4px 0 #A9DDF5; }
+#pricing .mb-chip { border-color:#CDEFB0; box-shadow:0 4px 0 #A9DDF5; }
+#pricing.kl-pricing .pt-card { box-shadow:0 6px 0 var(--pd); }
+#pricing.kl-pricing .pt-mega { box-shadow:0 8px 0 var(--pd); }
+#pricing .kp-divider::before { border-top-color:#B7E3F8; }
+#pricing .kp-divider .kp-compare-title { border-color:#CDEBFA; box-shadow:0 5px 0 #A9DDF5; }
+#pricing.kl-pricing .pt-table { border-color:#CDEBFA; box-shadow:0 6px 0 #A9DDF5; }
+#pricing .kp-foot { color:var(--text-light) !important; }
+#pricing .kp-cta p { color:var(--text-light); }
+html[data-theme="dark"] #pricing .kp-toggle, html[data-theme="dark"] #pricing .mb-chip, html[data-theme="dark"] #pricing .kp-divider .kp-compare-title, html[data-theme="dark"] #pricing.kl-pricing .pt-table { border-color:var(--border); box-shadow:0 5px 0 rgba(0,0,0,.3); }
+
+/* ── REVIEWS: three students, in their own words ── */
+.kl-reviews-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:22px; align-items:stretch; }
+.kl-review { display:flex; flex-direction:column; gap:16px; margin:0; padding:24px 24px 22px; background:var(--surface); border:3px solid var(--m); border-radius:24px; box-shadow:0 6px 0 var(--md); }
+.kl-review-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.kl-review-q { display:grid; place-items:center; width:42px; height:42px; border-radius:13px; background:var(--ml); border:2px solid var(--m); box-shadow:0 3px 0 var(--md); color:var(--md); }
+.kl-review-q svg { width:20px; height:20px; }
+.kl-review-src { font-size:12px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; color:var(--text-light); }
+.kl-review blockquote { flex:1; margin:0; font-size:19px; font-weight:900; line-height:1.4; color:var(--text); letter-spacing:-.01em; overflow-wrap:anywhere; }
+.kl-review figcaption { display:flex; align-items:center; gap:10px; }
+.kl-review-av { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:var(--m); color:#fff; font-weight:900; font-size:16px; box-shadow:0 3px 0 var(--md); }
+.kl-review-name { font-size:15px; font-weight:900; color:var(--text); }
+.kl-review-handle { font-size:13px; font-weight:700; color:var(--text-light); }
+.kl-reviews-foot { display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:30px; text-align:center; }
+.kl-reviews-foot p { font-size:12.5px; font-weight:700; color:var(--text-light); max-width:560px; }
+@media (max-width:900px) { .kl-reviews-grid { grid-template-columns:1fr; max-width:520px; margin:0 auto; } }
