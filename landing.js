@@ -185,8 +185,24 @@
       }).join('');
       $$('.kl-q p', gradeBox).forEach(function (p, k) { p.textContent = GRADES[g][k][2]; });
     };
-    gradeTabs.forEach(function (b) { b.addEventListener('click', function () { showGrade(b.dataset.grade); }); });
-    showGrade('middle');
+    // Plays through every grade on its own while the section is on screen
+    // (pausing while the pointer is over it). Clicking a grade stops it there.
+    var order = gradeTabs.map(function (b) { return b.dataset.grade; }), gAt = 0, gTimer = 0, gPicked = false, gSeen = false, gHover = false;
+    var GRADE_MS = 4200;
+    var gradeTick = function () {
+      clearTimeout(gTimer);
+      gradeTabs.forEach(function (b) { b.classList.remove('auto'); });
+      if (gPicked || reduced || !gSeen || gHover || document.hidden) return;
+      var on = gradeTabs[gAt]; void on.offsetWidth; on.style.setProperty('--gdur', GRADE_MS + 'ms'); on.classList.add('auto');
+      gTimer = setTimeout(function () { gAt = (gAt + 1) % order.length; showGrade(order[gAt]); gradeTick(); }, GRADE_MS);
+    };
+    gradeTabs.forEach(function (b, k) { b.addEventListener('click', function () { gPicked = true; gAt = k; showGrade(b.dataset.grade); gradeTick(); }); });
+    var gradeArea = gradeBox.parentElement;
+    gradeArea.addEventListener('mouseenter', function () { gHover = true; gradeTick(); });
+    gradeArea.addEventListener('mouseleave', function () { gHover = false; gradeTick(); });
+    document.addEventListener('visibilitychange', gradeTick);
+    showGrade(order[0]);
+    whenSeen(gradeBox, function () { gSeen = true; gradeTick(); }, function () { gSeen = false; gradeTick(); }, 0.3);
   }
 
   // ── THE IPHONE APP (two phones playing real recordings) ───────────────
