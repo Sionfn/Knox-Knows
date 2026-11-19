@@ -111,8 +111,8 @@
     whenSeen(v, function () { v.preload = 'auto'; var p = v.play(); if (p && p.catch) p.catch(function () {}); }, function () { v.pause(); }, 0.3);
   };
 
-  // ── ASK, LEARN, SNAP, FLASHCARDS: real recordings of the iPhone app ──
-  $$('.kl-feature .kl-rec-stage video').forEach(loopWhenSeen);
+  // ── ASK, LEARN, SNAP, FLASHCARDS: real recordings of the website and the iPhone app ──
+  $$('.kl-feature .kl-rec-stage video, .kl-feature .kl-duo video').forEach(loopWhenSeen);
 
   // ── CALCULATOR GRAPH ───────────────────────────────────────────────────
   function canvasLoop(canvas, draw) {
