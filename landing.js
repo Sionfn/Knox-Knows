@@ -54,54 +54,49 @@
     return { x: x, y: y };
   }
 
-  // ── HERO TOUR (real recordings of the iPhone app) ──────────────────────
-  // One recording per step. Only the playing one is loaded and played; the
-  // others wait (preload="none"), so the page stays light.
-  var playClip = function (v) {
-    if (!v) return;
-    try { v.currentTime = 0; } catch (_) {}
-    var p = v.play(); if (p && p.catch) p.catch(function () {});
-  };
+  // ── HERO TOUR (one real recording of the iPhone app) ───────────────────
+  // A single continuous video; each step is a stretch of it (data-start, in
+  // seconds). The highlighted step and its progress bar follow the video, and
+  // clicking a step (or Next step) jumps the video there. No gaps between
+  // clips, so nothing freezes between steps.
   var tour = document.getElementById('klTour');
   if (tour) {
-    var scenes = $$('.kl-scene', tour), steps = $$('.kl-step', tour), nextBtn = $('#klNext'), caption = $('.kl-caption', tour);
-    var at = -1, timer = null, seen = false, inView = false, hovering = false;
-    var running = function () { return inView && !hovering && !document.hidden; };
-    var schedule = function () {
-      clearTimeout(timer);
-      steps.forEach(function (b) { b.classList.remove('running'); });
-      var v = at >= 0 ? $('video', scenes[at]) : null;
-      if (!running() || at < 0) { if (v) v.pause(); return; }
-      if (v && v.paused && !v.ended) { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
-      void steps[at].offsetWidth;
-      steps[at].classList.add('running');
-      timer = setTimeout(function () { show(at + 1); }, +scenes[at].dataset.dur || 7000);
-    };
-    var show = function (n) {
-      at = (n + scenes.length) % scenes.length;
-      scenes.forEach(function (s, k) {
-        s.classList.toggle('on', k === at);
-        var v = $('video', s); if (v && k !== at) v.pause();
-      });
-      // The next clip starts loading while this one plays.
-      var next = $('video', scenes[(at + 1) % scenes.length]); if (next && next.preload === 'none') next.preload = 'auto';
-      if (reduced) { var still = $('video', scenes[at]); if (still) still.preload = 'auto'; }
-      else playClip($('video', scenes[at]));
-      steps.forEach(function (b, k) { b.classList.toggle('on', k === at); b.setAttribute('aria-current', k === at ? 'step' : 'false'); });
-      steps[at].style.setProperty('--dur', (+scenes[at].dataset.dur || 7000) + 'ms');
-      var mode = Array.prototype.find.call(steps[at].classList, function (c) { return c.indexOf('m-') === 0; });
+    var tv = $('#klTourVideo', tour), steps = $$('.kl-step', tour), nextBtn = $('#klNext'), caption = $('.kl-caption', tour);
+    var starts = steps.map(function (b) { return +b.dataset.start || 0; });
+    var at = -1, inView = false, raf = 0;
+    var endOf = function (k) { return k + 1 < starts.length ? starts[k + 1] : (tv.duration || starts[k] + 9); };
+    var stepAt = function (t) { var k = 0; for (var i = 0; i < starts.length; i++) if (t >= starts[i] - 0.04) k = i; return k; };
+    var mark = function (k) {
+      if (k === at) return;
+      if (at >= 0) steps[at].style.setProperty('--p', 0);
+      at = k;
+      steps.forEach(function (b, i) { b.classList.toggle('on', i === k); b.setAttribute('aria-current', i === k ? 'step' : 'false'); });
+      var mode = Array.prototype.find.call(steps[k].classList, function (c) { return c.indexOf('m-') === 0; });
       nextBtn.className = 'kl-next ' + mode;
-      caption.textContent = $('strong', steps[at]).textContent + ' — ' + $('em', steps[at]).textContent;
-      if (reduced) { clearTimeout(timer); return; }
-      schedule();
+      caption.textContent = $('strong', steps[k]).textContent + ' — ' + $('em', steps[k]).textContent;
     };
-    steps.forEach(function (b, k) { b.addEventListener('click', function () { show(k); }); });
-    nextBtn.addEventListener('click', function () { show(at + 1); });
-    // Looking closely? Hold still while the pointer is on the tour.
-    tour.addEventListener('mouseenter', function () { hovering = true; schedule(); });
-    tour.addEventListener('mouseleave', function () { hovering = false; schedule(); });
-    document.addEventListener('visibilitychange', schedule);
-    whenSeen(tour, function () { inView = true; if (!seen) { seen = true; show(0); } else schedule(); }, function () { inView = false; schedule(); }, 0.25);
+    var tick = function () {
+      var t = tv.currentTime || 0, k = stepAt(t); mark(k);
+      steps[k].style.setProperty('--p', Math.max(0, Math.min(1, (t - starts[k]) / Math.max(0.1, endOf(k) - starts[k]))));
+      raf = !tv.paused ? requestAnimationFrame(tick) : 0;
+    };
+    var sync = function () {
+      if (reduced) return;
+      if (inView && !document.hidden) { var p = tv.play(); if (p && p.catch) p.catch(function () {}); } else tv.pause();
+    };
+    tv.addEventListener('play', function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); });
+    tv.addEventListener('seeked', function () { if (!raf) tick(); });
+    var go = function (k) {
+      k = (k + starts.length) % starts.length;
+      if (tv.preload !== 'auto') tv.preload = 'auto';
+      try { tv.currentTime = starts[k] + 0.02; } catch (_) {}
+      mark(k); if (!raf) tick(); sync();
+    };
+    steps.forEach(function (b, k) { b.addEventListener('click', function () { go(k); }); });
+    nextBtn.addEventListener('click', function () { go(at + 1); });
+    document.addEventListener('visibilitychange', sync);
+    mark(0);
+    whenSeen(tour, function () { inView = true; tv.preload = 'auto'; sync(); }, function () { inView = false; sync(); }, 0.25);
   }
 
   // A looping recording that plays only while it's on screen.
@@ -204,7 +199,7 @@
       phones.appendChild(p);
       return $('video', p);
     };
-    var backClip = phone('3-learn', 'back'), frontClip = phone('5-home', 'front');
+    var backClip = phone('learn-full', 'back'), frontClip = phone('app-home', 'front');
     var widget = document.createElement('div');
     widget.className = 'kl-widget';
     widget.innerHTML = '<span class="kl-emoji-flame" aria-hidden="true">🔥</span><b>18</b><small>day streak</small>';
