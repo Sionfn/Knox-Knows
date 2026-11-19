@@ -2558,7 +2558,6 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <nav class="kl-modes reveal" aria-label="Knox modes">
       <a class="kl-mode m-orange" href="#ask" onclick="smoothScroll('ask',event)"><i><svg><use href="#kli-ask"/></svg></i>Ask Knox</a>
       <a class="kl-mode m-purple" href="#learn" onclick="smoothScroll('learn',event)"><i><svg><use href="#kli-learn"/></svg></i>Learn</a>
-      <a class="kl-mode m-orange" href="#snap" onclick="smoothScroll('snap',event)"><i><svg><use href="#kli-camera"/></svg></i>Snap</a>
       <a class="kl-mode m-green" href="#flashcards" onclick="smoothScroll('flashcards',event)"><i><svg><use href="#kli-cards"/></svg></i>Flashcards</a>
       <a class="kl-mode m-blue" href="#tools" onclick="smoothScroll('tools',event)"><i><svg><use href="#kli-calc"/></svg></i>Calculator &amp; more</a>
       <a class="kl-mode m-red" href="#streaks" onclick="smoothScroll('streaks',event)"><i><span class="kl-emoji-flame" aria-hidden="true">🔥</span></i>Streaks</a>
@@ -2572,14 +2571,18 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <div class="kl-copy reveal-left">
       <span class="kl-eyebrow"><svg><use href="#kli-ask"/></svg>Ask Knox</span>
       <h2 class="kl-h2">Ask anything. <em>Get it explained</em> like a tutor would.</h2>
-      <p>Type it, snap it or drop in your worksheet. Knox explains it step by step, puts the key ideas in bold and gives you the answer — then you can keep asking until it clicks.</p>
+      <p>Type it on the web, or snap it with your iPhone camera. Knox explains it step by step, puts the key ideas in bold and gives you the answer — then you can keep asking until it clicks.</p>
       <ul class="kl-checks">
         <li>Every subject: math, science, history, English, languages and more</li>
+        <li>Snap a worksheet: fit one question in the box, or send the whole page</li>
         <li>Photos, PDFs, Word and PowerPoint files</li>
         <li>One tap for an easier explanation, a similar problem or flashcards</li>
         <li>Free gets the same AI as paid</li>
       </ul>
-      <a class="kl-btn kl-btn-mode" href="/app">Ask Knox a question <span aria-hidden="true">→</span></a>
+      <div class="kl-cta-row" style="margin-top:0">
+        <a class="kl-btn kl-btn-mode" href="/app">Ask Knox a question <span aria-hidden="true">→</span></a>
+        <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
+      </div>
     </div>
     <div class="kl-stage reveal-right">
       <div class="kl-duo" id="klAskRec">
@@ -2587,8 +2590,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div class="kl-browser-bar" aria-hidden="true"><i></i><i></i><i></i><span>knoxknowsapp.com/app</span></div>
           <div class="kl-browser-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/web-ask.jpg" src="/media/landing/web-ask.mp4"></video></div>
         </div>
-        <div class="kl-phone kl-rec-phone kl-duo-phone" aria-label="Asking Knox a science question in the Knox Knows iPhone app">
-          <div class="kl-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/ask-full.jpg" src="/media/landing/ask-full.mp4"></video></div>
+        <div class="kl-phone kl-rec-phone kl-duo-phone" aria-label="Snapping a homework question with the camera in the Knox Knows iPhone app">
+          <div class="kl-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/snap-full.jpg" src="/media/landing/snap-full.mp4"></video></div>
         </div>
         <span class="kl-duo-tag web">On the web</span><span class="kl-duo-tag ios">On iPhone</span>
       </div>
@@ -2621,32 +2624,6 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           <div class="kl-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/learn-full.jpg" src="/media/landing/learn-full.mp4"></video></div>
         </div>
         <span class="kl-duo-tag web">On the web</span><span class="kl-duo-tag ios">On iPhone</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== SNAP ===================== -->
-<section id="snap" class="kl-section kl-feature m-orange">
-  <div class="kl-wrap kl-feature-grid">
-    <div class="kl-copy reveal-left">
-      <span class="kl-eyebrow"><svg><use href="#kli-camera"/></svg>Snap it</span>
-      <h2 class="kl-h2">Stuck on a worksheet? <em>Snap it.</em></h2>
-      <p>Point your camera at a question — or the whole page. Fit one question in the box, or turn the crop off and let Knox find it. Handwriting, worksheets and textbooks all work.</p>
-      <ul class="kl-checks">
-        <li>Crop to one question, or send the whole photo</li>
-        <li>Pick Ask Knox for the answer, or Learn to work it out</li>
-        <li>Right from the iPhone camera — or upload a photo on the web</li>
-      </ul>
-      <div class="kl-cta-row" style="margin-top:0">
-        <a class="kl-store" data-appstore href="#get-the-app"><svg><use href="#kli-apple"/></svg><span><small>Download on the</small>App Store</span></a>
-      </div>
-    </div>
-    <div class="kl-stage reveal-right">
-      <div class="kl-rec-stage" id="klSnap">
-        <div class="kl-phone kl-rec-phone" aria-label="Snapping a homework question in the Knox Knows iPhone app">
-          <div class="kl-screen"><video class="kl-rec" muted playsinline loop preload="none" poster="/media/landing/snap-full.jpg" src="/media/landing/snap-full.mp4"></video></div>
-        </div>
       </div>
     </div>
   </div>
@@ -2795,6 +2772,37 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 </section>
 
 <!-- ===================== PRICING ===================== -->
+<!-- ===================== REVIEWS ===================== -->
+<section id="reviews" class="kl-section kl-reviews">
+  <div class="kl-wrap">
+    <header class="kl-head reveal">
+      <span class="kl-eyebrow"><svg><use href="#kli-spark"/></svg>From the Knox community</span>
+      <h2 class="kl-h2">Real words. <em>Real students.</em></h2>
+    </header>
+    <div class="kl-reviews-grid">
+      <figure class="kl-review m-orange reveal">
+        <div class="kl-review-top"><span class="kl-review-q" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 7H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2H6a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Zm10 0h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2h.5a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Z"/></svg></span><span class="kl-review-src">Shared on Discord · Nov 3</span></div>
+        <blockquote>Knox Knows helped me pass school if it wasnt for Knox, I woulda failed I went from a .5 to a 3.0 all cause of Knox</blockquote>
+        <figcaption><span class="kl-review-av" aria-hidden="true">1</span><div><div class="kl-review-name">1shot</div><div class="kl-review-handle">Knox community member</div></div></figcaption>
+      </figure>
+      <figure class="kl-review m-blue reveal">
+        <div class="kl-review-top"><span class="kl-review-q" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 7H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2H6a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Zm10 0h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2h.5a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Z"/></svg></span><span class="kl-review-src">Shared on X · Sep 13</span></div>
+        <blockquote>It's better than superhuman go and google lens</blockquote>
+        <figcaption><span class="kl-review-av" aria-hidden="true">I</span><div><div class="kl-review-name">Icyfxy</div><div class="kl-review-handle">@icyfxy</div></div></figcaption>
+      </figure>
+      <figure class="kl-review m-purple reveal">
+        <div class="kl-review-top"><span class="kl-review-q" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 7H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2H6a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Zm10 0h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v1a2 2 0 0 1-2 2h-.5a1 1 0 0 0 0 2h.5a4 4 0 0 0 4-4V9a2 2 0 0 0-2-2Z"/></svg></span><span class="kl-review-src">Shared on X · Sep 13</span></div>
+        <blockquote>i used it and got an A in calc ty</blockquote>
+        <figcaption><span class="kl-review-av" aria-hidden="true">f</span><div><div class="kl-review-name">fern</div><div class="kl-review-handle">@fernfnb</div></div></figcaption>
+      </figure>
+    </div>
+    <div class="kl-reviews-foot reveal">
+      <a class="kl-btn kl-btn-plain" href="/reviews">See all reviews <span aria-hidden="true">→</span></a>
+      <p>Shared with permission and quoted exactly as written. These are individual experiences, not verified results or a promise of grades.</p>
+    </div>
+  </div>
+</section>
+
 <!-- Knox-style plan cards (Dec 1): white cards in each plan's color with the
      solid bottom edge. Every id and onclick the checkout code uses is kept. -->
 <section id="pricing" class="kl-section kl-pricing">
