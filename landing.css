@@ -877,3 +877,13 @@ html[data-theme="dark"] #ask.kl-section::after, html[data-theme="dark"] #learn.k
   #ask.kl-section::before, #learn.kl-section::before, #flashcards.kl-section::before, #streaks.kl-section::before { width:300px; height:300px; left:-150px; top:-110px; }
   #ask.kl-section::after, #learn.kl-section::after, #flashcards.kl-section::after, #streaks.kl-section::after { width:340px; height:340px; right:-170px; bottom:-170px; }
 }
+
+/* Yearly savings badges in the Knox look: flat color, border and edge (no
+   gradients). Plus wears its green; Mega's sits where its free-trial badge
+   does, in Knox orange. The yearly price is one plain line under the price. */
+#pricing.kl-pricing .pt-badge.pt-save { background:#58CC02; color:#fff; border:2px solid #46A302; box-shadow:0 3px 0 #2D6A00; padding:6px 14px; font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; top:-16px; }
+#pricing.kl-pricing .pt-badge.pt-save-mega { background:#FF6B00; border-color:#CC5500; box-shadow:0 3px 0 #A34400; }
+#pricing.kl-pricing .pt-badge.pt-save .kk-ic { width:15px; height:15px; }
+#pricing.kl-pricing .pt-save-off { border-left:0; padding-left:0; margin-left:0; opacity:.9; }
+#pricing.kl-pricing .pt-save-off::before { content:'·'; margin:0 6px 0 0; }
+#pricing.kl-pricing .yearly-note { background:none; border:0; padding:0; margin-top:4px; color:var(--text-light); font-size:13.5px; font-weight:800; animation:none; }
