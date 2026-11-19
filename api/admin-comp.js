@@ -3,8 +3,10 @@
 //   GET  → list every user currently given free Knox Plus
 //   POST { action: 'grant',  email, note? } → give free Knox Plus
 //   POST { action: 'revoke', uid }          → take it back
-//   POST { action: 'gift-codes', gift: '1m'|'3m'|'12m', count, note? }
+//   POST { action: 'gift-codes', gift: '1m'|'3m'|'12m', count, uses?, note? }  (uses = people per code)
 //        → make Knox Plus gift codes (giveaways; see api/_gifts.js)
+//   POST { action: 'flame-codes', flame: 'slime'|'galaxy', count, uses?, note? }  (uses = people per code)
+//        → make codes that unlock a flame look (giveaways)
 //
 // A comped user is stored as plan 'super' (what the rest of the app treats
 // as Knox Plus) plus comped: true. The webhook keeps Knox Plus for comped users
@@ -16,7 +18,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { GIFTS, createGiftCodes, formatCode } from "./_gifts.js";
+import { GIFTS, FLAME_GIFTS, createGiftCodes, formatCode } from "./_gifts.js";
 import { MEGA_PLAN, PLUS_PLAN } from "./_plans.js";
 
 if (!getApps().length) {
@@ -65,8 +67,21 @@ export default async function handler(req, res) {
       const count = Math.floor(Number(body.count) || 1);
       if (!g || count < 1 || count > 50) return res.status(400).json({ error: "Choose 1, 3 or 12 months and 1–50 codes." });
       const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
-      const codes = await createGiftCodes(db, { days: g.days, tier: g.tier, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
-      return res.status(200).json({ codes: codes.map(formatCode), label: `${g.name} · ${g.label}` });
+      const maxUses = Math.floor(Number(body.uses) || 1);
+      if (maxUses < 1 || maxUses > 100000) return res.status(400).json({ error: "Each code can be used by 1 to 100,000 people." });
+      const codes = await createGiftCodes(db, { days: g.days, tier: g.tier, maxUses, uses: 0, count, source: "admin", gift: body.gift, note, createdBy: decoded.uid });
+      return res.status(200).json({ codes: codes.map(formatCode), label: `${g.name} · ${g.label}` + (maxUses > 1 ? ` · up to ${maxUses.toLocaleString("en-US")} people each` : "") });
+    }
+    if (body.action === "flame-codes") {
+      const f = Object.hasOwn(FLAME_GIFTS, body.flame) ? FLAME_GIFTS[body.flame] : null;
+      const count = Math.floor(Number(body.count) || 1);
+      if (!f || count < 1 || count > 50) return res.status(400).json({ error: "Choose the Slime or Galaxy Flame and 1–50 codes." });
+      const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
+      // How many different people can use each code (1 = a normal one-time code).
+      const maxUses = Math.floor(Number(body.uses) || 1);
+      if (maxUses < 1 || maxUses > 100000) return res.status(400).json({ error: "Each code can be used by 1 to 100,000 people." });
+      const codes = await createGiftCodes(db, { days: 0, flame: body.flame, maxUses, uses: 0, count, source: "admin", gift: "flame-" + body.flame, note, createdBy: decoded.uid });
+      return res.status(200).json({ codes: codes.map(formatCode), label: maxUses > 1 ? `${f.name} · up to ${maxUses.toLocaleString("en-US")} people each` : f.name });
     }
     return res.status(400).json({ error: "Unknown action." });
   } catch (err) {

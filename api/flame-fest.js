@@ -10,7 +10,7 @@
 //
 // GET  → { event, plus, rewards, days, shielded, claimed, shields, flameStyle, flameStyles, plusUntil, giftCode }
 // POST { claim: 'w1' | 'w2' | 'w3' | 'w4' | 'month' } → same shape, reward applied
-// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' | 'diamond' } → pick an unlocked flame look
+// POST { style: 'classic' | 'purple' | 'blue' | 'gold' | 'slime' | 'diamond' | 'galaxy' } → pick an unlocked flame look
 //   (🟢 Slime Flame: anyone who links their Discord with /link in the Knox server)
 // POST { studied: 'flashcards', localDay }             → a Flashcards review lights today's flame
 //
@@ -73,12 +73,26 @@ const REWARDS = [
     // Mega Knox members already have Mega: a week to gift a friend instead.
     mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" }, },
 ];
-const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond"];
+const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy"];
+// 🌌 Galaxy Flame: for students who subscribe on the website (Stripe). Theirs to keep
+// once a website payment went through (an active subscription or a renewal).
+const GALAXY_GIFTED = ["sion22comp@gmail.com"];
+const webSupporter = data => data.galaxyFlame === true ||
+  (typeof data.stripeCustomerId === "string" && !!data.stripeCustomerId &&
+    ((data.planStatus === "active" && !!data.stripeSubscription) || !!data.planRenewedAt));
 const GIFT_DAYS = 7;
 // Which prizes a member gets: their real plan (paid or comped) — a gift or
 // Flame Fest week still gets the free-member prizes. Mega is plan 'max', or a
 // Mega comp (a paying Plus subscriber keeps plan 'super' with compedTier 'mega').
-const prizeTier = d => d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ? "mega" : (["super", "plus"].includes(d?.plan) || d?.comped === true) ? "plus" : "free";
+function prizeTier(d) {
+  const now = Date.now();
+  const apple = Number(d?.appleUntil) > now ? d?.appleTier : null;
+  if (d?.plan === MEGA_PLAN || (d?.comped === true && d?.compedTier === "mega") ||
+      apple === "mega" || Number(d?.appleMegaUntil) > now) return "mega";
+  if (["super", "plus"].includes(d?.plan) || d?.comped === true ||
+      apple === "plus" || Number(d?.applePlusUntil) > now) return "plus";
+  return "free";
+}
 const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
 const DAY_MS = 86400000;
@@ -109,7 +123,7 @@ function status(data, tester = false) {
     claimed: fest.claimed && typeof fest.claimed === "object" ? fest.claimed : {},
     shields: Math.max(0, Math.floor(Number(data.flameShields) || 0)),
     flameStyle: STYLES.includes(data.flameStyle) ? data.flameStyle : "classic",
-    flameStyles: [...new Set(["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : []), ...(typeof data.discordId === "string" && data.discordId ? ["slime"] : [])])],
+    flameStyles: [...new Set(["classic", ...(Array.isArray(data.flameStyles) ? data.flameStyles.filter(s => STYLES.includes(s) && s !== "classic") : []), ...(typeof data.discordId === "string" && data.discordId ? ["slime"] : []), ...(webSupporter(data) ? ["galaxy"] : [])])],
     plusUntil: Number(data.plusUntil) || 0,
     megaUntil: Number(data.megaUntil) || 0,
     giftCode: typeof fest.giftCode === "string" ? fest.giftCode : "",
@@ -133,6 +147,10 @@ export default async function handler(req, res) {
   // including the Chrome extension.
   const tester = isTester(decoded) && String(req.headers["x-knox-flame-test"] || "") === "1";
   const userRef = db.collection("users").doc(uid);
+  // The owner's account has the 🌌 Galaxy Flame (given by hand; verified email only).
+  if (decoded.email_verified === true && GALAXY_GIFTED.includes(String(decoded.email || "").toLowerCase())) {
+    await userRef.set({ galaxyFlame: true }, { merge: true }).catch(() => {});
+  }
   // testerReady: false when this deployment has no ADMIN_UID (so ?flamefest=test
   // can say why tester mode is missing).
   const testerReady = !!(process.env.ADMIN_UID || "").trim();

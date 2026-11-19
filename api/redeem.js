@@ -72,7 +72,28 @@ export default async function handler(req, res) {
       if (!gift.exists) return { error: "That code isn't valid. Check it and try again.", code: 404 };
       const g = gift.data();
       if (g.disabled) return { error: "This gift code was canceled. Ask the person who gave it to you.", code: 410 };
-      if (g.redeemedBy) return { error: g.redeemedBy === uid ? "You already used this code." : "This code was already used.", code: 409 };
+      // Admin codes can be made for many people (maxUses): each person once,
+      // until it's used up. Other codes (bought gifts, Flame Fest links) are one person.
+      const maxUses = Math.max(1, Math.floor(Number(g.maxUses) || 1)), uses = Math.max(0, Math.floor(Number(g.uses) || 0));
+      const redeemerRef = giftRef.collection("redeemers").doc(uid);
+      const mine = await tx.get(redeemerRef);
+      if (mine.exists || g.redeemedBy === uid) return { error: "You already used this code.", code: 409 };
+      if (g.redeemedBy || uses >= maxUses) return { error: maxUses > 1 ? "This code has been used by everyone it was for." : "This code was already used.", code: 409 };
+      const at = new Date().toISOString(), used = uses + 1;
+      const markUsed = () => {
+        tx.set(redeemerRef, { at });
+        tx.set(giftRef, { uses: used, ...(used >= maxUses ? { redeemedBy: uid, redeemedAt: at } : { lastRedeemedAt: at }) }, { merge: true });
+      };
+      // A flame code unlocks a flame look (any plan) and turns it on.
+      if (g.flame === "slime" || g.flame === "galaxy") {
+        const styles = Array.isArray(data.flameStyles) ? data.flameStyles : [];
+        const has = styles.includes(g.flame) || (g.flame === "slime" && typeof data.discordId === "string" && !!data.discordId) ||
+          (g.flame === "galaxy" && data.galaxyFlame === true);
+        if (has) return { error: `You already have the ${g.flame === "slime" ? "🟢 Slime" : "🌌 Galaxy"} Flame! Give this code to a friend.`, code: 409 };
+        markUsed();
+        tx.set(userRef, { flameStyles: [...new Set([...styles, g.flame])], flameStyle: g.flame }, { merge: true });
+        return { flame: g.flame };
+      }
       const flameLink = g.source === "flamefest";
       if (flameLink && g.from === uid) return { error: "That's your own gift — send the link to a friend!", code: 400 };
       // A Plus gift needs a free account; a Mega gift works for free and Plus.
@@ -84,12 +105,12 @@ export default async function handler(req, res) {
       const days = Math.max(1, Math.min(400, Number(g.days) || 7));
       const field = giftTier === "mega" ? "megaUntil" : "plusUntil";
       const until = Math.max(Date.now(), Number(data[field]) || 0) + days * DAY_MS; // stacks with time left
-      const at = new Date().toISOString();
-      tx.set(giftRef, { redeemedBy: uid, redeemedAt: at }, { merge: true });
+      markUsed();
       tx.set(userRef, { [field]: until, ...(flameLink ? { giftRedeemedAt: at } : {}) }, { merge: true });
       return { until, days, tier: giftTier };
     });
     if (out.error) return res.status(out.code).json({ error: out.error });
+    if (out.flame) return res.status(200).json({ redeemed: true, flame: out.flame });
     return res.status(200).json({ redeemed: true, days: out.days, tier: out.tier, until: out.until, plusUntil: out.until });
   } catch (err) {
     console.error("Redeem error:", err?.message);

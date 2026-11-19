@@ -22,6 +22,12 @@ export const GIFTS = {
   "mega-12m": { tier: "mega", name: "Mega Knox", label: "12 months", days: 365, cents: 9999 },
 };
 
+// Flame codes (admin giveaways): unlock a flame look instead of plan time.
+export const FLAME_GIFTS = {
+  slime:  { name: "🟢 Slime Flame" },
+  galaxy: { name: "🌌 Galaxy Flame" },
+};
+
 // No 0/O or 1/I, so a code read off a card is never ambiguous.
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 // A 12-character code (60 bits). With a seed (a Stripe checkout id + a

@@ -99,6 +99,16 @@ export default async function handler(req, res) {
   if (req.query?.route === "notes") return notes(req, res);
   // Flashcard decks shared by link (see api/_share-deck.js).
   if (req.query?.route === "share-deck") return shareDeck(req, res);
+  // The iPhone app opening the website signed in as the same account (see api/_handoff.js).
+  if (req.query?.route === "handoff" || req.query?.route === "handoff-redeem") {
+    const { default: handoff } = await import("./_handoff.js");
+    return handoff(req, res, { db, auth: adminAuth });
+  }
+  // Plans bought in the iPhone app (see api/_apple.js).
+  if (req.query?.route === "apple" || req.query?.route === "apple-notify") {
+    const { default: apple } = await import("./_apple.js");
+    return apple(req, res, { db, auth: adminAuth });
+  }
   res.setHeader('Cache-Control', 'no-store');
   // ── CORS for the extension (chrome-extension:// origin) ──
   res.setHeader("Access-Control-Allow-Origin", "*");
