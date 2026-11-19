@@ -997,3 +997,9 @@ html[data-theme="dark"] .kl-duo-tag { color:var(--m, var(--orange)); }
 html[data-theme="dark"] #pricing.kl-pricing .pt-head > div:nth-child(2) { background:rgba(28,176,246,.16); color:#6FD0FF; }
 html[data-theme="dark"] #pricing.kl-pricing .pt-head > div:nth-child(3) { background:rgba(88,204,2,.16); color:#8BE04E; }
 html[data-theme="dark"] #pricing.kl-pricing .pt-head > div:nth-child(4) { background:rgba(255,200,0,.14); color:#FFD45C; }
+
+/* Every grade: the tabs play through on their own; the active one fills a
+   little bar until it moves on. Clicking a grade stops on it (no bar). */
+.kl-grade-tabs button { position:relative; overflow:hidden; }
+.kl-grade-tabs button.on.auto::after { content:''; position:absolute; left:12px; right:12px; bottom:6px; height:3px; border-radius:3px; background:rgba(255,255,255,.8); transform-origin:left center; animation:klGradeFill var(--gdur, 4.2s) linear forwards; }
+@keyframes klGradeFill { from { transform:scaleX(0); } to { transform:scaleX(1); } }
