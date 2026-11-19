@@ -799,13 +799,15 @@
   const GIFT_PRICES = { '1m': [9.99, 12.99], '3m': [29.99, 36.99], '12m': [79.99, 99.99] };
   function picked(name) { return document.querySelector(`[data-pick="${name}"] .choice[aria-pressed="true"]`)?.dataset.value || ''; }
   function giftCountValue() { const n = Math.round(Number(document.getElementById('giftCount')?.value)); return Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 1; }
+  function giftUsesValue() { const n = Math.round(Number(document.getElementById('giftUses')?.value)); return Number.isFinite(n) ? Math.min(100000, Math.max(1, n)) : 1; }
   function giftKey() { return (picked('giftPlan') === 'mega' ? 'mega-' : '') + (picked('giftLen') || '1m'); }
   function syncPickers() {
     const mega = picked('giftPlan') === 'mega', len = picked('giftLen') || '1m', n = giftCountValue();
     const lenText = { '1m': '1 month', '3m': '3 months', '12m': '12 months' }[len];
     const each = GIFT_PRICES[len][mega ? 1 : 0];
     const summary = document.getElementById('giftSummary');
-    if (summary) summary.innerHTML = `${n} code${n === 1 ? '' : 's'} for <b>${lenText} of ${mega ? '💎 Mega Knox' : '⚡ Knox Plus'}</b> · worth $${each.toFixed(2)} each`;
+    const u = giftUsesValue();
+    if (summary) summary.innerHTML = `${n} code${n === 1 ? '' : 's'} for <b>${lenText} of ${mega ? '💎 Mega Knox' : '⚡ Knox Plus'}</b>` + (u > 1 ? ` · <b>${u.toLocaleString()} people</b> can use each` : '') + ` · worth $${each.toFixed(2)} per person`;
     const go = document.getElementById('giftSubmit');
     if (go) { go.textContent = `Make ${n} code${n === 1 ? '' : 's'}`; go.classList.toggle('mega', mega); }
     const tier = picked('compTier'), give = document.getElementById('compSubmit');
@@ -859,8 +861,9 @@
       <div class="card card-lg">
         <div class="metric-label">Make Knox Plus or Mega Knox gift codes</div>
         <p style="font-size:13px;font-weight:700;color:var(--text-light);margin:6px 0 14px;line-height:1.5;">
-          For giveaways and contests. Each code works once and never expires — anyone enters it at knoxknowsapp.com/redeem.
-          It's time-limited Knox Plus or Mega Knox, not a subscription.
+          For giveaways and contests. Codes never expire — anyone enters it at knoxknowsapp.com/redeem.
+          It's time-limited Knox Plus or Mega Knox, not a subscription. "People per code" is how many different people can use
+          each code before it stops working (1 = a one-time code). Each person can use a code once.
         </p>
         <form class="pick-form" id="giftForm" autocomplete="off">
           <div class="pick-row">
@@ -886,6 +889,10 @@
                 <input id="giftCount" type="number" min="1" max="50" value="1" aria-labelledby="giftCountLabel">
                 <button type="button" data-step="1" aria-label="One more">+</button>
               </div>
+            </div>
+            <div class="pick-row" style="gap:6px">
+              <span class="pick-label" id="giftUsesLabel">People per code</span>
+              <input id="giftUses" type="number" min="1" max="100000" value="1" aria-labelledby="giftUsesLabel" style="width:110px">
             </div>
             <div class="pick-row" style="gap:6px;flex:1 1 240px">
               <span class="pick-label">Note <span style="text-transform:none;letter-spacing:0">(optional)</span></span>
@@ -966,7 +973,7 @@
       const btn = document.getElementById('giftSubmit'), msg = document.getElementById('giftMsg'), out = document.getElementById('giftCodes');
       btn.disabled = true; msg.textContent = '';
       try {
-        const r = await compFetch('POST', { action: 'gift-codes', gift: giftKey(), count: giftCountValue(), note: document.getElementById('giftNote').value.trim() });
+        const r = await compFetch('POST', { action: 'gift-codes', gift: giftKey(), count: giftCountValue(), uses: giftUsesValue(), note: document.getElementById('giftNote').value.trim() });
         showGiftCodes(out, r.codes, r.label);
         msg.textContent = `Made ${r.codes.length} code${r.codes.length === 1 ? '' : 's'}: ${r.label}. Copy them now; they aren't shown again.`; msg.className = 'comp-msg ok';
       } catch (err) { msg.textContent = err.message; msg.className = 'comp-msg err'; }
@@ -1013,6 +1020,7 @@
       syncPickers();
     }));
     document.getElementById('giftCount').addEventListener('input', syncPickers);
+    document.getElementById('giftUses').addEventListener('input', syncPickers);
     syncPickers();
 
     document.getElementById('compList').addEventListener('click', async (e) => {
@@ -1372,7 +1380,7 @@
         <div class="grid grid-4">
           <div class="metric-card orange"><div class="metric-label">Gifts sold</div><div class="metric-value">${fmt(g.sold)}</div><div class="metric-sub">${fmt(g.soldRedeemed)} redeemed${g.refunded ? ' · ' + fmt(g.refunded) + ' refunded' : ''}</div></div>
           <div class="metric-card green"><div class="metric-label">Gift sales</div><div class="metric-value">${escHtml(fmtMoney(g.soldCents / 100))}</div><div class="metric-sub">One-time, before Stripe fees</div></div>
-          <div class="metric-card blue"><div class="metric-label">Codes you made</div><div class="metric-value">${fmt(g.made)}</div><div class="metric-sub">${fmt(g.madeRedeemed)} redeemed</div></div>
+          <div class="metric-card blue"><div class="metric-label">Codes you made</div><div class="metric-value">${fmt(g.made)}</div><div class="metric-sub">used ${fmt(g.madeRedeemed)} time${g.madeRedeemed === 1 ? '' : 's'}</div></div>
           <div class="metric-card purple"><div class="metric-label">Flame Fest gifts</div><div class="metric-value">${fmt(g.flameFest)}</div><div class="metric-sub">${fmt(g.flameFestRedeemed)} redeemed</div></div>
         </div>` : '';
     dash.innerHTML = revenueHtml + giftsHtml + trialsHtml + usersHtml + feedbackHtml + usageHtml;
