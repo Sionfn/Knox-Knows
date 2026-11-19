@@ -962,3 +962,32 @@ body > footer [style*="color:#888"], body > footer [style*="color:#aaa"] { color
 body > footer [style*="color:#555"], body > footer [style*="color:#666"] { color:#C2A988 !important; }
 body > footer [style*="border-top:1px solid #333"] { border-top-color:rgba(255,248,236,.16) !important; }
 body > footer [style*="border:1px solid #333"] { border-color:rgba(255,248,236,.22) !important; }
+
+/* ═══ Round 7 ══════════════════════════════════════════════════════════════ */
+/* The iPhone section is a light Knox orange with dark text, like the other
+   colored sections (circles stay: it's a colored panel). */
+.kl-app { background:#FFF1E3; color:var(--text); border-top:2px solid var(--border); }
+html[data-theme="dark"] .kl-app { background:var(--kl-alt); }
+.kl-app::before { background:#FFDFC0; } .kl-app::after { background:#E3F4FD; }
+html[data-theme="dark"] .kl-app::before, html[data-theme="dark"] .kl-app::after { background:rgba(255,255,255,.035); }
+.kl-app .kl-eyebrow { color:var(--orange); opacity:1; }
+.kl-app .kl-h2 { color:var(--text); }
+.kl-app .kl-sub { color:var(--text-body); opacity:1; }
+.kl-app-feat { background:var(--surface); border:2px solid var(--orange); box-shadow:0 4px 0 #CC5500; }
+.kl-app-feat i { background:var(--orange-light); color:var(--orange); border:2px solid var(--orange); box-shadow:0 3px 0 #CC5500; }
+.kl-app-feat b { color:var(--text); }
+.kl-app-feat span { color:var(--text-body); opacity:1; }
+.kl-app .kl-store, html[data-theme="dark"] .kl-app .kl-store { background:var(--surface); color:var(--text); border-color:#E8DCCB; --edge:#D9CBB8; box-shadow:0 5px 0 var(--edge); }
+.kl-app .kl-store svg { color:var(--text); }
+html[data-theme="dark"] .kl-app .kl-store { border-color:var(--border); --edge:var(--border); }
+.kl-app .kl-btn-plain { background:var(--orange); color:#fff; border-color:#CC5500; --edge:#CC5500; box-shadow:0 5px 0 var(--edge); }
+
+/* Footer: Knox cream with dark text (the app's background), not brown or black. */
+body > footer { background:var(--kl-alt) !important; color:var(--text); border-top:2px solid var(--border); }
+body > footer a { color:var(--text-body) !important; }
+body > footer a:hover { color:var(--orange) !important; }
+body > footer [style*="color:white"], body > footer [style*="color:#fff"] { color:var(--text) !important; }
+body > footer [style*="color:#888"], body > footer [style*="color:#aaa"] { color:var(--text-body) !important; }
+body > footer [style*="color:#555"], body > footer [style*="color:#666"] { color:var(--text-light) !important; }
+body > footer [style*="border-top:1px solid #333"] { border-top-color:var(--border) !important; }
+body > footer [style*="border:1px solid #333"] { border-color:rgba(0,0,0,.12) !important; }
