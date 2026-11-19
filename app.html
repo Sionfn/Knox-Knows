@@ -436,26 +436,30 @@
     }
 
     #appGuestBtns { display: inline-flex; gap: 8px; align-items: center; }
+    /* On the orange top bar: Log in is a see-through white card, Sign up a solid
+       white one with orange text — both with the Knox bottom edge (same as the landing page). */
     .header-login-btn {
       padding: 9px 16px;
-      background: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.16);
       color: white;
-      border: 2px solid rgba(255,255,255,0.4);
-      border-radius: 12px;
-      font-size: 13px;
+      border: 2px solid rgba(255,255,255,0.75);
+      border-radius: 14px;
+      font-size: 14px;
       font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      transition: all 0.15s;
+      text-transform: none;
+      letter-spacing: 0;
+      box-shadow: 0 3px 0 var(--orange-dark);
+      transition: background 0.15s, filter 0.15s;
     }
-    .header-login-btn:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+    .header-login-btn:hover { background: rgba(255,255,255,0.26); }
+    .header-login-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--orange-dark); }
     .header-signup-btn {
-      background: var(--surface);
+      background: #fff;
       color: var(--orange);
-      border-color: white;
-      box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+      border-color: #fff;
+      box-shadow: 0 3px 0 var(--orange-dark);
     }
-    .header-signup-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.15); background: var(--surface); }
+    .header-signup-btn:hover { background: #fff; filter: brightness(0.97); }
 
     /* ═══ ACCOUNT DROPDOWN ════════════════════════════════ */
     #appAccountDropdown {
@@ -1221,6 +1225,27 @@
     html.native-app #authMicrosoftBtn { display: none !important; }
     html.native-app:not(.native-ios) #authAppleBtn { display: none !important; }
     #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange-dark); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
+
+    /* Log in / Sign up at the bottom of the sidebar (and the phone menu): the same
+       chunky pair as the sign-in page — Log in on a white card, Sign up in orange,
+       each with its solid bottom edge. */
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns,
+    #drawerGuestBtns { gap: 8px; }
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns button,
+    #drawerGuestBtns button {
+      flex: 1 1 0; height: 44px; padding: 0 8px; border-radius: 14px;
+      border: 2px solid var(--border); background: var(--surface); color: var(--text);
+      font-family: inherit; font-size: 14.5px; font-weight: 900; text-transform: none; letter-spacing: 0;
+      box-shadow: 0 3px 0 var(--border); transform: none; cursor: pointer; white-space: nowrap;
+    }
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns .header-signup-btn,
+    #drawerGuestBtns .drawer-signup { background: var(--orange); border-color: var(--orange); color: #fff; box-shadow: 0 3px 0 var(--orange-dark); }
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns button:hover,
+    #drawerGuestBtns button:hover { transform: none; filter: brightness(1.04); }
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns button:active,
+    #drawerGuestBtns button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+    body:not(.app-sidebar-collapsed) #sidebarControlsSlot #appGuestBtns .header-signup-btn:active,
+    #drawerGuestBtns .drawer-signup:active { box-shadow: 0 1px 0 var(--orange-dark); }
 
     /* CHAT + INPUT */
     #chatAndInput {
@@ -2337,6 +2362,31 @@
     }
     .auth-terms a { color: var(--orange); text-decoration: none; }
 
+    /* ── Sign-in page, Knox style (Dec 1): a chunky Knox card — 2px border with a
+       solid bottom edge, flat colors only. Cream header with the fox on its tile,
+       the sign-in buttons first (all one size), then "or use your email" with a
+       small Sign in / Create account switch. The landing page's sign-in and the
+       sidebar's Log in / Sign up use the same pieces. */
+    .auth-card { position: relative; border: 2px solid var(--border); border-radius: 28px; box-shadow: 0 6px 0 var(--border); max-width: 420px; }
+    .auth-header { position: relative; background: var(--orange-cream, #FFF1E4); border-bottom: 2px solid var(--border); padding: 28px 28px 20px; }
+    .auth-header img { width: 72px; height: 72px; border-radius: 20px; border: 3px solid var(--orange); box-shadow: 0 4px 0 var(--orange-dark); margin-bottom: 12px; object-position: center; }
+    .auth-header h2 { color: var(--text); font-size: 25px; }
+    .auth-header p { color: var(--text-light); font-weight: 800; }
+    .auth-close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; box-shadow: 0 3px 0 var(--border); display: flex; align-items: center; justify-content: center; }
+    .auth-close:hover { color: var(--text); }
+    .auth-close:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+    .auth-body { padding: 22px 26px 24px; }
+    .auth-social { height: 54px; padding: 0 18px; border-radius: 16px; font-size: 15px; font-weight: 900; justify-content: flex-start; gap: 14px; box-shadow: 0 3px 0 var(--border); position: relative; }
+    .auth-social svg { flex: 0 0 22px; width: 22px; height: 22px; }
+    .auth-social:hover { transform: none; background: var(--cream); border-color: var(--border); box-shadow: 0 3px 0 var(--border); filter: brightness(0.99); }
+    .auth-social:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border); }
+    .auth-divider { margin: 18px 0 16px; text-transform: none; font-size: 13px; }
+    .auth-tabs { margin-bottom: 16px; }
+    .auth-tab { text-transform: none; letter-spacing: 0; font-size: 14px; padding: 9px; }
+    .auth-tab.active { background: var(--orange); color: #fff; box-shadow: 0 2px 0 var(--orange-dark); }
+    .auth-submit { height: 54px; padding: 0 15px; text-transform: none; letter-spacing: 0; font-size: 16px; }
+    .auth-error, .auth-success { margin-bottom: 14px; }
+
     /* Help & support panel (reuses the Account & Plan card) */
     .settings-card {
       background: var(--surface);
@@ -2845,7 +2895,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       </button>
       </div>
       <div id="appGuestBtns">
-        <button class="header-login-btn" onclick="openAuthModal()">Login</button>
+        <button class="header-login-btn" onclick="openAuthModal()">Log in</button>
         <button class="header-login-btn header-signup-btn" onclick="openAuthModal('signup')">Sign up</button>
         <button class="guest-avatar-btn" onclick="openAuthModal('signup')" aria-label="Sign up or log in" title="Sign up or log in"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M3 21c0-3.9 3.1-7 7-7 1.6 0 3 .5 4.2 1.4"/><path d="M19 15v6M16 18h6"/></svg></button>
       </div>
@@ -3114,19 +3164,35 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
 <!-- ═══════ AUTH MODAL ═══════════════════════════════════════ -->
 <div id="authModal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closeAuthModal()">
-  <div class="auth-card">
+  <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authHeaderTitle">
     <div class="auth-header">
+      <button type="button" class="auth-close" onclick="closeAuthModal()" aria-label="Close">✕</button>
       <img src="/knox-logo-square.jpg" alt="Knox" draggable="false" onerror="this.style.display='none'">
       <h2 id="authHeaderTitle">Welcome to Knox</h2>
       <p id="authHeaderSubtitle">Sign in or create your free account</p>
     </div>
     <div class="auth-body">
-      <div class="auth-tabs" id="authTabs">
-        <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
-        <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Sign up</button>
-      </div>
       <div id="authError" class="auth-error"></div>
       <div id="authSuccess" class="auth-success"></div>
+      <div id="authSocialButtons">
+        <button class="auth-social" onclick="appHandleGoogleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <button class="auth-social" id="authAppleBtn" onclick="appHandleAppleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.75c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.86-.76-1.47.02-2.83.86-3.59 2.17-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.51zM14.18 6.3c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.96-.49 2.56-1.23z"/></svg>
+          Continue with Apple
+        </button>
+        <button class="auth-social" id="authMicrosoftBtn" onclick="appHandleMicrosoftLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+          Continue with Microsoft
+        </button>
+      </div>
+      <div class="auth-divider" id="authSocialDivider">or use your email</div>
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab active" id="authSigninTab" onclick="switchAuthTab('signin')">Sign in</button>
+        <button class="auth-tab" id="authSignupTab" onclick="switchAuthTab('signup')">Create account</button>
+      </div>
 
       <!-- SIGN IN -->
       <div id="authSigninFields">
@@ -3174,21 +3240,6 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <button class="auth-forgot" onclick="switchAuthTab('signin')">← Back to sign in</button>
       </div>
 
-      <div class="auth-divider" id="authSocialDivider">or continue with</div>
-      <div id="authSocialButtons">
-        <button class="auth-social" id="authAppleBtn" onclick="appHandleAppleLogin()">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.75c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.86-.76-1.47.02-2.83.86-3.59 2.17-1.53 2.66-.39 6.6 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.3-3.51zM14.18 6.3c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.31-.56.65-1.05 1.69-.92 2.68.97.08 1.96-.49 2.56-1.23z"/></svg>
-          Continue with Apple
-        </button>
-        <button class="auth-social" onclick="appHandleGoogleLogin()">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Continue with Google
-        </button>
-        <button class="auth-social" id="authMicrosoftBtn" onclick="appHandleMicrosoftLogin()">
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
-          Continue with Microsoft
-        </button>
-      </div>
       <p class="auth-terms">By continuing you agree to our <a href="/terms.html">Terms</a> and <a href="/privacy.html">Privacy Policy</a></p>
     </div>
   </div>
