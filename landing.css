@@ -633,3 +633,107 @@ html[data-theme="dark"] .kl-pricing .pt-mega { --pl:rgba(255,200,0,.14); --pt:#F
 .kp-cta { text-align:center; margin-top:36px; }
 .kp-cta p { margin-top:14px; font-size:13px; font-weight:700; color:var(--text-light); }
 @media (max-width:900px) { #pricing.kl-pricing .pt-cards { gap:26px !important; } }
+
+/* ═══ Knox 3D buttons (Nov 19, round 2) ════════════════════════════════════
+   Every landing button is a chunky Knox button: a 2px border and a solid
+   bottom edge in a darker shade. Hover lifts it (the edge grows), pressing
+   pushes it down onto its edge. Flat colors only. */
+.kl-btn, .kl-store, .kl-next, #pricing.kl-pricing .pt-btn, .header-login, #accountBtn {
+  position:relative; --edge:var(--border); box-shadow:0 5px 0 var(--edge);
+  transition:transform .16s cubic-bezier(.3,.7,.4,1.5), box-shadow .16s ease, filter .16s ease;
+}
+/* Keeps the hover steady while the button lifts away from the pointer. */
+.kl-btn::after, .kl-store::after, .kl-next::after, #pricing.kl-pricing .pt-btn::after, .header-login::after, #accountBtn::after {
+  content:''; position:absolute; left:-2px; right:-2px; top:100%; height:10px;
+}
+.kl-btn-orange { --edge:#CC5500; }
+.kl-btn-mode { --edge:var(--md); }
+.kl-btn-plain { --edge:#D9CBB8; border-color:#E8DCCB; }
+html[data-theme="dark"] .kl-btn-plain { --edge:var(--border); border-color:var(--border); }
+.kl-store, html[data-theme="dark"] .kl-store { --edge:#D9CBB8; border-color:#E8DCCB; box-shadow:0 5px 0 var(--edge); }
+html[data-theme="dark"] .kl-store { --edge:var(--border); border-color:var(--border); }
+.kl-app .kl-store, html[data-theme="dark"] .kl-app .kl-store { --edge:#A34400; border-color:#fff; }
+.kl-app .kl-btn-plain { --edge:#A34400; }
+.kl-next { --edge:var(--md, #CC5500); box-shadow:0 4px 0 var(--edge); }
+#pricing.kl-pricing .pt-btn { --edge:var(--pd); border:2px solid var(--pd); }
+.header-login, #accountBtn { --edge:var(--orange-dark); box-shadow:0 3px 0 var(--edge); }
+@media (hover:hover) {
+  .kl-btn:hover, .kl-store:hover, #pricing.kl-pricing .pt-btn:hover:not(:disabled) { transform:translateY(-3px); box-shadow:0 8px 0 var(--edge); filter:brightness(1.05); }
+  .kl-next:hover { transform:translateY(-2px); box-shadow:0 6px 0 var(--edge); filter:brightness(1.05); }
+  .header-login:hover, #accountBtn:hover { transform:translateY(-2px); box-shadow:0 5px 0 var(--edge); }
+}
+.kl-btn:active, .kl-store:active, #pricing.kl-pricing .pt-btn:active:not(:disabled) { transform:translateY(4px); box-shadow:0 1px 0 var(--edge); filter:none; transition-duration:.06s; }
+.kl-next:active { transform:translateY(3px); box-shadow:0 1px 0 var(--edge); filter:none; transition-duration:.06s; }
+.header-login:active, #accountBtn:active { transform:translateY(2px); box-shadow:0 1px 0 var(--edge); transition-duration:.06s; }
+@media (prefers-reduced-motion:reduce) { .kl-btn, .kl-store, .kl-next, #pricing.kl-pricing .pt-btn { transition:none; } }
+
+/* Binder is brown, like a real binder. */
+.m-brown { --m:#A0662E; --md:#76461A; --ml:#F6EAD9; }
+html[data-theme="dark"] .m-brown { --ml:rgba(160,102,46,.2); }
+
+/* Streaks: every flame the same size. Each sits in the same 76px box; the
+   emoji flames are drawn at the size the SVG flames fill. */
+.kl-flamecard .kl-realflame { display:flex !important; width:76px; height:86px; margin:0 auto; font-size:62px; }
+.kl-flamecard .kl-realflame svg { width:auto; height:84px; display:block; }
+
+/* ── PRICING, round 2 ──────────────────────────────────────────────────────
+   Knox cream with big flat circles in the plan colors (like the app's
+   background), cards that grow from Free to Mega, and a "Compare every plan"
+   divider leading into a table with plan-colored headers. */
+#pricing.kl-pricing { position:relative; overflow:hidden; background:var(--kl-alt); isolation:isolate; }
+.kp-bg { position:absolute; inset:0; z-index:-1; pointer-events:none; }
+.kp-bg i { position:absolute; border-radius:50%; }
+.kp-bg .b1 { width:560px; height:560px; left:-220px; top:120px; background:#DDF4FF; }
+.kp-bg .b2 { width:620px; height:620px; right:-240px; top:260px; background:#FFF1C2; }
+.kp-bg .b3 { width:360px; height:360px; left:34%; top:-210px; background:#E5F8D6; }
+.kp-bg .b4 { width:520px; height:520px; left:-180px; bottom:-200px; background:#FFE0C2; }
+html[data-theme="dark"] .kp-bg i { opacity:.07; }
+html[data-theme="dark"] .kp-bg .b1 { background:#1CB0F6; } html[data-theme="dark"] .kp-bg .b2 { background:#FFC800; }
+html[data-theme="dark"] .kp-bg .b3 { background:#58CC02; } html[data-theme="dark"] .kp-bg .b4 { background:#FF6B00; }
+#pricing.kl-pricing .kp-toggle { background:var(--surface); }
+
+/* Free is the smallest card, Mega the biggest: the tops step up like stairs. */
+@media (min-width:901px) {
+  #pricing.kl-pricing .pt-cards { grid-template-columns:.92fr 1fr 1.12fr; align-items:end; max-width:1080px; margin-left:auto; margin-right:auto; }
+}
+#pricing.kl-pricing .pt-free { padding:24px 20px 20px; }
+#pricing.kl-pricing .pt-free .pt-price span { font-size:40px; }
+#pricing.kl-pricing .pt-free .kp-list li { font-size:14px; }
+#pricing.kl-pricing .pt-free .pt-btn { height:50px; }
+#pricing.kl-pricing .pt-mega { padding:36px 28px 26px; border-width:4px; box-shadow:0 8px 0 var(--pd); }
+#pricing.kl-pricing .pt-mega .kp-ic { width:54px; height:54px; border-radius:17px; }
+#pricing.kl-pricing .pt-mega .kp-ic .kk-ic { width:30px; height:30px; }
+#pricing.kl-pricing .pt-mega .pt-name { font-size:25px; }
+#pricing.kl-pricing .pt-mega .pt-price span { font-size:58px; }
+#pricing.kl-pricing .pt-mega .kp-list li { font-size:15px; }
+#pricing.kl-pricing .pt-mega .pt-btn { height:60px; font-size:18px; }
+#pricing.kl-pricing .pt-mega .pt-badge { font-size:12px; padding:7px 16px; top:-17px; box-shadow:0 3px 0 #CC5500; }
+
+/* "Compare every plan": a line with a chip and a bouncing arrow. */
+.kp-divider { position:relative; display:flex; flex-direction:column; align-items:center; gap:10px; margin:72px 0 26px; }
+.kp-divider::before { content:''; position:absolute; left:0; right:0; top:26px; border-top:3px dashed #E8DCCB; z-index:0; }
+html[data-theme="dark"] .kp-divider::before { border-top-color:var(--border); }
+#pricing .kp-divider .kp-compare-title { position:relative; z-index:1; margin:0; display:inline-flex; align-items:center; height:54px; padding:0 26px; border-radius:18px; background:var(--surface); border:2px solid #E8DCCB; box-shadow:0 5px 0 #D9CBB8; font-size:22px; }
+html[data-theme="dark"] #pricing .kp-divider .kp-compare-title { border-color:var(--border); box-shadow:0 5px 0 var(--border); }
+.kp-down { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:var(--orange); color:#fff; border:2px solid #CC5500; box-shadow:0 3px 0 #CC5500; animation:kpBob 1.6s ease-in-out infinite; }
+.kp-down svg { width:20px; height:20px; }
+@keyframes kpBob { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(6px); } }
+@media (prefers-reduced-motion:reduce) { .kp-down { animation:none; } }
+
+/* The table: a white card with each plan's color on its header and the Mega
+   column lit up. */
+#pricing.kl-pricing .pt-table { border:3px solid #E8DCCB; box-shadow:0 6px 0 #D9CBB8; }
+html[data-theme="dark"] #pricing.kl-pricing .pt-table { border-color:var(--border); box-shadow:0 6px 0 var(--border); }
+#pricing.kl-pricing .pt-head { background:var(--surface); padding-top:18px; padding-bottom:18px; }
+#pricing.kl-pricing .pt-head > div:nth-child(n+2) { justify-self:center; display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:999px; border:2px solid; font-size:12.5px; letter-spacing:.05em; }
+#pricing.kl-pricing .pt-head > div:nth-child(2) { color:#0A6E9E; background:#DDF4FF; border-color:#1CB0F6; }
+#pricing.kl-pricing .pt-head > div:nth-child(3) { color:#2D6A00; background:#E5F8D6; border-color:#58CC02; }
+#pricing.kl-pricing .pt-head > div:nth-child(4) { color:#8A5A00; background:#FFF4CC; border-color:#FFC800; }
+#pricing.kl-pricing .pt-head .kk-ic { width:15px; height:15px; }
+@media (min-width:641px) {
+  #pricing.kl-pricing .pt-row:not(.pt-head) > div:nth-child(4) { align-self:stretch; display:flex; align-items:center; justify-content:center; margin:-16px 0; padding:16px 6px; background:#FFFAE6; }
+  html[data-theme="dark"] #pricing.kl-pricing .pt-row:not(.pt-head) > div:nth-child(4) { background:rgba(255,200,0,.07); }
+}
+@media (max-width:900px) {
+  .kp-bg .b1, .kp-bg .b2, .kp-bg .b4 { width:380px; height:380px; }
+}
