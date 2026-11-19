@@ -2526,24 +2526,18 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     <div class="kl-hero-demo">
       <div class="kl-demo kl-card" id="klTour" aria-label="A quick tour of Knox Knows on iPhone">
-        <!-- Real screen recordings of the Knox Knows iPhone app, one per step. -->
+        <!-- One real screen recording of the Knox Knows iPhone app; each step is a stretch of it. -->
         <div class="kl-phone kl-rec-phone" aria-hidden="true">
-          <div class="kl-screen">
-            <div class="kl-scene" data-dur="5300"><video class="kl-rec" muted playsinline preload="none" poster="/media/landing/1-snap.jpg" src="/media/landing/1-snap.mp4"></video></div>
-            <div class="kl-scene" data-dur="7100"><video class="kl-rec" muted playsinline preload="none" poster="/media/landing/2-explain.jpg" src="/media/landing/2-explain.mp4"></video></div>
-            <div class="kl-scene" data-dur="12800"><video class="kl-rec" muted playsinline preload="none" poster="/media/landing/3-learn.jpg" src="/media/landing/3-learn.mp4"></video></div>
-            <div class="kl-scene" data-dur="9600"><video class="kl-rec" muted playsinline preload="none" poster="/media/landing/4-cards.jpg" src="/media/landing/4-cards.mp4"></video></div>
-            <div class="kl-scene" data-dur="9800"><video class="kl-rec" muted playsinline preload="none" poster="/media/landing/5-streak.jpg" src="/media/landing/5-streak.mp4"></video></div>
-          </div>
+          <div class="kl-screen"><video class="kl-rec" id="klTourVideo" muted playsinline loop preload="metadata" poster="/media/landing/tour.jpg" src="/media/landing/tour.mp4"></video></div>
         </div>
 
         <div class="kl-demo-side">
           <ol class="kl-steps">
-            <li><button class="kl-step m-orange" data-step="0"><span class="kl-step-num">1</span><span><strong>Snap it</strong><em>Point your camera at any question and fit it in the box.</em><span class="kl-step-bar"><i></i></span></span></button></li>
-            <li><button class="kl-step m-orange" data-step="1"><span class="kl-step-num">2</span><span><strong>Get it explained</strong><em>Knox walks you through it, step by step.</em><span class="kl-step-bar"><i></i></span></span></button></li>
-            <li><button class="kl-step m-purple" data-step="2"><span class="kl-step-num">3</span><span><strong>Learn it</strong><em>Learn mode has you try each step yourself.</em><span class="kl-step-bar"><i></i></span></span></button></li>
-            <li><button class="kl-step m-green" data-step="3"><span class="kl-step-num">4</span><span><strong>Remember it</strong><em>Flashcards bring it back right before you'd forget.</em><span class="kl-step-bar"><i></i></span></span></button></li>
-            <li><button class="kl-step m-orange" data-step="4"><span class="kl-step-num">5</span><span><strong>Keep your streak</strong><em>A little every day — and it sticks.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-orange" data-step="0" data-start="0"><span class="kl-step-num">1</span><span><strong>Snap it</strong><em>Point your camera at any question and fit it in the box.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-orange" data-step="1" data-start="4.4"><span class="kl-step-num">2</span><span><strong>Get it explained</strong><em>Knox walks you through it, step by step.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-purple" data-step="2" data-start="9.92"><span class="kl-step-num">3</span><span><strong>Learn it</strong><em>Learn mode has you try each step yourself.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-green" data-step="3" data-start="24.24"><span class="kl-step-num">4</span><span><strong>Remember it</strong><em>Flashcards bring it back right before you'd forget.</em><span class="kl-step-bar"><i></i></span></span></button></li>
+            <li><button class="kl-step m-orange" data-step="4" data-start="32.64"><span class="kl-step-num">5</span><span><strong>Keep your streak</strong><em>A little every day — and it sticks.</em><span class="kl-step-bar"><i></i></span></span></button></li>
           </ol>
           <p class="kl-caption" aria-live="polite"></p>
           <button class="kl-next" id="klNext">Next step <span aria-hidden="true">→</span></button>
@@ -2895,15 +2889,16 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     </div>
     <!-- What each plan includes. The rows that differ come first. -->
     <div class="reveal pt-table">
-      <div class="pt-row pt-head"><div class="pt-label pt-group">What's included</div><div>Free</div><div><svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg> Plus</div><div><svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg> Mega</div></div>
-      <div class="pt-row"><div class="pt-label">Questions</div><div><span class="pt-text free">5 / day*</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
-      <div class="pt-row"><div class="pt-label">Photos &amp; files</div><div><span class="pt-text free">2 credits each</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
-      <div class="pt-row"><div class="pt-label">Flashcard decks made by Knox<small>Cards per deck when Knox writes them for you.</small></div><div><span class="pt-text free">2 credits · 10 cards</span></div><div><span class="pt-text plus">15 cards</span></div><div><span class="pt-text mega">40 cards</span></div></div>
-      <div class="pt-row"><div class="pt-label">Learn lessons<small>How long one guided lesson can run.</small></div><div><span class="pt-text free">20 replies</span></div><div><span class="pt-text plus">30 replies</span></div><div><span class="pt-text mega">50 replies</span></div></div>
-      <div class="pt-row"><div class="pt-label">Support<small>How quickly we get back to you.</small></div><div><span class="pt-text free">Email</span></div><div><span class="pt-text plus">Faster</span></div><div><span class="pt-text mega">Fastest</span></div></div>
-      <div class="pt-row"><div class="pt-label">Knox Knows Discord Server**<small>Hang out with other students and get help. Paid plans unlock private lounges.</small></div><div><span class="pt-text free">Community</span></div><div><span class="pt-text plus">Plus lounge</span></div><div><span class="pt-text mega pt-list">Mega lounge<br>Early-access channel<br>Voice hangout<br>Chat with the founder</span></div></div>
-      <div class="pt-row"><div class="pt-label">Early access to new features<small>Try new tools before everyone else.</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
-      <div class="pt-row pt-last"><div class="pt-label">Mega extras***<small>Custom flashcard decks, the Mega badge, and the highest limits on files, photos, decks and Learn sessions.</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row pt-head"><div class="pt-label pt-group">What you get</div><div>Free</div><div><svg class="kk-ic kk-bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/></svg> Plus</div><div><svg class="kk-ic kk-gem" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11l4.5 6-10 12L2 9Z" fill="#FFD45C" stroke="#E07800" stroke-width="2" stroke-linejoin="round"/><path d="M2 9h20M9.5 3 8 9l4 12 4-12-1.5-6" fill="none" stroke="#E07800" stroke-width="1.4" stroke-linejoin="round"/></svg> Mega</div></div>
+      <div class="pt-row"><div class="pt-label">The same AI on every plan<small>Ask Knox, Learn mode, the Calculator and the Binder.</small></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row"><div class="pt-label">Typed questions<small>Ask Knox anything, in any subject.</small></div><div><span class="pt-text free">5 a day*</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
+      <div class="pt-row"><div class="pt-label">Photos &amp; files<small>Snap a worksheet, or add a PDF, Word or PowerPoint file.</small></div><div><span class="pt-text free">2 credits each</span></div><div><span class="pt-text plus">Unlimited</span></div><div><span class="pt-text mega">Unlimited</span></div></div>
+      <div class="pt-row"><div class="pt-label">Flashcards Knox makes for you<small>How many cards go in each deck Knox writes.</small></div><div><span class="pt-text free">10 cards · 2 credits</span></div><div><span class="pt-text plus">15 cards</span></div><div><span class="pt-text mega">40 cards</span></div></div>
+      <div class="pt-row"><div class="pt-label">Learn lessons<small>How long one guided lesson can go.</small></div><div><span class="pt-text free">Up to 20 replies</span></div><div><span class="pt-text plus">Up to 30 replies</span></div><div><span class="pt-text mega">Up to 50 replies</span></div></div>
+      <div class="pt-row"><div class="pt-label">Help from the Knox team<small>How fast we answer when you need us.</small></div><div><span class="pt-text free">Email</span></div><div><span class="pt-text plus">Faster replies</span></div><div><span class="pt-text mega">Fastest replies</span></div></div>
+      <div class="pt-row"><div class="pt-label">Knox Knows on Discord**<small>Study and hang out with other students. Paid plans get their own lounge.</small></div><div><span class="pt-text free">Community</span></div><div><span class="pt-text plus">Plus lounge</span></div><div><span class="pt-text mega pt-list">Mega lounge<br>Early-access channel<br>Voice hangout<br>Chat with the founder</span></div></div>
+      <div class="pt-row"><div class="pt-label">Early access<small>Try new Knox tools before everyone else.</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
+      <div class="pt-row pt-last"><div class="pt-label">Mega extras***<small>Custom flashcard decks, the Mega badge and the highest limits on everything.</small></div><div><span class="pt-no">—</span></div><div><span class="pt-no">—</span></div><div><span class="pt-yes">✓</span></div></div>
     </div>
 
     <p class="kp-foot" style="text-align:center;font-size:12px;font-weight:600;color:var(--text-light);margin-top:14px;">*Starts at 10, then +5 every day — save up unused questions up to 20. Every plan gets Ask Knox, Learn mode and the Calculator, with the same AI.</p>

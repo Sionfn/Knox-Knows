@@ -843,3 +843,37 @@ html[data-theme="dark"] #pricing .kp-divider .kp-compare-title, html[data-theme=
 #pricing.kl-pricing .pt-mega .kp-list li { font-size:14px; }
 #pricing.kl-pricing .pt-space { min-height:12px; }
 #pricing.kl-pricing .pt-mega .pt-btn { height:52px; }
+
+/* ═══ Round 4 (Nov 19) ═════════════════════════════════════════════════════ */
+
+/* Buttons like the Knox app's: a solid color, a 2px border and a darker
+   bottom edge. Hover just brightens it; pressing pushes it down onto its
+   edge. (No lifting.) */
+.kl-btn::after, .kl-store::after, .kl-next::after, #pricing.kl-pricing .pt-btn::after, .header-login::after, #accountBtn::after { content:none; }
+@media (hover:hover) {
+  .kl-btn:hover, .kl-store:hover, #pricing.kl-pricing .pt-btn:hover:not(:disabled) { transform:none; box-shadow:0 5px 0 var(--edge); filter:brightness(1.06); }
+  .kl-next:hover { transform:none; box-shadow:0 4px 0 var(--edge); filter:brightness(1.06); }
+  .header-login:hover, #accountBtn:hover { transform:none; box-shadow:0 3px 0 var(--edge); }
+}
+#pricing.kl-pricing .pt-btn { box-shadow:0 5px 0 var(--edge); }
+
+/* The tour's step bar follows the video (landing.js sets --p from 0 to 1). */
+.kl-step-bar i { width:calc(var(--p, 0) * 100%); }
+.kl-step.on.running .kl-step-bar i { animation:none; }
+
+/* Flat Knox circles behind the colored sections, like the app's backgrounds. */
+#ask.kl-section, #learn.kl-section, #flashcards.kl-section, #streaks.kl-section { position:relative; overflow:hidden; isolation:isolate; }
+#ask.kl-section::before, #learn.kl-section::before, #flashcards.kl-section::before, #streaks.kl-section::before,
+#ask.kl-section::after, #learn.kl-section::after, #flashcards.kl-section::after, #streaks.kl-section::after { content:''; position:absolute; z-index:-1; border-radius:50%; pointer-events:none; }
+#ask.kl-section::before, #learn.kl-section::before, #flashcards.kl-section::before, #streaks.kl-section::before { width:520px; height:520px; left:-210px; top:-170px; }
+#ask.kl-section::after, #learn.kl-section::after, #flashcards.kl-section::after, #streaks.kl-section::after { width:600px; height:600px; right:-250px; bottom:-280px; }
+#ask.kl-section::before { background:#FFEBDA; } #ask.kl-section::after { background:#E6F6FE; }
+#learn.kl-section::before { background:#EEDFFF; } #learn.kl-section::after { background:#E3F4FD; }
+#flashcards.kl-section::before { background:#DFF5CC; } #flashcards.kl-section::after { background:#FFF1CF; }
+#streaks.kl-section::before { background:#FFE2C6; } #streaks.kl-section::after { background:#FFE3E3; }
+html[data-theme="dark"] #ask.kl-section::before, html[data-theme="dark"] #learn.kl-section::before, html[data-theme="dark"] #flashcards.kl-section::before, html[data-theme="dark"] #streaks.kl-section::before,
+html[data-theme="dark"] #ask.kl-section::after, html[data-theme="dark"] #learn.kl-section::after, html[data-theme="dark"] #flashcards.kl-section::after, html[data-theme="dark"] #streaks.kl-section::after { background:rgba(255,255,255,.035); }
+@media (max-width:900px) {
+  #ask.kl-section::before, #learn.kl-section::before, #flashcards.kl-section::before, #streaks.kl-section::before { width:300px; height:300px; left:-150px; top:-110px; }
+  #ask.kl-section::after, #learn.kl-section::after, #flashcards.kl-section::after, #streaks.kl-section::after { width:340px; height:340px; right:-170px; bottom:-170px; }
+}
