@@ -131,6 +131,9 @@
     const gift = giftUrl ? `<div class="ff-gift"><b>🎁 Your Mega Knox week to give</b><span>Send this link to a friend who doesn’t have Mega Knox — they get 7 days free. It works once.</span><div class="ff-gift-row"><input class="ff-gift-link" value="${esc(giftUrl)}" readonly aria-label="Your gift link"><button type="button" class="ff-copy" data-copy="${esc(giftUrl)}">Copy link</button></div></div>` : '';
     const plus = state.megaUntil > Date.now() ? `<div class="ff-note">💎 Your free Mega Knox week runs until ${new Date(state.megaUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}.</div>` : '';
     const picker = state.flameStyles.length > 1 ? `<div class="ff-styles">${state.flameStyles.map(s => `<button type="button" class="ff-style ff-r-${rarityOf(s)}${s === state.flameStyle ? ' on' : ''}" data-style="${s}" aria-pressed="${s === state.flameStyle}" aria-label="${STYLE_LABELS[s]} (${RARITY_NAMES[rarityOf(s)]})">${flameOf(s)}<span class="ff-style-name">${STYLE_LABELS[s]}<small class="ff-rarity">${RARITY_NAMES[rarityOf(s)]}</small></span></button>`).join('')}</div>` : '';
+    // December on: the event is over, so the 🔥 opens "Your flame" (all year).
+    // (?flamehome=1 shows it early, e.g. with ?flamefest=demo on the preview.)
+    if ((after && !testMode && !demo) || /[?&]flamehome=1/.test(location.search)) return flameHome({ gift, plus, picker });
     return `<div class="ff-head">
         <span class="ff-badge">🔥 November event${state.tier === 'mega' ? ' · 💎 Mega Knox rewards' : state.plus ? ' · ⚡ Knox Plus rewards' : ''}${state.demo ? ' · demo' : ''}</span>
         <h2 id="ffTitle">Flame <span>Fest</span></h2>
@@ -146,9 +149,26 @@
       ${state.tester && testMode ? testerPanel() : testMode && !demo ? testerOff() : ''}
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
   }
+  // "Your flame" (after Flame Fest, all year): the streak, Flame Shields and the
+  // flame looks you've earned. In December a big button opens the Advent
+  // Calendar (advent.js); until Dec 7 any Flame Fest rewards left to claim show.
+  function flameHome({ gift, plus, picker }) {
+    const t = today(), streak = Number(document.getElementById('streakCount')?.textContent) || 0;
+    const claimable = t <= CLAIM_UNTIL ? state.rewards.filter(r => !state.claimed[r.id] && r.flames >= r.need) : [];
+    const advent = window.knoxAdvent?.active?.() ? `<button type="button" class="ff-advent" data-advent><span class="ff-advent-ic" aria-hidden="true">🎄</span><span class="ff-advent-copy"><b>Advent Calendar</b><small>Open today’s door. A surprise behind every one!</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
+    return `<div class="ff-head">
+        <span class="ff-badge">🔥 Your streak</span>
+        <h2 id="ffTitle">Your <span>flame</span></h2>
+        <p>${streak ? `You’re on a ${streak}-day streak. Study with Knox each day to keep it lit!` : 'Study with Knox today to light your streak flame.'}</p>
+        <div class="ff-stats"><div><b>${streak}</b><span>day streak</span></div><div><b>${state.shields}</b><span>🛡️ shield${state.shields === 1 ? '' : 's'}</span></div><div><b>${state.flameStyles.length}</b><span>flame look${state.flameStyles.length === 1 ? '' : 's'}</span></div></div>
+      </div>
+      ${advent}${myFlame(picker, true)}${plus}${gift}
+      ${claimable.length ? `<h3 class="ff-h3">Flame Fest rewards to claim · until December 7</h3><div class="ff-rewards">${claimable.map(rewardRow).join('')}</div>` : ''}
+      <p class="ff-fine">A day counts when you study with Knox: Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day; they’re used automatically.</p>`;
+  }
   // The flame you're using, big, so you can really see it (and pick another).
-  function myFlame(picker) {
-    const tip = state.flameStyles.length > 1 ? '' : '<span class="ff-myflame-tip">Earn new flames from the rewards below — or link your Discord with /link for the 🟢 Slime Flame.</span>';
+  function myFlame(picker, home) {
+    const tip = state.flameStyles.length > 1 ? '' : `<span class="ff-myflame-tip">${home ? 'Earn new flames in Knox events like the Advent Calendar' : 'Earn new flames from the rewards below'} — or link your Discord with /link for the 🟢 Slime Flame.</span>`;
     return `<div class="ff-myflame"><span class="knox-flame ff-myflame-icon" aria-hidden="true">🔥</span><div class="ff-myflame-copy"><span class="ff-myflame-label">Your flame</span><b>${STYLE_LABELS[state.flameStyle] || STYLE_LABELS.classic}</b>${tip}${picker}</div></div>`;
   }
   function testerPanel() {
@@ -275,6 +295,7 @@
     wrap.addEventListener('pointerup', e => { if (e.target.closest('.ff-x')) { e.preventDefault(); close(); } });
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('.ff-x')) { close(); return; }
+      if (e.target.closest('[data-advent]')) { close(); window.knoxAdvent?.open(); return; }
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
       const s = e.target.closest('[data-style]'); if (s) { pickStyle(s.dataset.style); return; }
       const t = e.target.closest('[data-test]'); if (t) { runTest(t.dataset.test, t); return; }
