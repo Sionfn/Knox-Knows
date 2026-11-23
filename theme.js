@@ -16,8 +16,9 @@
     { id: 'dark',     icon: '🌙', name: 'Dark',  note: 'Easy on the eyes at night' },
     { id: 'seasonal', icon: '🍁', name: 'Fall harvest', note: 'Warm colors, autumn leaves & Thanksgiving' },
     { id: 'christmas', icon: '🎄', name: 'Christmas', note: 'Knox red & green, a tree and a little snow' },
+    { id: 'christmas-night', icon: '⭐', name: 'Christmas night', note: 'Snow under the stars, glowing lights' },
   ];
-  const current = () => root.classList.contains('knox-christmas') ? 'christmas' : root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const current = () => root.classList.contains('knox-christmas') ? (root.getAttribute('data-theme') === 'dark' ? 'christmas-night' : 'christmas') : root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   window.knoxTheme = current;
 
   // Fall mode is offered September through November. After that it rests
@@ -28,17 +29,19 @@
   // Christmas (christmas.css) is offered in December; the private preview and
   // local copies always offer it, and ?christmas=demo shows it any time.
   const christmasSeason = () => new Date().getMonth() === 11 || /preview|localhost|127\.0\.0\.1/.test(location.hostname) || /[?&]christmas=demo/.test(location.search);
-  if (!christmasSeason()) MODES.splice(MODES.findIndex(m => m.id === 'christmas'), 1);
+  if (!christmasSeason()) MODES.splice(MODES.findIndex(m => m.id === 'christmas'), 2); // Christmas and Christmas night
   window.knoxSetTheme = function (mode) {
     if (!MODES.some(m => m.id === mode)) mode = 'light';
     // Pause color transitions while the look changes (see .knox-theme-switching)
     // so every element switches in the same frame.
     root.classList.add('knox-theme-switching');
     // Christmas is built on Light (christmas.css); Fall on Dark (seasonal.css).
+    // Christmas night: Dark plus the Christmas look (christmas.css, .knox-xmas-night).
     if (mode === 'light' || mode === 'christmas') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
     root.classList.toggle('knox-seasonal', mode === 'seasonal');
-    root.classList.toggle('knox-christmas', mode === 'christmas');
-    if (mode === 'christmas') requestAnimationFrame(() => { christmasDecorate(); document.querySelectorAll('.xmas-lights-host').forEach(drawLights); });
+    root.classList.toggle('knox-christmas', mode === 'christmas' || mode === 'christmas-night');
+    root.classList.toggle('knox-xmas-night', mode === 'christmas-night');
+    if (mode === 'christmas' || mode === 'christmas-night') requestAnimationFrame(() => { christmasDecorate(); document.querySelectorAll('.xmas-lights-host').forEach(drawLights); });
     try { localStorage.setItem('knoxTheme', mode); } catch (e) { /* best effort */ }
     syncIcons();
     syncFavicon();
@@ -58,7 +61,7 @@
     const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal', darkModeIconTree: mode === 'christmas' };
     // The button shows the same Knox icon as the Appearance menu (knox-icons.js):
     // the yellow sun, the purple moon, the Christmas gift, the fall leaf.
-    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'gift' }[mode]);
+    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'gift', 'christmas-night': 'star' }[mode]);
     let slot = document.getElementById('darkModeIconKnox');
     if (btn && ki) {
       if (!slot) { slot = document.createElement('span'); slot.id = 'darkModeIconKnox'; slot.className = 'theme-btn-icon'; slot.setAttribute('aria-hidden', 'true'); btn.prepend(slot); }
@@ -325,12 +328,15 @@
   function sizeSectionSnow(layer) { const h = layer.clientHeight; if (!h) return; layer.style.setProperty('--fall', h + 'px'); layer.style.setProperty('--dm', Math.max(1, h / 800).toFixed(2)); }
   const sectionSnowRO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => sizeSectionSnow(e.target))) : null;
   const sectionSnowIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('xmas-run', e.isIntersecting))) : null;
+  // Christmas night only (christmas.css): a moon and a few stars.
+  const XMAS_NIGHT_SKY = '<div class="xmas-night-sky"><svg class="xmas-moon" viewBox="0 0 60 60" focusable="false"><path d="M34 7A23 23 0 1 0 53 38A18 18 0 1 1 34 7Z" fill="#FFF3C4" stroke="#E8D48A" stroke-width="3" stroke-linejoin="round"/></svg>' +
+    Array.from({ length: 14 }, (_, i) => `<span class="xmas-star" style="left:${(i * 37 + 9) % 96}%;top:${8 + (i * 23) % 52}%;--s:${3 + i % 3}px"></span>`).join('') + '</div>';
   function christmasDecorate() {
     const host = document.getElementById('welcomeScreen') || document.getElementById('home');
     if (host && !host.querySelector(':scope > .xmas-deco')) {
       // Snow falls inside this space and scrolls with the page: behind the
       // app's welcome screen (never over a chat) and the landing hero.
-      host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+      host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true">${XMAS_NIGHT_SKY}<div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
       addLights(host.querySelector(':scope > .xmas-deco'), host.id !== 'welcomeScreen'); // a shorter string under the landing header
     }
     // The landing's last section: Knox in a Santa hat, snow and the snowy ground.
@@ -356,7 +362,7 @@
   // "Christmas mode is here" tip (app welcome screen, December, dismissible).
   function christmasTip() {
     const ws = document.getElementById('welcomeScreen'), badge = ws?.querySelector('.welcome-badge');
-    if (!badge || ws.querySelector('.fall-tip') || current() === 'christmas') return;
+    if (!badge || ws.querySelector('.fall-tip') || current().startsWith('christmas')) return;
     try { if (localStorage.getItem('knoxChristmasTip') === 'hidden') return; } catch (e) {}
     const el = document.createElement('div');
     el.className = 'fall-tip';
@@ -370,7 +376,7 @@
   // After December, anyone still on Christmas goes back to Light.
   function christmasResting() {
     let saved = null; try { saved = localStorage.getItem('knoxTheme'); } catch (e) {}
-    if (saved === 'christmas' && !christmasSeason()) window.knoxSetTheme('light');
+    if ((saved === 'christmas' || saved === 'christmas-night') && !christmasSeason()) window.knoxSetTheme(saved === 'christmas-night' ? 'dark' : 'light');
   }
   function ready() { fallResting(); christmasResting(); syncIcons(); syncFavicon(); decorate(); arrangeHarvest(); christmasDecorate(); if (fallSeason()) tip(); else if (christmasSeason()) christmasTip(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();

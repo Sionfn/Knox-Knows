@@ -19,8 +19,9 @@
         }
         if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
         // Christmas (December): Knox's light look in red and green (christmas.css).
-        if (t === 'christmas' && !(mo === 11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search))) t = 'light';
-        if (t === 'christmas') document.documentElement.classList.add('knox-christmas');
+        if ((t === 'christmas' || t === 'christmas-night') && !(mo === 11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search))) t = t === 'christmas-night' ? 'dark' : 'light';
+        if (t === 'christmas' || t === 'christmas-night') document.documentElement.classList.add('knox-christmas');
+        if (t === 'christmas-night') { document.documentElement.classList.add('knox-xmas-night'); document.documentElement.setAttribute('data-theme', 'dark'); }
       } catch (e) { /* localStorage unavailable — default to light */ }
     })();
   </script>
@@ -1405,6 +1406,9 @@
       margin-bottom: 12px;
     }
     .welcome-accent { color: var(--orange); }
+    /* Knox's own fox (his logo) on the welcome badge, instead of the phone's 🦊. */
+    .kb-fox-wrap { position: relative; display: inline-block; width: 20px; height: 20px; margin-right: 4px; vertical-align: -4px; }
+    .kb-fox { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; object-position: top; border: 1.5px solid var(--orange); display: block; }
     /* One badge recipe for every section — only the color changes: Ask Knox
        orange, Learn purple, Flashcards green, Calculator blue (and Flame Fest). */
     .welcome-badge, .fc-badge, .kc-badge, .ff-badge { --bdg: var(--orange); --bdg-ink: var(--orange); --bdg-tint: var(--orange-light); }
@@ -3074,7 +3078,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
           <!-- WELCOME -->
           <div id="welcomeScreen">
-            <div class="welcome-badge"><span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span></div>
+            <div class="welcome-badge"><span class="season-hide"><span class="kb-fox-wrap"><img class="kb-fox" src="/knox-logo-square.jpg" alt="" aria-hidden="true"></span> Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span></div>
             <h1 class="welcome-title">What are we<br><span class="welcome-accent">tackling today?</span></h1>
             <p class="welcome-sub">Pick a topic below to get started — or type your own question in the box.</p>
 
@@ -5914,7 +5918,7 @@ function resetWelcomeCopy() {
   const badge = document.querySelector('.welcome-badge');
   const title = document.querySelector('.welcome-title');
   const sub   = document.querySelector('.welcome-sub');
-  if (badge) badge.innerHTML = '<span class="season-hide">🦊 Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
+  if (badge) badge.innerHTML = '<span class="season-hide"><span class="kb-fox-wrap"><img class="kb-fox" src="/knox-logo-square.jpg" alt="" aria-hidden="true"></span> Your AI study companion</span><span class="season-only">🍂 Cozy fall study buddy</span>';
   if (title) title.innerHTML = 'What are we<br><span class="welcome-accent">tackling today?</span>';
   if (sub)   sub.textContent = 'Pick a topic below to get started — or type your own question in the box.';
   updateSuggestionChipsForMode(false);

@@ -29,8 +29,9 @@
         }
         if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
         // Christmas (December): Knox's light look in red and green (christmas.css).
-        if (t === 'christmas' && !(mo === 11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search))) t = 'light';
-        if (t === 'christmas') document.documentElement.classList.add('knox-christmas');
+        if ((t === 'christmas' || t === 'christmas-night') && !(mo === 11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search))) t = t === 'christmas-night' ? 'dark' : 'light';
+        if (t === 'christmas' || t === 'christmas-night') document.documentElement.classList.add('knox-christmas');
+        if (t === 'christmas-night') { document.documentElement.classList.add('knox-xmas-night'); document.documentElement.setAttribute('data-theme', 'dark'); }
       } catch (e) { /* localStorage unavailable — default to light */ }
     })();
   </script>

@@ -40,6 +40,7 @@
     apple: '<path d="M12 7c-1.5-1-5-1.4-6.6 1.5C3.6 11.8 6 20 9 20c1 0 1.8-.6 3-.6s2 .6 3 .6c3 0 5.4-8.2 3.6-11.5C17 5.6 13.5 6 12 7Z"/><path d="M12 7c0-2 1-4 3-4"/>',
     dna: '<path d="M2 15c6.7-6 13.3 0 20-6M9 22c1.8-7-3.5-13.4 1-20M15 2c-1.8 7 3.5 13.4-1 20"/><path d="m17 6-2.5-2.5M14 8l-1-1M7 18l2.5 2.5M3.5 14.5l.5.5M20 9l.5.5M6.5 12.5l1 1M16.5 10.5l1 1M10 16l1.5 1.5"/>',
     columns: '<path d="M3 21h18M5 18h14M6 18v-7M10 18v-7M14 18v-7M18 18v-7M3 11h18L12 4Z"/>',
+    sliders: '<path d="M5 21v-7M5 10V3M12 21v-9M12 8V3M19 21v-5M19 12V3"/><path d="M2 14h6M9 8h6M16 16h6"/>',
     heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
     inbox: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
     outbox: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
@@ -92,11 +93,11 @@
     '🧠': 'brain', '🎯': 'target', '📇': 'cards', '🗂': 'cards', '🎥': 'video', '🧪': 'flask', '🪵': 'logs',
     '🦅': 'crown', '📚': 'book', '🍎': 'apple', '🧬': 'dna', '🏛': 'columns', '🫀': 'heart', '📥': 'inbox',
     '📤': 'outbox', '📊': 'chart', '📋': 'clip', '🖼': 'image', '📎': 'paperclip', '☁': 'cloud', '🗑': 'trash',
-    '✏': 'pencil', '☀': 'sun', '🌙': 'moon', '🧮': 'calc', '💰': 'tag', '⏰': 'clock', '🔒': 'lock', '🆓': 'spark',
+    '✏': 'pencil', '☀': 'sun', '🌙': 'moon', '🧮': 'calc', '🎛': 'sliders', '💰': 'tag', '⏰': 'clock', '🔒': 'lock', '🆓': 'spark',
     '✍': 'pencil', '⌨': 'keyboard', '🎟': 'ticket', '🐾': 'paw', '💳': 'card', '❌': 'xcircle', '😕': 'frown', '✂': 'scissors',
   };
   // Line icons get a color of their own where there's no better one around.
-  const TINT = { cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
+  const TINT = { sliders: '#B98500', cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
 
   function KI(name, opts = {}) {
     if (F[name]) return F[name];

@@ -157,3 +157,57 @@ html.knox-christmas section.kl-section > .kl-wrap { position: relative; z-index:
 .xmas-snow-sec.xmas-run .xmas-flake { animation-play-state: running; }
 @keyframes xmasFallSec { from { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--drift), calc(var(--fall, 800px) * .5)) rotate(160deg); } to { transform: translate(calc(var(--drift) * -.4), calc(var(--fall, 800px) + 40px)) rotate(320deg); } }
 @media (prefers-reduced-motion: reduce) { .xmas-snow-sec .xmas-flake { animation: none; top: var(--rest); } }
+/* Knox's fox on the welcome badge wears a little Santa hat too. */
+html.knox-christmas .kb-fox-wrap::after { content: ""; position: absolute; width: 16px; height: 13px; top: -7px; left: -3px; transform: rotate(-18deg); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'%3E%3Cpath d='M4 26C8 10 22 2 34 6l6 14-6 2C30 14 22 14 18 26Z' fill='%23E5383B' stroke='%23B3202A' stroke-width='2.5' stroke-linejoin='round'/%3E%3Crect x='2' y='24' width='24' height='9' rx='4.5' fill='%23fff' stroke='%23E6DCD8' stroke-width='2'/%3E%3Ccircle cx='38' cy='22' r='5' fill='%23fff' stroke='%23E6DCD8' stroke-width='2'/%3E%3C/svg%3E") no-repeat center / contain; pointer-events: none; }
+
+/* ── Christmas night (html.knox-christmas.knox-xmas-night, built on Dark) ──
+   A night-blue sky, moonlit snow, softly glowing lights, a moon and stars.
+   Same Knox red and green, a little brighter on the dark background. */
+html.knox-christmas[data-theme="dark"] {
+  --cream:        #0D1626;
+  --cream-warm:   #132036;
+  --gray:         #16233A;
+  --surface:      #1A2840;
+  --border:       #2C3E5A;
+  --text:         #EEF4FB;
+  --text-light:   #A6B8CC;
+  --text-body:    #C9D6E4;
+  --orange:       #FF4F57;
+  --orange-dark:  #C42F38;
+  --orange-light: #4A1C26;
+  --orange-cream: #2A1620;
+  --red:          #FF4F57;
+  --green:        #2BC06A;
+  --green-dark:   #1A8A4B;
+  --green-light:  #133A2A;
+  --purple-light: #2E1F4A;
+  --danger-bg:    #3A1820;
+  --app-bg:       #0F1B2E;
+  --app-card:     #1A2840;
+  --app-line:     #2C3E5A;
+  --kl-alt:       #122036;
+  color-scheme: dark;
+}
+html.knox-christmas[data-theme="dark"], html.knox-christmas[data-theme="dark"] body { background: var(--cream); }
+html.knox-christmas[data-theme="dark"] #home.kl-hero { background: var(--cream); }
+/* Knox's circles glow softly at night (like Dark), in red and evergreen. */
+html.knox-christmas[data-theme="dark"] [data-mb="classic"] { --mb-bg: #0D1626; --mb-c1: rgba(229,56,59,.12); --mb-g1: rgba(255,90,95,.5); --mb-c2: rgba(31,164,90,.12); --mb-g2: rgba(60,200,120,.45); }
+/* Moonlit snow on the hills */
+html.knox-xmas-night .xmas-hills .xh-back { fill: #5D7593; }
+html.knox-xmas-night .xmas-hills .xh-mid { fill: #C9D7E6; stroke: #A9BDD3; }
+html.knox-xmas-night .xmas-hills .xh-front { fill: #E8EFF7; stroke: #C2D2E3; }
+/* Lights glow at night; the wire shows on the dark sky */
+html.knox-xmas-night .xmas-lights > path { stroke: #7FA08A; }
+html.knox-xmas-night .xmas-lights .xb { filter: drop-shadow(0 0 5px rgba(255, 235, 180, .6)); }
+html.knox-xmas-night .xmas-baubles path, html.knox-xmas-night .xmas-wreath > path:first-child, html.knox-xmas-night .xmas-stocking > path:first-child { stroke: #7C8DA3; }
+/* Moon and stars */
+.xmas-night-sky { display: none; }
+html.knox-xmas-night .xmas-night-sky { display: block; position: absolute; inset: 0; }
+.xmas-moon { position: absolute; top: 64px; left: 18%; width: 64px; filter: drop-shadow(0 0 14px rgba(255, 240, 190, .45)); }
+.xmas-star { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #FFF6D6; box-shadow: 0 0 6px rgba(255, 246, 214, .8); }
+@media (max-width: 900px) { .xmas-moon { width: 44px; left: 6%; top: 70px; } }
+/* Snow: brighter flakes on the dark sky */
+html.knox-xmas-night .xmas-flake { border-color: #FFFFFF; }
+html.knox-xmas-night .xmas-flake.is-flake svg g { stroke: #DCEBFA; }
+/* Snow caps and section edges stay white (frosting on dark cards) */
+html.knox-xmas-night .kb-fox { border-color: var(--orange); }
