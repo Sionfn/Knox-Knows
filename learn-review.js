@@ -1,8 +1,14 @@
 (function () {
   let revision = 0, pending = null;
-  // Last answer per account: the panel shows at once when Learn opens, then
-  // quietly updates when the server answers (no late pop-in).
-  const cache = new Map();
+  // Last answer per account, kept on this device too: the panel shows at once
+  // when Learn opens (even right after signing in), then quietly updates when
+  // the server answers. It's fetched while the loading screen is still up.
+  const mem = new Map();
+  const cacheKey = uid => 'knoxReviewCache.' + uid;
+  const cache = {
+    get(uid) { if (mem.has(uid)) return mem.get(uid); try { const v = JSON.parse(localStorage.getItem(cacheKey(uid)) || 'null'); if (v && Array.isArray(v.items)) { mem.set(uid, v); return v; } } catch {} return undefined; },
+    set(uid, v) { mem.set(uid, v); try { localStorage.setItem(cacheKey(uid), JSON.stringify(v)); } catch {} },
+  };
   // Each topic wears an icon for its subject (knox-icons.js), checked in order.
   const SUBJECTS = [
     [/essay|\bthesis\b|writing|paragraph|grammar|sentence|punctuation|citation|spelling/i, 'pencil'],
@@ -152,10 +158,15 @@
   async function refresh() {
     const user = window.currentUser, view = window._appViewVersion, rev = ++revision;
     if (!user || !window._learnModeActive) { hide(); return; }
-    const known = cache.get(user.uid);
-    if (known) render(known, user, view, rev); else { let hid = false; try { hid = !!localStorage.getItem(hideKey(user.uid)); } catch {} if (!hid) placeholder(user, view, rev); }
+    let known = cache.get(user.uid), fresh = false;
+    if (!known && prefetching?.uid === user.uid) { known = await prefetching.promise.catch(() => null); fresh = !!known; }
+    if (!same(user.uid, view, rev)) return;
+    // Known topics show at once; with nothing known yet, nothing shows until
+    // the answer (no placeholder that appears and then changes or vanishes).
+    if (known) render(known, user, view, rev);
+    if (fresh) return; // just fetched at sign-in
     const wasOpen = () => !!panel()?.querySelector('details[open]');
-    try { const data = await request(user); render(data, user, view, rev, wasOpen()); }
+    try { const data = await request(user); cache.set(user.uid, data); render(data, user, view, rev, wasOpen()); }
     catch { if (same(user.uid,view,rev)) { const p=panel(); if(p) p.hidden=true; document.getElementById('welcomeScreen')?.classList.remove('has-learn-review'); } }
   }
   window.learnReviewUI = {
@@ -163,5 +174,13 @@
     targetFor: (text,uid,sessionId) => pending?.uid === uid && pending.sessionId === sessionId && pending.text === text ? pending.id : undefined,
     used: (id,uid,sessionId) => { if(pending?.id===id && pending.uid===uid && pending.sessionId===sessionId) pending=null; },
   };
-  window.addEventListener('knox-auth-changed', () => { hide(); if(window.currentUser && window._learnModeActive) refresh(); });
+  // As soon as the account is known (during the loading screen), get its topics.
+  let prefetching = null;
+  function prefetch() {
+    const user = window.currentUser; if (!user) { prefetching = null; return; }
+    const promise = request(user).then(data => { cache.set(user.uid, data); return data; });
+    prefetching = { uid: user.uid, promise };
+    promise.catch(() => {});
+  }
+  window.addEventListener('knox-auth-changed', () => { hide(); prefetch(); if(window.currentUser && window._learnModeActive) refresh(); });
 })();
