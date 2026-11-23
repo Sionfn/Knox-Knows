@@ -80,7 +80,7 @@
     simsView.innerHTML = `<div class="bs-wrap"><div class="bs-head"><h2>🎛️ Simulations</h2><p>Move the sliders, press Play, and watch math and science happen.</p></div>` +
       (mega ? '' : `<div class="bs-lock"><span>💎 Simulations are a <b>Mega Knox</b> perk. Upgrade to play with all of them.</span>${window.knoxNativeApp ? '' : '<button type="button" data-sims-upgrade>See Mega</button>'}</div>`) +
       `<div class="bs-grid">${SIMS.map(([, icon, title, sub, flavor], i) => `<button type="button" class="bs-tile" data-flavor="${flavor}" data-sim-i="${i}"><span class="bs-ico" aria-hidden="true">${icon}</span><b>${title}</b><small>${sub}</small>${mega ? '' : '<em aria-label="Mega Knox">💎</em>'}</button>`).join('')}</div>` +
-      (mega ? '<p class="bs-tip">Tip: turn on 🎛️ Simulations in Account &amp; Plan and Ask Knox adds one to your math and science answers.</p>' : '') + '</div>';
+      (mega ? '<p class="bs-tip">Tip: turn on 🎛️ Simulations in Account &amp; Plan and Knox adds one to your math and science answers in Ask Knox and Learn.</p>' : '') + '</div>';
     simsView.scrollTop = 0;
   }
   function simOpen(i) {

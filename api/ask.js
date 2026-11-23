@@ -844,6 +844,11 @@ const SIM_INSTRUCTION = 'Simulations are ON for this student. When a hands-on si
   'Sim: interest | p=1000, r=5, t=10   (simple vs compound interest: dollars, percent per year, years)\n' +
   'Whenever the problem names what is moving or being launched, ALWAYS include who= (motion) or item= (projectile) with the closest word from its list, so the app draws it. Use the numbers from the student\'s problem as the starting values. Only use one of these templates, only when it truly fits a math or science question, and never for anything else. Do not mention the Sim line or describe it; the app shows it as a card. Keep the normal answer complete without it.';
 
+// Learn: the same templates, as the JSON "sim" field, and never a shortcut to the answer.
+const SIM_LEARN_INSTRUCTION = 'Simulations are ON for this student. You may set the JSON field "sim" to ONE simulation when moving sliders would genuinely help them understand the idea of the current step (otherwise sim is ""). Write it as "type | key=value, ..." using only these templates:\n' +
+  SIM_INSTRUCTION.split('\n').filter(l => /^Sim: /.test(l)).map(l => l.replace(/^Sim: /, '')).join('\n') +
+  '\nWhen the problem names what is moving or launched, include who= (motion) or item= (projectile). This is Learn: the simulation must never hand over an answer the student has not worked out yet. While they are still solving, use different numbers from their problem so it shows the idea, not their result; use their own numbers only after they have solved that step (assessment correct) or in the recap. At most one simulation every few turns, only for math or science, and do not describe it in body: the app shows it as a card.';
+
 function toResponsesInput(messages) {
   return messages.map(msg => ({
     role: msg.role,
@@ -1307,8 +1312,11 @@ export default async function handler(req, res) {
     const tokenLimit = image ? 12000 : doc ? 12000 : casual ? 1500 : writing ? 8000 : 3000; // files can hold many problems, like photos
     // The student's chosen answer language (app setting). Learn's JSON keys stay as specified.
     if (language && language !== 'auto') messages.splice(messages.length - 1, 0, { role: 'system', content: `Write your entire reply in ${ANSWER_LANGUAGES[language]}, even if the question or photo is in another language, unless the student asks for a translation or for a different language. Keep math notation as is. Any required output format, labels or JSON keys stay exactly as specified; only the student-facing text is in ${ANSWER_LANGUAGES[language]}.` });
-    // Mega Knox with "Simulations" on (Ask Knox only): Knox may add one Sim: line.
-    if (simulations === true && tier === 'mega' && !learnMode && !casual && !isBot) messages.splice(messages.length - 1, 0, { role: 'system', content: SIM_INSTRUCTION });
+    // Mega Knox with "Simulations" on: Knox may add one Sim: line (Ask Knox), or
+    // fill Learn's sim field (Dec 1) without giving away an unearned answer.
+    const simsOn = simulations === true && tier === 'mega' && !casual && !isBot;
+    if (simsOn) messages.splice(messages.length - 1, 0, { role: 'system', content: learnMode ? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION });
+    if (lessonState) lessonState.sims = simsOn;
     const requestBody = {
       model:       modelToUse,
       messages,

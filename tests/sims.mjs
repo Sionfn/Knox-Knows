@@ -23,12 +23,23 @@ test('simulation specs are escaped and never become markup', () => {
   assert.doesNotMatch(html, /<img|onerror="/);
 });
 
-test('Learn answers and normal prose are left alone', () => {
+test('normal prose is left alone; a Learn reply shows its simulation above Your turn (Dec 1)', () => {
   assert.doesNotMatch(context.renderAnswerHtml('Simulation: try this at home.', 'answer'), /knox-sim/);
-  assert.doesNotMatch(context.renderAnswerHtml('Try it.\nSim: line | m=1\nYour turn: What next?', 'learn'), /knox-sim/);
+  const html = context.renderAnswerHtml('Try it.\nSim: line | m=1\nYour turn: What next?', 'learn');
+  assert.match(html, /data-sim="line \| m=1"/);
+  assert.doesNotMatch(html, /Sim:/);
 });
 
-test('the server adds simulations only for Mega Ask Knox and validates the flag', () => {
-  assert.match(ask, /simulations === true && tier === 'mega' && !learnMode && !casual && !isBot/);
+test('the server adds simulations only for Mega with the switch on (Ask Knox and Learn) and validates the flag', () => {
+  assert.match(ask, /const simsOn = simulations === true && tier === 'mega' && !casual && !isBot/);
+  assert.match(ask, /learnMode \? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION/);
   assert.match(ask, /typeof simulations !== 'boolean'/);
+});
+
+test('Learn keeps a sim only when Simulations are on, and only a known template', async () => {
+  const { decodeLearnOutput } = await import('../api/_learn-output.js');
+  const reply = sim => JSON.stringify({body:'Watch the slope.',question:'What is m?',choices:[],goals:['Slope'],part:1,practiceIndex:0,assessment:'new',reviewFocus:'',keyIdea:'',graph:'',visual:'',video:'',recap:'',watchOut:'',topic:'',sim});
+  assert.match(decodeLearnOutput(reply('line | m=3, b=1'), { sims: true }), /^Sim: line \| m=3, b=1$/m);
+  assert.doesNotMatch(decodeLearnOutput(reply('line | m=3, b=1'), {}), /Sim:/);
+  assert.doesNotMatch(decodeLearnOutput(reply('rocket | x=1'), { sims: true }), /Sim:/);
 });
