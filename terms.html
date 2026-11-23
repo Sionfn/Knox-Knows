@@ -4,7 +4,7 @@
   <script>
     // Same theme as the landing page and app (localStorage 'knoxTheme'), set
     // before first paint so dark-mode users don't get a white flash.
-    (function(){try{var t=localStorage.getItem('knoxTheme'),mo=new Date().getMonth();if(t==='seasonal')t='light';if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');document.documentElement.style.backgroundColor=t==='seasonal'?'#FBF3E5':t==='dark'?'#120E17':'#FFF9F1';}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('knoxTheme'),mo=new Date().getMonth();if(t==='seasonal')t='light';if(t==='dark'||t==='seasonal')document.documentElement.setAttribute('data-theme','dark');if(t==='seasonal')document.documentElement.classList.add('knox-seasonal');if(t==='christmas'&&!(mo===11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search)))t='light';if(t==='christmas')document.documentElement.classList.add('knox-christmas');document.documentElement.style.backgroundColor=t==='christmas'?'#FFFAF6':t==='seasonal'?'#FBF3E5':t==='dark'?'#120E17':'#FFF9F1';}catch(e){}})();
   </script>
 
   <meta charset="UTF-8">
@@ -59,6 +59,7 @@
 <link rel="stylesheet" href="/logo-theme.css">
 <link rel="stylesheet" href="/hover-steady.css">
 <link rel="stylesheet" href="/legal-theme.css">
+  <link rel="stylesheet" href="/christmas.css">
 </head>
 <body>
 <noscript><style>body.page-loading > * { visibility:visible !important; } #pageLoading { display:none !important; } body.page-loading { overflow:auto; }</style></noscript>

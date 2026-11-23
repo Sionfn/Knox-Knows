@@ -15,8 +15,9 @@
     { id: 'light',    icon: '☀️', name: 'Light', note: 'Knox’s classic look' },
     { id: 'dark',     icon: '🌙', name: 'Dark',  note: 'Easy on the eyes at night' },
     { id: 'seasonal', icon: '🍁', name: 'Fall harvest', note: 'Warm colors, autumn leaves & Thanksgiving' },
+    { id: 'christmas', icon: '🎄', name: 'Christmas', note: 'Knox red & green, a tree and a little snow' },
   ];
-  const current = () => root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const current = () => root.classList.contains('knox-christmas') ? 'christmas' : root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   window.knoxTheme = current;
 
   // Fall mode is offered September through November. After that it rests
@@ -24,13 +25,19 @@
   // December update: Fall is over, so Light and Dark only (anyone on Fall goes back to Light).
   const fallSeason = () => false;
   if (!fallSeason()) MODES.splice(MODES.findIndex(m => m.id === 'seasonal'), 1);
+  // Christmas (christmas.css) is offered in December; the private preview and
+  // local copies always offer it, and ?christmas=demo shows it any time.
+  const christmasSeason = () => new Date().getMonth() === 11 || /preview|localhost|127\.0\.0\.1/.test(location.hostname) || /[?&]christmas=demo/.test(location.search);
+  if (!christmasSeason()) MODES.splice(MODES.findIndex(m => m.id === 'christmas'), 1);
   window.knoxSetTheme = function (mode) {
     if (!MODES.some(m => m.id === mode)) mode = 'light';
     // Pause color transitions while the look changes (see .knox-theme-switching)
     // so every element switches in the same frame.
     root.classList.add('knox-theme-switching');
-    if (mode === 'light') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
+    // Christmas is built on Light (christmas.css); Fall on Dark (seasonal.css).
+    if (mode === 'light' || mode === 'christmas') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
     root.classList.toggle('knox-seasonal', mode === 'seasonal');
+    root.classList.toggle('knox-christmas', mode === 'christmas');
     try { localStorage.setItem('knoxTheme', mode); } catch (e) { /* best effort */ }
     syncIcons();
     syncFavicon();
@@ -41,11 +48,13 @@
 
   // ── Appearance button icon shows the current look ───────────────────────
   const LEAF_ICON = '<svg id="darkModeIconLeaf" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>';
+  const TREE_ICON = '<svg id="darkModeIconTree" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M12 2l4 6h-2.5l4 6H15l4 6H5l4-6H6.5l4-6H8z"/><path d="M12 20v2"/></svg>';
   function syncIcons() {
     const mode = current();
     const btn = document.getElementById('darkModeToggle');
     if (btn && !document.getElementById('darkModeIconLeaf')) btn.querySelector('svg:last-of-type')?.insertAdjacentHTML('afterend', LEAF_ICON);
-    const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal' };
+    if (btn && !document.getElementById('darkModeIconTree')) btn.querySelector('svg:last-of-type')?.insertAdjacentHTML('afterend', TREE_ICON);
+    const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal', darkModeIconTree: mode === 'christmas' };
     for (const [id, on] of Object.entries(show)) { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
     if (btn) {
       const name = MODES.find(m => m.id === mode).name;
@@ -232,6 +241,76 @@
       l.setAttribute('href', fall ? fallHref : l.dataset.normal);
     });
   }
-  function ready() { fallResting(); syncIcons(); syncFavicon(); decorate(); arrangeHarvest(); if (fallSeason()) tip(); }
+  // ── Christmas decorations (christmas.css shows them only in Christmas) ──
+  // Flat Knox shapes: a tree, presents, hanging ornaments and slow snow.
+  const XMAS_TREE = '<svg class="xmas-tree" viewBox="0 0 150 190" aria-hidden="true" focusable="false"><rect x="64" y="160" width="22" height="26" rx="4" fill="#A5673A" stroke="#7A4A27" stroke-width="3"/><path d="M75 20 128 92H22Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 58 138 140H12Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 96 146 170H4Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 4l5 10 11 1-8 7 3 11-11-6-11 6 3-11-8-7 11-1Z" fill="#FFC800" stroke="#D9A300" stroke-width="2.5" stroke-linejoin="round"/><g stroke-width="2.5"><circle cx="58" cy="82" r="6" fill="#E5383B" stroke="#B3202A"/><circle cx="96" cy="122" r="6" fill="#FFC800" stroke="#D9A300"/><circle cx="46" cy="132" r="6" fill="#1CB0F6" stroke="#0A85C2"/><circle cx="106" cy="160" r="6" fill="#E5383B" stroke="#B3202A"/><circle cx="62" cy="160" r="6" fill="#FFC800" stroke="#D9A300"/><circle cx="88" cy="74" r="5" fill="#CE82FF" stroke="#7C3AED"/></g></svg>';
+  const GIFT = (x, y, w, h, c, d, rib) => `<g transform="translate(${x} ${y})"><rect width="${w}" height="${h}" rx="5" fill="${c}" stroke="${d}" stroke-width="3"/><rect x="${w / 2 - 5}" width="10" height="${h}" fill="${rib}"/><rect y="${h / 2 - 5}" width="${w}" height="10" fill="${rib}" opacity=".9"/><path d="M${w / 2} 0c-6-10-18-10-16-2s16 2 16 2c6-10 18-10 16-2s-16 2-16 2" fill="${rib}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+  const XMAS_GIFTS = '<svg class="xmas-gifts" viewBox="0 0 170 120" aria-hidden="true" focusable="false">' + GIFT(6, 44, 70, 72, '#E5383B', '#B3202A', '#FFC800') + GIFT(84, 62, 58, 54, '#1FA45A', '#157A41', '#FFFFFF') + GIFT(120, 22, 44, 40, '#FFC800', '#D9A300', '#E5383B') + '</svg>';
+  const BAUBLE = (x, len, r, c, d) => `<path d="M${x} 0v${len}" stroke="#D9C9C3" stroke-width="2"/><rect x="${x - 5}" y="${len - 2}" width="10" height="7" rx="2" fill="#FFC800" stroke="#D9A300" stroke-width="2"/><circle cx="${x}" cy="${len + 5 + r}" r="${r}" fill="${c}" stroke="${d}" stroke-width="3"/>`;
+  const XMAS_BAUBLES = '<svg class="xmas-baubles" viewBox="0 0 150 120" aria-hidden="true" focusable="false">' + BAUBLE(14, 30, 11, '#E5383B', '#B3202A') + BAUBLE(46, 56, 14, '#1FA45A', '#157A41') + BAUBLE(78, 22, 10, '#FFC800', '#D9A300') + BAUBLE(108, 46, 12, '#1CB0F6', '#0A85C2') + BAUBLE(138, 28, 9, '#CE82FF', '#7C3AED') + '</svg>';
+  // Falling snow over the whole page: six-armed flakes and soft dots in icy
+  // blue and white, so they show on the light background.
+  const FLAKE = c => `<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/><path d="M9.2 3.8 12 6l2.8-2.2M9.2 20.2 12 18l2.8 2.2M3.6 10.4l3.4-.6-1.2-3.3M20.4 13.6l-3.4.6 1.2 3.3M3.6 13.6l3.4.6-1.2 3.3M20.4 10.4l-3.4-.6 1.2-3.3"/></g></svg>`;
+  function snow(n) {
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      const flake = i % 3 !== 2, size = flake ? 12 + (i * 7) % 14 : 6 + (i * 5) % 7;
+      html += `<span class="xmas-flake${flake ? ' is-flake' : ''}" style="--x:${(i * 41 + 7) % 99}%;--s:${size}px;--d:${12 + (i * 7) % 14}s;--delay:-${((i * 4.3) % 24).toFixed(1)}s;--drift:${(i % 2 ? 1 : -1) * (14 + (i * 3) % 26)}px;--rest:${(4 + (i * 17) % 88)}%">${flake ? FLAKE(i % 2 ? '#8FC1E3' : '#B7D8EE') : ''}</span>`;
+    }
+    return html;
+  }
+  // String lights along the top: a drooping wire with red, green, gold and blue bulbs.
+  function lights(count) {
+    let bulbs = '';
+    const cols = [['#E5383B', '#B3202A'], ['#1FA45A', '#157A41'], ['#FFC800', '#D9A300'], ['#1CB0F6', '#0A85C2']];
+    for (let i = 0; i < count; i++) {
+      const x = 20 + i * (1160 / (count - 1)), sag = Math.sin(((x % 290) / 290) * Math.PI) * 26, [c, d] = cols[i % 4];
+      bulbs += `<g transform="translate(${x.toFixed(1)} ${(8 + sag).toFixed(1)}) rotate(${(i % 2 ? 8 : -8)})"><rect x="-4" y="0" width="8" height="7" rx="2" fill="#4E6B57"/><path d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+    }
+    return `<svg class="xmas-lights" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 8 Q145 42 290 8 T580 8 T870 8 T1160 8 T1450 8" fill="none" stroke="#4E6B57" stroke-width="3"/>${bulbs}</svg>`;
+  }
+  // Snowy hills along the bottom (stretch to any width) …
+  const XMAS_HILLS = '<svg class="xmas-hills" viewBox="0 0 1200 140" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 70C160 20 300 30 450 62S760 110 900 70 1120 30 1200 50V140H0Z" fill="#E4EFF7"/><path d="M0 100C200 60 360 70 520 96S820 130 980 98 1140 76 1200 84V140H0Z" fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3"/></svg>';
+  // … with little pines, a snowman and Knox-colored presents standing on them.
+  const PINE = (x, s, c = '#1FA45A', d = '#157A41') => `<g transform="translate(${x} 0) scale(${s})"><rect x="-6" y="78" width="12" height="14" rx="3" fill="#A5673A"/><path d="M0 0 26 36H-26Z M0 22 32 62H-32Z M0 44 38 84H-38Z" fill="${c}" stroke="${d}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-12 18 0 12 12 18M-16 42 0 35 16 42M-20 66 0 58 20 66" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></g>`;
+  const XMAS_PINES = `<svg class="xmas-pines" viewBox="-40 -6 230 100" aria-hidden="true" focusable="false">${PINE(0, 1)}${PINE(78, .78, '#28B565', '#157A41')}${PINE(140, .6)}</svg>`;
+  const XMAS_SNOWMAN = '<svg class="xmas-snowman" viewBox="0 0 110 150" aria-hidden="true" focusable="false"><g fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3.5"><circle cx="55" cy="112" r="34"/><circle cx="55" cy="66" r="24"/><circle cx="55" cy="32" r="18"/></g><rect x="38" y="4" width="34" height="8" rx="3" fill="#3C3C3C"/><rect x="43" y="-14" width="24" height="20" rx="3" fill="#3C3C3C"/><rect x="43" y="-2" width="24" height="5" fill="#E5383B"/><circle cx="48" cy="29" r="2.6" fill="#3C3C3C"/><circle cx="62" cy="29" r="2.6" fill="#3C3C3C"/><path d="M55 34l16 4-16 3Z" fill="#FF8A3D" stroke="#CC5500" stroke-width="1.5" stroke-linejoin="round"/><path d="M33 48c14 7 30 7 44 0l3 8c-16 8-34 8-50 0Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M66 52l6 20 8-3-5-17" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><g fill="#3C3C3C"><circle cx="55" cy="60" r="2.6"/><circle cx="55" cy="72" r="2.6"/><circle cx="55" cy="104" r="2.6"/></g><path d="M31 66 8 52M79 66l22-12" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/></svg>';
+  const SANTA_HAT = '<svg class="xmas-hat" viewBox="0 0 44 36" aria-hidden="true" focusable="false"><path d="M4 26C8 10 22 2 34 6l6 14-6 2C30 14 22 14 18 26Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><rect x="2" y="24" width="24" height="9" rx="4.5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/><circle cx="38" cy="22" r="5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/></svg>';
+  // A wreath (top left), candy canes and a stocking.
+  const XMAS_WREATH = (() => { let leaves = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, x = 60 + Math.cos(a) * 38, y = 60 + Math.sin(a) * 38; leaves += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="15" ry="9" transform="rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#1FA45A' : '#28B565'}" stroke="#157A41" stroke-width="2.5"/>`; } return `<svg class="xmas-wreath" viewBox="0 0 120 150" aria-hidden="true" focusable="false"><path d="M60 0v20" stroke="#D9C9C3" stroke-width="2"/>${leaves}<g stroke-width="2.5"><circle cx="30" cy="44" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="92" cy="52" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="40" cy="94" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="86" cy="92" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="60" cy="24" r="5" fill="#1CB0F6" stroke="#0A85C2"/></g><path d="M60 98c-14-12-30-8-24 4s24-4 24-4c14-12 30-8 24 4s-24-4-24-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M54 100l-8 30 10-6 4 10 2-34M66 100l8 30-10-6-4 10-2-34" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/></svg>`; })();
+  const CANE = (x, r) => `<g transform="translate(${x} 6) rotate(${r})"><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#E5383B" stroke-width="11" stroke-linecap="round" stroke-dasharray="7 7"/><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#B3202A" stroke-width="1.5" opacity=".0"/></g>`;
+  const XMAS_CANES = `<svg class="xmas-canes" viewBox="-14 0 80 104" aria-hidden="true" focusable="false">${CANE(10, -8)}${CANE(42, 10)}</svg>`;
+  const XMAS_STOCKING = '<svg class="xmas-stocking" viewBox="0 0 70 110" aria-hidden="true" focusable="false"><path d="M35 0v14" stroke="#D9C9C3" stroke-width="2"/><path d="M18 30h34v40c0 18-10 30-28 30H12c-8 0-10-12 0-16l6-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="14" width="42" height="18" rx="6" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2.5"/><path d="M22 52h26M22 64h26" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><circle cx="38" cy="46" r="0"/></svg>';
+  function christmasDecorate() {
+    const host = document.getElementById('welcomeScreen') || document.getElementById('home');
+    if (host && !host.querySelector(':scope > .xmas-deco')) {
+      host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true">${lights(17)}${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+    }
+    // Snow falls over the whole page (never catches clicks).
+    if (!document.querySelector('body > .xmas-snow')) document.body.insertAdjacentHTML('beforeend', `<div class="xmas-snow" aria-hidden="true">${snow(FEW_LEAVES ? 22 : 44)}</div>`);
+    // Lights along the top of the sidebar and the landing header too.
+    document.querySelectorAll('.sidebar-top, #main-header').forEach(el => { if (!el.querySelector(':scope > .xmas-lights-mini')) el.insertAdjacentHTML('beforeend', lights(9).replace('class="xmas-lights"', 'class="xmas-lights xmas-lights-mini"')); });
+    document.querySelectorAll('.sidebar-logo-link, .header-logo').forEach(a => { if (!a.querySelector('.xmas-hat')) a.insertAdjacentHTML('afterbegin', SANTA_HAT); });
+  }
+  // "Christmas mode is here" tip (app welcome screen, December, dismissible).
+  function christmasTip() {
+    const ws = document.getElementById('welcomeScreen'), badge = ws?.querySelector('.welcome-badge');
+    if (!badge || ws.querySelector('.fall-tip') || current() === 'christmas') return;
+    try { if (localStorage.getItem('knoxChristmasTip') === 'hidden') return; } catch (e) {}
+    const el = document.createElement('div');
+    el.className = 'fall-tip';
+    el.setAttribute('role', 'note');
+    el.innerHTML = '<span aria-hidden="true">🎄</span><span class="ft-text">Christmas mode is here! Red, green and a little snow.</span><button type="button" class="ft-btn">Try it</button><button type="button" class="ft-x" aria-label="Hide this tip" title="Hide">×</button>';
+    const hide = () => { el.remove(); try { localStorage.setItem('knoxChristmasTip', 'hidden'); } catch (e) {} };
+    el.querySelector('.ft-btn').addEventListener('click', () => { window.knoxSetTheme('christmas'); hide(); });
+    el.querySelector('.ft-x').addEventListener('click', hide);
+    badge.before(el);
+  }
+  // After December, anyone still on Christmas goes back to Light.
+  function christmasResting() {
+    let saved = null; try { saved = localStorage.getItem('knoxTheme'); } catch (e) {}
+    if (saved === 'christmas' && !christmasSeason()) window.knoxSetTheme('light');
+  }
+  function ready() { fallResting(); christmasResting(); syncIcons(); syncFavicon(); decorate(); arrangeHarvest(); christmasDecorate(); if (fallSeason()) tip(); else if (christmasSeason()) christmasTip(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();
 })();

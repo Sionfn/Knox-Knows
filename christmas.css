@@ -1,0 +1,106 @@
+/* christmas.css — Knox's Christmas look (Dec 2026), for the web app, the
+   landing page and the info pages. Turned on by html.knox-christmas
+   (localStorage knoxTheme 'christmas', offered in December by theme.js).
+
+   It is Knox's normal LIGHT look in Christmas colors: cream backgrounds,
+   solid borders with the darker edge underneath, flat colors, Nunito.
+   Knox orange becomes Christmas red, green becomes evergreen, gold stays.
+   No glows, gradients or sparkles. A little flat snow, a tree and presents
+   sit behind the app's welcome screen and the landing hero (theme.js). */
+
+html.knox-christmas {
+  --orange:        #E5383B;   /* Christmas red (Ask Knox, main buttons) */
+  --orange-dark:   #B3202A;
+  --orange-light:  #FFD6D8;
+  --orange-cream:  #FFF4F3;
+  --green:         #1FA45A;   /* evergreen (Flashcards, Plus, "right") */
+  --green-dark:    #157A41;
+  --green-light:   #D3F3DF;
+  --red:           #E5383B;
+  --cream:         #FFFAF6;   /* snowy cream */
+  --cream-warm:    #FFF2EE;
+  --border:        #EADFDC;
+  --danger-bg:     #FFF0F0;
+  /* landing.css's own names */
+  --app-bg:        #FFF7F3;
+  --app-line:      #F0DEDA;
+  --kl-alt:        #FFF4F1;
+}
+html.knox-christmas, html.knox-christmas body { background: var(--cream); }
+
+/* Knox's flat circles (mode-bg.css "Classic") in red and evergreen. */
+html.knox-christmas [data-mb="classic"] { --mb-bg: var(--cream); --mb-c1: #FFE3E4; --mb-c2: #DDF4E6; }
+
+/* Badges that said "Cozy fall…" etc. use the normal text in Christmas. */
+html.knox-christmas .season-only { display: none; }
+
+/* Calculator, Learn and the rest keep their own colors; only the warm
+   accents change. The Learn purple stays purple. */
+
+/* ── Decorations (theme.js) ──────────────────────────────────────────
+   Behind the app's welcome screen and the landing hero (.xmas-deco): string
+   lights, a wreath, ornaments, a stocking, and snowy hills with pines, the
+   tree, candy canes, a snowman and presents. Snow falls over the whole page
+   (.xmas-snow). Cards get a little snow cap. All flat Knox shapes. */
+.xmas-deco, .xmas-snow, .xmas-lights-mini { display: none; }
+html.knox-christmas .xmas-deco { display: block; position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+html.knox-christmas #welcomeScreen > .xmas-deco, html.knox-christmas #home > .xmas-deco { position: absolute !important; inset: 0 !important; z-index: 0 !important; margin: 0 !important; width: auto !important; height: auto !important; }
+html.knox-christmas #welcomeScreen > :not(.xmas-deco),
+html.knox-christmas #home > :not(.xmas-deco) { position: relative; z-index: 1; }
+
+/* Frosty winter background */
+html.knox-christmas { --cream: #F3F8FC; --cream-warm: #EAF3FA; }
+html.knox-christmas [data-mb="classic"] { --mb-bg: #F3F8FC; --mb-c1: #FFE1E2; --mb-c2: #D9F2E3; }
+html.knox-christmas #home.kl-hero { background: #F3F8FC; }
+
+/* Snow over everything (never catches clicks) */
+html.knox-christmas .xmas-snow { display: block; position: fixed; inset: 0; z-index: 9000; pointer-events: none; overflow: hidden; }
+.xmas-flake { position: absolute; top: -30px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: #FFFFFF; border: 2px solid #C9E0F0; animation: xmasFall var(--d) linear var(--delay) infinite; }
+.xmas-flake.is-flake { background: none; border: 0; border-radius: 0; }
+.xmas-flake svg { display: block; width: 100%; height: 100%; }
+@keyframes xmasFall { from { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--drift), 52vh) rotate(160deg); } to { transform: translate(calc(var(--drift) * -.4), 106vh) rotate(320deg); } }
+@media (prefers-reduced-motion: reduce) { .xmas-flake { animation: none; top: var(--rest); } }
+
+/* String lights */
+.xmas-lights { position: absolute; top: 0; left: 0; width: 100%; height: 46px; }
+html.knox-christmas .xmas-lights-mini { display: block; position: absolute; top: auto; bottom: -22px; left: 0; width: 100%; height: 30px; pointer-events: none; z-index: 5; }
+html.knox-christmas .sidebar-top, html.knox-christmas #main-header { position: relative; }
+
+/* Top: wreath (left), ornaments (right), stocking */
+.xmas-wreath { position: absolute; top: 28px; left: 3%; width: 104px; }
+.xmas-baubles { position: absolute; top: 18px; right: 5%; width: 190px; }
+.xmas-stocking { position: absolute; top: 30px; right: calc(5% + 200px); width: 46px; }
+
+/* Bottom: the snowy ground */
+.xmas-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; }
+.xmas-hills { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 96px; }
+.xmas-pines { position: absolute; left: 1%; bottom: 40px; width: 200px; }
+.xmas-tree { position: absolute; left: 15%; bottom: 26px; width: 120px; }
+.xmas-canes { position: absolute; left: calc(15% + 120px); bottom: 24px; width: 48px; }
+.xmas-snowman { position: absolute; right: calc(2% + 190px); bottom: 28px; width: 84px; }
+.xmas-gifts { position: absolute; right: 2%; bottom: 22px; width: 170px; }
+@media (max-width: 1100px) { .xmas-pines { display: none; } .xmas-tree { left: 2%; } .xmas-canes { left: calc(2% + 120px); } .xmas-stocking { display: none; } }
+@media (max-width: 900px) {
+  .xmas-ground { height: 120px; } .xmas-hills { height: 70px; }
+  .xmas-tree { width: 84px; } .xmas-canes { left: calc(2% + 84px); width: 34px; }
+  .xmas-snowman { width: 60px; right: calc(2% + 120px); } .xmas-gifts { width: 116px; }
+  .xmas-wreath { width: 72px; } .xmas-baubles { width: 130px; }
+}
+@media (max-width: 600px) { .xmas-snowman, .xmas-canes, .xmas-wreath { display: none; } .xmas-baubles { width: 110px; } }
+/* The welcome screen's content sits above the ground scene. */
+html.knox-christmas #welcomeScreen { padding-bottom: 150px; }
+@media (max-width: 900px) { html.knox-christmas #welcomeScreen { padding-bottom: 110px; } }
+
+/* Snow caps on Knox's cards (app + landing) */
+html.knox-christmas :is(.suggestion-chip, .fc-way, .fc-deck, .pt-card, .kp-family, .kl-mode-card, .kl-card, .sidebar-extension-card, .bs-tile, .fc-quiz-q) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px;
+}
+html.knox-christmas #pricing .kp-family { background-color: var(--surface); }
+
+/* The "Christmas mode is here" tip reuses the fall tip's shape (seasonal.css). */
+html.knox-christmas .fall-tip { border-color: var(--orange); }
+
+/* Knox's logo in the sidebar and the landing header wears a Santa hat. */
+html.knox-christmas .sidebar-logo-link, html.knox-christmas .header-logo { position: relative; }
+html.knox-christmas .xmas-hat { display: block; }
+.xmas-hat { display: none; position: absolute; width: 22px; height: 18px; top: -9px; left: 9px; transform: rotate(-18deg); pointer-events: none; z-index: 2; }
