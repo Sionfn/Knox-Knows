@@ -12,8 +12,16 @@
 // Ambassadors also `ambassador: true`). Gift codes and Flame Fest add
 // time-limited Plus (`plusUntil`) or Mega (`megaUntil`), in ms. App Store
 // subscriptions set appleTier + appleUntil (api/_apple.js).
+//
+// Family plan (Dec 2026): Knox Plus for the payer and up to 3 more students
+// ($19.99/mo, $149/yr). The payer is stored like Knox Plus (plan 'super') with
+// `family: true`; each member gets `familyUntil` (ms, the payer's paid-through
+// date plus a few days, refreshed on every renewal) and `familyOwner`. Only the
+// server writes these (api/_family.js, api/webhook.js).
 export const MEGA_PLAN = "max";
 export const PLUS_PLAN = "super";
+export const FAMILY_PLAN = "family";   // the checkout choice; stored as PLUS_PLAN + family: true
+export const FAMILY_SEATS = 4;         // the payer + 3 members
 
 export function activeAppleTier(d, now = Date.now()) {
   const legacy = Number(d?.appleUntil) > now ? d?.appleTier : null;
@@ -25,7 +33,7 @@ export function activeAppleTier(d, now = Date.now()) {
 export function tierOf(d, now = Date.now()) {
   const apple = activeAppleTier(d, now);
   if (d?.plan === MEGA_PLAN || Number(d?.megaUntil) > now || (d?.comped === true && d?.compedTier === "mega") || apple === "mega") return "mega";
-  if (d?.plan === "super" || d?.plan === "plus" || d?.comped === true || Number(d?.plusUntil) > now || apple === "plus") return "plus";
+  if (d?.plan === "super" || d?.plan === "plus" || d?.comped === true || Number(d?.plusUntil) > now || Number(d?.familyUntil) > now || apple === "plus") return "plus";
   return "free";
 }
 export const isPaidTier = tier => tier === "plus" || tier === "mega";
@@ -47,3 +55,11 @@ export const megaPrices = () => ({
   monthly: (process.env.STRIPE_PRICE_MEGA_MONTHLY || "").trim(),
   yearly:  (process.env.STRIPE_PRICE_MEGA_YEARLY  || "").trim(),
 });
+
+// Family plan prices (env vars, made in the Stripe dashboard):
+// STRIPE_PRICE_FAMILY_MONTHLY ($19.99/mo) and STRIPE_PRICE_FAMILY_YEARLY ($149/yr).
+export const familyPrices = () => ({
+  monthly: (process.env.STRIPE_PRICE_FAMILY_MONTHLY || "").trim(),
+  yearly:  (process.env.STRIPE_PRICE_FAMILY_YEARLY  || "").trim(),
+});
+export const isFamilyPrice = id => !!id && Object.values(familyPrices()).includes(id);

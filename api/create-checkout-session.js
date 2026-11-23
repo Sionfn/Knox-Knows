@@ -9,7 +9,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from 'firebase-admin/firestore';
 import { GIFTS } from './_gifts.js';
-import { MEGA_PLAN, compedPlan, megaPrices, activeAppleTier } from './_plans.js';
+import { MEGA_PLAN, FAMILY_PLAN, compedPlan, megaPrices, familyPrices, isFamilyPrice, activeAppleTier } from './_plans.js';
 
 if (!getApps().length) {
   initializeApp({
@@ -51,6 +51,7 @@ const PRICES = {
     yearly:  "price_1UBcpYCqlxC7aoKR7FUFZ0e2",  // Knox Plus $79.99/yr
   },
   get max() { return megaPrices(); },          // Mega Knox $12.99/mo, $99.99/yr
+  get family() { return familyPrices(); },     // Family plan $19.99/mo, $149/yr (Knox Plus for 4)
 };
 
 // Stripe portal settings for upgrades: charge the difference right away and
@@ -129,6 +130,7 @@ export default async function handler(req, res) {
     ? PRICES[plan][billing] : null;
   if (!priceId) {
     if (plan === MEGA_PLAN && ['monthly', 'yearly'].includes(billing)) return res.status(503).json({ error: "Mega Knox isn't available just yet. Please try again soon." });
+    if (plan === FAMILY_PLAN && ['monthly', 'yearly'].includes(billing)) return res.status(503).json({ error: "The Family plan isn't available just yet. Please try again soon." });
     return res.status(400).json({ error: "Invalid plan or billing period." });
   }
 
@@ -176,6 +178,13 @@ export default async function handler(req, res) {
       const pendingSwitch = (await checkoutRef.get()).data()?.switchAttempt;
       if (pendingSwitch && (pendingSwitch.subscriptionId !== subscriptionId || pendingSwitch.priceId !== priceId || pendingSwitch.billing !== billing)) {
         return res.status(409).json({ error: 'Your previous plan change is still being confirmed. Retry that selection before choosing another plan.' });
+      }
+      // Moving to or from the Family plan changes who has Knox Plus, so it's a
+      // fresh start rather than a price switch.
+      if (active && currentPrice && currentPrice.price?.id !== priceId && (plan === FAMILY_PLAN || isFamilyPrice(currentPrice.price?.id))) {
+        return res.status(409).json({ error: plan === FAMILY_PLAN
+          ? 'To switch to the Family plan, cancel your current plan in Manage billing first. You keep it until the end of what you paid for, then you can start Family.'
+          : "You're on the Family plan. To change it, use Manage billing." });
       }
       if (active && currentPrice && currentPrice.price?.id !== priceId) {
         // Reconcile historical direct-update intents above, but never re-charge

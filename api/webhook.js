@@ -9,7 +9,8 @@ import crypto from 'crypto';
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { GIFTS, newGiftCode, formatCode, giftEmail } from "./_gifts.js";
-import { MEGA_PLAN, compedPlan, megaPrices } from "./_plans.js";
+import { MEGA_PLAN, PLUS_PLAN, compedPlan, megaPrices, familyPrices, isFamilyPrice } from "./_plans.js";
+import { syncFamily, familyUntilOf } from "./_family.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -50,6 +51,8 @@ const PRICE_TO_PLAN = {
 };
 // Mega Knox's current prices (env vars, made in the Stripe dashboard).
 for (const id of Object.values(megaPrices())) if (id) PRICE_TO_PLAN[id] = MEGA_PLAN;
+// The Family plan is Knox Plus for the payer (plus family: true) and their members.
+for (const id of Object.values(familyPrices())) if (id) PRICE_TO_PLAN[id] = PLUS_PLAN;
 
 export const config = { api: { bodyParser: false } };
 
@@ -68,6 +71,7 @@ async function getRawBody(req) {
 // see the unified brand name in every email going forward.
 const PLAN_NAMES = {
   super: { name: "Knox Plus", perks: "unlimited questions, unlimited photo and file uploads, and faster support" },
+  family: { name: "Knox Family plan", perks: "Knox Plus for you and up to 3 more students. Invite them from Account & Plan on knoxknowsapp.com" },
   max:   { name: "Mega Knox", perks: "unlimited questions, the biggest flashcard decks you can customize, early access to new features, the highest limits everywhere, and a direct line to me on Discord" },
 };
 
@@ -274,7 +278,8 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
   const plan = PRICE_TO_PLAN[subscription.items?.data?.[0]?.price?.id];
   if (!plan || !['active', 'trialing'].includes(subscription.status)) return false;
   const ref = db.collection('users').doc(uid);
-  return db.runTransaction(async tx => {
+  const family = isFamilyPrice(subscription.items?.data?.[0]?.price?.id);
+  const applied = await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     const existing = snap.exists ? snap.data() : {};
     // A delayed checkout event must never replace a different subscription.
@@ -291,7 +296,7 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
     // and only after the subscription id has been cleared.
     if (!options.checkout && existing.planStatus === 'cancelled' && !existing.stripeSubscription) return false;
     tx.set(ref, {
-      plan, planStatus: subscription.status,
+      plan, planStatus: subscription.status, family,
       stripeCustomerId: subscription.customer,
       stripeSubscription: subscription.id,
       ...(options.checkout ? { planActivatedAt: new Date().toISOString() } : { planRenewedAt: new Date().toISOString() }),
@@ -299,6 +304,9 @@ async function applyActiveSubscription(uid, subscription, options = {}) {
     if (options.notification) tx.set(options.eventRef, { notification: options.notification, notificationCustomer: subscription.customer }, { merge: true });
     return true;
   });
+  // Family plan: members' access follows this subscription (0 once it's no longer Family).
+  if (applied) await syncFamily(db, uid, family ? familyUntilOf(subscription) : 0).catch(err => console.error('Family sync failed:', uid, err.message));
+  return applied;
 }
 
 // True when this trial's card already started a trial on a different account.
@@ -407,7 +415,7 @@ export default async function handler(req, res) {
         }
         const purchasePlan = PRICE_TO_PLAN[subscription.items.data[0]?.price?.id];
         const notification = ['active', 'trialing'].includes(subscription.status) && purchasePlan
-          ? await sendPurchaseEmail(verifiedEmail || await resolveEmail(subscription), purchasePlan) : null;
+          ? await sendPurchaseEmail(verifiedEmail || await resolveEmail(subscription), isFamilyPrice(subscription.items.data[0]?.price?.id) ? 'family' : purchasePlan) : null;
         const activated = await applyActiveSubscription(uid, subscription, { checkout: true, notification, eventRef: claim.ref });
         if (!activated) {
           if (['active', 'trialing'].includes(subscription.status)) {
@@ -459,7 +467,11 @@ export default async function handler(req, res) {
             tx.set(ref, comped ? { plan: compedPlan(snap.data()), planStatus: 'comped' } : { plan: 'free', planStatus: subscription.status }, { merge: true });
             return true;
           });
-          if (paused) console.log(`⚠ Subscription ${subscription.status}: uid=${uid} — paid access removed`);
+          if (paused) {
+            console.log(`⚠ Subscription ${subscription.status}: uid=${uid} — paid access removed`);
+            await ref.set({ family: false }, { merge: true });
+            await syncFamily(db, uid, 0).catch(err => console.error('Family end failed:', uid, err.message));
+          }
           break;
         }
         if (uid && await applyActiveSubscription(uid, subscription)) {
@@ -527,6 +539,8 @@ export default async function handler(req, res) {
           });
           if (cancelled) {
             console.log(`✓ Plan cancelled: uid=${uid}`);
+            await ref.set({ family: false }, { merge: true });
+            await syncFamily(db, uid, 0).catch(err => console.error('Family end failed:', uid, err.message));
             // Immediate cancels, refunds and failed payments still get this
             // email; a cancellation already confirmed earlier doesn't get a second.
           }

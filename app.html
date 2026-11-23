@@ -474,6 +474,23 @@
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     /* Account & Plan → Connections */
     .settings-connections { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+    /* Family plan in Account & Plan (Knox orange card) */
+    .settings-family { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .fam-card { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--orange); background: color-mix(in srgb, var(--orange) 6%, var(--surface)); box-shadow: 0 3px 0 var(--orange-dark); }
+    .fam-line { margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.45; }
+    .fam-status { font-size: 12.5px; font-weight: 700; color: var(--text-light); }
+    .fam-list { display: flex; flex-direction: column; gap: 6px; }
+    .fam-member { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); }
+    .fam-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; background: var(--orange-light); border: 2px solid var(--orange); flex-shrink: 0; }
+    .fam-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .fam-who b { font-size: 13.5px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fam-who small { font-size: 11.5px; font-weight: 700; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fam-invite { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--text-light); }
+    .fam-link { display: flex; gap: 6px; }
+    .fam-link input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 700; }
+    .fam-new { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--orange-dark); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; text-decoration: underline; }
+    html[data-theme="dark"] .fam-new { color: var(--orange); }
+    .fam-leave { align-self: flex-start; }
     .conn-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
     .settings-connections.linked .conn-row { border-color: #A3A9F5; background: color-mix(in srgb, #5865F2 8%, var(--surface)); }
     .conn-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; background: #5865F2; box-shadow: 0 2px 0 #3C45A5; }
@@ -3458,8 +3475,10 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const appleTier = Number(d.appleMegaUntil) > now ? 'mega' :
         Number(d.appleUntil) > now ? d.appleTier : Number(d.applePlusUntil) > now ? 'plus' : null;
       const realTier = ownTier === 'mega' || Number(d.megaUntil) > now || appleTier === 'mega' ? 'mega' :
-        ownTier === 'plus' || Number(d.plusUntil) > now || appleTier === 'plus' ? 'plus' : 'free';
+        ownTier === 'plus' || Number(d.plusUntil) > now || Number(d.familyUntil) > now || appleTier === 'plus' ? 'plus' : 'free';
       window.userTierReal = realTier;
+      // Family plan: the payer (family: true) or a member (familyUntil). See api/_family.js.
+      window.userFamily = d.family === true ? 'owner' : Number(d.familyUntil) > now ? 'member' : null;
       // "View as" (owner account only, see knoxViewAs below): show the app as
       // Free, Plus or Mega. Display only: the server still uses the real plan.
       window._viewAs = !window._testerPlans && window.knoxOwnerTools?.() ? window.knoxViewAsChoice?.() : null;
@@ -3467,7 +3486,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       window.userTier = tier;
       window.userPlan = tier === 'mega' ? 'max' : tier === 'plus' ? (planTier(d.plan) === 'paid' ? d.plan : 'plus') : 'free';
       // Plan time from a gift or Flame Fest, beyond what they pay for (shown in Account & Plan).
-      window.userGiftUntil = tier !== ownTier ? Number(tier === 'mega' ? d.megaUntil : d.plusUntil) || 0 : 0;
+      window.userGiftUntil = tier !== ownTier && !(tier === 'plus' && window.userFamily === 'member') ? Number(tier === 'mega' ? d.megaUntil : d.plusUntil) || 0 : 0;
       window.userAmbassador = d.ambassador === true;
       window.hasBillingAccount = !!(snap.exists() && snap.data().stripeCustomerId);
       window.userComped = !!(snap.exists() && snap.data().comped === true);
@@ -5346,6 +5365,100 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   window.knoxSimsOn = function(uid) {
     try { return !!uid && localStorage.getItem('knoxSims:' + uid) === '1'; } catch (_) { return false; }
   };
+  // ── Family plan (Dec 2026, api/_family.js) ──────────────────────────
+  // Account & Plan: the payer sees their students, the invite link and Remove;
+  // a member sees whose plan they're on and can leave.
+  const familyApi = async (u, method, body) => {
+    const r = await fetch('/api/me?route=family', { method, headers: { 'Authorization': 'Bearer ' + await u.getIdToken(), ...(body ? { 'Content-Type': 'application/json' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Something went wrong. Please try again.');
+    return j;
+  };
+  window.knoxFamilySection = function(u) {
+    const box = document.createElement('div'); box.className = 'settings-family';
+    box.innerHTML = '<span class="settings-label">👨‍👩‍👧‍👦 Family plan</span><div class="fam-card"><small class="fam-status">Loading…</small></div>';
+    const card = box.querySelector('.fam-card');
+    const draw = async () => {
+      let f;
+      try { f = await familyApi(u, 'GET'); } catch (e) { card.innerHTML = '<small class="fam-status"></small>'; card.firstChild.textContent = e.message; return; }
+      if (window.currentUser?.uid !== u.uid) return;
+      if (f.role === 'member') {
+        card.innerHTML = '<p class="fam-line">You’re on <b></b>’s Family plan, so you have ⚡ Knox Plus.</p><button type="button" class="conn-btn danger fam-leave">Leave this Family plan</button>';
+        card.querySelector('b').textContent = f.owner?.name || 'someone';
+        card.querySelector('.fam-leave').onclick = async () => {
+          if (!confirm('Leave this Family plan?\n\nYou go back to the Free plan right away. You can join again with a new invite link.')) return;
+          try { await familyApi(u, 'POST', { action: 'leave' }); await window.knoxRefreshPlan?.(); closeAppSettings(); } catch (e) { alert(e.message); }
+        };
+        return;
+      }
+      if (f.role !== 'owner') { card.innerHTML = '<small class="fam-status">Your Family plan isn’t active right now.</small>'; return; }
+      const used = 1 + f.members.length;
+      card.innerHTML = '<p class="fam-line"><b>' + used + ' of ' + f.seats + '</b> students (you included) have ⚡ Knox Plus.</p><div class="fam-list"></div>' +
+        (used < f.seats ? '<div class="fam-invite"><span>Send this link to a student. They sign in (or make a free account) and they’re in:</span><div class="fam-link"><input readonly aria-label="Family invite link"><button type="button" class="conn-btn fam-copy">Copy</button></div><button type="button" class="fam-new">Make a new link (the old one stops working)</button></div>'
+          : '<small class="fam-status">Your Family plan is full. Remove someone to invite another student.</small>');
+      const list = card.querySelector('.fam-list');
+      const me = document.createElement('div'); me.className = 'fam-member'; me.innerHTML = '<span class="fam-av">⭐</span><span class="fam-who"><b></b><small>You · pays for the plan</small></span>';
+      me.querySelector('b').textContent = u.displayName || u.email || 'You'; list.appendChild(me);
+      f.members.forEach(m => {
+        const r = document.createElement('div'); r.className = 'fam-member';
+        r.innerHTML = '<span class="fam-av">🎒</span><span class="fam-who"><b></b><small></small></span><button type="button" class="conn-btn danger">Remove</button>';
+        r.querySelector('b').textContent = m.name; r.querySelector('small').textContent = m.email;
+        r.querySelector('button').onclick = async () => {
+          if (!confirm('Remove ' + m.name + ' from your Family plan?\n\nThey go back to the Free plan right away. Their account, decks and chats stay theirs.')) return;
+          try { await familyApi(u, 'POST', { action: 'remove', uid: m.uid }); draw(); } catch (e) { alert(e.message); }
+        };
+        list.appendChild(r);
+      });
+      const input = card.querySelector('.fam-link input');
+      if (input) {
+        input.value = f.invite;
+        card.querySelector('.fam-copy').onclick = async e => { try { await navigator.clipboard.writeText(input.value); e.target.textContent = 'Copied!'; setTimeout(() => e.target.textContent = 'Copy', 1500); } catch (_) { input.select(); } };
+        card.querySelector('.fam-new').onclick = async () => { try { input.value = (await familyApi(u, 'POST', { action: 'invite' })).invite; } catch (e) { alert(e.message); } };
+      }
+    };
+    draw();
+    return box;
+  };
+
+  // /app?family=<code>: a Family plan invite link. Guests are asked to sign up
+  // (free) first; then the student joins and gets Knox Plus.
+  (function familyInvite() {
+    let code = new URLSearchParams(location.search).get('family');
+    if (code) {
+      try { sessionStorage.setItem('knoxFamilyInvite', code); } catch (e) {}
+      const url = new URL(location.href); url.searchParams.delete('family');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    }
+    try { code = sessionStorage.getItem('knoxFamilyInvite') || code; } catch (e) {}
+    if (!code || !/^[A-Za-z0-9]{10}$/.test(code)) return;
+    let busy = false, asked = false;
+    async function finish() {
+      if (!code || busy || document.body.classList.contains('app-auth-pending')) return;
+      const u = window.currentUser;
+      if (!u) { if (!asked) { asked = true; setTimeout(() => window.openAuthModal?.('signup'), 400); } return; }
+      busy = true;
+      let title, message;
+      try {
+        const j = await familyApi(u, 'POST', { action: 'join', code });
+        title = j.already ? 'You’re already in!' : 'Welcome to the family! 🎉';
+        message = (j.owner?.name ? 'You’re on ' + j.owner.name + '’s Family plan, so ' : 'You ') + (j.already ? 'already have ⚡ Knox Plus.' : 'now have ⚡ Knox Plus: unlimited questions, photos and files, and bigger flashcard decks.') +
+          (j.paysToo ? ' You still pay for Knox yourself, so cancel that in Manage billing (or the iPhone app) so you don’t pay twice.' : '');
+        await window.knoxRefreshPlan?.();
+      } catch (e) { title = 'Couldn’t join the Family plan'; message = e.message; }
+      try { sessionStorage.removeItem('knoxFamilyInvite'); } catch (e) {}
+      code = null; busy = false;
+      const modal = document.createElement('div'); modal.className = 'modal-backdrop';
+      modal.innerHTML = '<div class="auth-card"><div class="auth-header"><img src="/knox-logo-square.jpg" alt="Knox" onerror="this.style.display=\'none\'"><h2></h2></div><div class="auth-body"><p style="font-size:14px;font-weight:700;color:var(--text);line-height:1.6;margin-bottom:18px;"></p><button class="auth-submit">Got it</button></div></div>';
+      modal.querySelector('h2').textContent = title; modal.querySelector('p').textContent = message;
+      modal.querySelector('button').onclick = () => modal.remove();
+      modal.onclick = e => { if (e.target === modal) modal.remove(); };
+      document.body.appendChild(modal);
+    }
+    window.addEventListener('knox-auth-changed', () => setTimeout(finish, 0));
+    new MutationObserver(finish).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    finish();
+  })();
+
   window.openAppSettings = function() {
     const u = window.currentUser;
     if (!u) { openAuthModal(); return; }
@@ -5378,6 +5491,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.className   = 'plan-badge badge-' + badgeClass;
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
+    if (window.userFamily) el.appendChild(window.knoxFamilySection(u));
 
     const mega = window.userTier === 'mega';
     if (mega || !window.knoxNativeApp) {
