@@ -356,6 +356,9 @@
     /* Advent Calendar gift button beside the 🔥 (December; advent.js shows it). */
     #adventPill:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border-radius: 999px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); cursor: pointer; flex-shrink: 0; }
     #adventPill .kk-ic { width: 18px; height: 18px; }
+    /* Phones: the header is full (the question count must stay readable); the
+       Advent Calendar is in the side menu and in "Your flame" there. */
+    @media (max-width: 900px) { #adventPill { display: none !important; } }
     #streakPill {
       display: none;
       align-items: center;
