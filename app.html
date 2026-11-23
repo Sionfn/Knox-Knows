@@ -504,6 +504,8 @@
     .fam-new { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--orange-dark); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; text-decoration: underline; }
     html[data-theme="dark"] .fam-new { color: var(--orange); }
     .fam-leave { align-self: flex-start; }
+    .fam-label { display: inline-flex; align-items: center; gap: 6px; }
+    .fam-label .kk-family { width: 20px; height: 20px; }
     .conn-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
     .settings-connections.linked .conn-row { border-color: #A3A9F5; background: color-mix(in srgb, #5865F2 8%, var(--surface)); }
     .conn-icon { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #fff; background: #5865F2; box-shadow: 0 2px 0 #3C45A5; }
@@ -5452,7 +5454,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   };
   window.knoxFamilySection = function(u) {
     const box = document.createElement('div'); box.className = 'settings-family';
-    box.innerHTML = '<span class="settings-label">👨‍👩‍👧‍👦 Family plan</span><div class="fam-card"><small class="fam-status">Loading…</small></div>';
+    box.innerHTML = '<span class="settings-label fam-label"><svg class="kk-ic kk-family" viewBox="0 0 24 24" aria-hidden="true"><g stroke="#B84A00" stroke-width="1.6" stroke-linejoin="round"><circle cx="6.8" cy="6.2" r="2.9" fill="#FF8A3D"/><path d="M1.8 19v-2.6a5 5 0 0 1 10 0V19Z" fill="#FF8A3D"/><circle cx="17.2" cy="6.2" r="2.9" fill="#FF8A3D"/><path d="M12.2 19v-2.6a5 5 0 0 1 10 0V19Z" fill="#FF8A3D"/><circle cx="12" cy="11.6" r="2.5" fill="#FFD0A3"/><path d="M7.9 21.8v-1.9a4.1 4.1 0 0 1 8.2 0v1.9Z" fill="#FFD0A3"/></g></svg>Family plan</span><div class="fam-card"><small class="fam-status">Loading…</small></div>';
     const card = box.querySelector('.fam-card');
     const draw = async () => {
       let f;
