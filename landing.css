@@ -1011,7 +1011,7 @@ html[data-theme="dark"] #pricing.kl-pricing .pt-head > div:nth-child(4) { backgr
 .kl-looks i:nth-child(7), .kl-looks i:nth-child(8) { background:radial-gradient(circle at 88% 12%, var(--c1) 0 24%, color-mix(in srgb, var(--c1) 70%, #fff) 25%, transparent 34%), radial-gradient(circle at 10% 90%, var(--c2) 0 20%, color-mix(in srgb, var(--c2) 70%, #fff) 21%, transparent 30%), var(--bg); }
 
 /* ── Family plan card (Dec 2026): under the three plans, Knox orange ── */
-#pricing .kp-family { --p:#FF6B00; --pd:var(--orange-dark); --pl:#FFE0C2; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:22px; max-width:1080px; margin:26px auto 0; padding:22px 26px; background:var(--surface); border:3px solid var(--p); border-radius:26px; box-shadow:0 6px 0 var(--pd); color:var(--text); text-align:left; }
+#pricing .kp-family { --p:var(--orange); --pd:var(--orange-dark); --pl:var(--orange-light); display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:22px; max-width:1080px; margin:26px auto 0; padding:22px 26px; background:var(--surface); border:3px solid var(--p); border-radius:26px; box-shadow:0 6px 0 var(--pd); color:var(--text); text-align:left; }
 #pricing .kpf-ic { width:68px; height:68px; border-radius:50%; display:grid; place-items:center; font-size:32px; background:var(--pl); border:3px solid var(--p); box-shadow:0 3px 0 var(--pd); }
 #pricing .kpf-tag { display:inline-block; padding:4px 11px; border-radius:999px; background:var(--pl); border:2px solid var(--p); color:var(--pd); font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
 #pricing .kpf-copy h3 { margin:8px 0 4px; font-size:22px; font-weight:900; line-height:1.2; }

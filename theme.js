@@ -38,6 +38,7 @@
     if (mode === 'light' || mode === 'christmas') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', 'dark');
     root.classList.toggle('knox-seasonal', mode === 'seasonal');
     root.classList.toggle('knox-christmas', mode === 'christmas');
+    if (mode === 'christmas') requestAnimationFrame(() => { christmasDecorate(); document.querySelectorAll('.xmas-lights-host').forEach(drawLights); });
     try { localStorage.setItem('knoxTheme', mode); } catch (e) { /* best effort */ }
     syncIcons();
     syncFavicon();
@@ -245,8 +246,9 @@
   // Flat Knox shapes: a tree, presents, hanging ornaments and slow snow.
   const XMAS_TREE = '<svg class="xmas-tree" viewBox="0 0 150 190" aria-hidden="true" focusable="false"><rect x="64" y="160" width="22" height="26" rx="4" fill="#A5673A" stroke="#7A4A27" stroke-width="3"/><path d="M75 20 128 92H22Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 58 138 140H12Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 96 146 170H4Z" fill="#1FA45A" stroke="#157A41" stroke-width="4" stroke-linejoin="round"/><path d="M75 4l5 10 11 1-8 7 3 11-11-6-11 6 3-11-8-7 11-1Z" fill="#FFC800" stroke="#D9A300" stroke-width="2.5" stroke-linejoin="round"/><g stroke-width="2.5"><circle cx="58" cy="82" r="6" fill="#E5383B" stroke="#B3202A"/><circle cx="96" cy="122" r="6" fill="#FFC800" stroke="#D9A300"/><circle cx="46" cy="132" r="6" fill="#1CB0F6" stroke="#0A85C2"/><circle cx="106" cy="160" r="6" fill="#E5383B" stroke="#B3202A"/><circle cx="62" cy="160" r="6" fill="#FFC800" stroke="#D9A300"/><circle cx="88" cy="74" r="5" fill="#CE82FF" stroke="#7C3AED"/></g></svg>';
   const GIFT = (x, y, w, h, c, d, rib) => `<g transform="translate(${x} ${y})"><rect width="${w}" height="${h}" rx="5" fill="${c}" stroke="${d}" stroke-width="3"/><rect x="${w / 2 - 5}" width="10" height="${h}" fill="${rib}"/><rect y="${h / 2 - 5}" width="${w}" height="10" fill="${rib}" opacity=".9"/><path d="M${w / 2} 0c-6-10-18-10-16-2s16 2 16 2c6-10 18-10 16-2s-16 2-16 2" fill="${rib}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
-  const XMAS_GIFTS = '<svg class="xmas-gifts" viewBox="0 0 170 120" aria-hidden="true" focusable="false">' + GIFT(6, 44, 70, 72, '#E5383B', '#B3202A', '#FFC800') + GIFT(84, 62, 58, 54, '#1FA45A', '#157A41', '#FFFFFF') + GIFT(120, 22, 44, 40, '#FFC800', '#D9A300', '#E5383B') + '</svg>';
-  const BAUBLE = (x, len, r, c, d) => `<path d="M${x} 0v${len}" stroke="#D9C9C3" stroke-width="2"/><rect x="${x - 5}" y="${len - 2}" width="10" height="7" rx="2" fill="#FFC800" stroke="#D9A300" stroke-width="2"/><circle cx="${x}" cy="${len + 5 + r}" r="${r}" fill="${c}" stroke="${d}" stroke-width="3"/>`;
+  // Big red present with a small gold one resting squarely on top, a green one beside them.
+  const XMAS_GIFTS = '<svg class="xmas-gifts" viewBox="0 -14 170 134" aria-hidden="true" focusable="false">' + GIFT(6, 44, 76, 72, '#E5383B', '#B3202A', '#FFC800') + GIFT(20, 8, 48, 36, '#FFC800', '#D9A300', '#E5383B') + GIFT(92, 60, 64, 56, '#1FA45A', '#157A41', '#FFFFFF') + '</svg>';
+  const BAUBLE = (x, len, r, c, d) => `<path d="M${x} 0v${len}" stroke="#C9B8B2" stroke-width="2"/><rect x="${x - 5}" y="${len - 2}" width="10" height="7" rx="2" fill="#FFC800" stroke="#D9A300" stroke-width="2"/><circle cx="${x}" cy="${len + 5 + r}" r="${r}" fill="${c}" stroke="${d}" stroke-width="3"/>`;
   const XMAS_BAUBLES = '<svg class="xmas-baubles" viewBox="0 0 150 120" aria-hidden="true" focusable="false">' + BAUBLE(14, 30, 11, '#E5383B', '#B3202A') + BAUBLE(46, 56, 14, '#1FA45A', '#157A41') + BAUBLE(78, 22, 10, '#FFC800', '#D9A300') + BAUBLE(108, 46, 12, '#1CB0F6', '#0A85C2') + BAUBLE(138, 28, 9, '#CE82FF', '#7C3AED') + '</svg>';
   // Falling snow over the whole page: six-armed flakes and soft dots in icy
   // blue and white, so they show on the light background.
@@ -259,37 +261,69 @@
     }
     return html;
   }
-  // String lights along the top: a drooping wire with red, green, gold and blue bulbs.
-  function lights(count) {
-    let bulbs = '';
-    const cols = [['#E5383B', '#B3202A'], ['#1FA45A', '#157A41'], ['#FFC800', '#D9A300'], ['#1CB0F6', '#0A85C2']];
-    for (let i = 0; i < count; i++) {
-      const x = 20 + i * (1160 / (count - 1)), sag = Math.sin(((x % 290) / 290) * Math.PI) * 26, [c, d] = cols[i % 4];
-      bulbs += `<g transform="translate(${x.toFixed(1)} ${(8 + sag).toFixed(1)}) rotate(${(i % 2 ? 8 : -8)})"><rect x="-4" y="0" width="8" height="7" rx="2" fill="#4E6B57"/><path d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+  // String lights: a wire that droops between hooks, with each bulb's socket
+  // sitting exactly on the wire. Drawn at the real width (no stretching) and
+  // redrawn when the space changes size.
+  const BULB_COLORS = [['#E5383B', '#B3202A'], ['#1FA45A', '#157A41'], ['#FFC800', '#D9A300'], ['#1CB0F6', '#0A85C2']];
+  function lightsSvg(w, mini) {
+    const top = mini ? 3 : 5, span = mini ? 110 : 210, sag = mini ? 9 : 20, bulbH = mini ? 15 : 24, per = mini ? 2 : 3;
+    const n = Math.max(1, Math.round(w / span)), L = w / n;
+    let wire = `M0 ${top}`, bulbs = '', k = 0;
+    for (let i = 0; i < n; i++) {
+      const x0 = i * L;
+      wire += ` Q${(x0 + L / 2).toFixed(1)} ${top + 2 * sag} ${(x0 + L).toFixed(1)} ${top}`;
+      for (let j = 1; j <= per; j++) {
+        const t = j / (per + 1), x = x0 + L * t, y = top + 4 * sag * t * (1 - t), slope = Math.atan2(4 * sag * (1 - 2 * t), L) * 180 / Math.PI, [c, d] = BULB_COLORS[k++ % 4];
+        const sc = bulbH / 30;
+        bulbs += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(slope * .6).toFixed(1)}) scale(${sc.toFixed(2)})"><rect x="-4.5" y="-1" width="9" height="8" rx="2" fill="#4E6B57"/><path d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+      }
     }
-    return `<svg class="xmas-lights" viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 8 Q145 42 290 8 T580 8 T870 8 T1160 8 T1450 8" fill="none" stroke="#4E6B57" stroke-width="3"/>${bulbs}</svg>`;
+    const h = top + sag * 2 + bulbH + 4;
+    return `<svg class="xmas-lights" viewBox="0 0 ${w.toFixed(0)} ${h}" width="${w.toFixed(0)}" height="${h}" aria-hidden="true" focusable="false"><path d="${wire}" fill="none" stroke="#4E6B57" stroke-width="${mini ? 2 : 3}" stroke-linecap="round"/>${bulbs}</svg>`;
+  }
+  const lightsSeen = new WeakMap();
+  const lightsRO = 'ResizeObserver' in window ? new ResizeObserver(entries => entries.forEach(e => drawLights(e.target))) : null;
+  function drawLights(el) {
+    const w = Math.round(el.clientWidth);
+    if (!w || lightsSeen.get(el) === w) return;
+    lightsSeen.set(el, w);
+    el.innerHTML = lightsSvg(w, el.classList.contains('xmas-lights-mini'));
+  }
+  function addLights(parent, mini) {
+    if (parent.querySelector(':scope > .xmas-lights-host')) return;
+    const el = document.createElement('div');
+    el.className = 'xmas-lights-host' + (mini ? ' xmas-lights-mini' : '');
+    el.setAttribute('aria-hidden', 'true');
+    parent.appendChild(el);
+    lightsRO?.observe(el);
+    drawLights(el);
   }
   // Snowy hills along the bottom (stretch to any width) …
   const XMAS_HILLS = '<svg class="xmas-hills" viewBox="0 0 1200 140" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 70C160 20 300 30 450 62S760 110 900 70 1120 30 1200 50V140H0Z" fill="#E4EFF7"/><path d="M0 100C200 60 360 70 520 96S820 130 980 98 1140 76 1200 84V140H0Z" fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3"/></svg>';
   // … with little pines, a snowman and Knox-colored presents standing on them.
   const PINE = (x, s, c = '#1FA45A', d = '#157A41') => `<g transform="translate(${x} 0) scale(${s})"><rect x="-6" y="78" width="12" height="14" rx="3" fill="#A5673A"/><path d="M0 0 26 36H-26Z M0 22 32 62H-32Z M0 44 38 84H-38Z" fill="${c}" stroke="${d}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-12 18 0 12 12 18M-16 42 0 35 16 42M-20 66 0 58 20 66" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></g>`;
   const XMAS_PINES = `<svg class="xmas-pines" viewBox="-40 -6 230 100" aria-hidden="true" focusable="false">${PINE(0, 1)}${PINE(78, .78, '#28B565', '#157A41')}${PINE(140, .6)}</svg>`;
-  const XMAS_SNOWMAN = '<svg class="xmas-snowman" viewBox="0 0 110 150" aria-hidden="true" focusable="false"><g fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3.5"><circle cx="55" cy="112" r="34"/><circle cx="55" cy="66" r="24"/><circle cx="55" cy="32" r="18"/></g><rect x="38" y="4" width="34" height="8" rx="3" fill="#3C3C3C"/><rect x="43" y="-14" width="24" height="20" rx="3" fill="#3C3C3C"/><rect x="43" y="-2" width="24" height="5" fill="#E5383B"/><circle cx="48" cy="29" r="2.6" fill="#3C3C3C"/><circle cx="62" cy="29" r="2.6" fill="#3C3C3C"/><path d="M55 34l16 4-16 3Z" fill="#FF8A3D" stroke="#CC5500" stroke-width="1.5" stroke-linejoin="round"/><path d="M33 48c14 7 30 7 44 0l3 8c-16 8-34 8-50 0Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M66 52l6 20 8-3-5-17" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><g fill="#3C3C3C"><circle cx="55" cy="60" r="2.6"/><circle cx="55" cy="72" r="2.6"/><circle cx="55" cy="104" r="2.6"/></g><path d="M31 66 8 52M79 66l22-12" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/></svg>';
+  const XMAS_SNOWMAN = '<svg class="xmas-snowman" viewBox="0 -18 110 168" aria-hidden="true" focusable="false"><g fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3.5"><circle cx="55" cy="112" r="34"/><circle cx="55" cy="66" r="24"/><circle cx="55" cy="32" r="18"/></g><rect x="38" y="4" width="34" height="8" rx="3" fill="#3C3C3C"/><rect x="43" y="-14" width="24" height="20" rx="3" fill="#3C3C3C"/><rect x="43" y="-2" width="24" height="5" fill="#E5383B"/><circle cx="48" cy="29" r="2.6" fill="#3C3C3C"/><circle cx="62" cy="29" r="2.6" fill="#3C3C3C"/><path d="M55 34l16 4-16 3Z" fill="#FF8A3D" stroke="#CC5500" stroke-width="1.5" stroke-linejoin="round"/><path d="M33 48c14 7 30 7 44 0l3 8c-16 8-34 8-50 0Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M66 52l6 20 8-3-5-17" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><g fill="#3C3C3C"><circle cx="55" cy="60" r="2.6"/><circle cx="55" cy="72" r="2.6"/><circle cx="55" cy="104" r="2.6"/></g><path d="M31 66 8 52M79 66l22-12" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/></svg>';
   const SANTA_HAT = '<svg class="xmas-hat" viewBox="0 0 44 36" aria-hidden="true" focusable="false"><path d="M4 26C8 10 22 2 34 6l6 14-6 2C30 14 22 14 18 26Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><rect x="2" y="24" width="24" height="9" rx="4.5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/><circle cx="38" cy="22" r="5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/></svg>';
   // A wreath (top left), candy canes and a stocking.
-  const XMAS_WREATH = (() => { let leaves = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, x = 60 + Math.cos(a) * 38, y = 60 + Math.sin(a) * 38; leaves += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="15" ry="9" transform="rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#1FA45A' : '#28B565'}" stroke="#157A41" stroke-width="2.5"/>`; } return `<svg class="xmas-wreath" viewBox="0 0 120 150" aria-hidden="true" focusable="false"><path d="M60 0v20" stroke="#D9C9C3" stroke-width="2"/>${leaves}<g stroke-width="2.5"><circle cx="30" cy="44" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="92" cy="52" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="40" cy="94" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="86" cy="92" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="60" cy="24" r="5" fill="#1CB0F6" stroke="#0A85C2"/></g><path d="M60 98c-14-12-30-8-24 4s24-4 24-4c14-12 30-8 24 4s-24-4-24-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M54 100l-8 30 10-6 4 10 2-34M66 100l8 30-10-6-4 10-2-34" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/></svg>`; })();
-  const CANE = (x, r) => `<g transform="translate(${x} 6) rotate(${r})"><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round"/><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#E5383B" stroke-width="11" stroke-linecap="round" stroke-dasharray="7 7"/><path d="M14 90V22a12 12 0 0 0-24 0" fill="none" stroke="#B3202A" stroke-width="1.5" opacity=".0"/></g>`;
-  const XMAS_CANES = `<svg class="xmas-canes" viewBox="-14 0 80 104" aria-hidden="true" focusable="false">${CANE(10, -8)}${CANE(42, 10)}</svg>`;
-  const XMAS_STOCKING = '<svg class="xmas-stocking" viewBox="0 0 70 110" aria-hidden="true" focusable="false"><path d="M35 0v14" stroke="#D9C9C3" stroke-width="2"/><path d="M18 30h34v40c0 18-10 30-28 30H12c-8 0-10-12 0-16l6-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="14" width="42" height="18" rx="6" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2.5"/><path d="M22 52h26M22 64h26" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><circle cx="38" cy="46" r="0"/></svg>';
+  const XMAS_WREATH = (() => { let leaves = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, x = 60 + Math.cos(a) * 38, y = 60 + Math.sin(a) * 38; leaves += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="15" ry="9" transform="rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#1FA45A' : '#28B565'}" stroke="#157A41" stroke-width="2.5"/>`; } return `<svg class="xmas-wreath" viewBox="0 -44 120 194" aria-hidden="true" focusable="false"><path d="M60 -44v64" stroke="#C9B8B2" stroke-width="2"/>${leaves}<g stroke-width="2.5"><circle cx="30" cy="44" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="92" cy="52" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="40" cy="94" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="86" cy="92" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="60" cy="24" r="5" fill="#1CB0F6" stroke="#0A85C2"/></g><path d="M60 98c-14-12-30-8-24 4s24-4 24-4c14-12 30-8 24 4s-24-4-24-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M54 100l-8 30 10-6 4 10 2-34M66 100l8 30-10-6-4 10-2-34" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/></svg>`; })();
+  // White canes with red stripes (the stripes are short dashes along the cane).
+  const CANE_PATH = 'M14 92V24a12 12 0 0 0-24 0v4';
+  const CANE = (x, r) => `<g transform="translate(${x} 8) rotate(${r} 2 50)"><path d="${CANE_PATH}" fill="none" stroke="#CDB9B5" stroke-width="14" stroke-linecap="round"/><path d="${CANE_PATH}" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/><path d="${CANE_PATH}" fill="none" stroke="#E5383B" stroke-width="10" stroke-dasharray="5 6"/></g>`;
+  const XMAS_CANES = `<svg class="xmas-canes" viewBox="-22 0 96 110" aria-hidden="true" focusable="false">${CANE(10, -8)}${CANE(42, 10)}</svg>`;
+  const XMAS_STOCKING = '<svg class="xmas-stocking" viewBox="0 -40 70 150" aria-hidden="true" focusable="false"><path d="M35 -40v54" stroke="#C9B8B2" stroke-width="2"/><path d="M18 30h34v40c0 18-10 30-28 30H12c-8 0-10-12 0-16l6-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="14" width="42" height="18" rx="6" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2.5"/><path d="M22 52h26M22 64h26" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><circle cx="38" cy="46" r="0"/></svg>';
   function christmasDecorate() {
     const host = document.getElementById('welcomeScreen') || document.getElementById('home');
     if (host && !host.querySelector(':scope > .xmas-deco')) {
-      host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true">${lights(17)}${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+      // Snow falls inside this space and scrolls with the page: behind the
+      // app's welcome screen (never over a chat) and the landing hero.
+      host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+      addLights(host.querySelector(':scope > .xmas-deco'), host.id !== 'welcomeScreen'); // a shorter string under the landing header
     }
-    // Snow falls over the whole page (never catches clicks).
-    if (!document.querySelector('body > .xmas-snow')) document.body.insertAdjacentHTML('beforeend', `<div class="xmas-snow" aria-hidden="true">${snow(FEW_LEAVES ? 22 : 44)}</div>`);
-    // Lights along the top of the sidebar and the landing header too.
-    document.querySelectorAll('.sidebar-top, #main-header').forEach(el => { if (!el.querySelector(':scope > .xmas-lights-mini')) el.insertAdjacentHTML('beforeend', lights(9).replace('class="xmas-lights"', 'class="xmas-lights xmas-lights-mini"')); });
+    // Landing sections: a snowy edge along the top of each one.
+    document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
+    // Shorter lights under the sidebar logo and the landing header.
+    document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true));
     document.querySelectorAll('.sidebar-logo-link, .header-logo').forEach(a => { if (!a.querySelector('.xmas-hat')) a.insertAdjacentHTML('afterbegin', SANTA_HAT); });
   }
   // "Christmas mode is here" tip (app welcome screen, December, dismissible).
