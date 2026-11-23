@@ -210,6 +210,11 @@ html.knox-xmas-night .xmas-night-sky { display: block; position: absolute; inset
 .xmas-moon { position: absolute; top: 64px; left: 18%; width: 64px; filter: drop-shadow(0 0 14px rgba(255, 240, 190, .45)); }
 .xmas-star { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #FFF6D6; box-shadow: 0 0 6px rgba(255, 246, 214, .8); }
 @media (max-width: 900px) { .xmas-moon { width: 44px; left: 6%; top: 70px; } }
+/* Landing hero: the moon sits in the open sky between the headline and the
+   phone, clear of the "Knox Knows for iPhone" pill. */
+#home .xmas-moon { left: 40%; top: 96px; }
+/* Stacked hero (centered text): up in the right corner instead. */
+@media (max-width: 1060px) { #home .xmas-moon { left: auto; right: 6%; top: 84px; } }
 /* Snow: brighter flakes on the dark sky */
 html.knox-xmas-night .xmas-flake { border-color: #FFFFFF; }
 html.knox-xmas-night .xmas-flake.is-flake svg g { stroke: #DCEBFA; }
