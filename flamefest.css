@@ -112,6 +112,9 @@
 
 /* Blue / Golden flame on the 🔥 streak pill (Flame Fest rewards) */
 :is(#streakFlame, .knox-flame).flame-blue { filter: hue-rotate(190deg) saturate(1.5) brightness(1.1); }
+/* ❄️ Frost and ❤️ Ruby (Advent Calendar, December 2026) */
+:is(#streakFlame, .knox-flame).flame-frost { filter: hue-rotate(185deg) saturate(.45) brightness(1.55) contrast(1.05); }
+:is(#streakFlame, .knox-flame).flame-ruby { filter: hue-rotate(-28deg) saturate(1.9) brightness(.92); }
 :is(#streakFlame, .knox-flame).flame-gold { filter: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15) drop-shadow(0 0 4px rgba(242,183,5,.8)); animation: goldShimmer 2.2s ease-in-out infinite; }
 @keyframes goldShimmer {
   0%, 100% { filter: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.1) drop-shadow(0 0 3px rgba(242,183,5,.7)); }
@@ -248,12 +251,14 @@ html .sidebar-promo-rotator > .sidebar-flame-card:hover, html .sidebar-promo-rot
 .fp-layer:not(.fp-depth) .knox-flame { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--fp-glow) 70%, transparent)); }
 /* Every layer gets the look's color (the darker depth copies too), or the plain
    red 🔥 behind shows through and Diamond/Gold look like a normal flame. */
-.fp-layer :is(.flame-purple, .flame-blue, .flame-gold, .flame-diamond) { filter: var(--fp-look) !important; animation: none; }
-.fp-layer:not(.fp-depth) :is(.flame-purple, .flame-blue, .flame-gold, .flame-diamond) { filter: var(--fp-look) drop-shadow(0 0 10px color-mix(in srgb, var(--fp-glow) 70%, transparent)) !important; }
+.fp-layer :is(.flame-purple, .flame-blue, .flame-gold, .flame-diamond, .flame-frost, .flame-ruby) { filter: var(--fp-look) !important; animation: none; }
+.fp-layer:not(.fp-depth) :is(.flame-purple, .flame-blue, .flame-gold, .flame-diamond, .flame-frost, .flame-ruby) { filter: var(--fp-look) drop-shadow(0 0 10px color-mix(in srgb, var(--fp-glow) 70%, transparent)) !important; }
 .fp-layer .flame-gold { --fp-look: sepia(1) saturate(3.5) hue-rotate(5deg) brightness(1.15); }
 .fp-layer .flame-purple { --fp-look: hue-rotate(250deg) saturate(1.6) brightness(1.05); }
 .fp-layer .flame-blue { --fp-look: hue-rotate(190deg) saturate(1.5) brightness(1.1); }
 .fp-layer .flame-diamond { --fp-look: hue-rotate(165deg) saturate(.75) brightness(1.45) contrast(1.05); }
+.fp-layer .flame-frost { --fp-look: hue-rotate(185deg) saturate(.45) brightness(1.55) contrast(1.05); }
+.fp-layer .flame-ruby { --fp-look: hue-rotate(-28deg) saturate(1.9) brightness(.92); }
 /* Slime already wobbles and drips on its own; it shouldn't flicker like fire. */
 .fp-layer .flame-slime > svg { animation: none; }
 .fp-embers i { position: absolute; left: 50%; bottom: 26px; width: var(--s); height: var(--s); margin-left: var(--x); border-radius: 50%; background: var(--fp-glow); box-shadow: 0 0 6px var(--fp-glow); opacity: 0; animation: fpEmber 2.4s ease-out infinite; animation-delay: var(--d); }

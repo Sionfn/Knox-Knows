@@ -28,13 +28,13 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const ICONS = { w1: '✨', w2: '🛡️', w3: '💙', w4: '🪵', month: '🦅' };
-  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame', diamond: '💎 Diamond Flame', galaxy: '🌌 Galaxy Flame' };
+  const STYLE_NAMES = { classic: '🔥 Classic', purple: '💜 Purple Flame', blue: '💙 Blue Flame', gold: '🟡 Golden Flame', slime: '🟢 Slime Flame', diamond: '💎 Diamond Flame', galaxy: '🌌 Galaxy Flame', frost: '❄️ Frost Flame', ruby: '❤️ Ruby Flame' };
   // In the flame picker each look shows its real flame instead of an emoji dot.
   // Rarity: how special a flame is, shown with its own color (not all orange).
-  const RARITY = { classic: 'common', purple: 'rare', blue: 'rare', gold: 'epic', diamond: 'epic', slime: 'legendary', galaxy: 'legendary' }; // the animated ones are Legendary
+  const RARITY = { classic: 'common', purple: 'rare', blue: 'rare', gold: 'epic', diamond: 'epic', slime: 'legendary', galaxy: 'legendary', frost: 'epic', ruby: 'rare' }; // frost and ruby: the Advent Calendar // the animated ones are Legendary
   const RARITY_NAMES = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
   const rarityOf = s => RARITY[s] || 'common';
-  const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame', diamond: 'Diamond Flame', galaxy: 'Galaxy Flame' };
+  const STYLE_LABELS = { classic: 'Classic', purple: 'Purple Flame', blue: 'Blue Flame', gold: 'Golden Flame', slime: 'Slime Flame', diamond: 'Diamond Flame', galaxy: 'Galaxy Flame', frost: 'Frost Flame', ruby: 'Ruby Flame' };
   const flameOf = look => `<span class="knox-flame"${look ? ` data-look="${look}"` : ''} aria-hidden="true">🔥</span>`;
 
   // ── Data ────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@
   }
   // A prize's flame shows as that flame (the same look the streak would wear),
   // not as an emoji: "💎 Diamond Flame" → the Diamond Flame itself.
-  const FLAME_EMOJI = { '💜': 'purple', '💙': 'blue', '🟡': 'gold', '💎': 'diamond', '🟢': 'slime', '🌌': 'galaxy' };
+  const FLAME_EMOJI = { '💜': 'purple', '💙': 'blue', '🟡': 'gold', '💎': 'diamond', '🟢': 'slime', '🌌': 'galaxy', '❄️': 'frost', '❤️': 'ruby' };
   const giftHtml = label => esc(label).replace(/(💜|💙|🟡|💎|🟢)\s*((?:Purple|Blue|Golden|Diamond|Slime) Flame)/gu, (_, e, name) => flameOf(FLAME_EMOJI[e]) + ' ' + name);
   function rewardRow(r) {
     const claimed = !!state.claimed[r.id], ready = r.flames >= r.need;
@@ -303,8 +303,8 @@
     if (style) currentStyle = style;
     document.querySelectorAll('#streakFlame, .knox-flame').forEach(el => {
       const look = el.dataset.look || currentStyle;
-      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime', 'flame-diamond', 'flame-galaxy');
-      if (['purple', 'blue', 'gold', 'slime', 'diamond', 'galaxy'].includes(look)) el.classList.add('flame-' + look);
+      el.classList.remove('flame-purple', 'flame-blue', 'flame-gold', 'flame-slime', 'flame-diamond', 'flame-galaxy', 'flame-frost', 'flame-ruby');
+      if (['purple', 'blue', 'gold', 'slime', 'diamond', 'galaxy', 'frost', 'ruby'].includes(look)) el.classList.add('flame-' + look);
       // Each copy gets its own gradient id: a shared id breaks when the first copy is hidden.
       if (look === 'slime') { if (!el.querySelector('.slime-flame')) el.innerHTML = SLIME.replace(/slimeFill/g, 'slimeFill' + (++slimeCount)); }
       else if (look === 'galaxy') { if (!el.querySelector('.galaxy-flame')) { const n = ++galaxyCount; el.innerHTML = GALAXY.replace(/galaxyFill/g, 'galaxyFill' + n).replace(/galaxyCore/g, 'galaxyCore' + n); } }
@@ -314,7 +314,7 @@
   // ── Flame peek: press and hold a flame (mouse or finger) to see it big,
   // alive and turning in 3D; letting go hides it. Layers stacked in depth give
   // it thickness as it sways. A normal click/tap still does what it did.
-  const GLOW = { classic: '#FF6B00', purple: '#A35BFF', blue: '#2E9BFF', gold: '#F2B705', slime: '#6FD83C', diamond: '#8FE3FF', galaxy: '#B455FF' };
+  const GLOW = { classic: '#FF6B00', purple: '#A35BFF', blue: '#2E9BFF', gold: '#F2B705', slime: '#6FD83C', diamond: '#8FE3FF', galaxy: '#B455FF', frost: '#BFE6FF', ruby: '#E5383B' };
   const PEEK_AT = '#streakPill, .ff-myflame-icon, .discord-slime-badge, .ff-style, .km-flame-pill, .km-streak-card';
   let peek = null, peekFor = null, peekTimer = 0;
   function peekLook(host) {

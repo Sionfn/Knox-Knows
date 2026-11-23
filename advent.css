@@ -1,0 +1,83 @@
+/* advent.css — the Knox Advent Calendar (advent.js). Knox's own look: a
+   white card with a solid border and darker edge, flat Christmas colors,
+   Nunito. Doors: later (dashed), today (study first), ready (red with a
+   gold ribbon), opened (the prize), missed (frosty). Door 25 is gold. */
+.adv-wrap { position: fixed; inset: 0; z-index: 10070; display: grid; place-items: center; padding: 16px; background: rgba(30, 24, 22, .45); }
+.adv-card { position: relative; width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 22px 22px 18px; background: var(--surface); color: var(--text); border: 3px solid #E5383B; border-radius: 26px; box-shadow: 0 6px 0 #B3202A; font-family: inherit; }
+.adv-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 var(--border); }
+.adv-x:hover { color: #E5383B; border-color: #E5383B; }
+.adv-head { text-align: center; padding: 4px 30px 0; }
+.adv-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; background: #E9F7EE; border: 2px solid #1FA45A; color: #157A41; font-size: 12.5px; font-weight: 900; }
+.adv-badge .kk-ic { width: 15px; height: 15px; }
+.adv-head h2 { margin: 10px 0 4px; font-size: 26px; font-weight: 900; line-height: 1.15; }
+.adv-head h2 span { color: #E5383B; }
+.adv-head p { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-light); }
+.adv-meta { display: flex; justify-content: space-between; gap: 10px; margin: 16px 2px 10px; font-size: 12.5px; font-weight: 800; color: var(--text-light); }
+.adv-meta b { color: var(--text); }
+.adv-meta .kk-ic { width: 15px; height: 15px; vertical-align: -3px; }
+.adv-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.adv-door { position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; overflow: hidden; transition: transform .12s, box-shadow .12s; }
+.adv-n { font-size: 22px; font-weight: 900; line-height: 1; position: relative; z-index: 1; }
+.adv-cta { font-size: 10.5px; font-weight: 900; line-height: 1.1; text-align: center; position: relative; z-index: 1; }
+/* Later: not yet */
+.adv-door.is-later { border-style: dashed; color: var(--text-light); cursor: default; }
+/* Today, not studied yet */
+.adv-door.is-today { border-color: #E5383B; box-shadow: 0 3px 0 #B3202A; color: #B3202A; }
+/* Ready: a red present with a gold ribbon */
+.adv-door.is-ready { background: #E5383B; border-color: #B3202A; box-shadow: 0 4px 0 #B3202A; color: #fff; }
+.adv-ribbon::before, .adv-ribbon::after { content: ""; position: absolute; background: #FFC800; }
+.adv-ribbon::before { left: calc(50% - 5px); top: 0; bottom: 0; width: 10px; }
+.adv-ribbon::after { top: calc(50% - 5px); left: 0; right: 0; height: 10px; }
+.adv-door.is-ready .adv-n, .adv-door.is-ready .adv-cta { background: #E5383B; padding: 1px 5px; border-radius: 7px; }
+.adv-door.is-ready:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #B3202A; }
+.adv-door.is-ready:active { transform: translateY(2px); box-shadow: 0 1px 0 #B3202A; }
+/* Opened: the prize */
+.adv-door.is-open { background: #E9F7EE; border-color: #1FA45A; box-shadow: 0 3px 0 #157A41; }
+.adv-door.is-open .adv-n { position: absolute; top: 5px; left: 7px; font-size: 11px; color: #157A41; }
+.adv-prize { font-size: 26px; line-height: 1; }
+.adv-prize .kk-ic { width: 28px; height: 28px; }
+/* Missed: frosty */
+.adv-door.is-missed { background: #EEF4F9; border-color: #D3E2EE; color: #8FA7BB; cursor: help; }
+/* Door 25: the big gold present */
+.adv-door.is-big.is-later, .adv-door.is-big.is-today { border: 2px solid #F2B705; background: #FFF8DC; color: #B98500; box-shadow: 0 3px 0 #D9A300; border-style: solid; }
+.adv-door.is-big.is-ready { background: #FFC800; border-color: #D9A300; box-shadow: 0 4px 0 #B98500; color: #7A5400; }
+.adv-door.is-big.is-ready .adv-ribbon::before, .adv-door.is-big.is-ready .adv-ribbon::after { background: #E5383B; }
+.adv-door.is-big.is-ready .adv-n, .adv-door.is-big.is-ready .adv-cta { background: #FFC800; }
+/* Opening: the door swings */
+.adv-door.is-opening { animation: advSwing .45s ease-in forwards; }
+@keyframes advSwing { to { transform: perspective(300px) rotateY(-80deg); opacity: .4; } }
+.adv-gift { margin: 14px 0 0; padding: 10px 12px; border-radius: 14px; background: #FFF8DC; border: 2px solid #F2B705; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+.adv-gift a { color: #B3202A; }
+.adv-note { margin: 14px 4px 2px; font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--text-light); text-align: center; transition: color .2s; }
+.adv-note.adv-flash { color: #B3202A; }
+.adv-actions { display: flex; justify-content: center; margin-top: 10px; }
+.adv-btn { padding: 11px 22px; border-radius: 14px; border: 2px solid #B3202A; background: #E5383B; color: #fff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #B3202A; }
+.adv-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #B3202A; }
+/* The prize card */
+.adv-reveal { position: fixed; inset: 0; z-index: 10071; display: grid; place-items: center; padding: 16px; background: rgba(30, 24, 22, .35); }
+.adv-reveal-card { width: min(360px, 100%); text-align: center; padding: 22px 20px 20px; background: var(--surface); border: 3px solid #1FA45A; border-radius: 24px; box-shadow: 0 6px 0 #157A41; animation: advPop .28s cubic-bezier(.2, .9, .3, 1.3); }
+@keyframes advPop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.adv-reveal-n { display: inline-block; padding: 4px 11px; border-radius: 999px; background: #FFE1E2; color: #B3202A; font-size: 12px; font-weight: 900; }
+.adv-reveal-prize { width: 82px; height: 82px; margin: 12px auto 8px; display: grid; place-items: center; border-radius: 50%; background: #E9F7EE; border: 3px solid #1FA45A; box-shadow: 0 4px 0 #157A41; font-size: 40px; line-height: 1; }
+.adv-reveal-prize .kk-ic { width: 42px; height: 42px; }
+.adv-reveal-card h3 { margin: 6px 0 6px; font-size: 18px; font-weight: 900; color: var(--text); }
+.adv-reveal-card p { margin: 0 0 16px; font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--text-light); }
+@media (max-width: 480px) {
+  .adv-card { padding: 18px 12px 14px; border-radius: 22px; }
+  .adv-head h2 { font-size: 22px; }
+  .adv-grid { gap: 7px; }
+  .adv-n { font-size: 17px; }
+  .adv-cta { font-size: 8.5px; }
+  .adv-door { border-radius: 12px; }
+  .adv-prize { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .adv-door.is-opening, .adv-reveal-card { animation: none; } }
+
+/* Sidebar promo card (app.html) */
+.sidebar-advent-card.adv-off { display: none !important; }
+html .sidebar-advent-card.sidebar-extension-card { font: inherit; text-align: left; cursor: pointer; color: var(--text); border-color: #E5383B; background: color-mix(in srgb, #E5383B 10%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, #E5383B 55%, transparent); }
+html .sidebar-advent-card.sidebar-extension-card:hover, html .sidebar-advent-card.sidebar-extension-card:focus-visible { box-shadow: 0 5px 0 #B3202A; }
+.sidebar-advent-card .adv-card-icon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: grid; place-items: center; background: #1FA45A; box-shadow: 0 2px 0 #157A41; font-size: 18px; }
+.sidebar-advent-card .adv-card-icon .kk-ic { width: 20px; height: 20px; }
+.sidebar-advent-card .sidebar-extension-copy span, .sidebar-advent-card .sidebar-extension-arrow { color: #B3202A; }
+html[data-theme="dark"] .sidebar-advent-card .sidebar-extension-copy span, html[data-theme="dark"] .sidebar-advent-card .sidebar-extension-arrow { color: #FF8A8C; }
