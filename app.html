@@ -563,6 +563,11 @@
     .kbadge:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
     .kb-glyph { font-size: 14px; font-weight: 900; line-height: 1; color: var(--kb-ink); }
     .kb-glyph.kb-long { font-size: 10.5px; letter-spacing: -.02em; }
+    .kbadge > .kk-ic, .kbadge > .kb-svg { width: 17px; height: 17px; color: var(--kb-ink); }
+    .kbadge > .kb-img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: top; border: 1.5px solid var(--kb-d); }
+    .kb-locked > .kk-ic, .kb-locked > .kb-svg, .kb-locked > .kb-img { filter: grayscale(1); opacity: .55; }
+    .kbadge.kb-big > .kk-ic, .kbadge.kb-big > .kb-svg { width: 26px; height: 26px; }
+    .kbadge.kb-big > .kb-img { width: 36px; height: 36px; }
     .kb-blue   { --kb: #1CB0F6; --kb-l: #D7F2FD; --kb-d: #0A85C2; --kb-ink: #0A85C2; }
     .kb-gold   { --kb: #FFC800; --kb-l: #FFF4CC; --kb-d: #D9A300; --kb-ink: #B98500; }
     .kb-orange { --kb: #FF6B00; --kb-l: #FFE0C2; --kb-d: #CC5500; --kb-ink: #CC5500; }
@@ -4324,22 +4329,28 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   // Earned from the account (join date) and server-only fields on the user doc
   // (bestStreak, discordId, flameFest), so nobody can hand themselves one.
   const BADGES = [
-    { id: 'joined', shape: 'circle', tier: 'blue', glyph: '🐣',  icon: '🐣', name: () => 'Joined ' + joinedLabel(), how: 'When you joined Knox Knows', earned: () => !!joinedAt() },
-    { id: 'founder', shape: 'star', tier: 'gold', glyph: '🦊', icon: '🌟', name: () => 'Founding Member', how: 'Joined before Knox Knows 2.0 (November 1, 2026)', earned: () => { const t = joinedAt(); return !!t && t < Date.parse('2026-11-01T00:00:00'); } },
+    { id: 'joined', shape: 'circle', tier: 'blue', glyph: '', ki: 'paw', icon: '🐾', name: () => 'Joined ' + joinedLabel(), how: 'When you joined Knox Knows', earned: () => !!joinedAt() },
+    { id: 'founder', shape: 'star', tier: 'gold', glyph: '', img: '/knox-logo-square.jpg', icon: '🌟', name: () => 'Founding Member', how: 'Joined before Knox Knows 2.0 (November 1, 2026)', earned: () => { const t = joinedAt(); return !!t && t < Date.parse('2026-11-01T00:00:00'); } },
     { id: 's3', shape: 'shield', tier: 'orange', glyph: '3',   icon: '🔥', name: () => '3-Day Streak',   how: 'Study 3 days in a row',   earned: () => best() >= 3 },
     { id: 's7', shape: 'shield', tier: 'red', glyph: '7',   icon: '📅', name: () => 'Week Warrior',   how: 'Study 7 days in a row',   earned: () => best() >= 7 },
     { id: 's30', shape: 'shield', tier: 'gold', glyph: '30',  icon: '🏆', name: () => 'Monthly Master', how: 'Study 30 days in a row',  earned: () => best() >= 30 },
     { id: 's100', shape: 'shield', tier: 'purple', glyph: '100', icon: '💯', name: () => '100-Day Legend', how: 'Study 100 days in a row', earned: () => best() >= 100 },
-    { id: 'discord', shape: 'hex', tier: 'blurple', glyph: '💬', icon: '💬', name: () => 'Discord Member', how: 'Link your Discord with /link in the Knox server', earned: () => !!window.knoxUserDoc?.discordId },
-    { id: 'flamefest', shape: 'hex', tier: 'orange', glyph: '🔥', icon: '🔥', name: () => 'Flame Fest 2026', how: 'Light a flame in Flame Fest (November 2026)', earned: () => (window.knoxUserDoc?.flameFest?.days || []).length > 0 },
+    { id: 'discord', shape: 'hex', tier: 'blurple', glyph: '', svg: 'discord', icon: '💬', name: () => 'Discord Member', how: 'Link your Discord with /link in the Knox server', earned: () => !!window.knoxUserDoc?.discordId },
+    { id: 'flamefest', shape: 'hex', tier: 'orange', glyph: '', ki: 'flame', icon: '🔥', name: () => 'Flame Fest 2026', how: 'Light a flame in Flame Fest (November 2026)', earned: () => (window.knoxUserDoc?.flameFest?.days || []).length > 0 },
+    { id: 'collector', shape: 'star', tier: 'gold', glyph: '', ki: 'trophy', icon: '🏆', name: () => 'Collector', how: 'Collect all 12 Knox’s Christmas blind bag figures', earned: () => window.knoxUserDoc?.knoxBags?.collector === true },
   ];
   function joinedAt() { const t = Date.parse(window.currentUser?.metadata?.creationTime || ''); return Number.isFinite(t) ? t : 0; }
   function joinedLabel() { const t = joinedAt(); return t ? new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''; }
   function best() { const d = window.knoxUserDoc || {}; return Math.max(Number(d.bestStreak) || 0, Number(d.streakCount) || 0); }
-  window.knoxBadges = () => BADGES.map(b => ({ id: b.id, icon: b.icon, shape: b.shape, tier: b.tier, glyph: b.glyph, name: b.name(), how: b.how, earned: !!window.currentUser && b.earned() }));
+  window.knoxBadges = () => BADGES.map(b => ({ id: b.id, icon: b.icon, shape: b.shape, tier: b.tier, glyph: b.glyph, ki: b.ki, img: b.img, svg: b.svg, name: b.name(), how: b.how, earned: !!window.currentUser && b.earned() }));
+  // Each badge's art: a Knox icon (knox-icons.js), Knox's own fox, the Discord
+  // logo, or the streak number. Never the phone's emoji.
+  const DISCORD_SVG = '<svg class="kb-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.32 4.37A19.8 19.8 0 0 0 15.4 2.84a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.25a18.3 18.3 0 0 0-5.43 0 12.6 12.6 0 0 0-.62-1.25.08.08 0 0 0-.08-.04 19.7 19.7 0 0 0-4.92 1.53.07.07 0 0 0-.03.03C.53 9.05-.32 13.58.1 18.06a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 5.99 3.03.08.08 0 0 0 .08-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.04-.1 13.1 13.1 0 0 1-1.87-.89.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08-.01c3.93 1.79 8.18 1.79 12.06 0a.07.07 0 0 1 .08.01l.37.29a.08.08 0 0 1-.01.13c-.6.35-1.22.65-1.87.89a.08.08 0 0 0-.04.1c.36.7.78 1.36 1.23 1.99a.08.08 0 0 0 .08.03 19.8 19.8 0 0 0 6-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.66a.06.06 0 0 0-.03-.03zM8.02 15.33c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42s.96-2.42 2.16-2.42c1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42z"/></svg>';
+  const badgeArt = b => b.img ? `<img class="kb-img" src="${b.img}" alt="">` : b.svg === 'discord' ? DISCORD_SVG
+    : b.ki && window.KI ? window.KI(b.ki, { tint: false }) : `<span class="kb-glyph${b.glyph.length > 2 && /\d/.test(b.glyph) ? ' kb-long' : ''}">${escHtml(b.glyph)}</span>`;
   // A round badge in its color, like the iPhone app's (YouView badgeGrid).
   // Hover, focus or tap shows what it is and how to earn it.
-  window.knoxBadgeEmblem = (b, size = '') => `<span class="kbadge kb-${b.earned ? b.tier : 'locked'}${size ? ' kb-' + size : ''}" tabindex="0" role="img" aria-label="${escHtml(b.name + ' — ' + (b.earned ? 'earned' : b.how))}"><span class="kb-glyph${b.glyph.length > 2 && /\d/.test(b.glyph) ? ' kb-long' : ''}">${escHtml(b.glyph)}</span><span class="kb-tip"><b>${escHtml(b.name)}</b><small>${escHtml(b.how)}</small><em>${b.earned ? '✓ Earned' : 'Locked'}</em></span></span>`;
+  window.knoxBadgeEmblem = (b, size = '') => `<span class="kbadge kb-${b.earned ? b.tier : 'locked'}${size ? ' kb-' + size : ''}" tabindex="0" role="img" aria-label="${escHtml(b.name + ' — ' + (b.earned ? 'earned' : b.how))}">${badgeArt(b)}<span class="kb-tip"><b>${escHtml(b.name)}</b><small>${escHtml(b.how)}</small><em>${b.earned ? '✓ Earned' : 'Locked'}</em></span></span>`;
   // Profile menu: the join date, the top streak badge, and any others earned.
   function renderProfileBadges() {
     const box = document.getElementById('ddEarnedBadges');
