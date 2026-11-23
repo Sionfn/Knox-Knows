@@ -2668,7 +2668,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     if (/[?&]flamefest=(demo|test)\b/.test(location.search)) return true;
     try { if (sessionStorage.getItem('knoxFlameDemo') === '1' || sessionStorage.getItem('knoxFlameTest') === '1') return true; } catch (e) {}
     var d = new Date(), k = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-    return k >= 20261101 && k <= 20261207;
+    return k >= 20261101 && k <= 20261130; // the event's sidebar card; leftover rewards are claimed in "Your flame" until Dec 7
   };
 </script>
 <script src="/theme.js" defer></script>
@@ -4381,7 +4381,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   // Streak detail popover when the pill is clicked
   window.showStreakDetail = async function() {
     if (!window.currentUser) return;
-    if (window.knoxFlameFest?.active()) { window.knoxFlameFest.open(); return; } // Flame Fest calendar in November
+    // The 🔥 opens Flame Fest in November and "Your flame" after it (streak,
+    // shields, flame looks, and the Advent Calendar in December).
+    if (window.knoxFlameFest) { window.knoxFlameFest.open(); return; }
     try {
       const snap = await getDoc(doc(db, 'users', window.currentUser.uid));
       const data = snap.exists() ? snap.data() : {};

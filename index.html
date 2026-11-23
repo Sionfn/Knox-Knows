@@ -229,7 +229,7 @@
       --text-light: #777;
       --border:  #E5E5E5;
       --shadow:  0 4px 0 rgba(0,0,0,0.15);
-      --shadow-orange: 0 4px 0 #CC5500;
+      --shadow-orange: 0 4px 0 var(--orange-dark);
       --shadow-blue:   0 4px 0 #0A85C2;
       --shadow-green:  0 4px 0 #46A302;
       /* Anything that was hardcoded "white" before dark mode existed now
@@ -358,7 +358,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     body.landing-loading #landingLoading { display:flex; }
     .landing-loading-content { display:flex; flex-direction:column; align-items:center; gap:13px; padding: 28px; border: 2px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: 0 6px 0 var(--border), 0 0 40px rgba(255,107,0,.08); }
-    .landing-loading-logo { width:76px; height:76px; border:4px solid var(--orange); border-radius:22px; box-shadow:0 5px 0 #CC5500; }
+    .landing-loading-logo { width:76px; height:76px; border:4px solid var(--orange); border-radius:22px; box-shadow:0 5px 0 var(--orange-dark); }
     .landing-loading-title { font-size:24px; font-weight:900; }
     .landing-loading-status { font-size:14px; font-weight:700; color:var(--text-light); }
     .landing-loading-spinner { width:26px; height:26px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:landingLoadingSpin .8s linear infinite; }
@@ -380,7 +380,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       box-shadow:var(--shadow-orange);
       transition:all 0.15s; cursor:pointer;
     }
-    .btn-orange:hover  { transform:translateY(-2px); box-shadow:0 6px 0 #CC5500; }
+    .btn-orange:hover  { transform:translateY(-2px); box-shadow:0 6px 0 var(--orange-dark); }
     .btn-orange:active { transform:translateY(2px);  box-shadow:none; }
 
     .btn-blue {
@@ -552,7 +552,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       border-bottom:1px solid var(--border); flex-shrink:0;
     }
     #mobileNav .ln-logo { display:flex; align-items:center; gap:9px; text-decoration:none; min-width:0; }
-    #mobileNav .ln-logo img { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--orange); box-shadow:0 2px 0 #CC5500; flex-shrink:0; }
+    #mobileNav .ln-logo img { width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid var(--orange); box-shadow:0 2px 0 var(--orange-dark); flex-shrink:0; }
     #mobileNav .ln-logo span { font-size:16px; font-weight:900; color:var(--text); white-space:nowrap; }
     #mobileNav .ln-close {
       width:34px; height:34px; border-radius:9px; flex-shrink:0; cursor:pointer;
@@ -581,11 +581,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     #mobileNav .ln-link-learn:hover { background:var(--purple-light); color:var(--purple); }
     #mobileNav .ln-calc  { color:var(--blue);   background:var(--blue-light);   box-shadow:0 3px 0 var(--blue-dark); }
     #mobileNav .ln-learn { color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
-    #mobileNav .ln-ask   { color:var(--orange); background:var(--orange-light); box-shadow:0 3px 0 #CC5500; }
+    #mobileNav .ln-ask   { color:var(--orange); background:var(--orange-light); box-shadow:0 3px 0 var(--orange-dark); }
     #mobileNav .ln-how   { color:var(--blue);   background:var(--blue-light);   box-shadow:0 3px 0 var(--blue-dark); }
     #mobileNav .ln-subj  { color:var(--green);  background:var(--green-light);  box-shadow:0 3px 0 var(--green-dark); }
     #mobileNav .ln-price { color:var(--purple); background:var(--purple-light); box-shadow:0 3px 0 var(--purple-dark); }
-    #mobileNav .ln-faq   { color:var(--orange); background:var(--orange-cream); box-shadow:0 3px 0 #CC5500; }
+    #mobileNav .ln-faq   { color:var(--orange); background:var(--orange-cream); box-shadow:0 3px 0 var(--orange-dark); }
     #mobileNav .ln-rev   { color:var(--blue); background:var(--blue-light); box-shadow:0 3px 0 var(--blue-dark, #0A85C2); }
     #mobileNav .ln-ext {
       display:flex; align-items:center; gap:10px; margin:8px; padding:10px 12px; border-radius:14px;
@@ -636,7 +636,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       background:var(--cream); color:var(--text); font-size:14px; font-weight:900;
       font-family:inherit; cursor:pointer; box-shadow:0 2px 0 var(--border);
     }
-    #lnGuestBtns .ln-signup { background:var(--orange); border-color:#CC5500; color:#fff; box-shadow:0 3px 0 #CC5500; }
+    #lnGuestBtns .ln-signup { background:var(--orange); border-color:var(--orange-dark); color:#fff; box-shadow:0 3px 0 var(--orange-dark); }
 
     /* ── HEADER ──────────────────────────────────────────────── */
     /* Like the app on the mobile website: Safari colours its top from a
@@ -649,7 +649,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     #main-header {
       background:var(--orange);
       position:sticky; top:0; z-index:200;
-      border-bottom:3px solid #CC5500;
+      border-bottom:3px solid var(--orange-dark);
       padding:0 24px; height:68px;
       /* Saved-to-home-screen: extend behind the iOS status bar (0 in a browser tab). */
       padding-top:env(safe-area-inset-top);
@@ -705,12 +705,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .header-open-knox {
       display:inline-flex; align-items:center; justify-content:center; gap:7px;
       min-height:40px; padding:9px 18px; border-radius:12px;
-      background:#fff; color:#CC5500; font-size:14px; font-weight:900;
-      text-decoration:none; box-shadow:0 3px 0 #CC5500;
+      background:#fff; color:var(--orange-dark); font-size:14px; font-weight:900;
+      text-decoration:none; box-shadow:0 3px 0 var(--orange-dark);
       transition:transform 0.15s, box-shadow 0.15s;
     }
-    .header-open-knox:hover { transform:translateY(-1px); box-shadow:0 5px 0 #CC5500; }
-    .header-open-knox:active { transform:translateY(2px); box-shadow:0 1px 0 #CC5500; }
+    .header-open-knox:hover { transform:translateY(-1px); box-shadow:0 5px 0 var(--orange-dark); }
+    .header-open-knox:active { transform:translateY(2px); box-shadow:0 1px 0 var(--orange-dark); }
     .header-open-knox svg { width:15px; height:15px; }
     @media (max-width:850px) { .header-open-knox .ok-label { display:none; } .header-open-knox { padding:9px 12px; } }
 
@@ -725,11 +725,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       background: var(--orange); color: #fff;
       font-family: inherit; font-size: 15px; font-weight: 900;
       text-decoration: none; border: none; cursor: pointer;
-      box-shadow: 0 5px 0 #CC5500, 0 12px 28px rgba(255,107,0,0.35);
+      box-shadow: 0 5px 0 var(--orange-dark);
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    #appFab:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 #CC5500, 0 16px 34px rgba(255,107,0,0.4); }
-    #appFab:active { transform: translateY(3px);  box-shadow: 0 2px 0 #CC5500, 0 6px 16px rgba(255,107,0,0.3); }
+    #appFab:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 var(--orange-dark); }
+    #appFab:active { transform: translateY(3px);  box-shadow: 0 2px 0 var(--orange-dark); }
     #appFab svg { width: 17px; height: 17px; }
     /* Phones: the floating button covered page text, and the menu already
        has Ask Knox at the top, so it's hidden there. */
@@ -834,8 +834,8 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .dd-plan-card.dd-plan-mega { background: linear-gradient(135deg, #FFF3C4, #FFE08A); border-color: #B98500; box-shadow: 0 2px 0 #8A6200; }
     .dd-plan-mega .plan-name, .dd-plan-mega .plan-tag { color: #5C3D00; }
     .dd-plan-max   { background: linear-gradient(135deg, var(--orange-light), #FFD0A8); border-color: var(--orange); box-shadow: 0 2px 0 var(--orange-light); }
-    .dd-plan-max   .plan-name { color: #CC5500; }
-    .dd-plan-max   .plan-tag  { color: #CC5500; }
+    .dd-plan-max   .plan-name { color: var(--orange-dark); }
+    .dd-plan-max   .plan-tag  { color: var(--orange-dark); }
     .dropdown-item {
       width: 100%;
       display: flex; align-items: center; gap: 10px;
@@ -962,9 +962,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .mode-card-orange {
       background:var(--orange-light);
       border:3px solid var(--orange);
-      box-shadow:0 6px 0 #CC5500;
+      box-shadow:0 6px 0 var(--orange-dark);
     }
-    .mode-card-orange:hover { box-shadow:0 10px 0 #CC5500; }
+    .mode-card-orange:hover { box-shadow:0 10px 0 var(--orange-dark); }
     .mode-card-blue {
       background:var(--blue-light);
       border:3px solid var(--blue);
@@ -994,7 +994,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       font-size:20px; font-weight:900;
       display:flex; align-items:center; justify-content:center;
       margin:0 auto 16px;
-      box-shadow:0 4px 0 #CC5500;
+      box-shadow:0 4px 0 var(--orange-dark);
     }
     .step-icon { font-size:40px; margin-bottom:12px; }
     .step-title { font-size:18px; font-weight:800; color:var(--text); margin-bottom:8px; }
@@ -1039,7 +1039,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .subject-showcase-card .subject-name { font-size:16px; font-weight:900; }
     .subject-showcase-card .subject-tags { color:var(--subject-ink); font-weight:700; margin-top:6px; }
-    .subject-showcase-card.math { --subject-accent:var(--orange); --subject-shadow:#CC5500; --subject-tint:var(--orange-light); --subject-ink:#C75000; }
+    .subject-showcase-card.math { --subject-accent:var(--orange); --subject-shadow:var(--orange-dark); --subject-tint:var(--orange-light); --subject-ink:#C75000; }
     .subject-showcase-card.science { --subject-accent:var(--green); --subject-shadow:#3D9900; --subject-tint:var(--green-light); --subject-ink:#367F00; }
     .subject-showcase-card.history { --subject-accent:#7C3AED; --subject-shadow:#5B21B6; --subject-tint:#EDE1FF; --subject-ink:#6D28D9; }
     .subject-showcase-card.english { --subject-accent:var(--blue); --subject-shadow:#0A85C2; --subject-tint:var(--blue-light); --subject-ink:#0677B0; }
@@ -1114,7 +1114,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .ai-mode-tab.active-orange {
       background:var(--orange); color:white;
-      box-shadow:0 3px 0 #CC5500;
+      box-shadow:0 3px 0 var(--orange-dark);
     }
     .ai-mode-tab.active-blue {
       background:var(--blue); color:white;
@@ -1144,9 +1144,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .ask-btn-orange {
       background:var(--orange); color:white;
-      box-shadow:0 5px 0 #CC5500;
+      box-shadow:0 5px 0 var(--orange-dark);
     }
-    .ask-btn-orange:hover  { transform:translateY(-2px); box-shadow:0 7px 0 #CC5500; }
+    .ask-btn-orange:hover  { transform:translateY(-2px); box-shadow:0 7px 0 var(--orange-dark); }
     .ask-btn-orange:active { transform:translateY(3px);  box-shadow:none; }
     .ask-btn-blue {
       background:var(--blue); color:white;
@@ -1208,7 +1208,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .tag-free     { background:#EFF6FF; color:#1D4ED8; border:1.5px solid #93C5FD; }
     .tag-pro      { background:var(--green-light); color:var(--green-dark); border:1.5px solid var(--green); }
     .tag-super    { background:var(--green-light); color:#166534; border:1.5px solid #86EFAC; }
-    .tag-max      { background:var(--orange-light); color:#CC5500; border:1.5px solid #FDBA74; }
+    .tag-max      { background:var(--orange-light); color:var(--orange-dark); border:1.5px solid #FDBA74; }
 
     .resp-final {
       background:var(--green-light); border-left:5px solid var(--green);
@@ -1247,7 +1247,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       background:var(--orange); color:white;
       font-weight:900; font-size:14px;
       display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; box-shadow:0 3px 0 #CC5500;
+      flex-shrink:0; box-shadow:0 3px 0 var(--orange-dark);
     }
     .resp-step-text { font-size:14px; font-weight:600; color:var(--text); line-height:1.6; padding-top:4px; }
 
@@ -1356,7 +1356,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .pricing-tab.active {
       background:var(--orange); color:white;
-      box-shadow:0 3px 0 #CC5500;
+      box-shadow:0 3px 0 var(--orange-dark);
     }
     .pricing-grid {
       display:grid; grid-template-columns:repeat(3,1fr);
@@ -1377,10 +1377,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .pricing-card-popular:hover { box-shadow:0 10px 0 var(--green-dark); }
     .pricing-card-pro-plus {
-      background:var(--orange); border-color:#CC5500;
-      box-shadow:0 6px 0 #CC5500;
+      background:var(--orange); border-color:var(--orange-dark);
+      box-shadow:0 6px 0 var(--orange-dark);
     }
-    .pricing-card-pro-plus:hover { box-shadow:0 10px 0 #CC5500; }
+    .pricing-card-pro-plus:hover { box-shadow:0 10px 0 var(--orange-dark); }
 
     /* ─── Pricing card animations (subtle, perf-friendly) ─── */
     .plan-card {
@@ -1598,7 +1598,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     }
     .login-header {
       background: var(--orange);
-      border-bottom: 4px solid #CC5500;
+      border-bottom: 4px solid var(--orange-dark);
       padding: 32px 28px 26px;
       text-align: center;
       display: block;
@@ -1693,7 +1693,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       background: var(--orange);
       color: white;
       font-size: 15px; font-weight: 900;
-      box-shadow: 0 4px 0 #CC5500;
+      box-shadow: 0 4px 0 var(--orange-dark);
       transition: all 0.15s;
       margin-bottom: 14px;
       text-transform: uppercase;
@@ -1701,9 +1701,9 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       cursor: pointer;
       font-family: inherit;
     }
-    .login-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    .login-submit:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
     .login-submit:active { transform: translateY(2px);  box-shadow: none; }
-    .login-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 #CC5500; }
+    .login-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: 0 4px 0 var(--orange-dark); }
 
     .login-forgot {
       display: block;
@@ -1853,7 +1853,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     /* Settings header (orange band) — matches /app */
     .settings-header {
       background: var(--orange);
-      border-bottom: 4px solid #CC5500;
+      border-bottom: 4px solid var(--orange-dark);
       padding: 22px 28px;
       display: flex; align-items: center; justify-content: space-between;
       gap: 14px;
@@ -1936,14 +1936,14 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       background: var(--orange);
       color: white;
       font-size: 15px; font-weight: 900;
-      box-shadow: 0 4px 0 #CC5500;
+      box-shadow: 0 4px 0 var(--orange-dark);
       transition: all 0.15s;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       cursor: pointer;
       font-family: inherit;
     }
-    .settings-primary-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 #CC5500; }
+    .settings-primary-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
     .settings-primary-btn:active { transform: translateY(2px);  box-shadow: none; }
     .settings-danger-btn {
       width: 100%;
@@ -2005,7 +2005,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     @keyframes ptShine { 0%, 55% { left:-60%; } 100% { left:130%; } }
     @media (prefers-reduced-motion: reduce) { .pt-save::after { animation:none; display:none; } }
     .pt-badge-slot { height:8px; }
-    .pt-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:999px; background:var(--orange); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; box-shadow:0 2px 0 #CC5500; }
+    .pt-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border-radius:999px; background:var(--orange); color:#fff; font-size:10.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; white-space:nowrap; box-shadow:0 2px 0 var(--orange-dark); }
     .pt-name { font-size:12px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; opacity:.92; margin-bottom:10px; }
     .pt-price { line-height:1; }
     .pt-price span { font-size:44px; font-weight:900; }
@@ -2162,12 +2162,12 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       width:48px; height:48px; border-radius:14px; border:none;
       background:var(--orange); color:white; cursor:pointer;
       display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; box-shadow:0 3px 0 #CC5500;
+      flex-shrink:0; box-shadow:0 3px 0 var(--orange-dark);
       transition:all 0.15s;
     }
-    .chat-send-btn:hover  { transform:translateY(-2px); box-shadow:0 5px 0 #CC5500; }
+    .chat-send-btn:hover  { transform:translateY(-2px); box-shadow:0 5px 0 var(--orange-dark); }
     .chat-send-btn:active { transform:translateY(2px); box-shadow:none; }
-    .chat-send-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; box-shadow:0 3px 0 #CC5500 !important; }
+    .chat-send-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; box-shadow:0 3px 0 var(--orange-dark) !important; }
     .chat-attach-btn {
       width:38px; height:38px; border-radius:11px; border:2px solid var(--border);
       background: var(--surface); cursor:pointer; display:flex; align-items:center;
@@ -2202,11 +2202,11 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     /* Cookie banner: a floating Knox card (sticker border, fox, Knox buttons) */
     #cookieBanner { display:none; position:fixed; left:16px; right:16px; bottom:max(16px, env(safe-area-inset-bottom)); z-index:9999; max-width:620px; margin:0 auto;
-      background:var(--surface); border:3px solid var(--orange); border-radius:22px; box-shadow:0 5px 0 #CC5500, 0 18px 44px rgba(0,0,0,.18); padding:16px 18px; animation:kkCookieIn .35s cubic-bezier(.2,.8,.2,1); }
+      background:var(--surface); border:3px solid var(--orange); border-radius:22px; box-shadow:0 5px 0 var(--orange-dark), 0 18px 44px rgba(0,0,0,.18); padding:16px 18px; animation:kkCookieIn .35s cubic-bezier(.2,.8,.2,1); }
     @keyframes kkCookieIn { from { transform:translateY(24px); opacity:0; } to { transform:none; opacity:1; } }
     .kk-cookie { display:flex; align-items:center; gap:14px; }
     .kk-cookie-fox { position:relative; flex-shrink:0; width:52px; height:52px; }
-    .kk-cookie-fox img { width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); box-shadow:0 3px 0 #CC5500; }
+    .kk-cookie-fox img { width:52px; height:52px; border-radius:50%; object-fit:cover; border:3px solid var(--orange); box-shadow:0 3px 0 var(--orange-dark); }
     .kk-cookie-fox span { position:absolute; right:-6px; bottom:-4px; font-size:22px; line-height:1; }
     .kk-cookie-text { flex:1; min-width:0; }
     .kk-cookie-text b { display:block; font-size:16px; font-weight:900; color:var(--text); margin-bottom:2px; }
@@ -2214,7 +2214,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     .kk-cookie-text a { color:var(--orange); font-weight:800; }
     .kk-cookie-btns { display:flex; gap:8px; flex-shrink:0; }
     .kk-cookie-btns button { font-family:inherit; font-size:14px; font-weight:900; border-radius:14px; padding:10px 16px; cursor:pointer; white-space:nowrap; transition:transform .12s, box-shadow .12s; }
-    .kk-cookie-yes { background:var(--orange); color:#fff; border:2px solid #CC5500; box-shadow:0 4px 0 #CC5500; }
+    .kk-cookie-yes { background:var(--orange); color:#fff; border:2px solid var(--orange-dark); box-shadow:0 4px 0 var(--orange-dark); }
     .kk-cookie-no { background:var(--surface); color:var(--text); border:2px solid var(--border); box-shadow:0 4px 0 var(--border); }
     .kk-cookie-btns button:hover { transform:translateY(-1px); }
     .kk-cookie-btns button:active { transform:translateY(3px); box-shadow:0 1px 0 currentColor; }
@@ -2936,7 +2936,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <!-- Gift Knox Plus: gift.js opens the gift window right here -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:36px auto 0;max-width:720px;padding:18px 22px;border-radius:20px;background:var(--orange-cream);border:2px solid var(--orange);box-shadow:0 4px 0 var(--orange-light);">
       <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 300px;text-align:left;">
-        <span aria-hidden="true" style="display:flex;width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 #CC5500;align-items:center;justify-content:center;flex-shrink:0;"><svg class="kk-ic" style="width:28px;height:28px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>
+        <span aria-hidden="true" style="display:flex;width:52px;height:52px;border-radius:15px;background:var(--orange-light);color:var(--orange);border:2px solid var(--orange);box-shadow:0 4px 0 var(--orange-dark);align-items:center;justify-content:center;flex-shrink:0;"><svg class="kk-ic" style="width:28px;height:28px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></span>
         <div>
           <p style="font-size:17px;font-weight:900;color:var(--text);line-height:1.25;">Give Knox Knows as a gift</p>
           <p style="font-size:13px;font-weight:700;color:var(--text-light);margin-top:3px;line-height:1.45;">1, 3 or 12 months of Knox Plus or Mega Knox with a gift code — no subscription, it never renews. Got a code? <a href="/redeem" onclick="if(window.knoxGifts){event.preventDefault();window.knoxGifts.openRedeem();}" style="color:var(--orange);font-weight:800;">Redeem it here</a>.</p>
@@ -3105,7 +3105,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   }
   .knox-faq[open] {
     border-color: var(--orange);
-    box-shadow: 0 4px 0 #CC5500;
+    box-shadow: 0 4px 0 var(--orange-dark);
   }
   .knox-faq > summary {
     padding: 18px 22px;
@@ -3816,7 +3816,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
             You've got <strong style="color:var(--text);">10 free questions to start</strong>, plus 5 more every day (up to 20 saved) across every subject. Type a question or snap a photo of your homework — Knox handles both.
           </p>
         </div>
-        <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 #CC5500;transition:filter 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.filter='brightness(1.07)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.filter='';this.style.boxShadow='0 4px 0 #CC5500'">
+        <button id="knoxWelcomeCta" style="width:100%;padding:15px;border-radius:16px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 4px 0 var(--orange-dark);transition:filter 0.12s,box-shadow 0.12s;margin-bottom:8px;" onmouseover="this.style.filter='brightness(1.07)';this.style.boxShadow='0 5px 0 var(--orange-dark)'" onmouseout="this.style.filter='';this.style.boxShadow='0 4px 0 var(--orange-dark)'">
           Ask Knox your first question →
         </button>
         <button onclick="document.getElementById('knoxWelcomeModal').remove();if(window.redirectToApp)window.redirectToApp();" style="width:100%;padding:11px;border-radius:12px;font-size:13px;font-weight:700;font-family:inherit;border:none;background:transparent;color:var(--text-light);cursor:pointer;transition:color 0.12s;" onmouseover="this.style.color='#6B7280'" onmouseout="this.style.color='#9CA3AF'">
@@ -4400,7 +4400,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;';
     const upgradeSection = isPaid ? '' : `
       <div style="background:var(--orange-light);border:2px solid #FFCFA0;border-radius:14px;padding:14px 16px;margin-bottom:2px;">
-        <div style="font-size:13px;font-weight:900;color:#CC5500;margin-bottom:4px;">${upgradeBadge}</div>
+        <div style="font-size:13px;font-weight:900;color:var(--orange-dark);margin-bottom:4px;">${upgradeBadge}</div>
         <div style="font-size:12px;font-weight:600;color:#888;">${upgradeSub}</div>
       </div>
       <button onclick="this.closest('div[style*=fixed]').remove();scrollToPricing();" style="width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;font-family:inherit;border:none;background:var(--green);color:white;cursor:pointer;box-shadow:0 4px 0 var(--green-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">${upgradeText}</button>`;
@@ -4509,7 +4509,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
         megaTrial.className = 'pt-badge';
         megaTrial.innerHTML = KK_SPARK + ' 3-DAY FREE TRIAL';
         megaTrial.style.background = '#FF6B00';
-        megaTrial.style.boxShadow  = '0 2px 0 #CC5500';
+        megaTrial.style.boxShadow  = '0 2px 0 var(--orange-dark)';
       }
     }
     document.querySelectorAll('.yearly-note').forEach(el => { el.style.display = yearly ? 'block' : 'none'; });
@@ -5016,7 +5016,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
           html += `<div style="display:flex;flex-direction:column;gap:8px;margin:10px 14px;">`;
           steps.forEach(({ num, txt }) => {
             html += `<div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:2px solid #FFE0C2;border-radius:12px;padding:12px 14px;box-shadow:0 2px 0 #FFD0A0;">
-              <div style="min-width:28px;height:28px;border-radius:9px;background:var(--orange);color:white;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 0 #CC5500;">${num}</div>
+              <div style="min-width:28px;height:28px;border-radius:9px;background:var(--orange);color:white;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 0 var(--orange-dark);">${num}</div>
               <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.6;padding-top:4px;">${formatInline(txt, plan)}</div>
             </div>`;
           });
@@ -5821,7 +5821,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   <div style="background:var(--surface);border-radius:24px;width:320px;max-width:calc(95vw / var(--kz, 1));max-height:calc(90vh / var(--kz, 1));overflow-y:auto;overflow-x:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
 
     <!-- Header -->
-    <div style="background:var(--orange);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid #CC5500;">
+    <div style="background:var(--orange);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:4px solid var(--orange-dark);">
       <div style="display:flex;align-items:center;gap:10px;">
         <div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.4);flex-shrink:0;">
           <img src="./knox-logo-square.jpg" alt="Knox" style="width:100%;height:100%;object-fit:cover;">
@@ -5885,7 +5885,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
       <button onclick="calcInput('0')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">0</button>
       <button onclick="calcInput('.')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;font-size:20px;font-weight:700;color:var(--text);cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 2px 0 var(--border);">.</button>
-      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 #CC5500;">=</button>
+      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:12px;font-size:22px;font-weight:900;color:white;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 4px 0 var(--orange-dark);">=</button>
       <button onclick="calcInput('+')" style="background:var(--orange-light);border:none;border-radius:12px;font-size:20px;font-weight:900;color:#FF6B00;cursor:pointer;padding:16px 8px;font-family:inherit;box-shadow:0 3px 0 #FFD0A0;">+</button>
     </div>
 
@@ -5919,7 +5919,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
       <button onclick="calcInput('5')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">5</button>
       <button onclick="calcInput('6')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">6</button>
       <button onclick="calcInput('+')" style="background:var(--orange-light);border:none;border-radius:10px;font-size:15px;font-weight:900;color:#FF6B00;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 2px 0 #FFD0A0;">+</button>
-      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 #CC5500;grid-row:span 2;">=</button>
+      <button onclick="calcEquals()" style="background:var(--orange);border:none;border-radius:10px;font-size:18px;font-weight:900;color:white;cursor:pointer;padding:12px 2px;font-family:inherit;box-shadow:0 3px 0 var(--orange-dark);grid-row:span 2;">=</button>
 
       <button onclick="calcInput('1')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">1</button>
       <button onclick="calcInput('2')" style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-size:16px;font-weight:700;color:var(--text);cursor:pointer;padding:12px 2px;font-family:inherit;">2</button>
@@ -5957,7 +5957,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     <!-- Footer -->
     <div style="padding:12px 16px;border-top:2px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <p style="font-size:12px;font-weight:600;color:var(--text-light);margin:0;">Saved automatically · Delete anytime</p>
-      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 #CC5500;transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 #CC5500'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 #CC5500'"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg> Clear All</button>
+      <button onclick="clearAllHistory()" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;font-family:inherit;border:none;background:var(--orange);color:white;cursor:pointer;box-shadow:0 3px 0 var(--orange-dark);transition:all 0.15s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 0 var(--orange-dark)'" onmouseout="this.style.transform='';this.style.boxShadow='0 3px 0 var(--orange-dark)'"><svg class="kk-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg> Clear All</button>
     </div>
   </div>
 </div>
