@@ -42,7 +42,7 @@ html.knox-christmas .season-only { display: none; }
    lights, a wreath, ornaments, a stocking, and snowy hills with pines, the
    tree, candy canes, a snowman and presents. Snow falls over the whole page
    (.xmas-snow). Cards get a little snow cap. All flat Knox shapes. */
-.xmas-deco, .xmas-snow, .xmas-lights-mini { display: none; }
+.xmas-deco { display: none; }
 html.knox-christmas .xmas-deco { display: block; position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 html.knox-christmas #welcomeScreen > .xmas-deco, html.knox-christmas #home > .xmas-deco { position: absolute !important; inset: 0 !important; z-index: 0 !important; margin: 0 !important; width: auto !important; height: auto !important; }
 html.knox-christmas #welcomeScreen > :not(.xmas-deco),
@@ -53,23 +53,29 @@ html.knox-christmas { --cream: #F3F8FC; --cream-warm: #EAF3FA; }
 html.knox-christmas [data-mb="classic"] { --mb-bg: #F3F8FC; --mb-c1: #FFE1E2; --mb-c2: #D9F2E3; }
 html.knox-christmas #home.kl-hero { background: #F3F8FC; }
 
-/* Snow over everything (never catches clicks) */
-html.knox-christmas .xmas-snow { display: block; position: fixed; inset: 0; z-index: 9000; pointer-events: none; overflow: hidden; }
+/* Snow: falls inside the welcome screen / landing hero and scrolls with it. */
+.xmas-snow-local { position: absolute; inset: 0; overflow: hidden; }
 .xmas-flake { position: absolute; top: -30px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: #FFFFFF; border: 2px solid #C9E0F0; animation: xmasFall var(--d) linear var(--delay) infinite; }
 .xmas-flake.is-flake { background: none; border: 0; border-radius: 0; }
 .xmas-flake svg { display: block; width: 100%; height: 100%; }
 @keyframes xmasFall { from { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--drift), 52vh) rotate(160deg); } to { transform: translate(calc(var(--drift) * -.4), 106vh) rotate(320deg); } }
 @media (prefers-reduced-motion: reduce) { .xmas-flake { animation: none; top: var(--rest); } }
 
-/* String lights */
-.xmas-lights { position: absolute; top: 0; left: 0; width: 100%; height: 46px; }
-html.knox-christmas .xmas-lights-mini { display: block; position: absolute; top: auto; bottom: -22px; left: 0; width: 100%; height: 30px; pointer-events: none; z-index: 5; }
-html.knox-christmas .sidebar-top, html.knox-christmas #main-header { position: relative; }
+/* String lights (drawn to the real width by theme.js) */
+.xmas-lights-host { display: none; }
+.xmas-lights { display: block; }
+html.knox-christmas .xmas-deco > .xmas-lights-host { display: block; position: absolute; top: 0; left: 0; right: 0; }
+/* Under the sidebar logo: inside the logo bar, so the tools never cover it. */
+html.knox-christmas .sidebar-top { position: relative; height: 96px; padding-bottom: 26px; }
+html.knox-christmas .sidebar-top > .xmas-lights-mini { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; overflow: hidden; pointer-events: none; }
+body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !important; }
+/* Under the landing header: hangs just below it. */
+/* (The landing's string hangs at the top of the hero, just under the header.) */
 
 /* Top: wreath (left), ornaments (right), stocking */
-.xmas-wreath { position: absolute; top: 28px; left: 3%; width: 104px; }
-.xmas-baubles { position: absolute; top: 18px; right: 5%; width: 190px; }
-.xmas-stocking { position: absolute; top: 30px; right: calc(5% + 200px); width: 46px; }
+.xmas-wreath { position: absolute; top: 0; left: 3%; width: 104px; }
+.xmas-baubles { position: absolute; top: 0; right: 5%; width: 190px; }
+.xmas-stocking { position: absolute; top: 0; right: calc(5% + 200px); width: 46px; }
 
 /* Bottom: the snowy ground */
 .xmas-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; }
@@ -86,7 +92,7 @@ html.knox-christmas .sidebar-top, html.knox-christmas #main-header { position: r
   .xmas-snowman { width: 60px; right: calc(2% + 120px); } .xmas-gifts { width: 116px; }
   .xmas-wreath { width: 72px; } .xmas-baubles { width: 130px; }
 }
-@media (max-width: 600px) { .xmas-snowman, .xmas-canes, .xmas-wreath { display: none; } .xmas-baubles { width: 110px; } }
+@media (max-width: 600px) { .xmas-snowman, .xmas-canes, .xmas-wreath, .xmas-baubles, .xmas-stocking { display: none; } }
 /* The welcome screen's content sits above the ground scene. */
 html.knox-christmas #welcomeScreen { padding-bottom: 150px; }
 @media (max-width: 900px) { html.knox-christmas #welcomeScreen { padding-bottom: 110px; } }
@@ -104,3 +110,21 @@ html.knox-christmas .fall-tip { border-color: var(--orange); }
 html.knox-christmas .sidebar-logo-link, html.knox-christmas .header-logo { position: relative; }
 html.knox-christmas .xmas-hat { display: block; }
 .xmas-hat { display: none; position: absolute; width: 22px; height: 18px; top: -9px; left: 9px; transform: rotate(-18deg); pointer-events: none; z-index: 2; }
+html.knox-christmas #main-header { border-bottom-color: var(--orange-dark); }
+
+/* ── Landing hero: decorations stay clear of the text and the iPhone tour ── */
+html.knox-christmas #home.kl-hero { padding-bottom: 170px; }
+html.knox-christmas #home .xmas-wreath, html.knox-christmas #home .xmas-baubles, html.knox-christmas #home .xmas-stocking { display: none; }
+@media (min-width: 1560px) {
+  /* Wide screens have empty margins beside the hero: hang them there. */
+  html.knox-christmas #home .xmas-wreath { display: block; top: 30px; left: 1.5%; width: 92px; }
+  html.knox-christmas #home .xmas-baubles { display: block; top: 30px; right: 1%; width: 150px; }
+}
+@media (max-width: 900px) { html.knox-christmas #home.kl-hero { padding-bottom: 120px; } }
+
+/* Landing sections: a snowy edge on top, and holly beside each section label. */
+.xmas-edge { display: none; }
+html.knox-christmas section.kl-section { position: relative; }
+html.knox-christmas .xmas-edge { display: block; position: absolute; top: 0; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-size: 110px 16px; }
+html.knox-christmas .kl-eyebrow::after { content: ""; display: inline-block; width: 22px; height: 16px; margin-left: 6px; vertical-align: -2px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 32'%3E%3Cg stroke='%23157A41' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M22 18C14 8 4 10 2 4c6 1 10-2 12 3 2-4 6-2 8 0-2 3 2 8 0 11Z' fill='%231FA45A'/%3E%3Cpath d='M22 18c8-10 18-8 20-14-6 1-10-2-12 3-2-4-6-2-8 0 2 3-2 8 0 11Z' fill='%231FA45A'/%3E%3C/g%3E%3Cg fill='%23E5383B' stroke='%23B3202A' stroke-width='2'%3E%3Ccircle cx='18' cy='22' r='5'/%3E%3Ccircle cx='27' cy='23' r='5'/%3E%3Ccircle cx='22' cy='28' r='4'/%3E%3C/g%3E%3C/svg%3E") no-repeat center / contain; }
+html.knox-christmas #pricing.kl-pricing :is(.pt-card, .kp-family) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px; }
