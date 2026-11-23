@@ -17,13 +17,19 @@
   const START = '2026-11-01', END = '2026-11-30', CLAIM_UNTIL = '2026-12-07';
   // ?flamefest=demo turns the demo on for the rest of this visit (tab).
   let demo = new URLSearchParams(location.search).get('flamefest') === 'demo';
-  try { if (demo) sessionStorage.setItem('knoxFlameDemo', '1'); else demo = sessionStorage.getItem('knoxFlameDemo') === '1'; } catch (e) {}
+  const onPreview = /preview|localhost|127\.0\.0\.1/.test(location.hostname);
+  // On the private preview the demo only runs while ?flamefest=demo is in the link
+  // (so it can't stick around and hide the December look).
+  try { if (demo) sessionStorage.setItem('knoxFlameDemo', '1'); else if (onPreview) sessionStorage.removeItem('knoxFlameDemo'); else demo = sessionStorage.getItem('knoxFlameDemo') === '1'; } catch (e) {}
   const pad = n => String(n).padStart(2, '0');
   const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   // ?flamefest=test also sticks for this tab (the server checks it's the admin).
   let testMode = new URLSearchParams(location.search).get('flamefest') === 'test';
   try { if (testMode) { sessionStorage.setItem('knoxFlameTest', '1'); sessionStorage.removeItem('knoxFlameDemo'); demo = false; } else testMode = sessionStorage.getItem('knoxFlameTest') === '1'; } catch (e) {}
-  const today = () => demo ? '2026-11-18' : localDay();
+  // The private preview acts like early December (what students see when the
+  // December update goes live): Flame Fest is over and the 🔥 opens "Your flame".
+  const previewDecember = onPreview && !demo && !testMode && localDay() < '2026-12-01';
+  const today = () => demo ? '2026-11-18' : previewDecember ? '2026-12-02' : localDay();
   const active = () => demo || testMode || (today() >= START && today() <= CLAIM_UNTIL);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
