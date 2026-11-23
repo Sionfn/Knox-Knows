@@ -153,7 +153,7 @@ const tierTag=t=>t==='mega'?'<span class="fc-plus-tag mega">💎 Mega</span>':'<
 const canSee=()=>EVERYONE||isPlus();
 const chip=(label,action,on,attrs='')=>`<button type="button" class="fc-chip${on?' on':''}" data-action="${action}" ${attrs}>${label}</button>`;
 function makeView(){
-  generationVersion++;session=null;editing=null;dirty=false;importNote=null;
+  generationVersion++;stopQuiz();session=null;editing=null;dirty=false;importNote=null;
   const plus=isPlus(), tier=tierNow(), mega=tier==='mega';
   if(makeOpts.count>MAX_CARDS[tier])makeOpts.count=MAX_CARDS[tier];
   if(!mega){if(['fill','tf'].includes(makeOpts.style))makeOpts.style='qa';makeOpts.difficulty='mixed';}
@@ -242,7 +242,7 @@ async function makeDeck(){
 
 const way=(action,flavor,icon,title,text)=>`<button type="button" class="fc-way" data-action="${action}" data-flavor="${flavor}"><span class="fc-way-icon" aria-hidden="true">${icon}</span><b>${title}</b><span>${text}</span></button>`;
 function home(query=''){
-  generationVersion++;
+  generationVersion++;stopQuiz();
   session=null; editing=null; dirty=false; importNote=null;
   frame({badge:badge('🗂️ Knox Flashcards','🍂 Cozy fall study session'),title:'Practice makes<br><span class="accent">knowing.</span>',
     sub:'Build a deck, try to recall each answer before you flip, and Knox brings back the tricky cards more often.'},
@@ -276,12 +276,12 @@ function renderDecks(query){
       <div class="fc-deck-top"><div class="fc-deck-icon" aria-hidden="true">${ICONS[i%4]}</div>
         <div style="min-width:0"><h2 class="fc-deck-name">${esc(d.title)}</h2>
         <div class="fc-pills"><span class="fc-pill">${d.cards.length} card${d.cards.length===1?'':'s'}</span>${due?`<span class="fc-pill due">${due} due</span>`:'<span class="fc-pill done">✓ Caught up</span>'}</div></div></div>
-      <div class="fc-deck-actions">${btn('Review due','due',{cls:'primary small',attrs:`data-id="${esc(d.id)}" ${due?'':'disabled'}`})}${btn('Practice all','practice',{cls:'small',attrs:`data-id="${esc(d.id)}"`})}</div>
+      <div class="fc-deck-actions">${btn('Review due','due',{cls:'primary small',attrs:`data-id="${esc(d.id)}" ${due?'':'disabled'}`})}${btn('Practice all','practice',{cls:'small',attrs:`data-id="${esc(d.id)}"`})}${btn('🎯 Quiz me','quiz',{cls:'small fc-quiz-btn',attrs:`data-id="${esc(d.id)}"`})}</div>
       <div class="fc-deck-more">${btn('Edit','edit',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Share','share',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Export','export',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Delete','delete',{cls:'ghost small danger',attrs:`data-id="${esc(d.id)}"`})}</div>
     </article>`;}).join('');
 }
 
-function editor(deck){generationVersion++;importNote=null;editing=deck?structuredClone(deck):{id:crypto.randomUUID(),title:'',cards:[{front:'',back:''}]};dirty=false;renderEditor();}
+function editor(deck){generationVersion++;stopQuiz();importNote=null;editing=deck?structuredClone(deck):{id:crypto.randomUUID(),title:'',cards:[{front:'',back:''}]};dirty=false;renderEditor();}
 // One card row. Only the first card shows example text — repeating it on every
 // blank card made new cards look like copies of card 1.
 function cardRow(c,i){
@@ -492,6 +492,170 @@ function flip(){
   panel.querySelector('#fcControls button')?.focus({preventScroll:true});
 }
 
+// ── Quiz me (Dec 1): multiple choice and a matching game ────────────────────
+// Quizzes never change the Review due schedule. Multiple choice uses wrong
+// answers Knox writes (api/generate-flashcards.js, quiz), kept on each card as
+// `wrong` so the next quiz is instant; editing a card clears them. Without
+// them (a guest, offline, or the daily limit) the choices are the deck's own
+// other answers. Match: up to 6 pairs against the clock, best time per deck.
+let quiz=null, quizFor=null, quizCount=10, quizTimer=0;
+const MATCH_PAIRS=6, QUIZ_CHUNK=25;
+const isTF=c=>/^\s*(true|false)\s*(?:[.!,:;—–-]|$)/i.test(c.back||''); // a True/False card (not "True north…")
+// The answer as a choice: True/False, the word that fills the blank, or the whole back.
+function shortAnswer(c){
+  if(isTF(c))return /^\s*true/i.test(c.back)?'True':'False';
+  if(BLANK.test(c.front||'')){const m=String(c.back||'').match(/^\s*(.+?)(?:[.!]\s+|\s+[—–-]\s+|$)/);const a=m&&m[1].trim().replace(/[.!]$/,'');if(a&&a.length<=80)return a;}
+  return String(c.back||'').trim();
+}
+const shuffle=list=>{const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const quizDeck=()=>decks.find(d=>d.id===(quiz?.id||quizFor));
+const matchable=d=>{const seen=new Set();return d.cards.map((c,i)=>i).filter(i=>{const c=d.cards[i],a=shortAnswer(c).toLowerCase();return !isTF(c)&&a&&!seen.has(a)&&seen.add(a);});};
+const bestKey=id=>`knox.flashcards.matchBest.${window.currentUser?.uid||'guest'}.${id}`;
+const fmtTime=ms=>{const s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+function stopQuiz(){quiz=null;if(quizTimer)clearInterval(quizTimer);quizTimer=0;}
+
+function quizMenu(id){
+  generationVersion++;stopQuiz();session=null;editing=null;dirty=false;quizFor=id;
+  const d=quizDeck();if(!d){home();return;}
+  const canMc=d.cards.length>=4||!!window.currentUser, canMatch=matchable(d).length>=3, n=d.cards.length;
+  const choice=(action,flavor,icon,title,text,ok,why)=>`<button type="button" class="fc-way" data-action="${action}" data-flavor="${flavor}"${ok?'':' disabled'}><span class="fc-way-icon" aria-hidden="true">${icon}</span><b>${title}</b><span>${ok?text:why}</span></button>`;
+  frame({badge:'<span class="fc-badge">🎯 Quiz me</span>',title:`Quiz me on <span class="accent">${esc(d.title)}</span>`,
+    sub:'Pick a game. Quizzes are just for practice: your Review due schedule stays the same.'},
+   `<div class="fc-topbar">${btn('← Decks','back',{cls:'ghost'})}</div>
+    <div class="fc-ways fc-quiz-ways">
+      ${choice('quiz-mc','orange','🔤','Multiple choice','Pick the right answer out of four. Knox writes believable wrong answers, so you really have to know it.',canMc,'Add at least 4 cards, or sign in so Knox can write the choices.')}
+      ${choice('quiz-match','blue','🧩','Match','Match each question to its answer as fast as you can. Beat your best time!',canMatch,'Match needs at least 3 cards with different answers.')}
+    </div>
+    ${canMc&&n>5?`<div class="fc-quiz-count"><span class="fc-field-label">Multiple choice questions</span><div class="fc-chips">${[5,10,20].filter(k=>k<n).map(k=>chip(String(k),'quiz-count',quizCount===k,`data-count="${k}"`)).join('')}${chip(`All ${n}`,'quiz-count',quizCount>=n,`data-count="${n}"`)}</div></div>`:''}`,true);
+  panel.querySelector('.fc-title')?.focus();
+}
+
+// Fill in missing wrong answers: from Knox when signed in, else from the deck.
+async function quizChoicesFor(d,idx){
+  const need=idx.filter(i=>!isTF(d.cards[i])&&!(Array.isArray(d.cards[i].wrong)&&d.cards[i].wrong.length>=3));
+  const got=new Map();let note='';
+  const user=window.currentUser;
+  if(need.length&&user?.getIdToken){
+    const owner=key(),version=generationVersion;
+    nextWay='make';frame(null,`<div class="fc-loading"><img src="${FOX}" alt=""><h2>Knox is writing your answer choices…</h2><p class="fc-sub">Believable wrong answers take a few seconds. Next time this deck is instant.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${btn('Cancel','quiz-menu',{cls:'ghost small'})}</div></div>`,true);
+    try{
+      const token=await user.getIdToken();
+      const chunks=[];for(let k=0;k<need.length;k+=QUIZ_CHUNK)chunks.push(need.slice(k,k+QUIZ_CHUNK));
+      await Promise.all(chunks.map(async part=>{
+        const r=await fetch('/api/generate-flashcards',{method:'POST',signal:AbortSignal.timeout(50000),headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body:JSON.stringify({quiz:{title:d.title,cards:part.map(i=>({front:d.cards[i].front,back:shortAnswer(d.cards[i])}))}})});
+        const j=await r.json().catch(()=>({}));
+        if(!r.ok||!Array.isArray(j.choices)){note=j.error||note;return;}
+        part.forEach((i,k)=>{const w=j.choices[k];if(Array.isArray(w)&&w.length>=3)got.set(i,w.slice(0,3).map(String));});
+      }));
+    }catch{note='Couldn’t reach Knox, so this quiz uses your other cards’ answers.';}
+    if(version!==generationVersion||owner!==key())return null; // cancelled or signed out
+    if(got.size){const next=structuredClone(decks),nd=next.find(x=>x.id===d.id);if(nd){for(const [i,w] of got)if(nd.cards[i])nd.cards[i].wrong=w;save(next);}}
+  }
+  return {got,note:got.size<need.length?(note||'Some choices use your other cards’ answers.'):''};
+}
+async function quizStart(id){
+  const d=decks.find(x=>x.id===id);if(!d)return home();
+  quizFor=id;const count=Math.min(quizCount,d.cards.length);
+  const idx=shuffle(d.cards.map((_,i)=>i)).slice(0,count);
+  const r=await quizChoicesFor(d,idx);if(!r)return;
+  const fresh=decks.find(x=>x.id===id)||d;
+  const answers=fresh.cards.map(shortAnswer);
+  const items=idx.map(i=>{
+    const c=fresh.cards[i],right=answers[i];
+    let wrong=isTF(c)?[right==='True'?'False':'True']:(r.got.get(i)||(Array.isArray(c.wrong)&&c.wrong.length>=3?c.wrong:null));
+    if(!wrong){ // closest-length answers from the rest of the deck
+      const pool=[...new Set(answers.filter((a,k)=>k!==i&&a.toLowerCase()!==right.toLowerCase()&&!isTF(fresh.cards[k])))];
+      wrong=shuffle(pool.sort((a,b)=>Math.abs(a.length-right.length)-Math.abs(b.length-right.length)).slice(0,6)).slice(0,3);
+      if(/^\p{Lu}/u.test(right))wrong=wrong.map(a=>a.charAt(0).toUpperCase()+a.slice(1)); // "cytoplasm" next to "Nucleus" would give it away
+    }
+    return {i,q:c.front,right,options:isTF(c)?['True','False']:shuffle([right,...wrong.slice(0,3)]),picked:null};
+  }).filter(x=>x.options.length>=2);
+  if(!items.length){quizMenu(id);message('Add a few more cards with different answers to play multiple choice.');return;}
+  stopQuiz();quiz={id,mode:'mc',items,at:0,right:0};quizQuestion();
+  if(r.note)message(r.note);
+}
+function quizQuestion(){
+  const d=quizDeck(),it=quiz.items[quiz.at],n=quiz.items.length,pct=Math.round(quiz.at/n*100);
+  frame(null,`<div class="fc-topbar fc-study-top">${btn('← Finish','quiz-menu',{cls:'ghost'})}<span class="fc-pill">${esc(d.title)}</span></div>
+    <div class="fc-progress"><div class="fc-progress-text"><span>Question ${quiz.at+1} of ${n}</span><span>${quiz.right} right</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
+    <div class="fc-quiz-q"><span class="fc-face-label">Question</span><p class="fc-face-text" id="fcQuizQ">${esc(it.q)}</p></div>
+    <div class="fc-quiz-opts${it.options.length===2?' two':''}" role="group" aria-labelledby="fcQuizQ">${it.options.map((o,k)=>`<button type="button" class="fc-opt" data-action="quiz-pick" data-k="${k}"><span class="k" aria-hidden="true">${k+1}</span><span class="fc-opt-text">${esc(o)}</span></button>`).join('')}</div>
+    <div class="fc-quiz-after" id="fcQuizAfter" aria-live="polite"></div>
+    <p class="fc-tip">Press 1–${it.options.length} to answer, Enter for the next question.</p>`,true);
+}
+function quizPick(k){
+  const it=quiz.items[quiz.at];if(it.picked!==null)return;
+  it.picked=k;const ok=it.options[k]===it.right;if(ok)quiz.right++;
+  panel.querySelectorAll('.fc-opt').forEach((b,j)=>{b.disabled=true;b.classList.toggle('right',it.options[j]===it.right);b.classList.toggle('wrong',j===k&&!ok);});
+  const c=quizDeck()?.cards[it.i],last=quiz.at===quiz.items.length-1;
+  const pic=c&&cleanImage(c).image?`<img class="fc-quiz-img" src="${esc(c.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:'';
+  const why=c&&!ok&&shortAnswer(c)!==String(c.back).trim()?`<p class="fc-fill-why">${esc(c.back)}</p>`:'';
+  panel.querySelector('#fcQuizAfter').innerHTML=`<div class="fc-quiz-feedback ${ok?'ok':'no'}"><b>${ok?pick(['✓ Nice!','✓ You got it!','✓ Correct!']):'✗ Not quite'}</b>${ok?'':`<span>The answer is <b>${esc(it.right)}</b>.</span>`}${why}${pic}</div>${btn(last?'See my score':'Next question','quiz-next',{cls:'primary fc-reveal'})}`;
+  panel.querySelector('[data-action="quiz-next"]')?.focus({preventScroll:true});
+  panel.querySelector('#fcQuizAfter').scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function quizNext(){
+  if(quiz.items[quiz.at].picked===null)return;
+  if(++quiz.at<quiz.items.length){quizQuestion();return;}
+  const d=quizDeck(),n=quiz.items.length,missed=quiz.items.filter(x=>x.options[x.picked]!==x.right),score=Math.round(quiz.right/n*100);
+  if(n>=3)window.knoxFlameFest?.studied();
+  frame(null,`<div class="fc-done"><img src="${FOX}" alt=""><h1 class="fc-title" tabindex="-1">${score>=90?'Quiz <span class="accent">crushed!</span> <span class="no-ki">🏆</span>':score>=70?'Nice <span class="accent">work!</span> <span class="no-ki">🎉</span>':'Quiz <span class="accent">done!</span>'}</h1>
+    <p class="fc-sub">${score>=90?`You really know <b>${esc(d.title)}</b>.`:missed.length?'Study the ones you missed, then try again.':''}</p>
+    <div class="fc-stats"><div class="fc-stat orange"><b>${score}%</b><span>Score</span></div><div class="fc-stat green"><b>${quiz.right}</b><span>Right</span></div><div class="fc-stat red"><b>${missed.length}</b><span>Missed</span></div></div>
+    ${missed.length?`<div class="fc-missed"><span class="fc-field-label">To study</span>${missed.map(x=>`<div class="fc-missed-row"><b>${esc(x.q)}</b><span>${esc(x.right)}</span></div>`).join('')}</div>`:''}
+    <div class="fc-toolbar">${missed.length?btn('Study the missed ones','quiz-study',{cls:'primary'}):''}${btn('Quiz again','quiz-mc',{cls:missed.length?'':'primary'})}${btn('Back to decks','back')}</div></div>`,true);
+  quiz.missed=missed.map(x=>x.i);quiz.done=true;
+  panel.querySelector('.fc-title')?.focus();
+}
+// The cards you missed, as a normal study session (this one does update the schedule).
+function quizStudy(){
+  const id=quiz.id,q=shuffle(quiz.missed||[]);stopQuiz();if(!q.length){home();return;}
+  generationVersion++;session={id,queue:q,flipped:false,reviewed:0,again:0,total:q.length,retry:new Set()};study();
+}
+
+function matchStart(id){
+  const d=decks.find(x=>x.id===id);if(!d)return home();
+  const picked=shuffle(matchable(d)).slice(0,MATCH_PAIRS);
+  stopQuiz();quizFor=id;
+  quiz={id,mode:'match',pairs:picked.map(i=>({i,left:d.cards[i].front,right:shortAnswer(d.cards[i])})),lefts:shuffle(picked.map((_,k)=>k)),rights:shuffle(picked.map((_,k)=>k)),sel:null,done:new Set(),mistakes:0,startedAt:Date.now()};
+  matchView();
+  quizTimer=setInterval(()=>{const t=panel.querySelector('#fcMatchTime');if(!quiz||quiz.mode!=='match'||!t||quiz.finished){clearInterval(quizTimer);return;}t.textContent=fmtTime(Date.now()-quiz.startedAt);},500);
+}
+function matchView(){
+  const d=quizDeck(),n=quiz.pairs.length,pct=Math.round(quiz.done.size/n*100);
+  const tile=(side,k)=>{const p=quiz.pairs[k],done=quiz.done.has(k),sel=quiz.sel&&quiz.sel.side===side&&quiz.sel.k===k;
+    return `<button type="button" class="fc-match${side==='r'?' ans':''}${done?' matched':''}${sel?' sel':''}" data-action="match-pick" data-side="${side}" data-k="${k}" aria-pressed="${sel}"${done?' disabled':''}>${esc(side==='l'?p.left:p.right)}</button>`;};
+  frame(null,`<div class="fc-topbar fc-study-top">${btn('← Finish','quiz-menu',{cls:'ghost'})}<span class="fc-pill">${esc(d.title)}</span></div>
+    <div class="fc-progress"><div class="fc-progress-text"><span>⏱ <span id="fcMatchTime">${fmtTime(Date.now()-quiz.startedAt)}</span></span><span>${quiz.done.size} of ${n} matched${quiz.mistakes?` · ${quiz.mistakes} miss${quiz.mistakes===1?'':'es'}`:''}</span></div><div class="fc-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div></div>
+    <div class="fc-match-grid"><div class="fc-match-col"><span class="fc-field-label">Questions</span>${quiz.lefts.map(k=>tile('l',k)).join('')}</div><div class="fc-match-col"><span class="fc-field-label">Answers</span>${quiz.rights.map(k=>tile('r',k)).join('')}</div></div>
+    <p class="fc-tip">Tap a question, then its answer.</p>`,true);
+}
+function matchPick(side,k){
+  if(!quiz||quiz.mode!=='match'||quiz.done.has(k)||quiz.busy)return;
+  const s=quiz.sel;
+  if(!s||s.side===side){quiz.sel=s&&s.side===side&&s.k===k?null:{side,k};matchView();return;}
+  quiz.sel=null;
+  if(s.k===k){quiz.done.add(k);if(quiz.done.size===quiz.pairs.length){matchDone();return;}matchView();announce('Matched!');return;}
+  quiz.mistakes++;quiz.busy=true;matchView();
+  const a=panel.querySelector(`.fc-match[data-side="${s.side}"][data-k="${s.k}"]`),b=panel.querySelector(`.fc-match[data-side="${side}"][data-k="${k}"]`);
+  a?.classList.add('miss');b?.classList.add('miss');announce('Not a match');
+  setTimeout(()=>{if(!quiz||quiz.mode!=='match')return;quiz.busy=false;a?.classList.remove('miss');b?.classList.remove('miss');},600);
+}
+function matchDone(){
+  quiz.finished=true;clearInterval(quizTimer);
+  const ms=Date.now()-quiz.startedAt,d=quizDeck();
+  let best=0;try{best=+localStorage.getItem(bestKey(d.id))||0;}catch{}
+  const newBest=!best||ms<best;
+  if(newBest)try{localStorage.setItem(bestKey(d.id),String(ms));}catch{}
+  if(quiz.pairs.length>=3)window.knoxFlameFest?.studied();
+  frame(null,`<div class="fc-done"><img src="${FOX}" alt=""><h1 class="fc-title" tabindex="-1">${newBest&&best?'New <span class="accent">best time!</span> <span class="no-ki">🏆</span>':'All <span class="accent">matched!</span> <span class="no-ki">🎉</span>'}</h1>
+    <p class="fc-sub">${best&&!newBest?`Your best on this deck is ${fmtTime(best)}.`:'Play again with new cards from this deck.'}</p>
+    <div class="fc-stats"><div class="fc-stat orange"><b>${fmtTime(ms)}</b><span>Time</span></div><div class="fc-stat green"><b>${quiz.pairs.length}</b><span>Matched</span></div><div class="fc-stat red"><b>${quiz.mistakes}</b><span>Misses</span></div></div>
+    <div class="fc-toolbar">${btn('Play again','quiz-match',{cls:'primary'})}${btn('Other games','quiz-menu')}${btn('Back to decks','back')}</div></div>`,true);
+  panel.querySelector('.fc-title')?.focus();
+}
+
 // Knox-style confirm dialog (the browser's built-in dialog can't be styled).
 // Resolves true for the main action, false for cancel / Esc / backdrop.
 function knoxConfirm({title,body,ok='OK',cancel='Cancel',danger=false}){
@@ -652,14 +816,17 @@ window.flashcardsMake=async (request,fromLearn=false)=>{
  }
  const origin=fromLearn&&window.currentUser&&window._currentConversationId?{uid:window.currentUser.uid,id:window._currentConversationId}:null;
  const lessonUrl=new URL(location.href);lessonUrl.searchParams.set('open','learn');
- if(!(await open())||owner!==key())return false;
- if(window.knoxAppShell){documentReadVersion++;makeOpts.files=[];makeOpts.reading=false;}
- learnReturn=origin;makeOpts.request=String(request||'').slice(0,4000);
+ // The Back steps go in first, so the page's own section sync (app.html) sees
+ // the address already says Flashcards and doesn't add another.
+ const req=String(request||'').slice(0,4000);
  if(origin){
   history.replaceState({...history.state,knoxLearnLesson:origin},'',lessonUrl.pathname+lessonUrl.search+lessonUrl.hash);
   const next=new URL(lessonUrl);next.searchParams.set('open','flashcards');
-  history.pushState({knoxLearnFlashcards:origin,request:makeOpts.request},'',next.pathname+next.search+next.hash);
+  history.pushState({knoxLearnFlashcards:origin,request:req},'',next.pathname+next.search+next.hash);
  }
+ if(!(await open())||owner!==key()||panel.hidden){if(origin)history.back();return false;}
+ if(window.knoxAppShell){documentReadVersion++;makeOpts.files=[];makeOpts.reading=false;}
+ learnReturn=origin;makeOpts.request=req;
  makeView();return true;
 };
 async function returnToLesson(target){
@@ -667,15 +834,16 @@ async function returnToLesson(target){
  close();learnReturn=null;
  await window.openConversation?.(target.id);
 }
+const quietly=fn=>window.knoxQuietSection?window.knoxQuietSection(fn):fn(); // no new Back step while going back
 window.addEventListener('popstate',async e=>{
  if(e.state?.knoxLearnLesson){
   if(dirty&&!(await confirmLeave())){history.forward();return;}
-  await returnToLesson(e.state.knoxLearnLesson);
+  await quietly(()=>returnToLesson(e.state.knoxLearnLesson));
  }
- else if(e.state?.knoxLearnFlashcards?.uid===window.currentUser?.uid){await open();learnReturn=e.state.knoxLearnFlashcards;makeOpts.request=String(e.state.request||'').slice(0,4000);makeView();}
+ else if(e.state?.knoxLearnFlashcards&&e.state.knoxLearnFlashcards.uid===window.currentUser?.uid){const s=e.state;/* a guest's Back used to land here (undefined === undefined) */await quietly(async()=>{await open();learnReturn=s.knoxLearnFlashcards;makeOpts.request=String(s.request||'').slice(0,4000);makeView();});}
 });
 if(window.__knoxOpenFlashcardsWhenReady){window.__knoxOpenFlashcardsWhenReady=false;open();}
-function close(){generationVersion++;documentReadVersion++;makeOpts.reading=false;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
+function close(){generationVersion++;stopQuiz();documentReadVersion++;makeOpts.reading=false;document.body.classList.remove('knox-flashcards');panel.hidden=true;session=null;editing=null;dirty=false;}
 // The sidebar's Flashcards button (sidebar-tools.js decides which 4 tools show).
 const icon='<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7" width="13" height="14" rx="2.5"/><path d="M8 3.5h10a2.5 2.5 0 0 1 2.5 2.5v11"/><path d="M7 12h6M7 16h4"/></svg></span>';
 document.querySelectorAll('.sidebar-quicknav').forEach(nav=>{const b=document.createElement('button');b.className='sidebar-quicknav-link fc-nav';b.type='button';b.setAttribute('aria-label','Flashcards');b.innerHTML=icon+'<span class="sidebar-collapsible">Flashcards</span>';b.addEventListener('click',()=>{window.openBinder?window.openBinder('flashcards'):open();window.closeMobileHistory?.();});nav.append(b);});
@@ -777,7 +945,7 @@ window.flashcardsTakeDrop=files=>{
 };
 window.addEventListener('knox-auth-changed',()=>{generationVersion++;documentReadVersion++;Object.assign(makeOpts,{request:'',count:10,style:'qa',difficulty:'mixed',upgrade:false,files:[],reading:false});load();if(!panel.hidden)home();});
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
-panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;if(e.target.dataset.field==='front')delete c.imageTopic;}});
+panel.addEventListener('input',e=>{if(e.target.id==='fcSearch'){renderDecks(e.target.value);return;}if(e.target.id==='fcMakeReq'){makeOpts.request=e.target.value;return;}if(!editing)return;dirty=true;if(e.target.id==='fcTitle')editing.title=e.target.value;else if(e.target.dataset.field){const c=editing.cards[+e.target.dataset.index];c[e.target.dataset.field]=e.target.value;c.due=0;c.interval=0;delete c.wrong;if(e.target.dataset.field==='front')delete c.imageTopic;}});
 panel.addEventListener('click',async e=>{
  const b=e.target.closest('[data-action]');if(!b||b.disabled)return;const action=b.dataset.action,id=b.dataset.id;
  if(action==='learn-return'){if(!dirty||await confirmLeave()){dirty=false;if(history.state?.knoxLearnFlashcards)history.back();else await returnToLesson(learnReturn);}return;}
@@ -820,11 +988,20 @@ panel.addEventListener('click',async e=>{
  if(action==='flip'&&session)flip();
  if(['again','good','easy'].includes(action)&&session?.flipped){const s=session,index=s.queue[0];const next=structuredClone(decks);const d=next.find(d=>d.id===s.id);d.cards[index]=schedule(d.cards[index],action);if(!save(next))return;s.queue.shift();if(action==='again'){s.queue.splice(Math.min(3,s.queue.length),0,index);s.retry.add(index);s.again++;if(s.queue.length>1)message('↻ Knox will bring this one back in a few cards.','ok');}else s.retry.delete(index);s.reviewed++;s.flipped=false;if(window.knoxAppShell&&window.currentUser?.uid)window.dispatchEvent(new CustomEvent('knox-study-completed',{detail:{uid:window.currentUser.uid,id:s.id+':'+(s.mobileId||=crypto.randomUUID())+':'+s.reviewed,kind:'review'}}));if(s.reviewed===5||(!s.queue.length&&s.reviewed>=3))window.knoxFlameFest?.studied();study();}
  if(action==='import')importView();
+ if(action==='quiz')quizMenu(id);
+ if(action==='quiz-menu'&&quizFor){quizMenu(quizFor);}
+ if(action==='quiz-count'){quizCount=+b.dataset.count;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}
+ if(action==='quiz-mc'&&quizFor){b.disabled=true;try{await quizStart(quizFor);}finally{b.disabled=false;}}
+ if(action==='quiz-match'&&quizFor)matchStart(quizFor);
+ if(action==='quiz-pick'&&quiz?.mode==='mc')quizPick(+b.dataset.k);
+ if(action==='quiz-next'&&quiz?.mode==='mc')quizNext();
+ if(action==='quiz-study'&&quiz)quizStudy();
+ if(action==='match-pick')matchPick(b.dataset.side,+b.dataset.k);
  }catch(err){message(err.message);}
 });
 // Space flips, 1/2/3 grade — but never while typing. A focused button
 // already turns Space into a click, so leave that to the browser.
-document.addEventListener('keydown',e=>{if(e.target?.id==='fcMakeReq'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();panel.querySelector('[data-action="make-go"]')?.click();return;}if(!panel.hidden&&session&&e.key==='Escape'){e.preventDefault();home();return;}if(panel.hidden||!session||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'&&e.target.tagName==='BUTTON')return;const action=e.code==='Space'?'flip':({'1':'again','2':'good','3':'easy'}[e.key]);const b=action&&panel.querySelector(`[data-action="${action}"]`);if(b){e.preventDefault();b.click();}});
+document.addEventListener('keydown',e=>{if(e.target?.id==='fcMakeReq'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();panel.querySelector('[data-action="make-go"]')?.click();return;}if(!panel.hidden&&(session||quiz)&&e.key==='Escape'){e.preventDefault();home();return;}if(!panel.hidden&&quiz?.mode==='mc'&&!quiz.done&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&!e.ctrlKey&&!e.metaKey&&!e.altKey){const it=quiz.items[quiz.at],k=+e.key;if(it.picked===null&&k>=1&&k<=it.options.length){e.preventDefault();quizPick(k-1);return;}if(it.picked!==null&&e.key==='Enter'&&e.target.tagName!=='BUTTON'){e.preventDefault();quizNext();return;}}if(panel.hidden||!session||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;if(e.code==='Space'&&e.target.tagName==='BUTTON')return;const action=e.code==='Space'?'flip':({'1':'again','2':'good','3':'easy'}[e.key]);const b=action&&panel.querySelector(`[data-action="${action}"]`);if(b){e.preventDefault();b.click();}});
 load();
 
 // App tabs (iPhone app and home-screen version) suspend the panel without discarding an editor, files or review.

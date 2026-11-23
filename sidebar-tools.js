@@ -1,8 +1,8 @@
 // sidebar-tools.js — pick which 4 tools show in the web app's sidebar.
-// Tools: Ask Knox, Learn, Flashcards, Calculator, Simulations (the last two
+// Tools, in this order: Ask Knox, Learn, Calculator, Flashcards, Simulations (the
 // buttons are added by flashcards.js and notes.js). "Your tools · Edit" sits
 // above them; the choice is saved on this device:
-//   localStorage 'knoxSidebarTools.v1' = ['chat', 'learn', 'cards', 'calc']
+//   localStorage 'knoxSidebarTools.v1' = ['chat', 'learn', 'calc', 'cards']
 // Under the 4 sits "··· More": it lists the hidden tools, opens one without
 // changing your 4, and lights up in that tool's color while it's open.
 // (More is not a .sidebar-quicknav-link on purpose: the Flashcards and
@@ -12,11 +12,11 @@
   const TOOLS = [
     ['chat', 'Ask Knox', '[data-nav="chat"], [data-mobile-nav="chat"]'],
     ['learn', 'Learn', '[data-nav="learn"], [data-mobile-nav="learn"]'],
-    ['cards', 'Flashcards', '.fc-nav'],
     ['calc', 'Calculator', '[data-nav="calculator"], [data-mobile-nav="calculator"]'],
+    ['cards', 'Flashcards', '.fc-nav'],
     ['sims', 'Simulations', '.sims-nav'],
   ];
-  const DEFAULT = ['chat', 'learn', 'cards', 'calc'];
+  const DEFAULT = ['chat', 'learn', 'calc', 'cards'];
   const DOTS = '<span class="sq-icon sq-more-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>';
   const chosen = () => {
     try { const v = JSON.parse(localStorage.getItem(KEY)); if (Array.isArray(v)) { const ok = v.filter(k => TOOLS.some(t => t[0] === k)).slice(0, MAX); if (ok.length) return ok; } } catch (_) {}
