@@ -68,7 +68,10 @@ html.knox-christmas .xmas-deco > .xmas-lights-host { display: block; position: a
 /* The sidebar logo bar keeps its normal size; a short tangled string runs
    along its bottom edge, drawn above the tools so nothing hides the bulbs. */
 html.knox-christmas .sidebar-top { position: relative; z-index: 3; }
-html.knox-christmas .sidebar-top > .xmas-lights-mini { display: block; position: absolute; left: 0; right: 0; top: calc(100% - 6px); height: 24px; pointer-events: none; }
+html.knox-christmas .sidebar-top > .xmas-lights-mini { display: block; position: absolute; left: 0; right: 0; top: calc(100% - 4px); pointer-events: none; }
+/* Room for the bulbs to hang between the logo bar and the tools. */
+html.knox-christmas #rightSidebar .sidebar-quicknav { padding-top: 38px; }
+body.app-sidebar-collapsed #rightSidebar .sidebar-quicknav { padding-top: 10px; }
 body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !important; }
 /* Under the landing header: hangs just below it. */
 /* (The landing's string hangs at the top of the hero, just under the header.) */

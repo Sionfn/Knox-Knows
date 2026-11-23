@@ -372,7 +372,7 @@
     // Landing sections: a snowy edge along the top of each one.
     document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
     // Shorter lights under the sidebar logo and the landing header.
-    document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true, true));
+    document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true)); // the drooping string under the logo bar
     document.querySelectorAll('.sidebar-logo-link, .header-logo').forEach(a => { if (!a.querySelector('.xmas-hat')) a.insertAdjacentHTML('afterbegin', SANTA_HAT); });
   }
   // "Christmas mode is here" tip (app welcome screen, December, dismissible).
