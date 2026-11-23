@@ -320,6 +320,13 @@
       host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
       addLights(host.querySelector(':scope > .xmas-deco'), host.id !== 'welcomeScreen'); // a shorter string under the landing header
     }
+    // The landing's last section: Knox in a Santa hat, snow and the snowy ground.
+    const fin = document.querySelector('.kl-final');
+    if (fin && !fin.querySelector(':scope > .xmas-deco')) {
+      fin.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 12 : 24)}</div><div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+      const img = fin.querySelector('.kl-wrap > img');
+      if (img && !img.parentElement.classList.contains('xmas-hat-wrap')) { const w = document.createElement('span'); w.className = 'xmas-hat-wrap'; img.before(w); w.append(img); w.insertAdjacentHTML('afterbegin', SANTA_HAT); }
+    }
     // Landing sections: a snowy edge along the top of each one.
     document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
     // Shorter lights under the sidebar logo and the landing header.
