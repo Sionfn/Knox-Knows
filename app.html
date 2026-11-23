@@ -2053,6 +2053,38 @@
     }
     .usage-info-upgrade:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--orange-dark); }
 
+    /* ── Plan card (usage pill): the landing page's pricing-card look ──
+       A solid card in the plan's color with its darker edge, a plan icon tile,
+       ✓ checks in little circles and a flat plan-colored button. No gradients. */
+    .ui-card { --p:#1CB0F6; --pd:#0A85C2; --pl:#D7F2FD; --pt:#0A6E9F;
+      background: var(--surface) !important; border: 3px solid var(--p) !important; border-radius: 26px; box-shadow: 0 6px 0 var(--pd) !important; text-align: left; padding: 24px 22px 20px; max-width: 400px; }
+    .ui-card.ui-plus { --p:#58CC02; --pd:#46A302; --pl:#E5F8D6; --pt:#2D6A00; }
+    .ui-card.ui-mega { --p:#F2B705; --pd:#B98500; --pl:#FFF4CC; --pt:#8A5A00; }
+    html[data-theme="dark"] .ui-card { --pl: color-mix(in srgb, var(--p) 16%, var(--surface)); --pt: var(--p); }
+    .ui-card .usage-info-close:hover { background: var(--pl); color: var(--pt); }
+    .ui-head { display: flex; align-items: center; gap: 12px; margin: 2px 36px 12px 0; }
+    .ui-ic { width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; display: grid; place-items: center; background: var(--pl); border: 2px solid var(--p); box-shadow: 0 3px 0 var(--pd); font-size: 24px; }
+    .ui-ic .kk-ic { width: 28px; height: 28px; }
+    .ui-name { display: block; font-size: 21px; font-weight: 900; color: var(--text); line-height: 1.15; }
+    .ui-tag { display: block; font-size: 13px; font-weight: 800; color: var(--pt); }
+    .ui-card > p.ui-lead { font-size: 14px; font-weight: 700; color: var(--text-light); line-height: 1.5; margin: 0 0 12px; text-align: left; }
+    .ui-big { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 2px; }
+    .ui-big b { font-size: 44px; font-weight: 900; line-height: 1; color: var(--text); }
+    .ui-big span { font-size: 15px; font-weight: 800; color: var(--text-light); }
+    .ui-card .ui-next { color: var(--pt); text-align: left; margin-bottom: 14px; font-size: 14px; }
+    .ui-card .ui-next strong { color: var(--pt); }
+    .ui-how { font-size: 12px !important; font-weight: 900 !important; text-transform: uppercase; letter-spacing: .06em; color: var(--text-light) !important; margin: 0 0 6px !important; padding-top: 12px; border-top: 2px solid var(--border); }
+    .ui-card ul.ui-list { margin: 4px 0 16px; gap: 9px; }
+    .ui-card ul.ui-list li { padding-left: 30px; font-size: 13.5px; font-weight: 700; }
+    .ui-card ul.ui-list li::before { content: "✓"; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 900; line-height: 1; background: var(--pl); color: var(--pt); border: 1.5px solid var(--p); }
+    .ui-card ul.ui-list li strong { color: var(--pt) !important; }
+    .ui-card .usage-info-upgrade { border-radius: 16px; padding: 13px; background: var(--p); color: #fff; border: 2px solid var(--pd); box-shadow: 0 4px 0 var(--pd); }
+    .ui-card .usage-info-upgrade.ui-btn-mega { background: #FFC800 !important; color: #3D2800 !important; border: 2px solid #D9A300; box-shadow: 0 4px 0 #B98500 !important; }
+    .ui-card .usage-info-upgrade:hover { transform: none; filter: brightness(1.04); }
+    .ui-card .usage-info-upgrade:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--pd) !important; }
+    .ui-card .usage-info-upgrade .kk-ic { width: 1.2em; height: 1.2em; vertical-align: -0.22em; margin-right: 3px; }
+    .ui-card .usage-info-fine { text-align: left; }
+
     /* GUEST CTA */
     #guestCta {
       display: none;
@@ -3952,11 +3984,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     const mega = tier === 'paid' && window.userTier === 'mega';
     if (mega) {
       html = `
-        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <span class="usage-info-plan mega">💎 Mega Knox${window.userAmbassador ? ' · Ambassador' : ''}</span>
-        <h3>Everything Knox has</h3>
-        <p>Unlimited questions, no daily cap, no waiting — plus the most Knox can do.</p>
-        <ul>
+        <div class="ui-head"><span class="ui-ic" aria-hidden="true">💎</span><div><span class="ui-name">Mega Knox</span><span class="ui-tag">Everything Knox has${window.userAmbassador ? ' · Ambassador' : ''}</span></div></div>
+        <p class="ui-lead">Unlimited questions, no daily cap, no waiting, plus the most Knox can do.</p>
+        <ul class="ui-list">
           <li><strong>Flashcard decks up to 40 cards</strong> — pick the difficulty, fill-in-the-blank or true/false cards.</li>
           <li><strong>The highest limits</strong> — files twice as long, 10 photos per deck, the longest Learn sessions.</li>
           <li><strong>Early access</strong> to new features before anyone else.</li>
@@ -3966,11 +3996,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       `;
     } else if (tier === 'paid') {
       html = `
-        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <span class="usage-info-plan">⚡ Knox Plus</span>
-        <h3>Unlimited, for real</h3>
-        <p>Ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
-        <ul>
+        <div class="ui-head"><span class="ui-ic" aria-hidden="true">⚡</span><div><span class="ui-name">Knox Plus</span><span class="ui-tag">Unlimited, for real</span></div></div>
+        <p class="ui-lead">Ask as much as you need, whenever you need it. No daily cap, no waiting.</p>
+        <ul class="ui-list">
           <li><strong>Unlimited questions</strong>, photos and files.</li>
           <li><strong>Flashcard decks up to 15 cards</strong>, made by Knox.</li>
           <li><strong>Longer Learn lessons</strong> — up to 30 replies (Free: 20).</li>
@@ -3978,7 +4006,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           <li><strong>The Knox Plus lounge</strong> on <a href="https://discord.gg/34mMzXc5zG" target="_blank" rel="noopener noreferrer">Discord</a> — a members-only space for Plus.</li>
         </ul>
         <p class="usage-info-fine">A very high fair-use ceiling exists purely to stop automated abuse. Real studying never gets anywhere near it.</p>
-        ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">💎 See Mega Knox — 40-card decks, early access &amp; more</button>'}
+        ${window.knoxNativeApp ? '' : '<button class="usage-info-upgrade ui-btn-mega" onclick="closeUsageInfo(); goToPricing();">💎 See Mega Knox: 40-card decks, early access &amp; more</button>'}
       `;
     } else {
       const st = window._knoxUsageState || {};
@@ -3987,14 +4015,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       const atMax = left >= FREE_MAX_BALANCE;
 
       html = `
-        <img class="usage-info-icon" src="/knox-logo-square.jpg" alt="Knox">
-        <h3>${left} credit${left === 1 ? '' : 's'} left</h3>
-        <p class="usage-info-next">${atMax
+        <div class="ui-head"><span class="ui-ic" aria-hidden="true">🪙</span><div><span class="ui-name">Free plan</span><span class="ui-tag">Credits refill every day</span></div></div>
+        <div class="ui-big"><b>${left}</b><span>credit${left === 1 ? '' : 's'} left</span></div>
+        <p class="usage-info-next ui-next">${atMax
           ? `You're at your max saved balance.`
           : `+${FREE_DAILY_REGEN} more in <strong id="usageCountdownClock">calculating…</strong>`}</p>
-        <div class="usage-info-divider"></div>
-        <p><strong>How this works:</strong></p>
-        <ul>
+        <p class="ui-how">How this works</p>
+        <ul class="ui-list">
           <li>New accounts start with <strong>${FREE_STARTING_BALANCE} credits</strong>.</li>
           <li>You get <strong>+${FREE_DAILY_REGEN} more every 24 hours</strong> — not at midnight, exactly 24h after your last refill.</li>
           <li>Unused credits save up, up to <strong>${FREE_MAX_BALANCE} total</strong> — so a light week means more room during a busy one.</li>
@@ -4002,7 +4029,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           <li>🎓 <strong>Learn mode</strong> only charges once per topic — starting one costs 1 credit (even with a photo), and the whole guided back-and-forth after that is free.</li>
           <li>Casual chit-chat with Knox doesn't use any credits — only real homework help does.</li>
         </ul>
-        ${window.knoxNativeApp ? '' : `<button class="usage-info-upgrade mega" onclick="closeUsageInfo(); goToPricing();">${window.knoxMegaPitch()?.button || '💎 See Mega Knox'}</button>
+        ${window.knoxNativeApp ? '' : `<button class="usage-info-upgrade ui-btn-mega" onclick="closeUsageInfo(); goToPricing();">${window.knoxMegaPitch()?.button || '💎 See Mega Knox'}</button>
         <p class="usage-info-fine">Mega Knox: unlimited questions, 40-card decks, the longest Learn sessions and early access.</p>`}
       `;
     }
@@ -4014,9 +4041,11 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
       modal.onclick = (e) => { if (e.target === modal) closeUsageInfo(); };
       document.body.appendChild(modal);
     }
-    modal.innerHTML = `<div class="usage-info-card${mega ? ' mega' : ''}">
+    // The plan card in the landing page's pricing style: gold Mega, green Plus, blue Free.
+    const planCls = mega ? 'ui-mega' : tier === 'paid' ? 'ui-plus' : 'ui-free';
+    modal.innerHTML = `<div class="usage-info-card ui-card ${planCls}">
       <button class="usage-info-close" onclick="closeUsageInfo()" aria-label="Close">✕</button>
-      ${html}
+      ${window.KI?.fill ? window.KI.fill(html) : html}
     </div>`;
     modal.classList.add('open');
 
