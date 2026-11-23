@@ -109,6 +109,7 @@
     let top = r.bottom + gap;
     if (top + h > innerHeight - 8 && r.top - gap - h > 8) top = r.top - gap - h; // no room below: open upward
     const left = Math.min(Math.max(8, r.left), innerWidth - w - 8);
+    top = Math.min(top, innerHeight - 8 - h); // a tall menu (Background + Custom) stays on screen and scrolls
     menu.style.top = Math.max(8, top) + 'px';
     menu.style.left = left + 'px';
   }
@@ -139,6 +140,7 @@
     closeMenu(false);
   }, true);
   addEventListener('resize', place);
+  window.knoxPlaceThemeMenu = place; // mode-bg.js: the menu grew (Custom opened)
   addEventListener('scroll', place, true);
 
   // ── Fall decorations ────────────────────────────────────────────────────

@@ -196,3 +196,5 @@ html.knox-seasonal .fall-tip { display: none; }
 /* Appearance button: the same Knox icon as the menu (theme.js) */
 .theme-btn-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
 .theme-btn-icon .kk-ic { width: 18px; height: 18px; }
+/* The Appearance menu scrolls when it's taller than the window (Background + Custom). */
+.knox-theme-menu { max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }

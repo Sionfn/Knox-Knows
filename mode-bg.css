@@ -16,7 +16,9 @@
 [data-mb="yellow"]  { --mb-bg:#FFFAE8; --mb-c1:#FFEBA8; --mb-c2:#FFE2C6; }
 [data-mb="red"]     { --mb-bg:#FFF3F3; --mb-c1:#FFD9D9; --mb-c2:#FFE6CC; }
 /* Mega Knox: your own color (made into a Knox background) or your own photo. */
-[data-mb="custom"]  { --mb-hex:#A560F2; --mb-bg:color-mix(in srgb, var(--mb-hex) 7%, #fff); --mb-c1:color-mix(in srgb, var(--mb-hex) 28%, #fff); --mb-c2:color-mix(in srgb, var(--mb-hex) 16%, #fff); }
+/* Mega Knox Custom: each part can have its own color (--mb-bg-x, --mb-c1-x, --mb-c2-x, set by mode-bg.js);
+   older saves have one color (--mb-hex) and the parts are made from it. */
+[data-mb="custom"]  { --mb-hex:#A560F2; --mb-bg:var(--mb-bg-x, color-mix(in srgb, var(--mb-hex) 7%, #fff)); --mb-c1:var(--mb-c1-x, color-mix(in srgb, var(--mb-hex) 28%, #fff)); --mb-c2:var(--mb-c2-x, color-mix(in srgb, var(--mb-hex) 16%, #fff)); }
 [data-mb="photo"]   { --mb-bg:var(--cream); --mb-c1:transparent; --mb-c2:transparent; --mb-veil:rgba(255,248,236,.42); }
 
 /* Dark: a deep background in the color, circles with a glowing rim. */
@@ -27,7 +29,7 @@ html[data-theme="dark"] [data-mb="purple"]  { --mb-bg:#120D1E; --mb-c1:rgba(165,
 html[data-theme="dark"] [data-mb="green"]   { --mb-bg:#0C150D; --mb-c1:rgba(88,204,2,.13); --mb-g1:rgba(122,230,44,.55); --mb-c2:rgba(255,200,0,.10); --mb-g2:rgba(255,204,30,.42); }
 html[data-theme="dark"] [data-mb="blue"]    { --mb-bg:#0A131C; --mb-c1:rgba(28,176,246,.14); --mb-g1:rgba(64,192,255,.6); --mb-c2:rgba(88,204,2,.10); --mb-g2:rgba(110,220,40,.45); }
 html[data-theme="dark"] [data-mb="yellow"]  { --mb-bg:#16130A; --mb-c1:rgba(255,200,0,.13); --mb-g1:rgba(255,212,44,.55); --mb-c2:rgba(255,107,0,.10); --mb-g2:rgba(255,128,32,.45); }
-html[data-theme="dark"] [data-mb="custom"]  { --mb-bg:color-mix(in srgb, var(--mb-hex) 9%, #0D0D10); --mb-c1:color-mix(in srgb, var(--mb-hex) 14%, transparent); --mb-g1:color-mix(in srgb, var(--mb-hex) 62%, transparent); --mb-c2:color-mix(in srgb, var(--mb-hex) 10%, transparent); --mb-g2:color-mix(in srgb, var(--mb-hex) 45%, transparent); }
+html[data-theme="dark"] [data-mb="custom"]  { --mb-bg:var(--mb-bg-x, color-mix(in srgb, var(--mb-hex) 9%, #0D0D10)); --mb-c1:color-mix(in srgb, var(--mb-c1-x, var(--mb-hex)) 14%, transparent); --mb-g1:color-mix(in srgb, var(--mb-c1-x, var(--mb-hex)) 62%, transparent); --mb-c2:color-mix(in srgb, var(--mb-c2-x, var(--mb-hex)) 10%, transparent); --mb-g2:color-mix(in srgb, var(--mb-c2-x, var(--mb-hex)) 45%, transparent); }
 html[data-theme="dark"] [data-mb="photo"]   { --mb-bg:#101013; --mb-veil:rgba(12,12,16,.6); }
 html[data-theme="dark"] [data-mb="red"]     { --mb-bg:#180C0F; --mb-c1:rgba(255,75,75,.14); --mb-g1:rgba(255,100,100,.56); --mb-c2:rgba(255,107,0,.10); --mb-g2:rgba(255,128,32,.45); }
 
@@ -85,7 +87,32 @@ html[data-theme="dark"] .ktm-sw-art {
 html[data-theme="dark"] .ktm-mega { color:#FFD45C; background:rgba(255,200,0,.14); }
 .knox-theme-menu .ktm-custom-edit { display:flex; flex-wrap:wrap; gap:6px; margin:8px 8px 0; }
 .knox-theme-menu .ktm-cbtn { display:inline-flex; align-items:center; gap:6px; width:auto; padding:6px 10px; border-radius:10px; border:2px solid var(--border); background:var(--surface); box-shadow:0 2px 0 var(--border); font-size:12px; font-weight:900; color:var(--text); cursor:pointer; }
-.knox-theme-menu .ktm-cbtn input[type="color"] { width:22px; height:22px; padding:0; border:0; border-radius:6px; background:none; cursor:pointer; }
+/* The Custom editor: a preview, which part to color, Knox swatches and
+   "Any color" sliders (instead of the phone's color wheel), and a photo. */
+.knox-theme-menu .ktm-custom-edit { flex-direction:column; flex-wrap:nowrap; gap:8px; }
+.ktm-cprev { position:relative; height:62px; border-radius:12px; border:2px solid var(--border); box-shadow:0 3px 0 var(--border); overflow:hidden; background:var(--pv-bg); }
+.ktm-cprev::before, .ktm-cprev::after { content:""; position:absolute; border-radius:50%; }
+.ktm-cprev::before { width:58px; height:58px; top:-18px; right:-14px; background:var(--pv-c1); }
+.ktm-cprev::after { width:42px; height:42px; bottom:-14px; left:-10px; background:var(--pv-c2); }
+html[data-theme="dark"] .ktm-cprev::before { background:color-mix(in srgb, var(--pv-c1) 20%, transparent); box-shadow:0 0 0 2px color-mix(in srgb, var(--pv-c1) 70%, transparent), 0 0 14px color-mix(in srgb, var(--pv-c1) 55%, transparent); }
+html[data-theme="dark"] .ktm-cprev::after { background:color-mix(in srgb, var(--pv-c2) 16%, transparent); box-shadow:0 0 0 2px color-mix(in srgb, var(--pv-c2) 60%, transparent), 0 0 12px color-mix(in srgb, var(--pv-c2) 45%, transparent); }
+.knox-theme-menu .ktm-cparts { display:flex; gap:4px; padding:3px; border-radius:12px; background:var(--gray); border:2px solid var(--border); }
+.knox-theme-menu .ktm-cparts button { flex:1 1 0; min-width:0; flex-direction:column; justify-content:center; gap:3px; width:auto; padding:6px 2px; border-radius:9px; font-size:11px; font-weight:900; line-height:1.1; color:var(--text-light); white-space:nowrap; }
+.knox-theme-menu .ktm-cdot { width:10px; height:10px; }
+.knox-theme-menu .ktm-cparts button[aria-pressed="true"] { background:var(--surface); color:var(--text); box-shadow:0 2px 0 var(--border); }
+.ktm-cdot { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(0,0,0,.18); background:var(--d); }
+.knox-theme-menu .ktm-cgrid { display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; }
+.knox-theme-menu .ktm-cgrid button { justify-content:center; width:auto; aspect-ratio:1; padding:0; border-radius:50%; border:2px solid color-mix(in srgb, var(--s) 70%, #000); background:var(--s); box-shadow:0 2px 0 color-mix(in srgb, var(--s) 55%, #000); }
+.knox-theme-menu .ktm-cgrid button:hover, .knox-theme-menu .ktm-cgrid button:focus-visible { background:var(--s); transform:translateY(-1px); }
+.knox-theme-menu .ktm-cgrid button[aria-pressed="true"] { outline:3px solid var(--text); outline-offset:2px; }
+.ktm-crange { display:flex; flex-direction:column; gap:6px; }
+.ktm-crange > span { font-size:11px; font-weight:900; color:var(--text-light); text-transform:uppercase; letter-spacing:.06em; }
+.ktm-crange input[type="range"] { -webkit-appearance:none; appearance:none; width:100%; height:16px; margin:0; border-radius:999px; border:2px solid var(--border); box-shadow:0 2px 0 var(--border); cursor:pointer; }
+.ktm-crange .ktm-hue { background:linear-gradient(90deg, #FF4B4B, #FF9A2E, #FFD900, #58CC02, #14B8A6, #1CB0F6, #7C3AED, #FF86C8, #FF4B4B); }
+.ktm-crange .ktm-shade { background:linear-gradient(90deg, var(--sh-light), var(--sh-mid), var(--sh-deep)); }
+.ktm-crange input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--surface); border:3px solid var(--text); box-shadow:0 2px 0 rgba(0,0,0,.25); }
+.ktm-crange input[type="range"]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--surface); border:3px solid var(--text); box-shadow:0 2px 0 rgba(0,0,0,.25); }
+.ktm-cphoto { display:flex; flex-wrap:wrap; gap:6px; }
 .knox-theme-menu .ktm-lock { margin:8px 8px 0; padding:8px 10px; border-radius:12px; background:#FFF4CC; border:2px solid #FFC800; font-size:12px; font-weight:800; color:#6B4A00; display:flex; flex-direction:column; gap:6px; }
 html[data-theme="dark"] .knox-theme-menu .ktm-lock { background:rgba(255,200,0,.12); color:#FFD45C; }
 .knox-theme-menu .ktm-lock .ktm-see-mega { width:auto; align-self:flex-start; padding:5px 10px; border-radius:9px; background:#FFC800; color:#3D2800; font-size:12px; font-weight:900; box-shadow:0 2px 0 #B98500; }
