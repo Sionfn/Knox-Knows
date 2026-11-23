@@ -90,6 +90,8 @@
     if (k === 'custom') {
       const key = slot(t, p, sc), c = customOf(key);
       b.style.setProperty('--mb-hex', c.color);
+      // Each part's own color (Background, Big circle, Small circle), if picked.
+      for (const [k2, v] of [['bg', '--mb-bg-x'], ['c1', '--mb-c1-x'], ['c2', '--mb-c2-x']]) { if (c[k2]) b.style.setProperty(v, c[k2]); else b.style.removeProperty(v); }
       if (c.photo) {
         photos.url(key).then(u => {
           if (ticket !== applyTicket) return;
@@ -117,6 +119,7 @@
       LOOKS[t].map(([k, n]) => '<button type="button" class="ktm-sw" data-mb="' + k + '" aria-pressed="' + (k === cur) + '" title="' + n + '"><span class="ktm-sw-art" aria-hidden="true"></span>' + n + '</button>').join('') +
       '</div>' + customRow(t, p, s, cur === 'custom') +
       '<p class="ktm-note">Saved for ' + (t === 'dark' ? 'Dark' : 'Light') + ' mode. Each part keeps its own.</p>';
+    window.knoxPlaceThemeMenu?.();
   }
   function renderLocked() {
     render();
@@ -125,13 +128,60 @@
   }
   function customRow(t, p, s, on) {
     const c = customOf(slot(t, p, s));
-    let html = '<button type="button" class="ktm-custom" aria-pressed="' + on + '"><span class="ktm-custom-art" aria-hidden="true" style="--mb-hex:' + c.color + '"></span><span><b>Custom</b><small>Your own color or photo</small></span><span class="ktm-mega" aria-hidden="true">💎 Mega</span></button>';
+    let html = '<button type="button" class="ktm-custom" aria-pressed="' + on + '"><span class="ktm-custom-art" aria-hidden="true" style="--mb-hex:' + c.color + '"></span><span><b>Custom</b><small>Your own colors or a photo</small></span><span class="ktm-mega" aria-hidden="true">💎 Mega</span></button>';
     if (!on) return html;
     if (!mega()) return html + '<div class="ktm-lock">Custom backgrounds come with Mega Knox.<button type="button" class="ktm-see-mega">See Mega Knox</button></div>';
+    const cur = partColors(t, c), cp = pick.cpart || 'bg', val = cur[cp], hs = toHsl(val);
+    const rows = t === 'dark' ? (cp === 'bg' ? [DEEP, BOLD] : [BOLD, SOFT]) : (cp === 'bg' ? [SOFT, BOLD] : [BOLD, SOFT]);
+    const shadeOf = l => hex(hs.h, 85, l);
     return html + '<div class="ktm-custom-edit">' +
-      '<label class="ktm-cbtn"><input type="color" class="ktm-color" value="' + c.color + '"> Pick a color</label>' +
-      '<label class="ktm-cbtn"><input type="file" class="ktm-photo" accept="image/*" hidden>' + (c.photo ? 'Change photo' : 'Use a photo') + '</label>' +
-      (c.photo ? '<button type="button" class="ktm-cbtn ktm-nophoto">Remove photo</button>' : '') + '</div>';
+      '<div class="ktm-cprev" aria-hidden="true" style="--pv-bg:' + cur.bg + ';--pv-c1:' + cur.c1 + ';--pv-c2:' + cur.c2 + '"></div>' +
+      '<div class="ktm-cparts" role="group" aria-label="What to color">' + CPARTS.map(([k, n]) => '<button type="button" data-cpart="' + k + '" aria-pressed="' + (k === cp) + '"><span class="ktm-cdot" style="--d:' + cur[k] + '"></span>' + n + '</button>').join('') + '</div>' +
+      '<div class="ktm-cgrid" role="group" aria-label="Knox colors">' + rows.flat().map(h => '<button type="button" data-cpick="' + h + '" style="--s:' + h + '" aria-label="' + h + '" aria-pressed="' + (h.toLowerCase() === val.toLowerCase()) + '"></button>').join('') + '</div>' +
+      '<div class="ktm-crange"><span>Any color</span>' +
+        '<input type="range" class="ktm-hue" min="0" max="359" value="' + Math.round(hs.h) + '" aria-label="Color">' +
+        '<input type="range" class="ktm-shade" min="0" max="100" value="' + Math.round(lToShade(hs.l)) + '" aria-label="Light to deep" style="--sh-light:' + shadeOf(96) + ';--sh-mid:' + shadeOf(58) + ';--sh-deep:' + shadeOf(16) + '"></div>' +
+      '<div class="ktm-cphoto"><label class="ktm-cbtn"><input type="file" class="ktm-photo" accept="image/*" hidden>' + (c.photo ? 'Change photo' : 'Use a photo') + '</label>' +
+      (c.photo ? '<button type="button" class="ktm-cbtn ktm-nophoto">Remove photo</button>' : '') + '</div></div>';
+  }
+  // ── Custom colors ──
+  const CPARTS = [['bg', 'Background'], ['c1', 'Big circle'], ['c2', 'Small circle']];
+  const SOFT = ['#FFFFFF', '#FFF8F0', '#FFF2E5', '#FFF0F0', '#FFEFF7', '#F8F2FF', '#EDF8FE', '#E9FBF7', '#F1FAEA', '#FFFAE8', '#F4EEE8', '#F2F2F2'];
+  const BOLD = ['#FF6B00', '#FF4B4B', '#FF86C8', '#CE82FF', '#7C3AED', '#1CB0F6', '#2B6CE0', '#14B8A6', '#58CC02', '#FFC800', '#A0622D', '#3C3C3C'];
+  const DEEP = ['#0D0D10', '#17100A', '#180C0F', '#1A0F17', '#120D1E', '#0A131C', '#0D1626', '#08161A', '#0C150D', '#16130A', '#15100C', '#000000'];
+  const mixHex = (a, b, w) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v * w + y[i] * (1 - w)).toString(16).padStart(2, '0')).join('').toUpperCase(); };
+  // The colors showing now: picked ones, or the ones made from an older single color.
+  function partColors(t, c) {
+    const base = /^#[0-9a-f]{6}$/i.test(c.color) ? c.color : '#A560F2';
+    return t === 'dark'
+      ? { bg: c.bg || mixHex(base, '#0D0D10', .09), c1: c.c1 || base, c2: c.c2 || base }
+      : { bg: c.bg || mixHex(base, '#FFFFFF', .07), c1: c.c1 || mixHex(base, '#FFFFFF', .28), c2: c.c2 || mixHex(base, '#FFFFFF', .16) };
+  }
+  function toHsl(h) {
+    let [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let hu = 0;
+    if (d) hu = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return { h: (hu * 60 + 360) % 360, l: l * 100 };
+  }
+  function hex(h, s, l) {
+    s /= 100; l /= 100;
+    const f = n => { const k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, '0'); };
+    return ('#' + f(0) + f(8) + f(4)).toUpperCase();
+  }
+  // The shade slider: 0 = lightest (96%), 100 = deepest (6%).
+  const shadeToL = v => 96 - v * .9, lToShade = l => Math.max(0, Math.min(100, (96 - l) / .9));
+  function setPart(part, color, live) {
+    const key = slot(theme(), pick.part, pick.screen);
+    saveCustom(key, { [part]: color });
+    if (live) {
+      // While dragging: update the page and the editor's preview without a redraw.
+      document.body.style.setProperty({ bg: '--mb-bg-x', c1: '--mb-c1-x', c2: '--mb-c2-x' }[part], color);
+      const prev = section.querySelector('.ktm-cprev'); if (prev) prev.style.setProperty('--pv-' + part, color);
+      const dot = section.querySelector('[data-cpart="' + part + '"] .ktm-cdot'); if (dot) dot.style.setProperty('--d', color);
+      return;
+    }
+    apply();
   }
   window.knoxModeBgMenu = function (menu) {
     if (!section) {
@@ -148,17 +198,20 @@
           return;
         }
         if (b.classList.contains('ktm-see-mega')) { window.goToPricing?.(); return; }
+        if (b.dataset.cpart) { pick.cpart = b.dataset.cpart; render(); return; }
+        if (b.dataset.cpick) { setPart(pick.cpart || 'bg', b.dataset.cpick); return; }
         if (b.classList.contains('ktm-nophoto')) { const key = slot(theme(), pick.part, pick.screen); photos.del(key).finally(() => { saveCustom(key, { photo: false }); apply(); }); }
       });
+      // "Any color": the hue and the shade sliders make a color for the chosen part.
+      const fromSliders = () => hex(+section.querySelector('.ktm-hue').value, 85, shadeToL(+section.querySelector('.ktm-shade').value));
       section.addEventListener('input', e => {
-        if (!e.target.classList.contains('ktm-color')) return;
-        const key = slot(theme(), pick.part, pick.screen);
-        saveCustom(key, { color: e.target.value, photo: customOf(key).photo });
-        document.body.style.setProperty('--mb-hex', e.target.value);
-        const art = section.querySelector('.ktm-custom-art'); if (art) art.style.setProperty('--mb-hex', e.target.value);
+        if (!e.target.matches('.ktm-hue, .ktm-shade')) return;
+        const color = fromSliders();
+        setPart(pick.cpart || 'bg', color, true);
+        if (e.target.classList.contains('ktm-hue')) { const sh = section.querySelector('.ktm-shade'), h = +e.target.value; sh.style.setProperty('--sh-light', hex(h, 85, 96)); sh.style.setProperty('--sh-mid', hex(h, 85, 58)); sh.style.setProperty('--sh-deep', hex(h, 85, 16)); }
       });
       section.addEventListener('change', e => {
-        if (e.target.classList.contains('ktm-color')) { apply(); return; }
+        if (e.target.matches('.ktm-hue, .ktm-shade')) { apply(); return; }
         if (!e.target.classList.contains('ktm-photo') || !e.target.files[0]) return;
         const key = slot(theme(), pick.part, pick.screen);
         shrink(e.target.files[0]).then(blob => photos.put(key, blob)).then(() => { saveCustom(key, { photo: true }); apply(); })
@@ -166,7 +219,7 @@
       });
       menu.append(section);
     }
-    pick = { part: part(), screen: screen() };
+    pick = { part: part(), screen: screen(), cpart: 'bg' };
     render();
   };
 
