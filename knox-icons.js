@@ -77,6 +77,8 @@
     coin: FILL('<circle cx="12" cy="12" r="9.5" fill="#FFD900" stroke="#B38600" stroke-width="1.8"/><circle cx="12" cy="12" r="6" fill="none" stroke="#E0A100" stroke-width="1.4"/><path d="M12 8.6v6.8" stroke="#B38600" stroke-width="1.8" stroke-linecap="round"/><path d="M7.6 8.4a5.6 5.6 0 0 1 2.6-2.2" stroke="#FFF6B8" stroke-width="1.4" stroke-linecap="round" fill="none"/>', 'kk-coin'),
     bolt: FILL('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" fill="#FFD900" stroke="#B38600" stroke-width="1.8" stroke-linejoin="round"/>', 'kk-bolt'),
     shield: FILL('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" fill="#5CC8FA" stroke="#0A85C2" stroke-width="1.8" stroke-linejoin="round"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>', 'kk-shield'),
+    // A Christmas tree (Christmas mode, the Advent Calendar card): green tiers, a gold star, ornaments.
+    tree: FILL('<path d="M12 4 16.5 10H14.2L18 15.2H15.6L19.4 20H4.6L8.4 15.2H6L9.8 10H7.5Z" fill="#1FA45A" stroke="#157A41" stroke-width="1.5" stroke-linejoin="round"/><rect x="10.6" y="20" width="2.8" height="2.6" rx=".6" fill="#A5673A"/><path d="M12 .8l.9 1.9 2 .2-1.5 1.3.5 2-1.9-1.1-1.9 1.1.5-2-1.5-1.3 2-.2Z" fill="#FFC800" stroke="#D9A300" stroke-width=".8" stroke-linejoin="round"/><circle cx="10.4" cy="12" r="1.1" fill="#E5383B"/><circle cx="14" cy="16.6" r="1.1" fill="#FFC800"/><circle cx="9.2" cy="17.6" r="1.1" fill="#1CB0F6"/>', 'kk-tree'),
     gift: FILL('<rect x="3" y="8" width="18" height="5" rx="1.5" fill="#FF8A2B" stroke="#CC5500" stroke-width="1.6"/><path d="M5 13h14v6.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19.5Z" fill="#FF6B00" stroke="#CC5500" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8v13" stroke="#FFD23F" stroke-width="2.4"/><path d="M12 8C10.5 5 8.8 3.5 7.5 3.5a2.2 2.2 0 0 0 0 4.5ZM12 8c1.5-3 3.2-4.5 4.5-4.5a2.2 2.2 0 0 1 0 4.5Z" fill="none" stroke="#CC5500" stroke-width="1.6" stroke-linejoin="round"/>', 'kk-gift'),
     crown: FILL('<path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5Z" fill="#FFD45C" stroke="#E07800" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="15" r="1.4" fill="#E07800"/>', 'kk-crown'),
     trophy: FILL('<path d="M7 3h10v6a5 5 0 0 1-10 0Z" fill="#FFD45C" stroke="#E07800" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 5H4a3 3 0 0 0 3 4M17 5h3a3 3 0 0 1-3 4M12 14v4M8 21h8M9 18h6v3H9Z" fill="none" stroke="#E07800" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>', 'kk-trophy'),
@@ -87,7 +89,7 @@
   // Emoji → icon name (a trailing variation selector is matched too).
   const MAP = {
     '🔥': 'flame', '💜': 'flamePurple', '💙': 'flameBlue', '👑': 'crown', '🟡': 'flameGold', '💎': 'gem', '⚡': 'bolt', '🪙': 'coin',
-    '🛡': 'shield', '🎁': 'gift', '🎄': 'gift', '🏆': 'trophy', '🌟': 'star', '⭐': 'star', '🎉': 'party',
+    '🛡': 'shield', '🎁': 'gift', '🎄': 'tree', '🏆': 'trophy', '🌟': 'star', '⭐': 'star', '🎉': 'party',
     '🎓': 'cap', '👍': 'up', '👎': 'down', '📄': 'doc', '📷': 'camera', '📸': 'camera',
     '📐': 'math', '🌿': 'leaf', '🍂': 'leaf', '🍁': 'leaf', '🌍': 'globe', '⚠': 'warn', '🚀': 'rocket',
     '💫': 'spark', '✨': 'spark', '😬': 'grimace', '💡': 'bulb', '🤔': 'think', '📝': 'note', '🔄': 'refresh',

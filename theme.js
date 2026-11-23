@@ -61,7 +61,7 @@
     const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal', darkModeIconTree: mode === 'christmas' };
     // The button shows the same Knox icon as the Appearance menu (knox-icons.js):
     // the yellow sun, the purple moon, the Christmas gift, the fall leaf.
-    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'gift', 'christmas-night': 'star' }[mode]);
+    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'tree', 'christmas-night': 'star' }[mode]);
     let slot = document.getElementById('darkModeIconKnox');
     if (btn && ki) {
       if (!slot) { slot = document.createElement('span'); slot.id = 'darkModeIconKnox'; slot.className = 'theme-btn-icon'; slot.setAttribute('aria-hidden', 'true'); btn.prepend(slot); }

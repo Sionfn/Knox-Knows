@@ -132,6 +132,29 @@
   async function openBag() {
     if (busy || !state?.unopened) return;
     busy = true;
+    // The full experience: the 3D bag you swipe open (bags3d.js). Without WebGL
+    // or with reduced motion, the simple opening below.
+    if (window.knoxBagStage?.supported()) {
+      const pick = (async () => {
+        let got;
+        if (demo) {
+          const fig = demoPick(state.got), isNew = !state.got[fig.id];
+          state.got[fig.id] = (state.got[fig.id] || 0) + 1; if (!state.unlimited) state.unopened--; state.dupes += isNew ? 0 : 1;
+          state.complete = SERIES.every(c => state.got[c.id]);
+          got = { figure: fig.id, isNew };
+        } else { const res = await api('POST', { bags: 'open' }); state = res; got = res; }
+        const c = SERIES.find(x => x.id === got.figure);
+        return { figure: c.id, isNew: got.isNew, rarity: c.rarity, name: esc(c.name), art: figure(c.id), more: state.unopened > 0 };
+      })();
+      try {
+        await window.knoxBagStage.play({ result: pick, onReveal: (how, err) => {
+          busy = false; render();
+          if (err) toast(err.message);
+          if (how === 'again') setTimeout(openBag, 80); else wrap?.querySelector('[data-open], .kb-x')?.focus();
+        } });
+        return;
+      } catch (e) { /* 3D couldn't start: fall back to the simple opening */ }
+    }
     const bag = wrap.querySelector('.kb-bag');
     bag.classList.add('is-shaking');
     let got;
@@ -204,6 +227,7 @@
     });
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.querySelector('.kb-reveal')) close(); });
     document.body.append(wrap);
+    window.knoxBagStage?.preload?.(); // get the 3D bag ready while the collection loads
     render(); await load(); render();
     wrap?.querySelector('[data-open]:not([disabled]), .kb-x')?.focus();
   }
