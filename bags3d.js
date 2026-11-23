@@ -9,9 +9,11 @@
 // confetti flies and the figure rises out spinning.
 //
 //   window.knoxBagStage.supported()               — WebGL and motion allowed
-//   window.knoxBagStage.play({ result, onReveal }) — result: Promise of
-//       { figure, isNew, rarity, name, art } (the server's pick); onReveal()
-//       runs after the reveal is dismissed ('again' or 'done').
+//   window.knoxBagStage.play({ result, onReveal }) — result: a function
+//       returning a Promise of { figure, isNew, rarity, name, art } (the
+//       server's pick). It's only called once the bag is torn, so closing
+//       before that keeps the bag. onReveal(how) runs when the stage closes
+//       ('again', 'done' or 'close').
 (function () {
   const THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
   const RARITY_COLOR = { common: '#1CB0F6', rare: '#CE82FF', epic: '#FF4F57', secret: '#FFC800' };
@@ -122,8 +124,8 @@
       <div class="kb3-spot" aria-hidden="true"></div>
       <canvas class="kb3-canvas"></canvas>
       <div class="kb3-tearline" aria-hidden="true"><span class="kb3-scissors">${window.KI ? window.KI('scissors', { tint: false }) : '✂'}</span></div>
-      <div class="kb3-hint"><b>Swipe across the top to tear it open</b><span>or press the button</span></div>
-      <button type="button" class="kb3-tear-btn">Tear it open</button>
+      <div class="kb3-hint"><b>Swipe across the dotted line</b><span>with your mouse, trackpad or finger</span></div>
+      <button type="button" class="kb3-tear-btn">${window.KI ? window.KI('scissors', { tint: false }) : '✂'}<span>Tear it open</span></button>
       <button type="button" class="kb3-close" aria-label="Close">✕</button>
       <div class="kb3-reveal" hidden></div>`;
     document.body.append(stage);
@@ -205,40 +207,52 @@
       return { x1, x2, y };
     }
 
-    // Pointer: tilt toward it, and swipe across the top to tear.
-    let px = .5, py = .5, tear = 0, tearing = false, startX = 0, torn = false, t0 = performance.now();
+    // Pointer: tilt toward it, and swipe across the dotted line to tear. A
+    // swipe counts pressed (mouse drag, finger) or not (just gliding the cursor
+    // across on a trackpad): how far you've covered along the line is the tear.
+    let px = .5, py = .5, tear = 0, tearing = false, pressed = false, minX = 0, maxX = 0, torn = false, t0 = performance.now();
     let dropT = 0, openT = 0;
-    const onMove = e => {
-      const r = stage.getBoundingClientRect(); px = (e.clientX - r.left) / r.width; py = (e.clientY - r.top) / r.height;
-      if (!tearing || torn) return;
-      const line = placeTearline(), span = Math.max(80, line.x2 - line.x1);
-      tear = Math.min(1, Math.abs(e.clientX - startX) / (span * .75));
+    const band = line => Math.max(64, (line.x2 - line.x1) * .4);
+    const resetTear = () => { tearing = false; tear = 0; stage.classList.remove('is-tearing'); stage.style.setProperty('--tear', 0); };
+    const track = e => {
+      if (torn || dropT < 1) return;
+      const line = placeTearline(), r = stage.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const near = Math.abs(y - line.y) <= band(line) && x >= line.x1 - 60 && x <= line.x2 + 60;
+      if (!tearing) {
+        if (!near) return;
+        tearing = true; minX = maxX = x; stage.classList.add('is-tearing');
+      } else if (!near && !pressed) { resetTear(); return; } // wandered off: start over
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      tear = Math.min(1, (maxX - minX) / (Math.max(80, line.x2 - line.x1) * .7));
       stage.style.setProperty('--tear', tear.toFixed(3));
       if (tear >= 1) rip();
     };
+    const onMove = e => {
+      const r = stage.getBoundingClientRect(); px = (e.clientX - r.left) / r.width; py = (e.clientY - r.top) / r.height;
+      track(e);
+    };
     const onDown = e => {
       if (torn || dropT < 1) return;
-      const line = placeTearline(), r = stage.getBoundingClientRect(), y = e.clientY - r.top;
-      // Start anywhere near the top of the bag.
-      if (Math.abs(y - line.y) > Math.max(70, (line.x2 - line.x1) * .45)) return;
-      tearing = true; startX = e.clientX; stage.classList.add('is-tearing');
-      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      pressed = true; tearing = false; track(e);
+      if (tearing) { try { canvas.setPointerCapture(e.pointerId); } catch (_) {} }
     };
-    const onUp = () => { if (torn) return; tearing = false; stage.classList.remove('is-tearing'); if (tear < 1) { tear = 0; stage.style.setProperty('--tear', 0); } };
+    const onUp = () => { pressed = false; if (!torn && tear < 1 && tearing) resetTear(); };
     canvas.addEventListener('pointerdown', onDown); stage.addEventListener('pointermove', onMove); addEventListener('pointerup', onUp);
+    stage.addEventListener('pointerleave', () => { if (!torn && !pressed) resetTear(); });
     stage.querySelector('.kb3-tear-btn').addEventListener('click', () => { if (!torn && dropT >= 1) { tear = 1; rip(); } });
     stage.querySelector('.kb3-close').addEventListener('click', () => end('close'));
     const onKey = e => { if (e.key === 'Escape') end('close'); if ((e.key === 'Enter' || e.key === ' ') && !torn && dropT >= 1 && document.activeElement === stage.querySelector('.kb3-tear-btn')) { e.preventDefault(); tear = 1; rip(); } };
     addEventListener('keydown', onKey);
 
-    let picked = null, pickErr = null;
-    result.then(r => { picked = r; }, e => { pickErr = e; });
+    let picked = null, pickErr = null, ended = false;
     async function rip() {
       if (torn) return; torn = true; tearing = false;
       stage.classList.remove('is-tearing'); stage.classList.add('is-torn');
       navigator.vibrate?.(18);
-      // Wait for the server's pick (usually already here).
+      // Only now ask for the figure (the bag shakes while it comes back).
+      Promise.resolve().then(() => typeof result === 'function' ? result() : result).then(r => { picked = r; }, e => { pickErr = e; });
       while (!picked && !pickErr) await new Promise(r => setTimeout(r, 60));
+      if (ended) return;
       if (pickErr) { end('error', pickErr); return; }
       const col = new THREE.Color(RARITY_COLOR[picked.rarity] || '#ffffff');
       glowMat.map = glowTexture(THREE, RARITY_COLOR[picked.rarity]); glowMat.needsUpdate = true;
@@ -272,7 +286,7 @@
       const ease = 1 - Math.pow(1 - dropT, 3), bounce = dropT < 1 ? Math.sin(dropT * Math.PI) * .25 : 0;
       bag.position.y = (1 - ease) * 3.2 + bounce * .3 + Math.sin(t * 1.6) * .05;
       // Tilt toward the pointer; a little shake while you tear.
-      const shake = tearing ? (Math.random() - .5) * .03 * (1 + tear * 2) : 0;
+      const shake = tearing ? (Math.random() - .5) * .03 * (1 + tear * 2) : torn && !openT ? (Math.random() - .5) * .07 : 0;
       bag.rotation.y += ((px - .5) * .7 - bag.rotation.y) * .08;
       bag.rotation.x += ((py - .5) * .35 - bag.rotation.x) * .08;
       bag.rotation.z = shake + Math.sin(t * 1.1) * .02;
@@ -300,7 +314,6 @@
     raf = requestAnimationFrame(frame);
     stage.querySelector('.kb3-tear-btn').focus({ preventScroll: true });
 
-    let ended = false;
     function end(how, err) {
       if (ended) return; ended = true;
       cancelAnimationFrame(raf); removeEventListener('resize', size); removeEventListener('pointerup', onUp); removeEventListener('keydown', onKey);
