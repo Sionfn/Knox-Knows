@@ -18,6 +18,9 @@
           document.documentElement.setAttribute('data-theme', 'dark');
         }
         if (t === 'seasonal') document.documentElement.classList.add('knox-seasonal');
+        // Christmas (December): Knox's light look in red and green (christmas.css).
+        if (t === 'christmas' && !(mo === 11||/preview|localhost|127\.0\.0\.1/.test(location.hostname)||/[?&]christmas=demo/.test(location.search))) t = 'light';
+        if (t === 'christmas') document.documentElement.classList.add('knox-christmas');
       } catch (e) { /* localStorage unavailable — default to light */ }
     })();
   </script>
@@ -2665,6 +2668,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <link rel="stylesheet" href="/logo-theme.css">
 <script src="/knox-icons.js"></script>
 <link rel="stylesheet" href="/seasonal.css">
+<link rel="stylesheet" href="/christmas.css">
 <link rel="stylesheet" href="/mode-bg.css">
 <link rel="stylesheet" href="/sidebar-tools.css">
 <script>
