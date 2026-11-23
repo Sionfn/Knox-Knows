@@ -487,6 +487,22 @@
     .dd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     /* Account & Plan → Connections */
     .settings-connections { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+    /* Answers: language + text size (like the iPhone app's You page) */
+    .settings-answers { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .sa-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
+    .sa-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .sa-copy b { font-size: 13.5px; font-weight: 900; color: var(--text); }
+    .sa-copy small { font-size: 11.5px; font-weight: 700; color: var(--text-light); line-height: 1.35; }
+    .sa-lang { flex-shrink: 0; max-width: 46%; padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+    .sa-size { display: flex; gap: 6px; flex-shrink: 0; }
+    .sa-size button { padding: 7px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12px; font-weight: 900; box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+    .sa-size button.big { font-size: 14px; }
+    .sa-size button[aria-pressed="true"] { border-color: var(--orange); background: var(--orange-light); color: var(--orange-dark); box-shadow: 0 2px 0 var(--orange-dark); }
+    html[data-theme="dark"] .sa-size button[aria-pressed="true"] { color: var(--orange); }
+    @media (max-width: 420px) { .sa-row { flex-wrap: wrap; } .sa-lang { max-width: none; width: 100%; } }
+    /* Larger answer text (Account & Plan → Answer text size) */
+    html.knox-large-text .msg-knox-bubble { font-size: 18px; }
+    html.knox-large-text .msg-knox-bubble :is(p, li, td, blockquote) { font-size: inherit; }
     /* Family plan in Account & Plan (Knox orange card) */
     .settings-family { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
     .fam-card { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--orange); background: color-mix(in srgb, var(--orange) 6%, var(--surface)); box-shadow: 0 3px 0 var(--orange-dark); }
@@ -5440,6 +5456,13 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 
   // ── Settings ────────────────────────────────────────────────
   // Mega Knox "Simulations" (Beta, off by default, saved on this device).
+  // Like the iPhone app's You page (Dec 1): "Knox answers in" and answer text
+  // size, saved on this device. The language goes with every question
+  // (api/ask.js ANSWER_LANGUAGES); Larger makes Knox's answers easier to read.
+  const KNOX_LANGS = [['auto','Auto (the language you ask in)'],['en','English'],['es','Español (Spanish)'],['fr','Français (French)'],['pt','Português (Portuguese)'],['de','Deutsch (German)'],['it','Italiano (Italian)'],['zh','中文 (Chinese)'],['ja','日本語 (Japanese)'],['ko','한국어 (Korean)'],['ar','العربية (Arabic)'],['hi','हिन्दी (Hindi)'],['vi','Tiếng Việt (Vietnamese)'],['tl','Tagalog'],['ru','Русский (Russian)']];
+  window.knoxAnswerLanguage = uid => { try { const v = localStorage.getItem('knoxLang:' + uid); return KNOX_LANGS.some(l => l[0] === v) ? v : 'auto'; } catch (_) { return 'auto'; } };
+  const applyTextSize = () => { let on = false; try { on = localStorage.getItem('knoxLargeText') === '1'; } catch (_) {} document.documentElement.classList.toggle('knox-large-text', on); return on; };
+  applyTextSize();
   window.knoxSimsOn = function(uid) {
     try { return !!uid && localStorage.getItem('knoxSims:' + uid) === '1'; } catch (_) { return false; }
   };
@@ -5570,6 +5593,21 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     planBadge.textContent = planLabel;
     el.appendChild(row('Plan', planBadge));
     if (window.userFamily) el.appendChild(window.knoxFamilySection(u));
+
+    // Answers: language + text size (same as the iPhone app).
+    const ans = document.createElement('div'); ans.className = 'settings-answers';
+    ans.innerHTML = '<span class="settings-label">Answers</span>' +
+      '<label class="sa-row"><span class="sa-copy"><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select class="sa-lang" aria-label="Knox answers in"></select></label>' +
+      '<div class="sa-row"><span class="sa-copy"><b>Answer text size</b><small>Makes Knox’s answers and lessons easier to read.</small></span><div class="sa-size" role="group" aria-label="Answer text size"><button type="button" data-size="0">Aa Standard</button><button type="button" data-size="1" class="big">Aa Larger</button></div></div>';
+    const langSel = ans.querySelector('.sa-lang');
+    KNOX_LANGS.forEach(([v, label]) => { const o = document.createElement('option'); o.value = v; o.textContent = v === 'auto' ? 'Auto' : label; o.title = label; langSel.appendChild(o); });
+    langSel.value = window.knoxAnswerLanguage(u.uid);
+    langSel.onchange = () => { try { localStorage.setItem('knoxLang:' + u.uid, langSel.value); } catch (_) {} };
+    const sizeBtns = [...ans.querySelectorAll('.sa-size button')];
+    const showSize = () => { const on = applyTextSize(); sizeBtns.forEach(b => b.setAttribute('aria-pressed', String((b.dataset.size === '1') === on))); };
+    sizeBtns.forEach(b => b.onclick = () => { try { localStorage.setItem('knoxLargeText', b.dataset.size); } catch (_) {} showSize(); });
+    showSize();
+    el.appendChild(ans);
 
     const mega = window.userTier === 'mega';
     if (mega || !window.knoxNativeApp) {
@@ -6928,6 +6966,7 @@ window.appHandleAsk = async function() {
         language: window.knoxAnswerLanguage?.() || undefined,
         // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
         simulations: (window.userTier === 'mega' && window.knoxSimsOn?.(requestUid)) || undefined, // Ask Knox and Learn (Dec 1)
+        language: requestUid && window.knoxAnswerLanguage?.(requestUid) !== 'auto' ? window.knoxAnswerLanguage(requestUid) : undefined, // Account & Plan → Knox answers in
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
       }),
