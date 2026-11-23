@@ -439,6 +439,7 @@ function study(){
   const s=session,d=decks.find(d=>d.id===s.id);
   if(!s.queue.length){
     const gotIt=s.reviewed-s.again;
+    if(s.reviewed&&!s.doneSound){s.doneSound=true;window.knoxSound?.play('deck');}
     frame(null,`<div class="fc-done"><img src="${FOX}" alt=""><h1 class="fc-title" tabindex="-1">Session <span class="accent">complete!</span> <span class="no-ki">🎉</span></h1>
       <p class="fc-sub">Nice work on <b>${esc(d.title)}</b>. Your schedule is saved — Knox will bring cards back when they’re due.</p>
       <div class="fc-stats"><div class="fc-stat orange"><b>${s.reviewed}</b><span>Reviews</span></div><div class="fc-stat green"><b>${gotIt}</b><span>Got it</span></div><div class="fc-stat red"><b>${s.again}</b><span>Again</span></div></div>
@@ -481,6 +482,7 @@ window.addEventListener('resize',()=>{if(session&&!panel.hidden&&panel.querySele
 // Flip in place so the card animates instead of being redrawn.
 function flip(){
   session.flipped=!session.flipped;
+  window.knoxSound?.play('flip');
   const card=panel.querySelector('.fc-card');
   card.classList.toggle('is-flipped',session.flipped);
   card.setAttribute('aria-label',session.flipped?'Show question':'Reveal answer');

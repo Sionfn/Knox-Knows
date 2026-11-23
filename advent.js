@@ -149,6 +149,7 @@
       const fresh = state.doors[n - 1];
       render();
       reveal(fresh, true);
+      window.knoxSound?.play('reward');
     } catch (e) { btn?.classList.remove('is-opening'); nudge(e.message); }
     busy = 0;
   }
