@@ -83,16 +83,18 @@
     if (demo) { state = state || demoState(); return; }
     try { state = await api('GET'); error = ''; } catch (e) { error = e.message; }
   }
-  // Demo opening: the same rules as the server (new ones first, Golden last).
+  // The odds per bag (the server's RARITY_ODDS): Golden Knox is 1 in 100.
+  // Within a rarity, one you're missing comes before a duplicate.
+  const ODDS = { common: 64, rare: 25, epic: 10, secret: 1 };
+  // Demo opening: the same rules as the server.
   function demoPick(got) {
-    const regular = SERIES.filter(c => c.rarity !== 'secret'), missing = regular.filter(c => !got[c.id]);
-    if (!got.golden && !missing.length) return SERIES[11];
-    if (!got.golden && regular.length - missing.length >= 8 && Math.random() < .25) return SERIES[11];
-    const pool = missing.length && Math.random() < .75 ? missing : regular, w = { common: 6, rare: 3, epic: 1.5 };
-    let r = Math.random() * pool.reduce((t, c) => t + w[c.rarity], 0);
-    for (const c of pool) { r -= w[c.rarity]; if (r <= 0) return c; }
-    return pool[0];
+    let r = Math.random() * 100, rarity = 'common';
+    for (const [k, pct] of Object.entries(ODDS)) { r -= pct; if (r < 0) { rarity = k; break; } }
+    const pool = SERIES.filter(c => c.rarity === rarity), missing = pool.filter(c => !got[c.id]);
+    const from = missing.length ? missing : pool;
+    return from[Math.floor(Math.random() * from.length)];
   }
+  const oddsHtml = () => `<div class="kb-odds" aria-label="Odds per bag"><b>Odds per bag</b>${['common', 'rare', 'epic', 'secret'].map(k => `<span class="kb-odd r-${k}">${RARITY[k]} <em>${k === 'secret' ? '1 in 100' : ODDS[k] + '%'}</em></span>`).join('')}<small>Within each rarity, you always get one you’re missing before a duplicate.</small></div>`;
 
   // ── The screen ──────────────────────────────────────────────────────────
   let wrap = null, lastFocus = null;
@@ -112,6 +114,7 @@
       </div>
       <div class="kb-meta"><span><b>${owned}</b> of 12 collected</span>${state.dupes >= 3 ? '<button type="button" class="kb-trade" data-trade>Trade 3 duplicates for a bag</button>' : `<span>${state.dupes} duplicate${state.dupes === 1 ? '' : 's'} · 3 trade in for a bag</span>`}</div>
       ${reward(owned)}
+      ${oddsHtml()}
       <div class="kb-grid">${SERIES.map(slot).join('')}</div>
       <p class="kb-note">Collect all 12 for 30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame. Bags are always earned, never sold.${state.demo ? ' <b>Demo:</b> nothing is saved.' : ''}</p>`);
   }

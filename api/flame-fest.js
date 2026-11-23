@@ -190,28 +190,28 @@ const BAG_SERIES = [
   ["skater", "Ice Skater Knox", "rare"], ["caroler", "Caroler Knox", "rare"], ["snowball", "Snowball Knox", "rare"],
   ["santa", "Santa Knox", "epic"], ["nutcracker", "Nutcracker Knox", "epic"], ["golden", "Golden Knox", "secret"],
 ].map(([id, name, rarity]) => ({ id, name, rarity }));
-const RARITY_WEIGHT = { common: 6, rare: 3, epic: 1.5 };
+// The odds per bag, shown on the bags screen (bags.js ODDS matches): Golden Knox is 1 in 100.
+const RARITY_ODDS = { common: 64, rare: 25, epic: 10, secret: 1 };
 function bagStatus(data) {
   const kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
   const got = {};
   for (const c of BAG_SERIES) { const n = Math.max(0, Math.floor(Number(kb.got?.[c.id]) || 0)); if (n) got[c.id] = n; }
   return {
-    series: { name: "Knox's Christmas", start: BAGS_START, end: BAGS_END, figures: BAG_SERIES },
+    series: { name: "Knox's Christmas", start: BAGS_START, end: BAGS_END, figures: BAG_SERIES, odds: RARITY_ODDS },
     unopened: Math.max(0, Math.floor(Number(kb.unopened) || 0)), got,
     dupes: Object.values(got).reduce((t, n) => t + n - 1, 0),
     complete: BAG_SERIES.every(c => got[c.id]), claimed: !!kb.claimed, giftCode: typeof kb.giftCode === "string" ? kb.giftCode : "",
     questions: Math.max(0, Number(kb.questions) || 0) % 10, // toward the next bag
   };
 }
-function pickFigure(got) {
-  const regular = BAG_SERIES.filter(c => c.rarity !== "secret"), golden = BAG_SERIES.find(c => c.rarity === "secret");
-  const missing = regular.filter(c => !got[c.id]);
-  if (!got.golden && !missing.length) return golden;
-  if (!got.golden && regular.length - missing.length >= 8 && Math.random() < 0.25) return golden;
-  const pool = missing.length && Math.random() < 0.75 ? missing : regular;
-  let r = Math.random() * pool.reduce((t, c) => t + RARITY_WEIGHT[c.rarity], 0);
-  for (const c of pool) { r -= RARITY_WEIGHT[c.rarity]; if (r <= 0) return c; }
-  return pool[pool.length - 1];
+// 1) Roll the rarity at exactly the published odds. 2) Within that rarity, a
+// figure you're missing comes before any duplicate (also shown on the screen).
+function pickFigure(got, rand = Math.random) {
+  let r = rand() * 100, rarity = "common";
+  for (const [k, pct] of Object.entries(RARITY_ODDS)) { r -= pct; if (r < 0) { rarity = k; break; } }
+  const pool = BAG_SERIES.filter(c => c.rarity === rarity), missing = pool.filter(c => !got[c.id]);
+  const from = missing.length ? missing : pool;
+  return from[Math.min(from.length - 1, Math.floor(rand() * from.length))];
 }
 
 export default async function handler(req, res) {

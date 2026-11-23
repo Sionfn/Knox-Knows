@@ -256,6 +256,7 @@
     }
   }
   function celebrate(r) {
+    window.knoxSound?.play('reward');
     const box = wrap?.querySelector('.ff-card');
     if (!box) return;
     const burst = document.createElement('div');

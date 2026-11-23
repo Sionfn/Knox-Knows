@@ -2731,6 +2731,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <link rel="stylesheet" href="/bags.css">
 <link rel="stylesheet" href="/bags3d.css">
 <link rel="stylesheet" href="/sims.css">
+<script src="/knox-sound.js" defer></script>
 <script src="/flamefest.js" defer></script>
 <script src="/advent.js" defer></script>
 <script src="/bags.js" defer></script>
@@ -4194,6 +4195,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         const params = new URLSearchParams(window.location.search);
         if (params.get('payment') === 'success') {
           showPaymentSuccessModal();
+          window.knoxSound?.play('plan');
           // Poll for the webhook to finish writing the new plan
           pollForPlanUpdate(user.uid, params.get('switched') || '');
           try { history.replaceState({}, '', window.location.pathname); } catch (e) {}
@@ -4278,6 +4280,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // The successful answer already advanced it in a server transaction.
     const previous = Number(document.getElementById('streakCount')?.textContent) || 0;
     const result = await loadStreak(uid);
+    if (window.currentUser?.uid === uid && result?.studiedToday && result.count > previous) window.knoxSound?.play('flame'); // today's flame lights
     if (window.currentUser?.uid === uid && result?.studiedToday && result.count > previous && STREAK_MILESTONES.includes(result.count)) celebrateStreak(result.count);
   }
   window.updateStreak = updateStreak;
@@ -5631,6 +5634,14 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     sizeBtns.forEach(b => b.onclick = () => { try { localStorage.setItem('knoxLargeText', b.dataset.size); } catch (_) {} showSize(); });
     showSize();
     el.appendChild(ans);
+
+    // Sound effects, like the iPhone app's: off until switched on, saved on this device (knox-sound.js).
+    const snd = document.createElement('div'); snd.className = 'settings-websearch settings-sound';
+    snd.innerHTML = '<span class="ws-copy"><span class="settings-label">Sound effects</span><small>Knox’s sounds and celebrations: your flame, finished decks and lessons, card flips, Advent doors and blind bags.</small></span><button type="button" class="settings-switch" role="switch" aria-label="Sound effects"></button>';
+    const sndSw = snd.querySelector('.settings-switch');
+    sndSw.setAttribute('aria-checked', String(!!window.knoxSound?.on()));
+    sndSw.onclick = () => { const v = sndSw.getAttribute('aria-checked') !== 'true'; window.knoxSound?.set(v); sndSw.setAttribute('aria-checked', String(v)); };
+    el.appendChild(snd);
 
     const mega = window.userTier === 'mega';
     if (mega || !window.knoxNativeApp) {
@@ -6997,6 +7008,8 @@ window.appHandleAsk = async function() {
     // Successful answer — increment guest count
     if (requestReviewSkillId) window.learnReviewUI?.used(requestReviewSkillId, requestUid, requestLearnSessionId);
     if (!window.currentUser && !data.isCasual) window._incGuestCount();
+    // A Learn lesson that ends with its recap: Knox's "lesson finished" sound (if sounds are on).
+    if (requestLearnMode && window.knoxSound?.on() && parseLearnExtras(data.answer || '').recap) setTimeout(() => window.knoxSound.play('lesson'), 400);
 
     // One source per account/session; a new document replaces a previous photo.
     if (newLessonSource && requestUid && window.currentUser?.uid === requestUid && requestLearnSessionId === window._learnSessionId) {

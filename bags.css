@@ -36,6 +36,13 @@ html[data-theme="dark"] .kb-stage { background: color-mix(in srgb, #FF6B00 10%, 
 .kb-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
 .kb-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .kb-btn .kk-ic { width: 1.15em; height: 1.15em; vertical-align: -.2em; margin-right: 2px; }
+.kb-odds { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; padding: 10px 12px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); font-size: 12.5px; font-weight: 800; color: var(--text-light); }
+.kb-odds > b { color: var(--text); font-weight: 900; margin-right: 2px; }
+.kb-odd { --r: #1CB0F6; --rd: #0A85C2; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; border: 2px solid var(--r); color: var(--rd); background: color-mix(in srgb, var(--r) 12%, var(--surface)); }
+.kb-odd em { font-style: normal; font-weight: 900; color: var(--text); }
+.kb-odd.r-rare { --r: #CE82FF; --rd: #7C3AED; } .kb-odd.r-epic { --r: #E5383B; --rd: #B3202A; } .kb-odd.r-secret { --r: #F2B705; --rd: #8A6400; }
+html[data-theme="dark"] .kb-odd { color: var(--r); }
+.kb-odds small { flex-basis: 100%; font-size: 11.5px; font-weight: 700; }
 .kb-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 4px 2px 8px; font-size: 12.5px; font-weight: 800; color: var(--text-light); }
 .kb-meta b { color: var(--text); }
 .kb-trade { padding: 6px 12px; border-radius: 999px; border: 2px solid #7C3AED; background: #F3E8FF; color: #5B21B6; font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 #7C3AED; }

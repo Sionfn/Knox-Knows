@@ -18,6 +18,8 @@
 .kb3-scissors .kk-ic { width: 18px; height: 18px; }
 @keyframes kb3Slide { 0%, 15% { left: -6px; } 75%, 100% { left: calc(100% - 26px); } }
 .kb3-stage.is-tearing .kb3-scissors { animation: none; left: calc(var(--tear) * 100% - 16px); }
+.kb3-stage.dir-left .kb3-tearline::after { left: auto; right: 0; }
+.kb3-stage.is-tearing.dir-left .kb3-scissors { left: auto; right: calc(var(--tear) * 100% - 16px); }
 .kb3-stage.is-torn .kb3-tearline, .kb3-stage.is-torn .kb3-hint, .kb3-stage.is-torn .kb3-tear-btn { opacity: 0; pointer-events: none; }
 .kb3-hint { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 18px; border-radius: 18px; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .25); text-align: center; white-space: nowrap; transition: opacity .25s; animation: kb3Pulse 2.4s ease-in-out infinite; }
 .kb3-hint b { font-size: 17px; font-weight: 900; }
@@ -31,16 +33,38 @@
 .kb3-tear-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .kb3-tear-btn .kk-ic { width: 18px; height: 18px; }
 .kb3-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .08); color: #fff; font: inherit; font-size: 16px; font-weight: 900; cursor: pointer; }
+.kb3-sound { position: absolute; top: 16px; right: 66px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .08); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.kb3-sound[aria-pressed="false"] { color: rgba(255, 255, 255, .6); }
+.kb3-sound:focus-visible, .kb3-close:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+/* The burst: a flash in the rarity color and a shockwave ring */
+.kb3-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 34%, #fff 0%, color-mix(in srgb, var(--rc) 70%, #fff) 26%, color-mix(in srgb, var(--rc) 30%, transparent) 55%, transparent 80%); }
+.kb3-stage.is-burst .kb3-flash { animation: kb3Flash .7s ease-out both; }
+@keyframes kb3Flash { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
+.kb3-ring { position: absolute; left: 50%; top: 34%; width: 60px; height: 60px; margin: -30px; border-radius: 50%; border: 8px solid var(--rc); opacity: 0; pointer-events: none; }
+.kb3-stage.is-burst .kb3-ring { animation: kb3Ring .9s cubic-bezier(.15, .7, .3, 1) both; }
+@keyframes kb3Ring { 0% { transform: scale(.2); opacity: 1; border-width: 14px; } 100% { transform: scale(16); opacity: 0; border-width: 1px; } }
+/* Spot glows harder as the light climbs */
+.kb3-stage.is-torn .kb3-spot { transition: background .25s; }
 /* The reveal (its display:flex would beat [hidden], so hide it explicitly:
    otherwise this invisible layer covers the stage and eats every click). */
 .kb3-reveal[hidden] { display: none; }
-.kb3-reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; --rc: #1CB0F6; --rd: #0A85C2; }
+.kb3-reveal { animation: kb3Thud .3s .76s; position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; --rc: #1CB0F6; --rd: #0A85C2; }
 .kb3-reveal.r-rare { --rc: #CE82FF; --rd: #7C3AED; }
 .kb3-reveal.r-epic { --rc: #FF4F57; --rd: #B3202A; }
 .kb3-reveal.r-secret { --rc: #FFC800; --rd: #B98500; }
-.kb3-fig { width: min(260px, 62vw); aspect-ratio: 120 / 130; animation: kb3Rise 1s cubic-bezier(.2, .9, .3, 1.25) both; filter: drop-shadow(0 10px 0 rgba(0, 0, 0, .25)); }
+.kb3-figwrap { position: relative; display: grid; place-items: center; }
+.kb3-fig { position: relative; z-index: 2; width: min(250px, 58vw); aspect-ratio: 120 / 130; animation: kb3Pop .85s cubic-bezier(.2, 1.5, .4, 1) both, kb3Bob 2.6s ease-in-out 1s infinite; filter: drop-shadow(0 10px 0 rgba(0, 0, 0, .25)) drop-shadow(0 0 26px color-mix(in srgb, var(--rc) 55%, transparent)); }
 .kb3-fig .kb-fig { width: 100%; height: 100%; display: block; }
-@keyframes kb3Rise { 0% { transform: translateY(40vh) scale(.3) rotateY(0); opacity: 0; } 55% { opacity: 1; } 100% { transform: none; } }
+@keyframes kb3Pop { 0% { transform: translateY(26vh) scale(.15) rotate(-14deg); opacity: 0; } 40% { opacity: 1; } 70% { transform: translateY(-14px) scale(1.12) rotate(4deg); } 100% { transform: none; } }
+@keyframes kb3Bob { 50% { transform: translateY(-9px) rotate(1.5deg); } }
+/* Sunburst rays spinning behind the figure, and twinkles around it */
+.kb3-rays { position: absolute; left: 50%; top: 50%; width: 720px; height: 720px; margin: -360px 0 0 -360px; z-index: 0; border-radius: 50%; background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rc) 50%, transparent) 0deg 8deg, transparent 8deg 22.5deg); -webkit-mask: radial-gradient(circle, #000 12%, transparent 62%); mask: radial-gradient(circle, #000 12%, transparent 62%); animation: kb3RaysIn .7s ease-out both, kb3Spin 14s linear infinite; pointer-events: none; }
+@keyframes kb3RaysIn { from { opacity: 0; transform: scale(.2); } }
+@keyframes kb3Spin { to { rotate: 360deg; } }
+.kb3-twinkle { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.kb3-twinkle i { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px; background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); transform: rotate(var(--a)) translateY(calc(var(--rad) * -1)); animation: kb3Twinkle 1.6s ease-in-out var(--delay) infinite both; }
+.kb3-twinkle i:nth-child(odd) { background: #FFE38A; width: 12px; height: 12px; margin: -6px; }
+@keyframes kb3Twinkle { 0%, 100% { opacity: 0; scale: .3; } 50% { opacity: 1; scale: 1.1; } }
 .kb3-tag { padding: 5px 14px; border-radius: 999px; font-size: 14px; font-weight: 900; transform: rotate(-4deg); animation: kb3Stamp .45s .7s both cubic-bezier(.2, .9, .3, 1.6); }
 .kb3-tag.new { background: #1FA45A; box-shadow: 0 3px 0 #157A41; }
 .kb3-tag.dup { background: rgba(255, 255, 255, .14); border: 2px solid rgba(255, 255, 255, .3); }
@@ -52,7 +76,10 @@
 .kb3-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; animation: kb3Up .5s 1.15s both ease; }
 .kb3-done { background: #fff; color: #CC5500; border-color: #fff; box-shadow: 0 4px 0 rgba(255, 255, 255, .45); }
 @keyframes kb3Up { from { transform: translateY(14px); opacity: 0; } }
-.kb3-confetti i { position: absolute; left: 50%; top: 45%; width: 10px; height: 14px; border-radius: 3px; background: var(--c); animation: kb3Confetti var(--d) var(--delay) cubic-bezier(.15, .7, .4, 1) both; }
+.kb3-confetti { position: absolute; inset: 0; pointer-events: none; }
+.kb3-confetti i { position: absolute; left: 50%; top: 40%; width: 10px; height: 15px; border-radius: 3px; background: var(--c); animation: kb3Confetti var(--d) var(--delay) cubic-bezier(.2, .75, .4, 1) both; }
 .kb3-confetti i:nth-child(3n) { border-radius: 50%; width: 10px; height: 10px; }
-@keyframes kb3Confetti { 0% { transform: translate(-50%, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--x), 60vh) rotate(var(--r)); opacity: 0; } }
+@keyframes kb3Confetti { 0% { transform: translate(-50%, -50%) rotate(0) scale(.4); opacity: 1; } 28% { transform: translate(calc(var(--x) * .75), var(--y)) rotate(calc(var(--r) * .35)) scale(1); opacity: 1; } 100% { transform: translate(var(--x), 70vh) rotate(var(--r)); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .kb3-stage *, .kb3-stage { animation: none !important; } }
+
+@keyframes kb3Thud { 30% { transform: translate(-3px, 2px); } 60% { transform: translate(3px, -2px); } }
