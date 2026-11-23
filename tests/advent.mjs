@@ -31,3 +31,14 @@ test('the calendar has a treat for every door and the new flames have looks', ()
   assert.match(css, /\.flame-frost \{ filter:/);
   assert.match(css, /\.flame-ruby \{ filter:/);
 });
+
+test('blind bags: earned behind every Advent door and every 10 questions (3 a day), opened and traded on the server', () => {
+  const ff = src('api/flame-fest.js'), streak = src('api/_streak.js'), ask = src('api/ask.js');
+  assert.match(ff, /return \{ gives: \{ \.\.\.base\.gives, bag: 1 \}/);
+  assert.match(ff, /\["open", "trade", "claim"\]\.includes\(body\.bags\)/);
+  assert.match(ff, /if \(st\.dupes < 3\) return/);
+  assert.match(streak, /const BAG_EVERY = 10, BAGS_PER_DAY = 3;/);
+  assert.match(ask, /await countQuestionForBags\(db, uid, localDay\)/);
+  const bags = src('bags.js');
+  for (const id of ['elf', 'snowman', 'reindeer', 'gingerbread', 'cocoa', 'sweater', 'skater', 'caroler', 'snowball', 'santa', 'nutcracker', 'golden']) assert.match(bags, new RegExp(`\\b${id}: \\(\\) => S\\(`));
+});

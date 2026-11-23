@@ -58,7 +58,7 @@
   let state = null, loading = false, error = '', busy = 0;
   function demoState() {
     const studied = [1, 2, 3, 5, 6, 7, 8, 9], opened = [1, 2, 3, 5, 6, 7];
-    const label = n => ({ 6: '🛡️ Flame Shield', 7: '❄️ Frost Flame', 13: '+10 bonus questions + 🛡️ Flame Shield', 17: '❤️ Ruby Flame', 20: '🛡️ Flame Shield', 24: '+15 bonus questions + 🛡️ Flame Shield', 25: '🎁 5 days of Mega Knox' }[n] || '+5 bonus questions');
+    const label = n => ({ 6: '🛡️ Flame Shield', 7: '❄️ Frost Flame', 13: '+10 bonus questions + 🛡️ Flame Shield', 17: '❤️ Ruby Flame', 20: '🛡️ Flame Shield', 24: '+15 bonus questions + 🛡️ Flame Shield', 25: '🎁 5 days of Mega Knox' }[n] || '+5 bonus questions') + ' + 🛍️ Blind bag';
     return { demo: true, tier: 'free', shields: 1, giftCode: '', doors: Array.from({ length: 25 }, (_, k) => { const n = k + 1; return { n, day: `2026-12-${pad(n)}`, studied: studied.includes(n), opened: opened.includes(n), label: label(n) }; }) };
   }
   async function api(method, body) {
@@ -110,7 +110,7 @@
     if (error && !state) { card.innerHTML = head() + `<p class="adv-note">${esc(error)}</p><div class="adv-actions"><button type="button" class="adv-btn" data-retry>Try again</button></div>`; return; }
     const doors = state.doors, opened = doors.filter(d => d.opened).length;
     card.innerHTML = head() +
-      `<div class="adv-meta"><span><b>${opened}</b> of 25 opened</span><span>🛡️ <b>${state.shields || 0}</b> Flame Shield${state.shields === 1 ? '' : 's'}</span></div>` +
+      `<div class="adv-meta"><span><b>${opened}</b> of 25 opened</span><button type="button" class="adv-bags" data-bags>🛍️ Blind bags</button><span>🛡️ <b>${state.shields || 0}</b> Flame Shield${state.shields === 1 ? '' : 's'}</span></div>` +
       `<div class="adv-grid">${doors.map(door).join('')}</div>` +
       (state.giftCode ? `<p class="adv-gift">🎁 Your Mega Knox week for a friend: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a></p>` : '') +
       `<p class="adv-note">Study any day in December (ask a question, do a Learn step or review flashcards) to open that day’s door. Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
@@ -122,9 +122,12 @@
   function reveal(d, fresh) {
     const pop = document.createElement('div');
     pop.className = 'adv-reveal';
-    pop.innerHTML = ki(`<div class="adv-reveal-card" role="dialog" aria-modal="true" aria-labelledby="advRevealT"><span class="adv-reveal-n">Door ${d.n}</span><div class="adv-reveal-prize">${prizeIcon(d.label)}</div><h3 id="advRevealT">${fresh ? 'You got' : 'Behind this door'}: ${esc(d.label)}</h3><p>${esc(TREATS[d.n - 1])}</p><button type="button" class="adv-btn" data-done>${fresh ? 'Yay!' : 'Close'}</button></div>`);
+    pop.innerHTML = ki(`<div class="adv-reveal-card" role="dialog" aria-modal="true" aria-labelledby="advRevealT"><span class="adv-reveal-n">Door ${d.n}</span><div class="adv-reveal-prize">${prizeIcon(d.label)}</div><h3 id="advRevealT">${fresh ? 'You got' : 'Behind this door'}: ${esc(d.label)}</h3><p>${esc(TREATS[d.n - 1])}</p>${fresh && /blind bag/i.test(d.label) ? '<button type="button" class="adv-btn adv-btn-bag" data-bag>🛍️ Open your blind bag</button>' : ''}<button type="button" class="adv-btn${fresh && /blind bag/i.test(d.label) ? ' adv-btn-quiet' : ''}" data-done>${fresh ? 'Yay!' : 'Close'}</button></div>`);
     const done = () => { pop.remove(); wrap?.querySelector(`[data-door="${d.n}"]`)?.focus(); };
-    pop.addEventListener('click', e => { if (e.target === pop || e.target.closest('[data-done]')) done(); });
+    pop.addEventListener('click', e => {
+      if (e.target.closest('[data-bag]')) { pop.remove(); close(); window.knoxBags?.open(); return; }
+      if (e.target === pop || e.target.closest('[data-done]')) done();
+    });
     pop.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); done(); } });
     wrap.append(pop);
     pop.querySelector('[data-done]').focus();
@@ -162,6 +165,7 @@
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('[data-close]')) { close(); return; }
       if (e.target.closest('[data-retry]')) { load().then(render); return; }
+      if (e.target.closest('[data-bags]')) { close(); window.knoxBags?.open(); return; }
       const d = e.target.closest('[data-door]'); if (d) openDoor(+d.dataset.door);
     });
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });

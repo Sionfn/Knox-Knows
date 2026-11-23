@@ -30,7 +30,7 @@ import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { newGiftCode } from "./_gifts.js";
 import { MEGA_PLAN } from "./_plans.js";
-import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END, ADVENT_START, ADVENT_END } from "./_streak.js";
+import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END, ADVENT_START, ADVENT_END, BAGS_START, BAGS_END } from "./_streak.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -153,10 +153,12 @@ const BIG = {
 };
 // The small doors: Free gets bonus questions; Plus and Mega get a treat
 // (a winter fact or study tip, shown by the app) — they're already unlimited.
+// Every door also holds a Knox blind bag (the only way to get them).
 const adventPrize = (n, tier) => {
   const b = BIG[n];
-  if (b) return b.all || (tier === "mega" && b.mega) || (tier === "free" ? b.free : b.plus);
-  return tier === "free" ? { gives: { bonus: 5 }, label: "+5 bonus questions" } : { gives: {}, label: "🍪 A treat from Knox" };
+  const base = b ? (b.all || (tier === "mega" && b.mega) || (tier === "free" ? b.free : b.plus))
+    : tier === "free" ? { gives: { bonus: 5 }, label: "+5 bonus questions" } : { gives: {}, label: "" };
+  return { gives: { ...base.gives, bag: 1 }, label: base.label ? base.label + " + 🛍️ Blind bag" : "🛍️ A Knox blind bag" };
 };
 function adventStatus(data, tester = false) {
   const adv = data.advent && typeof data.advent === "object" ? data.advent : {};
@@ -170,6 +172,46 @@ function adventStatus(data, tester = false) {
     giftCode: typeof adv.giftCode === "string" ? adv.giftCode : "", megaUntil: base.megaUntil,
     ...(tester ? { tester: true } : {}),
   };
+}
+
+// ── Blind bags, Series 1 "Knox's Christmas" (Dec 2026 – Jan 2027) ──────────
+// Bags are earned, never sold: one behind every Advent Calendar door, one for
+// every 10 questions asked in December (up to 3 a day, api/_streak.js), or 3
+// duplicates traded in for a new one.
+// Odds favor figures you don't have yet; ✨ Golden Knox drops only once you
+// have 8 of the other 11 (and is certain when it's the last one missing).
+// Collect all 12: 30 days of Mega Knox (a Mega month to gift if already Mega),
+// the Collector badge (knoxBags.collector) and the 🟡 Golden Flame.
+// GET ?event=bags → { series, unopened, got, dupes, complete, claimed, giftCode }
+// POST { bags: 'open' | 'trade' | 'claim' }
+const BAG_SERIES = [
+  ["elf", "Elf Knox", "common"], ["snowman", "Snowman Knox", "common"], ["reindeer", "Reindeer Knox", "common"],
+  ["gingerbread", "Gingerbread Knox", "common"], ["cocoa", "Hot Cocoa Knox", "common"], ["sweater", "Ugly Sweater Knox", "common"],
+  ["skater", "Ice Skater Knox", "rare"], ["caroler", "Caroler Knox", "rare"], ["snowball", "Snowball Knox", "rare"],
+  ["santa", "Santa Knox", "epic"], ["nutcracker", "Nutcracker Knox", "epic"], ["golden", "Golden Knox", "secret"],
+].map(([id, name, rarity]) => ({ id, name, rarity }));
+const RARITY_WEIGHT = { common: 6, rare: 3, epic: 1.5 };
+function bagStatus(data) {
+  const kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
+  const got = {};
+  for (const c of BAG_SERIES) { const n = Math.max(0, Math.floor(Number(kb.got?.[c.id]) || 0)); if (n) got[c.id] = n; }
+  return {
+    series: { name: "Knox's Christmas", start: BAGS_START, end: BAGS_END, figures: BAG_SERIES },
+    unopened: Math.max(0, Math.floor(Number(kb.unopened) || 0)), got,
+    dupes: Object.values(got).reduce((t, n) => t + n - 1, 0),
+    complete: BAG_SERIES.every(c => got[c.id]), claimed: !!kb.claimed, giftCode: typeof kb.giftCode === "string" ? kb.giftCode : "",
+    questions: Math.max(0, Number(kb.questions) || 0) % 10, // toward the next bag
+  };
+}
+function pickFigure(got) {
+  const regular = BAG_SERIES.filter(c => c.rarity !== "secret"), golden = BAG_SERIES.find(c => c.rarity === "secret");
+  const missing = regular.filter(c => !got[c.id]);
+  if (!got.golden && !missing.length) return golden;
+  if (!got.golden && regular.length - missing.length >= 8 && Math.random() < 0.25) return golden;
+  const pool = missing.length && Math.random() < 0.75 ? missing : regular;
+  let r = Math.random() * pool.reduce((t, c) => t + RARITY_WEIGHT[c.rarity], 0);
+  for (const c of pool) { r -= RARITY_WEIGHT[c.rarity]; if (r <= 0) return c; }
+  return pool[pool.length - 1];
 }
 
 export default async function handler(req, res) {
@@ -200,10 +242,51 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const snap = await userRef.get();
       if (req.query?.event === "advent") return res.status(200).json(adventStatus(snap.exists ? snap.data() : {}, tester));
+      if (req.query?.event === "bags") return res.status(200).json({ ...bagStatus(snap.exists ? snap.data() : {}), ...(tester ? { unlimited: true, unopened: 99 } : {}) });
       return send(snap.exists ? snap.data() : {});
     }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
+
+    // Blind bags: open one, trade 3 duplicates, or the complete-set reward.
+    if (["open", "trade", "claim"].includes(body.bags)) {
+      const giftCode = body.bags === "claim" ? newGiftCode().slice(0, 8) : "";
+      const giftRef = giftCode ? db.collection("giftCodes").doc(giftCode) : null;
+      const out = await db.runTransaction(async tx => {
+        const [snap, taken] = await Promise.all([tx.get(userRef), giftRef ? tx.get(giftRef) : null]);
+        const data = snap.exists ? snap.data() : {};
+        const st = bagStatus(data), kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
+        let next = { ...kb, got: { ...st.got }, unopened: st.unopened }, extra = {}, result = {};
+        if (body.bags === "open") {
+          // Tester mode (the admin account with ?flamefest=test): unlimited bags.
+          if (!st.unopened && !tester) return { error: "You don't have a bag to open yet. Keep studying to earn one!", code: 403 };
+          const fig = pickFigure(st.got);
+          next.unopened = tester ? st.unopened : st.unopened - 1;
+          next.got[fig.id] = (st.got[fig.id] || 0) + 1;
+          result = { figure: fig.id, isNew: !st.got[fig.id] };
+        } else if (body.bags === "trade") {
+          if (st.dupes < 3) return { error: "Trading needs 3 duplicates.", code: 403 };
+          let left = 3;
+          for (const c of [...BAG_SERIES].reverse()) while (left && next.got[c.id] > 1) { next.got[c.id]--; left--; }
+          next.unopened = st.unopened + 1;
+        } else {
+          if (!st.complete) return { error: "Collect all 12 figures to claim the reward.", code: 403 };
+          if (st.claimed) return { error: "You already claimed the collector reward.", code: 409 };
+          next.claimed = new Date().toISOString(); next.collector = true;
+          const styles = status(data).flameStyles;
+          extra.flameStyles = [...new Set([...styles.filter(x => x !== "classic"), "gold"])];
+          if (prizeTier(data) === "mega") {
+            if (taken?.exists) return { error: "Please try again.", code: 503 };
+            tx.set(giftRef, { source: "blindbags", tier: "mega", from: uid, days: 30, createdAt: new Date().toISOString(), redeemedBy: null });
+            next.giftCode = giftCode;
+          } else extra.megaUntil = Math.max(Date.now(), Number(data.megaUntil) || 0) + 30 * DAY_MS;
+        }
+        tx.set(userRef, { knoxBags: next, ...extra }, { merge: true });
+        return { data: { ...data, knoxBags: next, ...extra }, result };
+      });
+      if (out.error) return res.status(out.code).json({ error: out.error });
+      return res.status(200).json({ ...bagStatus(out.data), ...out.result, ...(tester ? { unlimited: true, unopened: 99 } : {}) });
+    }
 
     // Advent Calendar: open a door.
     if (body.advent === "open") {
@@ -233,6 +316,7 @@ export default async function handler(req, res) {
         if (g.shields) update.flameShields = st.shields + g.shields;
         if (g.style) { update.flameStyles = [...new Set([...st.flameStyles.filter(s => s !== "classic"), g.style])]; update.flameStyle = g.style; }
         if (g.megaDays) update.megaUntil = Math.max(Date.now(), st.megaUntil) + g.megaDays * DAY_MS;
+        if (g.bag) { const kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {}; update.knoxBags = { ...kb, unopened: Math.max(0, Number(kb.unopened) || 0) + g.bag }; }
         if (g.bonus) {
           const b = bank.exists ? bank.data() : {};
           const balance = typeof b.balance === "number" ? b.balance : FREE_STARTING_BALANCE;

@@ -371,3 +371,6 @@ html[data-theme="dark"]:not(.knox-seasonal) .ff-rarity { color:var(--r); }
 .ff-advent-copy b { font-size: 14px; font-weight: 900; }
 .ff-advent-copy small { font-size: 12.5px; font-weight: 700; opacity: .92; }
 .ff-advent-go { font-size: 18px; font-weight: 900; color: #E5383B; }
+.ff-bags-link { margin-top: 8px; border-color: #FF6B00; box-shadow: 0 3px 0 #CC5500; }
+.ff-bags-link .ff-advent-ic { background: #FFF2E5; border-color: #FF6B00; }
+.ff-bags-link .ff-advent-go { color: #FF6B00; }

@@ -2,7 +2,7 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { advanceStudyStreak } from "./_streak.js";
+import { advanceStudyStreak, countQuestionForBags } from "./_streak.js";
 import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson, correctedLessonState } from "./_learn-progress.js";
 import { loadLearnReview, reviewGuidance, recordLearnReview } from './_learn-review.js';
@@ -1477,6 +1477,9 @@ export default async function handler(req, res) {
     if (uid && !casual) {
       try { await advanceStudyStreak(db, uid, localDay); }
       catch (err) { console.error('Streak update failed:', err); }
+      // December: every 10 questions earn a Knox blind bag (up to 3 a day).
+      try { await countQuestionForBags(db, uid, localDay); }
+      catch (err) { console.error('Blind bag count failed:', err?.message); }
     }
     return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage,
       webSearch: searched?.sources.length ? 'used' : undefined });

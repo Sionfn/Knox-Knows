@@ -81,3 +81,9 @@ html .sidebar-advent-card.sidebar-extension-card:hover, html .sidebar-advent-car
 .sidebar-advent-card .adv-card-icon .kk-ic { width: 20px; height: 20px; }
 .sidebar-advent-card .sidebar-extension-copy span, .sidebar-advent-card .sidebar-extension-arrow { color: #B3202A; }
 html[data-theme="dark"] .sidebar-advent-card .sidebar-extension-copy span, html[data-theme="dark"] .sidebar-advent-card .sidebar-extension-arrow { color: #FF8A8C; }
+/* Blind bags (bags.js) from the calendar */
+.adv-bags { padding: 5px 11px; border-radius: 999px; border: 2px solid #FF6B00; background: #FFF2E5; color: #CC5500; font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 0 #CC5500; }
+.adv-bags .kk-ic { width: 14px; height: 14px; vertical-align: -2px; }
+html[data-theme="dark"] .adv-bags { background: color-mix(in srgb, #FF6B00 16%, var(--surface)); color: #FFB27A; }
+.adv-btn-bag { display: block; width: 100%; margin-bottom: 8px; background: #FF6B00; border-color: #CC5500; box-shadow: 0 4px 0 #CC5500; }
+.adv-btn-quiet { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: 0 3px 0 var(--border); }
