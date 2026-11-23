@@ -105,6 +105,9 @@ html.knox-christmas #pricing .kp-family { background-color: var(--surface); }
 
 /* The "Christmas mode is here" tip reuses the fall tip's shape (seasonal.css). */
 html.knox-christmas .fall-tip { border-color: var(--orange); }
+/* In Christmas the note sits in its own row above the badge (centered), below
+   the string lights, instead of floating at the very top over them. */
+html.knox-christmas #welcomeScreen > .fall-tip { position: relative; top: auto; left: auto; transform: none; margin: 22px auto 14px; width: auto; max-width: min(640px, 100%); z-index: 2; }
 
 /* Knox's logo in the sidebar and the landing header wears a Santa hat. */
 html.knox-christmas .sidebar-logo-link, html.knox-christmas .header-logo { position: relative; }
