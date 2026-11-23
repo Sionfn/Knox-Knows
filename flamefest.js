@@ -163,6 +163,7 @@
     const claimable = t <= CLAIM_UNTIL ? state.rewards.filter(r => !state.claimed[r.id] && r.flames >= r.need) : [];
     // A small link at the bottom (the calendar's own button sits beside the 🔥 in the sidebar).
     const advent = window.knoxAdvent?.active?.() ? `<button type="button" class="ff-advent" data-advent><span class="ff-advent-ic" aria-hidden="true">🎁</span><span class="ff-advent-copy"><b>Advent Calendar</b><small>Open today’s door</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
+    const bags = window.knoxBags ? `<button type="button" class="ff-advent ff-bags-link" data-bags><span class="ff-advent-ic" aria-hidden="true">🛍️</span><span class="ff-advent-copy"><b>Blind bags</b><small>Knox’s Christmas collection</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 Your streak</span>
         <h2 id="ffTitle">Your <span>flame</span></h2>
@@ -171,7 +172,7 @@
       </div>
       ${myFlame(picker, true)}${plus}${gift}
       ${claimable.length ? `<h3 class="ff-h3">Flame Fest rewards to claim · until December 7</h3><div class="ff-rewards">${claimable.map(rewardRow).join('')}</div>` : ''}
-      ${advent}
+      ${advent}${bags}
       <p class="ff-fine">A day counts when you study with Knox: Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day; they’re used automatically.</p>`;
   }
   // The flame you're using, big, so you can really see it (and pick another).
@@ -304,6 +305,7 @@
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('.ff-x')) { close(); return; }
       if (e.target.closest('[data-advent]')) { close(); window.knoxAdvent?.open(); return; }
+      if (e.target.closest('[data-bags]')) { close(); window.knoxBags?.open(); return; }
       const c = e.target.closest('[data-claim]'); if (c) { claim(c.dataset.claim, c); return; }
       const s = e.target.closest('[data-style]'); if (s) { pickStyle(s.dataset.style); return; }
       const t = e.target.closest('[data-test]'); if (t) { runTest(t.dataset.test, t); return; }

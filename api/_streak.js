@@ -25,6 +25,24 @@ const inFlameFest = day => day >= FLAME_FEST_START && day <= FLAME_FEST_END;
 // Advent Calendar (December 2026): every study day Dec 1–25 unlocks that day's
 // door (users/{uid}.advent.days); doors are opened in api/flame-fest.js.
 export const ADVENT_START = '2026-12-01', ADVENT_END = '2026-12-25';
+// Blind bags, Series 1 "Knox's Christmas": earned behind Advent Calendar doors
+// and for every 10 questions asked in December (up to 3 bags a day), opened any time.
+export const BAGS_START = '2026-12-01', BAGS_END = '2026-12-31';
+const BAG_EVERY = 10, BAGS_PER_DAY = 3;
+export async function countQuestionForBags(db, uid, clientDay) {
+  const day = studyDay(clientDay);
+  if (day < BAGS_START || day > BAGS_END) return;
+  const ref = db.collection('users').doc(uid);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const kb = snap.exists && snap.data().knoxBags && typeof snap.data().knoxBags === 'object' ? snap.data().knoxBags : {};
+    const sameDay = kb.qDay === day, todayBags = sameDay ? Math.max(0, Number(kb.qBags) || 0) : 0;
+    if (todayBags >= BAGS_PER_DAY) return;
+    const count = Math.max(0, Number(kb.questions) || 0) + 1;
+    const earned = count % BAG_EVERY === 0;
+    tx.set(ref, { knoxBags: { ...kb, questions: count, qDay: day, qBags: todayBags + (earned ? 1 : 0), unopened: Math.max(0, Number(kb.unopened) || 0) + (earned ? 1 : 0) } }, { merge: true });
+  });
+}
 const inAdvent = day => day >= ADVENT_START && day <= ADVENT_END;
 const addDays = (day, n) => new Date(Date.parse(day) + n * 86400000).toISOString().slice(0, 10);
 export async function advanceStudyStreak(db, uid, clientDay) {
