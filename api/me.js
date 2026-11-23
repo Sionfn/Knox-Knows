@@ -15,6 +15,7 @@ import { learnReviewRoute } from "./_learn-review.js";
 import transcribe from "./_transcribe.js";
 import notes from "./_notes.js";
 import shareDeck from "./_share-deck.js";
+import family from "./_family.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -97,6 +98,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "transcribe") return transcribe(req, res, { db, auth: adminAuth });
   // The Binder's notes (see api/_notes.js).
   if (req.query?.route === "notes") return notes(req, res);
+  // The Family plan: invite, join, remove, leave (see api/_family.js).
+  if (req.query?.route === "family") return family(req, res, { db, auth: adminAuth });
   // Flashcard decks shared by link (see api/_share-deck.js).
   if (req.query?.route === "share-deck") return shareDeck(req, res);
   // The iPhone app opening the website signed in as the same account (see api/_handoff.js).

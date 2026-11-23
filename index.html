@@ -2886,6 +2886,21 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     </div>
 
+    <!-- Family plan (Dec 2026): Knox Plus for up to 4 students, one bill. -->
+    <div class="kp-family reveal" id="familyPlan">
+      <div class="kpf-ic" aria-hidden="true">👨‍👩‍👧‍👦</div>
+      <div class="kpf-copy">
+        <span class="kpf-tag">New · Family plan</span>
+        <h3>Knox Plus for up to <em>4 students</em>, one bill</h3>
+        <p>Every student keeps their own account, streak and decks. Invite them with a link and remove anyone anytime. A great holiday gift for the whole family.</p>
+      </div>
+      <div class="kpf-buy">
+        <div class="kpf-price"><span id="familyPrice">$19.99</span><em id="familyPeriod">/mo</em></div>
+        <div class="kpf-note" id="familyNote">That’s $5 a student · cancel anytime</div>
+        <button class="pt-btn kpf-btn" onclick="handlePurchase('Family')" id="familyCTABtn">Get the Family plan</button>
+      </div>
+    </div>
+
     <div class="kp-divider reveal">
       <h3 class="kp-compare-title">Compare every plan</h3>
       <span class="kp-down" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
@@ -4469,6 +4484,10 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if ($('megaPrice'))  $('megaPrice').textContent  = yearly ? '$8.33' : '$12.99';
     if ($('megaPeriod')) $('megaPeriod').textContent = yearly ? '/mo, billed yearly' : '/mo';
     if ($('megaSubline')) $('megaSubline').textContent = 'Everything Knox has · cancel anytime';
+    // Family plan: $19.99/mo or $149/yr for up to 4 students.
+    if ($('familyPrice'))  $('familyPrice').textContent  = yearly ? '$12.42' : '$19.99';
+    if ($('familyPeriod')) $('familyPeriod').textContent = yearly ? '/mo, billed yearly' : '/mo';
+    if ($('familyNote'))   $('familyNote').textContent   = yearly ? 'Billed $149 once a year · about $3.10 a student' : 'That’s $5 a student · cancel anytime';
     // Badges: Mega shows its free trial (monthly) or its savings (yearly);
     // Plus shows its savings on yearly only.
     const proTrial = $('proTrialBadge'), megaTrial = $('megaTrialBadge');
@@ -4506,7 +4525,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
   async function handlePurchase(planName, requestedBilling) {
     if (window._checkoutBusy) return;
     // 'super' = Knox Plus, 'max' = Mega Knox (the Stripe / Firestore plan values).
-    const planKey = planName === 'Mega' ? 'max' : 'super';
+    const planKey = planName === 'Mega' ? 'max' : planName === 'Family' ? 'family' : 'super';
     const billingPeriod = requestedBilling || billing || 'monthly';
 
     // Guest? Save their intent so we can resume checkout after they sign up.
@@ -4526,7 +4545,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
 
     window._checkoutBusy = true;
     const requestUser = window.currentUser;
-    const btn = document.getElementById(planKey === 'max' ? 'megaCTABtn' : 'proCTABtn');
+    const btn = document.getElementById(planKey === 'max' ? 'megaCTABtn' : planKey === 'family' ? 'familyCTABtn' : 'proCTABtn');
     const originalText = btn?.textContent;
     if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
 
@@ -4612,7 +4631,7 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     window._pendingCheckout = pending;
     // Close login modal if it's open, then route through handlePurchase
     try { document.getElementById('loginModal')?.classList?.remove('open'); } catch(e) {}
-    await handlePurchase(pending.plan === 'max' ? 'Mega' : 'Plus', pending.billing);
+    await handlePurchase(pending.plan === 'max' ? 'Mega' : pending.plan === 'family' ? 'Family' : 'Plus', pending.billing);
   }
   window.resumePendingCheckoutIfAny = resumePendingCheckoutIfAny;
 
