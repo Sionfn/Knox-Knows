@@ -19,15 +19,21 @@
 @keyframes kb3Slide { 0%, 15% { left: -6px; } 75%, 100% { left: calc(100% - 26px); } }
 .kb3-stage.is-tearing .kb3-scissors { animation: none; left: calc(var(--tear) * 100% - 16px); }
 .kb3-stage.is-torn .kb3-tearline, .kb3-stage.is-torn .kb3-hint, .kb3-stage.is-torn .kb3-tear-btn { opacity: 0; pointer-events: none; }
-.kb3-hint { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 18px; border-radius: 18px; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .25); text-align: center; white-space: nowrap; transition: opacity .25s; animation: kb3Pulse 2.4s ease-in-out infinite; }
+.kb3-hint { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 18px; border-radius: 18px; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .25); text-align: center; white-space: nowrap; transition: opacity .25s; animation: kb3Pulse 2.4s ease-in-out infinite; }
 .kb3-hint b { font-size: 17px; font-weight: 900; }
 .kb3-hint span { font-size: 12.5px; font-weight: 700; opacity: .75; }
 @keyframes kb3Pulse { 50% { transform: translateX(-50%) scale(1.04); } }
 .kb3-tear-btn, .kb3-again, .kb3-done { padding: 12px 22px; border-radius: 16px; border: 2px solid #CC5500; background: #FF6B00; color: #fff; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 #CC5500; }
-.kb3-tear-btn:active, .kb3-again:active, .kb3-done:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
-.kb3-tear-btn { position: absolute; left: 50%; bottom: 30px; transform: translateX(-50%); background: transparent; border-color: rgba(255, 255, 255, .4); box-shadow: 0 3px 0 rgba(255, 255, 255, .2); font-size: 13.5px; padding: 9px 16px; transition: opacity .25s; }
+.kb3-again:active, .kb3-done:active { transform: translateY(2px); box-shadow: 0 1px 0 #CC5500; }
+.kb3-tear-btn { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 8px; font-size: 16px; padding: 12px 24px; transition: opacity .25s, transform .12s; }
+.kb3-tear-btn:hover { background: #FF7A1A; }
+.kb3-tear-btn:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 1px 0 #CC5500; }
+.kb3-tear-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.kb3-tear-btn .kk-ic { width: 18px; height: 18px; }
 .kb3-close { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .35); background: rgba(255, 255, 255, .08); color: #fff; font: inherit; font-size: 16px; font-weight: 900; cursor: pointer; }
-/* The reveal */
+/* The reveal (its display:flex would beat [hidden], so hide it explicitly:
+   otherwise this invisible layer covers the stage and eats every click). */
+.kb3-reveal[hidden] { display: none; }
 .kb3-reveal { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; --rc: #1CB0F6; --rd: #0A85C2; }
 .kb3-reveal.r-rare { --rc: #CE82FF; --rd: #7C3AED; }
 .kb3-reveal.r-epic { --rc: #FF4F57; --rd: #B3202A; }
