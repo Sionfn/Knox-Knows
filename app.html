@@ -2878,10 +2878,20 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           }
           rot.querySelector('.promo-dots').addEventListener('click', function(e) { var k = dots.indexOf(e.target.closest('button')); if (k >= 0) { show(k); start(); } });
           rot.addEventListener('mouseenter', stop);
-          rot.addEventListener('mouseleave', start);
+          rot.addEventListener('mouseleave', function() { if (!hidden()) start(); });
           rot.addEventListener('focusin', stop);
-          rot.addEventListener('focusout', start);
+          rot.addEventListener('focusout', function() { if (!hidden()) start(); });
           rot.knoxShow = show;
+          // × hides the promo slot for a week (on this device).
+          var HIDE_KEY = 'knoxPromoHiddenUntil';
+          function hidden() { try { return Number(localStorage.getItem(HIDE_KEY)) > Date.now(); } catch (e) { return false; } }
+          if (hidden()) document.documentElement.classList.add('knox-promo-hidden');
+          var x = document.createElement('button');
+          x.type = 'button'; x.className = 'promo-hide'; x.setAttribute('aria-label', 'Hide these cards for a week'); x.title = 'Hide for a week'; x.textContent = '✕';
+          x.onclick = function() { try { localStorage.setItem(HIDE_KEY, String(Date.now() + 7 * 864e5)); } catch (e) {} document.documentElement.classList.add('knox-promo-hidden'); stop(); showMega(); };
+          // Hidden: the Mega card (Free and Plus) stays put, everything else is gone.
+          function showMega() { var m = rot.querySelector('.sidebar-mega-card'); if (m) show(cards.indexOf(m)); }
+          rot.appendChild(x);
           // Knox Plus members: a Mega Knox card joins the rotation (pitch from
           // knoxMegaPitch); null takes it out again.
           rot.knoxSetMega = function(pitch) {
@@ -2911,8 +2921,9 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
             card.querySelector('strong').textContent = pitch.title;
             card.querySelector('.sidebar-extension-copy span').textContent = pitch.sub;
             card.setAttribute('aria-label', pitch.title + ' — ' + pitch.sub);
+            if (hidden()) { stop(); showMega(); }
           };
-          start();
+          if (hidden()) stop(); else start();
         })();
       </script>
 
@@ -3776,10 +3787,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // only to people who have never subscribed (the trial is first-time only).
     // Knox Plus members get the Mega card in the rotating slot instead, so
     // their chat history keeps the room.
-    const inRotation = !!window.currentUser && window.userTier === 'plus';
+    // Dec 1: one promo slot for everyone. Free and Plus get the Mega card in the
+    // rotation (never a second pinned card), so chat history keeps the room.
+    const inRotation = !!window.currentUser && window.userTier !== 'mega';
     document.getElementById('sidebarPromoRotator')?.knoxSetMega?.(inRotation ? window.knoxMegaPitch() : null);
     if (upgradeCard) {
-      const pitch = inRotation ? null : window.knoxMegaPitch();
+      const pitch = null; // the pinned card is retired: the Mega pitch rotates with the others
       upgradeCard.style.display = pitch ? 'block' : 'none';
       if (pitch) {
         document.getElementById('upgradeCardTitle').textContent = pitch.title;
