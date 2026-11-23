@@ -177,6 +177,9 @@
   // The promo cards (app.html) only show while the calendar is on.
   function syncCards() {
     document.querySelectorAll('.sidebar-advent-card').forEach(c => c.classList.toggle('adv-off', !active()));
+    // The gift button beside the 🔥 in the sidebar: signed-in students, in December.
+    const pill = document.getElementById('adventPill');
+    if (pill) pill.hidden = !(active() && window.currentUser);
   }
   // A one-time "the calendar is open" note on the app's welcome screen.
   function intro() {

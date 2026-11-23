@@ -161,15 +161,17 @@
   function flameHome({ gift, plus, picker }) {
     const t = today(), streak = Number(document.getElementById('streakCount')?.textContent) || 0;
     const claimable = t <= CLAIM_UNTIL ? state.rewards.filter(r => !state.claimed[r.id] && r.flames >= r.need) : [];
-    const advent = window.knoxAdvent?.active?.() ? `<button type="button" class="ff-advent" data-advent><span class="ff-advent-ic" aria-hidden="true">🎄</span><span class="ff-advent-copy"><b>Advent Calendar</b><small>Open today’s door. A surprise behind every one!</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
+    // A small link at the bottom (the calendar's own button sits beside the 🔥 in the sidebar).
+    const advent = window.knoxAdvent?.active?.() ? `<button type="button" class="ff-advent" data-advent><span class="ff-advent-ic" aria-hidden="true">🎁</span><span class="ff-advent-copy"><b>Advent Calendar</b><small>Open today’s door</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 Your streak</span>
         <h2 id="ffTitle">Your <span>flame</span></h2>
         <p>${streak ? `You’re on a ${streak}-day streak. Study with Knox each day to keep it lit!` : 'Study with Knox today to light your streak flame.'}</p>
         <div class="ff-stats"><div><b>${streak}</b><span>day streak</span></div><div><b>${state.shields}</b><span>🛡️ shield${state.shields === 1 ? '' : 's'}</span></div><div><b>${state.flameStyles.length}</b><span>flame look${state.flameStyles.length === 1 ? '' : 's'}</span></div></div>
       </div>
-      ${advent}${myFlame(picker, true)}${plus}${gift}
+      ${myFlame(picker, true)}${plus}${gift}
       ${claimable.length ? `<h3 class="ff-h3">Flame Fest rewards to claim · until December 7</h3><div class="ff-rewards">${claimable.map(rewardRow).join('')}</div>` : ''}
+      ${advent}
       <p class="ff-fine">A day counts when you study with Knox: Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day; they’re used automatically.</p>`;
   }
   // The flame you're using, big, so you can really see it (and pick another).

@@ -65,9 +65,10 @@ html.knox-christmas #home.kl-hero { background: #F3F8FC; }
 .xmas-lights-host { display: none; }
 .xmas-lights { display: block; }
 html.knox-christmas .xmas-deco > .xmas-lights-host { display: block; position: absolute; top: 0; left: 0; right: 0; }
-/* Under the sidebar logo: inside the logo bar, so the tools never cover it. */
-html.knox-christmas .sidebar-top { position: relative; height: 96px; padding-bottom: 26px; }
-html.knox-christmas .sidebar-top > .xmas-lights-mini { display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; overflow: hidden; pointer-events: none; }
+/* The sidebar logo bar keeps its normal size; a short tangled string runs
+   along its bottom edge, drawn above the tools so nothing hides the bulbs. */
+html.knox-christmas .sidebar-top { position: relative; z-index: 3; }
+html.knox-christmas .sidebar-top > .xmas-lights-mini { display: block; position: absolute; left: 0; right: 0; top: calc(100% - 6px); height: 24px; pointer-events: none; }
 body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !important; }
 /* Under the landing header: hangs just below it. */
 /* (The landing's string hangs at the top of the hero, just under the header.) */
@@ -98,7 +99,7 @@ body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !imp
 
 /* Snow caps on Knox's cards (app + landing) */
 html.knox-christmas :is(.suggestion-chip, .fc-way, .fc-deck, .pt-card, .kp-family, .kl-mode-card, .kl-card, .kl-review, details.faq-item, .kl-platform, .sidebar-extension-card, .bs-tile, .fc-quiz-q) {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6H0V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px;
 }
 html.knox-christmas #pricing .kp-family { background-color: var(--surface); }
 
@@ -129,8 +130,8 @@ html.knox-christmas #home .xmas-wreath, html.knox-christmas #home .xmas-baubles,
 /* Landing sections: a snowy edge on top. */
 .xmas-edge { display: none; }
 html.knox-christmas section.kl-section { position: relative; }
-html.knox-christmas .xmas-edge { display: block; position: absolute; top: 0; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-size: 110px 16px; }
-html.knox-christmas #pricing.kl-pricing :is(.pt-card, .kp-family) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px; }
+html.knox-christmas .xmas-edge { display: block; position: absolute; top: 0; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6H0V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-size: 110px 16px; }
+html.knox-christmas #pricing.kl-pricing :is(.pt-card, .kp-family) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6H0V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px; }
 
 /* The last "Stop guessing" section: Knox in a Santa hat, snow and a snowy
    ground with pines, the tree, a snowman and presents (theme.js). */
@@ -211,3 +212,5 @@ html.knox-xmas-night .xmas-flake { border-color: #FFFFFF; }
 html.knox-xmas-night .xmas-flake.is-flake svg g { stroke: #DCEBFA; }
 /* Snow caps and section edges stay white (frosting on dark cards) */
 html.knox-xmas-night .kb-fox { border-color: var(--orange); }
+/* Christmas night: Dark's card backgrounds would drop the snow caps; keep them. */
+html.knox-christmas[data-theme="dark"] :is(.suggestion-chip, .fc-way, .fc-deck, .kl-card, .kl-review, .sidebar-extension-card, .bs-tile, .fc-quiz-q) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16'%3E%3Cpath d='M0 0h120v6c-6 0-6 8-12 8s-6-6-12-6-6 9-13 9-6-7-12-7-7 6-13 6-6-8-12-8-6 7-12 7-7-5-13-5-6 6-11 6H0V0Z' fill='%23fff'/%3E%3Cpath d='M0 6c5 0 5 6 11 6s6-5 13-5 6 7 12 7 6-8 12-8 7 6 13 6 6-7 12-7 7 9 13 9 6-6 12-6 6 8 12 8 6-8 12-8' fill='none' stroke='%23D3E4F0' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 90px 12px; }

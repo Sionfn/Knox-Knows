@@ -278,6 +278,20 @@
   // sitting exactly on the wire. Drawn at the real width (no stretching) and
   // redrawn when the space changes size.
   const BULB_COLORS = [['#E5383B', '#B3202A'], ['#1FA45A', '#157A41'], ['#FFC800', '#D9A300'], ['#1CB0F6', '#0A85C2']];
+  // The sidebar's short string: two twisted wires (a little tangled) with tiny
+  // bulbs hanging from it, along the bottom edge of the logo bar.
+  function tangledLightsSvg(w) {
+    const mid = 5, A = 2.6, P = 34, step = 2;
+    let a = '', b = '';
+    for (let x = 0; x <= w; x += step) { const y = A * Math.sin(2 * Math.PI * x / P); a += (x ? ' L' : 'M') + x + ' ' + (mid + y).toFixed(1); b += (x ? ' L' : 'M') + x + ' ' + (mid - y).toFixed(1); }
+    let bulbs = '', k = 0;
+    for (let x = P / 2 + 6; x < w - 6; x += P * 1.5) {
+      const [c, d] = BULB_COLORS[k % 4], sway = (k % 2 ? 9 : -9);
+      bulbs += `<g transform="translate(${x.toFixed(1)} ${mid}) rotate(${sway}) scale(.56)"><rect x="-4.5" y="-1" width="9" height="8" rx="2" fill="#4E6B57"/><path class="xb xb${k % 3}" d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+      k++;
+    }
+    return `<svg class="xmas-lights" viewBox="0 0 ${w} 24" width="${w}" height="24" aria-hidden="true" focusable="false"><path d="${a}" fill="none" stroke="#4E6B57" stroke-width="1.6"/><path d="${b}" fill="none" stroke="#6E8F7A" stroke-width="1.6"/>${bulbs}</svg>`;
+  }
   function lightsSvg(w, mini) {
     const top = mini ? 3 : 5, span = mini ? 110 : 210, sag = mini ? 9 : 20, bulbH = mini ? 15 : 24, per = mini ? 2 : 3;
     const n = Math.max(1, Math.round(w / span)), L = w / n;
@@ -300,12 +314,12 @@
     const w = Math.round(el.clientWidth);
     if (!w || lightsSeen.get(el) === w) return;
     lightsSeen.set(el, w);
-    el.innerHTML = lightsSvg(w, el.classList.contains('xmas-lights-mini'));
+    el.innerHTML = el.classList.contains('xmas-lights-tangle') ? tangledLightsSvg(w) : lightsSvg(w, el.classList.contains('xmas-lights-mini'));
   }
-  function addLights(parent, mini) {
+  function addLights(parent, mini, tangle) {
     if (parent.querySelector(':scope > .xmas-lights-host')) return;
     const el = document.createElement('div');
-    el.className = 'xmas-lights-host' + (mini ? ' xmas-lights-mini' : '');
+    el.className = 'xmas-lights-host' + (mini ? ' xmas-lights-mini' : '') + (tangle ? ' xmas-lights-tangle' : '');
     el.setAttribute('aria-hidden', 'true');
     parent.appendChild(el);
     lightsRO?.observe(el);
@@ -358,7 +372,7 @@
     // Landing sections: a snowy edge along the top of each one.
     document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
     // Shorter lights under the sidebar logo and the landing header.
-    document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true));
+    document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true, true));
     document.querySelectorAll('.sidebar-logo-link, .header-logo').forEach(a => { if (!a.querySelector('.xmas-hat')) a.insertAdjacentHTML('afterbegin', SANTA_HAT); });
   }
   // "Christmas mode is here" tip (app welcome screen, December, dismissible).
