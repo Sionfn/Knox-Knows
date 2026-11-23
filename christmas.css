@@ -78,8 +78,8 @@ body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !imp
 .xmas-stocking { position: absolute; top: 0; right: calc(5% + 200px); width: 46px; }
 
 /* Bottom: the snowy ground */
-.xmas-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 170px; }
-.xmas-hills { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 96px; }
+.xmas-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 190px; }
+.xmas-hills { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 124px; }
 .xmas-pines { position: absolute; left: 1%; bottom: 40px; width: 200px; }
 .xmas-tree { position: absolute; left: 15%; bottom: 26px; width: 120px; }
 .xmas-canes { position: absolute; left: calc(15% + 120px); bottom: 24px; width: 48px; }
@@ -93,9 +93,8 @@ body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !imp
   .xmas-wreath { width: 72px; } .xmas-baubles { width: 130px; }
 }
 @media (max-width: 600px) { .xmas-snowman, .xmas-canes, .xmas-wreath, .xmas-baubles, .xmas-stocking { display: none; } }
-/* The welcome screen's content sits above the ground scene. */
-html.knox-christmas #welcomeScreen { padding-bottom: 150px; }
-@media (max-width: 900px) { html.knox-christmas #welcomeScreen { padding-bottom: 110px; } }
+/* (The welcome screen keeps its normal spacing: the ground scene sits behind
+   the content, so Ask Knox and Learn stay exactly where they are in Light.) */
 
 /* Snow caps on Knox's cards (app + landing) */
 html.knox-christmas :is(.suggestion-chip, .fc-way, .fc-deck, .pt-card, .kp-family, .kl-mode-card, .kl-card, .kl-review, details.faq-item, .kl-platform, .sidebar-extension-card, .bs-tile, .fc-quiz-q) {
@@ -105,9 +104,11 @@ html.knox-christmas #pricing .kp-family { background-color: var(--surface); }
 
 /* The "Christmas mode is here" tip reuses the fall tip's shape (seasonal.css). */
 html.knox-christmas .fall-tip { border-color: var(--orange); }
-/* In Christmas the note sits in its own row above the badge (centered), below
-   the string lights, instead of floating at the very top over them. */
-html.knox-christmas #welcomeScreen > .fall-tip { position: relative; top: auto; left: auto; transform: none; margin: 22px auto 14px; width: auto; max-width: min(640px, 100%); z-index: 2; }
+/* The note floats like in Light (never moves Ask Knox or Learn), just below
+   the string lights. Phones and short windows keep it in the flow. */
+@media (min-width: 769px) and (min-height: 720px) {
+  html.knox-christmas #welcomeScreen > .fall-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); margin: 0; width: max-content; max-width: calc(100% - 32px); z-index: 3; }
+}
 
 /* Knox's logo in the sidebar and the landing header wears a Santa hat. */
 html.knox-christmas .sidebar-logo-link, html.knox-christmas .header-logo { position: relative; }
@@ -139,3 +140,20 @@ html.knox-christmas .kl-final .xmas-hat { width: 58px; height: 48px; top: -26px;
 html.knox-christmas .kl-final .xmas-deco .xmas-ground { height: 170px; }
 @media (max-width: 900px) { html.knox-christmas .kl-final { padding-bottom: 130px; } }
 html.knox-christmas .kl-final > :not(.xmas-deco):not(.xmas-edge) { position: relative; z-index: 1; }
+
+/* String lights take turns dimming, like real ones (three groups). */
+.xmas-lights .xb { animation: xmasBlink 3.6s ease-in-out infinite; }
+.xmas-lights .xb1 { animation-delay: -1.2s; }
+.xmas-lights .xb2 { animation-delay: -2.4s; }
+@keyframes xmasBlink { 0%, 55%, 100% { opacity: 1; } 70%, 85% { opacity: .38; } }
+@media (prefers-reduced-motion: reduce) { .xmas-lights .xb { animation: none; } }
+
+/* Snow in every landing section: falls the section's full height (--fall,
+   set by theme.js) and only moves while the section is on screen. */
+.xmas-snow-sec { display: none; }
+html.knox-christmas .xmas-snow-sec { display: block; position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+html.knox-christmas section.kl-section > .kl-wrap { position: relative; z-index: 1; }
+.xmas-snow-sec .xmas-flake { animation-name: xmasFallSec; animation-duration: calc(var(--d) * var(--dm, 1)); animation-play-state: paused; }
+.xmas-snow-sec.xmas-run .xmas-flake { animation-play-state: running; }
+@keyframes xmasFallSec { from { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--drift), calc(var(--fall, 800px) * .5)) rotate(160deg); } to { transform: translate(calc(var(--drift) * -.4), calc(var(--fall, 800px) + 40px)) rotate(320deg); } }
+@media (prefers-reduced-motion: reduce) { .xmas-snow-sec .xmas-flake { animation: none; top: var(--rest); } }

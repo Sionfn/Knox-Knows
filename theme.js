@@ -283,7 +283,7 @@
       for (let j = 1; j <= per; j++) {
         const t = j / (per + 1), x = x0 + L * t, y = top + 4 * sag * t * (1 - t), slope = Math.atan2(4 * sag * (1 - 2 * t), L) * 180 / Math.PI, [c, d] = BULB_COLORS[k++ % 4];
         const sc = bulbH / 30;
-        bulbs += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(slope * .6).toFixed(1)}) scale(${sc.toFixed(2)})"><rect x="-4.5" y="-1" width="9" height="8" rx="2" fill="#4E6B57"/><path d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+        bulbs += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(slope * .6).toFixed(1)}) scale(${sc.toFixed(2)})"><rect x="-4.5" y="-1" width="9" height="8" rx="2" fill="#4E6B57"/><path class="xb xb${k % 3}" d="M0 6c-8 4-9 17 0 24 9-7 8-20 0-24Z" fill="${c}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
       }
     }
     const h = top + sag * 2 + bulbH + 4;
@@ -307,7 +307,7 @@
     drawLights(el);
   }
   // Snowy hills along the bottom (stretch to any width) …
-  const XMAS_HILLS = '<svg class="xmas-hills" viewBox="0 0 1200 140" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M0 70C160 20 300 30 450 62S760 110 900 70 1120 30 1200 50V140H0Z" fill="#E4EFF7"/><path d="M0 100C200 60 360 70 520 96S820 130 980 98 1140 76 1200 84V140H0Z" fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3"/></svg>';
+  const XMAS_HILLS = '<svg class="xmas-hills" viewBox="0 0 1200 170" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="xh-back" d="M0 62C160 14 300 24 450 56S760 104 900 64 1120 24 1200 44V170H0Z" fill="#E4EFF7"/><path class="xh-mid" d="M0 92C200 52 360 62 520 88S820 122 980 90 1140 68 1200 76V170H0Z" fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3"/><path class="xh-front" d="M0 132C150 112 320 118 480 130S800 146 960 132 1130 118 1200 124V170H0Z" fill="#FFFFFF" stroke="#DCE9F3" stroke-width="2.5"/></svg>';
   // … with little pines, a snowman and Knox-colored presents standing on them.
   const PINE = (x, s, c = '#1FA45A', d = '#157A41') => `<g transform="translate(${x} 0) scale(${s})"><rect x="-6" y="78" width="12" height="14" rx="3" fill="#A5673A"/><path d="M0 0 26 36H-26Z M0 22 32 62H-32Z M0 44 38 84H-38Z" fill="${c}" stroke="${d}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-12 18 0 12 12 18M-16 42 0 35 16 42M-20 66 0 58 20 66" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></g>`;
   const XMAS_PINES = `<svg class="xmas-pines" viewBox="-40 -6 230 100" aria-hidden="true" focusable="false">${PINE(0, 1)}${PINE(78, .78, '#28B565', '#157A41')}${PINE(140, .6)}</svg>`;
@@ -320,6 +320,11 @@
   const CANE = (x, r) => `<g transform="translate(${x} 8) rotate(${r} 2 50)"><path d="${CANE_PATH}" fill="none" stroke="#CDB9B5" stroke-width="14" stroke-linecap="round"/><path d="${CANE_PATH}" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/><path d="${CANE_PATH}" fill="none" stroke="#E5383B" stroke-width="10" stroke-dasharray="5 6"/></g>`;
   const XMAS_CANES = `<svg class="xmas-canes" viewBox="-22 0 96 110" aria-hidden="true" focusable="false">${CANE(10, -8)}${CANE(42, 10)}</svg>`;
   const XMAS_STOCKING = '<svg class="xmas-stocking" viewBox="0 -40 70 150" aria-hidden="true" focusable="false"><path d="M35 -40v54" stroke="#C9B8B2" stroke-width="2"/><path d="M18 30h34v40c0 18-10 30-28 30H12c-8 0-10-12 0-16l6-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="3" stroke-linejoin="round"/><rect x="14" y="14" width="42" height="18" rx="6" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2.5"/><path d="M22 52h26M22 64h26" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/><circle cx="38" cy="46" r="0"/></svg>';
+  // Section snow falls the section's full height at the same speed everywhere,
+  // and only moves while the section is on screen.
+  function sizeSectionSnow(layer) { const h = layer.clientHeight; if (!h) return; layer.style.setProperty('--fall', h + 'px'); layer.style.setProperty('--dm', Math.max(1, h / 800).toFixed(2)); }
+  const sectionSnowRO = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => sizeSectionSnow(e.target))) : null;
+  const sectionSnowIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => e.target.classList.toggle('xmas-run', e.isIntersecting))) : null;
   function christmasDecorate() {
     const host = document.getElementById('welcomeScreen') || document.getElementById('home');
     if (host && !host.querySelector(':scope > .xmas-deco')) {
@@ -335,6 +340,13 @@
       const img = fin.querySelector('.kl-wrap > img');
       if (img && !img.parentElement.classList.contains('xmas-hat-wrap')) { const w = document.createElement('span'); w.className = 'xmas-hat-wrap'; img.before(w); w.append(img); w.insertAdjacentHTML('afterbegin', SANTA_HAT); }
     }
+    // Landing sections: snow falls in every one, so there's snow wherever you scroll.
+    document.querySelectorAll('section.kl-section:not(#home):not(.kl-final)').forEach(sec => {
+      if (sec.querySelector(':scope > .xmas-snow-sec')) return;
+      sec.insertAdjacentHTML('afterbegin', `<div class="xmas-snow-sec" aria-hidden="true">${snow(FEW_LEAVES ? 12 : 26)}</div>`);
+      const layer = sec.firstElementChild;
+      sectionSnowRO?.observe(layer); sectionSnowIO?.observe(layer); sizeSectionSnow(layer);
+    });
     // Landing sections: a snowy edge along the top of each one.
     document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
     // Shorter lights under the sidebar logo and the landing header.
