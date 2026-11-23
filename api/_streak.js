@@ -22,6 +22,10 @@ export function studyDay(clientDay) {
 // claimed in api/flame-fest.js (which imports these dates).
 export const FLAME_FEST_START = '2026-11-01', FLAME_FEST_END = '2026-11-30';
 const inFlameFest = day => day >= FLAME_FEST_START && day <= FLAME_FEST_END;
+// Advent Calendar (December 2026): every study day Dec 1–25 unlocks that day's
+// door (users/{uid}.advent.days); doors are opened in api/flame-fest.js.
+export const ADVENT_START = '2026-12-01', ADVENT_END = '2026-12-25';
+const inAdvent = day => day >= ADVENT_START && day <= ADVENT_END;
 const addDays = (day, n) => new Date(Date.parse(day) + n * 86400000).toISOString().slice(0, 10);
 export async function advanceStudyStreak(db, uid, clientDay) {
   const ref = db.collection('users').doc(uid);
@@ -55,6 +59,13 @@ export async function advanceStudyStreak(db, uid, clientDay) {
       const shieldDays = new Set(Array.isArray(fest.shielded) ? fest.shielded : []);
       savedDays.filter(inFlameFest).forEach(d => shieldDays.add(d));
       update.flameFest = { ...fest, days: [...days].sort(), shielded: [...shieldDays].sort() };
+    }
+    if (inAdvent(today) || savedDays.some(inAdvent)) {
+      const adv = data.advent && typeof data.advent === 'object' ? data.advent : {};
+      const days = new Set(Array.isArray(adv.days) ? adv.days : []);
+      if (inAdvent(today)) days.add(today);
+      savedDays.filter(inAdvent).forEach(d => days.add(d)); // a Flame Shield keeps that day's door too
+      update.advent = { ...adv, days: [...days].sort() };
     }
     tx.set(ref, update, { merge: true });
   });

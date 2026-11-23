@@ -193,3 +193,6 @@ html.knox-seasonal .fall-tip { display: none; }
 .fall-tip .ft-x { width: 26px; height: 26px; flex-shrink: 0; border: none; border-radius: 50%; background: transparent; color: var(--text-light); font-size: 17px; font-weight: 900; line-height: 1; cursor: pointer; }
 .fall-tip .ft-x:hover { background: var(--gray); color: var(--text); }
 @media (max-width: 520px) { .fall-tip { border-radius: 18px; flex-wrap: wrap; padding: 8px 8px 8px 12px; row-gap: 8px; } .fall-tip .ft-text { flex: 1 1 160px; } }
+/* Appearance button: the same Knox icon as the menu (theme.js) */
+.theme-btn-icon { display: inline-flex; align-items: center; justify-content: center; line-height: 0; }
+.theme-btn-icon .kk-ic { width: 18px; height: 18px; }

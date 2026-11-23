@@ -30,7 +30,7 @@ import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { newGiftCode } from "./_gifts.js";
 import { MEGA_PLAN } from "./_plans.js";
-import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END } from "./_streak.js";
+import { advanceStudyStreak, FLAME_FEST_START, FLAME_FEST_END, ADVENT_START, ADVENT_END } from "./_streak.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -73,7 +73,7 @@ const REWARDS = [
     // Mega Knox members already have Mega: a week to gift a friend instead.
     mega: { gives: { gift: 7, style: "gold" }, label: "🎁 A Mega Knox week to gift a friend + 🟡 Golden Flame" }, },
 ];
-const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy"];
+const STYLES = ["classic", "purple", "blue", "gold", "slime", "diamond", "galaxy", "frost", "ruby"]; // ❄️ Frost and ❤️ Ruby come from the Advent Calendar
 // 🌌 Galaxy Flame: for students who subscribe on the website (Stripe). Theirs to keep
 // once a website payment went through (an active subscription or a renewal).
 const GALAXY_GIFTED = ["sion22comp@gmail.com"];
@@ -132,6 +132,46 @@ function status(data, tester = false) {
   };
 }
 
+// ── Advent Calendar (December 2026) ─────────────────────────────────────────
+// 25 doors, Dec 1–25. Studying on a day (or a Flame Shield covering it)
+// unlocks that day's door; opening it gives its surprise. Doors stay
+// openable until Dec 31. Free members mostly get bonus questions; Plus and
+// Mega (already unlimited) get Flame Shields and looks on the big doors.
+// GET ?event=advent → { event, tier, doors: [{ n, day, studied, opened, label }], shields, flameStyle, flameStyles, giftCode }
+// POST { advent: 'open', door: n } → same, plus { opened: n }
+const ADVENT = { name: "Advent Calendar", start: ADVENT_START, end: ADVENT_END, openUntil: "2026-12-31" };
+const adventDay = n => `2026-12-${String(n).padStart(2, "0")}`;
+const BIG = {
+  6:  { free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" }, plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" }, mega: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" } },
+  7:  { all: { gives: { style: "frost" }, label: "❄️ Frost Flame" } },
+  13: { free: { gives: { bonus: 10, shields: 1 }, label: "+10 bonus questions + 🛡️ Flame Shield" }, plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" }, mega: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" } },
+  17: { all: { gives: { style: "ruby" }, label: "❤️ Ruby Flame" } },
+  20: { free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" }, plus: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" }, mega: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" } },
+  24: { free: { gives: { bonus: 15, shields: 1 }, label: "+15 bonus questions + 🛡️ Flame Shield" }, plus: { gives: { shields: 3 }, label: "🛡️🛡️🛡️ 3 Flame Shields" }, mega: { gives: { shields: 3 }, label: "🛡️🛡️🛡️ 3 Flame Shields" } },
+  25: { free: { gives: { megaDays: 5 }, label: "🎁 5 days of Mega Knox" }, plus: { gives: { megaDays: 7 }, label: "🎁 7 days of Mega Knox" },
+        mega: { gives: { gift: 7 }, label: "🎁 A Mega Knox week to gift a friend" } },
+};
+// The small doors: Free gets bonus questions; Plus and Mega get a treat
+// (a winter fact or study tip, shown by the app) — they're already unlimited.
+const adventPrize = (n, tier) => {
+  const b = BIG[n];
+  if (b) return b.all || (tier === "mega" && b.mega) || (tier === "free" ? b.free : b.plus);
+  return tier === "free" ? { gives: { bonus: 5 }, label: "+5 bonus questions" } : { gives: {}, label: "🍪 A treat from Knox" };
+};
+function adventStatus(data, tester = false) {
+  const adv = data.advent && typeof data.advent === "object" ? data.advent : {};
+  const days = new Set(Array.isArray(adv.days) ? adv.days : []);
+  const opened = adv.opened && typeof adv.opened === "object" ? adv.opened : {};
+  const tier = prizeTier(data), base = status(data);
+  return {
+    event: ADVENT, tier,
+    doors: Array.from({ length: 25 }, (_, k) => { const n = k + 1, day = adventDay(n); return { n, day, studied: tester || days.has(day), opened: !!opened[n], label: adventPrize(n, tier).label }; }),
+    shields: base.shields, flameStyle: base.flameStyle, flameStyles: base.flameStyles,
+    giftCode: typeof adv.giftCode === "string" ? adv.giftCode : "", megaUntil: base.megaUntil,
+    ...(tester ? { tester: true } : {}),
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "GET" && req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -159,10 +199,51 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       const snap = await userRef.get();
+      if (req.query?.event === "advent") return res.status(200).json(adventStatus(snap.exists ? snap.data() : {}, tester));
       return send(snap.exists ? snap.data() : {});
     }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
+
+    // Advent Calendar: open a door.
+    if (body.advent === "open") {
+      const n = Number(body.door);
+      if (!Number.isInteger(n) || n < 1 || n > 25) return res.status(400).json({ error: "That door doesn't exist." });
+      const day = adventDay(n), now = utcDay();
+      if (!tester && now > ADVENT.openUntil) return res.status(410).json({ error: "The Advent Calendar closed on December 31." });
+      // The day's own date (a day of slack for time zones).
+      if (!tester && day > addDays(now, 1)) return res.status(403).json({ error: `Door ${n} opens on December ${n}.` });
+      const bankRef = userRef.collection("usage").doc("bank");
+      const giftCode = n === 25 ? newGiftCode().slice(0, 8) : "";
+      const giftRef = giftCode ? db.collection("giftCodes").doc(giftCode) : null;
+      const out = await db.runTransaction(async tx => {
+        const [snap, bank, taken] = await Promise.all([tx.get(userRef), tx.get(bankRef), giftRef ? tx.get(giftRef) : null]);
+        const data = snap.exists ? snap.data() : {};
+        const st = adventStatus(data, tester), door = st.doors[n - 1];
+        if (door.opened) return { error: "You already opened this door.", code: 409 };
+        if (!door.studied) return { error: `Study on December ${n} to open this door.`, code: 403 };
+        const g = { ...adventPrize(n, st.tier).gives };
+        const adv = data.advent && typeof data.advent === "object" ? data.advent : {};
+        const update = { advent: { ...adv, opened: { ...(adv.opened || {}), [n]: new Date().toISOString() } } };
+        if (g.gift && taken?.exists) return { error: "The Advent Calendar is busy right now. Please try again.", code: 503 };
+        if (g.gift) {
+          tx.set(giftRef, { source: "advent", tier: "mega", from: uid, days: g.gift, createdAt: new Date().toISOString(), redeemedBy: null });
+          update.advent.giftCode = giftCode;
+        }
+        if (g.shields) update.flameShields = st.shields + g.shields;
+        if (g.style) { update.flameStyles = [...new Set([...st.flameStyles.filter(s => s !== "classic"), g.style])]; update.flameStyle = g.style; }
+        if (g.megaDays) update.megaUntil = Math.max(Date.now(), st.megaUntil) + g.megaDays * DAY_MS;
+        if (g.bonus) {
+          const b = bank.exists ? bank.data() : {};
+          const balance = typeof b.balance === "number" ? b.balance : FREE_STARTING_BALANCE;
+          tx.set(bankRef, { balance: balance + g.bonus, lastRegenAt: b.lastRegenAt || Date.now(), updatedAt: new Date().toISOString() }, { merge: true });
+        }
+        tx.set(userRef, update, { merge: true });
+        return { data: { ...data, ...update } };
+      });
+      if (out.error) return res.status(out.code).json({ error: out.error });
+      return res.status(200).json({ ...adventStatus(out.data, tester), opened: n });
+    }
 
     // A Flashcards review session lights today's flame (and keeps the streak),
     // the same as asking Knox a question.
@@ -208,7 +289,7 @@ export default async function handler(req, res) {
       const out = await db.runTransaction(async tx => {
         const snap = await tx.get(userRef);
         const data = snap.exists ? snap.data() : {};
-        if (!status(data).flameStyles.includes(body.style)) return { error: "Unlock that flame in Flame Fest first." };
+        if (!status(data).flameStyles.includes(body.style)) return { error: "Unlock that flame first (Flame Fest or the Advent Calendar)." };
         tx.set(userRef, { flameStyle: body.style }, { merge: true });
         return { data: { ...data, flameStyle: body.style } };
       });

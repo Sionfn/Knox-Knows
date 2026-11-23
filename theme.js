@@ -56,7 +56,15 @@
     if (btn && !document.getElementById('darkModeIconLeaf')) btn.querySelector('svg:last-of-type')?.insertAdjacentHTML('afterend', LEAF_ICON);
     if (btn && !document.getElementById('darkModeIconTree')) btn.querySelector('svg:last-of-type')?.insertAdjacentHTML('afterend', TREE_ICON);
     const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal', darkModeIconTree: mode === 'christmas' };
-    for (const [id, on] of Object.entries(show)) { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
+    // The button shows the same Knox icon as the Appearance menu (knox-icons.js):
+    // the yellow sun, the purple moon, the Christmas gift, the fall leaf.
+    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'gift' }[mode]);
+    let slot = document.getElementById('darkModeIconKnox');
+    if (btn && ki) {
+      if (!slot) { slot = document.createElement('span'); slot.id = 'darkModeIconKnox'; slot.className = 'theme-btn-icon'; slot.setAttribute('aria-hidden', 'true'); btn.prepend(slot); }
+      slot.innerHTML = ki;
+    }
+    for (const [id, on] of Object.entries(show)) { const el = document.getElementById(id); if (el) el.style.display = on && !(btn && ki) ? '' : 'none'; }
     if (btn) {
       const name = MODES.find(m => m.id === mode).name;
       btn.title = `Appearance: ${name}`;
