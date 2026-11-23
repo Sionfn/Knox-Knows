@@ -479,6 +479,8 @@ const GUEST_HARD_LIMIT = 3;   // max requests per IP per hour for guests — in-
 const IP_WINDOW_MS     = 60 * 60 * 1000; // 1 hour
 
 const ipStore = new Map();
+// Set once the model says it doesn't take reasoning_effort (quicker Learn replies).
+let learnEffortUnsupported = false;
 
 function getIp(req) {
   return (
@@ -1318,6 +1320,13 @@ export default async function handler(req, res) {
     if (isNewerModel) {
       requestBody.max_completion_tokens = tokenLimit;
       // temperature intentionally omitted for reasoning models
+      // Faster Learn (Dec 1): once a lesson is going and the student is replying
+      // in text, Knox thinks less before answering (replies took 10–15s each).
+      // The first turn plans the lesson, and photos/files need reading, so
+      // those keep full thinking. If the model doesn't take this setting, the
+      // request is sent again without it (see sendToModel).
+      if (learnMode && !casual && !image && !doc && !reviewSkillId && !learnEffortUnsupported &&
+          history.some(m => m.role === 'assistant')) requestBody.reasoning_effort = 'low';
     } else {
       requestBody.max_tokens  = tokenLimit;
       requestBody.temperature = casual ? 1.0 : 0.7;
@@ -1340,7 +1349,7 @@ export default async function handler(req, res) {
       data = { usage: searched.usage };
       answer = searched.text;
     } else {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const sendToModel = () => fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -1350,10 +1359,19 @@ export default async function handler(req, res) {
         // inside the 60-second function limit.
         signal: AbortSignal.timeout(casual ? 15000 : Math.max(5000, Math.min(50000, 57000 - (Date.now() - startedAt)))),
       });
+      let response = await sendToModel();
+      let err = response.ok ? '' : await response.text();
+      // The model turned down the quicker-Learn setting: remember that and ask normally.
+      if (!response.ok && requestBody.reasoning_effort && response.status === 400 && /reasoning/i.test(err)) {
+        learnEffortUnsupported = true;
+        delete requestBody.reasoning_effort;
+        console.error("Learn reasoning_effort not supported by " + modelToUse + "; sending without it.");
+        response = await sendToModel();
+        err = response.ok ? '' : await response.text();
+      }
 
       if (!response.ok) {
         await refundFailedAnswer();
-        const err = await response.text();
         console.error("OpenAI error [" + modelToUse + "]:", err);
         return res.status(500).json({ error: "Knox couldn't reach the AI. Please try again." });
       }
