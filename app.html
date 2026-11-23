@@ -353,6 +353,9 @@
     #headerUsage.danger .usage-dot .kk-ic { filter: grayscale(1); opacity: .55; } /* almost out */
 
     /* ── Study streak pill ─────────────────────────────────── */
+    /* Advent Calendar gift button beside the 🔥 (December; advent.js shows it). */
+    #adventPill:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border-radius: 999px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); cursor: pointer; flex-shrink: 0; }
+    #adventPill .kk-ic { width: 18px; height: 18px; }
     #streakPill {
       display: none;
       align-items: center;
@@ -1089,6 +1092,12 @@
       }
       #sidebarControlsSlot #headerUsage { flex: 1 1 0; min-width: 0; white-space: nowrap; }
       #sidebarControlsSlot #streakPill { flex: 0 0 auto; }
+      /* The Advent Calendar button beside the 🔥 (December): a red gift tile. */
+      #sidebarControlsSlot #adventPill:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; border-radius: 9px; border: 1.5px solid #E5383B; background: #FFE1E2; box-shadow: 0 2px 0 #B3202A; cursor: pointer; order: 2; }
+      #sidebarControlsSlot #adventPill:active { transform: translateY(1px); box-shadow: 0 1px 0 #B3202A; }
+      #sidebarControlsSlot #adventPill .kk-ic { width: 20px; height: 20px; }
+      html[data-theme="dark"] #sidebarControlsSlot #adventPill:not([hidden]) { background: rgba(229,56,59,.18); }
+      body.app-sidebar-collapsed:not(.app-guest) #sidebarControlsSlot #adventPill:not([hidden]) { order: -1; width: 46px; flex: 0 0 auto; height: 30px; }
       #sidebarControlsSlot #darkModeToggle { width: 36px; flex: 0 0 36px; }
       /* Member status row mirrors the guest one: the plan/credit pill fills the
          left, the compact streak sits to its right (🔥 on the right). */
@@ -2995,6 +3004,8 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
         <span id="streakCount">0</span>
         <span class="sidebar-control-label">day streak</span>
       </button>
+      <!-- December: the Advent Calendar sits right next to the 🔥 (advent.js shows it). -->
+      <button id="adventPill" type="button" onclick="window.knoxAdvent?.open()" title="Advent Calendar" aria-label="Open the Advent Calendar" hidden><span class="adv-pill-ic" aria-hidden="true">🎁</span><span class="sidebar-control-label">Advent Calendar</span></button>
       <button id="headerUsage" onclick="openUsageInfo()" title="Tap to see how questions work">
         <span class="usage-dot" aria-hidden="true">🪙</span>
         <span id="headerUsageText">10 questions left</span>

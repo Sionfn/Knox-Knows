@@ -362,12 +362,12 @@ html[data-theme="dark"]:not(.knox-seasonal) .ff-rarity { color:var(--r); }
 .galaxy-flame .galaxy-body > path { animation:none!important; }
 
 /* "Your flame" (after Flame Fest): the Advent Calendar button (December). */
-.ff-advent { display: flex; align-items: center; gap: 12px; width: 100%; margin: 4px 0 16px; padding: 12px 14px; border-radius: 18px; border: 2px solid #B3202A; background: #E5383B; color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 0 #B3202A; }
+.ff-advent { display: flex; align-items: center; gap: 10px; width: 100%; margin: 14px 0 4px; padding: 8px 12px; border-radius: 14px; border: 2px solid #E5383B; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: 0 3px 0 #B3202A; }
 .ff-advent:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #B3202A; }
 .ff-advent:active { transform: translateY(2px); box-shadow: 0 1px 0 #B3202A; }
-.ff-advent-ic { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: grid; place-items: center; background: #1FA45A; box-shadow: 0 2px 0 #157A41; font-size: 22px; }
-.ff-advent-ic .kk-ic { width: 24px; height: 24px; }
+.ff-advent-ic { width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px; display: grid; place-items: center; background: #FFE1E2; border: 1.5px solid #E5383B; font-size: 18px; }
+.ff-advent-ic .kk-ic { width: 20px; height: 20px; }
 .ff-advent-copy { flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.ff-advent-copy b { font-size: 16px; font-weight: 900; }
+.ff-advent-copy b { font-size: 14px; font-weight: 900; }
 .ff-advent-copy small { font-size: 12.5px; font-weight: 700; opacity: .92; }
-.ff-advent-go { font-size: 20px; font-weight: 900; }
+.ff-advent-go { font-size: 18px; font-weight: 900; color: #E5383B; }
