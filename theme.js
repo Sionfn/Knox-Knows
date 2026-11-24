@@ -12,11 +12,11 @@
 (function () {
   const root = document.documentElement;
   const MODES = [
-    { id: 'light',    icon: '☀️', name: 'Light', note: 'Knox’s classic look' },
-    { id: 'dark',     icon: '🌙', name: 'Dark',  note: 'Easy on the eyes at night' },
-    { id: 'seasonal', icon: '🍁', name: 'Fall harvest', note: 'Warm colors, autumn leaves & Thanksgiving' },
-    { id: 'christmas', icon: '🎄', name: 'Christmas', note: 'Knox red & green, a tree and a little snow' },
-    { id: 'christmas-night', icon: '⭐', name: 'Christmas night', note: 'Snow under the stars, glowing lights' },
+    { id: 'light',    ki: 'sun', icon: '☀️', name: 'Light', note: 'Knox’s classic look' },
+    { id: 'dark',     ki: 'moon', icon: '🌙', name: 'Dark',  note: 'Easy on the eyes at night' },
+    { id: 'seasonal', ki: 'leaf', icon: '🍁', name: 'Fall harvest', note: 'Warm colors, autumn leaves & Thanksgiving' },
+    { id: 'christmas', ki: 'snowDay', icon: '❄️', name: 'Christmas', note: 'Knox red & green, a tree and a little snow' },
+    { id: 'christmas-night', ki: 'snowNight', icon: '🌙', name: 'Christmas night', note: 'Snow under the stars, glowing lights' },
   ];
   const current = () => root.classList.contains('knox-christmas') ? (root.getAttribute('data-theme') === 'dark' ? 'christmas-night' : 'christmas') : root.classList.contains('knox-seasonal') ? 'seasonal' : root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   window.knoxTheme = current;
@@ -61,7 +61,7 @@
     const show = { darkModeIconSun: mode === 'light', darkModeIconMoon: mode === 'dark', darkModeIconLeaf: mode === 'seasonal', darkModeIconTree: mode === 'christmas' };
     // The button shows the same Knox icon as the Appearance menu (knox-icons.js):
     // the yellow sun, the purple moon, the Christmas gift, the fall leaf.
-    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'tree', 'christmas-night': 'star' }[mode]);
+    const ki = window.KI && window.KI({ light: 'sun', dark: 'moon', seasonal: 'leaf', christmas: 'snowDay', 'christmas-night': 'snowNight' }[mode]);
     let slot = document.getElementById('darkModeIconKnox');
     if (btn && ki) {
       if (!slot) { slot = document.createElement('span'); slot.id = 'darkModeIconKnox'; slot.className = 'theme-btn-icon'; slot.setAttribute('aria-hidden', 'true'); btn.prepend(slot); }
@@ -85,7 +85,7 @@
     menu.setAttribute('aria-label', 'Appearance');
     menu.hidden = true;
     menu.innerHTML = '<div class="ktm-title">Appearance</div>' + MODES.map(m =>
-      `<button type="button" role="menuitemradio" data-mode="${m.id}"><span class="ktm-icon" aria-hidden="true">${m.icon}</span><span class="ktm-text">${m.name}<small>${m.note}</small></span><span class="ktm-check" aria-hidden="true">✓</span></button>`).join('');
+      `<button type="button" role="menuitemradio" data-mode="${m.id}"><span class="ktm-icon" aria-hidden="true">${window.KI ? window.KI(m.ki) : m.icon}</span><span class="ktm-text">${m.name}<small>${m.note}</small></span><span class="ktm-check" aria-hidden="true">✓</span></button>`).join('');
     menu.addEventListener('click', e => {
       const b = e.target.closest('[data-mode]');
       if (!b) return;

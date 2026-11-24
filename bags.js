@@ -86,7 +86,7 @@
     return j;
   }
   // The collection ladder (the server's BAG_REWARDS; the demo shows the free labels).
-  const DEMO_REWARDS = [['first', 'Your first figure', 1, null, '+5 bonus credits'], ['three', 'Collect 3', 3, null, '+10 bonus credits'], ['commons', 'All 6 Commons', 0, 'common', '+20 bonus credits'], ['six', 'Collect 6', 6, null, '+15 bonus credits'], ['rares', 'All 3 Rares', 0, 'rare', '+25 bonus credits'], ['nine', 'Collect 9', 9, null, '+20 bonus credits'], ['epics', 'Both Epics', 0, 'epic', '+30 bonus credits'], ['eleven', 'Every figure but the secret', 11, null, '+50 bonus credits']];
+  const DEMO_REWARDS = [['first', '1/12', 1, null, '+5 bonus credits'], ['three', '3/12', 3, null, '+10 bonus credits'], ['six', '6/12', 6, null, '+20 bonus credits'], ['nine', '9/12', 9, null, '+30 bonus credits'], ['eleven', '11/12', 11, null, '+50 bonus credits']];
   function demoRewards() {
     const owned = SERIES.filter(c => state.got[c.id]).length;
     state.rewards = DEMO_REWARDS.map(([id, title, n, set, label]) => {
@@ -109,7 +109,7 @@
     const from = missing.length ? missing : pool;
     return from[Math.floor(Math.random() * from.length)];
   }
-  const oddsHtml = () => `<div class="kb-odds" aria-label="Odds per bag"><b>Odds per bag</b>${['common', 'rare', 'epic', 'secret'].map(k => `<span class="kb-odd r-${k}">${RARITY[k]} <em>${k === 'secret' ? '1 in 100' : ODDS[k] + '%'}</em></span>`).join('')}<small>Within each rarity, you always get one you’re missing before a duplicate.</small></div>`;
+  const oddsHtml = () => `<div class="kb-odds" aria-label="Odds per bag"><b>Odds per bag</b>${['common', 'rare', 'epic', 'secret'].map(k => `<span class="kb-odd r-${k}">${RARITY[k]} <em>${ODDS[k]}%</em></span>`).join('')}<small>Within each rarity, you always get one you’re missing before a duplicate.</small></div>`;
 
   // ── The screen ──────────────────────────────────────────────────────────
   let wrap = null, lastFocus = null, bagPicUrl = '', afterStage = null;
@@ -130,12 +130,12 @@
           <button type="button" class="kb-btn" data-open${state.unopened ? '' : ' disabled'}>🛍️ Open a bag</button>
         </div>
       </div>
-      <div class="kb-meta"><span><b>${owned}</b> of 12 collected</span>${state.dupes >= 3 ? '<button type="button" class="kb-trade" data-trade>Trade 3 duplicates for a bag</button>' : `<span>${state.dupes} duplicate${state.dupes === 1 ? '' : 's'} · 3 trade in for a bag</span>`}</div>
+      <div class="kb-meta"><span><b>${owned}</b> of 12 collected</span>${state.dupes >= 3 ? '<button type="button" class="kb-trade" data-trade>Trade 3 duplicates for a bag</button>' : ''}</div>
       ${reward(owned)}
       ${ladder()}
       ${oddsHtml()}
       <div class="kb-grid">${SERIES.map(slot).join('')}</div>
-      <p class="kb-note">Collect all 12 for 30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame. Bags are always earned, never sold.${state.demo ? ' <b>Demo:</b> nothing is saved.' : ''}</p>`);
+      <p class="kb-note">Collect all 12 for 30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame. 3 duplicates trade in for a new bag. Bags are always earned, never sold.${state.demo ? ' <b>Demo:</b> nothing is saved.' : ''}</p>`);
   }
   const head = () => `<button type="button" class="kb-x" data-close aria-label="Close">✕</button><div class="kb-head"><span class="kb-badge">🛍️ Blind bags · Series 1</span><h2 id="kbTitle">Knox’s <span>Christmas</span></h2><p>12 figures to collect, including a secret one.</p></div>`;
   function slot(c) {
@@ -147,12 +147,9 @@
   // figures and for each full rarity, each claimed with a tap.
   function ladder() {
     if (!state.rewards?.length) return '';
-    const left = state.rewards.filter(r => r.ready && !r.claimed).length;
-    return `<div class="kb-ladder"><div class="kb-ladder-head"><b>🎁 Collection rewards</b>${left ? `<span class="kb-ready-n">${left} to claim!</span>` : ''}</div><ol>${state.rewards.map(r => `<li class="kb-rw${r.claimed ? ' is-claimed' : r.ready ? ' is-ready' : ''}">
-        <span class="kb-rw-step">${r.claimed ? '✓' : `${r.have}/${r.need}`}</span>
-        <span class="kb-rw-copy"><b>${esc(r.title)}</b><small>${esc(r.label)}</small></span>
-        ${r.claimed ? '<span class="kb-rw-done">Claimed</span>' : r.ready ? `<button type="button" class="kb-btn kb-rw-btn" data-reward="${r.id}">Claim</button>` : `<span class="kb-rw-bar"><i style="width:${r.have / r.need * 100}%"></i></span>`}
-      </li>`).join('')}<li class="kb-rw kb-rw-big${state.claimed ? ' is-claimed' : state.complete ? ' is-ready' : ''}"><span class="kb-rw-step">${state.claimed ? '✓' : `${SERIES.filter(c => state.got[c.id]).length}/12`}</span><span class="kb-rw-copy"><b>All 12, Golden Knox too</b><small>30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame</small></span>${state.claimed ? '<span class="kb-rw-done">Claimed</span>' : state.complete ? '<button type="button" class="kb-btn kb-rw-btn" data-claim>Claim</button>' : ''}</li></ol></div>`;
+    const owned = SERIES.filter(c => state.got[c.id]).length;
+    const chip = (title, label, claimed, ready, attr) => `<li class="kb-rw${claimed ? ' is-claimed' : ready ? ' is-ready' : ''}"><b>${title}</b><small>${label}</small>${claimed ? '<span class="kb-rw-done">✓</span>' : ready ? `<button type="button" class="kb-rw-btn" ${attr}>Claim</button>` : ''}</li>`;
+    return `<div class="kb-ladder"><b class="kb-ladder-head">🎁 Rewards</b><ol>${state.rewards.map(r => chip(esc(r.title), esc(r.label.replace(/ bonus credits$/, ' credits')), r.claimed, r.ready, `data-reward="${r.id}"`)).join('')}${chip('12/12', '30 days Mega + Golden Flame', state.claimed, state.complete, 'data-claim')}</ol></div>`;
   }
   async function claimReward(id) {
     if (busy) return; busy = true;

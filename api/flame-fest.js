@@ -193,18 +193,15 @@ const BAG_SERIES = [
 ].map(([id, name, rarity]) => ({ id, name, rarity }));
 // The odds per bag, shown on the bags screen (bags.js ODDS matches): Golden Knox is 1 in 100.
 const RARITY_ODDS = { common: 64, rare: 25, epic: 10, secret: 1 };
-// Collection rewards: a ladder of prizes as your collection grows (plus the
-// collect-all reward). Free and Plus get bonus credits (Plus more, into its
+// Collection rewards: a prize at 1, 3, 6, 9 and 11 of the 12 figures (plus the
+// collect-all reward at 12). Free and Plus get bonus credits (Plus more, into its
 // own daily bank); Mega is unlimited, so it gets Flame Shields.
 const BAG_REWARDS = [
-  ["first", 1, null, "Your first figure", 5, 10, 1],
-  ["three", 3, null, "Collect 3", 10, 20, 1],
-  ["commons", 0, "common", "All 6 Commons", 20, 40, 2],
-  ["six", 6, null, "Collect 6", 15, 30, 2],
-  ["rares", 0, "rare", "All 3 Rares", 25, 50, 2],
-  ["nine", 9, null, "Collect 9", 20, 40, 3],
-  ["epics", 0, "epic", "Both Epics", 30, 60, 3],
-  ["eleven", 11, null, "Every figure but the secret", 50, 100, 4],
+  ["first", 1, null, "1/12", 5, 10, 1],
+  ["three", 3, null, "3/12", 10, 20, 1],
+  ["six", 6, null, "6/12", 20, 40, 2],
+  ["nine", 9, null, "9/12", 30, 60, 3],
+  ["eleven", 11, null, "11/12", 50, 100, 4],
 ].map(([id, need, set, title, free, plus, shields]) => ({ id, need, set, title,
   free: { gives: { bonus: free }, label: `+${free} bonus credits` },
   plus: { gives: { bonus: plus }, label: `+${plus} bonus credits` },
