@@ -85,8 +85,17 @@
     if (!r.ok) throw new Error(j.error || 'Blind bags are busy right now. Please try again.');
     return j;
   }
+  // The collection ladder (the server's BAG_REWARDS; the demo shows the free labels).
+  const DEMO_REWARDS = [['first', 'Your first figure', 1, null, '+5 bonus credits'], ['three', 'Collect 3', 3, null, '+10 bonus credits'], ['commons', 'All 6 Commons', 0, 'common', '+20 bonus credits'], ['six', 'Collect 6', 6, null, '+15 bonus credits'], ['rares', 'All 3 Rares', 0, 'rare', '+25 bonus credits'], ['nine', 'Collect 9', 9, null, '+20 bonus credits'], ['epics', 'Both Epics', 0, 'epic', '+30 bonus credits'], ['eleven', 'Every figure but the secret', 11, null, '+50 bonus credits']];
+  function demoRewards() {
+    const owned = SERIES.filter(c => state.got[c.id]).length;
+    state.rewards = DEMO_REWARDS.map(([id, title, n, set, label]) => {
+      const pool = set ? SERIES.filter(c => c.rarity === set) : null, need = pool ? pool.length : n, have = pool ? pool.filter(c => state.got[c.id]).length : owned;
+      return { id, title, label, have: Math.min(have, need), need, ready: have >= need, claimed: !!state.rewardsClaimed?.[id] };
+    });
+  }
   async function load() {
-    if (demo) { state = state || demoState(); return; }
+    if (demo) { state = state || demoState(); demoRewards(); return; }
     try { state = await api('GET'); error = ''; } catch (e) { error = e.message; }
   }
   // The odds per bag (the server's RARITY_ODDS): Golden Knox is 1 in 100.
@@ -103,7 +112,10 @@
   const oddsHtml = () => `<div class="kb-odds" aria-label="Odds per bag"><b>Odds per bag</b>${['common', 'rare', 'epic', 'secret'].map(k => `<span class="kb-odd r-${k}">${RARITY[k]} <em>${k === 'secret' ? '1 in 100' : ODDS[k] + '%'}</em></span>`).join('')}<small>Within each rarity, you always get one you’re missing before a duplicate.</small></div>`;
 
   // ── The screen ──────────────────────────────────────────────────────────
-  let wrap = null, lastFocus = null;
+  let wrap = null, lastFocus = null, bagPicUrl = '', afterStage = null;
+  // The pack picture (the same Christmas print as the 3D bag, bags3d.js).
+  const bagArt = () => bagPicUrl ? `<img class="kb-bag-img" src="${bagPicUrl}" alt="" draggable="false">` : BAG;
+  const loadBagPic = () => window.knoxBagStage?.bagImage?.().then(u => { if (u && u !== bagPicUrl) { bagPicUrl = u; render(); afterStage?.pic?.(u); } });
   function render() {
     if (!wrap) return;
     const card = wrap.querySelector('.kb-card');
@@ -111,7 +123,7 @@
     const owned = SERIES.filter(c => state.got[c.id]).length;
     card.innerHTML = ki(head() +
       `<div class="kb-stage">
-        <div class="kb-bag${state.unopened ? '' : ' is-empty'}">${BAG}${state.unlimited ? '<span class="kb-count">∞</span>' : state.unopened > 1 ? `<span class="kb-count">×${state.unopened}</span>` : ''}</div>
+        <div class="kb-bag${state.unopened ? '' : ' is-empty'}">${bagArt()}${state.unlimited ? '<span class="kb-count">∞</span>' : state.unopened > 1 ? `<span class="kb-count">×${state.unopened}</span>` : ''}</div>
         <div class="kb-stage-copy">
           <b>${state.unlimited ? 'Unlimited test bags!' : state.unopened ? `You have ${state.unopened} bag${state.unopened === 1 ? '' : 's'}!` : 'No bags right now'}</b>
           <span>${state.unopened ? 'Tear one open to find out who’s inside.' : `Earn them behind Advent Calendar doors and for every 10 questions you ask (${state.questions || 0}/10 toward the next).`}</span>
@@ -120,6 +132,7 @@
       </div>
       <div class="kb-meta"><span><b>${owned}</b> of 12 collected</span>${state.dupes >= 3 ? '<button type="button" class="kb-trade" data-trade>Trade 3 duplicates for a bag</button>' : `<span>${state.dupes} duplicate${state.dupes === 1 ? '' : 's'} · 3 trade in for a bag</span>`}</div>
       ${reward(owned)}
+      ${ladder()}
       ${oddsHtml()}
       <div class="kb-grid">${SERIES.map(slot).join('')}</div>
       <p class="kb-note">Collect all 12 for 30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame. Bags are always earned, never sold.${state.demo ? ' <b>Demo:</b> nothing is saved.' : ''}</p>`);
@@ -130,9 +143,29 @@
     return n ? `<div class="kb-slot r-${c.rarity}" title="${esc(c.name)}"><div class="kb-slot-art">${figure(c.id)}</div><b>${esc(c.name)}</b><small>${RARITY[c.rarity]}${n > 1 ? ` · ×${n}` : ''}</small></div>`
       : `<div class="kb-slot is-missing" title="Not found yet"><div class="kb-slot-art">${c.rarity === 'secret' ? '<span class="kb-secret">?</span>' : figure(c.id)}</div><b>???</b><small>${c.rarity === 'secret' ? 'Secret' : RARITY[c.rarity]}</small></div>`;
   }
+  // Rewards for collecting (bonus credits on Free): a step at 1, 3, 6, 9 and 11
+  // figures and for each full rarity, each claimed with a tap.
+  function ladder() {
+    if (!state.rewards?.length) return '';
+    const left = state.rewards.filter(r => r.ready && !r.claimed).length;
+    return `<div class="kb-ladder"><div class="kb-ladder-head"><b>🎁 Collection rewards</b>${left ? `<span class="kb-ready-n">${left} to claim!</span>` : ''}</div><ol>${state.rewards.map(r => `<li class="kb-rw${r.claimed ? ' is-claimed' : r.ready ? ' is-ready' : ''}">
+        <span class="kb-rw-step">${r.claimed ? '✓' : `${r.have}/${r.need}`}</span>
+        <span class="kb-rw-copy"><b>${esc(r.title)}</b><small>${esc(r.label)}</small></span>
+        ${r.claimed ? '<span class="kb-rw-done">Claimed</span>' : r.ready ? `<button type="button" class="kb-btn kb-rw-btn" data-reward="${r.id}">Claim</button>` : `<span class="kb-rw-bar"><i style="width:${r.have / r.need * 100}%"></i></span>`}
+      </li>`).join('')}<li class="kb-rw kb-rw-big${state.claimed ? ' is-claimed' : state.complete ? ' is-ready' : ''}"><span class="kb-rw-step">${state.claimed ? '✓' : `${SERIES.filter(c => state.got[c.id]).length}/12`}</span><span class="kb-rw-copy"><b>All 12, Golden Knox too</b><small>30 days of Mega Knox (a Mega month to gift if you have it), the Collector badge and the Golden Flame</small></span>${state.claimed ? '<span class="kb-rw-done">Claimed</span>' : state.complete ? '<button type="button" class="kb-btn kb-rw-btn" data-claim>Claim</button>' : ''}</li></ol></div>`;
+  }
+  async function claimReward(id) {
+    if (busy) return; busy = true;
+    try {
+      if (demo) { state.rewardsClaimed = { ...(state.rewardsClaimed || {}), [id]: true }; demoRewards(); }
+      else { state = await api('POST', { bags: 'reward', reward: id }); window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
+      render(); window.knoxSound?.play('reward');
+      const r = state.rewards.find(x => x.id === id); toast(`🎁 ${r ? r.label : 'Reward'} — it’s yours!`);
+    } catch (e) { toast(e.message); }
+    busy = false;
+  }
   function reward(owned) {
     if (state.claimed) return `<div class="kb-reward done">🏆 <span>Collection complete! ${state.giftCode ? `Your Mega month to gift: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a>` : '30 days of Mega Knox, the Collector badge and the Golden Flame are yours.'}</span></div>`;
-    if (state.complete) return `<div class="kb-reward">🏆 <span><b>You collected all 12!</b> Claim your collector reward.</span><button type="button" class="kb-btn" data-claim>Claim</button></div>`;
     return `<div class="kb-progress" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="${owned}" aria-label="Collection progress"><span style="width:${owned / 12 * 100}%"></span></div>`;
   }
 
@@ -150,7 +183,7 @@
         if (demo) {
           const fig = demoPick(state.got), isNew = !state.got[fig.id];
           state.got[fig.id] = (state.got[fig.id] || 0) + 1; if (!state.unlimited) state.unopened--; state.dupes += isNew ? 0 : 1;
-          state.complete = SERIES.every(c => state.got[c.id]);
+          state.complete = SERIES.every(c => state.got[c.id]); demoRewards();
           got = { figure: fig.id, isNew };
         } else { const res = await api('POST', { bags: 'open' }); state = res; got = res; }
         const c = SERIES.find(x => x.id === got.figure);
@@ -159,12 +192,16 @@
       try {
         await window.knoxBagStage.play({ result: pick, onReveal: (how, err) => {
           busy = false; render();
-          if (err) toast(err.message);
-          if (how === 'again') setTimeout(openBag, 80); else wrap?.querySelector('[data-open], .kb-x')?.focus();
+          if (err) (wrap ? toast(err.message) : alert(err.message));
+          if (how === 'again') { setTimeout(openBag, 80); return; }
+          // Opened from the Advent Calendar: back to the calendar ("My collection" opens the collection on top).
+          if (!wrap && afterStage) { const a = afterStage; afterStage = null; a.done?.(state); if (how === 'done') open(); return; }
+          wrap?.querySelector('[data-open], .kb-x')?.focus();
         } });
         return;
       } catch (e) { /* 3D couldn't start: fall back to the simple opening */ }
     }
+    if (!wrap) { busy = false; await open(); return; }
     const bag = wrap.querySelector('.kb-bag');
     bag.classList.add('is-shaking');
     let got;
@@ -172,7 +209,7 @@
       if (demo) {
         const fig = demoPick(state.got), isNew = !state.got[fig.id];
         state.got[fig.id] = (state.got[fig.id] || 0) + 1; if (!state.unlimited) state.unopened--; state.dupes += isNew ? 0 : 1;
-        state.complete = SERIES.every(c => state.got[c.id]);
+        state.complete = SERIES.every(c => state.got[c.id]); demoRewards();
         got = { figure: fig.id, isNew };
       } else { const res = await api('POST', { bags: 'open' }); got = res; state = res; }
     } catch (e) { bag.classList.remove('is-shaking'); busy = false; toast(e.message); return; }
@@ -233,15 +270,28 @@
       if (e.target === wrap || e.target.closest('[data-close]')) { close(); return; }
       if (e.target.closest('[data-open]') || e.target.closest('.kb-bag:not(.is-empty)')) { openBag(); return; }
       if (e.target.closest('[data-trade]')) { trade(); return; }
+      const rw = e.target.closest('[data-reward]'); if (rw) { claimReward(rw.dataset.reward); return; }
       if (e.target.closest('[data-claim]')) claim();
     });
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.querySelector('.kb-reveal')) close(); });
     document.body.append(wrap);
-    window.knoxBagStage?.preload?.(); preloadFigs(); // get the 3D bag and the figures ready while the collection loads
+    window.knoxBagStage?.preload?.(); preloadFigs(); loadBagPic(); // get the 3D bag and the figures ready while the collection loads
     render(); await load(); render();
     wrap?.querySelector('[data-open]:not([disabled]), .kb-x')?.focus();
   }
   function close() { if (!wrap) return; wrap.remove(); wrap = null; lastFocus?.focus?.(); }
+  // For the Advent Calendar screen: your bags (count, collection) and opening
+  // one right there with the 3D bag; you land back on the calendar after.
+  async function status() { if (!window.currentUser && !demo) return null; if (!state) await load(); await loadBagPic()?.catch(() => {}); return state; }
+  async function openHere({ done, pic } = {}) {
+    if (!window.currentUser && !demo) { window.openAuthModal?.('signup'); return; }
+    if (busy) return;
+    if (!state) await load();
+    if (!state?.unopened) { done?.(state); return; }
+    if (!window.knoxBagStage?.supported()) { await open(); openBag(); return; } // the simple opening lives on the bags screen
+    afterStage = { done, pic }; openBag();
+  }
+  const bagPicture = () => bagPicUrl;
   addEventListener('knox-auth-changed', () => { state = null; close(); });
-  window.knoxBags = { open, close, figure, series: SERIES };
+  window.knoxBags = { open, close, figure, series: SERIES, status, openHere, bagPicture, loadBagPic };
 })();

@@ -95,6 +95,7 @@ function prizeTier(d) {
 }
 const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
+const PLUS_STARTING_BALANCE = 50; // Knox Plus credits (api/_plans.js BANKS.plus.start)
 const DAY_MS = 86400000;
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -192,6 +193,30 @@ const BAG_SERIES = [
 ].map(([id, name, rarity]) => ({ id, name, rarity }));
 // The odds per bag, shown on the bags screen (bags.js ODDS matches): Golden Knox is 1 in 100.
 const RARITY_ODDS = { common: 64, rare: 25, epic: 10, secret: 1 };
+// Collection rewards: a ladder of prizes as your collection grows (plus the
+// collect-all reward). Free and Plus get bonus credits (Plus more, into its
+// own daily bank); Mega is unlimited, so it gets Flame Shields.
+const BAG_REWARDS = [
+  ["first", 1, null, "Your first figure", 5, 10, 1],
+  ["three", 3, null, "Collect 3", 10, 20, 1],
+  ["commons", 0, "common", "All 6 Commons", 20, 40, 2],
+  ["six", 6, null, "Collect 6", 15, 30, 2],
+  ["rares", 0, "rare", "All 3 Rares", 25, 50, 2],
+  ["nine", 9, null, "Collect 9", 20, 40, 3],
+  ["epics", 0, "epic", "Both Epics", 30, 60, 3],
+  ["eleven", 11, null, "Every figure but the secret", 50, 100, 4],
+].map(([id, need, set, title, free, plus, shields]) => ({ id, need, set, title,
+  free: { gives: { bonus: free }, label: `+${free} bonus credits` },
+  plus: { gives: { bonus: plus }, label: `+${plus} bonus credits` },
+  mega: { gives: { shields }, label: shields > 1 ? `🛡️ ${shields} Flame Shields` : "🛡️ Flame Shield" } }));
+function bagRewards(got, claimed, tier) {
+  const owned = BAG_SERIES.filter(c => got[c.id]).length;
+  return BAG_REWARDS.map(r => {
+    const set = r.set ? BAG_SERIES.filter(c => c.rarity === r.set) : null;
+    const have = set ? set.filter(c => got[c.id]).length : owned, need = set ? set.length : r.need;
+    return { id: r.id, title: r.title, label: pick(r, tier).label, have: Math.min(have, need), need, ready: have >= need, claimed: !!claimed?.[r.id] };
+  });
+}
 function bagStatus(data) {
   const kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
   const got = {};
@@ -202,6 +227,7 @@ function bagStatus(data) {
     dupes: Object.values(got).reduce((t, n) => t + n - 1, 0),
     complete: BAG_SERIES.every(c => got[c.id]), claimed: !!kb.claimed, giftCode: typeof kb.giftCode === "string" ? kb.giftCode : "",
     questions: Math.max(0, Number(kb.questions) || 0) % 10, // toward the next bag
+    rewards: bagRewards(got, kb.rewards, prizeTier(data)),
   };
 }
 // 1) Roll the rarity at exactly the published odds. 2) Within that rarity, a
@@ -249,11 +275,13 @@ export default async function handler(req, res) {
     const body = req.body && typeof req.body === "object" ? req.body : {};
 
     // Blind bags: open one, trade 3 duplicates, or the complete-set reward.
-    if (["open", "trade", "claim"].includes(body.bags)) {
+    if (["open", "trade", "claim", "reward"].includes(body.bags)) {
       const giftCode = body.bags === "claim" ? newGiftCode().slice(0, 8) : "";
       const giftRef = giftCode ? db.collection("giftCodes").doc(giftCode) : null;
       const out = await db.runTransaction(async tx => {
-        const [snap, taken] = await Promise.all([tx.get(userRef), giftRef ? tx.get(giftRef) : null]);
+        // Bonus credits land in the plan's own bank (Plus has its own, 50 a day).
+        const bankRef = userRef.collection("usage").doc(prizeTier((await tx.get(userRef)).data() || {}) === "plus" ? "plusBank" : "bank");
+        const [snap, taken, bank] = await Promise.all([tx.get(userRef), giftRef ? tx.get(giftRef) : null, body.bags === "reward" ? tx.get(bankRef) : null]);
         const data = snap.exists ? snap.data() : {};
         const st = bagStatus(data), kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
         let next = { ...kb, got: { ...st.got }, unopened: st.unopened }, extra = {}, result = {};
@@ -264,6 +292,23 @@ export default async function handler(req, res) {
           next.unopened = tester ? st.unopened : st.unopened - 1;
           next.got[fig.id] = (st.got[fig.id] || 0) + 1;
           result = { figure: fig.id, isNew: !st.got[fig.id] };
+        } else if (body.bags === "reward") {
+          // A step on the collection ladder.
+          const r = BAG_REWARDS.find(x => x.id === body.reward), row = st.rewards.find(x => x.id === body.reward);
+          if (!r || !row) return { error: "That reward doesn't exist.", code: 400 };
+          if (row.claimed) return { error: "You already claimed this reward.", code: 409 };
+          if (!row.ready) return { error: "Keep collecting to unlock this reward.", code: 403 };
+          const g = pick(r, prizeTier(data)).gives, now = Date.now();
+          next.rewards = { ...(kb.rewards || {}), [r.id]: new Date().toISOString() };
+          const base = status(data);
+          if (g.shields) extra.flameShields = base.shields + g.shields;
+          if (g.megaDays) extra.megaUntil = Math.max(now, Number(data.megaUntil) || 0) + g.megaDays * DAY_MS;
+          if (g.bonus) {
+            const b = bank?.exists ? bank.data() : {};
+            const start = bankRef.id === "plusBank" ? PLUS_STARTING_BALANCE : FREE_STARTING_BALANCE;
+            tx.set(bankRef, { balance: (typeof b.balance === "number" ? b.balance : start) + g.bonus, lastRegenAt: b.lastRegenAt || now, updatedAt: new Date().toISOString() }, { merge: true });
+          }
+          result = { reward: r.id, label: row.label };
         } else if (body.bags === "trade") {
           if (st.dupes < 3) return { error: "Trading needs 3 duplicates.", code: 403 };
           let left = 3;

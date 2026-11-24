@@ -156,14 +156,11 @@
       <p class="ff-fine">A flame lights when you study with Knox that day — Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day — they’re used automatically. Bonus questions add to your free questions.</p>`;
   }
   // "Your flame" (after Flame Fest, all year): the streak, Flame Shields and the
-  // flame looks you've earned. In December a big button opens the Advent
-  // Calendar (advent.js); until Dec 7 any Flame Fest rewards left to claim show.
+  // flame looks you've earned; until Dec 7 any Flame Fest rewards left to claim
+  // show. Flames only: the Advent Calendar has its own button beside the 🔥.
   function flameHome({ gift, plus, picker }) {
     const t = today(), streak = Number(document.getElementById('streakCount')?.textContent) || 0;
     const claimable = t <= CLAIM_UNTIL ? state.rewards.filter(r => !state.claimed[r.id] && r.flames >= r.need) : [];
-    // A small link at the bottom (the calendar's own button sits beside the 🔥 in the sidebar).
-    const advent = window.knoxAdvent?.active?.() ? `<button type="button" class="ff-advent" data-advent><span class="ff-advent-ic" aria-hidden="true">🎁</span><span class="ff-advent-copy"><b>Advent Calendar</b><small>Open today’s door</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
-    const bags = window.knoxBags ? `<button type="button" class="ff-advent ff-bags-link" data-bags><span class="ff-advent-ic" aria-hidden="true">🛍️</span><span class="ff-advent-copy"><b>Blind bags</b><small>Knox’s Christmas collection</small></span><span class="ff-advent-go" aria-hidden="true">→</span></button>` : '';
     return `<div class="ff-head">
         <span class="ff-badge">🔥 Your streak</span>
         <h2 id="ffTitle">Your <span>flame</span></h2>
@@ -172,7 +169,6 @@
       </div>
       ${myFlame(picker, true)}${plus}${gift}
       ${claimable.length ? `<h3 class="ff-h3">Flame Fest rewards to claim · until December 7</h3><div class="ff-rewards">${claimable.map(rewardRow).join('')}</div>` : ''}
-      ${advent}${bags}
       <p class="ff-fine">A day counts when you study with Knox: Ask Knox, Learn or a Flashcards review. 🛡️ Flame Shields save your streak if you miss a day; they’re used automatically.</p>`;
   }
   // The flame you're using, big, so you can really see it (and pick another).
