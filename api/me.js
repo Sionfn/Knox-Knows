@@ -16,6 +16,7 @@ import notes from "./_notes.js";
 import shareDeck from "./_share-deck.js";
 import transcribe from "./_transcribe.js";
 import family from "./_family.js";
+import simBuild from "./_sim-build.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -98,6 +99,8 @@ export default async function handler(req, res) {
   if (req.query?.route === "notes") return notes(req, res);
   // The Family plan: invite, join, remove, leave (see api/_family.js).
   if (req.query?.route === "family") return family(req, res, { db, auth: adminAuth });
+  // Simulation Lab: "Knox builds it" (simlab.js; api/_sim-build.js).
+  if (req.query?.route === "sim-build") return simBuild(req, res, { db, auth: adminAuth });
   // Flashcard decks shared by link (see api/_share-deck.js).
   if (req.query?.route === "share-deck") return shareDeck(req, res);
   // Talk to Knox: a short recording becomes text (see api/_transcribe.js).
