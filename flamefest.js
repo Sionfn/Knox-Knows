@@ -496,7 +496,7 @@
   addEventListener('knox-auth-changed', () => { if (window.currentUser && active()) setTimeout(() => { if (window.currentUser && !state && !loading) loadQuietly().catch(() => {}); }, 3000); });
   if (window.currentUser) introTimer = setTimeout(intro, 1500); // signed in before this script loaded
 
-  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true) };
+  window.knoxFlameFest = { open, active, applyFlameStyle, close, studied, discordHint, previewIntro: () => intro(true), styles: () => (state && state.flameStyles) || ['classic'] }; // styles: the flame looks you have (wallpaper stickers)
   // Flames with a fixed look on the page (e.g. the Discord card's Slime Flame) draw right away.
   applyFlameStyle();
 })();

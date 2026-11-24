@@ -59,56 +59,28 @@
 
 
   // ── Simulations tab ──
-  const SIMS = [
-    ['motion | a=60, b=75, head=30, unit=mi, time=h, who=car', '🚗', 'Catch-up race', 'When does the faster car catch up?', 'orange'],
-    ['projectile | speed=20, angle=45, item=soccer', '⚽', 'Launch a ball', 'How angle and speed change the distance', 'green'],
-    ['parabola | a=1, b=-2, c=-3', '📈', 'Parabolas', 'Find the vertex and where it crosses', 'purple'],
-    ['line | m=2, b=1', '📏', 'Lines', 'See slope and the y-intercept move', 'blue'],
-    ['probability | kind=coin, trials=100', '🪙', 'Flip coins', 'Do the results match the odds?', 'gold'],
-    ['probability | kind=die, trials=300', '🎲', 'Roll a die', 'Six sides, hundreds of rolls', 'pink'],
-    ['fraction | n=3, d=4', '🍕', 'Fractions', 'Fraction, decimal and percent', 'orange'],
-    ['interest | p=1000, r=5, t=10', '💰', 'Interest', 'Simple vs compound growth', 'green'],
-  ];
   const simsPanel = document.createElement('section');
   simsPanel.id = 'simsPanel'; simsPanel.hidden = true; simsPanel.setAttribute('aria-label', 'Simulations');
   const simsView = document.createElement('div'); simsView.className = 'nb-scroll bs-scroll';
   simsPanel.append(simsView);
   document.querySelector('#chatAndInput')?.append(simsPanel);
   const isMega = () => window.userTier === 'mega';
-  function simsHome() {
-    const mega = isMega();
-    simsView.innerHTML = `<div class="bs-wrap"><div class="bs-head"><h2>🎛️ Simulations</h2><p>Move the sliders, press Play, and watch math and science happen.</p></div>` +
-      (mega ? '' : `<div class="bs-lock"><span>💎 Simulations are a <b>Mega Knox</b> perk. Upgrade to play with all of them.</span>${window.knoxNativeApp ? '' : '<button type="button" data-sims-upgrade>See Mega</button>'}</div>`) +
-      `<div class="bs-grid">${SIMS.map(([, icon, title, sub, flavor], i) => `<button type="button" class="bs-tile" data-flavor="${flavor}" data-sim-i="${i}"><span class="bs-ico" aria-hidden="true">${icon}</span><b>${title}</b><small>${sub}</small>${mega ? '' : '<em aria-label="Mega Knox">💎</em>'}</button>`).join('')}</div>` +
-      (mega ? '<p class="bs-tip">Tip: turn on 🎛️ Simulations in Account &amp; Plan and Knox adds one to your math and science answers in Ask Knox and Learn.</p>' : '') + '</div>';
-    simsView.scrollTop = 0;
-  }
-  function simOpen(i) {
-    const [spec, icon, title] = SIMS[i];
-    simsView.innerHTML = `<div class="bs-wrap"><div class="bs-top"><button type="button" class="bs-back" data-sims-back>← All simulations</button><b>${icon} ${title}</b></div><div class="knox-sim bs-big" data-sim="${esc(spec)}"></div></div>`;
-    simsView.scrollTop = 0;
-  }
-  simsView.addEventListener('click', e => {
-    if (e.target.closest('[data-sims-back]')) { simsHome(); return; }
-    if (e.target.closest('[data-sims-upgrade]')) { window.goToPricing?.(); return; }
-    const t = e.target.closest('[data-sim-i]'); if (!t) return;
-    if (!isMega()) { say('💎 Simulations are a Mega Knox perk.'); return; }
-    simOpen(+t.dataset.simI);
-  });
+  // The Simulation Lab (simlab.js): Knox builds it, Playground, My sims.
+  function simsHome() { if (window.knoxSimLab) window.knoxSimLab.show(simsView); }
   function openSims() {
     window.closeCalc?.();
     document.body.classList.add('knox-bsims');
     simsPanel.hidden = false;
     setNavActive();
     window.closeMobileHistory?.();
-    if (!simsView.querySelector('.bs-big') || !isMega()) simsHome();
+    if (!simsView.querySelector('.sl-wrap, .sl-ed')) simsHome();
   }
   function closeSims() { document.body.classList.remove('knox-bsims'); simsPanel.hidden = true; }
   window.closeSims = closeSims;
   window.openSims = () => openBinder('sims');
   // Plan or account changes: redraw so the lock matches.
   window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) simsHome(); });
-  window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.bs-big')) simsHome(); });
+  window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.sl-ed')) simsHome(); });
   // Simulations has its own sidebar button (Notes and the Binder strip are gone).
   const SIMS_ICON = '<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 17c3-9 11-9 14 0"/><circle cx="12" cy="9" r="2.2"/></svg></span>';
   document.querySelectorAll('.sidebar-quicknav').forEach(nav => {
