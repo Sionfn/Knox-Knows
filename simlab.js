@@ -95,6 +95,47 @@
   // A seeded random, so "Roll again" makes a new run and replays stay the same.
   const rng = seed => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
 
+  // ── A safe math reader (for "Graph your own"): turns what a student types
+  // into a tree and evaluates it — never eval(), never code.
+  const FUNCS = { sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, sqrt: Math.sqrt, abs: Math.abs, ln: Math.log, log: Math.log10, exp: Math.exp, floor: Math.floor, ceil: Math.ceil, round: Math.round };
+  function parseMath(src) {
+    const text = String(src || '').replace(/\s+/g, '').replace(/^y=/i, '').replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/²/g, '^2').replace(/³/g, '^3').replace(/π/g, 'pi');
+    if (!text) throw new Error('Type an equation, like y = 2x + 1');
+    const toks = []; let i = 0;
+    while (i < text.length) {
+      const ch = text[i];
+      if (/[0-9.]/.test(ch)) { let j = i; while (j < text.length && /[0-9.]/.test(text[j])) j++; const n = Number(text.slice(i, j)); if (!Number.isFinite(n)) throw new Error('That number looks off: ' + text.slice(i, j)); toks.push({ t: 'n', v: n }); i = j; }
+      else if (/[a-z]/i.test(ch)) { let j = i; while (j < text.length && /[a-z]/i.test(text[j])) j++; const w = text.slice(i, j).toLowerCase();
+        // A known function or constant, else single letters (so "ax" is a·x).
+        let k = 0; while (k < w.length) { const f = Object.keys(FUNCS).concat(['pi']).sort((a, b) => b.length - a.length).find(fn => w.startsWith(fn, k)); if (f) { toks.push(f === 'pi' ? { t: 'n', v: Math.PI } : { t: 'f', v: f }); k += f.length; } else { toks.push(w[k] === 'e' ? { t: 'n', v: Math.E } : { t: 'v', v: w[k] }); k++; } }
+        i = j; }
+      else if ('+-*/^(),'.includes(ch)) { toks.push({ t: ch }); i++; }
+      else throw new Error(`Knox can’t read “${ch}” — use numbers, x, letters, + − × ÷ ^ and ( )`);
+    }
+    // Implied multiplication: 2x, 3(x+1), x(x-1), (x+1)(x-1), 2sin(x).
+    const out = [];
+    toks.forEach((tk, k) => { const prev = out[out.length - 1]; if (prev && (prev.t === 'n' || prev.t === 'v' || prev.t === ')') && (tk.t === 'n' || tk.t === 'v' || tk.t === 'f' || tk.t === '(')) out.push({ t: '*' }); out.push(tk); });
+    let p = 0; const peek = () => out[p], eat = t => { if (out[p]?.t !== t) throw new Error(t === ')' ? 'A “(” is missing its “)”' : 'Something is missing near the end'); p++; };
+    const expr = () => { let n = term(); while (peek()?.t === '+' || peek()?.t === '-') { const op = out[p++].t, r = term(); n = { op, a: n, b: r }; } return n; };
+    const term = () => { let n = unary(); while (peek()?.t === '*' || peek()?.t === '/') { const op = out[p++].t, r = unary(); n = { op, a: n, b: r }; } return n; };
+    const unary = () => { if (peek()?.t === '-') { p++; return { op: 'neg', a: unary() }; } if (peek()?.t === '+') { p++; return unary(); } return power(); };
+    const power = () => { const b = atom(); if (peek()?.t === '^') { p++; return { op: '^', a: b, b: unary() }; } return b; };
+    const atom = () => {
+      const tk = out[p++]; if (!tk) throw new Error('Something is missing near the end');
+      if (tk.t === 'n') return { n: tk.v };
+      if (tk.t === 'v') return { v: tk.v };
+      if (tk.t === 'f') { if (peek()?.t !== '(') { const a = atom(); return { f: tk.v, a }; } p++; const a = expr(); eat(')'); return { f: tk.v, a }; }
+      if (tk.t === '(') { const a = expr(); eat(')'); return a; }
+      throw new Error('Knox can’t read that part: “' + (tk.t) + '”');
+    };
+    const tree = expr(); if (p < out.length) throw new Error('Knox couldn’t read the end of that equation');
+    const vars = new Set(); (function walk(n) { if (!n) return; if (n.v) vars.add(n.v); walk(n.a); walk(n.b); })(tree);
+    const ev = (n, env) => n.n != null ? n.n : n.v ? (env[n.v] ?? 0) : n.f ? FUNCS[n.f](ev(n.a, env)) : n.op === 'neg' ? -ev(n.a, env)
+      : n.op === '+' ? ev(n.a, env) + ev(n.b, env) : n.op === '-' ? ev(n.a, env) - ev(n.b, env) : n.op === '*' ? ev(n.a, env) * ev(n.b, env) : n.op === '/' ? ev(n.a, env) / ev(n.b, env) : Math.pow(ev(n.a, env), ev(n.b, env));
+    return { vars, f: env => ev(tree, env) };
+  }
+  const LETTERS = 'abcdfghjkmnpqrstuvw'.split(''); // slider letters (x is the input; e is 2.718…)
+  const text = (k, label, v, more = false) => ({ k, label, type: 'text', v, more });
   const range = (k, label, min, max, step, v, unit = '', more = false) => ({ k, label, type: 'range', min, max, step, v, unit, more });
   const toggle = (k, label, v = false, more = true) => ({ k, label, type: 'toggle', v, more });
   const select = (k, label, options, v, more = true) => ({ k, label, type: 'select', options, v, more });
@@ -103,6 +144,33 @@
   // group, icon (Knox icon), free (in the starter set), anim (has Play),
   // loop (repeats), params, presets, draw(g, s, c, t) → the readout.
   const T = {
+    equation: {
+      group: 'Math', icon: 'pencil', free: true, title: 'Graph your own', blurb: 'Type any equation — letters become sliders', anim: true, loop: true,
+      params: [text('eq', 'Your equation (y = …)', 'y = a x^2 + b x + c'), text('eq2', 'A second equation (optional)', ''),
+        ...LETTERS.map(L => ({ ...range('p_' + L, `Slider ${L}`, -10, 10, .1, L === 'a' ? 1 : L === 'c' ? -2 : 0), show: s => [s.eq, s.eq2].some(e => { try { return parseMath(e).vars.has(L); } catch (_) { return false; } }) })),
+        range('xmax', 'How far x goes (±)', 1, 100, 1, 10, '', true), toggle('fity', 'Fit y to the graph', true), range('ymax', 'How far y goes (±) when not fitting', 1, 200, 1, 10, '', true),
+        toggle('roots', 'Mark where it crosses the x-axis', true), toggle('meet', 'Mark where the two graphs meet', true), toggle('trace', 'A dot traces the graph when playing', true)],
+      presets: [['Parabola', { eq: 'y = a x^2 + b x + c', p_a: 1, p_b: 0, p_c: -4 }], ['Wave', { eq: 'y = a sin(b x) + c', p_a: 3, p_b: 1, p_c: 0 }], ['Line vs curve', { eq: 'y = m x + b', eq2: 'y = x^2 - 3', p_m: 2, p_b: 1 }], ['Exponential', { eq: 'y = a * 2^(x/b)', p_a: 1, p_b: 1 }], ['Circle-ish', { eq: 'y = sqrt(r^2 - x^2)', eq2: 'y = -sqrt(r^2 - x^2)', p_r: 5 }]],
+      duration: () => 6,
+      draw(g, s, c, t) {
+        const env = Object.fromEntries(LETTERS.map(L => [L, s['p_' + L]])), cols = [c.blue, c.red];
+        const fs = []; let err = '';
+        for (const e of [s.eq, s.eq2]) { if (!String(e || '').trim()) continue; try { const m = parseMath(e); fs.push(x => m.f({ ...env, x })); } catch (ex) { err = err || ex.message; } }
+        const X = s.xmax; let Y = s.ymax;
+        if (s.fity && fs.length) { let lo = Infinity, hi = -Infinity; for (const f of fs) for (let i = 0; i <= 200; i++) { const y = f(-X + 2 * X * i / 200); if (Number.isFinite(y)) { lo = Math.min(lo, y); hi = Math.max(hi, y); } } if (Number.isFinite(lo)) Y = clamp(Math.max(Math.abs(lo), Math.abs(hi), 1) * 1.2, 1, 1e6); }
+        const ch = chart(g, c, -X, X, -Y, Y); ch.axes('x', 'y');
+        fs.forEach((f, i) => ch.plot(f, c.ghost ? c.light : cols[i]));
+        if (err) return err;
+        if (!fs.length) return 'Type an equation above, like y = 2x + 1 — every letter besides x becomes a slider.';
+        const zeros = (f, from, to) => { const out = []; let px = from, py = f(px); for (let i = 1; i <= 800; i++) { const x = from + (to - from) * i / 800, y = f(x); if (Number.isFinite(py) && Number.isFinite(y) && (py === 0 || py * y < 0) && Math.abs(y - py) < Y) { let a = px, b = x; for (let k = 0; k < 40; k++) { const m = (a + b) / 2; (f(a) * f(m) <= 0) ? b = m : a = m; } out.push((a + b) / 2); } px = x; py = y; } return out.slice(0, 6); };
+        let out = '';
+        if (s.roots) { const r = zeros(fs[0], -X, X); r.forEach(x => ch.dot(x, 0, c.green, 6)); out += r.length ? `Crosses the x-axis at x = ${r.map(v => fmt(v)).join(', ')}` : 'Doesn’t cross the x-axis here'; }
+        if (fs[1] && s.meet) { const m = zeros(x => fs[0](x) - fs[1](x), -X, X); m.forEach(x => ch.dot(x, fs[0](x), c.orange, 8)); out += (out ? ' · ' : '') + (m.length ? `The graphs meet at ${m.map(x => `(${fmt(x)}, ${fmt(fs[0](x))})`).join(', ')}` : 'The two graphs don’t meet here'); }
+        if (s.trace && t != null) { const x = -X + 2 * X * (t / 6); ch.dot(x, fs[0](x), c.orange, 7); out += ` · tracing x = ${fmt(x, 1)}, y = ${fmt(fs[0](x))}`; }
+        const used = LETTERS.filter(L => [s.eq, s.eq2].some(e => { try { return parseMath(e).vars.has(L); } catch (_) { return false; } }));
+        return (used.length ? used.map(L => `${L} = ${fmt(s['p_' + L])}`).join(', ') + ' · ' : '') + out;
+      },
+    },
     line: {
       group: 'Math', icon: 'chart', free: true, title: 'Lines', blurb: 'Slope and the y-intercept',
       params: [range('m', 'Slope (m)', -10, 10, .5, 2), range('b', 'Y-intercept (b)', -20, 20, 1, 1),
@@ -432,7 +500,7 @@
     },
   };
   const GROUPS = ['Math', 'Physics', 'Money', 'Chance', 'Biology'];
-  const ORDER = ['projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population'];
+  const ORDER = ['equation', 'projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population'];
   const COMMON = [range('speedx', 'Playback speed', .25, 3, .25, 1, '×', true), toggle('grid', 'Show the grid', true), toggle('labels', 'Show labels and numbers', true)];
   const paramsOf = id => [...T[id].params, ...COMMON.filter(p => p.k !== 'speedx' || T[id].anim)];
   const defaults = id => Object.fromEntries(paramsOf(id).map(p => [p.k, p.v]));
@@ -441,6 +509,7 @@
     for (const p of paramsOf(id)) {
       const v = vals?.[p.k]; if (v == null) continue;
       if (p.type === 'range') { const n = Number(v); if (Number.isFinite(n)) s[p.k] = clamp(Math.round(n / p.step) * p.step, p.min, p.max); }
+      else if (p.type === 'text') s[p.k] = String(v).slice(0, 200);
       else if (p.type === 'toggle') s[p.k] = v === true || v === 1 || v === '1' || v === 'true';
       else if (p.type === 'select' && p.options.some(o => o[0] === String(v))) s[p.k] = String(v);
     }
@@ -532,9 +601,11 @@
     let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0, ghost = null, seed = (Math.random() * 1e9) | 0, title = meta.title || def.title, moreOpen = paid();
     const ctl = p => {
       const v = s[p.k], lock = p.more && !paid();
+      if (p.type === 'text') return `<label class="sl-field sl-text${lock ? ' locked' : ''}"><span>${esc(p.label)}</span><input type="text" data-k="${p.k}" value="${esc(v)}" spellcheck="false" autocomplete="off" maxlength="200"${lock ? ' disabled' : ''}></label>`;
+      const hide = p.show && !p.show(s) ? ' hidden' : '';
       if (p.type === 'toggle') return `<label class="sl-toggle${lock ? ' locked' : ''}"><input type="checkbox" data-k="${p.k}"${v ? ' checked' : ''}${lock ? ' disabled' : ''}><span class="sl-sw" aria-hidden="true"></span><span>${esc(p.label)}</span></label>`;
       if (p.type === 'select') return `<label class="sl-field${lock ? ' locked' : ''}"><span>${esc(p.label)}</span><select data-k="${p.k}"${lock ? ' disabled' : ''}>${p.options.map(([o, n]) => `<option value="${o}"${o === v ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>`;
-      return `<label class="sl-field${lock ? ' locked' : ''}"><span>${esc(p.label)} <output data-out="${p.k}">${esc(unitFmt(p, v))}</output></span><input type="range" data-k="${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${v}"${lock ? ' disabled' : ''}></label>`;
+      return `<label class="sl-field${lock ? ' locked' : ''}"${hide}><span>${esc(p.label)} <output data-out="${p.k}">${esc(unitFmt(p, v))}</output></span><input type="range" data-k="${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${v}"${lock ? ' disabled' : ''}></label>`;
     };
     const presets = def.presets || [];
     host.innerHTML = fill(`<div class="sl-ed">
@@ -597,7 +668,8 @@
     const onInput = e => {
       const k = e.target.dataset.k; if (!k) return;
       const p = params.find(x => x.k === k);
-      s[k] = p.type === 'toggle' ? e.target.checked : p.type === 'select' ? e.target.value : Number(e.target.value);
+      s[k] = p.type === 'toggle' ? e.target.checked : p.type === 'select' || p.type === 'text' ? e.target.value : Number(e.target.value);
+      if (p.type === 'text') for (const q of params) if (q.show) { const el = host.querySelector(`[data-k="${q.k}"]`)?.closest('.sl-field'); if (el) el.hidden = !q.show(s); }
       const o = host.querySelector(`[data-out="${k}"]`); if (o) o.textContent = unitFmt(p, s[k]);
       if (def.anim && !playing && k !== 'speedx') t = def.loop ? t : 0;
       draw();
@@ -613,7 +685,7 @@
         else if (b.matches('[data-restart]')) { t = 0; setPlaying(true); }
         else if (b.matches('[data-reroll]')) { seed = (Math.random() * 1e9) | 0; t = 0; setPlaying(true); }
         else if (b.matches('[data-reset]')) { Object.assign(s, defaults(id)); syncControls(); t = def.anim ? 0 : null; draw(); if (def.anim) setPlaying(true); }
-        else if (b.matches('[data-random]')) { for (const p of basic) if (p.type === 'range') s[p.k] = clamp(Math.round((p.min + Math.random() * (p.max - p.min)) / p.step) * p.step, p.min, p.max); syncControls(); t = def.anim ? 0 : null; draw(); if (def.anim) setPlaying(true); }
+        else if (b.matches('[data-random]')) { for (const p of basic) if (p.type === 'range' && (!p.show || p.show(s))) s[p.k] = clamp(Math.round((p.min + Math.random() * (p.max - p.min)) / p.step) * p.step, p.min, p.max); syncControls(); t = def.anim ? 0 : null; draw(); if (def.anim) setPlaying(true); }
         else if (b.matches('[data-preset]') && !paid() && Object.keys(def.presets[+b.dataset.preset][1]).some(k => more.some(p => p.k === k))) { upsell('plus', 'That one uses More settings (other planets, air, cliffs…) — they come with ⚡ Knox Plus.'); }
         else if (b.matches('[data-preset]')) { Object.assign(s, defaults(id), cleanValues(id, def.presets[+b.dataset.preset][1])); syncControls(); t = def.anim ? 0 : null; draw(); if (def.anim) setPlaying(true); }
         else if (b.matches('[data-more]')) {

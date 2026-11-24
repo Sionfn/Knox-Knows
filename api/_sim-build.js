@@ -22,6 +22,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 // The sims (simlab.js TEMPLATES). free: in the free starter set.
 export const SIM_CATALOG = [
+  ["equation", true, "any equation graphed with a slider for each letter (functions, systems, transformations)", "eq (the equation, like y = a x^2 + b x + c — use x and single letters; + - * / ^ ( ) sin cos tan sqrt abs ln log exp), eq2 (an optional second equation to compare), p_a, p_b, p_c, p_m … (the value of each letter, -10..10), xmax (1..100 how far x goes)"],
   ["line", true, "a straight line y = m x + b", "m (-10..10), b (-20..20), m2, b2 (a second line), second (0/1 show the second line and where they cross)"],
   ["parabola", true, "a quadratic y = a x² + b x + c", "a (-5..5), b (-20..20), c (-20..20)"],
   ["sine", false, "a sine wave y = A sin(B x + C) + D (trig, waves, sound, tides)", "amp (0..10), freq (0.1..5), phase (-180..180 degrees), shift (-10..10), cosine (0/1 compare with cosine)"],
@@ -104,7 +105,8 @@ Use the numbers from the student's request. Leave out settings you don't need. I
     if (!allowed.some(s => s[0] === type)) throw new Error("bad type");
     const values = {};
     for (const [k, v] of Object.entries(out.values && typeof out.values === "object" ? out.values : {}).slice(0, 20)) {
-      if (!/^[a-z0-9]{1,12}$/i.test(k)) continue;
+      if (!/^[a-z0-9_]{1,12}$/i.test(k)) continue;
+      if ((k === "eq" || k === "eq2") && typeof v === "string") { if (/^[a-z0-9\s.+\-*\/^()=,]{1,120}$/i.test(v)) values[k] = v; continue; }
       if (typeof v === "number" && Number.isFinite(v)) values[k] = v;
       else if (typeof v === "boolean") values[k] = v ? 1 : 0;
       else if (typeof v === "string" && /^[a-z0-9.\-]{1,16}$/i.test(v)) values[k] = v.toLowerCase();

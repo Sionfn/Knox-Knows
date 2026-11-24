@@ -99,6 +99,9 @@ html[data-theme="dark"] .sl-back { color: var(--sl); }
 .sl-group[hidden] { display: none; } /* display:flex would beat [hidden] */
 .sl-field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 800; color: var(--text); }
 .sl-field > span { display: flex; justify-content: space-between; gap: 8px; }
+.sl-field[hidden], .sl-toggle[hidden] { display: none; }
+.sl-text input { padding: 9px 11px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 800; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+.sl-text input:focus { outline: none; border-color: var(--sl); }
 .sl-field output { color: var(--sl-ink); font-weight: 900; white-space: nowrap; }
 .sl-field input[type=range] { width: 100%; accent-color: var(--sl); }
 .sl-field select { padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; }

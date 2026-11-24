@@ -8,11 +8,11 @@ const src = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 test('Simulation Lab: the server catalog and the Lab have the same simulations and the same free starter set', () => {
   const lab = src('simlab.js');
   const ids = [...lab.matchAll(/^    ([a-z]+): \{\n      group:/gm)].map(m => m[1]);
-  assert.equal(ids.length, 15);
+  assert.equal(ids.length, 16);
   assert.deepEqual([...ids].sort(), SIM_CATALOG.map(s => s[0]).sort());
   const freeLab = ids.filter(id => new RegExp(`^    ${id}: \\{\\n      group: '[A-Za-z]+', icon: '[a-zA-Z]+', free: true`, 'm').test(lab)).sort();
   assert.deepEqual(freeLab, SIM_CATALOG.filter(s => s[1]).map(s => s[0]).sort());
-  assert.deepEqual(freeLab, ['fraction', 'interest', 'line', 'parabola', 'probability', 'projectile']);
+  assert.deepEqual(freeLab, ['equation', 'fraction', 'interest', 'line', 'parabola', 'probability', 'projectile']);
 });
 
 test('Simulation Lab: plans like Flashcards, and Knox builds through /api/me', () => {
@@ -33,4 +33,23 @@ test('Wallpaper stickers: extra background layers behind the content, per backgr
   assert.match(css, /background:var\(--mb-stk, none\), var\(--mb-paint\), var\(--mb-bg\) !important;/);
   assert.match(bg, /window\.knoxFlameFest\?\.styles\?\.\(\)/);
   assert.match(src('flamefest.js'), /styles: \(\) => \(state && state\.flameStyles\) \|\| \['classic'\]/);
+});
+
+test('Graph your own: the math reader reads what students type and never runs code', async () => {
+  const lab = src('simlab.js');
+  const start = lab.indexOf('  const FUNCS = '), end = lab.indexOf('  const LETTERS = ');
+  const { parseMath } = new Function(lab.slice(start, end) + '; return { parseMath };')();
+  const at = (e, env) => parseMath(e).f(env);
+  assert.equal(at('y = 2x + 1', { x: 3 }), 7);
+  assert.equal(at('a x^2 + b x + c', { x: 2, a: 1, b: -3, c: 2 }), 0);
+  assert.equal(at('3(x+1)(x-1)', { x: 2 }), 9);
+  assert.equal(at('2^(x/b)', { x: 4, b: 2 }), 4);
+  assert.ok(Math.abs(at('sin(pi/2)', {}) - 1) < 1e-12);
+  assert.equal(at('-x^2', { x: 3 }), -9);
+  assert.equal(at('sqrt(r^2 - x^2)', { r: 5, x: 3 }), 4);
+  assert.deepEqual([...parseMath('y = m x + b').vars].sort(), ['b', 'm', 'x']);
+  assert.throws(() => parseMath('alert(1);'));
+  assert.throws(() => parseMath('x +'));
+  assert.throws(() => parseMath('(x + 1'));
+  assert.doesNotMatch(lab.slice(start, end), /\beval\(|new Function/);
 });
