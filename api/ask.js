@@ -1337,7 +1337,7 @@ export default async function handler(req, res) {
     if (language && language !== 'auto') messages.splice(messages.length - 1, 0, { role: 'system', content: `Write your entire reply in ${ANSWER_LANGUAGES[language]}, even if the question or photo is in another language, unless the student asks for a translation or for a different language. Keep math notation as is. Any required output format, labels or JSON keys stay exactly as specified; only the student-facing text is in ${ANSWER_LANGUAGES[language]}.` });
     // Mega Knox with "Simulations" on: Knox may add one Sim: line (Ask Knox), or
     // fill Learn's sim field (Dec 1) without giving away an unearned answer.
-    const simsOn = simulations === true && tier === 'mega' && !casual && !isBot;
+    const simsOn = simulations === true && (tier === 'mega' || tier === 'plus') && !casual && !isBot; // Knox Plus and Mega Knox
     if (simsOn) messages.splice(messages.length - 1, 0, { role: 'system', content: learnMode ? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION });
     if (lessonState) lessonState.sims = simsOn;
     const requestBody = {

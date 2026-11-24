@@ -150,10 +150,10 @@
     const p = parse(el.dataset.sim), make = p && TEMPLATES[p.type];
     if (!make) { el.remove(); return; }
     const tpl = make(p.vals), state = Object.fromEntries(tpl.sliders.map(s => [s[0], s[5]]));
-    el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">🎛️</span><span><b>Try it yourself</b><small>${tpl.title}</small></span><span class="ksim-beta">Mega · Beta</span></div>
+    el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">${window.KI ? window.KI('sliders', { tint: false }) : ''}</span><span><b>Try it yourself</b><small>${tpl.title}</small></span></div>
       <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
       <div class="ksim-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ksim-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
-      <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button>` : ''}<button type="button" class="ksim-reset">↺ Reset</button></div>`;
+      <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button>` : ''}<button type="button" class="ksim-reset">↺ Reset</button>${window.knoxSimLab ? '<button type="button" class="ksim-lab">Open in Lab →</button>' : ''}</div>`;
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
     let anim = 0, pos = null, stop = () => { cancelAnimationFrame(anim); anim = 0; };
     const render = t => {
@@ -170,6 +170,11 @@
     el.addEventListener('input', e => { const k = e.target.dataset.k; if (!k) return; stop(); pos = null; state[k] = Number(e.target.value); if (tpl.counts) tpl.counts = null; render(); });
     // Reset: back to the numbers from the question.
     const initial = { ...state };
+    // Open in Lab: the same simulation in the Simulation Lab, with all its settings, challenges and Save.
+    el.querySelector('.ksim-lab')?.addEventListener('click', () => {
+      const cur = Object.fromEntries(Object.entries(p.vals).concat(Object.entries(state)));
+      window.openSims?.(); setTimeout(() => window.knoxSimLab?.open(p.type, cur, { title: tpl.title }), 60);
+    });
     el.querySelector('.ksim-reset').addEventListener('click', () => {
       stop(); pos = null; Object.assign(state, initial); tpl.counts = null;
       for (const [k] of tpl.sliders) el.querySelector(`[data-k="${k}"]`).value = state[k];

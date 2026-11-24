@@ -17,6 +17,7 @@ import notes from "./_notes.js";
 import shareDeck from "./_share-deck.js";
 import family from "./_family.js";
 import simBuild from "./_sim-build.js";
+import simCommunity from "./_sim-community.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -103,6 +104,7 @@ export default async function handler(req, res) {
   if (req.query?.route === "family") return family(req, res, { db, auth: adminAuth });
   // Simulation Lab: "Knox builds it" (simlab.js; api/_sim-build.js).
   if (req.query?.route === "sim-build") return simBuild(req, res, { db, auth: adminAuth });
+  if (req.query?.route === "sim-community") return simCommunity(req, res, { db, auth: adminAuth });
   // Flashcard decks shared by link (see api/_share-deck.js).
   if (req.query?.route === "share-deck") return shareDeck(req, res);
   // The iPhone app opening the website signed in as the same account (see api/_handoff.js).

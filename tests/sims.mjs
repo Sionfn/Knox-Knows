@@ -31,7 +31,7 @@ test('normal prose is left alone; a Learn reply shows its simulation above Your 
 });
 
 test('the server adds simulations only for Mega with the switch on (Ask Knox and Learn) and validates the flag', () => {
-  assert.match(ask, /const simsOn = simulations === true && tier === 'mega' && !casual && !isBot/);
+  assert.match(ask, /const simsOn = simulations === true && \(tier === 'mega' \|\| tier === 'plus'\) && !casual && !isBot/);
   assert.match(ask, /learnMode \? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION/);
   assert.match(ask, /typeof simulations !== 'boolean'/);
 });
