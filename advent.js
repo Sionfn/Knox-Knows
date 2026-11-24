@@ -51,7 +51,7 @@
     'Study tip: set one small goal for each study session, like “finish 10 flashcards.”',
     'A group of owls is called a parliament.',
     'Study tip: celebrate your streak. Small wins every day add up to big ones.',
-    'Merry Christmas from Knox! Thanks for studying with us all month. 🦊',
+    'Merry Christmas from Knox! Thanks for studying with us all month.',
   ];
 
   // ── Data ────────────────────────────────────────────────────────────────
@@ -110,12 +110,29 @@
     if (error && !state) { card.innerHTML = head() + `<p class="adv-note">${esc(error)}</p><div class="adv-actions"><button type="button" class="adv-btn" data-retry>Try again</button></div>`; return; }
     const doors = state.doors, opened = doors.filter(d => d.opened).length;
     card.innerHTML = head() +
-      `<div class="adv-meta"><span><b>${opened}</b> of 25 opened</span><button type="button" class="adv-bags" data-bags>🛍️ Blind bags</button><span>🛡️ <b>${state.shields || 0}</b> Flame Shield${state.shields === 1 ? '' : 's'}</span></div>` +
+      `<div class="adv-meta"><span><b>${opened}</b> of 25 opened</span><span>🛡️ <b>${state.shields || 0}</b> Flame Shield${state.shields === 1 ? '' : 's'}</span></div>` +
+      bagsPanel() +
       `<div class="adv-grid">${doors.map(door).join('')}</div>` +
       (state.giftCode ? `<p class="adv-gift">🎁 Your Mega Knox week for a friend: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a></p>` : '') +
       `<p class="adv-note">Study any day in December (ask a question, do a Learn step or review flashcards) to open that day’s door. Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
     card.innerHTML = ki(card.innerHTML);
   }
+  // Your blind bags live here: every door has one, and you tear them open
+  // right on the calendar (the 3D bag, bags.js / bags3d.js).
+  let bags = null;
+  function bagsPanel() {
+    if (!window.knoxBags) return '';
+    const n = bags?.unlimited ? '∞' : bags?.unopened || 0, owned = bags ? Object.keys(bags.got || {}).length : 0;
+    const pic = window.knoxBags.bagPicture?.();
+    return `<div class="adv-bagbox${n ? ' has-bags' : ''}">
+      <div class="adv-bagpic" aria-hidden="true">${pic ? `<img src="${pic}" alt="" draggable="false">` : '<span>🛍️</span>'}${n ? `<b class="adv-bagn">${n === '∞' ? '∞' : '×' + n}</b>` : ''}</div>
+      <div class="adv-bagcopy"><b>${!bags ? 'Your blind bags' : bags.unlimited ? 'Unlimited test bags!' : n ? `You have ${n} blind bag${n === 1 ? '' : 's'} to open!` : 'No blind bags right now'}</b>
+        <span>${bags ? `${owned} of 12 Knox’s Christmas figures collected. ` : ''}Every door has a bag inside, and you earn one for every 10 questions too.</span></div>
+      <div class="adv-bagbtns"><button type="button" class="adv-btn adv-btn-bag" data-open-bag${n ? '' : ' disabled'}>🛍️ Open a bag</button><button type="button" class="adv-bags" data-bags>My collection</button></div>
+    </div>`;
+  }
+  const refreshBags = () => window.knoxBags?.status?.().then(s => { bags = s; render(); }).catch(() => {});
+  const openBagHere = () => window.knoxBags?.openHere?.({ done: s => { if (s) bags = s; render(); wrap?.querySelector('[data-open-bag]:not([disabled]), .adv-x')?.focus(); }, pic: () => render() });
   const head = () => `<button type="button" class="adv-x" data-close aria-label="Close">✕</button><div class="adv-head"><span class="adv-badge">🎄 December event</span><h2 id="advTitle">Knox <span>Advent Calendar</span></h2><p>A surprise behind every door. Door 25 is the big present!</p></div>`;
 
   // The prize card after a door opens (or when you look at an opened one).
@@ -125,7 +142,7 @@
     pop.innerHTML = ki(`<div class="adv-reveal-card" role="dialog" aria-modal="true" aria-labelledby="advRevealT"><span class="adv-reveal-n">Door ${d.n}</span><div class="adv-reveal-prize">${prizeIcon(d.label)}</div><h3 id="advRevealT">${fresh ? 'You got' : 'Behind this door'}: ${esc(d.label)}</h3><p>${esc(TREATS[d.n - 1])}</p>${fresh && /blind bag/i.test(d.label) ? '<button type="button" class="adv-btn adv-btn-bag" data-bag>🛍️ Open your blind bag</button>' : ''}<button type="button" class="adv-btn${fresh && /blind bag/i.test(d.label) ? ' adv-btn-quiet' : ''}" data-done>${fresh ? 'Yay!' : 'Close'}</button></div>`);
     const done = () => { pop.remove(); wrap?.querySelector(`[data-door="${d.n}"]`)?.focus(); };
     pop.addEventListener('click', e => {
-      if (e.target.closest('[data-bag]')) { pop.remove(); close(); window.knoxBags?.open(); return; }
+      if (e.target.closest('[data-bag]')) { pop.remove(); openBagHere(); return; }
       if (e.target === pop || e.target.closest('[data-done]')) done();
     });
     pop.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); done(); } });
@@ -147,7 +164,7 @@
       if (demo) { await new Promise(r => setTimeout(r, 450)); d.opened = true; }
       else { state = await api('POST', { advent: 'open', door: n }); window.knoxRefreshPlan?.(); window.knoxFlameFest?.applyFlameStyle?.(state.flameStyle); }
       const fresh = state.doors[n - 1];
-      render();
+      render(); refreshBags();
       reveal(fresh, true);
       window.knoxSound?.play('reward');
     } catch (e) { btn?.classList.remove('is-opening'); nudge(e.message); }
@@ -166,12 +183,13 @@
     wrap.addEventListener('click', e => {
       if (e.target === wrap || e.target.closest('[data-close]')) { close(); return; }
       if (e.target.closest('[data-retry]')) { load().then(render); return; }
-      if (e.target.closest('[data-bags]')) { close(); window.knoxBags?.open(); return; }
+      if (e.target.closest('[data-open-bag]')) { openBagHere(); return; }
+      if (e.target.closest('[data-bags]')) { window.knoxBags?.open(); return; }
       const d = e.target.closest('[data-door]'); if (d) openDoor(+d.dataset.door);
     });
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     document.body.append(wrap);
-    render();
+    render(); refreshBags(); window.knoxBagStage?.preload?.();
     await load(); render();
     wrap?.querySelector('.adv-door.is-ready, .adv-x')?.focus();
   }

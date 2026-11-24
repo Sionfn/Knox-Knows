@@ -65,10 +65,10 @@
 .kb3-twinkle i { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px; background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); transform: rotate(var(--a)) translateY(calc(var(--rad) * -1)); animation: kb3Twinkle 1.6s ease-in-out var(--delay) infinite both; }
 .kb3-twinkle i:nth-child(odd) { background: #FFE38A; width: 12px; height: 12px; margin: -6px; }
 @keyframes kb3Twinkle { 0%, 100% { opacity: 0; scale: .3; } 50% { opacity: 1; scale: 1.1; } }
-.kb3-tag { padding: 5px 14px; border-radius: 999px; font-size: 14px; font-weight: 900; transform: rotate(-4deg); animation: kb3Stamp .45s .7s both cubic-bezier(.2, .9, .3, 1.6); }
+.kb3-tag { padding: 5px 14px; border-radius: 999px; font-size: 14px; font-weight: 900; animation: kb3Stamp .45s .7s both cubic-bezier(.2, .9, .3, 1.6); }
 .kb3-tag.new { background: #1FA45A; box-shadow: 0 3px 0 #157A41; }
 .kb3-tag.dup { background: rgba(255, 255, 255, .14); border: 2px solid rgba(255, 255, 255, .3); }
-@keyframes kb3Stamp { from { transform: scale(2.4) rotate(-14deg); opacity: 0; } to { transform: rotate(-4deg); opacity: 1; } }
+@keyframes kb3Stamp { from { transform: scale(2.4); opacity: 0; } to { transform: none; opacity: 1; } }
 .kb3-rarity { margin-top: 6px; padding: 4px 13px; border-radius: 999px; background: var(--rc); color: #fff; box-shadow: 0 3px 0 var(--rd); font-size: 12.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; animation: kb3Stamp .4s .85s both cubic-bezier(.2, .9, .3, 1.5); }
 .kb3-reveal.r-secret .kb3-rarity { color: #3D2800; }
 .kb3-reveal h2 { margin: 6px 0 0; font-size: clamp(26px, 6vw, 36px); font-weight: 900; animation: kb3Up .5s .95s both ease; }
@@ -83,3 +83,19 @@
 @media (prefers-reduced-motion: reduce) { .kb3-stage *, .kb3-stage { animation: none !important; } }
 
 @keyframes kb3Thud { 30% { transform: translate(-3px, 2px); } 60% { transform: translate(3px, -2px); } }
+
+/* The celebration backdrop behind the reveal: a glowing night in the rarity
+   color, a string of blinking Christmas lights, floating bokeh, snowy hills
+   with pines and presents. */
+.kb3-celebrate { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; animation: kb3Fade .6s ease-out both; }
+@keyframes kb3Fade { from { opacity: 0; } }
+.kb3-celebrate::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 55% at 50% 38%, color-mix(in srgb, var(--rc) 38%, transparent), transparent 70%), linear-gradient(180deg, #101C33 0%, #16284A 55%, #1B2F55 100%); }
+.kb3-lights { position: absolute; left: -2%; top: 0; width: 104%; height: 70px; }
+.kb3-lights path { fill: none; stroke: #2E5E3A; stroke-width: 3; }
+.kb3-lights circle { animation: kb3Blink 1.4s ease-in-out infinite; filter: drop-shadow(0 0 6px currentColor); }
+.kb3-lights circle:nth-of-type(3n) { animation-delay: .45s; } .kb3-lights circle:nth-of-type(3n+1) { animation-delay: .9s; }
+@keyframes kb3Blink { 50% { opacity: .35; } }
+.kb3-bokeh i { position: absolute; bottom: -40px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 70%, #fff) 0%, transparent 70%); opacity: .55; animation: kb3Float var(--d) linear var(--delay) infinite; }
+@keyframes kb3Float { to { transform: translateY(-115vh); opacity: 0; } }
+.kb3-hills { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 22vh; min-height: 120px; }
+.kb3-reveal > :not(.kb3-celebrate):not(.kb3-confetti) { position: relative; z-index: 1; }

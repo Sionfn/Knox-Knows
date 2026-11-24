@@ -37,47 +37,95 @@
     try { const c = document.createElement('canvas'); return !!(c.getContext('webgl') || c.getContext('experimental-webgl')); } catch (e) { return false; }
   }
 
-  // ── The bag's printed faces, drawn on a canvas (Nunito, Knox colors) ──────
-  const FOX_FACE = `<g><path d="M30 44 24 12 52 32Z M90 44 96 12 68 32Z" fill="#FF8A3D" stroke="#CC5500" stroke-width="3" stroke-linejoin="round"/><path d="M33 36 30 20 45 32Z M87 36 90 20 75 32Z" fill="#7A3B12"/><ellipse cx="60" cy="56" rx="35" ry="29" fill="#FF8A3D" stroke="#CC5500" stroke-width="3"/><path d="M32 62c8 14 18 20 28 20s20-6 28-20c-8 4-18 2-28 2s-20 2-28-2Z" fill="#fff"/><circle cx="47" cy="54" r="4.6" fill="#3C3C3C"/><circle cx="73" cy="54" r="4.6" fill="#3C3C3C"/><circle cx="48.6" cy="52.4" r="1.5" fill="#fff"/><circle cx="74.6" cy="52.4" r="1.5" fill="#fff"/><ellipse cx="60" cy="66" rx="4.8" ry="3.5" fill="#3C3C3C"/><path d="M54 71c3 3 9 3 12 0" fill="none" stroke="#3C3C3C" stroke-width="2.2" stroke-linecap="round"/><path d="M28 34c6-24 52-30 66-8l6 18-8 2c-4-10-10-16-16-16-14 0-34 2-42 4Z" fill="#E5383B" stroke="#B3202A" stroke-width="3" stroke-linejoin="round"/><circle cx="98" cy="48" r="6" fill="#fff"/><rect x="24" y="32" width="70" height="10" rx="5" fill="#fff"/></g>`;
-  const svgImage = svg => new Promise(ok => { const img = new Image(); img.onload = () => ok(img); img.onerror = () => ok(null); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
-  async function faceTexture(THREE, back) {
+  const loadImg = src => new Promise(ok => { const img = new Image(); img.onload = () => ok(img); img.onerror = () => ok(null); img.src = src; });
+  const FIG_IDS = ['elf', 'snowman', 'reindeer', 'gingerbread', 'cocoa', 'sweater', 'skater', 'caroler', 'snowball', 'santa', 'nutcracker', 'golden'];
+  // A snowflake: six arms with little branches.
+  function flake(g, x, y, r, alpha) {
+    g.save(); g.translate(x, y); g.strokeStyle = `rgba(255,255,255,${alpha})`; g.lineWidth = Math.max(2, r / 6); g.lineCap = 'round';
+    for (let k = 0; k < 6; k++) { g.rotate(Math.PI / 3); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r); g.moveTo(0, -r * .55); g.lineTo(r * .25, -r * .78); g.moveTo(0, -r * .55); g.lineTo(-r * .25, -r * .78); g.stroke(); }
+    g.restore();
+  }
+  // ── The bag's printed faces: Knox's Christmas pack (red foil, snowflakes,
+  // a gold ribbon, the real Santa Knox figure, the "?" coin and the label).
+  async function faceCanvas(back) {
     const W = 512, H = 672, c = document.createElement('canvas'); c.width = W; c.height = H;
     const g = c.getContext('2d');
-    g.fillStyle = '#FF6B00'; g.fillRect(0, 0, W, H);
-    // Foil stripes and a few snowflakes printed on the bag.
-    g.fillStyle = 'rgba(255,255,255,.07)';
-    for (let x = -H; x < W; x += 46) { g.beginPath(); g.moveTo(x, H); g.lineTo(x + 20, H); g.lineTo(x + 20 + H, 0); g.lineTo(x + H, 0); g.fill(); }
-    g.fillStyle = 'rgba(255,255,255,.22)';
-    for (const [x, y, r] of [[60, 120, 7], [450, 90, 6], [470, 380, 8], [40, 430, 6], [400, 560, 5], [110, 600, 7]]) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+    const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#E8333A'); bg.addColorStop(.55, '#C81E2A'); bg.addColorStop(1, '#A3151F');
+    g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    // Candy-stripe sheen and snowflakes printed on the foil.
+    g.fillStyle = 'rgba(255,255,255,.06)';
+    for (let x = -H; x < W; x += 56) { g.beginPath(); g.moveTo(x, H); g.lineTo(x + 22, H); g.lineTo(x + 22 + H, 0); g.lineTo(x + H, 0); g.fill(); }
+    for (const [x, y, r, a] of [[58, 96, 22, .35], [458, 250, 16, .3], [44, 330, 14, .28], [470, 470, 22, .3], [70, 560, 18, .3], [250, 40, 12, .25], [440, 620, 12, .25], [150, 640, 10, .22]]) flake(g, x, y, r, a);
     await document.fonts?.ready;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    // Green band across the bottom with a gold edge.
+    g.fillStyle = '#17803F'; g.fillRect(0, H - 92, W, 92);
+    g.fillStyle = '#F2B705'; g.fillRect(0, H - 98, W, 8);
     if (!back) {
-      const fox = await svgImage(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 92" width="600" height="460">${FOX_FACE}</svg>`);
-      if (fox) g.drawImage(fox, 96, 150, 320, 245);
+      // Gold ribbon running down, with a bow at the top.
+      g.fillStyle = 'rgba(242,183,5,.92)'; g.fillRect(W / 2 - 20, 0, 40, H - 98);
+      g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(W / 2 + 12, 0, 8, H - 98);
+      g.fillStyle = '#F2B705'; g.strokeStyle = '#B98500'; g.lineWidth = 6;
+      for (const s of [-1, 1]) { g.beginPath(); g.moveTo(W / 2, 46); g.bezierCurveTo(W / 2 + s * 30, 0, W / 2 + s * 92, 8, W / 2 + s * 76, 52); g.bezierCurveTo(W / 2 + s * 66, 80, W / 2 + s * 26, 66, W / 2, 46); g.fill(); g.stroke(); }
+      g.beginPath(); g.arc(W / 2, 48, 15, 0, Math.PI * 2); g.fill(); g.stroke();
+      // Glow behind Knox, then the real Santa Knox figure.
+      const glow = g.createRadialGradient(W / 2, 270, 10, W / 2, 270, 190); glow.addColorStop(0, 'rgba(255,236,170,.75)'); glow.addColorStop(1, 'rgba(255,236,170,0)');
+      g.fillStyle = glow; g.fillRect(0, 60, W, 420);
+      const santa = await loadImg('/bags/knox-santa.webp');
+      if (santa) { g.save(); g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowOffsetY = 8; g.shadowBlur = 10; g.drawImage(santa, W / 2 - 165, 92, 330, 330); g.restore(); }
       // The "?" coin
-      g.fillStyle = '#FFC800'; g.strokeStyle = '#D9A300'; g.lineWidth = 9;
-      g.beginPath(); g.arc(420, 140, 48, 0, Math.PI * 2); g.fill(); g.stroke();
-      g.fillStyle = '#7A5400'; g.font = '900 64px Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 420, 144);
-      // Label
-      g.fillStyle = '#FFF8F0'; g.strokeStyle = '#CC5500'; g.lineWidth = 8;
-      roundRect(g, 56, 438, 400, 118, 26); g.fill(); g.stroke();
-      g.fillStyle = '#CC5500'; g.font = '900 54px Nunito, sans-serif'; g.fillText('KNOX KNOWS', 256, 486);
-      g.fillStyle = '#E5383B'; g.font = '900 22px Nunito, sans-serif'; g.fillText('SERIES 1 · KNOX’S CHRISTMAS', 256, 530);
-      g.fillStyle = '#fff'; g.font = '900 26px Nunito, sans-serif'; g.fillText('BLIND BAG', 256, 610);
+      g.fillStyle = '#FFC800'; g.strokeStyle = '#B98500'; g.lineWidth = 9;
+      g.beginPath(); g.arc(426, 128, 46, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.fillStyle = '#7A5400'; g.font = '900 62px Nunito, sans-serif'; g.fillText('?', 426, 132);
+      // Label: white tag, green edge, holly in the corner.
+      g.fillStyle = '#FFFFFF'; g.strokeStyle = '#17803F'; g.lineWidth = 9;
+      roundRect(g, 48, 428, 416, 122, 28); g.fill(); g.stroke();
+      g.fillStyle = '#C81E2A'; g.font = '900 56px Nunito, sans-serif'; g.fillText('KNOX KNOWS', W / 2, 476);
+      g.fillStyle = '#17803F'; g.font = '900 22px Nunito, sans-serif'; g.fillText('SERIES 1 · KNOX’S CHRISTMAS', W / 2, 522);
+      g.fillStyle = '#1FA45A'; g.strokeStyle = '#0F5E2E'; g.lineWidth = 3;
+      for (const [x, y, rot] of [[66, 436, -.6], [92, 424, .3]]) { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.ellipse(0, 0, 26, 11, 0, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore(); }
+      g.fillStyle = '#E5383B'; for (const [x, y] of [[76, 440], [88, 446], [80, 452]]) { g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#fff'; g.font = '900 30px Nunito, sans-serif'; g.fillText('BLIND BAG', W / 2, H - 46);
     } else {
-      g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillStyle = '#FFF8F0'; g.font = '900 48px Nunito, sans-serif'; g.fillText('Collect all 12!', 256, 130);
-      g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '800 24px Nunito, sans-serif'; g.fillText('Who’s inside? Tear the top to find out.', 256, 178);
-      for (let i = 0; i < 12; i++) {
-        const x = 106 + (i % 4) * 100, y = 270 + Math.floor(i / 4) * 110;
-        g.fillStyle = i === 11 ? '#FFC800' : '#FFE0C2'; g.strokeStyle = i === 11 ? '#D9A300' : '#CC5500'; g.lineWidth = 6;
-        g.beginPath(); g.arc(x, y, 40, 0, Math.PI * 2); g.fill(); g.stroke();
-        g.fillStyle = i === 11 ? '#7A5400' : '#CC5500'; g.font = '900 40px Nunito, sans-serif'; g.fillText('?', x, y + 2);
-      }
-      g.fillStyle = '#fff'; g.font = '900 30px Nunito, sans-serif'; g.fillText('KNOX KNOWS', 256, 620);
+      g.fillStyle = '#FFFFFF'; g.font = '900 50px Nunito, sans-serif'; g.fillText('Collect all 12!', W / 2, 100);
+      g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '800 23px Nunito, sans-serif'; g.fillText('Who’s inside? Tear the top to find out.', W / 2, 146);
+      // The 12 figures as silhouettes (Golden Knox is a gold "?").
+      const imgs = await Promise.all(FIG_IDS.map(id => id === 'golden' ? null : loadImg(`/bags/knox-${id}.webp`)));
+      const sil = document.createElement('canvas'); sil.width = sil.height = 92; const sg = sil.getContext('2d');
+      FIG_IDS.forEach((id, i) => {
+        const x = 106 + (i % 4) * 100, y = 236 + Math.floor(i / 4) * 112;
+        g.fillStyle = id === 'golden' ? '#FFC800' : 'rgba(255,255,255,.16)'; g.strokeStyle = id === 'golden' ? '#B98500' : 'rgba(255,255,255,.45)'; g.lineWidth = 5;
+        g.beginPath(); g.arc(x, y, 44, 0, Math.PI * 2); g.fill(); g.stroke();
+        if (imgs[i]) { sg.clearRect(0, 0, 92, 92); sg.globalCompositeOperation = 'source-over'; sg.drawImage(imgs[i], 6, 4, 80, 80); sg.globalCompositeOperation = 'source-in'; sg.fillStyle = '#7E0F18'; sg.fillRect(0, 0, 92, 92); g.drawImage(sil, x - 46, y - 46); }
+        else { g.fillStyle = '#7A5400'; g.font = '900 44px Nunito, sans-serif'; g.fillText('?', x, y + 2); }
+      });
+      g.fillStyle = '#fff'; g.font = '900 32px Nunito, sans-serif'; g.fillText('KNOX KNOWS', W / 2, H - 46);
     }
-    const tex = new THREE.CanvasTexture(c);
+    return c;
+  }
+  async function faceTexture(THREE, back) {
+    const tex = new THREE.CanvasTexture(await faceCanvas(back));
     tex.anisotropy = 4;
     return tex;
+  }
+  // A flat picture of the pack for the bags screen and the Advent Calendar
+  // (the same printed face, with gold crimped ends and a foil shine).
+  let bagPic = null;
+  function bagImage() {
+    return bagPic || (bagPic = (async () => {
+      const face = await faceCanvas(false), W = 300, H = 420, c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+      const g = c.getContext('2d'); g.scale(2, 2);
+      const band = top => {
+        const y = top ? 12 : H - 40; g.fillStyle = '#E8A800'; g.fillRect(16, y, W - 32, 28);
+        g.beginPath(); for (let x = 16; x < W - 16; x += 12) { const ty = top ? y : y + 28, d = top ? -8 : 8; g.moveTo(x, ty); g.lineTo(x + 6, ty + d); g.lineTo(x + 12, ty); } g.fill();
+        g.fillStyle = 'rgba(0,0,0,.14)'; for (let x = 22; x < W - 18; x += 9) g.fillRect(x, y, 3, 28);
+      };
+      band(true); band(false);
+      g.save(); roundRect(g, 18, 32, W - 36, H - 64, 18); g.clip(); g.drawImage(face, 18, 32, W - 36, H - 64);
+      const sh = g.createLinearGradient(0, 0, W, 0); sh.addColorStop(0, 'rgba(0,0,0,.28)'); sh.addColorStop(.18, 'rgba(255,255,255,.12)'); sh.addColorStop(.32, 'rgba(255,255,255,0)'); sh.addColorStop(.8, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.3)');
+      g.fillStyle = sh; g.fillRect(0, 0, W, H); g.restore();
+      return c.toDataURL('image/webp', .9);
+    })().catch(() => { bagPic = null; return ''; }));
   }
   function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 
@@ -108,7 +156,7 @@
   }
   function crimpTexture(THREE) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 32;
-    const g = c.getContext('2d'); g.fillStyle = '#F26200'; g.fillRect(0, 0, 256, 32);
+    const g = c.getContext('2d'); g.fillStyle = '#E8A800'; g.fillRect(0, 0, 256, 32);
     g.fillStyle = 'rgba(0,0,0,.14)'; for (let x = 0; x < 256; x += 8) g.fillRect(x, 0, 3, 32);
     return new THREE.CanvasTexture(c);
   }
@@ -357,7 +405,11 @@
       const colors = picked.rarity === 'secret' ? ['#FFC800', '#FFE38A', '#FFFFFF', '#F2B705'] : ['#FF6B00', '#1CB0F6', '#58CC02', '#CE82FF', '#FFC800', '#FF4F57'];
       const confetti = Array.from({ length: 80 }, (_, i) => `<i style="--x:${(i * 53) % 100 - 50}vw;--y:${-(12 + (i * 29) % 34)}vh;--r:${(i * 97) % 900 - 450}deg;--c:${colors[i % colors.length]};--d:${1.7 + (i % 5) * .3}s;--delay:${(i % 6) * .03}s"></i>`).join('');
       const twinkles = Array.from({ length: 7 }, (_, i) => `<i style="--a:${i * 51}deg;--rad:${120 + (i % 3) * 26}px;--delay:${.5 + i * .17}s"></i>`).join('');
-      r.innerHTML = (window.KI?.fill || (x => x))(`<div class="kb3-confetti" aria-hidden="true">${confetti}</div>
+      const bulbs = ['#FF4F57', '#FFC800', '#1FA45A', '#1CB0F6', '#CE82FF'];
+      const lights = `<svg class="kb3-lights" viewBox="0 0 1000 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 8 Q 62 52 125 8 T 250 8 T 375 8 T 500 8 T 625 8 T 750 8 T 875 8 T 1000 8"/>${Array.from({ length: 16 }, (_, i) => { const x = 31 + i * 62.5, y = 8 + 22 * Math.sin(((x % 125) / 125) * Math.PI); return `<circle cx="${x}" cy="${y + 10}" r="7" fill="${bulbs[i % 5]}" color="${bulbs[i % 5]}"/>`; }).join('')}</svg>`;
+      const bokeh = `<div class="kb3-bokeh">${Array.from({ length: 16 }, (_, i) => `<i style="--x:${(i * 61) % 100}%;--s:${18 + (i * 7) % 34}px;--c:${i % 3 ? 'var(--rc)' : '#FFC800'};--d:${7 + i % 5}s;--delay:-${(i * 1.7) % 7}s"></i>`).join('')}</div>`;
+      const hills = `<svg class="kb3-hills" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 Q 200 60 420 110 T 820 100 T 1200 90 V200 H0Z" fill="#C9D7E6"/><path d="M0 160 Q 300 110 600 150 T 1200 140 V200 H0Z" fill="#EEF4FA"/>${[[90, 118], [160, 128], [1040, 104], [1110, 112]].map(([x, y]) => `<path d="M${x} ${y - 46} l22 34 h-10 l16 24 h-56 l16 -24 h-10Z" fill="#1F7A45"/><rect x="${x - 4}" y="${y + 12}" width="8" height="10" fill="#6B3E1E"/>`).join('')}${[[230, 150, '#E5383B'], [262, 156, '#1CB0F6'], [930, 146, '#FFC800'], [962, 152, '#1FA45A']].map(([x, y, col]) => `<rect x="${x}" y="${y}" width="26" height="22" rx="3" fill="${col}"/><rect x="${x + 11}" y="${y}" width="4" height="22" fill="#fff"/><rect x="${x}" y="${y + 8}" width="26" height="4" fill="#fff"/>`).join('')}</svg>`;
+      r.innerHTML = (window.KI?.fill || (x => x))(`<div class="kb3-celebrate" aria-hidden="true">${bokeh}${hills}${lights}</div><div class="kb3-confetti" aria-hidden="true">${confetti}</div>
         <div class="kb3-figwrap"><div class="kb3-rays" aria-hidden="true"></div><div class="kb3-twinkle" aria-hidden="true">${twinkles}</div><div class="kb3-fig">${picked.art}</div></div>
         <span class="kb3-tag ${picked.isNew ? 'new' : 'dup'}">${picked.isNew ? 'NEW!' : 'Duplicate'}</span>
         <span class="kb3-rarity">${RARITY_NAME[picked.rarity]}${picked.rarity === 'secret' ? ' · 1 in 100' : ''}</span>
@@ -459,5 +511,5 @@
       onReveal?.(how, err);
     }
   }
-  window.knoxBagStage = { supported, play, preload: () => supported() && loadThree().catch(() => {}) };
+  window.knoxBagStage = { supported, play, bagImage, preload: () => supported() && loadThree().catch(() => {}) };
 })();
