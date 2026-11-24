@@ -90,18 +90,35 @@ export default async function simBuild(req, res, { db, auth }) {
   const allowed = tier === "free" ? SIM_CATALOG.filter(s => s[1]) : SIM_CATALOG;
   const system = `You set up an interactive simulation in Knox Knows, a homework app for students. You can ONLY pick one of these built-in simulations and fill in its settings — never write code.
 ${allowed.map(([type, , what, keys]) => `- ${type}: ${what}. Settings: ${keys}`).join("\n")}
+${tier === "free" ? "" : `- custom: when none of those fits, BUILD a scene from pieces instead (physics setups: ramps, collisions, springs, targets, races, bouncing, orbits without gravity, Rube Goldberg ideas). Put it in "scene":
+  {"world": {"planet": earth|moon|mars|jupiter|sun|pluto|space, "air": 0..1, "bounce": 0..1, "friction": 0..1, "width": 5..200 (meters shown across)},
+   "objects": [{"id": short id, "kind": ball|box|ramp|wall|spring|target|label, "x": m, "y": m (0 is the ground), "name": short name, "color": one of #FF6B00 #1CB0F6 #1FA45A #A560F2 #E5383B #FFC800 #14B8A6 #3C3C3C,
+      ball: "r" radius m, "mass" kg, "speed" m/s, "dir" degrees (0 right, 90 up), "fixed" true to pin; box: "w" size m, mass, speed, dir; ramp: starts at x,y, "len" m, "angle" degrees (negative slopes down to the right); wall: at x from the ground up, "len" height m; spring: anchored at x,y, "to" the id of a ball/box, "k" N/m, "rest" m; target: "r" m; label: "text"}],
+   "sliders": [{"obj": an object id or "world", "prop": speed|dir|mass|r|w|x|y|angle|len|k|rest (world: gravity|air|bounce|friction), "min", "max"}] (1-4 helpful ones),
+   "graphs": [{"obj": a ball/box id, "prop": y|x|speed|vy|vx|ke|pe}] (0-2),
+   "goal": {"obj": ball id, "target": target id} (optional)}
+  Keep it under 15 objects and inside the width.`}
 Reply with JSON only: {"type": one type above, "values": {setting: number or word}, "title": a short friendly title (max 40 characters), "explain": one or two short sentences telling the student what to try (move which slider, what to watch for)}.
 Use the numbers from the student's request. Leave out settings you don't need. If nothing fits, pick the closest one and say in "explain" what it shows instead. Never use bad language; keep it school-friendly.`;
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-6-luna", messages: [{ role: "system", content: system }, { role: "user", content: prompt }], response_format: { type: "json_object" }, max_completion_tokens: 1500 }),
-      signal: AbortSignal.timeout(25000),
+      body: JSON.stringify({ model: "gpt-6-luna", messages: [{ role: "system", content: system }, { role: "user", content: prompt }], response_format: { type: "json_object" }, max_completion_tokens: 4000 }),
+      signal: AbortSignal.timeout(40000),
     });
     if (!r.ok) throw new Error("model " + r.status);
     const out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}");
     const type = String(out.type || "").toLowerCase();
+    const clean = s => String(s || "").replace(/[<>]/g, "").slice(0, 240);
+    // A custom scene (Plus and Mega): plain data the Lab checks again field by field (simbuilder.js clean()).
+    if (type === "custom" && tier !== "free" && out.scene && typeof out.scene === "object") {
+      const json = JSON.stringify(out.scene);
+      if (json.length > 12000) throw new Error("scene too big");
+      const scene = JSON.parse(json.replace(/[<>]/g, ""));
+      scene.title = clean(out.title).slice(0, 40);
+      return res.status(200).json({ sim: { type: "custom", scene, title: scene.title, explain: clean(out.explain) }, ...(charge.kind === "free" ? { creditsLeft: charge.remaining } : {}) });
+    }
     if (!allowed.some(s => s[0] === type)) throw new Error("bad type");
     const values = {};
     for (const [k, v] of Object.entries(out.values && typeof out.values === "object" ? out.values : {}).slice(0, 20)) {
@@ -111,7 +128,6 @@ Use the numbers from the student's request. Leave out settings you don't need. I
       else if (typeof v === "boolean") values[k] = v ? 1 : 0;
       else if (typeof v === "string" && /^[a-z0-9.\-]{1,16}$/i.test(v)) values[k] = v.toLowerCase();
     }
-    const clean = s => String(s || "").replace(/[<>]/g, "").slice(0, 240);
     return res.status(200).json({
       sim: { type, values, title: clean(out.title).slice(0, 40), explain: clean(out.explain) },
       ...(charge.kind === "free" ? { creditsLeft: charge.remaining } : {}),

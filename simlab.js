@@ -499,6 +499,32 @@
       },
     },
   };
+  // ── Challenges: goals checked live as you move things (done ones are kept on this device).
+  const near = (a, b, tol) => Math.abs(a - b) <= tol;
+  const rootsOf = (f, X = 10) => { const out = []; let px = -X, py = f(px); for (let i = 1; i <= 400; i++) { const x = -X + 2 * X * i / 400, y = f(x); if (Number.isFinite(py) && Number.isFinite(y) && py * y <= 0 && py !== y) out.push(px - py * (x - px) / (y - py)); px = x; py = y; } return out; };
+  const CHALLENGES = {
+    equation: [['Make your graph cross the x-axis at x = 3', s => { try { const m = parseMath(s.eq), env = Object.fromEntries(LETTERS.map(L => [L, s['p_' + L]])); return rootsOf(x => m.f({ ...env, x }), s.xmax).some(r => near(r, 3, .05)); } catch (_) { return false; } }],
+      ['Graph two equations that meet at exactly one point', s => { try { if (!s.eq2.trim()) return false; const a = parseMath(s.eq), b = parseMath(s.eq2), env = Object.fromEntries(LETTERS.map(L => [L, s['p_' + L]])); return rootsOf(x => a.f({ ...env, x }) - b.f({ ...env, x }), s.xmax).length === 1; } catch (_) { return false; } }]],
+    line: [['Make a line that goes through (2, 7)', s => near(s.m * 2 + s.b, 7, .01)], ['Make a line parallel to y = 3x − 1 (but not the same line)', s => s.m === 3 && s.b !== -1], ['Turn on a second line and make them cross at (1, 4)', s => s.second && s.m !== s.m2 && near(s.m + s.b, 4, .01) && near(s.m2 + s.b2, 4, .01)]],
+    parabola: [['Put the vertex at (2, −1)', s => s.a && near(-s.b / (2 * s.a), 2, .01) && near(s.c - s.b * s.b / (4 * s.a), -1, .01)], ['Make a parabola with no x-intercepts that opens up', s => s.a > 0 && s.b * s.b - 4 * s.a * s.c < 0], ['Make it open down and cross at x = −1 and x = 3', s => s.a < 0 && rootsOf(x => s.a * x * x + s.b * x + s.c).length === 2 && rootsOf(x => s.a * x * x + s.b * x + s.c).every(r => near(r, -1, .05) || near(r, 3, .05))]],
+    sine: [['Make the period 4π (one wave every 12.57 units)', s => near(s.freq, .5, .001)], ['Make the wave go from −1 up to 5', s => near(s.shift - s.amp, -1, .01) && near(s.shift + s.amp, 5, .01)]],
+    exponential: [['Make the amount double about every 4 steps', s => s.rate > 0 && near(Math.log(2) / Math.log(1 + s.rate / 100), 4, .3)], ['Shrink 1000 to under 10 in 10 steps', s => s.start >= 1000 && s.start * Math.pow(1 + s.rate / 100, s.steps) < 10 && s.steps <= 10]],
+    fraction: [['Make a fraction equal to 40%', s => near(s.n / s.d, .4, 1e-9)], ['Make a fraction equal to 2/3 with a bottom of 9', s => s.n === 6 && s.d === 9], ['Make a fraction bigger than 1', s => s.n > s.d]],
+    unitcircle: [['Find an angle where sine and cosine are equal', s => near(Math.sin(s.angle * Math.PI / 180), Math.cos(s.angle * Math.PI / 180), .01)], ['Find an angle where cosine is −1', s => near(Math.cos(s.angle * Math.PI / 180), -1, 1e-6)]],
+    projectile: [['Land exactly 30 m away (±0.5 m)', s => { const m = T.projectile.model(s), p = m.pts[m.pts.length - 1]; return near(p.x, 30, .5); }], ['Reach a height of 20 m', s => T.projectile.model(s).pts.some(p => p.y >= 20)], ['On the Moon, land 100 m away (±2 m)', s => s.planet === 'moon' && near(T.projectile.model(s).pts.slice(-1)[0].x, 100, 2)]],
+    freefall: [['On Earth with no air, find a drop that takes 3 s', s => s.planet === 'earth' && !s.drag && near(T.freefall.model(s).end, 3, .06)], ['Make something land slower than 10 m/s from 50 m or higher', s => s.height >= 50 && T.freefall.model(s).pts.slice(-1)[0].v < 10]],
+    pendulum: [['Make one full swing take 2 s on Earth', s => s.planet === 'earth' && near(2 * Math.PI * Math.sqrt(s.length / 9.81), 2, .03)], ['Make a 1 m pendulum swing faster than 1 s', s => s.length === 1 && 2 * Math.PI * Math.sqrt(1 / PLANETS[s.planet][0]) < 1]],
+    spring: [['Make one bounce take exactly 1 s', s => near(2 * Math.PI * Math.sqrt(s.mass / s.k), 1, .02)], ['Use a 5 kg mass and still bounce faster than 1 s', s => s.mass >= 5 && 2 * Math.PI * Math.sqrt(s.mass / s.k) < 1]],
+    motion: [['Make B catch A after exactly 3 hours', s => s.time === 'h' && s.b > s.a && near(s.head / (s.b - s.a), 3, .01)], ['Make B never catch up', s => s.b <= s.a && s.head > 0]],
+    ohm: [['Make exactly 0.5 A flow', s => near(s.volts / (s.ohms * s.bulbs), .5, .001)], ['Light 4 bulbs with a 12 V battery and at least 0.1 A', s => s.bulbs === 4 && s.volts === 12 && s.volts / (s.ohms * 4) >= .1]],
+    interest: [['Grow $1,000 into $5,000 (no monthly adds)', s => s.p === 1000 && s.add === 0 && s.p * Math.pow(1 + s.r / 100, s.t) >= 5000], ['Reach $100,000 in 30 years or less', s => { const r = s.r / 100; let b = s.p; for (let y = 0; y < s.t; y++) { b += s.add * 12; b *= 1 + r; } return s.t <= 30 && b >= 100000; }]],
+    probability: [['Flip a coin 1000 times or more', s => s.kind === 'coin' && s.trials >= 1000], ['Roll two dice 500 times and look for the most common sum', s => s.kind === 'twodice' && s.trials >= 500]],
+    population: [['Make it reach half its capacity by generation 10', s => { const r = s.rate / 100; let p = s.start; for (let y = 1; y <= 10; y++) p += r * p * (1 - p / s.capacity); return s.logistic && p >= s.capacity / 2; }], ['Turn off the limit and pass 1,000,000', s => !s.logistic && s.start * Math.pow(1 + s.rate / 100, s.years) > 1e6]],
+  };
+  const DONE_KEY = 'knoxSimChallenges.v1';
+  const doneSet = () => { try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch (_) { return new Set(); } };
+  const markDone = id => { const d = doneSet(); d.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...d])); } catch (_) {} };
+
   const GROUPS = ['Math', 'Physics', 'Money', 'Chance', 'Biology'];
   const ORDER = ['equation', 'projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population'];
   const COMMON = [range('speedx', 'Playback speed', .25, 3, .25, 1, '×', true), toggle('grid', 'Show the grid', true), toggle('labels', 'Show labels and numbers', true)];
@@ -539,7 +565,7 @@
   function renderHome() {
     if (!host) return;
     const saved = readSaved();
-    const tabs = [['build', 'sparkle', 'Knox builds it'], ['play', 'sliders', 'Playground'], ['mine', 'cards', `My sims${saved.length ? ` (${saved.length})` : ''}`]];
+    const tabs = [['build', 'sparkle', 'Knox builds it'], ['play', 'sliders', 'Playground'], ['make', 'pencil', 'Make your own'], ['mine', 'cards', `My sims${saved.length ? ` (${saved.length})` : ''}`]];
     let body = '';
     if (tab === 'build') {
       body = `<div class="sl-build">
@@ -550,6 +576,17 @@
           ${buildMsg ? `<p class="sl-msg" role="status">${buildMsg}</p>` : ''}
           <p class="sl-cost">${costLine()}</p>
         </div>`;
+    } else if (tab === 'make') {
+      body = `<div class="sl-make">
+          <div class="sl-make-hero"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><div><b>Build a simulation from scratch</b><span>Drop in balls, blocks, ramps, walls, springs and targets. Set gravity, air and bounce. Add sliders and graphs, then press Play.</span></div></div>
+          <div class="sl-make-grid">
+            <button type="button" class="sl-tile g-physics" data-make="blank"><span class="sl-ico" aria-hidden="true">${ki('target')}</span><b>Hit the target</b><small>A ball, a target and a slider to start from</small></button>
+            <button type="button" class="sl-tile g-math" data-make="ramp"><span class="sl-ico" aria-hidden="true">${ki('chart')}</span><b>Ramp race</b><small>Two balls roll down ramps — which wins?</small></button>
+            <button type="button" class="sl-tile g-chance" data-make="spring"><span class="sl-ico" aria-hidden="true">${ki('bolt')}</span><b>Bouncy spring</b><small>A block on a spring with a graph</small></button>
+            <button type="button" class="sl-tile g-money" data-make="crash"><span class="sl-ico" aria-hidden="true">${ki('spark')}</span><b>Collisions</b><small>A heavy and a light ball crash</small></button>
+            <button type="button" class="sl-tile g-biology" data-make="empty"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><b>Empty world</b><small>Start with nothing at all</small></button>
+          </div>
+          <p class="sl-cost">${window.knoxSimBuilder ? (() => { const L = window.knoxSimBuilder.LIMITS[tier()]; return `Your plan: up to ${L.objects} things, ${L.sliders} slider${L.sliders === 1 ? '' : 's'} and ${L.graphs} graph${L.graphs === 1 ? '' : 's'} per simulation.` + (tier() === 'free' ? ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.' : tier() === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ''); })() : ''}</p></div>`;
     } else if (tab === 'play') {
       const ids = ORDER.filter(id => filter === 'All' || T[id].group === filter);
       body = `<div class="sl-filters">${['All', ...GROUPS].map(g => `<button type="button" class="sl-chip${filter === g ? ' on' : ''}" data-filter="${g}">${g}</button>`).join('')}</div>
@@ -575,6 +612,7 @@
     try {
       const r = await fetch('/api/me?route=sim-build', { method: 'POST', headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
       const j = await r.json().catch(() => ({}));
+      if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain }); return; }
       if (!r.ok || !j.sim || !T[j.sim.type]) throw Object.assign(new Error(j.error || 'Knox couldn’t build that one. Try saying it another way.'), { upgrade: j.upgrade });
       buildBusy = false;
       if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.();
@@ -584,6 +622,33 @@
     }
   }
 
+  // ── Make your own (simbuilder.js) ────────────────────────────────────────
+  const STARTERS = {
+    blank: () => window.knoxSimBuilder.blank(),
+    empty: () => ({ title: 'My simulation', world: { planet: 'earth', air: 0, bounce: .5, friction: .3, width: 40 }, objects: [] }),
+    ramp: () => ({ title: 'Ramp race', world: { planet: 'earth', air: 0, bounce: .3, friction: .2, width: 40 }, objects: [
+      { id: 'r1', kind: 'ramp', x: 2, y: 14, len: 16, angle: -40, color: '#1CB0F6', name: 'Steep ramp' }, { id: 'r2', kind: 'ramp', x: 2, y: 6, len: 20, angle: -15, color: '#A560F2', name: 'Gentle ramp' },
+      { id: 'a', kind: 'ball', x: 2.6, y: 14.9, r: .6, mass: 1, color: '#FF6B00', name: 'Ball A' }, { id: 'b', kind: 'ball', x: 2.6, y: 6.9, r: .6, mass: 1, color: '#1FA45A', name: 'Ball B' },
+      { id: 'w', kind: 'wall', x: 38, len: 4, color: '#3C3C3C', name: 'Finish' }], sliders: [{ obj: 'r1', prop: 'angle', min: -70, max: -5 }], graphs: [{ obj: 'a', prop: 'speed' }] }),
+    spring: () => ({ title: 'Bouncy spring', world: { planet: 'earth', air: .1, bounce: .5, friction: .3, width: 20 }, objects: [
+      { id: 's', kind: 'spring', x: 10, y: 14, k: 40, rest: 4, to: 'm', color: '#A560F2', name: 'Spring' }, { id: 'm', kind: 'box', x: 10, y: 6, w: 1.4, mass: 2, color: '#1CB0F6', name: 'Block' }],
+      sliders: [{ obj: 's', prop: 'k', min: 5, max: 200 }, { obj: 'm', prop: 'mass', min: .5, max: 10 }], graphs: [{ obj: 'm', prop: 'y' }] }),
+    crash: () => ({ title: 'Collisions', world: { planet: 'space', air: 0, bounce: .9, friction: 0, width: 40 }, objects: [
+      { id: 'h', kind: 'ball', x: 6, y: 8, r: 1.4, mass: 10, speed: 8, dir: 0, color: '#E5383B', name: 'Heavy' }, { id: 'l', kind: 'ball', x: 26, y: 8, r: .7, mass: 1, speed: 0, dir: 0, color: '#FFC800', name: 'Light' }],
+      sliders: [{ obj: 'h', prop: 'mass', min: .5, max: 50 }], graphs: [{ obj: 'l', prop: 'speed' }] }),
+  };
+  function openBuilder(scene, meta = {}) {
+    if (!window.knoxSimBuilder) return;
+    editor?.stop();
+    const b = window.knoxSimBuilder.mount(host, scene, {
+      tier: tier(), explain: meta.explain,
+      onBack: () => { editor = null; tab = 'make'; renderHome(); },
+      onSave: sc => { const list = readSaved(), max = SAVE_MAX[tier()]; if (list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one in My sims, or upgrade to save more.`); return false; } list.unshift({ type: 'custom', values: sc, title: sc.title, at: Date.now() }); writeSaved(list); return true; },
+      onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
+    });
+    editor = { stop: b.stop, click: () => {} };
+  }
+
   // ── The editor ───────────────────────────────────────────────────────────
   function open(id, vals, meta = {}) {
     if (!T[id]) return;
@@ -591,6 +656,8 @@
     editor?.stop();
     editor = makeEditor(id, cleanValues(id, vals), meta);
   }
+  // Share: a link that opens this exact setup (filled in by the share step).
+  function shareSim(item, btn) { window.knoxSimShare ? window.knoxSimShare(item, btn) : (btn.textContent = 'Sharing soon'); }
   function upsell(level, text) {
     const n = host?.querySelector('.sl-upsell'); n?.remove();
     host?.querySelector('.sl-wrap, .sl-ed')?.insertAdjacentHTML('afterbegin', fill(`<div class="sl-upsell">${level === 'mega' ? '💎' : '⚡'} <span>${text}</span>${window.knoxNativeApp ? '' : '<button type="button" class="sl-btn sm" data-upgrade>See plans</button>'}<button type="button" class="sl-x" data-close-upsell aria-label="Close">✕</button></div>`));
@@ -621,6 +688,7 @@
             <button type="button" class="sl-btn ghost${tier() === 'mega' ? '' : ' locked'}" data-compare>${ghost ? 'Stop comparing' : 'Compare'} ${tier() === 'mega' ? '' : tag('mega')}</button></div>
           <p class="sl-readout" aria-live="polite"></p></div>
         <div class="sl-controls">
+          ${CHALLENGES[id] ? `<div class="sl-chal"><span class="sl-label">${ki('target', false)} Challenges</span>${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div>` : ''}
           ${presets.length ? `<div class="sl-presets"><span class="sl-label">Try</span>${presets.map(([n], i) => `<button type="button" class="sl-chip" data-preset="${i}">${esc(n)}</button>`).join('')}</div>` : ''}
           <div class="sl-group">${basic.map(ctl).join('')}</div>
           ${more.length ? `<button type="button" class="sl-more${moreOpen ? ' open' : ''}" data-more aria-expanded="${moreOpen}">More settings ${paid() ? '' : tag('plus')}<span aria-hidden="true">▾</span></button>
@@ -645,6 +713,24 @@
         text = def.draw.call(def, g, s, c, t);
       } catch (e) { text = 'That setup can’t be drawn — try different numbers.'; }
       readout.textContent = (ghost ? 'Faded = your saved setup · ' : '') + (text || '');
+      checkChallenges();
+    }
+    // A challenge you meet lights up with confetti (once).
+    let chTimer = 0;
+    function checkChallenges() {
+      clearTimeout(chTimer);
+      chTimer = setTimeout(() => (CHALLENGES[id] || []).forEach(([, ok], i) => {
+        const row = host.querySelector(`.sl-chal-row[data-ch="${i}"]`); if (!row) return;
+        let met = false; try { met = !!ok(s); } catch (_) {}
+        row.classList.toggle('now', met);
+        if (met && !row.classList.contains('done')) { row.classList.add('done'); markDone(id + i); celebrate(); }
+      }), 250);
+    }
+    function celebrate() {
+      window.knoxSound?.fx?.fanfare?.(false);
+      const st = host.querySelector('.sl-stage'); if (!st) return;
+      const c = document.createElement('div'); c.className = 'sb-confetti'; c.innerHTML = Array.from({ length: 30 }, (_, i) => `<i style="--x:${(i * 37) % 100}%;--c:${['#FF6B00', '#1CB0F6', '#1FA45A', '#A560F2', '#E5383B', '#FFC800'][i % 6]};--d:${.9 + (i % 5) * .2}s"></i>`).join('');
+      st.append(c); setTimeout(() => c.remove(), 2200);
     }
     const dur = () => def.duration ? def.duration.call(def, s) : 4;
     function frame(now) {
@@ -728,7 +814,8 @@
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
     if (b.matches('[data-build]')) { build(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }
-    if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) open(x.type, x.values, { title: x.title }); return; }
+    if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values) : open(x.type, x.values, { title: x.title }); return; }
+    if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.()); return; }
     if (b.dataset.unsave != null) { const list = readSaved(); list.splice(+b.dataset.unsave, 1); writeSaved(list); renderHome(); }
   });
   document.addEventListener('keydown', e => { if (host && e.target.id === 'slPrompt' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) build(); });

@@ -53,3 +53,9 @@ test('Graph your own: the math reader reads what students type and never runs co
   assert.throws(() => parseMath('(x + 1'));
   assert.doesNotMatch(lab.slice(start, end), /\beval\(|new Function/);
 });
+
+test('Challenges: every built-in sim has some, and none is already met by its starting setup', () => {
+  const lab = src('simlab.js');
+  const ids = [...lab.matchAll(/^    ([a-z]+): \{\n      group:/gm)].map(m => m[1]);
+  for (const id of ids) assert.match(lab, new RegExp(`^    ${id}: \\[\\['`, 'm'), `${id} has challenges`);
+});
