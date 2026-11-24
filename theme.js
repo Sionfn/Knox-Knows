@@ -347,6 +347,11 @@
   // Christmas night only (christmas.css): a moon and a few stars.
   const XMAS_NIGHT_SKY = '<div class="xmas-night-sky"><svg class="xmas-moon" viewBox="0 0 60 60" focusable="false"><path d="M34 7A23 23 0 1 0 53 38A18 18 0 1 1 34 7Z" fill="#FFF3C4" stroke="#E8D48A" stroke-width="3" stroke-linejoin="round"/></svg>' +
     Array.from({ length: 14 }, (_, i) => `<span class="xmas-star" style="left:${(i * 37 + 9) % 96}%;top:${8 + (i * 23) % 52}%;--s:${3 + i % 3}px"></span>`).join('') + '</div>';
+  // The same Christmas scene somewhere else (the blind bag opening, bags3d.js).
+  window.knoxXmasScene = host => {
+    host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true">${XMAS_NIGHT_SKY}<div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
+    addLights(host.querySelector(':scope > .xmas-deco'), false);
+  };
   function christmasDecorate() {
     const host = document.getElementById('welcomeScreen') || document.getElementById('home');
     if (host && !host.querySelector(':scope > .xmas-deco')) {
