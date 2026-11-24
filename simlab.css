@@ -61,6 +61,8 @@ html[data-theme="dark"] .sl-tag.mega { color: #6FD0FF; }
 .sl-tile.g-money { --c: #1FA45A; --cd: #157A41; }
 .sl-tile.g-chance { --c: #A560F2; --cd: #7C3AED; }
 .sl-tile.g-biology { --c: #14B8A6; --cd: #0E8A7D; }
+.sl-tile.g-chemistry { --c: #E5383B; --cd: #B3202A; }
+.sl-tile.g-earth { --c: #58CC02; --cd: #3E8F00; }
 
 /* My sims */
 .sl-saved { display: flex; flex-direction: column; gap: 8px; }
@@ -190,3 +192,24 @@ html[data-theme="dark"] .sl-back { color: var(--sl); }
 .sl-chal-row.done > span:last-child { color: var(--text-light); text-decoration: line-through; text-decoration-thickness: 2px; }
 .sl-chal-row.now > span:last-child { color: #157A41; text-decoration: none; }
 html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
+
+.sl-guide { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--sl); background: var(--surface); font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.45; }
+.sl-guide b:first-child { font-weight: 900; }
+.sl-guide span { flex: 1; min-width: 220px; }
+.sl-stage:fullscreen { display: flex; flex-direction: column; padding: 18px; background: var(--surface); }
+.sl-stage:fullscreen .sl-canvas { flex: 1; height: auto; }
+.sl-stage .sb-table { margin-top: 8px; }
+
+/* Community */
+.sl-tabs { grid-template-columns: repeat(5, 1fr); }
+.sl-tab { font-size: 13.5px; }
+.sl-cmeta { margin-top: auto; padding-top: 6px; font-size: 11.5px; font-weight: 800; color: var(--text-light); }
+.sl-btn.on { border-color: #E5383B; color: #E5383B; }
+.sl-pub-wrap { position: fixed; inset: 0; z-index: 10090; display: grid; place-items: center; padding: 16px; background: rgba(20, 16, 14, .45); }
+.sl-pub { width: min(460px, 100%); display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 22px; border: 2px solid #F2B705; background: var(--surface); box-shadow: 0 6px 0 #B98500, 0 24px 60px rgba(0, 0, 0, .3); }
+.sl-pub h3 { margin: 0; font-size: 20px; font-weight: 900; color: var(--text); }
+.sl-pub > p { margin: -6px 0 0; font-size: 13.5px; font-weight: 700; color: var(--text-light); }
+.sl-pub input[type=text], .sl-pub textarea { padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; resize: vertical; }
+.sl-pub-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.sl-msg[hidden] { display: none; }
+@media (max-width: 860px) { .sl-tabs { grid-template-columns: repeat(3, 1fr); } }

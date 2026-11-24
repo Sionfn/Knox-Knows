@@ -38,6 +38,12 @@ export const SIM_CATALOG = [
   ["probability", true, "flipping coins or rolling dice many times", "kind (coin, die, twodice), trials (10..5000)"],
   ["population", false, "a population growing in an environment (biology)", "start (1..1000), rate (1..100 percent per generation), capacity (10..10000 carrying capacity), years (5..100), logistic (0/1 limited by capacity)"],
   ["ohm", false, "a simple circuit: voltage, current and resistance (Ohm's law)", "volts (0..24), ohms (1..1000), bulbs (1..4 in series)"],
+  ["gas", false, "gas laws: pressure, volume and temperature (PV = nRT)", "temp (50..1000 K), vol (1..50 L), mol (0.1..5)"],
+  ["ph", false, "mixing an acid and a base and the pH", "va (0..100 mL acid), ca (0.01..1 M), vb (0..100 mL base), cb (0.01..1 M), ind (universal, phenol, litmus)"],
+  ["wave", false, "waves and sound: wavelength, frequency, interference", "amp (0.1..3), freq (0.2..5 Hz), speed (0.5..10 m/s), two (0/1 second wave), amp2, freq2, flip (0/1)"],
+  ["orbit", false, "a planet orbiting a star (gravity, Kepler)", "star (0.1..5 Suns), dist (0.3..5 AU), speed (0.2..1.6 times circular speed)"],
+  ["seasons", false, "seasons, daylight and the sun's height (Earth's tilt)", "lat (-90..90), day (1..365 day of the year), tilt (0..45)"],
+  ["supply", false, "supply and demand, equilibrium price, price ceilings", "d0 (20..200), ds (0.2..3), s0 (0..100), ss (0.2..3), ceil (0..200, 0 = none)"],
 ];
 const FREE_TYPES = SIM_CATALOG.filter(s => s[1]).map(s => s[0]);
 

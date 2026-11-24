@@ -6942,7 +6942,7 @@ window.appHandleAsk = async function() {
         // Smart search: in Ask Knox, Knox searches the web when the question needs it.
         webSearch: !requestLearnMode || undefined,
         // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
-        simulations: (window.userTier === 'mega' && window.knoxSimsOn?.(requestUid)) || undefined, // Ask Knox and Learn (Dec 1)
+        simulations: ['plus', 'mega'].includes(window.userTier) || undefined, // Ask Knox and Learn add a simulation when it helps (Knox Plus and Mega Knox; the server checks the plan)
         language: requestUid && window.knoxAnswerLanguage?.(requestUid) !== 'auto' ? window.knoxAnswerLanguage(requestUid) : undefined, // Account & Plan → Knox answers in
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),

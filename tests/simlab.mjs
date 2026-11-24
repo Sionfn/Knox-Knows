@@ -8,7 +8,7 @@ const src = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 test('Simulation Lab: the server catalog and the Lab have the same simulations and the same free starter set', () => {
   const lab = src('simlab.js');
   const ids = [...lab.matchAll(/^    ([a-z]+): \{\n      group:/gm)].map(m => m[1]);
-  assert.equal(ids.length, 16);
+  assert.equal(ids.length, 22);
   assert.deepEqual([...ids].sort(), SIM_CATALOG.map(s => s[0]).sort());
   const freeLab = ids.filter(id => new RegExp(`^    ${id}: \\{\\n      group: '[A-Za-z]+', icon: '[a-zA-Z]+', free: true`, 'm').test(lab)).sort();
   assert.deepEqual(freeLab, SIM_CATALOG.filter(s => s[1]).map(s => s[0]).sort());
@@ -58,4 +58,18 @@ test('Challenges: every built-in sim has some, and none is already met by its st
   const lab = src('simlab.js');
   const ids = [...lab.matchAll(/^    ([a-z]+): \{\n      group:/gm)].map(m => m[1]);
   for (const id of ids) assert.match(lab, new RegExp(`^    ${id}: \\[\\['`, 'm'), `${id} has challenges`);
+});
+
+test('Community: published sims are moderated, anonymous, reportable, and never carry contact info', () => {
+  const c = src('api/_sim-community.js'), lab = src('simlab.js');
+  assert.match(c, /omni-moderation-latest/);
+  assert.match(c, /const HIDE_AT = 3;/);
+  assert.match(c, /reports >= HIDE_AT \? \{ hidden: true \}/);
+  assert.match(c, /if \(CONTACT\.test\(text\)\)/);
+  assert.doesNotMatch(c, /displayName|email:/);
+  assert.match(lab, /By a Knox student/);
+  assert.match(src('api/me.js'), /route === "sim-community"\) return simCommunity\(req, res, \{ db, auth: adminAuth \}\)/);
+  const CONTACT = new RegExp(c.match(/const CONTACT = \/(.+)\/i;/)[1], 'i');
+  for (const bad of ['see www.example.com', 'email me kid@mail.com', 'call 555 123 4567', 'add me @coolkid99', 'https://x.y']) assert.ok(CONTACT.test(bad), bad);
+  for (const ok of ['Ball on the Moon', 'Ramp race 2', 'y = 2x + 1', 'Speed 25 m/s']) assert.ok(!CONTACT.test(ok), ok);
 });

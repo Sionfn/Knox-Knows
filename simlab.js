@@ -498,7 +498,127 @@
         return `After ${s.years} generations: ${fmt(main[main.length - 1], 0)}${s.logistic ? ` (levels off near ${fmt(K)})${half > 0 ? ` · reaches half of it at generation ${half}` : ''}` : ' (no limit, so it keeps exploding)'}${s.both && s.logistic ? ` · unlimited growth would be ${fmt(expo[expo.length - 1], 0)}` : ''}`;
       },
     },
+    gas: {
+      group: 'Chemistry', icon: 'flask', title: 'Gas laws', blurb: 'Pressure, volume and temperature', anim: true, loop: true,
+      params: [range('temp', 'Temperature', 50, 1000, 10, 300, 'K'), range('vol', 'Volume', 1, 50, .5, 25, 'L'), range('mol', 'Amount of gas', .1, 5, .1, 1, 'mol'), toggle('celsius', 'Show °C too', true), toggle('graph', 'Graph pressure vs volume', true)],
+      presets: [['Squeeze it', { vol: 5 }], ['Heat it up', { temp: 800 }], ['Freezing cold', { temp: 100 }]],
+      duration: () => 10,
+      draw(g, s, c, t) {
+        const P = s.mol * 8.314 * s.temp / s.vol, boxW = (c.w * (s.graph ? .5 : .85)) * clamp(s.vol / 50, .15, 1), x0 = 20, y0 = 20, H = c.h - 50;
+        if (!c.ghost) { g.save(); g.strokeStyle = c.axis; g.lineWidth = 3; g.strokeRect(x0, y0, boxW, H); g.fillStyle = c.axis; g.fillRect(x0 + boxW, y0 - 6, 8, H + 12); g.restore(); }
+        const R = rng(42), n = Math.round(clamp(s.mol * 18, 3, 90)), sp = Math.sqrt(s.temp) * 9, tt = t || 0;
+        for (let i = 0; i < n; i++) { const vx = (R() - .5) * sp, vy = (R() - .5) * sp, bx = (R() * boxW + vx * tt) % (2 * boxW), by = (R() * H + vy * tt) % (2 * H); const px = Math.abs(bx < 0 ? bx + 2 * boxW : bx), py = Math.abs(by < 0 ? by + 2 * H : by); ball(g, x0 + (px > boxW ? 2 * boxW - px : px), y0 + (py > H ? 2 * H - py : py), c.ghost ? c.light : c.blue, '#FFFFFF', 4); }
+        label(g, c, `${fmt(s.vol, 1)} L`, x0 + boxW / 2, c.h - 16, c.text);
+        if (s.graph && !c.ghost) { const gx = c.w * .58, gw = c.w * .38, gy = 20, gh = c.h - 60, pmax = s.mol * 8.314 * s.temp / 1; g.save(); g.strokeStyle = c.axis; g.lineWidth = 2; g.beginPath(); g.moveTo(gx, gy); g.lineTo(gx, gy + gh); g.lineTo(gx + gw, gy + gh); g.stroke(); g.strokeStyle = c.purple; g.lineWidth = 3; g.beginPath(); for (let v = 1; v <= 50; v += .5) { const px = gx + v / 50 * gw, py = gy + gh - clamp((s.mol * 8.314 * s.temp / v) / Math.min(pmax, 2000), 0, 1) * gh; v === 1 ? g.moveTo(px, py) : g.lineTo(px, py); } g.stroke(); g.restore(); ball(g, gx + s.vol / 50 * gw, gy + gh - clamp(P / Math.min(pmax, 2000), 0, 1) * gh, c.orange, '#FFFFFF', 6); label(g, c, 'pressure', gx + 4, gy - 6, c.text, 'left', 11); label(g, c, 'volume →', gx + gw, gy + gh + 14, c.light, 'right', 11); }
+        return `PV = nRT → pressure = ${fmt(P, 1)} kPa (${fmt(P / 101.325, 2)} atm) at ${fmt(s.temp)} K${s.celsius ? ` (${fmt(s.temp - 273.15, 0)} °C)` : ''} · smaller volume or hotter gas = more pressure (the dots hit the walls more)`;
+      },
+    },
+    ph: {
+      group: 'Chemistry', icon: 'flask', title: 'Acids & bases (pH)', blurb: 'Mix them and watch the pH', 
+      params: [range('va', 'Acid added', 0, 100, 1, 50, 'mL'), range('ca', 'Acid strength', .01, 1, .01, .1, 'M'), range('vb', 'Base added', 0, 100, 1, 20, 'mL'), range('cb', 'Base strength', .01, 1, .01, .1, 'M'), select('ind', 'Indicator colors', [['universal', 'Universal indicator'], ['phenol', 'Phenolphthalein (pink above 8.2)'], ['litmus', 'Litmus']], 'universal')],
+      presets: [['Neutralize it', { va: 50, ca: .1, vb: 50, cb: .1 }], ['Strong acid', { va: 50, ca: 1, vb: 0 }], ['Lots of base', { va: 10, vb: 90, cb: .5 }]],
+      draw(g, s, c) {
+        const H = s.va * s.ca / 1000, OH = s.vb * s.cb / 1000, V = (s.va + s.vb) / 1000 || 1e-9;
+        let pH = 7; if (H > OH) pH = -Math.log10((H - OH) / V); else if (OH > H) pH = 14 + Math.log10((OH - H) / V); if (s.va + s.vb === 0) pH = 7;
+        pH = clamp(pH, 0, 14);
+        const uni = ['#E5383B', '#F05A2B', '#F7871B', '#FBB117', '#FFD21E', '#C9DE24', '#7CC93A', '#2FB44E', '#1AA690', '#1CB0F6', '#2B6CE0', '#4B4FD8', '#6A3FC9', '#7C3AED', '#6B21A8'];
+        const col = s.ind === 'phenol' ? (pH >= 8.2 ? '#FF6FB5' : '#F4F6F8') : s.ind === 'litmus' ? (pH < 5 ? '#E5383B' : pH > 8 ? '#2B6CE0' : '#A560F2') : uni[Math.round(pH)];
+        if (!c.ghost) {
+          const bx = c.w * .18, bw = c.w * .3, by = 30, bh = c.h - 80, lvl = clamp((s.va + s.vb) / 200, 0, 1) * bh;
+          g.save(); g.fillStyle = col; g.fillRect(bx + 3, by + bh - lvl, bw - 6, lvl); g.strokeStyle = c.axis; g.lineWidth = 3; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx, by + bh); g.lineTo(bx + bw, by + bh); g.lineTo(bx + bw, by); g.stroke(); g.restore();
+          label(g, c, `${fmt(s.va + s.vb, 0)} mL`, bx + bw / 2, by + bh + 16, c.text);
+          const sx = c.w * .58, sw = c.w * .36, sy = c.h * .45; uni.forEach((u, i) => { g.fillStyle = u; g.fillRect(sx + i * sw / 15, sy, sw / 15 + 1, 24); });
+          for (const v of [0, 7, 14]) label(g, c, String(v), sx + v / 14 * sw, sy + 38, c.light, 'center', 11);
+          const mx = sx + pH / 14 * sw; g.fillStyle = c.text; g.beginPath(); g.moveTo(mx, sy - 2); g.lineTo(mx - 8, sy - 14); g.lineTo(mx + 8, sy - 14); g.closePath(); g.fill(); label(g, c, `pH ${fmt(pH, 2)}`, mx, sy - 26, c.text, 'center', 14);
+          label(g, c, 'acid', sx, sy - 10, c.red, 'left', 11); label(g, c, 'base', sx + sw, sy - 10, c.blue, 'right', 11);
+        }
+        return `pH ${fmt(pH, 2)} — ${pH < 6.95 ? 'acidic' : pH > 7.05 ? 'basic' : 'neutral'} · acid ${fmt(H * 1000, 2)} mmol vs base ${fmt(OH * 1000, 2)} mmol · ${Math.abs(H - OH) < 1e-12 ? 'they cancel out exactly' : H > OH ? 'extra acid left over' : 'extra base left over'}`;
+      },
+    },
+    wave: {
+      group: 'Physics', icon: 'spark', title: 'Waves & sound', blurb: 'Wavelength, frequency, adding waves', anim: true, loop: true,
+      params: [range('amp', 'Amplitude (loudness)', .1, 3, .1, 1), range('freq', 'Frequency', .2, 5, .1, 1, 'Hz'), range('speed', 'Wave speed', .5, 10, .5, 4, 'm/s'),
+        toggle('two', 'Add a second wave (interference)'), range('amp2', 'Second amplitude', .1, 3, .1, 1, '', true), range('freq2', 'Second frequency', .2, 5, .1, 1.2, 'Hz', true), toggle('flip', 'Flip the second wave upside down')],
+      presets: [['Long waves', { freq: .5 }], ['Beats', { two: 1, freq: 1, freq2: 1.2 }], ['Cancel out', { two: 1, freq: 1, freq2: 1, flip: 1 }]],
+      duration: () => 8,
+      draw(g, s, c, t) {
+        const tt = t || 0, lam = s.speed / s.freq, X = 10, top = (s.amp + (s.two ? s.amp2 : 0)) * 1.3 + .5;
+        const ch = chart(g, c, 0, X, -top, top); ch.axes('distance (m)', '');
+        const w1 = x => s.amp * Math.sin(2 * Math.PI * (x / lam - s.freq * tt)), w2 = x => (s.flip ? -1 : 1) * s.amp2 * Math.sin(2 * Math.PI * (x / (s.speed / s.freq2) - s.freq2 * tt));
+        if (s.two) { ch.plot(w1, c.blue, 1.5); ch.plot(w2, c.red, 1.5); ch.plot(x => w1(x) + w2(x), c.ghost ? c.light : c.purple, 3.5); } else ch.plot(w1, c.ghost ? c.light : c.blue, 3.5);
+        if (!c.ghost && !s.two && lam < X) { const y = -top * .8; g.save(); g.strokeStyle = c.orange; g.lineWidth = 2; g.beginPath(); g.moveTo(ch.X(0), ch.Y(y)); g.lineTo(ch.X(lam), ch.Y(y)); g.stroke(); g.restore(); label(g, c, `wavelength ${fmt(lam, 2)} m`, ch.X(lam / 2), ch.Y(y) - 10, c.orange); }
+        return `Wavelength λ = speed ÷ frequency = ${fmt(s.speed)} ÷ ${fmt(s.freq)} = ${fmt(lam, 2)} m · period ${fmt(1 / s.freq, 2)} s${s.two ? ` · the purple wave is the two added together${s.flip && s.freq === s.freq2 && s.amp === s.amp2 ? ' — they cancel out (destructive interference)' : s.freq !== s.freq2 ? ` — beats ${fmt(Math.abs(s.freq - s.freq2), 2)} times a second` : ''}` : ''}`;
+      },
+    },
+    orbit: {
+      group: 'Physics', icon: 'globe', title: 'Orbits', blurb: 'Gravity, speed and the shape of an orbit', anim: true,
+      params: [range('star', 'Star’s mass (Suns)', .1, 5, .1, 1), range('dist', 'Planet’s distance', .3, 5, .1, 2, 'AU'), range('speed', 'Planet’s speed (× a circle orbit)', .2, 1.6, .02, .8), toggle('trail', 'Show the path', true)],
+      presets: [['Earth', { star: 1, dist: 1, speed: 1 }], ['Comet', { dist: 4, speed: .4 }], ['Escape!', { speed: 1.5 }]],
+      model(s) { const GM = 4 * Math.PI * Math.PI * s.star, v = Math.sqrt(GM / s.dist) * s.speed; return integrate({ x: s.dist, y: 0, vx: 0, vy: v }, (p, dt) => { const r = Math.hypot(p.x, p.y), a = -GM / (r * r * r); const vx = p.vx + a * p.x * dt, vy = p.vy + a * p.y * dt; return { x: p.x + vx * dt, y: p.y + vy * dt, vx, vy }; }, 20, 1 / 2000, p => Math.hypot(p.x, p.y) < .05 || Math.hypot(p.x, p.y) > 30); },
+      duration(s) { return Math.min(20, this.model(s).end); },
+      draw(g, s, c, t) {
+        const m = this.model(s), now = t == null ? 0 : t, p = m.at(now), cx = c.w / 2, cy = c.h / 2, R = Math.min(c.w, c.h) / 2 - 16, sc = R / Math.max(6, s.dist * 1.3);
+        if (!c.ghost) { const gr = g.createRadialGradient(cx, cy, 2, cx, cy, 26); gr.addColorStop(0, '#FFF3B0'); gr.addColorStop(1, 'rgba(255,200,0,0)'); g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, 26, 0, Math.PI * 2); g.fill(); ball(g, cx, cy, '#FFC800', '#D9A300', 6 + s.star * 3); }
+        if (s.trail) { g.save(); g.strokeStyle = c.ghost ? c.light : c.blue; g.lineWidth = 2; g.globalAlpha = .6; g.beginPath(); for (const q of m.pts) { if (q.t > Math.max(now, .001) && t != null) break; const x = cx + q.x * sc, y = cy - q.y * sc; q === m.pts[0] ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke(); g.restore(); }
+        ball(g, cx + p.x * sc, cy - p.y * sc, c.ghost ? c.light : c.blue, '#FFFFFF', 7);
+        const esc_ = s.speed >= Math.SQRT2, a = s.dist / (2 - s.speed * s.speed), period = esc_ ? Infinity : Math.sqrt(a * a * a / s.star);
+        return esc_ ? `Too fast — the planet escapes the star (escape speed is √2 ≈ 1.41× a circle orbit)` : `One orbit takes about ${fmt(period, 2)} years (Kepler: T² = a³ ÷ M) · ${near(s.speed, 1, .02) ? 'a circle' : s.speed < 1 ? 'an oval that swings in close' : 'an oval that swings out far'}${t != null ? ` · ${fmt(now, 1)} years in` : ''}`;
+      },
+    },
+    seasons: {
+      group: 'Earth', icon: 'sun', title: 'Seasons & daylight', blurb: 'Tilt, latitude and the sun', anim: true, loop: true,
+      params: [range('lat', 'Your latitude', -90, 90, 1, 40, '°'), range('day', 'Day of the year', 1, 365, 1, 80), range('tilt', 'Earth’s tilt', 0, 45, .5, 23.5, '°'), toggle('spin', 'Run through the year when playing', true)],
+      presets: [['Summer solstice', { day: 172 }], ['Winter solstice', { day: 355 }], ['Equator', { lat: 0 }], ['North Pole', { lat: 89 }], ['No tilt', { tilt: 0 }]],
+      duration: () => 12,
+      draw(g, s, c, t) {
+        const day = s.spin && t != null ? ((s.day - 1 + t / 12 * 365) % 365) + 1 : s.day, dec = s.tilt * Math.sin(2 * Math.PI * (284 + day) / 365), L = s.lat * Math.PI / 180, D = dec * Math.PI / 180;
+        const noon = 90 - Math.abs(s.lat - dec), cosH = -Math.tan(L) * Math.tan(D), hours = cosH <= -1 ? 24 : cosH >= 1 ? 0 : 2 * Math.acos(cosH) * 180 / Math.PI / 15;
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], date = new Date(2026, 0, Math.round(day)), dname = `${months[date.getMonth()]} ${date.getDate()}`;
+        if (!c.ghost) {
+          // The sky: the sun's height at noon over the horizon.
+          const hx = c.w * .3, hy = c.h - 40, R = Math.min(c.w * .26, c.h - 70);
+          g.save(); g.fillStyle = c.ground; g.fillRect(0, hy, c.w * .6, c.h - hy); g.strokeStyle = c.grid; g.lineWidth = 2; g.setLineDash([4, 5]); g.beginPath(); g.arc(hx, hy, R, Math.PI, 0); g.stroke(); g.restore();
+          const a = clamp(noon, -10, 90) * Math.PI / 180, sx = hx + R * Math.cos(Math.PI - a) * (noon >= 0 ? 1 : 1), sy = hy - R * Math.sin(a);
+          if (noon > 0) ball(g, sx, sy, '#FFC800', '#D9A300', 14); else label(g, c, 'the sun doesn’t rise', hx, hy - 30, c.light);
+          label(g, c, `noon sun ${fmt(Math.max(noon, 0), 1)}° high`, hx, hy + 18, c.text);
+          // Earth with its tilt.
+          const ex = c.w * .78, ey = c.h * .45, er = Math.min(c.w * .14, c.h * .32);
+          g.save(); g.translate(ex, ey); g.rotate(-dec * Math.PI / 180 * 0 + s.tilt * Math.PI / 180 * Math.cos(2 * Math.PI * (day - 172) / 365)); g.fillStyle = '#1CB0F6'; g.beginPath(); g.arc(0, 0, er, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#0A85C2'; g.lineWidth = 2; g.stroke(); g.strokeStyle = c.text; g.beginPath(); g.moveTo(0, -er - 12); g.lineTo(0, er + 12); g.stroke(); const ly = -er * Math.sin(L); g.strokeStyle = '#FFC800'; g.lineWidth = 3; g.beginPath(); g.moveTo(-er * Math.cos(L), ly); g.lineTo(er * Math.cos(L), ly); g.stroke(); g.restore();
+          label(g, c, 'sunlight →', ex - er - 40, ey - er - 6, '#D9A300', 'center', 11);
+        }
+        return `${dname} at ${fmt(Math.abs(s.lat), 0)}°${s.lat >= 0 ? 'N' : 'S'}: ${fmt(hours, 1)} hours of daylight, noon sun ${fmt(Math.max(noon, 0), 1)}° above the horizon · the sun is overhead at ${fmt(Math.abs(dec), 1)}°${dec >= 0 ? 'N' : 'S'} today · ${s.tilt === 0 ? 'no tilt = no seasons!' : 'tilt makes the seasons'}`;
+      },
+    },
+    supply: {
+      group: 'Money', icon: 'tag', title: 'Supply & demand', blurb: 'Where price settles', 
+      params: [range('d0', 'Demand: price when no one buys', 20, 200, 1, 120, '$'), range('ds', 'Demand: how fast buyers drop off', .2, 3, .1, 1), range('s0', 'Supply: lowest price sellers take', 0, 100, 1, 20, '$'), range('ss', 'Supply: how fast sellers add', .2, 3, .1, 1),
+        range('ceil', 'Price limit (a ceiling, 0 = none)', 0, 200, 1, 0, '$', true), toggle('area', 'Shade the money spent', true)],
+      presets: [['Popular new toy', { d0: 180 }], ['Cheaper to make', { s0: 0, ss: .5 }], ['Price limit', { ceil: 50 }]],
+      draw(g, s, c) {
+        const qmax = 120, pmax = 200, ch = chart(g, c, 0, qmax, 0, pmax, 44); ch.axes('quantity', 'price ($)');
+        const D = q => s.d0 - s.ds * q, S = q => s.s0 + s.ss * q, q = clamp((s.d0 - s.s0) / (s.ds + s.ss), 0, qmax), p = D(q);
+        if (s.area && !c.ghost && q > 0) { g.save(); g.fillStyle = 'rgba(31,164,90,.15)'; g.fillRect(ch.X(0), ch.Y(p), ch.X(q) - ch.X(0), ch.Y(0) - ch.Y(p)); g.restore(); }
+        ch.plot(D, c.ghost ? c.light : c.blue); ch.plot(S, c.ghost ? c.light : c.orange);
+        label(g, c, 'demand', ch.X(Math.min(qmax * .85, s.d0 / s.ds * .8)), ch.Y(D(Math.min(qmax * .85, s.d0 / s.ds * .8))) - 12, c.blue);
+        label(g, c, 'supply', ch.X(qmax * .8), ch.Y(Math.min(pmax, S(qmax * .8))) - 12, c.orange);
+        ch.dot(q, p, c.green, 8);
+        let out = `They meet at $${fmt(p, 2)} with ${fmt(q, 1)} sold · money spent $${fmt(p * q, 0)}`;
+        if (s.ceil > 0 && s.ceil < p) { const qs = clamp((s.ceil - s.s0) / s.ss, 0, qmax), qd = clamp((s.d0 - s.ceil) / s.ds, 0, qmax); if (!c.ghost) { g.save(); g.strokeStyle = c.red; g.lineWidth = 2.5; g.setLineDash([6, 5]); g.beginPath(); g.moveTo(ch.L, ch.Y(s.ceil)); g.lineTo(ch.R, ch.Y(s.ceil)); g.stroke(); g.restore(); } out += ` · with a $${fmt(s.ceil)} limit, buyers want ${fmt(qd, 1)} but sellers make only ${fmt(qs, 1)}: a shortage of ${fmt(qd - qs, 1)}`; }
+        return out;
+      },
+    },
   };
+  // ── Data tables (copy into a spreadsheet for a lab report) ──
+  const every = (m, n = 25) => { const out = [], step = Math.max(m.end / n, 1 / 60); for (let t = 0; t <= m.end + 1e-9; t += step) out.push(m.at(t)); return out; };
+  T.projectile.table = function (s) { return { head: ['Time (s)', 'Distance (m)', 'Height (m)', 'Speed (m/s)'], rows: every(this.model(s)).map(p => [fmt(p.t, 2), fmt(p.x, 2), fmt(Math.max(0, p.y), 2), fmt(Math.hypot(p.vx, p.vy), 2)]) }; };
+  T.freefall.table = function (s) { return { head: ['Time (s)', 'Height (m)', 'Speed (m/s)'], rows: every(this.model(s)).map(p => [fmt(p.t, 2), fmt(Math.max(0, p.y), 2), fmt(p.v, 2)]) }; };
+  T.pendulum.table = function (s) { const m = this.model(s); m.end = Math.min(10, m.end); return { head: ['Time (s)', 'Angle (°)', 'Swing speed (°/s)'], rows: every(m, 40).map(p => [fmt(p.t, 2), fmt(p.th * 180 / Math.PI, 1), fmt(p.w * 180 / Math.PI, 1)]) }; };
+  T.spring.table = function (s) { const m = this.model(s); m.end = Math.min(10, m.end); return { head: ['Time (s)', 'Position (m)', 'Speed (m/s)', 'Spring force (N)'], rows: every(m, 40).map(p => [fmt(p.t, 2), fmt(p.x, 3), fmt(p.v, 3), fmt(-s.k * p.x, 2)]) }; };
+  T.interest.table = function (s) { const r = s.r / 100, n = { year: 1, month: 12, day: 365 }[s.every] || 1, monthly = n === 12 ? r / 12 : n === 365 ? Math.pow(1 + r / 365, 365 / 12) - 1 : 0, rows = [[0, money(s.p), money(s.p), money(s.p)]]; let b = s.p; for (let y = 1; y <= s.t; y++) { for (let m = 0; m < 12; m++) { b += s.add; if (monthly) b *= 1 + monthly; } if (!monthly) b *= 1 + r; rows.push([y, money(s.p + s.add * 12 * y), money(b), money(s.p + s.p * r * y + s.add * 12 * y)]); } return { head: ['Year', 'Put in', 'Compound balance', 'Simple balance'], rows }; };
+  T.exponential.table = s => ({ head: ['Step', 'Amount', 'Straight-line'], rows: Array.from({ length: s.steps + 1 }, (_, n) => [n, fmt(s.start * Math.pow(1 + s.rate / 100, n), 2), fmt(s.start + s.start * s.rate / 100 * n, 2)]) });
+  T.population.table = s => { const r = s.rate / 100, rows = [[0, fmt(s.start, 0), fmt(s.start, 0)]]; let p = s.start, e = s.start; for (let y = 1; y <= s.years; y++) { p += r * p * (1 - p / s.capacity); e *= 1 + r; rows.push([y, fmt(p, 0), fmt(e, 0)]); } return { head: ['Generation', 'With food & space limits', 'Unlimited'], rows }; };
+  T.motion.table = s => { const catchT = s.b > s.a ? s.head / (s.b - s.a) : 4, end = catchT * 1.3, rows = []; for (let i = 0; i <= 20; i++) { const t = end * i / 20; rows.push([fmt(t, 2), fmt(s.head + s.a * t, 2), fmt(s.b * t, 2), fmt(s.head + s.a * t - s.b * t, 2)]); } return { head: [`Time (${s.time})`, `A (${s.unit})`, `B (${s.unit})`, 'Gap'], rows }; };
+
   // ── Challenges: goals checked live as you move things (done ones are kept on this device).
   const near = (a, b, tol) => Math.abs(a - b) <= tol;
   const rootsOf = (f, X = 10) => { const out = []; let px = -X, py = f(px); for (let i = 1; i <= 400; i++) { const x = -X + 2 * X * i / 400, y = f(x); if (Number.isFinite(py) && Number.isFinite(y) && py * y <= 0 && py !== y) out.push(px - py * (x - px) / (y - py)); px = x; py = y; } return out; };
@@ -518,6 +638,12 @@
     motion: [['Make B catch A after exactly 3 hours', s => s.time === 'h' && s.b > s.a && near(s.head / (s.b - s.a), 3, .01)], ['Make B never catch up', s => s.b <= s.a && s.head > 0]],
     ohm: [['Make exactly 0.5 A flow', s => near(s.volts / (s.ohms * s.bulbs), .5, .001)], ['Light 4 bulbs with a 12 V battery and at least 0.1 A', s => s.bulbs === 4 && s.volts === 12 && s.volts / (s.ohms * 4) >= .1]],
     interest: [['Grow $1,000 into $5,000 (no monthly adds)', s => s.p === 1000 && s.add === 0 && s.p * Math.pow(1 + s.r / 100, s.t) >= 5000], ['Reach $100,000 in 30 years or less', s => { const r = s.r / 100; let b = s.p; for (let y = 0; y < s.t; y++) { b += s.add * 12; b *= 1 + r; } return s.t <= 30 && b >= 100000; }]],
+    gas: [['Make the pressure exactly 200 kPa (±2)', s => near(s.mol * 8.314 * s.temp / s.vol, 200, 2)], ['Keep 300 K and 1 mol but go above 500 kPa', s => s.temp === 300 && near(s.mol, 1, 1e-9) && 8.314 * 300 / s.vol > 500]],
+    ph: [['Make it exactly neutral (pH 7)', s => { const H = s.va * s.ca, OH = s.vb * s.cb; return s.va + s.vb > 0 && Math.abs(H - OH) < 1e-9; }], ['Make the pH about 3 (±0.1)', s => { const H = s.va * s.ca / 1000, OH = s.vb * s.cb / 1000, V = (s.va + s.vb) / 1000; return H > OH && near(-Math.log10((H - OH) / V), 3, .1); }]],
+    wave: [['Make a wavelength of exactly 2 m', s => near(s.speed / s.freq, 2, .01)], ['Add a second wave that cancels the first one out', s => s.two && s.flip && s.freq === s.freq2 && s.amp === s.amp2]],
+    orbit: [['Make an orbit that takes 1 year', s => s.speed < Math.SQRT2 && near(Math.sqrt(Math.pow(s.dist / (2 - s.speed * s.speed), 3) / s.star), 1, .03)], ['Make the planet escape the star', s => s.speed >= Math.SQRT2]],
+    seasons: [['Find a place and day where the noon sun is straight overhead', s => near(90 - Math.abs(s.lat - s.tilt * Math.sin(2 * Math.PI * (284 + s.day) / 365)), 90, .6)], ['Find a day with 24 hours of daylight', s => { const D = s.tilt * Math.sin(2 * Math.PI * (284 + s.day) / 365) * Math.PI / 180; return -Math.tan(s.lat * Math.PI / 180) * Math.tan(D) <= -1; }]],
+    supply: [['Make the price settle at $50 (±1)', s => near(s.d0 - s.ds * (s.d0 - s.s0) / (s.ds + s.ss), 50, 1)], ['Make more than 80 sell', s => (s.d0 - s.s0) / (s.ds + s.ss) > 80]],
     probability: [['Flip a coin 1000 times or more', s => s.kind === 'coin' && s.trials >= 1000], ['Roll two dice 500 times and look for the most common sum', s => s.kind === 'twodice' && s.trials >= 500]],
     population: [['Make it reach half its capacity by generation 10', s => { const r = s.rate / 100; let p = s.start; for (let y = 1; y <= 10; y++) p += r * p * (1 - p / s.capacity); return s.logistic && p >= s.capacity / 2; }], ['Turn off the limit and pass 1,000,000', s => !s.logistic && s.start * Math.pow(1 + s.rate / 100, s.years) > 1e6]],
   };
@@ -525,8 +651,8 @@
   const doneSet = () => { try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]')); } catch (_) { return new Set(); } };
   const markDone = id => { const d = doneSet(); d.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...d])); } catch (_) {} };
 
-  const GROUPS = ['Math', 'Physics', 'Money', 'Chance', 'Biology'];
-  const ORDER = ['equation', 'projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population'];
+  const GROUPS = ['Math', 'Physics', 'Chemistry', 'Earth', 'Money', 'Chance', 'Biology'];
+  const ORDER = ['equation', 'projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population', 'gas', 'ph', 'wave', 'orbit', 'seasons', 'supply'];
   const COMMON = [range('speedx', 'Playback speed', .25, 3, .25, 1, '×', true), toggle('grid', 'Show the grid', true), toggle('labels', 'Show labels and numbers', true)];
   const paramsOf = id => [...T[id].params, ...COMMON.filter(p => p.k !== 'speedx' || T[id].anim)];
   const defaults = id => Object.fromEntries(paramsOf(id).map(p => [p.k, p.v]));
@@ -555,7 +681,7 @@
   // ── The page ─────────────────────────────────────────────────────────────
   let host = null, tab = 'build', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '';
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
-  function show(h) { host = h; editor?.stop(); editor = null; renderHome(); }
+  function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
   function costLine() {
     const t = tier();
     return t === 'mega' ? '💎 Mega Knox — up to 100 Knox builds a day, every simulation and setting, unlimited saves and Compare runs.'
@@ -565,7 +691,7 @@
   function renderHome() {
     if (!host) return;
     const saved = readSaved();
-    const tabs = [['build', 'sparkle', 'Knox builds it'], ['play', 'sliders', 'Playground'], ['make', 'pencil', 'Make your own'], ['mine', 'cards', `My sims${saved.length ? ` (${saved.length})` : ''}`]];
+    const tabs = [['build', 'sparkle', 'Knox builds it'], ['play', 'sliders', 'Playground'], ['make', 'pencil', 'Make your own'], ['community', 'globe', 'Community'], ['mine', 'cards', `My sims${saved.length ? ` (${saved.length})` : ''}`]];
     let body = '';
     if (tab === 'build') {
       body = `<div class="sl-build">
@@ -576,6 +702,13 @@
           ${buildMsg ? `<p class="sl-msg" role="status">${buildMsg}</p>` : ''}
           <p class="sl-cost">${costLine()}</p>
         </div>`;
+    } else if (tab === 'community') {
+      if (!community.loaded && !community.busy) loadCommunity();
+      body = `<div class="sl-filters"><button type="button" class="sl-chip${community.sort === 'new' ? ' on' : ''}" data-csort="new">Newest</button><button type="button" class="sl-chip${community.sort === 'top' ? ' on' : ''}" data-csort="top">Most liked</button></div>` +
+        (community.busy ? '<p class="sl-cost">Loading the Community…</p>' : community.error ? `<p class="sl-msg">${esc(community.error)}</p>`
+        : community.list.length ? `<div class="sl-grid">${community.list.map(x => `<button type="button" class="sl-tile sl-ctile g-${(T[x.type]?.group || 'physics').toLowerCase()}" data-csim="${x.id}"><span class="sl-ico" aria-hidden="true">${ki(x.type === 'custom' ? 'pencil' : T[x.type]?.icon || 'sliders')}</span><b>${esc(x.title)}</b><small>${esc(x.desc || (x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || ''))}</small><span class="sl-cmeta">${x.mine ? 'Yours · ' : 'By a Knox student · '}${x.plays} play${x.plays === 1 ? '' : 's'} · ♥ ${x.likes}</span></button>`).join('')}</div>`
+        : '<div class="sl-empty"><b>Nothing here yet</b><span>Make a simulation and press Publish — it shows up here for everyone.</span></div>') +
+        '<p class="sl-cost">Everything here is made by students and checked for school-friendly words. Names are never shown. See something wrong? Open it and press Report.</p>';
     } else if (tab === 'make') {
       body = `<div class="sl-make">
           <div class="sl-make-hero"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><div><b>Build a simulation from scratch</b><span>Drop in balls, blocks, ramps, walls, springs and targets. Set gravity, air and bounce. Add sliders and graphs, then press Play.</span></div></div>
@@ -622,6 +755,63 @@
     }
   }
 
+  // ── Community (api/_sim-community.js) ────────────────────────────────────
+  const community = { sort: 'new', list: [], loaded: false, busy: false, error: '' };
+  async function communityApi(method, body, query = '') {
+    const u = window.currentUser, headers = {};
+    if (u?.getIdToken) headers.Authorization = 'Bearer ' + await u.getIdToken();
+    if (body) headers['Content-Type'] = 'application/json';
+    const r = await fetch('/api/me?route=sim-community' + query, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'The Community is busy right now. Please try again.');
+    return j;
+  }
+  async function loadCommunity() {
+    community.busy = true; community.error = ''; if (tab === 'community') renderHome();
+    try { community.list = (await communityApi('GET', null, '&sort=' + community.sort)).sims || []; community.loaded = true; }
+    catch (e) { community.error = e.message; }
+    community.busy = false; if (tab === 'community' && !editor) renderHome();
+  }
+  async function openCommunity(id) {
+    try {
+      const { sim } = await communityApi('GET', null, '&id=' + encodeURIComponent(id));
+      communityApi('POST', { action: 'play', id }).catch(() => {});
+      const meta = { title: sim.title, community: { id, liked: sim.liked, likes: sim.likes, mine: sim.mine }, explain: sim.desc };
+      if (sim.type === 'custom') openBuilder(sim.values, meta); else open(sim.type, sim.values, meta);
+    } catch (e) { community.error = e.message; renderHome(); }
+  }
+  // Publish: a small form over the page (title, a short description, a promise).
+  function publishSim(item, btn) {
+    if (!window.currentUser) { window.openAuthModal?.('signup'); return; }
+    const box = document.createElement('div'); box.className = 'sl-pub-wrap';
+    box.innerHTML = `<div class="sl-pub" role="dialog" aria-modal="true" aria-labelledby="slPubT"><h3 id="slPubT">Publish to the Community</h3><p>Anyone can find it and play with it. Your name is never shown.</p>
+      <label class="sl-field"><span>Title</span><input type="text" class="sl-pub-title" maxlength="40" value="${esc(item.title || '')}"></label>
+      <label class="sl-field"><span>What should people try? (optional)</span><textarea class="sl-pub-desc" maxlength="200" rows="3" placeholder="e.g. Can you get the ball into the hoop on the Moon?"></textarea></label>
+      <label class="sl-toggle"><input type="checkbox" class="sl-pub-ok"><span class="sl-sw" aria-hidden="true"></span><span>It’s school-friendly and has no personal info (no names, links or numbers)</span></label>
+      <p class="sl-msg" hidden></p><div class="sl-pub-btns"><button type="button" class="sl-btn ghost" data-pub-cancel>Cancel</button><button type="button" class="sl-btn" data-pub-go>Publish</button></div></div>`;
+    document.body.append(box); box.querySelector('.sl-pub-title').focus();
+    const msg = box.querySelector('.sl-msg'), close = () => box.remove();
+    box.addEventListener('click', async e => {
+      if (e.target === box || e.target.closest('[data-pub-cancel]')) { close(); return; }
+      const go = e.target.closest('[data-pub-go]'); if (!go) return;
+      if (!box.querySelector('.sl-pub-ok').checked) { msg.textContent = 'Tick the box to promise it’s school-friendly first.'; msg.hidden = false; return; }
+      go.disabled = true; go.textContent = 'Checking…'; msg.hidden = true;
+      try {
+        await communityApi('POST', { action: 'publish', sim: { type: item.type, values: item.values, title: box.querySelector('.sl-pub-title').value, desc: box.querySelector('.sl-pub-desc').value } });
+        close(); community.loaded = false; if (btn?.isConnected) { btn.textContent = 'Published ✓'; setTimeout(() => { if (btn.isConnected) btn.textContent = 'Publish'; }, 2400); }
+      } catch (err) { msg.textContent = err.message; msg.hidden = false; go.disabled = false; go.textContent = 'Publish'; }
+    });
+    box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  }
+  const communityButtons = c => c ? `<button type="button" class="sl-btn ghost sm${c.liked ? ' on' : ''}" data-clike="${c.id}">♥ ${c.likes}</button>${c.mine ? `<button type="button" class="sl-btn ghost sm" data-cdown="${c.id}">Take down</button>` : `<button type="button" class="sl-btn ghost sm" data-creport="${c.id}">Report</button>`}` : '';
+  async function communityAction(b) {
+    try {
+      if (b.dataset.clike) { const r = await communityApi('POST', { action: 'like', id: b.dataset.clike }); b.textContent = `♥ ${r.likes}`; b.classList.toggle('on', r.liked); community.loaded = false; }
+      else if (b.dataset.creport) { if (!confirm('Report this simulation for having something that isn’t school-friendly?')) return; await communityApi('POST', { action: 'report', id: b.dataset.creport, reason: 'student report' }); b.textContent = 'Reported — thanks'; b.disabled = true; }
+      else if (b.dataset.cdown) { if (!confirm('Take this simulation out of the Community? It stays in My sims if you saved it.')) return; await communityApi('POST', { action: 'unpublish', id: b.dataset.cdown }); b.textContent = 'Taken down'; b.disabled = true; community.loaded = false; }
+    } catch (e) { if (!window.currentUser) window.openAuthModal?.('signup'); else alert(e.message); }
+  }
+
   // ── Make your own (simbuilder.js) ────────────────────────────────────────
   const STARTERS = {
     blank: () => window.knoxSimBuilder.blank(),
@@ -645,6 +835,8 @@
       onBack: () => { editor = null; tab = 'make'; renderHome(); },
       onSave: sc => { const list = readSaved(), max = SAVE_MAX[tier()]; if (list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one in My sims, or upgrade to save more.`); return false; } list.unshift({ type: 'custom', values: sc, title: sc.title, at: Date.now() }); writeSaved(list); return true; },
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
+      onPublish: (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),
+      extraButtons: communityButtons(meta.community),
     });
     editor = { stop: b.stop, click: () => {} };
   }
@@ -656,8 +848,40 @@
     editor?.stop();
     editor = makeEditor(id, cleanValues(id, vals), meta);
   }
-  // Share: a link that opens this exact setup (filled in by the share step).
-  function shareSim(item, btn) { window.knoxSimShare ? window.knoxSimShare(item, btn) : (btn.textContent = 'Sharing soon'); }
+  // Share: the whole setup travels inside the link (squeezed when the browser
+  // can), so nothing is stored on a server. Opening it shows the same setup.
+  const b64u = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const unb64u = str => Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  async function encodeSim(item) {
+    const raw = new TextEncoder().encode(JSON.stringify({ t: item.type, v: item.values, n: item.title }));
+    if (window.CompressionStream) { const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()); return 'z' + b64u(z); }
+    return 'j' + b64u(raw);
+  }
+  async function decodeSim(code) {
+    let bytes = unb64u(code.slice(1));
+    if (code[0] === 'z') bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    const o = JSON.parse(new TextDecoder().decode(bytes));
+    return { type: String(o.t), values: o.v, title: String(o.n || '').slice(0, 40) };
+  }
+  async function shareSim(item, btn) {
+    try {
+      const code = await encodeSim(item), url = `${location.origin}/app?open=sims&sim=${code}`;
+      if (url.length > 7000) throw new Error('too long');
+      if (navigator.share && /Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) await navigator.share({ title: item.title || 'Knox simulation', url }).catch(() => {});
+      else await navigator.clipboard.writeText(url);
+      btn.textContent = 'Link copied ✓';
+    } catch (_) { btn.textContent = 'Couldn’t share that one'; }
+    setTimeout(() => { if (btn.isConnected) btn.textContent = 'Share'; }, 2200);
+  }
+  // A shared link: open it once the Lab is on screen.
+  let pendingShare = (() => { try { return new URLSearchParams(location.search).get('sim') || ''; } catch (_) { return ''; } })();
+  let pendingCommunity = (() => { try { return new URLSearchParams(location.search).get('csim') || ''; } catch (_) { return ''; } })();
+  async function openPendingShare() {
+    if (pendingCommunity) { const id = pendingCommunity; pendingCommunity = ''; tab = 'community'; openCommunity(id); return; }
+    if (!pendingShare) return; const code = pendingShare; pendingShare = '';
+    try { history.replaceState(null, '', location.pathname + location.search.replace(/([?&])sim=[^&]*&?/, '$1').replace(/[?&]$/, '')); } catch (_) {}
+    try { const it = await decodeSim(code); if (it.type === 'custom') openBuilder(it.values); else if (T[it.type]) open(it.type, it.values, { title: it.title }); } catch (_) { renderHome(); upsell('plus', 'That simulation link didn’t work — ask for a new one.'); }
+  }
   function upsell(level, text) {
     const n = host?.querySelector('.sl-upsell'); n?.remove();
     host?.querySelector('.sl-wrap, .sl-ed')?.insertAdjacentHTML('afterbegin', fill(`<div class="sl-upsell">${level === 'mega' ? '💎' : '⚡'} <span>${text}</span>${window.knoxNativeApp ? '' : '<button type="button" class="sl-btn sm" data-upgrade>See plans</button>'}<button type="button" class="sl-x" data-close-upsell aria-label="Close">✕</button></div>`));
@@ -678,15 +902,17 @@
     host.innerHTML = fill(`<div class="sl-ed">
       <div class="sl-top"><button type="button" class="sl-back" data-back>← Simulation Lab</button>
         <input class="sl-title" value="${esc(title)}" maxlength="40" aria-label="Name">
-        <div class="sl-top-btns"><button type="button" class="sl-btn ghost sm" data-ask>${ki('think', false)} Ask Knox</button><button type="button" class="sl-btn sm" data-save>Save</button></div></div>
+        <div class="sl-top-btns"><button type="button" class="sl-btn ghost sm" data-ask>${ki('think', false)} Ask Knox</button>${communityButtons(meta.community)}<button type="button" class="sl-btn ghost sm" data-share>Share</button><button type="button" class="sl-btn ghost sm" data-publish>Publish</button><button type="button" class="sl-btn sm" data-save>Save</button></div></div>
+      ${(() => { try { return localStorage.getItem('knoxSimGuide') ? '' : `<div class="sl-guide"><b>How it works</b><span>Move the sliders and watch the picture change. Press Play when there’s motion. Try a <b>Challenge</b> on the right, open <b>More settings</b> for extras, and double-click any slider’s name to put it back.</span><button type="button" class="sl-btn sm" data-guide-ok>Got it</button></div>`; } catch (_) { return ''; } })()}
       ${meta.explain ? `<div class="sl-explain">${ki('spark', false)}<span>${esc(meta.explain)}</span></div>` : ''}
       <div class="sl-main">
         <div class="sl-stage"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
           <div class="sl-play">${def.anim ? `<button type="button" class="sl-btn" data-play>▶ Play</button><button type="button" class="sl-btn ghost" data-restart>↺ Restart</button>` : ''}
             ${id === 'probability' ? '<button type="button" class="sl-btn ghost" data-reroll>🎲 New run</button>' : ''}
             <button type="button" class="sl-btn ghost" data-random>Randomize</button><button type="button" class="sl-btn ghost" data-reset>Reset</button>
+            ${def.table ? '<button type="button" class="sl-btn ghost" data-table>Data table</button>' : ''}<button type="button" class="sl-btn ghost" data-full aria-label="Full screen">⛶</button>
             <button type="button" class="sl-btn ghost${tier() === 'mega' ? '' : ' locked'}" data-compare>${ghost ? 'Stop comparing' : 'Compare'} ${tier() === 'mega' ? '' : tag('mega')}</button></div>
-          <p class="sl-readout" aria-live="polite"></p></div>
+          <p class="sl-readout" aria-live="polite"></p><div class="sb-table" hidden></div></div>
         <div class="sl-controls">
           ${CHALLENGES[id] ? `<div class="sl-chal"><span class="sl-label">${ki('target', false)} Challenges</span>${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div>` : ''}
           ${presets.length ? `<div class="sl-presets"><span class="sl-label">Try</span>${presets.map(([n], i) => `<button type="button" class="sl-chip" data-preset="${i}">${esc(n)}</button>`).join('')}</div>` : ''}
@@ -761,11 +987,13 @@
       draw();
     };
     host.addEventListener('input', onInput); host.addEventListener('change', onInput);
+    const onDbl = e => { const f = e.target.closest('.sl-field'); const el = f?.querySelector('[data-k]'); if (!el) return; const p = params.find(x => x.k === el.dataset.k); if (!p || p.type === 'text') return; s[p.k] = p.v; syncControls(); draw(); };
+    host.addEventListener('dblclick', onDbl);
     const ro = new ResizeObserver(() => { size(); draw(); }); ro.observe(canvas);
     size(); draw();
     if (def.anim) setPlaying(true);
     const ed = {
-      stop() { cancelAnimationFrame(raf); ro.disconnect(); host.removeEventListener('input', onInput); host.removeEventListener('change', onInput); },
+      stop() { cancelAnimationFrame(raf); ro.disconnect(); host.removeEventListener('input', onInput); host.removeEventListener('change', onInput); host.removeEventListener('dblclick', onDbl); },
       click(b) {
         if (b.matches('[data-play]')) setPlaying(!playing);
         else if (b.matches('[data-restart]')) { t = 0; setPlaying(true); }
@@ -797,6 +1025,16 @@
           setTimeout(() => { const input = document.getElementById('appChatInput'); if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); } }, 120);
         }
         else if (b.matches('[data-back]')) { ed.stop(); editor = null; renderHome(); }
+        else if (b.matches('[data-publish]')) publishSim({ type: id, values: { ...s }, title: ($('.sl-title', host)?.value || def.title).trim() }, b);
+        else if (b.matches('[data-share]')) shareSim({ type: id, values: { ...s }, title: ($('.sl-title', host)?.value || def.title).trim() }, b);
+        else if (b.matches('[data-guide-ok]')) { try { localStorage.setItem('knoxSimGuide', '1'); } catch (_) {} b.closest('.sl-guide')?.remove(); }
+        else if (b.matches('[data-full]')) { const st = $('.sl-stage', host); if (document.fullscreenElement) document.exitFullscreen?.(); else st.requestFullscreen?.().catch(() => {}); }
+        else if (b.matches('[data-table]')) {
+          const box = $('.sl-stage .sb-table', host); if (!box.hidden) { box.hidden = true; return; }
+          const { head, rows } = def.table.call(def, s);
+          box.innerHTML = `<div class="sb-table-top"><button type="button" class="sl-btn ghost sm" data-copy-table>Copy for a spreadsheet</button></div><table><thead><tr>${head.map(x => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`; box.hidden = false;
+        }
+        else if (b.matches('[data-copy-table]')) { const { head, rows } = def.table.call(def, s); navigator.clipboard?.writeText([head, ...rows].map(r => r.join('\t')).join('\n')).then(() => { b.textContent = 'Copied ✓'; }, () => { b.textContent = 'Couldn’t copy'; }); }
       },
     };
     return ed;
@@ -808,9 +1046,12 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.matches('[data-close-upsell]')) { b.closest('.sl-upsell')?.remove(); return; }
     if (b.matches('[data-upgrade]')) { window.goToPricing?.(); return; }
+    if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
     if (editor) { editor.click(b); return; }
     if (b.dataset.tab) { tab = b.dataset.tab; buildMsg = ''; renderHome(); return; }
     if (b.dataset.filter) { filter = b.dataset.filter; renderHome(); return; }
+    if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; loadCommunity(); return; }
+    if (b.dataset.csim) { openCommunity(b.dataset.csim); return; }
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
     if (b.matches('[data-build]')) { build(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }

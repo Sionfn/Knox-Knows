@@ -157,7 +157,7 @@
     host.innerHTML = `<div class="sl-ed sb">
       <div class="sl-top"><button type="button" class="sl-back" data-sb="back">← Simulation Lab</button>
         <input class="sl-title" value="${esc(sc.title)}" maxlength="40" aria-label="Name">
-        <div class="sl-top-btns"><button type="button" class="sl-btn ghost sm" data-sb="share">Share</button><button type="button" class="sl-btn sm" data-sb="save">Save</button></div></div>
+        <div class="sl-top-btns">${opts.extraButtons || ''}<button type="button" class="sl-btn ghost sm" data-sb="share">Share</button><button type="button" class="sl-btn ghost sm" data-sb="publish">Publish</button><button type="button" class="sl-btn sm" data-sb="save">Save</button></div></div>
       ${opts.explain ? `<div class="sl-explain">${ki('spark')}<span>${esc(opts.explain)}</span></div>` : ''}
       <div class="sb-add" role="toolbar" aria-label="Add">${Object.entries(KINDS).map(([k, d]) => `<button type="button" class="sl-chip" data-add="${k}">+ ${d.name}</button>`).join('')}</div>
       <div class="sl-main">
@@ -374,6 +374,7 @@
       else if (act === 'copy') { const { head, rows } = tableFor(+b.dataset.i), tsv = [head, ...rows].map(r => r.join('\t')).join('\n'); navigator.clipboard?.writeText(tsv).then(() => { b.textContent = 'Copied ✓'; }, () => { b.textContent = 'Couldn’t copy'; }); }
       else if (act === 'save') { sc.title = (host.querySelector('.sl-title')?.value || sc.title).trim() || 'My simulation'; if (opts.onSave?.(clean(sc)) !== false) { b.textContent = 'Saved ✓'; setTimeout(() => { if (b.isConnected) b.textContent = 'Save'; }, 1600); } }
       else if (act === 'share') opts.onShare?.(clean(sc), b);
+      else if (act === 'publish') { sc.title = (host.querySelector('.sl-title')?.value || sc.title).trim() || 'My simulation'; opts.onPublish?.(clean(sc), b); }
       else if (act === 'back') { stop(); opts.onBack?.(); }
       else if (act === 'upgrade') window.goToPricing?.();
       else if (act === 'close-upsell') b.closest('.sb-upsell')?.remove();

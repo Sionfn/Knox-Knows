@@ -23,3 +23,6 @@
 html[data-theme="dark"]:not(.knox-seasonal) .ksim-beta { background: rgba(242,183,5,.16); color: #FFD45C; }
 .ksim-reset { min-height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid var(--border, #E8DCCB); background: var(--surface, #fff); color: var(--text); font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 var(--border, #E8DCCB); cursor: pointer; }
 .ksim-reset:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border, #E8DCCB); }
+
+.ksim-lab { margin-left: auto; min-height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid #B98500; background: #FFC800; color: #3D2800; font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 #B98500; cursor: pointer; }
+.ksim-badge .kk-ic { width: 18px; height: 18px; }
