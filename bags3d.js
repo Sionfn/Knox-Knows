@@ -80,11 +80,11 @@
       // Label: white tag, green edge, holly in the corner.
       g.fillStyle = '#FFFFFF'; g.strokeStyle = '#17803F'; g.lineWidth = 9;
       roundRect(g, 48, 428, 416, 122, 28); g.fill(); g.stroke();
-      g.fillStyle = '#C81E2A'; g.font = '900 56px Nunito, sans-serif'; g.fillText('KNOX KNOWS', W / 2, 476);
-      g.fillStyle = '#17803F'; g.font = '900 22px Nunito, sans-serif'; g.fillText('SERIES 1 · KNOX’S CHRISTMAS', W / 2, 522);
+      g.fillStyle = '#C81E2A'; g.font = '900 50px Nunito, sans-serif'; g.fillText('KNOX KNOWS', W / 2, 478, 330); // squeezed to fit inside the label
+      g.fillStyle = '#17803F'; g.font = '900 21px Nunito, sans-serif'; g.fillText('SERIES 1 · KNOX’S CHRISTMAS', W / 2, 524, 350);
       g.fillStyle = '#1FA45A'; g.strokeStyle = '#0F5E2E'; g.lineWidth = 3;
-      for (const [x, y, rot] of [[66, 436, -.6], [92, 424, .3]]) { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.ellipse(0, 0, 26, 11, 0, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore(); }
-      g.fillStyle = '#E5383B'; for (const [x, y] of [[76, 440], [88, 446], [80, 452]]) { g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fill(); }
+      for (const [x, y, rot] of [[50, 420, -.6], [74, 410, .3]]) { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.ellipse(0, 0, 20, 9, 0, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore(); }
+      g.fillStyle = '#E5383B'; for (const [x, y] of [[58, 424], [68, 428], [62, 433]]) { g.beginPath(); g.arc(x, y, 5.5, 0, Math.PI * 2); g.fill(); }
       g.fillStyle = '#fff'; g.font = '900 30px Nunito, sans-serif'; g.fillText('BLIND BAG', W / 2, H - 46);
     } else {
       g.fillStyle = '#FFFFFF'; g.font = '900 50px Nunito, sans-serif'; g.fillText('Collect all 12!', W / 2, 100);
@@ -181,7 +181,7 @@
   const buzz = p => { try { navigator.vibrate?.(p); } catch (_) {} };
 
   // ── The stage ───────────────────────────────────────────────────────────
-  async function play({ result, onReveal }) {
+  async function play({ result, onReveal, bagsLeft }) {
     window.knoxSound?.unlock?.(); // we're inside the "Open a bag" click: let sound start (if it's on)
     const THREE = await loadThree();
     const stage = document.createElement('div');
@@ -198,7 +198,14 @@
       <button type="button" class="kb3-close" aria-label="Close">✕</button>
       <div class="kb3-flash" aria-hidden="true"></div><div class="kb3-ring" aria-hidden="true"></div>
       <div class="kb3-reveal" hidden></div>`;
+    // The background is the app's own: in Christmas mode the same scene as the
+    // home screen (lights, wreath, baubles, stocking, snowy hills, tree,
+    // snowman, presents, snow; the moon and stars at night), on the app's colors.
+    const root = document.documentElement, xmas = root.classList.contains('knox-christmas');
+    stage.classList.toggle('is-light', root.getAttribute('data-theme') !== 'dark');
+    if (xmas && window.knoxXmasScene) { stage.classList.add('is-xmas'); const sc = document.createElement('div'); sc.className = 'kb3-scene'; sc.setAttribute('aria-hidden', 'true'); stage.prepend(sc); }
     document.body.append(stage);
+    if (stage.classList.contains('is-xmas')) window.knoxXmasScene(stage.querySelector('.kb3-scene'));
     // Sound: the same switch as Account & Plan → Sound effects (off until you turn it on).
     const soundBtn = stage.querySelector('.kb3-sound');
     const showSound = () => { const on = !!window.knoxSound?.on(); soundBtn.innerHTML = SPEAKER(on); soundBtn.setAttribute('aria-pressed', String(on)); soundBtn.setAttribute('aria-label', on ? 'Sound effects on' : 'Sound effects off'); soundBtn.title = on ? 'Sound on' : 'Sound off'; };
@@ -273,7 +280,7 @@
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3)); pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
     const parts = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: .09, map: dotTex(THREE), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     parts.frustumCulled = false; scene.add(parts);
-    let pNext = 0; const pc = new THREE.Color();
+    let pNext = 0; const pc = new THREE.Color(), lightBg = stage.classList.contains('is-light');
     function emit(n, at, speed, colors, decay = 1, spread = 1) {
       for (let k = 0; k < n; k++) {
         const i = pNext = (pNext + 1) % PN, j = i * 3, a = Math.random() * Math.PI * 2, s = speed * (.35 + Math.random() * .65);
@@ -286,10 +293,11 @@
     function stepParticles(dt) {
       for (let i = 0; i < PN; i++) {
         const j = i * 3;
-        if (pLife[i] <= 0) { pCol[j] = pCol[j + 1] = pCol[j + 2] = 0; continue; }
+        if (pLife[i] <= 0) { pCol[j] = pCol[j + 1] = pCol[j + 2] = 0; pPos[j + 1] = -99; continue; } // gone: off screen (no dark specks)
         pLife[i] -= dt * pDecay[i]; pVel[j + 1] -= 2.4 * dt;
         pPos[j] += pVel[j] * dt; pPos[j + 1] += pVel[j + 1] * dt; pPos[j + 2] += pVel[j + 2] * dt;
-        const l = Math.max(0, pLife[i]); pCol[j] = pBase[j] * l; pCol[j + 1] = pBase[j + 1] * l; pCol[j + 2] = pBase[j + 2] * l;
+        // Fade out toward the background: black on dark looks, white on light ones.
+        const l = Math.max(0, pLife[i]), f = lightBg ? 1 - l : 0; pCol[j] = pBase[j] * l + f; pCol[j + 1] = pBase[j + 1] * l + f; pCol[j + 2] = pBase[j + 2] * l + f;
       }
       pGeo.attributes.position.needsUpdate = true; pGeo.attributes.color.needsUpdate = true;
     }
@@ -367,6 +375,10 @@
     const tearBtn = stage.querySelector('.kb3-tear-btn');
     const startAutoTear = () => { if (torn || dropT < 1 || autoTear) return; window.knoxSound?.unlock?.(); autoTear = performance.now(); dir = 1; lastCrinkle = 0; tearing = true; stage.classList.add('is-tearing'); stage.classList.remove('dir-left'); };
     tearBtn.addEventListener('click', startAutoTear);
+    // How many bags are left (when you have more than one).
+    const leftEl = document.createElement('span'); leftEl.className = 'kb3-left'; leftEl.setAttribute('aria-live', 'polite'); stage.append(leftEl);
+    const updateLeft = () => { const n = typeof bagsLeft === 'function' ? bagsLeft() : null; leftEl.hidden = !n || n === 1; leftEl.innerHTML = n ? `${window.KI ? window.KI('bag', { tint: false }) : ''}<b>${n === Infinity ? '∞' : n}</b> bag${n === 1 ? '' : 's'} to open` : ''; };
+    updateLeft();
     stage.querySelector('.kb3-close').addEventListener('click', () => end('close'));
     const onKey = e => { if (e.key === 'Escape') end('close'); };
     addEventListener('keydown', onKey);
@@ -416,7 +428,7 @@
         <h2>${picked.name}</h2>
         <p>${picked.isNew ? (picked.rarity === 'secret' ? 'The secret figure! You found Golden Knox.' : 'Added to your collection.') : 'You already have this one. 3 duplicates trade in for a new bag.'}</p>
         <div class="kb3-actions">${picked.more ? '<button type="button" class="kb3-again">Open another</button>' : ''}<button type="button" class="kb3-done">${picked.more ? 'My collection' : 'Yay!'}</button></div>`);
-      r.querySelector('.kb3-again')?.addEventListener('click', () => end('again'));
+      r.querySelector('.kb3-again')?.addEventListener('click', nextBag);
       r.querySelector('.kb3-done').addEventListener('click', () => end('done'));
       (r.querySelector('.kb3-again') || r.querySelector('.kb3-done')).focus({ preventScroll: true });
       SFX.fanfare(picked.rarity === 'secret');
@@ -503,6 +515,24 @@
     raf = requestAnimationFrame(frame);
     tearBtn.focus({ preventScroll: true });
 
+    // "Open another": the figure flies up and away, and a fresh bag drops onto
+    // the same stage (no fade to black between bags).
+    let switching = false;
+    function nextBag() {
+      if (switching || ended) return; switching = true;
+      const r = stage.querySelector('.kb3-reveal'); r.classList.add('is-out'); SFX.whoosh();
+      setTimeout(() => {
+        if (ended) return;
+        r.hidden = true; r.className = 'kb3-reveal'; r.innerHTML = '';
+        tear = 0; tearing = pressed = false; dir = 0; lastCrinkle = 0; torn = false; autoTear = 0; dropT = 0; t0 = performance.now();
+        picked = pickErr = null; rippedAt = nextStepAt = chargeStep = pulseAt = burstAt = 0; shakeAmp = 0; revealed = false; vf = 0; peeled = -1;
+        stripGroup.position.set(0, BH / 2 + .08, 0); stripGroup.rotation.set(0, 0, 0); topStrip.material.opacity = 1; peelStrip(0, 1);
+        haloMat.opacity = coreMat.opacity = rayMat.opacity = leakMat.opacity = 0; inside.intensity = 0; bag.scale.setScalar(1);
+        setChargeColor('#FFFFFF'); stage.style.setProperty('--tear', 0);
+        stage.classList.remove('is-torn', 'is-burst', 'is-tearing', 'dir-left');
+        updateLeft(); switching = false; tearBtn.focus({ preventScroll: true });
+      }, 380);
+    }
     function end(how, err) {
       if (ended) return; ended = true;
       cancelAnimationFrame(raf); removeEventListener('resize', size); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp); removeEventListener('keydown', onKey);

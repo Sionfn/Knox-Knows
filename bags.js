@@ -190,7 +190,7 @@
         return { figure: c.id, isNew: got.isNew, rarity: c.rarity, name: esc(c.name), art: figure(c.id), more: state.unopened > 0 };
       };
       try {
-        await window.knoxBagStage.play({ result: pick, onReveal: (how, err) => {
+        await window.knoxBagStage.play({ result: pick, bagsLeft: () => state?.unlimited ? Infinity : state?.unopened || 0, onReveal: (how, err) => {
           busy = false; render();
           if (err) (wrap ? toast(err.message) : alert(err.message));
           if (how === 'again') { setTimeout(openBag, 80); return; }
