@@ -52,7 +52,13 @@
     nutcracker: () => S(fox() + `<path d="M36 34V8h48v26Z" fill="#3C3C3C"/><rect x="34" y="28" width="52" height="8" rx="3" fill="#FFC800" stroke="#D9A300" stroke-width="2"/><path d="M42 10h36M42 18h36" stroke="#E5383B" stroke-width="3"/><path d="M76 4c4-6 10-4 8 2" fill="#1FA45A"/><path d="M32 96c4-10 16-14 28-14s24 4 28 14v12c-6 10-50 10-56 0Z" fill="#1CB0F6" stroke="#0A85C2" stroke-width="2.5" stroke-linejoin="round"/><path d="M60 84v30" stroke="#FFC800" stroke-width="3"/><circle cx="54" cy="94" r="2.5" fill="#FFC800"/><circle cx="66" cy="94" r="2.5" fill="#FFC800"/><circle cx="54" cy="104" r="2.5" fill="#FFC800"/><circle cx="66" cy="104" r="2.5" fill="#FFC800"/><path d="M40 74h40" stroke="#fff" stroke-width="5" stroke-linecap="round"/>`),
     golden: () => S(fox({ fur: '#FFC800', edge: '#B98500', belly: '#FFF4CC', inner: '#B98500' }) + `<path d="M60 2l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1Z" fill="#FFF4CC" stroke="#D9A300" stroke-width="2" stroke-linejoin="round"/><path d="M20 70l3-6 3 6-3 6Z M100 86l3-6 3 6-3 6Z M96 22l2-4 2 4-2 4Z" fill="#FFE38A"/>`),
   };
-  const figure = id => (FIG[id] || FIG.elf)();
+  // The figures: Knox's real Christmas figure art (bags/knox-<id>.webp, cut from
+  // the series sheet). The drawn SVGs above stay as a fallback if one fails to load.
+  const NAMES = Object.fromEntries(SERIES.map(c => [c.id, c.name]));
+  const figure = id => FIG[id] ? `<img class="kb-fig kb-fig-img" src="/bags/knox-${id}.webp" alt="${NAMES[id] || ''}" width="480" height="480" decoding="async" draggable="false" onerror="this.outerHTML=window.knoxBagFigSvg?.('${id}')||''">` : FIG.elf();
+  window.knoxBagFigSvg = id => (FIG[id] || FIG.elf)();
+  // Warm the cache so reveals pop in instantly.
+  const preloadFigs = () => SERIES.forEach(c => { const i = new Image(); i.src = `/bags/knox-${c.id}.webp`; });
   // The bag: a Knox-orange foil bag with a crimped top, Knox's face and a "?".
   const BAG = `<svg class="kb-bag-art" viewBox="0 0 160 200" aria-hidden="true" focusable="false">
     <g class="kb-bag-top"><path d="M24 30 32 18 40 30 48 18 56 30 64 18 72 30 80 18 88 30 96 18 104 30 112 18 120 30 128 18 136 30V44H24Z" fill="#FF6B00" stroke="#CC5500" stroke-width="3" stroke-linejoin="round"/><path d="M24 40h112" stroke="#CC5500" stroke-width="2" stroke-dasharray="5 5"/></g>
@@ -231,7 +237,7 @@
     });
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.querySelector('.kb-reveal')) close(); });
     document.body.append(wrap);
-    window.knoxBagStage?.preload?.(); // get the 3D bag ready while the collection loads
+    window.knoxBagStage?.preload?.(); preloadFigs(); // get the 3D bag and the figures ready while the collection loads
     render(); await load(); render();
     wrap?.querySelector('[data-open]:not([disabled]), .kb-x')?.focus();
   }
