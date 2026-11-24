@@ -18,6 +18,8 @@ import transcribe from "./_transcribe.js";
 import family from "./_family.js";
 import simBuild from "./_sim-build.js";
 import simCommunity from "./_sim-community.js";
+import deckCommunity from "./_deck-community.js";
+import communityAdmin from "./_community-admin.js";
 
 if (!getApps().length) {
   initializeApp({
@@ -103,6 +105,8 @@ export default async function handler(req, res) {
   // Simulation Lab: "Knox builds it" (simlab.js; api/_sim-build.js).
   if (req.query?.route === "sim-build") return simBuild(req, res, { db, auth: adminAuth });
   if (req.query?.route === "sim-community") return simCommunity(req, res, { db, auth: adminAuth });
+  if (req.query?.route === "deck-community") return deckCommunity(req, res, { db, auth: adminAuth });
+  if (req.query?.route === "community-admin") return communityAdmin(req, res, { db, auth: adminAuth });
   // Flashcard decks shared by link (see api/_share-deck.js).
   if (req.query?.route === "share-deck") return shareDeck(req, res);
   // Talk to Knox: a short recording becomes text (see api/_transcribe.js).

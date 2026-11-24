@@ -73,3 +73,20 @@ test('Community: published sims are moderated, anonymous, reportable, and never 
   for (const bad of ['see www.example.com', 'email me kid@mail.com', 'call 555 123 4567', 'add me @coolkid99', 'https://x.y']) assert.ok(CONTACT.test(bad), bad);
   for (const ok of ['Ball on the Moon', 'Ramp race 2', 'y = 2x + 1', 'Speed 25 m/s']) assert.ok(!CONTACT.test(ok), ok);
 });
+
+test('Flashcards Community: decks are moderated, fact-checked, anonymous, photo-free and reportable; admins review reports', () => {
+  const d = src('api/_deck-community.js'), fc = src('flashcards.js'), admin = src('api/_community-admin.js'), me = src('api/me.js');
+  assert.match(d, /omni-moderation-latest/);
+  assert.match(d, /async function factCheck\(/);
+  assert.match(d, /return res\.status\(409\)\.json\(\{ needsFix: wrong \}\)/);
+  assert.match(d, /Never publish a student's own photos/);
+  assert.match(d, /reports >= HIDE_AT \? \{ hidden: true \}/);
+  assert.doesNotMatch(d, /displayName|email:/);
+  assert.match(fc, /By a Knox student/);
+  assert.match(fc, /data-action="cm-open"/);
+  assert.match(fc, /'cm-publish'/);
+  assert.match(admin, /decoded\.uid !== ADMIN \|\| decoded\.email_verified !== true/);
+  assert.match(me, /route === "deck-community"\) return deckCommunity/);
+  assert.match(me, /route === "community-admin"\) return communityAdmin/);
+  assert.match(src('admin.html'), /Community reports/);
+});
