@@ -166,7 +166,8 @@ html.knox-christmas .kb-fox-wrap::after { content: ""; position: absolute; width
 
 /* ── Christmas night (html.knox-christmas.knox-xmas-night, built on Dark) ──
    A night-blue sky, moonlit snow, softly glowing lights, a moon and stars.
-   Same Knox red and green, a little brighter on the dark background. */
+   The exact Knox red and green of the light look; only the white and cream
+   surfaces turn night blue. */
 html.knox-christmas[data-theme="dark"] {
   --cream:        #0D1626;
   --cream-warm:   #132036;
@@ -176,13 +177,13 @@ html.knox-christmas[data-theme="dark"] {
   --text:         #EEF4FB;
   --text-light:   #A6B8CC;
   --text-body:    #C9D6E4;
-  --orange:       #FF4F57;
-  --orange-dark:  #C42F38;
+  --orange:       #E5383B;   /* the same Knox red as the light look */
+  --orange-dark:  #B3202A;
   --orange-light: #4A1C26;
   --orange-cream: #2A1620;
-  --red:          #FF4F57;
-  --green:        #2BC06A;
-  --green-dark:   #1A8A4B;
+  --red:          #E5383B;
+  --green:        #1FA45A;   /* the same evergreen as the light look */
+  --green-dark:   #157A41;
   --green-light:  #133A2A;
   --purple-light: #2E1F4A;
   --danger-bg:    #3A1820;

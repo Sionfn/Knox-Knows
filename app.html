@@ -497,6 +497,12 @@
     .sa-size button[aria-pressed="true"] { border-color: var(--orange); background: var(--orange-light); color: var(--orange-dark); box-shadow: 0 2px 0 var(--orange-dark); }
     html[data-theme="dark"] .sa-size button[aria-pressed="true"] { color: var(--orange); }
     @media (max-width: 420px) { .sa-row { flex-wrap: wrap; } .sa-lang { max-width: none; width: 100%; } }
+    /* On/off switch (Account & Plan → Sound effects) */
+    .sa-switch { position: relative; flex-shrink: 0; width: 50px; height: 30px; padding: 0; border-radius: 999px; border: 2px solid var(--border); background: var(--gray, #E5E5E5); cursor: pointer; transition: background .15s, border-color .15s; }
+    .sa-switch span { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.18); transition: transform .15s; }
+    .sa-switch[aria-checked="true"] { background: var(--green, #58CC02); border-color: var(--green-dark, #46A302); }
+    .sa-switch[aria-checked="true"] span { transform: translateX(20px); }
+    .sa-switch:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
     /* Larger answer text (Account & Plan → Answer text size) */
     html.knox-large-text .msg-knox-bubble { font-size: 18px; }
     html.knox-large-text .msg-knox-bubble :is(p, li, td, blockquote) { font-size: inherit; }
@@ -5636,36 +5642,12 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     el.appendChild(ans);
 
     // Sound effects, like the iPhone app's: off until switched on, saved on this device (knox-sound.js).
-    const snd = document.createElement('div'); snd.className = 'settings-websearch settings-sound';
-    snd.innerHTML = '<span class="ws-copy"><span class="settings-label">Sound effects</span><small>Knox’s sounds and celebrations: your flame, finished decks and lessons, card flips, Advent doors and blind bags.</small></span><button type="button" class="settings-switch" role="switch" aria-label="Sound effects"></button>';
-    const sndSw = snd.querySelector('.settings-switch');
+    const snd = document.createElement('div'); snd.className = 'settings-answers settings-sound';
+    snd.innerHTML = '<span class="settings-label">Sound</span><div class="sa-row"><span class="sa-copy"><b>Sound effects</b><small>Knox’s sounds and celebrations: your flame, finished decks and lessons, card flips, Advent doors and blind bags.</small></span><button type="button" class="sa-switch" role="switch" aria-label="Sound effects"><span></span></button></div>';
+    const sndSw = snd.querySelector('.sa-switch');
     sndSw.setAttribute('aria-checked', String(!!window.knoxSound?.on()));
     sndSw.onclick = () => { const v = sndSw.getAttribute('aria-checked') !== 'true'; window.knoxSound?.set(v); sndSw.setAttribute('aria-checked', String(v)); };
     el.appendChild(snd);
-
-    const mega = window.userTier === 'mega';
-    if (mega || !window.knoxNativeApp) {
-      // Mega Knox: "Simulations" (off by default, saved on this device). With it
-      // on, Ask Knox can add a hands-on simulation with sliders to an answer.
-      const sm = document.createElement('div'); sm.className = 'settings-websearch';
-      sm.innerHTML = '<span class="ws-copy"><span class="settings-label">🎛️ Simulations <span class="ws-beta">Beta</span></span><small></small></span><button type="button" class="settings-switch" role="switch"></button>';
-      const smNote = sm.querySelector('small'), smSw = sm.querySelector('.settings-switch');
-      const showSm = on => {
-        smSw.setAttribute('aria-checked', String(on));
-        smNote.textContent = !mega ? '💎 Mega Knox — Knox adds a hands-on simulation with sliders when it helps.'
-          : on ? 'On — in Ask Knox and Learn, Knox adds a simulation you can play with when it helps (graphs, motion, probability, interest…).'
-          : 'Off — turn on so Knox can add a simulation with sliders to math and science answers.';
-      };
-      smSw.setAttribute('aria-label', 'Simulations');
-      showSm(mega && window.knoxSimsOn(u.uid));
-      smSw.onclick = () => {
-        if (!mega) { goToPricing(); closeAppSettings(); return; }
-        const on = smSw.getAttribute('aria-checked') !== 'true';
-        try { localStorage.setItem('knoxSims:' + u.uid, on ? '1' : '0'); } catch (_) {}
-        showSm(on);
-      };
-      el.appendChild(sm);
-    }
 
     // Connections: Discord (linked with /link in the Knox server). Shows whether
     // it's connected and lets the student disconnect or connect it here.

@@ -43,5 +43,7 @@
 /* Depth, like the plan windows: a warm wash at the top fading to the card,
    a raised edge and a soft shadow. Gold while Mega Knox is picked. */
 .kg-card { background: linear-gradient(180deg, var(--orange-cream) 0%, var(--surface) 45%); box-shadow: 0 7px 0 var(--orange-dark), 0 24px 60px rgba(0,0,0,.35); }
-.kg-card.kg-mega { background: linear-gradient(180deg, #FFF3C4 0%, var(--surface) 45%); border-color: #F2B705; box-shadow: 0 7px 0 #C99404, 0 24px 60px rgba(0,0,0,.35); transition: background .2s, border-color .2s; }
+.kg-card.kg-mega { background: linear-gradient(180deg, #FFF3C4 0%, var(--surface) 45%); border-color: #F2B705; box-shadow: 0 7px 0 #C99404, 0 24px 60px rgba(0,0,0,.35); }
+/* Switching Plus ↔ Mega: no fade, so the card never goes see-through for a moment. */
+.ff-card.kg-card, .ff-card.kg-card.kg-mega { transition: border-color .2s, box-shadow .2s !important; }
 html[data-theme="dark"]:not(.knox-seasonal) .kg-card.kg-mega { background: linear-gradient(180deg, rgba(242,183,5,.16) 0%, transparent 45%), var(--surface); }
