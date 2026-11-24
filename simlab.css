@@ -213,3 +213,53 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
 .sl-pub-btns { display: flex; justify-content: flex-end; gap: 8px; }
 .sl-msg[hidden] { display: none; }
 @media (max-width: 860px) { .sl-tabs { grid-template-columns: repeat(3, 1fr); } }
+
+/* Home: the ways in (like Flashcards), full width so nothing changes size */
+.sl-wrap, .sl-ed { width: 100%; box-sizing: border-box; }
+.sl-ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+.sl-way { --c: #FF6B00; --cd: #CC5500; --cl: color-mix(in srgb, var(--c) 14%, var(--surface)); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px; min-height: 150px; text-align: left; border-radius: 22px; border: 2px solid var(--c); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 5px 0 var(--cd); transition: transform .12s; }
+.sl-way:hover { transform: translateY(-3px); }
+.sl-way b { font-size: 19px; font-weight: 900; }
+.sl-way > span:last-child { font-size: 13.5px; font-weight: 700; color: var(--text-light); line-height: 1.45; }
+.sl-way[data-flavor="blue"], .sl-way-icon[data-flavor="blue"] { --c: #1CB0F6; --cd: #0A85C2; }
+.sl-way[data-flavor="green"], .sl-way-icon[data-flavor="green"] { --c: #1FA45A; --cd: #157A41; }
+.sl-way[data-flavor="purple"], .sl-way-icon[data-flavor="purple"] { --c: #A560F2; --cd: #7C3AED; }
+.sl-way-icon[data-flavor="orange"] { --c: #FF6B00; --cd: #CC5500; }
+.sl-way-icon[data-flavor="gold"] { --c: #F2B705; --cd: #B98500; }
+.sl-way-icon { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; background: var(--c, #F2B705); color: #fff; box-shadow: 0 3px 0 var(--cd, #B98500); margin-bottom: 4px; }
+.sl-way-icon .kk-ic { width: 26px; height: 26px; color: #fff; stroke: #fff; }
+.sl-section h3 { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--text); }
+.sl-all { margin-top: 10px; }
+.sl-page-head { display: flex; align-items: center; gap: 12px; margin: 6px 0 14px; }
+.sl-page-head h2 { margin: 0; font-size: 26px; font-weight: 900; color: var(--text); }
+.sl-page-head .sl-way-icon { margin: 0; width: 42px; height: 42px; }
+.sl-wrap > .sl-back { margin-bottom: 4px; }
+@media (max-width: 600px) { .sl-ways { grid-template-columns: 1fr; } .sl-way { min-height: 0; } }
+
+/* ── Same sizing and spacing as the Flashcards home (measured from .fc-*) ── */
+#simsPanel .nb-scroll.bs-scroll { padding: 40px 40px 48px !important; }
+#simsPanel .sl-wrap { max-width: 960px; padding-bottom: 0; }
+#simsPanel .sl-head { margin: 0 0 28px; }
+#simsPanel .sl-badge { gap: 6px; padding: 7px 18px; border-width: 2px; font-size: 14px; font-weight: 800; line-height: 1.3; box-shadow: 0 3px 0 var(--sl-d), 0 0 26px rgba(242, 183, 5, .22); margin-bottom: 18px; }
+#simsPanel .sl-badge .kk-ic { width: 17px; height: 17px; }
+#simsPanel .sl-head h2 { margin: 0 0 12px; font-size: 40px; font-weight: 900; line-height: 42px; letter-spacing: -.8px; }
+#simsPanel .sl-head p { max-width: 480px; margin: 0 auto; font-size: 16px; font-weight: 700; line-height: 1.55; }
+#simsPanel .sl-ways { max-width: 860px; margin: 0 auto 28px; gap: 14px; }
+#simsPanel .sl-way { padding: 16px 16px 18px; min-height: 176px; border-radius: 20px; border-width: 3px; gap: 6px; box-shadow: 0 5px 0 var(--cd); }
+#simsPanel .sl-way b { font-size: 16px; font-weight: 900; }
+#simsPanel .sl-way > span:last-child { font-size: 13px; font-weight: 700; line-height: 1.45; }
+#simsPanel .sl-way-icon { width: 42px; height: 42px; border-radius: 50%; border: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: none; margin: 0 0 4px; box-sizing: border-box; }
+#simsPanel .sl-way-icon .kk-ic { width: 21px; height: 21px; color: var(--cd); stroke: var(--cd); }
+html[data-theme="dark"] #simsPanel .sl-way-icon .kk-ic { color: var(--c); stroke: var(--c); }
+#simsPanel .sl-section, #simsPanel .sl-build, #simsPanel .sl-make, #simsPanel .sl-wrap > .sl-grid, #simsPanel .sl-wrap > .sl-filters, #simsPanel .sl-wrap > .sl-cost, #simsPanel .sl-wrap > .sl-empty, #simsPanel .sl-saved { max-width: 860px; margin-left: auto; margin-right: auto; }
+#simsPanel .sl-section h3 { font-size: 16px; }
+#simsPanel .sl-wrap > .sl-back { display: block; max-width: 860px; margin: -8px auto 8px; text-align: left; width: 100%; }
+@media (max-width: 760px) { #simsPanel .nb-scroll.bs-scroll { padding: 24px 16px 40px !important; } #simsPanel .sl-head h2 { font-size: 30px; line-height: 34px; } }
+/* Sim tiles = Flashcards deck cards: 2px border, 20px corners, 4px edge, 18px padding, 16px grid gap */
+#simsPanel .sl-grid { gap: 16px; }
+#simsPanel .sl-tile { border-radius: 20px; padding: 18px; gap: 4px; }
+#simsPanel .sl-tile .sl-ico { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: 0 3px 0 var(--c); margin-bottom: 8px; box-sizing: border-box; }
+#simsPanel .sl-tile .sl-ico .kk-ic { width: 22px; height: 22px; }
+#simsPanel .sl-tile b { font-size: 15px; }
+#simsPanel .sl-tile .sl-tag { top: 14px; right: 14px; }
+#simsPanel .sl-filters { margin-bottom: 18px; }

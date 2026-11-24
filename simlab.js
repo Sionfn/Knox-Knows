@@ -679,7 +679,7 @@
   const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list.slice(0, 200))); return true; } catch (_) { return false; } };
 
   // ── The page ─────────────────────────────────────────────────────────────
-  let host = null, tab = 'build', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '';
+  let host = null, tab = 'home', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '';
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
   function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
   function costLine() {
@@ -691,8 +691,7 @@
   function renderHome() {
     if (!host) return;
     const saved = readSaved();
-    const tabs = [['build', 'sparkle', 'Knox builds it'], ['play', 'sliders', 'Playground'], ['make', 'pencil', 'Make your own'], ['community', 'globe', 'Community'], ['mine', 'cards', `My sims${saved.length ? ` (${saved.length})` : ''}`]];
-    let body = '';
+        let body = '';
     if (tab === 'build') {
       body = `<div class="sl-build">
           <label class="sl-label" for="slPrompt">What do you want to see?</label>
@@ -730,9 +729,24 @@
         : `<div class="sl-empty"><b>Nothing saved yet</b><span>Open a simulation, set it up, and press Save — it shows up here.</span></div>`;
       body += `<p class="sl-cost">Saves on this device: ${SAVE_MAX[tier()] === Infinity ? 'unlimited (Mega Knox)' : `${saved.length} of ${SAVE_MAX[tier()]}`}.</p>`;
     }
-    host.innerHTML = fill(`<div class="sl-wrap"><div class="sl-head"><span class="sl-badge">${ki('sliders', false)} Simulation Lab</span><h2>Play with <span>math &amp; science</span></h2><p>Build a simulation with Knox, or open one and change everything.</p></div>
-      <div class="sl-tabs" role="tablist">${tabs.map(([id, icon, name]) => `<button type="button" role="tab" class="sl-tab${tab === id ? ' on' : ''}" aria-selected="${tab === id}" data-tab="${id}">${ki(icon === 'sparkle' ? 'spark' : icon, false)}<span>${name}</span></button>`).join('')}</div>
-      ${body}</div>`);
+    const WAYS = [['build', 'spark', 'orange', 'Knox builds it', 'Describe what you want to see and Knox sets it up.'], ['play', 'sliders', 'blue', 'Playground', `${ORDER.length} simulations with challenges — math, physics, chemistry and more.`],
+      ['make', 'pencil', 'green', 'Make your own', 'Build from scratch: balls, ramps, springs, targets, sliders and graphs.'], ['community', 'globe', 'purple', 'Community', 'Play what other students made, or publish yours.']];
+    const page = WAYS.find(w => w[0] === tab) || (tab === 'mine' ? ['mine', 'cards', 'gold', 'My sims', ''] : null);
+    let html;
+    if (!page) {
+      // Home: the ways in, then your saved sims.
+      const mine = saved.length ? `<div class="sl-grid">${saved.slice(0, 8).map((x, i) => `<button type="button" class="sl-tile g-${(T[x.type]?.group || 'physics').toLowerCase()}" data-saved="${i}"><span class="sl-ico" aria-hidden="true">${ki(x.type === 'custom' ? 'pencil' : T[x.type]?.icon || 'sliders')}</span><b>${esc(x.title)}</b><small>${esc(x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || '')}</small></button>`).join('')}</div>${saved.length > 8 ? '<button type="button" class="sl-btn ghost sm sl-all" data-tab="mine">See all</button>' : ''}`
+        : '<div class="sl-empty"><b>Nothing saved yet</b><span>Open or build a simulation and press Save — it shows up here.</span></div>';
+      html = `<div class="sl-wrap"><div class="sl-head"><span class="sl-badge">${ki('sliders', false)} Simulation Lab</span><h2>Play with<br><span>math &amp; science.</span></h2><p>Build a simulation with Knox, play with one, or make your own from scratch.</p></div>
+        <div class="sl-ways">${WAYS.map(([id, icon, flavor, name, text]) => `<button type="button" class="sl-way" data-flavor="${flavor}" data-tab="${id}"><span class="sl-way-icon" aria-hidden="true">${ki(icon, false)}</span><b>${name}</b><span>${text}</span></button>`).join('')}</div>
+        <div class="sl-section"><h3>My sims</h3>${mine}</div></div>`;
+    } else {
+      // Each page has the same header as the home (and as Flashcards): badge, big title, line under it.
+      const sub = { build: 'Describe what you want to see. Knox picks the right simulation and fills in your numbers.', play: 'Open one, move the sliders, and try its challenges.', make: 'Start from a ready-made setup or an empty world.', community: 'Simulations other students made. Play any of them.', mine: 'Everything you saved, on this device.' }[page[0]];
+      html = `<div class="sl-wrap"><button type="button" class="sl-back" data-tab="home">← Simulation Lab</button>
+        <div class="sl-head"><span class="sl-badge">${ki('sliders', false)} Simulation Lab</span><h2>${page[3]}</h2><p>${sub}</p></div>${body}</div>`;
+    }
+    host.innerHTML = fill(html);
     host.scrollTop = 0;
   }
 
@@ -832,7 +846,7 @@
     editor?.stop();
     const b = window.knoxSimBuilder.mount(host, scene, {
       tier: tier(), explain: meta.explain,
-      onBack: () => { editor = null; tab = 'make'; renderHome(); },
+      onBack: () => { editor = null; renderHome(); },
       onSave: sc => { const list = readSaved(), max = SAVE_MAX[tier()]; if (list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one in My sims, or upgrade to save more.`); return false; } list.unshift({ type: 'custom', values: sc, title: sc.title, at: Date.now() }); writeSaved(list); return true; },
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
       onPublish: (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),

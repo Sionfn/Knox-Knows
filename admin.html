@@ -771,7 +771,39 @@
     renderDashboard(data);
     if (!document.getElementById('compForm')) renderCompPanel();
     loadComped();
+    loadReports();
   };
+
+  // ─── Community reports (Simulation Lab + Flashcards; api/_community-admin.js) ───
+  // Anything students reported. 3 reports hide it automatically; here you restore or delete.
+  async function reportsFetch(method, body) {
+    const user = auth.currentUser; if (!user) throw new Error('Please sign in again.');
+    const res = await fetch('/api/me?route=community-admin', { method, headers: Object.assign({ 'Authorization': 'Bearer ' + await user.getIdToken() }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`); return data;
+  }
+  const escR = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function loadReports() {
+    let box = document.getElementById('reportsPanel');
+    if (!box) { box = document.createElement('div'); box.id = 'reportsPanel'; document.getElementById('compPanel').after(box); }
+    box.innerHTML = '<h2 class="section-title">Community reports</h2><div class="card card-lg"><div class="metric-label">Simulations and flashcard decks students reported</div><div class="comp-list" id="reportList"><div class="comp-empty">Loading…</div></div></div>';
+    const list = box.querySelector('#reportList');
+    try {
+      const { items } = await reportsFetch('GET');
+      list.innerHTML = items.length ? items.map(it => `<div class="comp-row" style="display:block;padding:12px 0;border-bottom:1px solid var(--border)">
+          <b>${it.kind === 'deck' ? 'Deck' : 'Simulation'}: ${escR(it.title)}</b> · ${it.reports} report${it.reports === 1 ? '' : 's'} · ${it.hidden ? '<span style="color:#E5383B;font-weight:900">hidden</span>' : 'still public'}
+          ${it.desc ? `<div style="font-size:13px;color:var(--text-light);margin-top:4px">${escR(it.desc)}</div>` : ''}
+          <div style="font-size:12.5px;margin-top:6px;line-height:1.5">${it.summary.map(escR).join('<br>')}</div>
+          ${it.reasons.length ? `<div style="font-size:12px;color:var(--text-light);margin-top:4px">Reasons: ${it.reasons.map(escR).join(' · ')}</div>` : ''}
+          <div style="margin-top:8px;display:flex;gap:8px"><button class="pick-go" data-rep="restore" data-kind="${it.kind}" data-id="${it.id}">Restore (it's fine)</button><button class="pick-go" style="background:#E5383B;border-color:#B3202A" data-rep="delete" data-kind="${it.kind}" data-id="${it.id}">Delete</button></div></div>`).join('')
+        : '<div class="comp-empty">Nothing reported. 🎉</div>';
+    } catch (e) { list.innerHTML = `<div class="comp-empty">${escR(e.message)}</div>`; }
+    list.onclick = async e => {
+      const b = e.target.closest('[data-rep]'); if (!b) return;
+      if (b.dataset.rep === 'delete' && !confirm('Delete this for good? This can’t be undone.')) return;
+      b.disabled = true;
+      try { await reportsFetch('POST', { kind: b.dataset.kind, id: b.dataset.id, action: b.dataset.rep }); loadReports(); } catch (err) { alert(err.message); b.disabled = false; }
+    };
+  }
 
   // ─── Comped Knox Plus manager ───
   async function compFetch(method, body) {
