@@ -424,7 +424,7 @@
       r.innerHTML = (window.KI?.fill || (x => x))(`<div class="kb3-celebrate" aria-hidden="true">${bokeh}${hills}${lights}</div><div class="kb3-confetti" aria-hidden="true">${confetti}</div>
         <div class="kb3-figwrap"><div class="kb3-rays" aria-hidden="true"></div><div class="kb3-twinkle" aria-hidden="true">${twinkles}</div><div class="kb3-fig">${picked.art}</div></div>
         <span class="kb3-tag ${picked.isNew ? 'new' : 'dup'}">${picked.isNew ? 'NEW!' : 'Duplicate'}</span>
-        <span class="kb3-rarity">${RARITY_NAME[picked.rarity]}${picked.rarity === 'secret' ? ' · 1 in 100' : ''}</span>
+        <span class="kb3-rarity">${RARITY_NAME[picked.rarity]}${picked.rarity === 'secret' ? ' · 1%' : ''}</span>
         <h2>${picked.name}</h2>
         <p>${picked.isNew ? (picked.rarity === 'secret' ? 'The secret figure! You found Golden Knox.' : 'Added to your collection.') : 'You already have this one. 3 duplicates trade in for a new bag.'}</p>
         <div class="kb3-actions">${picked.more ? '<button type="button" class="kb3-again">Open another</button>' : ''}<button type="button" class="kb3-done">${picked.more ? 'My collection' : 'Yay!'}</button></div>`);

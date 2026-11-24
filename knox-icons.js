@@ -53,6 +53,10 @@
     pencil: '<path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 4 4"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    // The Christmas looks, drawn like the sun and moon (a look, not an event):
+    // a snowflake for Christmas, a moon with a falling snowflake for Christmas night.
+    snowDay: '<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.6 4.3 12 6.2l2.4-1.9M9.6 19.7 12 17.8l2.4 1.9M3.6 10.4l3 .6-.9-2.9M20.4 13.6l-3-.6.9 2.9M3.6 13.6l3-.6-.9 2.9M20.4 10.4l-3 .6.9-2.9"/>',
+    snowNight: '<path d="M11 4.5a6 6 0 0 0 8.3 8.3A8 8 0 1 1 11 4.5Z"/><path d="M18 2.5v5M15.8 3.8l4.4 2.4M15.8 6.2l4.4-2.4"/>',
     calc: '<rect x="5" y="2" width="14" height="20" rx="4"/><path d="M9 7h6M9 12h.01M15 12h.01M9 17h.01M15 17h.01"/>',
     send: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/>',
     tag: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/>',
@@ -102,7 +106,7 @@
     '✍': 'pencil', '⌨': 'keyboard', '🎟': 'ticket', '🐾': 'paw', '💳': 'card', '❌': 'xcircle', '😕': 'frown', '✂': 'scissors',
   };
   // Line icons get a color of their own where there's no better one around.
-  const TINT = { sliders: '#B98500', cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
+  const TINT = { sliders: '#B98500', cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', snowDay: '#E5383B', snowNight: '#1CB0F6', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };
 
   function KI(name, opts = {}) {
     if (F[name]) return F[name];
