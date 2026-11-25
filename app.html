@@ -1794,6 +1794,18 @@
       text-transform: uppercase;
     }
     html[data-theme="dark"] .knox-final-answer-label { color: #74D4FF; }
+    /* Citation box (Knox green): ready to paste into a Works Cited page */
+    .knox-citation { margin: 0 20px 18px; padding: 10px 14px 12px; border: 2px solid var(--green); border-radius: 14px; background: var(--green-light); box-shadow: 0 3px 0 var(--green-dark); }
+    .kcit-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+    .kcit-label { font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--green-dark); }
+    html[data-theme="dark"] .kcit-label { color: var(--green); }
+    .kcit-copy { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 10px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 900; box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+    .kcit-copy:hover { border-color: var(--green); }
+    .kcit-copy:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--border); }
+    .kcit-copy.done { border-color: var(--green); color: var(--green-dark); }
+    html[data-theme="dark"] .kcit-copy.done { color: var(--green); }
+    .kcit-text { margin: 0; padding-left: 2em; text-indent: -2em; font-size: 15px; font-weight: 700; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; } /* hanging indent, like a Works Cited page */
+    @media (max-width: 600px) { .knox-citation { margin: 0 15px 15px; } }
     html.knox-seasonal .knox-final-answer-label { color: var(--blue-dark); }
     .knox-response-body { padding: 18px 20px 16px; }
     .knox-response-body a.knox-link { color: var(--orange-dark); font-weight: 800; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
@@ -5273,7 +5285,19 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
   const COPY_ICON  = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
   const CHECK_ICON = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
 
-  window.appCopyAnswer = function(fbId, btn) {
+  // Citation box: copy with italics (rich text for Docs/Word) and plain text as a fallback.
+document.addEventListener('click', async e => {
+  const btn = e.target.closest?.('.kcit-copy'); if (!btn) return;
+  const box = btn.closest('.knox-citation')?.querySelector('.kcit-text'); if (!box) return;
+  const plain = box.innerText.trim(), rich = '<p style="padding-left:.5in;text-indent:-.5in">' + box.innerHTML + '</p>';
+  try {
+    if (window.ClipboardItem && navigator.clipboard?.write) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([rich], { type: 'text/html' }), 'text/plain': new Blob([plain], { type: 'text/plain' }) })]);
+    else await navigator.clipboard.writeText(plain);
+  } catch { try { await navigator.clipboard.writeText(plain); } catch { typeof fallbackCopyText === 'function' && fallbackCopyText(plain); } }
+  btn.classList.add('done'); btn.querySelector('span').textContent = 'Copied ✓';
+  setTimeout(() => { if (btn.isConnected) { btn.classList.remove('done'); btn.querySelector('span').textContent = 'Copy'; } }, 1800);
+});
+window.appCopyAnswer = function(fbId, btn) {
     const payload = window._fbPayloads[fbId];
     const text = payload ? payload.answer : '';
     if (!text) return;
@@ -7548,6 +7572,10 @@ function renderAnswerHtml(text, kind = 'answer') {
     list = ''; inItem = false;
   };
   const answerBox = result => '<div class="knox-final-answer"><span class="knox-final-answer-label">Answer</span><span>' + formatInline(result) + '</span></div>';
+  // "Citation (MLA): …" → a box with a Copy button (pastes with its italics into Docs/Word).
+  const citationBox = (style, cite) => '<div class="knox-citation"><div class="kcit-top"><span class="kcit-label">' + (style ? escHtml(style.trim()) + ' citation' : 'Citation') + '</span>' +
+    '<button type="button" class="kcit-copy" aria-label="Copy this citation"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span></button></div>' +
+    '<p class="kcit-text">' + formatInline(cite) + '</p></div>';
   let firstAnswer = '';
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -7563,6 +7591,8 @@ function renderAnswerHtml(text, kind = 'answer') {
         '<pre><code>' + escHtml(code.join('\n')) + '</code></pre></div>';
       continue;
     }
+    const citation = /^(?:[-*•]\s+)?Citation(?:\s*\(([^)\n]{2,24})\))?:\s*(.{5,1200})$/i.exec(line);
+    if (citation) { closeList(); flush(); html += citationBox(citation[1], citation[2]); continue; }
     const result = /^Answer:\s*(.{1,1200})$/i.exec(line);
     if (result && kind !== 'learn') {
       closeList();
