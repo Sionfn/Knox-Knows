@@ -41,7 +41,7 @@ html[data-theme="dark"] .knox-sim { --ks-tint: rgba(255, 200, 0, .16); --ks-ink:
 .ksim-badge .kk-ic { width: 20px; height: 20px; color: inherit !important; }
 .ksim-head b { font-size: 15px; text-transform: uppercase; letter-spacing: .02em; }
 .ksim-slider { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
-.ksim-slider b { color: var(--text); font-size: 13.5px; letter-spacing: 0; }
+.ksim-slider b { color: var(--text); font-size: 13.5px; letter-spacing: 0; text-transform: none; }
 .ksim-slider input { background: linear-gradient(to right, var(--ks) var(--p, 50%), var(--border, #E8DCCB) var(--p, 50%)); }
 .ksim-slider input::-webkit-slider-thumb { border-color: var(--ks); box-shadow: 0 2px 0 var(--ks-ledge); }
 .ksim-slider input::-moz-range-thumb { border-color: var(--ks); box-shadow: 0 2px 0 var(--ks-ledge); }

@@ -30,8 +30,9 @@ test('normal prose is left alone; a Learn reply shows its simulation above Your 
   assert.doesNotMatch(html, /Sim:/);
 });
 
-test('the server adds simulations only for Mega with the switch on (Ask Knox and Learn) and validates the flag', () => {
-  assert.match(ask, /const simsOn = simulations === true && \(tier === 'mega' \|\| tier === 'plus'\) && !casual && !isBot/);
+test('the server offers simulations on every plan (Ask Knox and Learn), only when they help, and validates the flag', () => {
+  assert.match(ask, /const simsOn = simulations === true && !casual && !isBot;/);
+  assert.match(ask, /const SIM_LINES = SIM_CATALOG\.map/);
   assert.match(ask, /learnMode \? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION/);
   assert.match(ask, /typeof simulations !== 'boolean'/);
 });
@@ -42,4 +43,24 @@ test('Learn keeps a sim only when Simulations are on, and only a known template'
   assert.match(decodeLearnOutput(reply('line | m=3, b=1'), { sims: true }), /^Sim: line \| m=3, b=1$/m);
   assert.doesNotMatch(decodeLearnOutput(reply('line | m=3, b=1'), {}), /Sim:/);
   assert.doesNotMatch(decodeLearnOutput(reply('rocket | x=1'), { sims: true }), /Sim:/);
+});
+
+test('answers and Learn know every Simulation Lab sim (all 22)', async () => {
+  const { SIM_CATALOG } = await import('../api/_sim-build.js');
+  const { decodeLearnOutput } = await import('../api/_learn-output.js');
+  const reply = sim => JSON.stringify({body:'Watch it swing.',question:'What changes the period?',choices:[],goals:['Pendulums'],part:1,practiceIndex:0,assessment:'new',reviewFocus:'',keyIdea:'',graph:'',visual:'',video:'',recap:'',watchOut:'',topic:'',sim});
+  assert.equal(SIM_CATALOG.length, 22);
+  for (const [type] of SIM_CATALOG) assert.match(decodeLearnOutput(reply(type + ' | a=1'), { sims: true }), new RegExp('^Sim: ' + type + ' \\|', 'm'), type);
+  const sims = readFileSync(new URL('../sims.js', import.meta.url), 'utf8');
+  assert.match(sims, /window\.knoxSimLab\.mini\(el, p\.type, p\.vals\)/);
+  assert.match(readFileSync(new URL('../simlab.js', import.meta.url), 'utf8'), /Open in Lab/);
+});
+
+test('Ask Knox and Learn both search the web only when needed, and Learn falls back to a normal reply', () => {
+  assert.match(ask, /const useWebSearch = webSearch === true && !casual && !isBot;/);
+  assert.match(ask, /LEARN_WEB_SEARCH_INSTRUCTION/);
+  assert.match(ask, /Learn search reply was not a lesson; answering normally\./);
+  const app = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
+  assert.match(app, /webSearch: true,/);
+  assert.match(app, /simulations: true,/);
 });
