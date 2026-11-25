@@ -688,7 +688,7 @@
   const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list.slice(0, 200))); return true; } catch (_) { return false; } };
 
   // ── The page ─────────────────────────────────────────────────────────────
-  let host = null, tab = 'home', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
+  let host = null, tab = 'home', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
   function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
   function costLine() {
@@ -707,8 +707,11 @@
   const head = (badge, title, sub) => `<header class="fc-head"><div class="fc-badges"><span class="fc-badge">${badge}</span></div><h1 class="fc-title" tabindex="-1">${title}</h1>${sub ? `<p class="fc-sub">${sub}</p>` : ''}</header>`;
   const topbar = (left, right = '') => `<div class="fc-topbar sl-topbar">${left}${right ? `<div class="fc-topbar-right">${right}</div>` : '<span></span>'}</div>`;
   const backBtn = B('← Simulation Lab', 'data-tab="home"', 'ghost');
+  const backLabel = () => tab === 'community' ? '← Community' : tab === 'build' ? '← Knox builds it' : '← Simulation Lab';
   const accentLast = t => { const w = esc(t).trim().split(/\s+/); return w.length > 1 ? `${w.slice(0, -1).join(' ')} <span class="accent">${w[w.length - 1]}</span>` : `<span class="accent">${w[0]}</span>`; };
-  const pick = (attrs, flavor, icon, title, sub, extra = '') => `<button type="button" class="sl-pick" data-flavor="${flavor}" ${attrs}><span class="sl-pick-circle" aria-hidden="true">${ki(icon, false)}</span><span class="sl-pick-text"><b>${title}</b><small>${sub}</small></span>${extra}</button>`;
+  const pick = (attrs, flavor, icon, title, sub, extra = '', tags = '') => `<button type="button" class="sl-pick" data-flavor="${flavor}" ${attrs}><span class="sl-pick-circle" aria-hidden="true">${ki(icon, false)}</span><span class="sl-pick-text"><b>${title}</b><small>${sub}</small>${tags ? `<span class="sl-pick-tags">${tags}</span>` : ''}</span>${extra}</button>`;
+  // Knox's own simulations wear this sticker in Community (student ones say "By a Knox student").
+  const KNOX_STICKER = '<span class="sl-knox"><img src="/knox-logo-square.jpg" alt="">Made by Knox</span>';
   const chipB = (label, attrs, on) => `<button type="button" class="fc-chip${on ? ' on' : ''}" ${attrs}>${label}</button>`;
   const searchBox = (id, label, ph, val) => `<div class="fc-search-wrap sl-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="sl-input" id="${id}" type="search" aria-label="${label}" placeholder="${ph}" value="${esc(val)}"></div>`;
   const empty = (title, text, btn = '') => `<div class="fc-empty"><h2>${title}</h2><p class="fc-sub">${text}</p>${btn ? `<div class="fc-toolbar" style="margin-top:14px">${btn}</div>` : ''}</div>`;
@@ -736,7 +739,7 @@
     if (!host) return;
     const top = host.scrollTop;
     const saved = readSaved();
-    if (tab === 'mine') tab = 'home';
+    if (!['home', 'build', 'community'].includes(tab)) tab = tab === 'play' ? 'community' : 'home';
     let html;
     if (tab === 'build' && buildBusy) {
       html = `<div class="fc-wrap center sl-wrap"><div class="fc-loading"><img src="/knox-logo-square.jpg" alt=""><h2>Knox is building your simulation…</h2><p class="fc-sub">This usually takes 5–20 seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${B('Cancel', 'data-build-cancel', 'ghost small')}</div></div></div>`;
@@ -753,61 +756,44 @@
           <p class="fc-note" style="margin-top:14px">Knox can make mistakes — check the numbers before you use them for homework.</p>
         </div>
         <p class="fc-note">${costLine()}</p></div>`;
-    } else if (tab === 'play') {
-      const ids = ORDER.filter(id => filter === 'All' || T[id].group === filter), done = doneSet();
-      html = `<div class="fc-wrap sl-wrap">${head(`${ki('sliders', false)} Playground`, `Pick one and <span class="accent">play.</span>`, `${ORDER.length} simulations. Move the sliders, watch what changes, and try each one’s challenges.`)}
-        ${topbar(backBtn)}
-        <div class="fc-chips sl-filters">${['All', ...GROUPS].map(g => chipB(g === 'All' ? 'Everything' : g, `data-filter="${g}"`, filter === g)).join('')}</div>
-        <div class="sl-picks">${ids.map(id => { const n = (CHALLENGES[id] || []).length, got = (CHALLENGES[id] || []).filter((_, i) => done.has(id + i)).length;
-          return pick(`data-open="${id}"`, flavorOf(id), T[id].icon, esc(T[id].title), esc(T[id].blurb) + (got ? ` · ${got}/${n} challenges` : ''), canUse(id) ? '' : tag('plus')); }).join('')}</div>
-        <p class="fc-note">${costLine()}</p></div>`;
-    } else if (tab === 'make') {
-      const L = window.knoxSimBuilder?.LIMITS?.[tier()];
-      html = `<div class="fc-wrap sl-wrap">${head(`${ki('pencil', false)} Make your own`, `Build it from <span class="accent">scratch.</span>`, 'Drop in balls, blocks, ramps, springs and targets. Set gravity and bounce, add sliders and graphs, then press Play.')}
-        ${topbar(backBtn)}
-        <div class="sl-picks two">
-          ${pick('data-make="blank"', 'orange', 'target', 'Hit the target', 'A ball, a target and a slider')}
-          ${pick('data-make="ramp"', 'blue', 'chart', 'Ramp race', 'Two balls, two ramps — which wins?')}
-          ${pick('data-make="spring"', 'purple', 'bolt', 'Bouncy spring', 'A block on a spring, with a graph')}
-          ${pick('data-make="crash"', 'green', 'spark', 'Collisions', 'A heavy ball and a light ball crash')}
-        </div>
-        <div class="fc-toolbar" style="margin-top:22px">${B(`${ki('pencil', false)} Start with an empty world`, 'data-make="empty"', 'primary')}</div>
-        ${L ? `<p class="fc-note">Your plan: up to ${L.objects} things, ${L.sliders} slider${L.sliders === 1 ? '' : 's'} and ${L.graphs} graph${L.graphs === 1 ? '' : 's'} in each simulation.${tier() === 'free' ? ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.' : tier() === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ''}</p>` : ''}</div>`;
     } else if (tab === 'community') {
       if (!community.loaded && !community.busy && !community.error) loadCommunity();
       const groupOf = x => x.type === 'custom' ? 'Made from scratch' : T[x.type]?.group || '';
-      const q = community.q.trim().toLowerCase();
+      const q = community.q.trim().toLowerCase(), filtering = !!q || community.group !== 'All', done = doneSet();
+      const knox = ORDER.filter(id => (community.group === 'All' || T[id].group === community.group) && (!q || (T[id].title + ' ' + T[id].blurb + ' ' + T[id].group).toLowerCase().includes(q)));
+      const knoxShown = filtering || community.allKnox ? knox : knox.slice(0, matchMedia('(max-width: 720px)').matches ? 4 : 9);
       const shown = community.list.filter(x => (community.group === 'All' || groupOf(x) === community.group) && (!q || (x.title + ' ' + (x.desc || '') + ' ' + (T[x.type]?.title || '')).toLowerCase().includes(q)));
       const sorts = [['new', 'Newest'], ['played', 'Most played'], ['top', 'Most liked']];
-      html = `<div class="fc-wrap sl-wrap">${head(`${ki('globe', false)} Community sims`, `Sims from <span class="accent">everyone.</span>`, 'Made by Knox students and checked for school-friendly words. Play any of them, or publish your own.')}
+      const knoxCard = id => { const n = (CHALLENGES[id] || []).length, got = (CHALLENGES[id] || []).filter((_, i) => done.has(id + i)).length;
+        return pick(`data-open="${id}"`, flavorOf(id), T[id].icon, esc(T[id].title), esc(T[id].blurb) + (got ? ` · ${got}/${n} challenges done` : ` · ${n} challenges`), canUse(id) ? '' : tag('plus'), KNOX_STICKER); };
+      const studentCard = x => pick(`data-csim="${x.id}"`, flavorOf(x.type), iconOf(x.type), esc(x.title), esc(x.desc || (x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || '')), '',
+        `<span class="sl-by">${x.mine ? 'Yours' : 'By a Knox student'} · ${x.plays} play${x.plays === 1 ? '' : 's'} · ♥ ${x.likes}</span>`);
+      html = `<div class="fc-wrap sl-wrap">${head(`${ki('globe', false)} Community`, `Sims from <span class="accent">everyone.</span>`, 'Knox’s own simulations — each with challenges — and ones Knox students made. Play any of them.')}
         ${topbar(backBtn)}
         <div class="fc-cm">
-        ${searchBox('slCmSearch', 'Search Community sims', 'Search — e.g. moon, pendulum, savings…', community.q)}
-        <div class="fc-cm-filters"><div class="fc-chips">${sorts.map(([v, l]) => chipB(l, `data-csort="${v}"`, community.sort === v)).join('')}</div>
-          <select class="sl-input sl-select kx-select" data-kx="pill" id="slCmGroup" aria-label="Subject"><option value="All">Every subject</option>${[...GROUPS, 'Made from scratch'].map(g => `<option${community.group === g ? ' selected' : ''}>${g}</option>`).join('')}</select></div>
+        ${searchBox('slCmSearch', 'Search simulations', 'Search — e.g. moon, pendulum, savings…', community.q)}
+        <div class="fc-cm-filters"><select class="sl-input sl-select kx-select" data-kx="pill" id="slCmGroup" aria-label="Subject"><option value="All">Every subject</option>${[...GROUPS, 'Made from scratch'].map(g => `<option${community.group === g ? ' selected' : ''}>${g}</option>`).join('')}</select></div>
         ${community.note ? `<p class="sl-msg" role="status">${esc(community.note)}</p>` : ''}
+        ${community.group === 'Made from scratch' ? '' : `<section class="sl-cm-sec"><div class="sl-sec-head"><h2>Made by Knox</h2><span class="fc-pill">${knox.length}</span></div>
+          ${knox.length ? `<div class="sl-picks">${knoxShown.map(knoxCard).join('')}</div>${knoxShown.length < knox.length ? `<div class="fc-toolbar" style="margin-top:16px">${B(`Show all ${knox.length}`, 'data-allknox', 'small')}</div>` : ''}` : empty('None of Knox’s match that', 'Try a different word or subject.')}</section>`}
+        <section class="sl-cm-sec"><div class="sl-sec-head"><h2>Made by students</h2><div class="fc-chips">${sorts.map(([v, l]) => chipB(l, `data-csort="${v}"`, community.sort === v)).join('')}</div></div>
         ${community.busy ? empty('Loading sims…', 'Getting the newest ones.')
-          : community.error ? empty('Community sims didn’t load', esc(community.error), B('Try again', 'data-cretry', 'primary small'))
-          : shown.length ? `<div class="fc-grid">${shown.map(x => `<article class="fc-deck" data-flavor="${flavorOf(x.type)}">
-              <div class="fc-deck-top"><div class="fc-deck-icon" aria-hidden="true">${ki(iconOf(x.type), false)}</div><div style="min-width:0"><h2 class="fc-deck-name">${esc(x.title)}</h2>
-              <div class="fc-pills"><span class="fc-pill">${esc(kindOf(x.type))}</span>${x.mine ? '<span class="fc-pill done">Yours</span>' : ''}</div></div></div>
-              <p class="fc-cm-desc">${esc(x.desc || (T[x.type]?.blurb || 'Made from scratch by a Knox student.'))}</p>
-              <div class="fc-deck-actions">${B(`${PI.play} Play`, `data-csim="${x.id}"`, 'primary small')}</div>
-              <p class="fc-cm-meta">${x.plays} play${x.plays === 1 ? '' : 's'} · ♥ ${x.likes}</p></article>`).join('')}</div>`
-          : community.list.length ? empty('No sims match that', 'Try a different word or subject.')
-          : empty('No sims here yet', 'Be the first: open a simulation, set it up, and press Publish.')}
-        <p class="fc-note">See something wrong or not school-friendly? Open it and press Report. 3 reports take a sim down until we check it.</p></div></div>`;
+          : community.error ? empty('Student sims didn’t load', esc(community.error), B('Try again', 'data-cretry', 'primary small'))
+          : shown.length ? `<div class="sl-picks">${shown.map(studentCard).join('')}</div>`
+          : community.list.length ? empty('No student sims match that', 'Try a different word or subject.')
+          : empty('No student sims yet', 'Be the first: open a simulation, set it up, and press Publish.')}</section>
+        <p class="fc-note">Student sims are checked for school-friendly words, and names are never shown. See something wrong? Open it and press Report — 3 reports take it down until we check it.</p></div></div>`;
     } else {
       // Home: the ways in (like Flashcards), then your saved sims as cards (like decks).
       const way = (t, flavor, icon, title, text) => `<button type="button" class="fc-way" data-tab="${t}" data-flavor="${flavor}"><span class="fc-way-icon" aria-hidden="true">${ki(icon, false)}</span><b>${title}</b><span>${text}</span></button>`;
       const max = SAVE_MAX[tier()];
-      html = `<div class="fc-wrap center sl-wrap">${head(`${ki('sliders', false)} Simulation Lab`, 'Play with<br><span class="accent">math &amp; science.</span>', 'Build a simulation with Knox, play with one of ours, or make your own — then move the sliders and watch what happens.')}
+      html = `<div class="fc-wrap center sl-wrap">${head(`${ki('sliders', false)} Simulation Lab`, 'Play with<br><span class="accent">math &amp; science.</span>', 'Have Knox build one, make your own, or play one from Community — then move the sliders and watch what happens.')}
         <div class="fc-ways${saved.length ? ' has-decks' : ''}">
           ${way('build', 'orange', 'spark', 'Knox builds it', 'Describe what you want to see, and Knox sets it up with your numbers.')}
-          ${way('play', 'blue', 'sliders', 'Playground', `${ORDER.length} ready-made simulations with challenges — math, physics, chemistry and more.`)}
-          ${way('make', 'green', 'pencil', 'Make your own', 'Build one from scratch with balls, ramps, springs, targets, sliders and graphs.')}
+          ${way('make', 'green', 'pencil', 'Make your own', 'Build one from scratch with balls, ramps, springs, targets, sliders and graphs.').replace('data-tab="make"', 'data-make="empty"')}
+          ${way('community', 'blue', 'globe', 'Community', `${ORDER.length} simulations made by Knox, with challenges — and ones students made.`)}
         </div>
-        <div class="fc-toolbar fc-toolbar-quiet">${B(`${ki('globe', false)} Community sims`, 'data-tab="community"', 'small primary fc-cm-entry')}${B('Surprise me', 'data-surprise', 'ghost small')}</div>
+        <div class="fc-toolbar fc-toolbar-quiet">${B(`${PI.dice} Surprise me`, 'data-surprise', 'ghost small')}</div>
         <p class="fc-sync-note">Your sims save on this device${max === Infinity ? '' : ` · ${saved.length} of ${max} saved`}.</p>
         <div style="height:22px"></div>
         ${saved.length ? `<div class="fc-grid">${saved.map((x, i) => `<article class="fc-deck" data-flavor="${flavorOf(x.type)}">
@@ -846,7 +832,7 @@
   }
 
   // ── Community (api/_sim-community.js) ────────────────────────────────────
-  const community = { sort: 'new', group: 'All', q: '', list: [], loaded: false, busy: false, error: '', note: '' };
+  const community = { sort: 'new', group: 'All', q: '', list: [], loaded: false, busy: false, error: '', note: '', allKnox: false };
   async function communityApi(method, body, query = '') {
     const u = window.currentUser, headers = {};
     if (u?.getIdToken) headers.Authorization = 'Bearer ' + await u.getIdToken();
@@ -925,16 +911,11 @@
     if (!window.knoxSimBuilder) return;
     editor?.stop();
     const b = window.knoxSimBuilder.mount(host, scene, {
-      tier: tier(), explain: meta.explain,
+      tier: tier(), explain: meta.explain, backLabel: backLabel(),
+      examples: meta.examples ? [['blank', 'Hit the target'], ['ramp', 'Ramp race'], ['spring', 'Bouncy spring'], ['crash', 'Collisions']] : null,
+      onExample: id => openBuilder(STARTERS[id]?.()),
       onBack: () => { editor = null; renderHome(); },
-      onSave: sc => {
-        const max = SAVE_MAX[tier()];
-        if (readSaved().length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one on the Simulation Lab home, or upgrade to save more.`); return null; }
-        return ask({ title: 'Save this simulation', body: 'Give it a name — it shows up on the Simulation Lab home.', input: sc.title, ok: 'Save' }).then(name => {
-          if (!name) return null;
-          const list = readSaved(); list.unshift({ type: 'custom', values: { ...sc, title: name }, title: name, at: Date.now() }); writeSaved(list); return name;
-        });
-      },
+      onSave: sc => saveSim({ type: 'custom', values: sc, title: sc.title }, meta),
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
       // Someone else's Community sim isn't yours to publish again (Save keeps a copy).
       onPublish: meta.community && !meta.community.mine ? null : (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),
@@ -946,7 +927,7 @@
   // ── The editor ───────────────────────────────────────────────────────────
   function open(id, vals, meta = {}) {
     if (!T[id]) return;
-    if (!canUse(id)) { tab = 'play'; renderHome(); upsell('plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`); return; }
+    if (!canUse(id)) { tab = 'community'; renderHome(); upsell('plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`); return; }
     editor?.stop();
     editor = makeEditor(id, cleanValues(id, vals), meta);
   }
@@ -984,6 +965,29 @@
     try { history.replaceState(null, '', location.pathname + location.search.replace(/([?&])sim=[^&]*&?/, '$1').replace(/[?&]$/, '')); } catch (_) {}
     try { const it = await decodeSim(code); if (it.type === 'custom') openBuilder(it.values); else if (T[it.type]) open(it.type, it.values, { title: it.title }); } catch (_) { renderHome(); upsell('plus', 'That simulation link didn’t work — ask for a new one.'); }
   }
+  // Save (like a Flashcards deck): a new sim gets a name, one you opened from
+  // the home is updated in place; then back to the Lab home with a "Saved" note.
+  async function saveSim(item, meta = {}) {
+    const list = readSaved(), i = meta.savedAt ? list.findIndex(x => x.at === meta.savedAt) : -1, max = SAVE_MAX[tier()];
+    if (i < 0 && list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one on the Simulation Lab home, or upgrade to save more.`); return null; }
+    let name = (item.title || '').trim().slice(0, 40) || 'My simulation';
+    if (i < 0) { name = await ask({ title: 'Save this simulation', body: 'Give it a name — it shows up on your Simulation Lab home.', input: name, ok: 'Save' }); if (!name) return null; }
+    const now = readSaved(), j = i < 0 ? -1 : now.findIndex(x => x.at === meta.savedAt);
+    const entry = { type: item.type, values: item.type === 'custom' ? { ...item.values, title: name } : item.values, title: name, at: j >= 0 ? now[j].at : Date.now() };
+    if (j >= 0) now.splice(j, 1);
+    now.unshift(entry); writeSaved(now);
+    editor?.stop(); editor = null; tab = 'home'; renderHome();
+    toast(j >= 0 ? 'Saved your changes.' : `Saved “${name}”. Open it here any time.`);
+    return name;
+  }
+  let toastEl = null, toastTimer = 0;
+  function toast(text) {
+    const panel = host?.parentElement; if (!panel) return;
+    if (!toastEl || !toastEl.isConnected) { toastEl = document.createElement('div'); toastEl.className = 'fc-toast'; toastEl.setAttribute('role', 'status'); toastEl.addEventListener('click', () => toastEl.classList.remove('show')); panel.append(toastEl); }
+    toastEl.textContent = text; toastEl.className = 'fc-toast show ok';
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl?.classList.remove('show'), 3500);
+  }
+
   function upsell(level, text) {
     host?.querySelector('.sl-upsell')?.remove();
     const html = fill(`<div class="sl-note sl-upsell" role="status">${level === 'mega' ? '💎' : '⚡'}<p>${text}</p>${window.knoxNativeApp ? '' : B('See plans', 'data-upgrade', 'primary small')}<button type="button" class="sl-x" data-close-upsell aria-label="Close">✕</button></div>`);
@@ -1005,9 +1009,8 @@
     };
     const presets = def.presets || [];
     host.innerHTML = fill(`<div class="fc-wrap sl-ed">
-      ${head(`${ki(def.icon, false)} ${esc(def.group)}`, accentLast(title), `${esc(def.blurb)} — move the sliders and watch what happens.`)}
-      ${topbar(B('← Simulation Lab', 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${B('Share', 'data-share', 'small')}${meta.community ? '' : B('Publish', 'data-publish', 'small')}${B('Save', 'data-save', 'primary small')}`)}
-      ${meta.explain ? `<div class="sl-note">${ki('spark', false)}<p>${esc(meta.explain)}</p></div>` : ''}
+      ${head(`${ki(def.icon, false)} ${esc(def.group)}`, accentLast(title), meta.explain ? esc(meta.explain) : `${esc(def.blurb)} — move the sliders and watch what happens.`)}
+      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${B('Share', 'data-share', 'small')}${meta.community ? '' : B('Publish', 'data-publish', 'small')}${B('Save', 'data-save', 'primary small')}`)}
       <div class="sl-main">
         <div class="sl-stage sl-box"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
           <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>${ghost ? 'Stop comparing' : 'Compare'}</span>${tier() === 'mega' ? '' : '<span class="sl-tag mega" title="Mega Knox">💎</span>'}`, 'data-compare', 'small' + (tier() === 'mega' ? '' : ' locked'))}</div>
@@ -1113,16 +1116,7 @@
           if (tier() !== 'mega') { upsell('mega', 'Compare keeps a faded copy of one setup while you change the other — a 💎 Mega Knox tool.'); return; }
           ghost = ghost ? null : { ...s }; b.firstChild.textContent = ghost ? 'Stop comparing' : 'Compare'; draw();
         }
-        else if (b.matches('[data-save]')) {
-          const max = SAVE_MAX[tier()];
-          if (readSaved().length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one on the Simulation Lab home, or upgrade to save more.`); return; }
-          ask({ title: 'Save this simulation', body: 'Give it a name — it shows up on the Simulation Lab home.', input: title, ok: 'Save' }).then(name => {
-            if (!name) return;
-            title = name; const h = $('.fc-title', host); if (h) h.innerHTML = accentLast(name);
-            const list = readSaved(); list.unshift({ type: id, values: { ...s }, title: name, at: Date.now() }); writeSaved(list);
-            if (b.isConnected) { b.textContent = 'Saved ✓'; setTimeout(() => { if (b.isConnected) b.textContent = 'Save'; }, 1600); }
-          });
-        }
+        else if (b.matches('[data-save]')) saveSim({ type: id, values: { ...s }, title }, meta);
         else if (b.matches('[data-ask]')) {
           const desc = params.filter(p => !['grid', 'labels', 'speedx', 'trail', 'vectors', 'peak', 'graph', 'trace', 'points', 'rider', 'tri', 'vertex', 'roots', 'axis', 'expect', 'pace', 'both'].includes(p.k))
             .map(p => `${p.label}: ${p.type === 'toggle' ? (s[p.k] ? 'on' : 'off') : p.type === 'select' ? (p.options.find(o => o[0] === s[p.k])?.[1] || s[p.k]) : fmt(s[p.k]) + (p.unit ? ' ' + p.unit : '')}`).join(', ');
@@ -1155,17 +1149,16 @@
     if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
     if (editor) { editor.click(b); return; }
     if (b.dataset.tab) { if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
-    if (b.dataset.filter) { filter = b.dataset.filter; renderHome(true); return; }
+    if (b.matches('[data-allknox]')) { community.allKnox = true; renderHome(true); return; }
     if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; community.error = ''; loadCommunity(); return; }
-    if (b.dataset.cgroup) { community.group = b.dataset.cgroup; renderHome(true); return; }
     if (b.matches('[data-cretry]')) { community.error = ''; loadCommunity(); return; }
     if (b.dataset.csim) { openCommunity(b.dataset.csim); return; }
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
     if (b.matches('[data-build]')) { build(); return; }
     if (b.matches('[data-build-cancel]')) { buildCtl?.abort(); buildCtl = null; buildBusy = false; renderHome(); $('#slPrompt', host)?.focus(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }
-    if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values) : open(x.type, x.values, { title: x.title }); return; }
-    if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.()); return; }
+    if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values, { savedAt: x.at }) : open(x.type, x.values, { title: x.title, savedAt: x.at }); return; }
+    if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.(), { examples: b.dataset.make === 'empty' }); return; }
     if (b.dataset.unsave != null) { const x = readSaved()[+b.dataset.unsave]; if (!x) return; ask({ title: `Delete “${x.title}”?`, body: 'It’s removed from this device. This can’t be undone.', ok: 'Delete', danger: true }).then(yes => { if (!yes) return; const list = readSaved(), at = list.findIndex(y => y.at === x.at && y.title === x.title); if (at >= 0) { list.splice(at, 1); writeSaved(list); } renderHome(true); }); return; }
     if (b.dataset.rename != null) { const i = +b.dataset.rename, x = readSaved()[i]; if (!x) return; ask({ title: 'Rename', input: x.title, ok: 'Save' }).then(name => { if (!name) return; const list = readSaved(); if (list[i]) { list[i].title = name; if (list[i].type === 'custom' && list[i].values) list[i].values.title = name; writeSaved(list); } renderHome(true); }); return; }
     if (b.dataset.shareSaved != null) { const x = readSaved()[+b.dataset.shareSaved]; if (x) shareSim(x, b); return; }
