@@ -99,7 +99,7 @@
     '🔥': 'flame', '💜': 'flamePurple', '💙': 'flameBlue', '👑': 'crown', '🟡': 'flameGold', '💎': 'gem', '⚡': 'bolt', '🪙': 'coin',
     '🛡': 'shield', '🛍': 'bag', '❄': 'snowflake', '❤': 'heartRed', '🎁': 'gift', '🎄': 'tree', '🏆': 'trophy', '🌟': 'star', '⭐': 'star', '🎉': 'party',
     '🎓': 'cap', '👍': 'up', '👎': 'down', '📄': 'doc', '📷': 'camera', '📸': 'camera',
-    '📐': 'math', '🌿': 'leaf', '🍂': 'leaf', '🍁': 'leaf', '🌍': 'globe', '⚠': 'warn', '🚀': 'rocket',
+    '📐': 'math', '🌿': 'leaf', '🍂': 'leaf', '🍁': 'leaf', '🌍': 'globe', '🌐': 'globe', '⚠': 'warn', '🚀': 'rocket',
     '💫': 'spark', '✨': 'spark', '😬': 'grimace', '💡': 'bulb', '🤔': 'think', '📝': 'note', '🔄': 'refresh',
     '🧠': 'brain', '🎯': 'target', '📇': 'cards', '🗂': 'cards', '🎥': 'video', '🧪': 'flask', '🪵': 'logs',
     '🦅': 'crown', '📚': 'book', '🍎': 'apple', '🧬': 'dna', '🏛': 'columns', '🫀': 'heart', '📥': 'inbox',

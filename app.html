@@ -1790,6 +1790,7 @@
     .knox-web-sources { margin: 0 20px 18px; padding: 12px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream-warm, #FFF3E8); display: grid; gap: 8px; }
     .kws-head { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 900; color: var(--text); padding: 0 2px; }
     .kws-head small { margin-left: auto; font-size: 12px; font-weight: 800; color: var(--text-light); }
+    .kws-icon { display: inline-flex; color: var(--blue); } .kws-icon .kk-ic { width: 17px; height: 17px; color: inherit !important; }
     .kws-item { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 10px; padding: 9px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); box-shadow: 0 2px 0 var(--border); color: var(--text); text-decoration: none; transition: border-color .15s, transform .12s; }
     .kws-item:hover { border-color: var(--orange); }
     .kws-item:active { transform: translateY(1px); }
@@ -7394,7 +7395,7 @@ function webSourcesHtml(list) {
       '<svg class="kws-arrow" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>';
   }).filter(Boolean);
   if (!items.length) return '';
-  return '<div class="knox-web-sources"><div class="kws-head"><span aria-hidden="true">🌐</span>Searched the web<small>' +
+  return '<div class="knox-web-sources"><div class="kws-head"><span class="kws-icon" aria-hidden="true">' + (window.KI ? window.KI('globe', { tint: false }) : '') + '</span>Searched the web<small>' +
     items.length + ' source' + (items.length === 1 ? '' : 's') + '</small></div>' + items.join('') + '</div>';
 }
 
