@@ -2168,7 +2168,7 @@ test('Smart search: fact questions must search (not math), the card shows pages 
   assert.equal(search.body.tool_choice, 'required', 'a clear fact question must search');
   assert.deepEqual(search.body.include, ['web_search_call.action.sources']);
   assert.equal(res.body.webSearch, 'used');
-  assert.match(res.body.answer, /🌐 Searched the web\n- \[archives\.gov — Declaration history\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)\n- \[history\.com — Declaration\]/, 'the pages it looked at show in the card');
+  assert.match(res.body.answer, /🌐 Searched the web\n- \[Declaration history\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)\n- \[Declaration\]\(https:\/\/www\.history\.com\/topics\/declaration\)/, 'the pages it looked at (about the question) show in the card');
 
   ({ search } = await ask('A bus leaves at 40 mph and a car follows 10 miles behind at 55 mph. When did the car catch up?'));
   assert.equal(search.body.tool_choice, undefined, 'math word problems are not forced');
@@ -2181,6 +2181,35 @@ test('Smart search: fact questions must search (not math), the card shows pages 
   assert.equal(tries.length, 2, 'retried once');
   assert.equal(tries[1].body.include, undefined); assert.equal(tries[1].body.tool_choice, undefined);
   assert.equal(res.code, 200); assert.equal(res.body.webSearch, 'used');
+});
+
+test('Smart search: the card shows the pages Knox cites in its words, never unrelated pages it only looked at', async () => {
+  const { db, store } = memoryDb();
+  let text = '', looked = [];
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.endsWith('/responses')) return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [
+      { type: 'web_search_call', status: 'completed', action: { type: 'search', sources: looked.map(u => ({ type: 'url', url: u })) } },
+      { type: 'message', content: [{ type: 'output_text', text, annotations: [] }] }] }) };
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'Plain answer.' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  looked = ['https://www.axios.com/pro/rata/a3e26c0f-6d85-4b97-8f1c-aa734828f95b', 'https://time.com/nvidia-megaspeed-china-investment/'];
+  text = 'Starship caught its upper stage on November 14 ([Space.com](https://www.space.com/spacex-starship-catch); [CBS News](https://www.cbsnews.com/news/spacex-starship-flight/)).';
+  let res = response();
+  await handler(askRequest({ question: "What's the latest news about SpaceX?", webSearch: true }), res);
+  const card = res.body.answer.split('🌐 Searched the web\n')[1];
+  assert.match(card, /\[Spacex starship catch\]\(https:\/\/www\.space\.com\/spacex-starship-catch\)/, 'a bare site name gets the page\'s own name (the card shows the site above it)');
+  assert.match(card, /\[CBS News\]\(https:\/\/www\.cbsnews\.com\/news\/spacex-starship-flight\/\)/);
+  assert.doesNotMatch(card, /axios|nvidia/i, 'unrelated pages it only looked at stay out');
+
+  text = 'SpaceX launched again this week.';
+  res = response();
+  await handler(askRequest({ question: "What's the latest news about SpaceX?", webSearch: true }), res);
+  assert.equal(res.body.webSearch, undefined, 'nothing about the question → no card of random pages');
+  assert.doesNotMatch(res.body.answer, /Searched the web/);
 });
 
 test('Learn search: a lesson reply that searched keeps its sources, listed last', async () => {

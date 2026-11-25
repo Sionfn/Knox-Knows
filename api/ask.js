@@ -862,14 +862,27 @@ function toResponsesInput(messages) {
   }));
 }
 
-// A readable name for a page that came without a title: "archives.gov — Declaration history".
+// A readable name for a page that came without a title, from its address:
+// ".../founding-docs/declaration-history" → "Declaration history". Code-like
+// chunks (ids, hashes, dates) are dropped; the card shows the site above it.
 function titleFromUrl(url) {
   try {
     const u = new URL(url), host = u.hostname.replace(/^www\./, '');
-    const last = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '').replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[-_+]+/g, ' ').trim();
-    return (last && !/^\d+$/.test(last) ? `${host} — ${last.charAt(0).toUpperCase()}${last.slice(1)}` : host).slice(0, 140);
+    const parts = u.pathname.split('/').filter(Boolean).map(p => decodeURIComponent(p).replace(/\.[a-z0-9]{2,5}$/i, ''));
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const words = parts[i].split(/[-_+\s]+/).filter(w => w && !/\d/.test(w) && !/^[a-f]{6,}$/i.test(w) && w.length < 25);
+      if (words.length >= 1 && words.join('').length >= 4) { const t = words.join(' '); return (t.charAt(0).toUpperCase() + t.slice(1)).slice(0, 140); }
+    }
+    return host;
   } catch { return 'Source'; }
 }
+// Does a page's address look like it's about the question? (for pages Knox looked at but didn't cite)
+const TOPIC_SKIP = new Set('what when where which while whom whose why how the and for with about latest news today current recent this that these those from into give find tell show does did was were have has many much year years there their they them your mine more most some any make made mean means happen happened right now please'.split(' '));
+const aboutTopic = (url, question) => {
+  const words = String(question || '').toLowerCase().match(/[a-z][a-z0-9]{3,}/g)?.filter(w => !TOPIC_SKIP.has(w)) || [];
+  const where = decodeURIComponent(String(url)).toLowerCase();
+  return words.some(w => where.includes(w));
+};
 
 // Clear fact questions are always checked on the web (Knox decides for the rest).
 // Math word problems ("when does the car catch up?") aren't forced.
@@ -890,7 +903,7 @@ function foldSourcesLine(text, sources) {
 }
 
 // Returns { text, sources, usage }, or null so the caller answers without search.
-async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort, required } = {}) {
+async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort, required, question } = {}) {
   const ends = Date.now() + timeoutMs;
   const ask = extras => fetch("https://api.openai.com/v1/responses", {
     method: "POST",
@@ -926,14 +939,19 @@ async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format,
     sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
   }
   const kept = sources.slice(0, 8), folded = format ? text : foldSourcesLine(text, kept);
-  // Knox searched but didn't link a page: show the pages it looked at, so a
-  // checked answer always shows its sources.
+  // Pages Knox linked in its own words (not marked as citations) are its sources too.
+  if (!format) for (const [, title, url] of folded.matchAll(/\[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)/g)) {
+    if (kept.length >= 8 || kept.some(x => x.url === url)) continue;
+    kept.push({ title: (/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(title.trim()) ? titleFromUrl(url) : title.replace(/[\[\]()\s]+/g, ' ').trim()).slice(0, 140) || titleFromUrl(url), url });
+  }
+  // Knox searched but cited nothing: show the pages it looked at that are
+  // clearly about the question (never unrelated results).
   if (!kept.length) {
     for (const item of data.output || []) {
       if (item.type !== 'web_search_call') continue;
       for (const src of item.action?.sources || []) {
         const url = String(src?.url || '');
-        if (kept.length >= 5 || !/^https?:\/\/[^\s]+$/.test(url) || kept.some(x => x.url === url)) continue;
+        if (kept.length >= 5 || !/^https?:\/\/[^\s]+$/.test(url) || kept.some(x => x.url === url) || !aboutTopic(url + ' ' + (src.title || ''), question)) continue;
         kept.push({ title: String(src.title || '').replace(/[\[\]()\s]+/g, ' ').trim().slice(0, 140) || titleFromUrl(url), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
       }
     }
@@ -1427,12 +1445,12 @@ export default async function handler(req, res) {
       try {
         if (learnMode) {
           searched = await webSearchAnswer([...messages, { role: 'system', content: LEARN_WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
-            Math.max(5000, Math.min(25000, 40000 - (Date.now() - startedAt))), { format: LEARN_SEARCH_FORMAT, effort: requestBody.reasoning_effort });
+            Math.max(5000, Math.min(25000, 40000 - (Date.now() - startedAt))), { format: LEARN_SEARCH_FORMAT, effort: requestBody.reasoning_effort, question: trimmedQuestion });
           // A lesson reply must be valid lesson JSON; otherwise answer the normal way.
           if (searched) { try { if (!searched.text.trim().startsWith('{')) throw new Error('not JSON'); decodeLearnOutput(searched.text, lessonState); } catch { console.error('Learn search reply was not a lesson; answering normally.'); searched = null; } }
         } else {
           searched = await webSearchAnswer([...messages, { role: 'system', content: WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
-            Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))), { required: MUST_CHECK.test(trimmedQuestion) && !looksLikeMath(trimmedQuestion) });
+            Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))), { required: MUST_CHECK.test(trimmedQuestion) && !looksLikeMath(trimmedQuestion), question: trimmedQuestion });
         }
       } catch (err) { console.error('Web search skipped:', err?.message); searched = null; }
     }
