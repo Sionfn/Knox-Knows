@@ -391,7 +391,7 @@
       else if (act === 'save') opts.onSave?.(clean(sc)); // the Lab saves it and takes you home
       else if (act === 'share') opts.onShare?.(clean(sc), b);
       else if (act === 'publish') opts.onPublish?.(clean(sc), b);
-      else if (act === 'back') { stop(); opts.onBack?.(); }
+      else if (act === 'back') Promise.resolve(opts.canLeave ? opts.canLeave() : true).then(ok => { if (ok) { stop(); opts.onBack?.(); } }); // asks first if it isn't saved
       else if (act === 'example') { stop(); opts.onExample?.(b.dataset.ex); }
       else if (act === 'upgrade') window.goToPricing?.();
       else if (act === 'close-upsell') b.closest('.sb-upsell')?.remove();

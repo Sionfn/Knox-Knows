@@ -43,6 +43,7 @@ html.knox-seasonal #simsPanel .fc-title .accent { color: var(--sl-accent) !impor
 .sl-topbar { max-width: 640px; width: 100%; margin: 0 auto 12px; }
 .sl-wrap:has(.sl-picks:not(.two), .fc-cm) .sl-topbar { max-width: 960px; }
 .sl-ed .sl-topbar { max-width: none; }
+.sl-backs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .fc-topbar-right { flex-wrap: wrap; justify-content: flex-end; }
 .sl-flex { flex: 1; }
 

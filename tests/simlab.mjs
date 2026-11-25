@@ -23,7 +23,7 @@ test('Simulation Lab: plans like Flashcards, and Knox builds through /api/me', (
   assert.match(build, /never write code/);
   assert.match(me, /route === "sim-build"\) return simBuild\(req, res, \{ db, auth: adminAuth \}\)/);
   assert.match(lab, /fetch\('\/api\/me\?route=sim-build'/);
-  assert.match(src('notes.js'), /window\.knoxSimLab\.show\(simsView\)/);
+  assert.match(src('notes.js'), /window\.knoxSimLab\.show\(simsView, fresh\)/);
   assert.match(src('app.html'), /<script src="\/simlab\.js" defer><\/script>/);
 });
 
@@ -89,4 +89,26 @@ test('Flashcards Community: decks are moderated, fact-checked, anonymous, photo-
   assert.match(me, /route === "deck-community"\) return deckCommunity/);
   assert.match(me, /route === "community-admin"\) return communityAdmin/);
   assert.match(src('admin.html'), /Community reports/);
+});
+
+test('Simulation Lab works like Flashcards: opens on its home, asks before losing an unsaved sim, Open in Lab goes straight to the sim', () => {
+  const lab = src('simlab.js'), notes = src('notes.js'), sims = src('sims.js'), builder = src('simbuilder.js'), app = src('app.html');
+  // Coming back to Simulations starts on the Lab home (not the sim you left open).
+  assert.match(notes, /if \(typeof then === 'function' && window\.knoxSimLab\) then\(simsView\); else simsHome\(true\);/);
+  assert.doesNotMatch(notes, /if \(!simsView\.querySelector\('\.sl-wrap, \.sl-ed'\)\) simsHome\(\)/);
+  // Knox-built sims and changed scenes of your own ask first — sidebar, Back button, the Lab's back button.
+  assert.match(lab, /title: 'Leave without saving\?'/);
+  assert.match(lab, /title: 'Discard your changes\?'/);
+  assert.match(lab, /guard = meta\.fromBuild \? \(\) => true : null;/);
+  assert.match(lab, /prompt, fromBuild: true/);
+  assert.match(notes, /if \(await simsCanLeave\(\)\) \{ closeSims\(\); nav\.click\(\); \}/);
+  assert.match(app, /if \(window\.simsCanLeave && !\(await window\.simsCanLeave\(\)\)\) return false;/);
+  assert.match(builder, /opts\.canLeave \? opts\.canLeave\(\) : true/);
+  // Open in Lab: no Lab home flashing first (no setTimeout hop), with a way back to the answer.
+  assert.match(lab, /window\.openSims\?\.\(h => openIn\(h, id, values/);
+  assert.match(sims, /window\.openSims\?\.\(h => window\.knoxSimLab\?\.openIn\(/);
+  assert.doesNotMatch(lab + sims, /openSims\?\.\(\); setTimeout/);
+  assert.match(lab, /← Back to answer/);
+  // Save goes back to the Lab home with a note, like a Flashcards deck.
+  assert.match(lab, /editor\?\.stop\(\); editor = null; tab = 'home'; renderHome\(\);\n    toast\(/);
 });

@@ -66,18 +66,23 @@
   document.querySelector('#chatAndInput')?.append(simsPanel);
   const isMega = () => window.userTier === 'mega';
   // The Simulation Lab (simlab.js): Knox builds it, Playground, My sims.
-  function simsHome() { if (window.knoxSimLab) window.knoxSimLab.show(simsView); }
-  function openSims() {
+  function simsHome(fresh) { if (window.knoxSimLab) window.knoxSimLab.show(simsView, fresh); }
+  // Like Flashcards, Simulations always opens on its home. `then(view)` opens
+  // a sim straight away instead (Open in Lab from an answer).
+  function openSims(then) {
     window.closeCalc?.();
     document.body.classList.add('knox-sims');
     simsPanel.hidden = false;
     setNavActive();
     window.closeMobileHistory?.();
-    if (!simsView.querySelector('.sl-wrap, .sl-ed')) simsHome();
+    if (typeof then === 'function' && window.knoxSimLab) then(simsView); else simsHome(true);
   }
+  // A sim Knox just built, or your own scene with changes: ask before leaving it.
+  const simsCanLeave = async () => simsPanel.hidden || !window.knoxSimLab?.canLeave || await window.knoxSimLab.canLeave();
+  window.simsCanLeave = simsCanLeave;
   function closeSims() { document.body.classList.remove('knox-sims'); simsPanel.hidden = true; }
   window.closeSims = closeSims;
-  window.openSims = () => openBinder('sims');
+  window.openSims = then => openBinder('sims', then);
   // Plan or account changes: redraw so the lock matches.
   window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) simsHome(); });
   window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.sl-ed')) simsHome(); });
@@ -95,13 +100,14 @@
     document.querySelectorAll('.sidebar-quicknav-link').forEach(b => b.classList.toggle('sidebar-nav-active', b.classList.contains('sims-nav')));
   }
 
-  async function openBinder(tab) {
+  async function openBinder(tab, then) {
     let pick = tab;
     if (!pick) { try { pick = localStorage.getItem(TAB_KEY); } catch {} }
     if (pick !== 'sims') pick = 'flashcards'; // Notes is gone: old links to it open Flashcards
     try { localStorage.setItem(TAB_KEY, pick); } catch {}
     if (pick === 'flashcards') {
       if (!panel.hidden && !(await leaveEditor())) return;
+      if (!(await simsCanLeave())) return;
       closeNotes(); closeSims();
       await window.openFlashcards?.();
       return;
@@ -110,7 +116,8 @@
       if (window.closeFlashcards && !(await window.closeFlashcards())) return; // unsaved deck: they chose to stay
     }
     if (!panel.hidden) closeNotes();
-    openSims();
+    if (!(await simsCanLeave())) return; // Simulations again while a sim is unsaved
+    openSims(then);
   }
 
   function openNotes() {
@@ -132,10 +139,16 @@
   window.closeNotes = closeNotes;
 
   // Leaving Notes from the sidebar (another section, a chat, New chat) closes it.
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async e => {
     if (panel.hidden && simsPanel.hidden) return;
     const nav = e.target.closest('.sidebar-quicknav-link:not(.fc-nav):not(.sims-nav), .sidebar-new-btn, .sidebar-history-item');
-    if (nav) { if (!panel.hidden) closeNotes(); closeSims(); }
+    if (!nav) return;
+    if (!simsPanel.hidden && window.knoxSimLab?.unsaved?.()) { // like Flashcards: ask, then go
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (await simsCanLeave()) { closeSims(); nav.click(); }
+      return;
+    }
+    if (!panel.hidden) closeNotes(); closeSims();
   }, true);
   // Signing in or out: start over with that account's notes.
   window.addEventListener('knox-auth-changed', () => { notes = null; editing = null; loadedFor = null; if (!panel.hidden) home(); });

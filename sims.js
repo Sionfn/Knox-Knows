@@ -184,7 +184,7 @@
     // Open in Lab: the same simulation in the Simulation Lab, with all its settings, challenges and Save.
     el.querySelector('.ksim-lab')?.addEventListener('click', () => {
       const cur = Object.fromEntries(Object.entries(p.vals).concat(Object.entries(state)));
-      window.openSims?.(); setTimeout(() => window.knoxSimLab?.open(p.type, cur, { title: tpl.title }), 60);
+      window.openSims?.(h => window.knoxSimLab?.openIn(h, p.type, cur, { title: tpl.title, fromAnswer: true }, el));
     });
     el.querySelector('.ksim-reset').addEventListener('click', () => {
       stop(); pos = null; Object.assign(state, initial); tpl.counts = null;

@@ -7843,6 +7843,7 @@ window.addEventListener('pagehide', () => {
   async function leavePanels() {
     window.closeCalc?.();
     if (document.body.classList.contains('knox-flashcards') && window.closeFlashcards && !(await window.closeFlashcards())) return false;
+    if (window.simsCanLeave && !(await window.simsCanLeave())) return false; // an unsaved sim
     window.closeSims?.();
     return true;
   }
