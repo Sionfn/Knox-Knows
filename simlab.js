@@ -268,21 +268,26 @@
     },
     triangle: {
       group: 'Math', icon: 'triangle', title: 'Right triangles', blurb: 'The Pythagorean theorem: ladders, ramps and missing sides',
-      params: [select('find', 'Find', [['c', 'The long side (c)'], ['b', 'A missing leg (b)']], 'c', false),
-        range('a', 'Leg a (along the bottom)', .5, 50, .5, 5),
+      params: [select('find', 'Find', [['c', 'The long side (c)'], ['b', 'The height (b)'], ['a', 'The bottom (a)']], 'c', false),
+        { ...range('a', 'Leg a (along the bottom)', .5, 50, .5, 5), show: s => s.find !== 'a' },
         { ...range('b', 'Leg b (going up)', .5, 50, .5, 12), show: s => s.find !== 'b' },
-        { ...range('c', 'Long side c (hypotenuse)', .5, 80, .5, 13), show: s => s.find === 'b' },
+        { ...range('c', 'Long side c (hypotenuse)', .5, 80, .5, 13), show: s => s.find !== 'c' },
         select('scene', 'Picture', [['triangle', 'A triangle'], ['ladder', 'A ladder on a wall'], ['ramp', 'A ramp']], 'triangle', false),
         select('unit', 'Units', [['', 'No units'], ['ft', 'Feet (ft)'], ['m', 'Meters (m)'], ['in', 'Inches (in)'], ['cm', 'Centimeters (cm)'], ['mi', 'Miles (mi)'], ['km', 'Kilometers (km)']], '', false),
         toggle('squares', 'Show the squares on each side (a² + b² = c²)'), toggle('angles', 'Show the angles')],
-      presets: [['Ladder: 13 ft long, 5 ft out', { find: 'b', a: 5, c: 13, scene: 'ladder', unit: 'ft' }], ['3, 4, 5', { find: 'c', a: 3, b: 4, scene: 'triangle', unit: '' }], ['Ramp: 12 ft along, 5 ft up', { find: 'c', a: 12, b: 5, scene: 'ramp', unit: 'ft' }], ['Walk 6 km east, 8 km north', { find: 'c', a: 6, b: 8, scene: 'triangle', unit: 'km' }]],
+      presets: [['Ladder: 13 ft long, 5 ft out', { find: 'b', a: 5, c: 13, scene: 'ladder', unit: 'ft' }], ['Ladder: 25 ft long, 24 ft up', { find: 'a', b: 24, c: 25, scene: 'ladder', unit: 'ft' }], ['3, 4, 5', { find: 'c', a: 3, b: 4, scene: 'triangle', unit: '' }], ['Ramp: 12 ft along, 5 ft up', { find: 'c', a: 12, b: 5, scene: 'ramp', unit: 'ft' }], ['Walk 6 km east, 8 km north', { find: 'c', a: 6, b: 8, scene: 'triangle', unit: 'km' }]],
       // The three sides: a and b are the legs, C the long side. null when c isn't longer than a.
-      solve(s) { if (s.find === 'b') return s.c > s.a ? { A: s.a, B: Math.sqrt(s.c * s.c - s.a * s.a), C: s.c } : null; return { A: s.a, B: s.b, C: Math.hypot(s.a, s.b) }; },
+      solve(s) {
+        if (s.find === 'b') return s.c > s.a ? { A: s.a, B: Math.sqrt(s.c * s.c - s.a * s.a), C: s.c } : null;
+        if (s.find === 'a') return s.c > s.b ? { A: Math.sqrt(s.c * s.c - s.b * s.b), B: s.b, C: s.c } : null;
+        return { A: s.a, B: s.b, C: Math.hypot(s.a, s.b) };
+      },
       draw(g, s, c) {
         if (c.ghost) return '';
         const u = s.unit ? ' ' + s.unit : '', t = this.solve(s);
-        if (!t) { label(g, c, 'The long side has to be longer than leg a', c.w / 2, c.h / 2, c.red, 'center', 15); return 'The long side (c) has to be longer than leg a — make c bigger or a smaller.'; }
-        const { A, B, C } = t, findB = s.find === 'b', exact = v => Math.abs(v - Math.round(v * 100) / 100) < 1e-9;
+        const leg = s.find === 'a' ? 'b' : 'a';
+        if (!t) { label(g, c, `The long side has to be longer than leg ${leg}`, c.w / 2, c.h / 2, c.red, 'center', 15); return `The long side (c) has to be longer than leg ${leg} — make c bigger or ${leg} smaller.`; }
+        const { A, B, C } = t, findB = s.find === 'b', findA = s.find === 'a', exact = v => Math.abs(v - Math.round(v * 100) / 100) < 1e-9;
         // World: right angle R at (0,0), foot F at (−A,0), top P at (0,B). The c square sits outside the long side.
         const nx = -B, ny = A, sqA = [[-A, 0], [0, 0], [0, -A], [-A, -A]], sqB = [[0, 0], [0, B], [B, B], [B, 0]], sqC = [[-A, 0], [0, B], [nx, B + ny], [-A + nx, ny]];
         const pts = [[-A, 0], [0, 0], [0, B]];
@@ -330,19 +335,20 @@
         // Side labels: the side you're finding is orange.
         const side = (txt, x, y, found, align = 'center') => label(g, c, txt, x, y, found ? c.orange : c.text, align, found ? 15 : 13);
         if (s.squares) {
-          side(`a² = ${fmt(A * A)}`, X(-A / 2), Y(-A / 2), false); side(`b² = ${fmt(B * B)}`, X(B / 2), Y(B / 2), findB); side(`c² = ${fmt(C * C)}`, X(-A / 2 + nx / 2), Y(B / 2 + ny / 2), !findB);
+          side(`a² = ${fmt(A * A)}`, X(-A / 2), Y(-A / 2), findA); side(`b² = ${fmt(B * B)}`, X(B / 2), Y(B / 2), findB); side(`c² = ${fmt(C * C)}`, X(-A / 2 + nx / 2), Y(B / 2 + ny / 2), !findB && !findA);
         } else {
-          side(`a = ${fmt(A)}${u}`, X(-A / 2), Y(0) + 16, false);
+          side(`a = ${fmt(A)}${u}`, X(-A / 2), Y(0) + 16, findA);
           side(`b = ${fmt(B)}${u}`, X(0) + (s.scene === 'ladder' ? Math.max(12, Math.min(26, k * .8)) + 8 : 10), Y(B / 2), findB, 'left');
           const L = Math.hypot(A, B), mx = X(-A / 2) + (-B / L) * 18, my = Y(B / 2) - (A / L) * 18;
-          side(`c = ${fmt(C)}${u}`, mx, my, !findB, 'right');
+          side(`c = ${fmt(C)}${u}`, mx, my, !findB && !findA, 'right');
         }
         const r2 = v => fmt(v, 2);
         const math = findB
           ? `b² = c² − a² = ${r2(C)}² − ${r2(A)}² = ${r2(C * C)} − ${r2(A * A)} = ${r2(B * B)}, so b = √${r2(B * B)} ${exact(B) ? '=' : '≈'} ${r2(B)}${u}`
+          : findA ? `a² = c² − b² = ${r2(C)}² − ${r2(B)}² = ${r2(C * C)} − ${r2(B * B)} = ${r2(A * A)}, so a = √${r2(A * A)} ${exact(A) ? '=' : '≈'} ${r2(A)}${u}`
           : `a² + b² = c²: ${r2(A)}² + ${r2(B)}² = ${r2(A * A)} + ${r2(B * B)} = ${r2(C * C)}, so c = √${r2(C * C)} ${exact(C) ? '=' : '≈'} ${r2(C)}${u}`;
-        const lead = s.scene === 'ladder' ? (findB ? `The ladder reaches ${r2(B)}${u} up the wall. ` : `The ladder has to be ${r2(C)}${u} long. `)
-          : s.scene === 'ramp' ? (findB ? `The ramp rises ${r2(B)}${u}. ` : `The ramp is ${r2(C)}${u} long. `) : '';
+        const lead = s.scene === 'ladder' ? (findB ? `The ladder reaches ${r2(B)}${u} up the wall. ` : findA ? `The foot of the ladder is ${r2(A)}${u} from the wall. ` : `The ladder has to be ${r2(C)}${u} long. `)
+          : s.scene === 'ramp' ? (findB ? `The ramp rises ${r2(B)}${u}. ` : findA ? `The ramp runs ${r2(A)}${u} along the ground. ` : `The ramp is ${r2(C)}${u} long. `) : '';
         const whole = [A, B, C].every(v => Math.abs(v - Math.round(v)) < 1e-9) ? ` · ${[A, B].sort((x, y) => x - y).map(v => fmt(v)).join(', ')}, ${fmt(C)} is a Pythagorean triple — all whole numbers` : '';
         return lead + math + whole + (s.angles ? ` · angles ${fmt(deg, 1)}°, ${fmt(90 - deg, 1)}° and 90°` : '');
       },
@@ -725,6 +731,7 @@
   T.exponential.table = s => ({ head: ['Step', 'Amount', 'Straight-line'], rows: Array.from({ length: s.steps + 1 }, (_, n) => [n, fmt(s.start * Math.pow(1 + s.rate / 100, n), 2), fmt(s.start + s.start * s.rate / 100 * n, 2)]) });
   T.triangle.table = s => { const u = s.unit ? ` (${s.unit})` : '', rows = [];
     if (s.find === 'b') for (let i = 1; i <= 12; i++) { const a = s.c * i / 13; rows.push([fmt(a, 2), fmt(Math.sqrt(s.c * s.c - a * a), 2), fmt(s.c, 2)]); } // slide the foot out: how high now?
+    else if (s.find === 'a') for (let i = 1; i <= 12; i++) { const b = s.c * i / 13; rows.push([fmt(Math.sqrt(s.c * s.c - b * b), 2), fmt(b, 2), fmt(s.c, 2)]); } // higher up the wall: how far out?
     else for (let i = 1; i <= 12; i++) { const b = s.b * i / 6; rows.push([fmt(s.a, 2), fmt(b, 2), fmt(Math.hypot(s.a, b), 2)]); }
     return { head: ['Leg a' + u, 'Leg b' + u, 'Long side c' + u], rows }; };
   T.population.table = s => { const r = s.rate / 100, rows = [[0, fmt(s.start, 0), fmt(s.start, 0)]]; let p = s.start, e = s.start; for (let y = 1; y <= s.years; y++) { p += r * p * (1 - p / s.capacity); e *= 1 + r; rows.push([y, fmt(p, 0), fmt(e, 0)]); } return { head: ['Generation', 'With food & space limits', 'Unlimited'], rows }; };
@@ -741,7 +748,7 @@
     sine: [['Make the period 4π (one wave every 12.57 units)', s => near(s.freq, .5, .001)], ['Make the wave go from −1 up to 5', s => near(s.shift - s.amp, -1, .01) && near(s.shift + s.amp, 5, .01)]],
     exponential: [['Make the amount double about every 4 steps', s => s.rate > 0 && near(Math.log(2) / Math.log(1 + s.rate / 100), 4, .3)], ['Shrink 1000 to under 10 in 10 steps', s => s.start >= 1000 && s.start * Math.pow(1 + s.rate / 100, s.steps) < 10 && s.steps <= 10]],
     triangle: [['Make every side a whole number (but not 3, 4, 5)', s => { const t = T.triangle.solve(s); return !!t && [t.A, t.B, t.C].every(v => Math.abs(v - Math.round(v)) < 1e-9) && !(Math.round(t.C) === 5 && Math.round(t.A * t.B) === 12); }],
-      ['Make a 10 ft ladder reach 8 ft up the wall', s => s.find === 'b' && s.c === 10 && near(Math.sqrt(100 - s.a * s.a), 8, .01)],
+      ['Make a 10 ft ladder reach 8 ft up the wall', s => { const t = T.triangle.solve(s); return !!t && near(t.C, 10, .01) && near(t.B, 8, .01); }],
       ['Make the long side exactly twice as long as one leg', s => { const t = T.triangle.solve(s); return !!t && (near(t.C, 2 * t.A, .01) || near(t.C, 2 * t.B, .01)); }]],
     fraction: [['Make a fraction equal to 40%', s => near(s.n / s.d, .4, 1e-9)], ['Make a fraction equal to 2/3 with a bottom of 9', s => s.n === 6 && s.d === 9], ['Make a fraction bigger than 1', s => s.n > s.d]],
     unitcircle: [['Find an angle where sine and cosine are equal', s => near(Math.sin(s.angle * Math.PI / 180), Math.cos(s.angle * Math.PI / 180), .01)], ['Find an angle where cosine is −1', s => near(Math.cos(s.angle * Math.PI / 180), -1, 1e-6)]],
