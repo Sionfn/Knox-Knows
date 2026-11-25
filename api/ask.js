@@ -828,7 +828,7 @@ function cleanLatexAnswer(text) {
 // web_search tool, and the model searches only when the question needs it, so
 // Knox checks real pages and links its sources instead of telling the student
 // to go look it up. A search costs no more credits than any other question.
-const WEB_SEARCH_INSTRUCTION = 'You can search the web. Search only when the answer depends on facts you should check: quotes, dates, statistics, current events, real people or works, or sources and citations (essays and research). Do not search for math, problems you can work out, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Cite each page right after the fact it supports, as a Markdown link (the app shows these as small chips), and do NOT add a separate Sources list or line at the end: the app lists every page you used in a sources card. (When the student asks for citations, still write each ready-to-use citation in your answer.) Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
+const WEB_SEARCH_INSTRUCTION = 'You can search the web. Always search before answering when the answer depends on facts you should check — dates and years, real people and what they did or said, quotes, statistics or numbers that can change, current events, places and works, or sources and citations (essays and research) — even if you think you know, and answer from the pages you find. Do not search for math, problems you can work out, writing help, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Cite each page right after the fact it supports, as a Markdown link (the app shows these as small chips), and do NOT add a separate Sources list or line at the end: the app lists every page you used in a sources card. (When the student asks for citations, still write each ready-to-use citation in your answer.) Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
 // Learn (Dec 1): the same smart search, inside a lesson. Facts only — never to
 // solve the student's problem for them — and the reply stays lesson JSON.
 const LEARN_WEB_SEARCH_INSTRUCTION = 'You can search the web. In this lesson, search only when the step depends on facts you should check: dates, quotes, statistics, real people, events, places, works, or a science fact you are not sure of. Never search for math or to work out the student\'s problem, and never hand over an answer they have not reached yet. Keep replying in the knox_learn_reply JSON. Do not paste links into body; the app lists the pages you used as sources.';
@@ -861,6 +861,20 @@ function toResponsesInput(messages) {
   }));
 }
 
+// A readable name for a page that came without a title: "archives.gov — Declaration history".
+function titleFromUrl(url) {
+  try {
+    const u = new URL(url), host = u.hostname.replace(/^www\./, '');
+    const last = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '').replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[-_+]+/g, ' ').trim();
+    return (last && !/^\d+$/.test(last) ? `${host} — ${last.charAt(0).toUpperCase()}${last.slice(1)}` : host).slice(0, 140);
+  } catch { return 'Source'; }
+}
+
+// Clear fact questions are always checked on the web (Knox decides for the rest).
+// Math word problems ("when does the car catch up?") aren't forced.
+const MUST_CHECK = /\b(?:when (?:was|were|did)|what year|which year|in what year|who (?:was|were|wrote|invented|discovered|said|won|founded|created|painted|signed|first)|(?:mla|apa|chicago)(?: style)?|citations?|cite|works cited|bibliography|find (?:me )?(?:a |some )?sources?|latest|in the news|this (?:week|month|year)|right now|currently|population of)\b/i;
+const looksLikeMath = q => /\d\s*(?:[-+*/×÷^=]|mph|km\/h|m\/s|%|x\b)|[=^]/i.test(q);
+
 // Knox sometimes still ends with its own "Sources: [a](…) · [b](…)" line. Those
 // links join the sources card instead, so each page shows once (citations with
 // text, like MLA, are left alone — only a line made of nothing but links folds).
@@ -875,14 +889,22 @@ function foldSourcesLine(text, sources) {
 }
 
 // Returns { text, sources, usage }, or null so the caller answers without search.
-async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort } = {}) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
+async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort, required } = {}) {
+  const ends = Date.now() + timeoutMs;
+  const ask = extras => fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model, input: toResponsesInput(messages), tools: [{ type: 'web_search' }], max_output_tokens: tokenLimit,
-      ...(format ? { text: { format } } : {}), ...(effort ? { reasoning: { effort } } : {}) }),
-    signal: AbortSignal.timeout(timeoutMs),
+      ...(format ? { text: { format } } : {}), ...(effort ? { reasoning: { effort } } : {}), ...extras }),
+    signal: AbortSignal.timeout(Math.max(3000, ends - Date.now())),
   });
+  // Ask for the pages it looked at (so the card can always show them), and for
+  // clear fact questions require a search. If the API turns either down, ask plainly.
+  let response = await ask({ include: ['web_search_call.action.sources'], ...(required ? { tool_choice: 'required' } : {}) });
+  if (!response.ok && response.status === 400) {
+    console.error("Web search options refused; asking without them:", (await response.text()).slice(0, 500));
+    response = await ask({});
+  }
   if (!response.ok) {
     console.error("Web search error [" + model + "]:", (await response.text()).slice(0, 2000));
     return null;
@@ -902,8 +924,20 @@ async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format,
     if (!title) { try { title = new URL(note.url).hostname; } catch { continue; } }
     sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
   }
-  const kept = sources.slice(0, 8);
-  return { text: format ? text : foldSourcesLine(text, kept), sources: kept, usage: data.usage };
+  const kept = sources.slice(0, 8), folded = format ? text : foldSourcesLine(text, kept);
+  // Knox searched but didn't link a page: show the pages it looked at, so a
+  // checked answer always shows its sources.
+  if (!kept.length) {
+    for (const item of data.output || []) {
+      if (item.type !== 'web_search_call') continue;
+      for (const src of item.action?.sources || []) {
+        const url = String(src?.url || '');
+        if (kept.length >= 5 || !/^https?:\/\/[^\s]+$/.test(url) || kept.some(x => x.url === url)) continue;
+        kept.push({ title: String(src.title || '').replace(/[\[\]()\s]+/g, ' ').trim().slice(0, 140) || titleFromUrl(url), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
+      }
+    }
+  }
+  return { text: folded, sources: kept, usage: data.usage };
 }
 
 // ── Discord bot ─────────────────────────────────────────────────────────────
@@ -1375,7 +1409,7 @@ export default async function handler(req, res) {
           if (searched) { try { if (!searched.text.trim().startsWith('{')) throw new Error('not JSON'); decodeLearnOutput(searched.text, lessonState); } catch { console.error('Learn search reply was not a lesson; answering normally.'); searched = null; } }
         } else {
           searched = await webSearchAnswer([...messages, { role: 'system', content: WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
-            Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))));
+            Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))), { required: MUST_CHECK.test(trimmedQuestion) && !looksLikeMath(trimmedQuestion) });
         }
       } catch (err) { console.error('Web search skipped:', err?.message); searched = null; }
     }
