@@ -266,6 +266,87 @@
         return `After ${s.steps} steps: ${fmt(f(s.steps), 1)} (started at ${fmt(s.start)}) · ${r > 0 ? `doubles about every ${fmt(twice, 1)} steps` : r < 0 ? `halves about every ${fmt(twice, 1)} steps` : 'no change'}${s.linear ? ` · straight-line growth would reach ${fmt(lin(s.steps), 1)}` : ''}`;
       },
     },
+    triangle: {
+      group: 'Math', icon: 'triangle', title: 'Right triangles', blurb: 'The Pythagorean theorem: ladders, ramps and missing sides',
+      params: [select('find', 'Find', [['c', 'The long side (c)'], ['b', 'A missing leg (b)']], 'c', false),
+        range('a', 'Leg a (along the bottom)', .5, 50, .5, 5),
+        { ...range('b', 'Leg b (going up)', .5, 50, .5, 12), show: s => s.find !== 'b' },
+        { ...range('c', 'Long side c (hypotenuse)', .5, 80, .5, 13), show: s => s.find === 'b' },
+        select('scene', 'Picture', [['triangle', 'A triangle'], ['ladder', 'A ladder on a wall'], ['ramp', 'A ramp']], 'triangle', false),
+        select('unit', 'Units', [['', 'No units'], ['ft', 'Feet (ft)'], ['m', 'Meters (m)'], ['in', 'Inches (in)'], ['cm', 'Centimeters (cm)'], ['mi', 'Miles (mi)'], ['km', 'Kilometers (km)']], '', false),
+        toggle('squares', 'Show the squares on each side (a² + b² = c²)'), toggle('angles', 'Show the angles')],
+      presets: [['Ladder: 13 ft long, 5 ft out', { find: 'b', a: 5, c: 13, scene: 'ladder', unit: 'ft' }], ['3, 4, 5', { find: 'c', a: 3, b: 4, scene: 'triangle', unit: '' }], ['Ramp: 12 ft along, 5 ft up', { find: 'c', a: 12, b: 5, scene: 'ramp', unit: 'ft' }], ['Walk 6 km east, 8 km north', { find: 'c', a: 6, b: 8, scene: 'triangle', unit: 'km' }]],
+      // The three sides: a and b are the legs, C the long side. null when c isn't longer than a.
+      solve(s) { if (s.find === 'b') return s.c > s.a ? { A: s.a, B: Math.sqrt(s.c * s.c - s.a * s.a), C: s.c } : null; return { A: s.a, B: s.b, C: Math.hypot(s.a, s.b) }; },
+      draw(g, s, c) {
+        if (c.ghost) return '';
+        const u = s.unit ? ' ' + s.unit : '', t = this.solve(s);
+        if (!t) { label(g, c, 'The long side has to be longer than leg a', c.w / 2, c.h / 2, c.red, 'center', 15); return 'The long side (c) has to be longer than leg a — make c bigger or a smaller.'; }
+        const { A, B, C } = t, findB = s.find === 'b', exact = v => Math.abs(v - Math.round(v * 100) / 100) < 1e-9;
+        // World: right angle R at (0,0), foot F at (−A,0), top P at (0,B). The c square sits outside the long side.
+        const nx = -B, ny = A, sqA = [[-A, 0], [0, 0], [0, -A], [-A, -A]], sqB = [[0, 0], [0, B], [B, B], [B, 0]], sqC = [[-A, 0], [0, B], [nx, B + ny], [-A + nx, ny]];
+        const pts = [[-A, 0], [0, 0], [0, B]];
+        if (s.squares) pts.push(...sqA, ...sqB, ...sqC);
+        if (s.scene !== 'triangle') pts.push([-A * 1.18, 0], [Math.max(A, B) * .12, 0], [0, B * 1.1]);
+        const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+        const pad = 36, k = Math.min((c.w - 2 * pad) / (x1 - x0 || 1), (c.h - 2 * pad) / (y1 - y0 || 1));
+        const ox = (c.w - (x1 - x0) * k) / 2, oy = (c.h - (y1 - y0) * k) / 2;
+        const X = x => ox + (x - x0) * k, Y = y => c.h - oy - (y - y0) * k;
+        const path = (poly, fill, stroke, lw = 2.5) => { g.beginPath(); poly.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } };
+        // A grid of whole units (or a nice step), lined up with the corner.
+        if (s.grid) { const step = [.5, 1, 2, 5, 10, 20, 50, 100].find(v => v * k >= 18) || 100, sp = step * k; g.save(); g.strokeStyle = c.grid; g.lineWidth = 1; g.beginPath(); for (let x = X(0) % sp; x < c.w; x += sp) { g.moveTo(x, 0); g.lineTo(x, c.h); } for (let y = Y(0) % sp; y < c.h; y += sp) { g.moveTo(0, y); g.lineTo(c.w, y); } g.stroke(); g.restore(); }
+        g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+        if (s.squares) { g.globalAlpha = .16; path(sqA, c.blue); path(sqB, c.red); path(sqC, c.orange); g.globalAlpha = 1; path(sqA, null, c.blue, 2); path(sqB, null, c.red, 2); path(sqC, null, c.orange, 2); }
+        const ground = () => { g.fillStyle = c.ground; g.fillRect(0, Y(0), c.w, c.h - Y(0)); g.strokeStyle = c.axis; g.lineWidth = 2; g.beginPath(); g.moveTo(0, Y(0)); g.lineTo(c.w, Y(0)); g.stroke(); };
+        if (s.scene === 'ramp') ground();
+        const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (s.scene === 'ladder') {
+          const ww = Math.max(12, Math.min(26, k * .8));
+          if (s.squares) path([[-A, 0], [0, 0], [0, B]], null, c.light, 1.5);
+          const fx = X(-A), fy = Y(0), px = X(0), py = Y(B), L = Math.hypot(px - fx, py - fy), ux = (px - fx) / L, uy = (py - fy) / L, off = 6;
+          g.strokeStyle = '#A0622D'; g.lineWidth = 4;
+          for (const side of [-1, 1]) { g.beginPath(); g.moveTo(fx - uy * off * side, fy + ux * off * side); g.lineTo(px - uy * off * side, py + ux * off * side); g.stroke(); }
+          const rungs = clamp(Math.round(L / 20), 3, 40); g.lineWidth = 3;
+          for (let i = 1; i < rungs; i++) { const qx = fx + ux * L * i / rungs, qy = fy + uy * L * i / rungs; g.beginPath(); g.moveTo(qx - uy * off, qy + ux * off); g.lineTo(qx + uy * off, qy - ux * off); g.stroke(); }
+          // The ground and wall go on top, so the ladder leans on the wall instead of poking into it.
+          ground(); g.fillStyle = dark ? '#4B5563' : '#D3D7DE'; g.fillRect(X(0), Y(B * 1.1), ww, Y(0) - Y(B * 1.1)); g.strokeStyle = dark ? '#6B7280' : '#AEB4BE'; g.lineWidth = 2; g.strokeRect(X(0), Y(B * 1.1), ww, Y(0) - Y(B * 1.1));
+        } else if (s.scene === 'ramp') {
+          path([[-A, 0], [0, 0], [0, B]], c.cliff, c.axis, 2.5);
+          const m = .55, cx = X(-A + A * m), cy = Y(B * m), ang = Math.atan2(B, A), bs = clamp(k * Math.min(A, B) * .18, 12, 34);
+          g.save(); g.translate(cx, cy); g.rotate(-ang); g.fillStyle = c.orange; g.strokeStyle = '#B84A00'; g.lineWidth = 2; g.fillRect(-bs / 2, -bs, bs, bs); g.strokeRect(-bs / 2, -bs, bs, bs); g.restore();
+        } else path([[-A, 0], [0, 0], [0, B]], s.squares ? null : 'rgba(255,107,0,.14)', c.text, 3);
+        // The right-angle box.
+        const q = Math.min(14, A * k * .3, B * k * .3); g.strokeStyle = c.text; g.lineWidth = 2; g.beginPath(); g.moveTo(X(0) - q, Y(0)); g.lineTo(X(0) - q, Y(0) - q); g.lineTo(X(0), Y(0) - q); g.stroke();
+        // The angles at the two sharp corners.
+        const th = Math.atan2(B, A), deg = th * 180 / Math.PI;
+        if (s.angles) {
+          g.strokeStyle = c.purple; g.lineWidth = 2.5; const r = clamp(Math.min(A, C) * k * .22, 14, 34);
+          // Each label sits on the angle's middle line, farther out when the angle is narrow.
+          const mark = (vx, vy, a1, a2, txt) => { g.beginPath(); g.arc(vx, vy, r, a1, a2); g.stroke(); const mid = (a1 + a2) / 2, d = clamp(17 / Math.tan(Math.abs(a2 - a1) / 2), r + 12, r + 70); label(g, c, txt, vx + d * Math.cos(mid), vy + d * Math.sin(mid), c.purple); };
+          mark(X(-A), Y(0), -th, 0, fmt(deg, 1) + '°');
+          mark(X(0), Y(B), Math.PI / 2, Math.PI - th, fmt(90 - deg, 1) + '°');
+        }
+        g.restore();
+        // Side labels: the side you're finding is orange.
+        const side = (txt, x, y, found, align = 'center') => label(g, c, txt, x, y, found ? c.orange : c.text, align, found ? 15 : 13);
+        if (s.squares) {
+          side(`a² = ${fmt(A * A)}`, X(-A / 2), Y(-A / 2), false); side(`b² = ${fmt(B * B)}`, X(B / 2), Y(B / 2), findB); side(`c² = ${fmt(C * C)}`, X(-A / 2 + nx / 2), Y(B / 2 + ny / 2), !findB);
+        } else {
+          side(`a = ${fmt(A)}${u}`, X(-A / 2), Y(0) + 16, false);
+          side(`b = ${fmt(B)}${u}`, X(0) + (s.scene === 'ladder' ? Math.max(12, Math.min(26, k * .8)) + 8 : 10), Y(B / 2), findB, 'left');
+          const L = Math.hypot(A, B), mx = X(-A / 2) + (-B / L) * 18, my = Y(B / 2) - (A / L) * 18;
+          side(`c = ${fmt(C)}${u}`, mx, my, !findB, 'right');
+        }
+        const r2 = v => fmt(v, 2);
+        const math = findB
+          ? `b² = c² − a² = ${r2(C)}² − ${r2(A)}² = ${r2(C * C)} − ${r2(A * A)} = ${r2(B * B)}, so b = √${r2(B * B)} ${exact(B) ? '=' : '≈'} ${r2(B)}${u}`
+          : `a² + b² = c²: ${r2(A)}² + ${r2(B)}² = ${r2(A * A)} + ${r2(B * B)} = ${r2(C * C)}, so c = √${r2(C * C)} ${exact(C) ? '=' : '≈'} ${r2(C)}${u}`;
+        const lead = s.scene === 'ladder' ? (findB ? `The ladder reaches ${r2(B)}${u} up the wall. ` : `The ladder has to be ${r2(C)}${u} long. `)
+          : s.scene === 'ramp' ? (findB ? `The ramp rises ${r2(B)}${u}. ` : `The ramp is ${r2(C)}${u} long. `) : '';
+        const whole = [A, B, C].every(v => Math.abs(v - Math.round(v)) < 1e-9) ? ` · ${[A, B].sort((x, y) => x - y).map(v => fmt(v)).join(', ')}, ${fmt(C)} is a Pythagorean triple — all whole numbers` : '';
+        return lead + math + whole + (s.angles ? ` · angles ${fmt(deg, 1)}°, ${fmt(90 - deg, 1)}° and 90°` : '');
+      },
+    },
     fraction: {
       group: 'Math', icon: 'calc', free: true, title: 'Fractions', blurb: 'Pictures, decimals and percents',
       params: [range('n', 'Top (numerator)', 0, 24, 1, 3), range('d', 'Bottom (denominator)', 1, 24, 1, 4),
@@ -642,6 +723,10 @@
   T.spring.table = function (s) { const m = this.model(s); m.end = Math.min(10, m.end); return { head: ['Time (s)', 'Position (m)', 'Speed (m/s)', 'Spring force (N)'], rows: every(m, 40).map(p => [fmt(p.t, 2), fmt(p.x, 3), fmt(p.v, 3), fmt(-s.k * p.x, 2)]) }; };
   T.interest.table = function (s) { const r = s.r / 100, n = { year: 1, month: 12, day: 365 }[s.every] || 1, monthly = n === 12 ? r / 12 : n === 365 ? Math.pow(1 + r / 365, 365 / 12) - 1 : 0, rows = [[0, money(s.p), money(s.p), money(s.p)]]; let b = s.p; for (let y = 1; y <= s.t; y++) { for (let m = 0; m < 12; m++) { b += s.add; if (monthly) b *= 1 + monthly; } if (!monthly) b *= 1 + r; rows.push([y, money(s.p + s.add * 12 * y), money(b), money(s.p + s.p * r * y + s.add * 12 * y)]); } return { head: ['Year', 'Put in', 'Compound balance', 'Simple balance'], rows }; };
   T.exponential.table = s => ({ head: ['Step', 'Amount', 'Straight-line'], rows: Array.from({ length: s.steps + 1 }, (_, n) => [n, fmt(s.start * Math.pow(1 + s.rate / 100, n), 2), fmt(s.start + s.start * s.rate / 100 * n, 2)]) });
+  T.triangle.table = s => { const u = s.unit ? ` (${s.unit})` : '', rows = [];
+    if (s.find === 'b') for (let i = 1; i <= 12; i++) { const a = s.c * i / 13; rows.push([fmt(a, 2), fmt(Math.sqrt(s.c * s.c - a * a), 2), fmt(s.c, 2)]); } // slide the foot out: how high now?
+    else for (let i = 1; i <= 12; i++) { const b = s.b * i / 6; rows.push([fmt(s.a, 2), fmt(b, 2), fmt(Math.hypot(s.a, b), 2)]); }
+    return { head: ['Leg a' + u, 'Leg b' + u, 'Long side c' + u], rows }; };
   T.population.table = s => { const r = s.rate / 100, rows = [[0, fmt(s.start, 0), fmt(s.start, 0)]]; let p = s.start, e = s.start; for (let y = 1; y <= s.years; y++) { p += r * p * (1 - p / s.capacity); e *= 1 + r; rows.push([y, fmt(p, 0), fmt(e, 0)]); } return { head: ['Generation', 'With food & space limits', 'Unlimited'], rows }; };
   T.motion.table = s => { const catchT = s.b > s.a ? s.head / (s.b - s.a) : 4, end = catchT * 1.3, rows = []; for (let i = 0; i <= 20; i++) { const t = end * i / 20; rows.push([fmt(t, 2), fmt(s.head + s.a * t, 2), fmt(s.b * t, 2), fmt(s.head + s.a * t - s.b * t, 2)]); } return { head: [`Time (${s.time})`, `A (${s.unit})`, `B (${s.unit})`, 'Gap'], rows }; };
 
@@ -655,6 +740,9 @@
     parabola: [['Put the vertex at (2, −1)', s => s.a && near(-s.b / (2 * s.a), 2, .01) && near(s.c - s.b * s.b / (4 * s.a), -1, .01)], ['Make a parabola with no x-intercepts that opens up', s => s.a > 0 && s.b * s.b - 4 * s.a * s.c < 0], ['Make it open down and cross at x = −1 and x = 3', s => s.a < 0 && rootsOf(x => s.a * x * x + s.b * x + s.c).length === 2 && rootsOf(x => s.a * x * x + s.b * x + s.c).every(r => near(r, -1, .05) || near(r, 3, .05))]],
     sine: [['Make the period 4π (one wave every 12.57 units)', s => near(s.freq, .5, .001)], ['Make the wave go from −1 up to 5', s => near(s.shift - s.amp, -1, .01) && near(s.shift + s.amp, 5, .01)]],
     exponential: [['Make the amount double about every 4 steps', s => s.rate > 0 && near(Math.log(2) / Math.log(1 + s.rate / 100), 4, .3)], ['Shrink 1000 to under 10 in 10 steps', s => s.start >= 1000 && s.start * Math.pow(1 + s.rate / 100, s.steps) < 10 && s.steps <= 10]],
+    triangle: [['Make every side a whole number (but not 3, 4, 5)', s => { const t = T.triangle.solve(s); return !!t && [t.A, t.B, t.C].every(v => Math.abs(v - Math.round(v)) < 1e-9) && !(Math.round(t.C) === 5 && Math.round(t.A * t.B) === 12); }],
+      ['Make a 10 ft ladder reach 8 ft up the wall', s => s.find === 'b' && s.c === 10 && near(Math.sqrt(100 - s.a * s.a), 8, .01)],
+      ['Make the long side exactly twice as long as one leg', s => { const t = T.triangle.solve(s); return !!t && (near(t.C, 2 * t.A, .01) || near(t.C, 2 * t.B, .01)); }]],
     fraction: [['Make a fraction equal to 40%', s => near(s.n / s.d, .4, 1e-9)], ['Make a fraction equal to 2/3 with a bottom of 9', s => s.n === 6 && s.d === 9], ['Make a fraction bigger than 1', s => s.n > s.d]],
     unitcircle: [['Find an angle where sine and cosine are equal', s => near(Math.sin(s.angle * Math.PI / 180), Math.cos(s.angle * Math.PI / 180), .01)], ['Find an angle where cosine is −1', s => near(Math.cos(s.angle * Math.PI / 180), -1, 1e-6)]],
     projectile: [['Land exactly 30 m away (±0.5 m)', s => { const m = T.projectile.model(s), p = m.pts[m.pts.length - 1]; return near(p.x, 30, .5); }], ['Reach a height of 20 m', s => T.projectile.model(s).pts.some(p => p.y >= 20)], ['On the Moon, land 100 m away (±2 m)', s => s.planet === 'moon' && near(T.projectile.model(s).pts.slice(-1)[0].x, 100, 2)]],
@@ -678,7 +766,7 @@
   const markDone = id => { const d = doneSet(); d.add(id); try { localStorage.setItem(DONE_KEY, JSON.stringify([...d])); } catch (_) {} };
 
   const GROUPS = ['Math', 'Physics', 'Chemistry', 'Earth', 'Money', 'Chance', 'Biology'];
-  const ORDER = ['equation', 'projectile', 'line', 'parabola', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population', 'gas', 'ph', 'wave', 'orbit', 'seasons', 'supply'];
+  const ORDER = ['equation', 'projectile', 'line', 'parabola', 'triangle', 'fraction', 'interest', 'probability', 'freefall', 'pendulum', 'spring', 'motion', 'ohm', 'sine', 'exponential', 'unitcircle', 'population', 'gas', 'ph', 'wave', 'orbit', 'seasons', 'supply'];
   const COMMON = [range('speedx', 'Playback speed', .25, 3, .25, 1, '×', true), toggle('grid', 'Show the grid', true), toggle('labels', 'Show labels and numbers', true)];
   const paramsOf = id => [...T[id].params, ...COMMON.filter(p => p.k !== 'speedx' || T[id].anim)];
   const defaults = id => Object.fromEntries(paramsOf(id).map(p => [p.k, p.v]));
@@ -1250,12 +1338,14 @@
         const o = host.querySelector(`[data-out="${p.k}"]`); if (o) o.textContent = unitFmt(p, s[p.k]);
       }
       window.knoxSelect?.refresh(host);
+      refreshShown();
     }
+    function refreshShown() { for (const q of params) if (q.show) { const el = host.querySelector(`[data-k="${q.k}"]`)?.closest('.sl-field'); if (el) el.hidden = !q.show(s); } }
     const onInput = e => {
       const k = e.target.dataset.k; if (!k) return;
       const p = params.find(x => x.k === k);
       s[k] = p.type === 'toggle' ? e.target.checked : p.type === 'select' || p.type === 'text' ? e.target.value : Number(e.target.value);
-      if (p.type === 'text') for (const q of params) if (q.show) { const el = host.querySelector(`[data-k="${q.k}"]`)?.closest('.sl-field'); if (el) el.hidden = !q.show(s); }
+      if (p.type === 'text' || p.type === 'select') refreshShown(); // e.g. Right triangles: Find → b swaps the c slider in
       const o = host.querySelector(`[data-out="${k}"]`); if (o) o.textContent = unitFmt(p, s[k]);
       if (def.anim && !playing && k !== 'speedx') t = def.loop ? t : dur(); // the new result right away
       draw();

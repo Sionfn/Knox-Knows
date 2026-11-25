@@ -45,11 +45,11 @@ test('Learn keeps a sim only when Simulations are on, and only a known template'
   assert.doesNotMatch(decodeLearnOutput(reply('rocket | x=1'), { sims: true }), /Sim:/);
 });
 
-test('answers and Learn know every Simulation Lab sim (all 22)', async () => {
+test('answers and Learn know every Simulation Lab sim (all 23)', async () => {
   const { SIM_CATALOG } = await import('../api/_sim-build.js');
   const { decodeLearnOutput } = await import('../api/_learn-output.js');
   const reply = sim => JSON.stringify({body:'Watch it swing.',question:'What changes the period?',choices:[],goals:['Pendulums'],part:1,practiceIndex:0,assessment:'new',reviewFocus:'',keyIdea:'',graph:'',visual:'',video:'',recap:'',watchOut:'',topic:'',sim});
-  assert.equal(SIM_CATALOG.length, 22);
+  assert.equal(SIM_CATALOG.length, 23);
   for (const [type] of SIM_CATALOG) assert.match(decodeLearnOutput(reply(type + ' | a=1'), { sims: true }), new RegExp('^Sim: ' + type + ' \\|', 'm'), type);
   const sims = readFileSync(new URL('../sims.js', import.meta.url), 'utf8');
   assert.match(sims, /window\.knoxSimLab\.mini\(el, p\.type, p\.vals\)/);

@@ -8,7 +8,7 @@ const src = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 test('Simulation Lab: the server catalog and the Lab have the same simulations and the same free starter set', () => {
   const lab = src('simlab.js');
   const ids = [...lab.matchAll(/^    ([a-z]+): \{\n      group:/gm)].map(m => m[1]);
-  assert.equal(ids.length, 22);
+  assert.equal(ids.length, 23);
   assert.deepEqual([...ids].sort(), SIM_CATALOG.map(s => s[0]).sort());
   const freeLab = ids.filter(id => new RegExp(`^    ${id}: \\{\\n      group: '[A-Za-z]+', icon: '[a-zA-Z]+', free: true`, 'm').test(lab)).sort();
   assert.deepEqual(freeLab, SIM_CATALOG.filter(s => s[1]).map(s => s[0]).sort());
@@ -111,4 +111,22 @@ test('Simulation Lab works like Flashcards: opens on its home, asks before losin
   assert.match(lab, /← Back to answer/);
   // Save goes back to the Lab home with a note, like a Flashcards deck.
   assert.match(lab, /editor\?\.stop\(\); editor = null; tab = 'home'; renderHome\(\);\n    toast\(/);
+});
+
+test('Right triangles: a Lab sim for the Pythagorean theorem (ladders, ramps, missing sides), in answers and Learn too', async () => {
+  const lab = src('simlab.js');
+  const { SIM_CATALOG } = await import('../api/_sim-build.js');
+  const tri = SIM_CATALOG.find(s => s[0] === 'triangle');
+  assert.ok(tri, 'the server offers it');
+  assert.match(tri[2], /Pythagorean theorem \(ladders/);
+  assert.match(tri[3], /find \(c = find the long side from both legs, b = find a missing leg/);
+  assert.match(lab, /triangle: \{\n      group: 'Math', icon: 'triangle', title: 'Right triangles'/);
+  assert.match(lab, /solve\(s\) \{ if \(s\.find === 'b'\) return s\.c > s\.a \? \{ A: s\.a, B: Math\.sqrt\(s\.c \* s\.c - s\.a \* s\.a\), C: s\.c \} : null; return \{ A: s\.a, B: s\.b, C: Math\.hypot\(s\.a, s\.b\) \}; \}/);
+  assert.match(lab, /\['Ladder: 13 ft long, 5 ft out', \{ find: 'b', a: 5, c: 13, scene: 'ladder', unit: 'ft' \}\]/);
+  assert.match(lab, /triangle: \[\['Make every side a whole number \(but not 3, 4, 5\)'/);
+  assert.match(lab, /T\.triangle\.table = s =>/);
+  assert.match(lab, /const ORDER = \['equation', 'projectile', 'line', 'parabola', 'triangle',/);
+  // Changing Find swaps the b and c sliders (select changes re-check which settings show).
+  assert.match(lab, /if \(p\.type === 'text' \|\| p\.type === 'select'\) refreshShown\(\);/);
+  assert.match(src('knox-icons.js'), /triangle: '<path d="M4 20h16V4Z"\/>/);
 });
