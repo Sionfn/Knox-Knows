@@ -1786,6 +1786,23 @@
     .kfrac { display: inline-flex; flex-direction: column; align-items: center; font-size: .8em; line-height: 1.12; margin: 0 .08em; font-variant-numeric: lining-nums tabular-nums; }
     .kfrac-n { border-bottom: 1.6px solid currentColor; padding: 0 .2em .05em; }
     .kfrac-d { padding: .05em .2em 0; }
+    /* Powers and square roots (drawPowersRoots) */
+    .kpow { font-size: .72em; line-height: 0; vertical-align: .62em; margin-left: .03em; font-variant-numeric: lining-nums; }
+    .krad { white-space: nowrap; }
+    .krad-in { display: inline-block; border-top: 1.6px solid currentColor; padding: .08em .12em 0 .06em; margin-left: .02em; line-height: 1.2; }
+    /* "Check:" — the answer plugged back in (Knox green, the same row shape as Answer) */
+    .knox-check { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin: 0 20px 14px; padding: 8px 14px; border: 1px solid var(--green); border-left: 4px solid var(--green); border-radius: 12px; background: var(--green-light); color: var(--text); font-size: 15px; font-weight: 700; line-height: 1.5; }
+    .knox-check-label { flex: none; display: inline-flex; align-items: center; gap: 4px; color: var(--green-dark); font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+    html[data-theme="dark"] .knox-check-label { color: var(--green); }
+    /* "All answers:" — every result in one card (3+ problems), Answer-box blue */
+    .knox-all-answers { margin: 0 20px 20px; padding: 10px 14px 6px; border: 1px solid var(--blue); border-left: 4px solid var(--blue); border-radius: 12px; background: var(--blue-light); color: var(--text); }
+    .knox-all-answers ul { list-style: none; margin: 6px 0 0; padding: 0 !important; }
+    .knox-all-answers li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 14px; margin: 0 !important; padding: 7px 0; border-top: 1.5px solid color-mix(in srgb, var(--blue) 28%, transparent); font-size: 15px; font-weight: 800; line-height: 1.45; }
+    .knox-all-answers li:first-child { border-top: 0; }
+    .kaa-name { flex: 0 0 9.5em; min-width: 0; color: var(--blue-dark); font-size: 13px; font-weight: 900; }
+    html[data-theme="dark"] .kaa-name { color: #74D4FF; }
+    .kaa-val { flex: 1 1 12em; min-width: 0; }
+    @media (max-width: 600px) { .knox-check, .knox-all-answers { margin: 0 15px 15px; } .kaa-name { flex-basis: 100%; } }
     /* "Why it works:" — the idea behind the steps (Knox purple, like Learn) */
     .knox-why { margin: 0 20px 16px; padding: 10px 14px; border: 2px solid var(--purple); border-radius: 14px; background: var(--purple-light); box-shadow: 0 3px 0 var(--purple-dark); }
     .knox-why-label { display: block; margin-bottom: 2px; font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--purple-dark); }
@@ -2733,6 +2750,8 @@
 .knox-response-body ol, .knox-response-body ul { padding-left: 24px; }
 .knox-response-body code { font-family: monospace; }
 .knox-response-body .knox-final-answer { margin: 18px 0 24px; }
+.knox-response-body .knox-why, .knox-response-body .knox-check { margin: 0 0 14px; }
+.knox-response-body .knox-all-answers { margin: 22px 0 8px; }
 /* The result keeps the box's text color, never the key-word blue (which is
    pale in dark mode and unreadable on Seasonal's light box). */
 html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
@@ -5851,19 +5870,35 @@ function formatInline(text) {
       .replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s()<>]+)\)/g, '<a class="knox-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       // *Title* → italics, only around words, so 5*2*3 and 2 * 3 stay math.
-      .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).map((html, index) => index % 2 ? html : stackFractions(html)).join('');
+      .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).map((html, index) => index % 2 ? html : stackFractions(drawPowersRoots(html))).join('');
+}
+
+// Powers and square roots drawn like a textbook: 3^(2x) → 3 with a raised 2x,
+// x^2 → x², √(910/6) and √144 get the bar over the top. Not inside links;
+// screen readers still hear "^(2x)".
+function drawPowersRoots(html) {
+  let inLink = 0;
+  const POW = /(?<=[\w)\]π°])\^(\((?:[^()]|\([^()]*\))+\)|[−-]?\d+(?:\.\d+)?|[A-Za-zπ])/g;
+  const ROOT = /√(\((?:[^()]|\([^()]*\))+\)|\d+(?:\.\d+)?|[A-Za-z](?![A-Za-z]))/g;
+  return String(html).split(/(<[^>]+>)/g).map(seg => {
+    if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inLink++; else if (/^<\/a>/i.test(seg)) inLink = Math.max(0, inLink - 1); return seg; }
+    if (inLink || !/[\^√]/.test(seg)) return seg;
+    return seg
+      .replace(POW, (m, e) => '<span class="sr-only">^' + e + '</span><sup class="kpow" aria-hidden="true">' + (e[0] === '(' ? e.slice(1, -1) : e) + '</sup>')
+      .replace(ROOT, (m, e) => '<span class="krad">√<span class="krad-in">' + (e[0] === '(' ? e.slice(1, -1) : e) + '</span></span>');
+  }).join('');
 }
 
 // Math fractions drawn stacked, like a textbook: 3/4, and mixed numbers like
 // 3 7/30. Only plain numbers, and never inside links, code, dates (11/25/2026),
 // web addresses (…/2025/04/…) or exponents like x^(1/2). Screen readers hear "3 7/30".
 function stackFractions(html) {
-  let inLink = 0;
+  let inLink = 0, inSup = 0;
   const frac = (n, d, whole) => '<span class="kfrac-wrap"><span class="sr-only">' + (whole ? whole + ' ' : '') + n + '/' + d + '</span><span class="kfrac-vis" aria-hidden="true">' +
     (whole ? '<span class="kfrac-whole">' + whole + '</span>' : '') + '<span class="kfrac"><span class="kfrac-n">' + n + '</span><span class="kfrac-d">' + d + '</span></span></span></span>';
   return String(html).split(/(<[^>]+>)/g).map(seg => {
-    if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inLink++; else if (/^<\/a>/i.test(seg)) inLink = Math.max(0, inLink - 1); return seg; }
-    if (inLink) return seg;
+    if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inLink++; else if (/^<\/a>/i.test(seg)) inLink = Math.max(0, inLink - 1); else if (/^<sup[\s>]/i.test(seg)) inSup++; else if (/^<\/sup>/i.test(seg)) inSup = Math.max(0, inSup - 1); return seg; }
+    if (inLink || inSup) return seg; // a fraction in a power stays inline (x^(1/2))
     // One pass, so a fraction is drawn once (never re-read inside its own spans).
     return seg.replace(/(?<![\w\/.:%&#;^-])(?<!\^\()(?:(\d{1,4}) (?=\d{1,4}\/))?(\d{1,5})\/(\d{1,5})(?![\w\/%]|\.\w|-\w|,\d)/g,
       (m, w, n, d) => +d > 0 && !(n === '24' && d === '7') ? (w && +n < +d ? frac(n, d, w) : (w ? w + ' ' : '') + frac(n, d)) : m);
@@ -7505,6 +7540,28 @@ function renderAnswerHtml(text, kind = 'answer') {
         (fence[2] ? '<div class="knox-code-lang">' + escHtml(fence[2]) + '</div>' : '') +
         '<pre><code>' + escHtml(code.join('\n')) + '</code></pre></div>';
       continue;
+    }
+    // "Check: 5² + 12² = 169 = 13² ✓" — the answer plugged back in (green, like a tick).
+    const check = /^(?:\*\*)?Check:(?:\*\*)?\s*(.{3,400})$/i.exec(line);
+    if (check && kind !== 'learn') { closeList(); flush(); html += '<div class="knox-check"><span class="knox-check-label"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Check</span><span>' + formatInline(check[1].replace(/\s*[✓✔]\s*$/, '')) + '</span></div>'; continue; }
+    // "All answers:" + one bullet per problem (3+ problems) → one summary card.
+    if (kind !== 'learn' && /^(?:#{1,6}\s*)?(?:\*\*)?All answers:?(?:\*\*)?:?\s*$/i.test(line)) {
+      const rows = []; let j = i + 1;
+      for (; j < lines.length; j++) {
+        const l = lines[j].trim();
+        if (!l) { if (rows.length) break; continue; }
+        const item = /^(?:[-*•]|\d{1,2}[.)])\s+(.+)$/.exec(l);
+        if (!item) break;
+        rows.push(item[1]);
+      }
+      if (rows.length) {
+        closeList(); flush();
+        html += '<div class="knox-all-answers"><span class="knox-final-answer-label">All answers</span><ul>' + rows.map(r => {
+          const m = /^(?:\*\*)?([^:*\n]{1,40}?)(?:\*\*)?:(?:\*\*)?\s*(.+)$/.exec(r);
+          return '<li>' + (m ? '<span class="kaa-name">' + formatInline(m[1]) + '</span><span class="kaa-val">' + formatInline(m[2].replace(/\*\*$/, '')) + '</span>' : '<span class="kaa-val">' + formatInline(r) + '</span>') + '</li>';
+        }).join('') + '</ul></div>';
+        i = j - 1; continue;
+      }
     }
     const why = /^(?:\*\*)?Why it works:(?:\*\*)?\s*(.{5,600})$/i.exec(line);
     if (why && kind !== 'learn') { closeList(); flush(); html += '<div class="knox-why"><span class="knox-why-label">Why it works</span><p>' + formatInline(why[1]) + '</p></div>'; continue; }

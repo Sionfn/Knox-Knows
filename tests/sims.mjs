@@ -135,3 +135,41 @@ test('"Why it works:" becomes a small note in the answer', () => {
     assert.equal(box, context.renderAnswerHtml('Step one.\n\nAnswer: $70', 'answer').replace('$70', line === 'Answer: **$70**' ? '<strong>$70</strong>' : '$70'), line);
   }
 });
+
+test('math answers draw powers and square roots like a textbook, never inside links', () => {
+  const f = t => context.formatInline(t);
+  assert.match(f('Solve 3^(2x) = 81'), /3<span class="sr-only">\^\(2x\)<\/span><sup class="kpow" aria-hidden="true">2x<\/sup> = 81/);
+  assert.match(f('x^2 + y^(n+1)'), /x<span class="sr-only">\^2<\/span><sup class="kpow" aria-hidden="true">2<\/sup> \+ y<span class="sr-only">\^\(n\+1\)<\/span><sup class="kpow" aria-hidden="true">n\+1<\/sup>/);
+  assert.match(f('e^(−0.5t)'), /<sup class="kpow" aria-hidden="true">−0\.5t<\/sup>/);
+  const half = f('x^(1/2)');
+  assert.match(half, /<sup class="kpow" aria-hidden="true">1\/2<\/sup>/);
+  assert.doesNotMatch(half, /kfrac/, 'a fraction in a power stays inline');
+  const root = f('σ = √(910/6) ≈ 12.32 and h = √144');
+  assert.match(root, /<span class="krad">√<span class="krad-in"><span class="kfrac-wrap">.*910.*6.*<\/span><\/span> ≈ 12\.32/);
+  assert.match(root, /<span class="krad">√<span class="krad-in">144<\/span><\/span>/);
+  assert.match(f('(−b ± √(b² − 4ac))/2a'), /√<span class="krad-in">b² − 4ac<\/span><\/span>\)\/2a/);
+  assert.doesNotMatch(f('see [a^b](https://x.com/a^b)'), /kpow/);
+  assert.doesNotMatch(f('`x^2` in code'), /kpow/);
+});
+
+test('"Check:" becomes a green row, and "All answers:" one summary card (3+ problems)', () => {
+  const html = context.renderAnswerHtml('### 1. Ladder\nUse the Pythagorean theorem.\n\nCheck: 5² + 12² = 25 + 144 = 169 = 13² ✓\n\nWhy it works: 5, 12, 13 is a Pythagorean triple, like 3, 4, 5.\n\nAnswer: **12 ft**\n\nAll answers:\n- Trigonometry: x = π/6, 5π/6\n- **Exponents:** x = 2\n- Big arithmetic: 17,290', 'answer');
+  assert.match(html, /<div class="knox-check"><span class="knox-check-label"><svg[^>]*>.*<\/svg>Check<\/span><span>5² \+ 12² = 25 \+ 144 = 169 = 13²<\/span><\/div>/);
+  assert.ok(html.indexOf('knox-check') < html.indexOf('knox-why') && html.indexOf('knox-why') < html.indexOf('knox-final-answer'));
+  assert.match(html, /<div class="knox-all-answers"><span class="knox-final-answer-label">All answers<\/span><ul>/);
+  assert.match(html, /<li><span class="kaa-name">Trigonometry<\/span><span class="kaa-val">x = π\/6, 5π\/6<\/span><\/li>/);
+  assert.match(html, /<li><span class="kaa-name">Exponents<\/span><span class="kaa-val">x = 2<\/span><\/li>/);
+  assert.match(html, /<span class="kaa-name">Big arithmetic<\/span><span class="kaa-val">17,290<\/span>/);
+  assert.doesNotMatch(html, /All answers:|<li>Trigonometry/);
+  // Learn keeps its own layout.
+  assert.doesNotMatch(context.renderAnswerHtml('Check: does 2 + 3 = 5?', 'learn'), /knox-check/);
+});
+
+test('the Knox prompt asks for a Check line, shortcut tips, both standard deviations and an All answers summary', () => {
+  const ask = readFileSync(new URL('../api/ask.js', import.meta.url), 'utf8');
+  assert.match(ask, /starts with "Check:"/);
+  assert.match(ask, /well-known shortcut that makes problems like it faster \(5, 12, 13 is a Pythagorean triple/);
+  assert.match(ask, /give both — population σ \(divide by n\) and sample s \(divide by n − 1\)/);
+  assert.match(ask, /list each squared difference's value/);
+  assert.match(ask, /end with the line "All answers:" followed by one bullet per problem/);
+});

@@ -165,7 +165,7 @@ test('numbered step labels have the same emphasis with or without model-supplied
 
 test('Text after a list and a blank line is not swallowed into the last step', () => {
   const html = context.renderAnswerHtml('1. Multiply\n2. Collect\n\nCheck: it works.');
-  assert.match(html, /<\/ol><p>Check: it works\.<\/p>/);
+  assert.match(html, /<\/ol><div class="knox-check">.*<span>it works\.<\/span><\/div>/);
   const continued = context.renderAnswerHtml('1. Multiply\n   because both sides match\n2. Collect');
   assert.match(continued, /<li value="1">Multiply<p>because both sides match<\/p><\/li>|<li value="1">Multiply<p>because both sides match/);
 });
