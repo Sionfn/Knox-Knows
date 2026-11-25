@@ -7,6 +7,7 @@ import { tierOf, LIMITS, MEGA_PLAN } from "./_plans.js";
 import { learnLessonContext, learnLessonReminder, learnLessonIssue, normalizeLearnLesson, correctedLessonState } from "./_learn-progress.js";
 import { loadLearnReview, reviewGuidance, recordLearnReview } from './_learn-review.js';
 import { LEARN_RESPONSE_FORMAT, LEARN_OUTPUT_INSTRUCTION, decodeLearnOutput } from './_learn-output.js';
+import { SIM_CATALOG } from './_sim-build.js';
 import crypto from "crypto";
 
 if (!getApps().length) {
@@ -828,25 +829,25 @@ function cleanLatexAnswer(text) {
 // Knox checks real pages and links its sources instead of telling the student
 // to go look it up. A search costs no more credits than any other question.
 const WEB_SEARCH_INSTRUCTION = 'You can search the web. Search only when the answer depends on facts you should check: quotes, dates, statistics, current events, real people or works, or sources and citations (essays and research). Do not search for math, problems you can work out, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
+// Learn (Dec 1): the same smart search, inside a lesson. Facts only — never to
+// solve the student's problem for them — and the reply stays lesson JSON.
+const LEARN_WEB_SEARCH_INSTRUCTION = 'You can search the web. In this lesson, search only when the step depends on facts you should check: dates, quotes, statistics, real people, events, places, works, or a science fact you are not sure of. Never search for math or to work out the student\'s problem, and never hand over an answer they have not reached yet. Keep replying in the knox_learn_reply JSON. Do not paste links into body; the app lists the pages you used as sources.';
+const LEARN_SEARCH_FORMAT = { type: 'json_schema', name: LEARN_RESPONSE_FORMAT.json_schema.name, schema: LEARN_RESPONSE_FORMAT.json_schema.schema, strict: true };
 // Answer languages students can choose in the app (codes the client sends).
 const ANSWER_LANGUAGES = { auto: 'auto', en: 'English', es: 'Spanish', fr: 'French', pt: 'Portuguese', de: 'German', it: 'Italian', zh: 'Simplified Chinese', ja: 'Japanese', ko: 'Korean', ar: 'Arabic', hi: 'Hindi', vi: 'Vietnamese', tl: 'Tagalog', ru: 'Russian' };
 
-// Mega Knox "Simulations" (Beta setting, Ask Knox only): Knox may end an answer
-// with ONE "Sim:" line; the app (sims.js) turns it into a built-in interactive
-// template with sliders. The model only picks a template and starting numbers.
-const SIM_INSTRUCTION = 'Simulations are ON for this student. When a hands-on simulation would genuinely help them understand THIS answer, end your reply with exactly ONE extra line in one of these formats (plain numbers only, no units in values, no extra text on the line):\n' +
-  'Sim: line | m=2, b=1   (straight lines, slope, y-intercept)\n' +
-  'Sim: parabola | a=1, b=0, c=-4   (quadratics, vertex, roots)\n' +
-  'Sim: motion | a=60, b=75, head=30, unit=mi, time=h, who=car   (catch-up / overtaking: A starts head ahead going a, B chases at b; unit is mi, km, m or ft; time is h, min or s; who is what is moving: car, runner, person, train, bike, plane, boat, dog, bus or truck — leave it out if none fits)\n' +
-  'Sim: projectile | speed=20, angle=45, item=soccer   (launches in m/s and degrees; item is what is launched: soccer, ball, basketball, football, baseball, tennis, volleyball, softball, golf, rocket, rock, water, arrow, cannonball, frisbee or apple)\n' +
-  'Sim: probability | kind=coin, trials=100   (or kind=die)\n' +
-  'Sim: fraction | n=3, d=4   (fractions, decimals, percents; d from 1 to 12)\n' +
-  'Sim: interest | p=1000, r=5, t=10   (simple vs compound interest: dollars, percent per year, years)\n' +
-  'Whenever the problem names what is moving or being launched, ALWAYS include who= (motion) or item= (projectile) with the closest word from its list, so the app draws it. Use the numbers from the student\'s problem as the starting values. Only use one of these templates, only when it truly fits a math or science question, and never for anything else. Do not mention the Sim line or describe it; the app shows it as a card. Keep the normal answer complete without it.';
+// Simulations in answers (every plan, Dec 1): Knox may end an Ask Knox answer
+// with ONE "Sim:" line when moving sliders would really help; the app
+// (sims.js → simlab.js) draws that Simulation Lab sim right in the answer, with
+// "Open in Lab". The model only picks a sim and starting numbers — never code.
+const SIM_LINES = SIM_CATALOG.map(([type, , what, keys]) => `Sim: ${type} | key=value, …   — ${what}. Keys: ${keys}`);
+const SIM_INSTRUCTION = 'Simulations are ON. Only when a hands-on simulation would genuinely help the student understand THIS math or science answer, end your reply with exactly ONE extra line "Sim: <type> | key=value, key=value" (plain numbers or single words; leave out keys you don\'t need). The sims:\n' +
+  SIM_LINES.join('\n') + '\n' +
+  'Use the numbers from the student\'s problem as the starting values. For projectile, include item= (what is launched) when the problem names it; for motion, include who=. Never add a sim for writing, history, small talk, or when a picture would not help. Do not mention or describe the Sim line — the app shows it as a card. Keep the normal answer complete without it.';
 
 // Learn: the same templates, as the JSON "sim" field, and never a shortcut to the answer.
-const SIM_LEARN_INSTRUCTION = 'Simulations are ON for this student. You may set the JSON field "sim" to ONE simulation when moving sliders would genuinely help them understand the idea of the current step (otherwise sim is ""). Write it as "type | key=value, ..." using only these templates:\n' +
-  SIM_INSTRUCTION.split('\n').filter(l => /^Sim: /.test(l)).map(l => l.replace(/^Sim: /, '')).join('\n') +
+const SIM_LEARN_INSTRUCTION = 'Simulations are ON. You may set the JSON field "sim" to ONE simulation when moving sliders would genuinely help the student understand the idea of the current step (otherwise sim is ""). Write it as "type | key=value, ..." using only these sims:\n' +
+  SIM_LINES.map(l => l.replace(/^Sim: /, '')).join('\n') +
   '\nWhen the problem names what is moving or launched, include who= (motion) or item= (projectile). This is Learn: the simulation must never hand over an answer the student has not worked out yet. While they are still solving, use different numbers from their problem so it shows the idea, not their result; use their own numbers only after they have solved that step (assessment correct) or in the recap. At most one simulation every few turns, only for math or science, and do not describe it in body: the app shows it as a card.';
 
 function toResponsesInput(messages) {
@@ -859,11 +860,12 @@ function toResponsesInput(messages) {
 }
 
 // Returns { text, sources, usage }, or null so the caller answers without search.
-async function webSearchAnswer(messages, model, tokenLimit, timeoutMs) {
+async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort } = {}) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: { "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model, input: toResponsesInput(messages), tools: [{ type: 'web_search' }], max_output_tokens: tokenLimit }),
+    body: JSON.stringify({ model, input: toResponsesInput(messages), tools: [{ type: 'web_search' }], max_output_tokens: tokenLimit,
+      ...(format ? { text: { format } } : {}), ...(effort ? { reasoning: { effort } } : {}) }),
     signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
@@ -1236,9 +1238,11 @@ export default async function handler(req, res) {
           : msg.content,
       }))
     : history.slice(-40);
+  // Knox's earlier source lists stay on screen but aren't sent back (they'd only cost tokens).
+  const SOURCES_TAIL = /\n*🌐 Searched the web\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+\s*$/;
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
-      messages.push({ role: msg.role, content: msg.content });
+      messages.push({ role: msg.role, content: msg.role === 'assistant' && typeof msg.content === 'string' ? msg.content.replace(SOURCES_TAIL, '') : msg.content });
     }
   }
 
@@ -1314,7 +1318,7 @@ export default async function handler(req, res) {
     if (language && language !== 'auto') messages.splice(messages.length - 1, 0, { role: 'system', content: `Write your entire reply in ${ANSWER_LANGUAGES[language]}, even if the question or photo is in another language, unless the student asks for a translation or for a different language. Keep math notation as is. Any required output format, labels or JSON keys stay exactly as specified; only the student-facing text is in ${ANSWER_LANGUAGES[language]}.` });
     // Mega Knox with "Simulations" on: Knox may add one Sim: line (Ask Knox), or
     // fill Learn's sim field (Dec 1) without giving away an unearned answer.
-    const simsOn = simulations === true && (tier === 'mega' || tier === 'plus') && !casual && !isBot; // Knox Plus and Mega Knox
+    const simsOn = simulations === true && !casual && !isBot; // every plan (Dec 1): a sim only when it really helps
     if (simsOn) messages.splice(messages.length - 1, 0, { role: 'system', content: learnMode ? SIM_LEARN_INSTRUCTION : SIM_INSTRUCTION });
     if (lessonState) lessonState.sims = simsOn;
     const requestBody = {
@@ -1340,16 +1344,24 @@ export default async function handler(req, res) {
       requestBody.temperature = casual ? 1.0 : 0.7;
     }
 
-    // Smart search (Ask Knox on the website, every plan; not Learn or small
-    // talk). The website opts in with webSearch, so the extension and bot keep
-    // their plain answers. If search is unavailable, answer normally instead.
-    const useWebSearch = webSearch === true && !learnMode && !casual && !isBot;
+    // Smart search (the website, every plan; Ask Knox and — Dec 1 — Learn; not
+    // small talk). Knox searches only when the answer needs facts checked. The
+    // website opts in with webSearch, so the extension and bot keep their plain
+    // answers. If search is unavailable, answer normally instead.
+    const useWebSearch = webSearch === true && !casual && !isBot;
     let searched = null;
     if (useWebSearch) {
       try {
-        searched = await webSearchAnswer([...messages, { role: 'system', content: WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
-          Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))));
-      } catch (err) { console.error('Web search skipped:', err?.message); }
+        if (learnMode) {
+          searched = await webSearchAnswer([...messages, { role: 'system', content: LEARN_WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
+            Math.max(5000, Math.min(25000, 40000 - (Date.now() - startedAt))), { format: LEARN_SEARCH_FORMAT, effort: requestBody.reasoning_effort });
+          // A lesson reply must be valid lesson JSON; otherwise answer the normal way.
+          if (searched) { try { if (!searched.text.trim().startsWith('{')) throw new Error('not JSON'); decodeLearnOutput(searched.text, lessonState); } catch { console.error('Learn search reply was not a lesson; answering normally.'); searched = null; } }
+        } else {
+          searched = await webSearchAnswer([...messages, { role: 'system', content: WEB_SEARCH_INSTRUCTION }], modelToUse, tokenLimit + 4000,
+            Math.max(5000, Math.min(40000, 45000 - (Date.now() - startedAt))));
+        }
+      } catch (err) { console.error('Web search skipped:', err?.message); searched = null; }
     }
 
     let data, answer;
@@ -1410,9 +1422,8 @@ export default async function handler(req, res) {
     // Clean LaTeX (see cleanLatexAnswer above)
     answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
     // Sources go after the LaTeX cleanup so nothing in a link gets rewritten.
-    if (searched?.sources.length) {
-      answer = answer.trim() + '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n');
-    }
+    const sourcesList = searched?.sources.length ? '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n') : '';
+    if (sourcesList && !(learnMode && !casual)) answer = answer.trim() + sourcesList;
 
     if (learnMode && !casual) Object.assign(lessonState, correctedLessonState(answer, lessonState));
 
@@ -1422,7 +1433,7 @@ export default async function handler(req, res) {
     // Not when the student is answering Knox's last question: then a plain
     // "Yes, that's right!" (or the worked step they earned) is the right reply.
     // Only if there's time left inside the 60-second function limit.
-    const lastKnox = [...history].reverse().find(m => m.role === 'assistant')?.content || '';
+    const lastKnox = String([...history].reverse().find(m => m.role === 'assistant')?.content || '').replace(SOURCES_TAIL, '');
     const answeringKnox = !!lastKnox && !/^\s*(?:[-*•]\s+)?\**recap\**\s*:/im.test(lastKnox) && !/\?\s*$/.test(trimmedQuestion);
     const timeLeft = 55000 - (Date.now() - startedAt);
     const lessonIssue = learnMode && !casual ? learnLessonIssue(answer, lessonState) : '';
@@ -1472,6 +1483,8 @@ export default async function handler(req, res) {
       try { await recordLearnReview(db, uid, { answer, state: lessonState, sessionId: learnSessionId, question: trimmedQuestion, lastKnox, startedAt }); }
       catch { console.warn('Learn review update skipped; lesson answer is still available.'); }
     }
+    // Learn's sources go on last, after the lesson checks and review (they read the lesson text).
+    if (sourcesList && learnMode && !casual) answer = answer.trim() + sourcesList;
     if (uid && !casual) await recordDailyUsage(uid);
     if (isBot && !casual) await recordDailyUsage(null); // counts toward the admin panel's question totals
     if (uid && !casual) {

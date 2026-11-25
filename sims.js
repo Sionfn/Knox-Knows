@@ -30,7 +30,7 @@
     const m = /^\s*([a-z]+)\s*(?:\|\s*(.*))?$/i.exec(String(spec || ''));
     if (!m) return null;
     const vals = {};
-    for (const part of (m[2] || '').split(/[,;]/)) { const kv = /^\s*([a-z]+)\s*=\s*([^\s]+)\s*$/i.exec(part); if (kv) vals[kv[1].toLowerCase()] = kv[2]; }
+    for (const part of (m[2] || '').split(/[,;]/)) { const kv = /^\s*([a-z][a-z0-9_]*)\s*=\s*(.+?)\s*$/i.exec(part); if (kv) vals[kv[1].toLowerCase()] = kv[2]; }
     return { type: m[1].toLowerCase(), vals };
   }
 
@@ -155,7 +155,10 @@
   // ── Build one card ───────────────────────────────────────────────────────
   function build(el) {
     el.dataset.ready = '1';
-    const p = parse(el.dataset.sim), make = p && TEMPLATES[p.type];
+    const p = parse(el.dataset.sim);
+    // The real Simulation Lab sim (all 22), when the Lab is on the page.
+    if (p && window.knoxSimLab?.mini && window.knoxSimLab.templates.includes(p.type)) { try { if (window.knoxSimLab.mini(el, p.type, p.vals)) return; } catch (e) { console.error('Lab sim card:', e); } }
+    const make = p && TEMPLATES[p.type];
     if (!make) { el.remove(); return; }
     const tpl = make(p.vals), state = Object.fromEntries(tpl.sliders.map(s => [s[0], s[5]]));
     el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">${window.KI ? window.KI('sliders', { tint: false }) : ''}</span><span><b>Try it yourself</b><small>${tpl.title}</small></span></div>

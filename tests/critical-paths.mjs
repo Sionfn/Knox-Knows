@@ -2055,7 +2055,7 @@ test('one free trial per card: the same card trialing on a second account is can
   assert.deepEqual(cancelled, ['sub_b']);
 });
 
-test('Smart search: every plan can search with sources; Learn, the extension/bot (no flag) never do; failures fall back', async () => {
+test('Smart search: every plan can search with sources (Ask Knox and Learn); the extension/bot (no flag) never do; failures fall back', async () => {
   const { db, store } = memoryDb();
   const calls = [];
   let searchFails = false;
@@ -2098,8 +2098,17 @@ test('Smart search: every plan can search with sources; Learn, the extension/bot
   }
   assert.equal(store.get('users/u1/usage/bank').balance, 5, 'a search costs no more than a normal question (Plus is not charged credits)');
 
-  for (const [user, body] of [[{ plan: 'max' }, { question: 'Teach me how to cite a book', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }],
-                              [{ plan: 'max' }, { question: 'Find a source for this essay quote' }]]) {
+  // Learn (Dec 1) searches too — with the lesson's JSON format — and a search reply
+  // that isn't a proper lesson falls back to the normal Learn reply (no sources).
+  store.set('users/u1', { plan: 'max' }); calls.length = 0; res = response();
+  await handler(askRequest({ question: 'Teach me how to cite a book', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }), res);
+  const learnSearch = calls.find(call => call.url.endsWith('/responses'));
+  assert.ok(learnSearch, 'Learn may search');
+  assert.equal(learnSearch.body.text?.format?.type, 'json_schema');
+  assert.match(JSON.stringify(learnSearch.body.input), /Never search for math or to work out the student/);
+  assert.equal(res.body?.webSearch, undefined, 'a non-lesson search reply is not used');
+
+  for (const [user, body] of [[{ plan: 'max' }, { question: 'Find a source for this essay quote' }]]) {
     store.set('users/u1', user); calls.length = 0; res = response();
     await handler(askRequest(body), res);
     assert.ok(!calls.some(call => call.url.endsWith('/responses')), JSON.stringify(body));
@@ -2107,6 +2116,25 @@ test('Smart search: every plan can search with sources; Learn, the extension/bot
   }
   res = response(); await handler(askRequest({ question: 'hi there friend', webSearch: 'yes' }), res);
   assert.equal(res.code, 400);
+});
+
+test('Learn search: a lesson reply that searched keeps its sources, listed last', async () => {
+  const { db, store } = memoryDb();
+  const lesson = JSON.stringify({ body: 'The Treaty of Paris was signed in 1783.', question: 'Why did it matter for the new country?', choices: [], goals: ['American Revolution'], part: 1, practiceIndex: 0, assessment: 'new', reviewFocus: '', keyIdea: '', graph: '', visual: '', video: '', recap: '', watchOut: '', topic: 'History', sim: '' });
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.endsWith('/responses')) return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [{ type: 'message', content: [{ type: 'output_text', text: lesson, annotations: [{ type: 'url_citation', url: 'https://example.org/treaty', title: 'Treaty of Paris' }] }] }] }) };
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : lesson }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  const res = response();
+  await handler(askRequest({ question: 'Teach me when the Treaty of Paris was signed', webSearch: true, learnMode: true, history: [], learnSessionId: crypto.randomUUID() }), res);
+  assert.equal(res.code, 200, JSON.stringify(res.body));
+  assert.equal(res.body.webSearch, 'used');
+  assert.match(res.body.answer, /Your turn: Why did it matter/);
+  assert.match(res.body.answer, /🌐 Searched the web\n- \[Treaty of Paris\]\(https:\/\/example\.org\/treaty\)$/);
 });
 
 test('Binder notes: save, list, open, edit and delete your own notes; never another account\'s', async () => {

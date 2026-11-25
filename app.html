@@ -6945,9 +6945,9 @@ window.appHandleAsk = async function() {
         reviewSkillId: requestReviewSkillId,
         renewLearn: renewLearn || undefined,
         // Smart search: in Ask Knox, Knox searches the web when the question needs it.
-        webSearch: !requestLearnMode || undefined,
+        webSearch: true, // Ask Knox and Learn search the web only when an answer needs facts checked
         // Mega Knox's "Simulations" setting (Account & Plan); the server checks the plan.
-        simulations: ['plus', 'mega'].includes(window.userTier) || undefined, // Ask Knox and Learn add a simulation when it helps (Knox Plus and Mega Knox; the server checks the plan)
+        simulations: true, // Ask Knox and Learn add a Simulation Lab sim when it really helps (every plan)
         language: requestUid && window.knoxAnswerLanguage?.(requestUid) !== 'auto' ? window.knoxAnswerLanguage(requestUid) : undefined, // Account & Plan → Knox answers in
         // The student's own calendar day, for the 🔥 streak (see api/ask.js).
         localDay: (d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)(new Date()),
@@ -7208,7 +7208,7 @@ function parseLearnExtras(text) {
   out.clean = body;
   return out;
 }
-window.knoxLearnClean = text => { const x = parseLearnExtras(String(text).replace(/^[ \t]*Sim:.*$/gim, '')); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
+window.knoxLearnClean = text => { const x = parseLearnExtras(String(text).replace(/^[ \t]*Sim:.*$/gim, '').replace(/\n*🌐 Searched the web\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+\s*$/, '')); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
 const LEARN_HELP = {
   hint:    ['💡', 'Hint', 'Can I get a hint?'],
   stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
@@ -7383,7 +7383,7 @@ function learnPlanHtml(x) {
     }).join('') + '</ol></details>';
 }
 
-// Mega "Search the web" answers end with a 🌐 Searched the web list (api/ask.js):
+// Answers and Learn replies that searched end with a 🌐 Searched the web list (api/ask.js):
 // shown as a sources card instead of plain text.
 function webSourcesHtml(list) {
   const items = [...list.matchAll(/^- \[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)$/gm)].map(([, title, url]) => {
@@ -7407,10 +7407,11 @@ function renderAnswerHtml(text, kind = 'answer') {
     const sim = /^[ \t]*(?:[-*•][ \t]+)?(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*(?:\|[^\n]{0,180})?)[ \t]*$/im.exec(text);
     if (sim) { text = (text.slice(0, sim.index) + text.slice(sim.index + sim[0].length)).replace(/\n{3,}/g, '\n\n').trim(); simCard = '<div class="knox-sim" data-sim="' + escHtml(sim[1].trim()) + '"></div>'; }
   }
+  // Sources (Ask Knox and, from Dec 1, Learn) come last in the reply text.
+  const web = /\n*🌐 Searched the web\n((?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)\s*$/.exec(text);
+  if (web) { text = text.slice(0, web.index); webSources = webSourcesHtml(web[1]); }
   const learnX = kind === 'learn' ? parseLearnExtras(text) : null;
   if (learnX) text = learnX.clean;
-  const web = kind === 'learn' ? null : /\n*🌐 Searched the web\n((?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)\s*$/.exec(text);
-  if (web) { text = text.slice(0, web.index); webSources = webSourcesHtml(web[1]); }
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
   let html = '', paragraphs = [], list = '', inItem = false;
   const flush = () => {
@@ -7474,8 +7475,8 @@ function renderAnswerHtml(text, kind = 'answer') {
   closeList();
   if (firstAnswer) html += answerBox(firstAnswer);
   return (kind === 'learn' ? learnHeadingHtml(text, learnX.progress, !!learnX.recap, learnX.practice, learnX.assessment) + learnPlanHtml(learnX) : '') +
-    '<div class="knox-response-body">' + html + simCard + '</div>' + webSources +
-    (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean, learnX.assessment)) : '');
+    '<div class="knox-response-body">' + html + simCard + '</div>' +
+    (kind === 'learn' ? learnTeachHtml(learnX) + learnExtrasHtml(learnX, learnTone(learnX.clean, learnX.assessment)) : '') + webSources;
 }
 
 // ── Render a video suggestion card (visual-learner topics) ─────

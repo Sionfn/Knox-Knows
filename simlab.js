@@ -692,6 +692,7 @@
   const buildOpts = { kind: 'auto', level: 'Any', steps: false, compare: false };
   const LEVELS = ['Any', 'Elementary', 'Middle school', 'High school', 'College'];
   const planTag = t => t === 'mega' ? '<span class="fc-plus-tag mega">💎 Mega</span>' : '<span class="fc-plus-tag">⚡ Plus</span>';
+  let pendingUpsell = null; // a plan note that stays while you're on the page
   let host = null, tab = 'home', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
   function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
@@ -815,6 +816,7 @@
     setWay(tab === 'build' ? 'build' : tab === 'community' ? 'community' : '');
     host.innerHTML = fill(html);
     window.knoxSelect?.enhance(host);
+    if (pendingUpsell) upsell(...pendingUpsell);
     host.scrollTop = keepScroll ? top : 0;
   }
   // Like Flashcards: a page you reach from a way card wears that card's color
@@ -976,8 +978,8 @@
   // ── The editor ───────────────────────────────────────────────────────────
   function open(id, vals, meta = {}) {
     if (!T[id]) return;
-    if (!canUse(id)) { tab = 'community'; renderHome(); upsell('plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`); return; }
-    editor?.stop(); setWay('');
+    if (!canUse(id) && !meta.fromAnswer) { tab = 'community'; pendingUpsell = ['plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`]; renderHome(); return; }
+    editor?.stop(); setWay(''); pendingUpsell = null;
     editor = makeEditor(id, cleanValues(id, vals), meta);
   }
   // Share: the whole setup travels inside the link (squeezed when the browser
@@ -1044,6 +1046,59 @@
   }
 
 
+  // The drawing colors for the current look (light, dark, Christmas…).
+  function simColors() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return { orange: css('--orange') || '#FF6B00', blue: '#1CB0F6', purple: '#A560F2', green: '#1FA45A', red: '#E5383B', yellow: '#FFC800',
+      text: css('--text') || '#3C3C3C', light: css('--text-light') || '#8A8A8A', surface: css('--surface') || '#FFFFFF', axis: dark ? '#7F8FA6' : '#9A8F86',
+      grid: dark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.07)', ground: dark ? '#2A3A2E' : '#DDF4E6', cliff: dark ? '#4A3B30' : '#D9C3AE' };
+  }
+
+  // ── A Lab sim inside an Ask Knox or Learn answer (sims.js hands the card here) ──
+  // The real Simulation Lab drawing with its main sliders, Play and Reset, and
+  // "Open in Lab", which opens this exact sim (and numbers) in Simulations.
+  function mini(el, id, vals, meta = {}) {
+    if (!T[id]) return false;
+    const def = T[id], s = cleanValues(id, vals), start = { ...s };
+    const sliders = paramsOf(id).filter(p => p.type === 'range' && !p.more && p.k !== 'speedx' && (!p.show || p.show(s))).slice(0, 4);
+    el.innerHTML = fill(`<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">${ki(def.icon, false)}</span><span><b>Try it yourself</b><small>${esc(meta.title || def.title)}</small></span></div>
+      <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
+      ${sliders.length ? `<div class="ksim-controls">${sliders.map(p => `<label class="ksim-slider"><span><span>${esc(p.label)}</span><b data-out="${p.k}"></b></span><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${s[p.k]}" data-k="${p.k}"></label>`).join('')}</div>` : ''}
+      <div class="ksim-actions">${def.anim ? `<button type="button" class="ksim-play">${PI.play} Play</button>` : ''}<button type="button" class="ksim-reset">${PI.restart} Reset</button><button type="button" class="ksim-lab">Open in Lab →</button></div>`);
+    const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout'), playBtn = el.querySelector('.ksim-play');
+    const seed = (Math.random() * 1e9) | 0;
+    let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0;
+    const dur = () => def.duration ? def.duration.call(def, s) : 4;
+    function draw() {
+      const w = canvas.clientWidth || 320, h = Math.round(Math.min(300, Math.max(200, w * .5))), d = Math.min(2, devicePixelRatio || 1);
+      canvas.style.height = h + 'px';
+      if (canvas.width !== Math.round(w * d) || canvas.height !== Math.round(h * d)) { canvas.width = Math.round(w * d); canvas.height = Math.round(h * d); }
+      g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+      let text = '';
+      try { text = def.draw.call(def, g, s, { w, h, s, seed, ...simColors() }, t) || ''; } catch (_) { text = 'That setup can’t be drawn — try different numbers.'; }
+      out.textContent = text; canvas.setAttribute('aria-label', def.title + '. ' + text);
+      for (const p of sliders) { const o = el.querySelector(`[data-out="${p.k}"]`); if (o) o.textContent = unitFmt(p, s[p.k]); el.querySelector(`[data-k="${p.k}"]`)?.style.setProperty('--p', (100 * (s[p.k] - p.min) / (p.max - p.min)) + '%'); }
+    }
+    function frame(now) {
+      if (!el.isConnected) { playing = false; return; }
+      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt * (s.speedx || 1);
+      if (t >= dur()) { if (def.loop) t %= dur(); else { t = dur(); setPlaying(false); draw(); return; } }
+      draw(); raf = requestAnimationFrame(frame);
+    }
+    function setPlaying(on) {
+      playing = on; cancelAnimationFrame(raf);
+      if (playBtn) playBtn.innerHTML = on ? `${PI.pause} Pause` : `${PI.play} Play`;
+      if (on) { if (t >= dur() && !def.loop) t = 0; last = performance.now(); raf = requestAnimationFrame(frame); }
+    }
+    el.addEventListener('input', e => { const k = e.target.dataset?.k; if (!k) return; s[k] = Number(e.target.value); if (def.anim && !def.loop && !playing) t = 0; draw(); });
+    playBtn?.addEventListener('click', () => setPlaying(!playing));
+    el.querySelector('.ksim-reset').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = def.anim ? 0 : null; draw(); });
+    el.querySelector('.ksim-lab').addEventListener('click', () => { setPlaying(false); const values = { ...s }; window.openSims?.(); setTimeout(() => open(id, values, { title: meta.title || def.title, fromAnswer: true }), 60); });
+    new ResizeObserver(() => { if (!playing && el.isConnected) draw(); }).observe(canvas);
+    draw();
+    return true;
+  }
+
   function makeEditor(id, s, meta) {
     const def = T[id], params = paramsOf(id), basic = params.filter(p => !p.more), more = params.filter(p => p.more);
     let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0, ghost = null, seed = (Math.random() * 1e9) | 0, title = meta.title || def.title, moreOpen = paid();
@@ -1082,12 +1137,7 @@
     window.knoxSelect?.enhance(host);
     host.scrollTop = 0;
     const canvas = $('.sl-canvas', host), g = canvas.getContext('2d'), readout = $('.sl-readout', host);
-    const colors = () => {
-      const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-      return { orange: css('--orange') || '#FF6B00', blue: '#1CB0F6', purple: '#A560F2', green: '#1FA45A', red: '#E5383B', yellow: '#FFC800',
-        text: css('--text') || '#3C3C3C', light: css('--text-light') || '#8A8A8A', surface: css('--surface') || '#FFFFFF', axis: dark ? '#7F8FA6' : '#9A8F86',
-        grid: dark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.07)', ground: dark ? '#2A3A2E' : '#DDF4E6', cliff: dark ? '#4A3B30' : '#D9C3AE' };
-    };
+    const colors = simColors;
     function size() { const w = canvas.clientWidth, h = canvas.clientHeight, d = Math.min(2, devicePixelRatio || 1); canvas.width = w * d; canvas.height = h * d; g.setTransform(d, 0, 0, d, 0, 0); }
     function draw() {
       const c = { w: canvas.clientWidth, h: canvas.clientHeight, s, seed, ...colors() };
@@ -1198,7 +1248,7 @@
   document.addEventListener('click', e => {
     if (!host || !host.contains(e.target)) return;
     const b = e.target.closest('button'); if (!b) return;
-    if (b.matches('[data-close-upsell]')) { b.closest('.sl-upsell')?.remove(); return; }
+    if (b.matches('[data-close-upsell]')) { pendingUpsell = null; b.closest('.sl-upsell')?.remove(); return; }
     if (b.matches('[data-upgrade]')) { window.goToPricing?.(); return; }
     if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
     if (b.closest('.sl-menu')) setTimeout(closeMenu); // a menu item: do it, then close the menu
@@ -1208,7 +1258,7 @@
     if (b.matches('[data-pub-go]')) { publishGo(b); return; }
     if (b.dataset.publishSaved != null) { const x = readSaved()[+b.dataset.publishSaved]; if (x) publishSim(x, () => { tab = 'home'; renderHome(); }); return; }
     if (editor) { editor.click(b); return; }
-    if (b.dataset.tab) { pub = null; if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
+    if (b.dataset.tab) { pub = null; pendingUpsell = null; if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
     if (b.matches('[data-allknox]')) { community.allKnox = true; renderHome(true); return; }
     if (b.dataset.csort) { community.sort = b.dataset.csort; sortCommunity(); renderHome(true); refreshCommunity(); return; }
     if (b.matches('[data-cretry]')) { community.error = ''; loadCommunity(); return; }
@@ -1235,5 +1285,5 @@
   });
   window.addEventListener('knox-plan-changed', () => { if (host && !editor && host.isConnected) renderHome(); });
 
-  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), templates: Object.keys(T), cleanValues };
+  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), mini, templates: Object.keys(T), cleanValues };
 })();
