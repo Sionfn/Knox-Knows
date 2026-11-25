@@ -2148,6 +2148,14 @@ test('Smart search: a "Sources:" line Knox writes folds into the sources card (e
   res = response();
   await handler(askRequest({ question: 'Give me an MLA citation for an article about climate change', webSearch: true }), res);
   assert.match(res.body.answer, /^Citation \(MLA\): "Evidence\." \*NASA Science\*, 1 Oct\. 2026, science\.nasa\.gov\/climate-change\/evidence\/\. Accessed 25 Nov\. 2026\.$/m, 'a citation line is plain text: no chip, no link markup');
+
+  text = 'Three sources.\n\nCitation (MLA): Faverio, Michelle. “Teens, Social Media and Mental Health.” *Pew Research Center*, 22 Apr. 2025, https://www.archives.gov/founding-docs/declaration.\n\nCitation (MLA): Office of the Surgeon General. “Social Media and Youth Mental Health.” *HHS.gov*, 2023, https://www.hhs.gov/surgeongeneral/social-media/index.html.\n\nCitation (MLA): American Psychological Association. “Health Advisory on Social Media Use in Adolescence.” *APA*, May 2023, www.apa.org/topics/social-media/health-advisory.';
+  res = response();
+  await handler(askRequest({ question: 'Give me 3 MLA sources about social media and teens', webSearch: true }), res);
+  const cards = res.body.answer.split('🌐 Searched the web\n')[1];
+  assert.match(cards, /\[Social Media and Youth Mental Health\]\(https:\/\/www\.hhs\.gov\/surgeongeneral\/social-media\/index\.html\)/, 'a page named only in a citation joins the card');
+  assert.match(cards, /\[Health Advisory on Social Media Use in Adolescence\]\(https:\/\/www\.apa\.org\/topics\/social-media\/health-advisory\)/, 'even without https://');
+  assert.equal(cards.match(/founding-docs\/declaration\)/g).length, 1, 'no page twice');
 });
 
 test('Smart search: fact questions must search (not math), the card shows pages Knox looked at, and refused options retry plainly', async () => {

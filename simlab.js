@@ -165,7 +165,23 @@
         const fs = []; let err = '';
         for (const e of [s.eq, s.eq2]) { if (!String(e || '').trim()) continue; try { const m = parseMath(e); fs.push(x => m.f({ ...env, x })); } catch (ex) { err = err || ex.message; } }
         const X = s.xmax; let Y = s.ymax;
-        if (s.fity && fs.length) { let lo = Infinity, hi = -Infinity; for (const f of fs) for (let i = 0; i <= 200; i++) { const y = f(-X + 2 * X * i / 200); if (Number.isFinite(y)) { lo = Math.min(lo, y); hi = Math.max(hi, y); } } if (Number.isFinite(lo)) Y = clamp(Math.max(Math.abs(lo), Math.abs(hi), 1) * 1.2, 1, 1e6); }
+        if (s.fity && fs.length) {
+          // Fit y to the interesting points — where the graphs turn, cross each other or
+          // the axes — not to the far ends, which would squash the middle flat (x³ − 3x).
+          const N = 400, xs = Array.from({ length: N + 1 }, (_, i) => -X + 2 * X * i / N), ys = fs.map(f => xs.map(x => f(x)));
+          const keys = [], all = [];
+          ys.forEach((row, j) => {
+            const f0 = fs[j](0); if (Number.isFinite(f0)) keys.push(Math.abs(f0));
+            row.forEach((y, i) => { if (!Number.isFinite(y)) return; all.push(Math.abs(y)); const a = row[i - 1], d = row[i + 1];
+              if (i > 0 && i < N && Number.isFinite(a) && Number.isFinite(d) && ((y > a && y >= d) || (y < a && y <= d))) keys.push(Math.abs(y)); });
+          });
+          if (ys.length === 2) for (let i = 1; i <= N; i++) { const d0 = ys[0][i - 1] - ys[1][i - 1], d1 = ys[0][i] - ys[1][i]; if (Number.isFinite(d0) && Number.isFinite(d1) && d0 * d1 <= 0) keys.push(Math.abs(ys[0][i])); }
+          if (all.length) {
+            all.sort((p, q) => p - q);
+            const full = all[all.length - 1] * 1.2, turnsOrMeets = keys.length > fs.length;
+            Y = clamp(Math.min(full, turnsOrMeets ? Math.max(...keys) * 2.5 : all[Math.floor(all.length * .75)] * 1.2), 1, 1e6);
+          }
+        }
         const ch = chart(g, c, -X, X, -Y, Y); ch.axes('x', 'y');
         fs.forEach((f, i) => ch.plot(f, c.ghost ? c.light : cols[i]));
         if (err) return err;
@@ -402,7 +418,7 @@
     motion: {
       group: 'Physics', icon: 'clock', title: 'Catch-up race', blurb: 'When does B catch A?', anim: true,
       params: [range('a', 'A’s speed', 1, 150, 1, 60), range('b', 'B’s speed', 1, 150, 1, 75), range('head', 'A’s head start', 0, 300, 1, 30),
-        select('unit', 'Distance in', [['mi', 'miles'], ['km', 'kilometers'], ['m', 'meters'], ['ft', 'feet']], 'mi'), select('time', 'Time in', [['h', 'hours'], ['min', 'minutes'], ['s', 'seconds']], 'h'), select('who', 'Who is racing', MOVERS.map(m => [m, m[0].toUpperCase() + m.slice(1) + 's']), 'car')],
+        select('unit', 'Distance in', [['mi', 'miles'], ['km', 'kilometers'], ['m', 'meters'], ['ft', 'feet']], 'mi'), select('time', 'Time in', [['h', 'hours'], ['min', 'minutes'], ['s', 'seconds']], 'h'), select('who', 'Who is ahead (A)', MOVERS.map(m => [m, m[0].toUpperCase() + m.slice(1)]), 'car'), select('who2', 'Who is chasing (B)', [['', 'Same as A'], ...MOVERS.map(m => [m, m[0].toUpperCase() + m.slice(1)])], '')],
       presets: [['Cars on a highway', { a: 55, b: 70, head: 30 }], ['Runners', { a: 6, b: 8, head: 1, unit: 'mi' }], ['Never catches up', { a: 70, b: 60, head: 10 }]],
       duration: () => 4,
       draw(g, s, c, t) {
@@ -411,8 +427,8 @@
         const lane = (y, pos, col, name) => { if (!c.ghost) { g.fillStyle = c.grid; g.fillRect(L, y - 3, W, 6); } ball(g, L + W * pos / far, y, c.ghost ? c.light : col, '#FFFFFF', 12); label(g, c, name, L + W * pos / far, y - 22, col); };
         lane(c.h * .35, pa, c.orange, 'A'); lane(c.h * .68, pb, c.blue, 'B');
         if (Number.isFinite(catchT) && now >= catchT && !c.ghost) { const x = L + W * (s.head + s.a * catchT) / far; g.save(); g.setLineDash([5, 5]); g.strokeStyle = c.green; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x, 12); g.lineTo(x, c.h - 12); g.stroke(); g.restore(); label(g, c, 'caught up!', x, c.h - 10, c.green); }
-        const who = s.who ? s.who[0].toUpperCase() + s.who.slice(1) : '';
-        return `${who} A starts ${fmt(s.head)} ${s.unit} ahead going ${fmt(s.a)} ${s.unit}/${s.time}; ${who} B chases at ${fmt(s.b)} · ${Number.isFinite(catchT) ? `B catches up after ${fmt(catchT, 2)} ${s.time}${s.time === 'h' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} min)` : s.time === 'min' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} s)` : ''}, ${fmt(s.b * catchT, 1)} ${s.unit} from the start (gap ÷ speed difference = ${fmt(s.head)} ÷ ${fmt(s.b - s.a)})` : 'B is not faster, so B never catches up'}`;
+        const name = w => w ? w[0].toUpperCase() + w.slice(1) : '', who = name(s.who), who2 = name(s.who2 || s.who); // a bike ahead, a car chasing
+        return `${who} A starts ${fmt(s.head)} ${s.unit} ahead going ${fmt(s.a)} ${s.unit}/${s.time}; ${who2} B chases at ${fmt(s.b)} · ${Number.isFinite(catchT) ? `B catches up after ${fmt(catchT, 2)} ${s.time}${s.time === 'h' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} min)` : s.time === 'min' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} s)` : ''}, ${fmt(s.b * catchT, 1)} ${s.unit} from the start (gap ÷ speed difference = ${fmt(s.head)} ÷ ${fmt(s.b - s.a)})` : 'B is not faster, so B never catches up'}`;
       },
     },
     ohm: {
