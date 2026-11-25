@@ -64,3 +64,11 @@ test('Ask Knox and Learn both search the web only when needed, and Learn falls b
   assert.match(app, /webSearch: true,/);
   assert.match(app, /simulations: true,/);
 });
+
+test('with a sim, Knox uses the Lab\'s exact gravity so the answer matches the sim', async () => {
+  assert.match(ask, /Earth 9\.81 m\/s², Moon 1\.62, Mars 3\.71, Jupiter 24\.79, Sun 274, Pluto 0\.62/);
+  assert.match(ask, /SIM_GRAVITY \+ ' Use the numbers/);
+  assert.match(ask, /'\\n' \+ SIM_GRAVITY \+/);
+  const lab = readFileSync(new URL('../simlab.js', import.meta.url), 'utf8');
+  assert.match(lab, /earth: \[9\.81, 'Earth'\], moon: \[1\.62, 'Moon'\], mars: \[3\.71, 'Mars'\], jupiter: \[24\.79, 'Jupiter'\], sun: \[274, 'The Sun'\], pluto: \[0\.62, 'Pluto'\]/);
+});

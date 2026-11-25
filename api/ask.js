@@ -842,14 +842,16 @@ const ANSWER_LANGUAGES = { auto: 'auto', en: 'English', es: 'Spanish', fr: 'Fren
 // (sims.js → simlab.js) draws that Simulation Lab sim right in the answer, with
 // "Open in Lab". The model only picks a sim and starting numbers — never code.
 const SIM_LINES = SIM_CATALOG.map(([type, , what, keys]) => `Sim: ${type} | key=value, …   — ${what}. Keys: ${keys}`);
+// The Lab's gravity (simlab.js PLANETS): Knox's own math uses the same numbers, so the answer and the sim agree.
+const SIM_GRAVITY = 'When you add a sim that uses gravity, use exactly the gravity the sims use in your own math too: Earth 9.81 m/s², Moon 1.62, Mars 3.71, Jupiter 24.79, Sun 274, Pluto 0.62 (never 9.8 or 10), so your numbers match the sim to the decimal.';
 const SIM_INSTRUCTION = 'Simulations are ON. Only when a hands-on simulation would genuinely help the student understand THIS math or science answer, end your reply with exactly ONE extra line "Sim: <type> | key=value, key=value" (plain numbers or single words; leave out keys you don\'t need). The sims:\n' +
   SIM_LINES.join('\n') + '\n' +
-  'Use the numbers from the student\'s problem as the starting values. For projectile, include item= (what is launched) when the problem names it; for motion, include who=. Never add a sim for writing, history, small talk, or when a picture would not help. Do not mention or describe the Sim line — the app shows it as a card. Keep the normal answer complete without it.';
+  SIM_GRAVITY + ' Use the numbers from the student\'s problem as the starting values. For projectile, include item= (what is launched) when the problem names it; for motion, include who=. Never add a sim for writing, history, small talk, or when a picture would not help. Do not mention or describe the Sim line — the app shows it as a card. Keep the normal answer complete without it.';
 
 // Learn: the same templates, as the JSON "sim" field, and never a shortcut to the answer.
 const SIM_LEARN_INSTRUCTION = 'Simulations are ON. You may set the JSON field "sim" to ONE simulation when moving sliders would genuinely help the student understand the idea of the current step (otherwise sim is ""). Write it as "type | key=value, ..." using only these sims:\n' +
   SIM_LINES.map(l => l.replace(/^Sim: /, '')).join('\n') +
-  '\nWhen the problem names what is moving or launched, include who= (motion) or item= (projectile). This is Learn: the simulation must never hand over an answer the student has not worked out yet. While they are still solving, use different numbers from their problem so it shows the idea, not their result; use their own numbers only after they have solved that step (assessment correct) or in the recap. At most one simulation every few turns, only for math or science, and do not describe it in body: the app shows it as a card.';
+  '\n' + SIM_GRAVITY + '\nWhen the problem names what is moving or launched, include who= (motion) or item= (projectile). This is Learn: the simulation must never hand over an answer the student has not worked out yet. While they are still solving, use different numbers from their problem so it shows the idea, not their result; use their own numbers only after they have solved that step (assessment correct) or in the recap. At most one simulation every few turns, only for math or science, and do not describe it in body: the app shows it as a card.';
 
 function toResponsesInput(messages) {
   return messages.map(msg => ({
