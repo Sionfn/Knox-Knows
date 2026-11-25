@@ -32,6 +32,14 @@
   const tier = () => testTier || (window.userTier === 'mega' ? 'mega' : window.userTier === 'plus' ? 'plus' : 'free');
   const paid = () => tier() !== 'free';
   const SAVE_MAX = { free: 3, plus: 25, mega: Infinity };
+  // Play-bar icons (drawn here, so no system emoji ever shows).
+  const PI = {
+    play: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8a1 1 0 0 0 1.5.86l11.8-7.4a1 1 0 0 0 0-1.72L8.5 3.74A1 1 0 0 0 7 4.6Z" fill="currentColor"/></svg>',
+    pause: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/><rect x="13.9" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/></svg>',
+    restart: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg>',
+    full: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    dice: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8.2 8.2h.01M15.8 8.2h.01M12 12h.01M8.2 15.8h.01M15.8 15.8h.01" stroke-width="3.4"/></svg>',
+  };
   const tag = t => t === 'mega' ? '<span class="sl-tag mega">💎 Mega</span>' : '<span class="sl-tag">⚡ Plus</span>';
 
   // ── Shared bits ──────────────────────────────────────────────────────────
@@ -43,7 +51,7 @@
   const MOVERS = ['car', 'runner', 'person', 'train', 'bike', 'plane', 'boat', 'dog', 'bus', 'truck'];
 
   // A chart in world coordinates.
-  function chart(g, c, x0, x1, y0, y1, pad = 34) {
+  function chart(g, c, x0, x1, y0, y1, pad = 34, axisX) {
     const L = pad + 8, R = c.w - 14, T = 14, B = c.h - pad;
     const X = x => L + (x - x0) / (x1 - x0) * (R - L), Y = y => B - (y - y0) / (y1 - y0) * (B - T);
     return {
@@ -59,7 +67,7 @@
           for (let y = Math.ceil(y0 / sy) * sy; y <= y1 + 1e-9; y += sy) { g.beginPath(); g.moveTo(L, Y(y)); g.lineTo(R, Y(y)); g.stroke(); }
         }
         g.strokeStyle = c.axis; g.lineWidth = 2;
-        const ax = clamp(0, x0, x1), ay = clamp(0, y0, y1);
+        const ax = axisX ?? clamp(0, x0, x1), ay = clamp(0, y0, y1);
         g.beginPath(); g.moveTo(L, Y(ay)); g.lineTo(R, Y(ay)); g.moveTo(X(ax), T); g.lineTo(X(ax), B); g.stroke();
         if (ticks && c.s.labels !== false) {
           g.textAlign = 'center'; g.textBaseline = 'top';
@@ -448,11 +456,12 @@
           if (!monthly) b *= 1 + r;
           bal.push(b); simple.push(s.p + s.p * r * y + s.add * 12 * y);
         }
-        const top = Math.max(...bal, ...(s.simple ? simple : [0]), 1) * 1.1, ch = chart(g, c, 0, s.t, 0, top, 46);
+        // Bars sit in slots around each year, so the first one stays clear of the dollar labels.
+        const top = Math.max(...bal, ...(s.simple ? simple : [0]), 1) * 1.1, ch = chart(g, c, -.6, s.t + .6, 0, top, 46, -.6), at = (arr, y) => arr[clamp(Math.round(y), 0, s.t)];
         ch.axes('years', 'dollars');
         if (!c.ghost) { const bw = Math.max(2, (ch.R - ch.L) / (s.t + 1) * .7); bal.forEach((v, y) => { g.fillStyle = c.green; g.fillRect(ch.X(y) - bw / 2, ch.Y(v), bw, ch.Y(0) - ch.Y(v)); }); }
-        else ch.plot(y => bal[Math.round(y)], c.light, 3);
-        if (s.simple) ch.plot(y => simple[Math.round(y)] ?? 0, c.orange, 3);
+        else ch.plot(y => at(bal, y), c.light, 3);
+        if (s.simple) ch.plot(y => at(simple, y), c.orange, 3);
         const end = bal[bal.length - 1], putIn = s.p + s.add * 12 * s.t;
         return `After ${s.t} years: ${money(end)} (you put in ${money(putIn)}, interest earned ${money(end - putIn)})${s.simple ? ` · simple interest would give ${money(simple[simple.length - 1])}` : ''} · compounding ${s.every === 'year' ? 'once a year' : s.every === 'month' ? 'every month' : 'every day'}`;
       },
@@ -671,7 +680,7 @@
     return s;
   }
   const canUse = id => T[id].free || paid();
-  const unitFmt = (p, v) => p.unit === '$' ? '$' + fmt(v) : fmt(v) + (p.unit ? ' ' + p.unit : '');
+  const unitFmt = (p, v) => p.unit === '$' ? '$' + fmt(v) : fmt(v) + (p.unit ? (/^[°%×]/.test(p.unit) ? '' : ' ') + p.unit : '');
 
   // ── Saved sims (this device, per account) ────────────────────────────────
   const saveKey = () => 'knoxSimLab.v1:' + (window.currentUser?.uid || 'guest');
@@ -688,8 +697,9 @@
       : t === 'plus' ? '⚡ Knox Plus — up to 20 Knox builds a day, every simulation and setting, 25 saves. 💎 Mega Knox adds 100 builds a day and Compare runs.'
       : 'Free — each Knox build costs 2 credits and uses the 6 starter simulations; 3 saves. ⚡ Knox Plus unlocks every simulation and setting and 20 builds a day.';
   }
-  function renderHome() {
+  function renderHome(keepScroll) {
     if (!host) return;
+    const top = host.scrollTop;
     const saved = readSaved();
         let body = '';
     if (tab === 'build') {
@@ -702,23 +712,32 @@
           <p class="sl-cost">${costLine()}</p>
         </div>`;
     } else if (tab === 'community') {
-      if (!community.loaded && !community.busy) loadCommunity();
-      body = `<div class="sl-filters"><button type="button" class="sl-chip${community.sort === 'new' ? ' on' : ''}" data-csort="new">Newest</button><button type="button" class="sl-chip${community.sort === 'top' ? ' on' : ''}" data-csort="top">Most liked</button></div>` +
-        (community.busy ? '<p class="sl-cost">Loading the Community…</p>' : community.error ? `<p class="sl-msg">${esc(community.error)}</p>`
-        : community.list.length ? `<div class="sl-grid">${community.list.map(x => `<button type="button" class="sl-tile sl-ctile g-${(T[x.type]?.group || 'physics').toLowerCase()}" data-csim="${x.id}"><span class="sl-ico" aria-hidden="true">${ki(x.type === 'custom' ? 'pencil' : T[x.type]?.icon || 'sliders')}</span><b>${esc(x.title)}</b><small>${esc(x.desc || (x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || ''))}</small><span class="sl-cmeta">${x.mine ? 'Yours · ' : 'By a Knox student · '}${x.plays} play${x.plays === 1 ? '' : 's'} · ♥ ${x.likes}</span></button>`).join('')}</div>`
-        : '<div class="sl-empty"><b>Nothing here yet</b><span>Make a simulation and press Publish — it shows up here for everyone.</span></div>') +
-        '<p class="sl-cost">Everything here is made by students and checked for school-friendly words. Names are never shown. See something wrong? Open it and press Report.</p>';
+      if (!community.loaded && !community.busy && !community.error) loadCommunity();
+      const groupOf = x => x.type === 'custom' ? 'Made from scratch' : T[x.type]?.group || '';
+      const q = community.q.trim().toLowerCase();
+      const shown = community.list.filter(x => (community.group === 'All' || groupOf(x) === community.group) && (!q || (x.title + ' ' + (x.desc || '') + ' ' + (T[x.type]?.title || '')).toLowerCase().includes(q)));
+      const sorts = [['new', 'Newest'], ['played', 'Most played'], ['top', 'Most liked']];
+      body = `<div class="sl-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="slCmSearch" aria-label="Search the Community" placeholder="Search — e.g. moon, pendulum, savings…" value="${esc(community.q)}"></div>
+        <div class="sl-filters">${sorts.map(([v, l]) => `<button type="button" class="sl-chip${community.sort === v ? ' on' : ''}" data-csort="${v}">${l}</button>`).join('')}<span class="sl-filter-gap" aria-hidden="true"></span>${['All', ...GROUPS, 'Made from scratch'].map(g => `<button type="button" class="sl-chip${community.group === g ? ' on' : ''}" data-cgroup="${g}">${g === 'All' ? 'Every subject' : g}</button>`).join('')}</div>` +
+        (community.note ? `<p class="sl-msg sl-cm-note" role="status">${esc(community.note)}</p>` : '') +
+        (community.busy ? '<div class="sl-empty"><b>Loading the Community…</b><span>Getting the newest simulations.</span></div>'
+        : community.error ? `<div class="sl-empty"><b>The Community didn’t load</b><span>${esc(community.error)}</span><button type="button" class="sl-btn sm" data-cretry>Try again</button></div>`
+        : shown.length ? `<div class="sl-grid">${shown.map(x => `<button type="button" class="sl-tile sl-ctile g-${(x.type === 'custom' ? 'physics' : T[x.type]?.group || 'physics').toLowerCase()}" data-csim="${x.id}"><span class="sl-ico" aria-hidden="true">${ki(x.type === 'custom' ? 'pencil' : T[x.type]?.icon || 'sliders')}</span><b>${esc(x.title)}</b><small>${esc(x.desc || (x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || ''))}</small><span class="sl-cmeta">${x.mine ? 'Yours · ' : ''}${x.plays} play${x.plays === 1 ? '' : 's'} · ♥ ${x.likes}</span></button>`).join('')}</div>`
+        : community.list.length ? '<div class="sl-empty"><b>Nothing matches that</b><span>Try a different word or subject.</span></div>'
+        : '<div class="sl-empty"><b>Nothing here yet</b><span>Be the first: open a simulation, set it up, and press Publish.</span></div>') +
+        '<p class="sl-cost">Made by students and checked for school-friendly words. Names are never shown. See something wrong? Open it and press Report — 3 reports take it down until we check it.</p>';
     } else if (tab === 'make') {
+      const L = window.knoxSimBuilder?.LIMITS?.[tier()];
       body = `<div class="sl-make">
-          <div class="sl-make-hero"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><div><b>Build a simulation from scratch</b><span>Drop in balls, blocks, ramps, walls, springs and targets. Set gravity, air and bounce. Add sliders and graphs, then press Play.</span></div></div>
+          <div class="sl-make-hero"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><div><b>Build one from scratch</b><span>Drop in balls, blocks, ramps, walls, springs and targets. Set gravity, air and bounce, add sliders and graphs, then press Play.</span></div><button type="button" class="sl-btn" data-make="empty">Start empty</button></div>
+          <h3 class="sl-sub">Or start from one of these</h3>
           <div class="sl-make-grid">
             <button type="button" class="sl-tile g-physics" data-make="blank"><span class="sl-ico" aria-hidden="true">${ki('target')}</span><b>Hit the target</b><small>A ball, a target and a slider to start from</small></button>
             <button type="button" class="sl-tile g-math" data-make="ramp"><span class="sl-ico" aria-hidden="true">${ki('chart')}</span><b>Ramp race</b><small>Two balls roll down ramps — which wins?</small></button>
-            <button type="button" class="sl-tile g-chance" data-make="spring"><span class="sl-ico" aria-hidden="true">${ki('bolt')}</span><b>Bouncy spring</b><small>A block on a spring with a graph</small></button>
-            <button type="button" class="sl-tile g-money" data-make="crash"><span class="sl-ico" aria-hidden="true">${ki('spark')}</span><b>Collisions</b><small>A heavy and a light ball crash</small></button>
-            <button type="button" class="sl-tile g-biology" data-make="empty"><span class="sl-ico" aria-hidden="true">${ki('pencil')}</span><b>Empty world</b><small>Start with nothing at all</small></button>
+            <button type="button" class="sl-tile g-chance" data-make="spring"><span class="sl-ico" aria-hidden="true">${ki('bolt')}</span><b>Bouncy spring</b><small>A block on a spring, with a graph</small></button>
+            <button type="button" class="sl-tile g-money" data-make="crash"><span class="sl-ico" aria-hidden="true">${ki('spark')}</span><b>Collisions</b><small>A heavy ball and a light ball crash</small></button>
           </div>
-          <p class="sl-cost">${window.knoxSimBuilder ? (() => { const L = window.knoxSimBuilder.LIMITS[tier()]; return `Your plan: up to ${L.objects} things, ${L.sliders} slider${L.sliders === 1 ? '' : 's'} and ${L.graphs} graph${L.graphs === 1 ? '' : 's'} per simulation.` + (tier() === 'free' ? ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.' : tier() === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ''); })() : ''}</p></div>`;
+          ${L ? `<p class="sl-cost">Your plan: up to ${L.objects} things, ${L.sliders} slider${L.sliders === 1 ? '' : 's'} and ${L.graphs} graph${L.graphs === 1 ? '' : 's'} in each simulation.${tier() === 'free' ? ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.' : tier() === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ''}</p>` : ''}</div>`;
     } else if (tab === 'play') {
       const ids = ORDER.filter(id => filter === 'All' || T[id].group === filter);
       body = `<div class="sl-filters">${['All', ...GROUPS].map(g => `<button type="button" class="sl-chip${filter === g ? ' on' : ''}" data-filter="${g}">${g}</button>`).join('')}</div>
@@ -738,7 +757,7 @@
       const mine = saved.length ? `<div class="sl-grid">${saved.slice(0, 8).map((x, i) => `<button type="button" class="sl-tile g-${(T[x.type]?.group || 'physics').toLowerCase()}" data-saved="${i}"><span class="sl-ico" aria-hidden="true">${ki(x.type === 'custom' ? 'pencil' : T[x.type]?.icon || 'sliders')}</span><b>${esc(x.title)}</b><small>${esc(x.type === 'custom' ? 'Made from scratch' : T[x.type]?.title || '')}</small></button>`).join('')}</div>${saved.length > 8 ? '<button type="button" class="sl-btn ghost sm sl-all" data-tab="mine">See all</button>' : ''}`
         : '<div class="sl-empty"><b>Nothing saved yet</b><span>Open or build a simulation and press Save — it shows up here.</span></div>';
       html = `<div class="sl-wrap"><div class="sl-head"><span class="sl-badge">${ki('sliders', false)} Simulation Lab</span><h2>Play with<br><span>math &amp; science.</span></h2><p>Build a simulation with Knox, play with one, or make your own from scratch.</p></div>
-        <div class="sl-ways">${WAYS.map(([id, icon, flavor, name, text]) => `<button type="button" class="sl-way" data-flavor="${flavor}" data-tab="${id}"><span class="sl-way-icon" aria-hidden="true">${ki(icon, false)}</span><b>${name}</b><span>${text}</span></button>`).join('')}</div>
+        <div class="sl-ways${saved.length ? ' has-sims' : ''}">${WAYS.map(([id, icon, flavor, name, text]) => `<button type="button" class="sl-way" data-flavor="${flavor}" data-tab="${id}"><span class="sl-way-icon" aria-hidden="true">${ki(icon, false)}</span><b>${name}</b><span>${text}</span></button>`).join('')}</div>
         <div class="sl-section"><h3>My sims</h3>${mine}</div></div>`;
     } else {
       // Each page has the same header as the home (and as Flashcards): badge, big title, line under it.
@@ -747,7 +766,7 @@
         <div class="sl-head"><span class="sl-badge">${ki('sliders', false)} Simulation Lab</span><h2>${page[3]}</h2><p>${sub}</p></div>${body}</div>`;
     }
     host.innerHTML = fill(html);
-    host.scrollTop = 0;
+    host.scrollTop = keepScroll ? top : 0;
   }
 
   async function build() {
@@ -770,7 +789,7 @@
   }
 
   // ── Community (api/_sim-community.js) ────────────────────────────────────
-  const community = { sort: 'new', list: [], loaded: false, busy: false, error: '' };
+  const community = { sort: 'new', group: 'All', q: '', list: [], loaded: false, busy: false, error: '', note: '' };
   async function communityApi(method, body, query = '') {
     const u = window.currentUser, headers = {};
     if (u?.getIdToken) headers.Authorization = 'Bearer ' + await u.getIdToken();
@@ -781,10 +800,10 @@
     return j;
   }
   async function loadCommunity() {
-    community.busy = true; community.error = ''; if (tab === 'community') renderHome();
+    community.busy = true; community.error = ''; if (tab === 'community') renderHome(true);
     try { community.list = (await communityApi('GET', null, '&sort=' + community.sort)).sims || []; community.loaded = true; }
     catch (e) { community.error = e.message; }
-    community.busy = false; if (tab === 'community' && !editor) renderHome();
+    community.busy = false; if (tab === 'community' && !editor) renderHome(true);
   }
   async function openCommunity(id) {
     try {
@@ -792,7 +811,7 @@
       communityApi('POST', { action: 'play', id }).catch(() => {});
       const meta = { title: sim.title, community: { id, liked: sim.liked, likes: sim.likes, mine: sim.mine }, explain: sim.desc };
       if (sim.type === 'custom') openBuilder(sim.values, meta); else open(sim.type, sim.values, meta);
-    } catch (e) { community.error = e.message; renderHome(); }
+    } catch (e) { community.note = e.message; tab = 'community'; renderHome(true); }
   }
   // Publish: a small form over the page (title, a short description, a promise).
   function publishSim(item, btn) {
@@ -817,7 +836,7 @@
     });
     box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   }
-  const communityButtons = c => c ? `<button type="button" class="sl-btn ghost sm${c.liked ? ' on' : ''}" data-clike="${c.id}">♥ ${c.likes}</button>${c.mine ? `<button type="button" class="sl-btn ghost sm" data-cdown="${c.id}">Take down</button>` : `<button type="button" class="sl-btn ghost sm" data-creport="${c.id}">Report</button>`}` : '';
+  const communityButtons = c => c ? `<span class="sl-by">${c.mine ? 'Yours' : 'By a Knox student'}</span><button type="button" class="sl-btn ghost sm${c.liked ? ' on' : ''}" data-clike="${c.id}">♥ ${c.likes}</button>${c.mine ? `<button type="button" class="sl-btn ghost sm" data-cdown="${c.id}">Take down</button>` : `<button type="button" class="sl-btn ghost sm" data-creport="${c.id}">Report</button>`}` : '';
   async function communityAction(b) {
     try {
       if (b.dataset.clike) { const r = await communityApi('POST', { action: 'like', id: b.dataset.clike }); b.textContent = `♥ ${r.likes}`; b.classList.toggle('on', r.liked); community.loaded = false; }
@@ -849,7 +868,8 @@
       onBack: () => { editor = null; renderHome(); },
       onSave: sc => { const list = readSaved(), max = SAVE_MAX[tier()]; if (list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one in My sims, or upgrade to save more.`); return false; } list.unshift({ type: 'custom', values: sc, title: sc.title, at: Date.now() }); writeSaved(list); return true; },
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
-      onPublish: (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),
+      // Someone else's Community sim isn't yours to publish again (Save keeps a copy).
+      onPublish: meta.community && !meta.community.mine ? null : (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),
       extraButtons: communityButtons(meta.community),
     });
     editor = { stop: b.stop, click: () => {} };
@@ -916,16 +936,12 @@
     host.innerHTML = fill(`<div class="sl-ed">
       <div class="sl-top"><button type="button" class="sl-back" data-back>← Simulation Lab</button>
         <input class="sl-title" value="${esc(title)}" maxlength="40" aria-label="Name">
-        <div class="sl-top-btns"><button type="button" class="sl-btn ghost sm" data-ask>${ki('think', false)} Ask Knox</button>${communityButtons(meta.community)}<button type="button" class="sl-btn ghost sm" data-share>Share</button><button type="button" class="sl-btn ghost sm" data-publish>Publish</button><button type="button" class="sl-btn sm" data-save>Save</button></div></div>
+        <div class="sl-top-btns"><button type="button" class="sl-btn ghost sm" data-ask>${ki('think', false)} Ask Knox</button>${communityButtons(meta.community)}<button type="button" class="sl-btn ghost sm" data-share>Share</button>${meta.community ? '' : '<button type="button" class="sl-btn ghost sm" data-publish>Publish</button>'}<button type="button" class="sl-btn sm" data-save>Save</button></div></div>
       ${(() => { try { return localStorage.getItem('knoxSimGuide') ? '' : `<div class="sl-guide"><b>How it works</b><span>Move the sliders and watch the picture change. Press Play when there’s motion. Try a <b>Challenge</b> on the right, open <b>More settings</b> for extras, and double-click any slider’s name to put it back.</span><button type="button" class="sl-btn sm" data-guide-ok>Got it</button></div>`; } catch (_) { return ''; } })()}
       ${meta.explain ? `<div class="sl-explain">${ki('spark', false)}<span>${esc(meta.explain)}</span></div>` : ''}
       <div class="sl-main">
         <div class="sl-stage"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
-          <div class="sl-play">${def.anim ? `<button type="button" class="sl-btn" data-play>▶ Play</button><button type="button" class="sl-btn ghost" data-restart>↺ Restart</button>` : ''}
-            ${id === 'probability' ? '<button type="button" class="sl-btn ghost" data-reroll>🎲 New run</button>' : ''}
-            <button type="button" class="sl-btn ghost" data-random>Randomize</button><button type="button" class="sl-btn ghost" data-reset>Reset</button>
-            ${def.table ? '<button type="button" class="sl-btn ghost" data-table>Data table</button>' : ''}<button type="button" class="sl-btn ghost" data-full aria-label="Full screen">⛶</button>
-            <button type="button" class="sl-btn ghost${tier() === 'mega' ? '' : ' locked'}" data-compare>${ghost ? 'Stop comparing' : 'Compare'} ${tier() === 'mega' ? '' : tag('mega')}</button></div>
+          <div class="sl-play">${def.anim ? `<button type="button" class="sl-btn sm sl-playbtn" data-play>${PI.play} Play</button><button type="button" class="sl-btn ghost sm" data-restart>${PI.restart} Restart</button>` : ''}${id === 'probability' ? `<button type="button" class="sl-btn ghost sm" data-reroll>${PI.dice} New run</button>` : ''}<button type="button" class="sl-btn ghost sm" data-random>Randomize</button><button type="button" class="sl-btn ghost sm" data-reset>Reset</button>${def.table ? '<button type="button" class="sl-btn ghost sm" data-table>Data table</button>' : ''}<button type="button" class="sl-btn ghost sm${tier() === 'mega' ? '' : ' locked'}" data-compare><span>${ghost ? 'Stop comparing' : 'Compare'}</span>${tier() === 'mega' ? '' : tag('mega')}</button><button type="button" class="sl-btn ghost sm sl-icon-btn" data-full aria-label="Full screen" title="Full screen">${PI.full}</button></div>
           <p class="sl-readout" aria-live="polite"></p><div class="sb-table" hidden></div></div>
         <div class="sl-controls">
           ${CHALLENGES[id] ? `<div class="sl-chal"><span class="sl-label">${ki('target', false)} Challenges</span>${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div>` : ''}
@@ -981,7 +997,7 @@
     }
     function setPlaying(on) {
       playing = on; cancelAnimationFrame(raf);
-      const b = $('[data-play]', host); if (b) b.textContent = on ? '⏸ Pause' : '▶ Play';
+      const b = $('[data-play]', host); if (b) b.innerHTML = on ? `${PI.pause} Pause` : `${PI.play} Play`;
       if (on) { if (t >= dur() && !def.loop) t = 0; last = performance.now(); raf = requestAnimationFrame(frame); }
     }
     function syncControls() {
@@ -1022,7 +1038,7 @@
         }
         else if (b.matches('[data-compare]')) {
           if (tier() !== 'mega') { upsell('mega', 'Compare keeps a faded copy of one setup while you change the other — a 💎 Mega Knox tool.'); return; }
-          ghost = ghost ? null : { ...s }; b.firstChild.textContent = ghost ? 'Stop comparing ' : 'Compare '; draw();
+          ghost = ghost ? null : { ...s }; b.firstChild.textContent = ghost ? 'Stop comparing' : 'Compare'; draw();
         }
         else if (b.matches('[data-save]')) {
           const list = readSaved(), max = SAVE_MAX[tier()], name = ($('.sl-title', host)?.value || def.title).trim().slice(0, 40) || def.title;
@@ -1062,18 +1078,26 @@
     if (b.matches('[data-upgrade]')) { window.goToPricing?.(); return; }
     if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
     if (editor) { editor.click(b); return; }
-    if (b.dataset.tab) { tab = b.dataset.tab; buildMsg = ''; renderHome(); return; }
-    if (b.dataset.filter) { filter = b.dataset.filter; renderHome(); return; }
-    if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; loadCommunity(); return; }
+    if (b.dataset.tab) { tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
+    if (b.dataset.filter) { filter = b.dataset.filter; renderHome(true); return; }
+    if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; community.error = ''; loadCommunity(); return; }
+    if (b.dataset.cgroup) { community.group = b.dataset.cgroup; renderHome(true); return; }
+    if (b.matches('[data-cretry]')) { community.error = ''; loadCommunity(); return; }
     if (b.dataset.csim) { openCommunity(b.dataset.csim); return; }
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
     if (b.matches('[data-build]')) { build(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }
     if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values) : open(x.type, x.values, { title: x.title }); return; }
     if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.()); return; }
-    if (b.dataset.unsave != null) { const list = readSaved(); list.splice(+b.dataset.unsave, 1); writeSaved(list); renderHome(); }
+    if (b.dataset.unsave != null) { const list = readSaved(); list.splice(+b.dataset.unsave, 1); writeSaved(list); renderHome(true); }
   });
   document.addEventListener('keydown', e => { if (host && e.target.id === 'slPrompt' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) build(); });
+  // Community search filters as you type (the box keeps its focus and place).
+  document.addEventListener('input', e => {
+    if (!host || e.target.id !== 'slCmSearch') return;
+    community.q = e.target.value.slice(0, 60); const at = e.target.selectionStart;
+    renderHome(true); const box = $('#slCmSearch', host); if (box) { box.focus(); try { box.setSelectionRange(at, at); } catch (_) {} }
+  });
   window.addEventListener('knox-plan-changed', () => { if (host && !editor && host.isConnected) renderHome(); });
 
   window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), templates: Object.keys(T), cleanValues };

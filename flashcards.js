@@ -249,9 +249,8 @@ function home(query=''){
       ${way('make','orange','✨','Make with Knox','Knox writes the cards for you — from a topic, your notes, slides or photos.')}
       ${way('create','green','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
       ${way('import','blue','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
-      ${way('cm-home','purple','🌍','Community decks','Study decks other students made — or publish yours for everyone.')}
     </div>
-    <div class="fc-toolbar fc-toolbar-quiet">${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
+    <div class="fc-toolbar fc-toolbar-quiet">${btn('🌍 Community decks','cm-home',{cls:'small fc-cm-entry'})}${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
@@ -277,7 +276,7 @@ function renderDecks(query){
         <div style="min-width:0"><h2 class="fc-deck-name">${esc(d.title)}</h2>
         <div class="fc-pills"><span class="fc-pill">${d.cards.length} card${d.cards.length===1?'':'s'}</span>${due?`<span class="fc-pill due">${due} due</span>`:'<span class="fc-pill done">✓ Caught up</span>'}</div></div></div>
       <div class="fc-deck-actions">${btn('Review due','due',{cls:'primary small',attrs:`data-id="${esc(d.id)}" ${due?'':'disabled'}`})}${btn('Practice all','practice',{cls:'small',attrs:`data-id="${esc(d.id)}"`})}${btn('🎯 Quiz me','quiz',{cls:'small fc-quiz-btn',attrs:`data-id="${esc(d.id)}"`})}</div>
-      <div class="fc-deck-more">${btn('Edit','edit',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Share','share',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Publish','cm-publish',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Export','export',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Delete','delete',{cls:'ghost small danger',attrs:`data-id="${esc(d.id)}"`})}</div>
+      <div class="fc-deck-more">${btn('Edit','edit',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Share','share',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Export','export',{cls:'ghost small',attrs:`data-id="${esc(d.id)}"`})}${btn('Delete','delete',{cls:'ghost small danger',attrs:`data-id="${esc(d.id)}"`})}</div>
     </article>`;}).join('');
 }
 
@@ -956,33 +955,45 @@ async function cmLoad(){
 }
 function cmHome(){
  cm.deck=null;session=null;editing=null;
- const chips=(list,cur,act)=>list.map(([v,l])=>`<button type="button" class="fc-chip${cur===v?' on':''}" data-action="${act}" data-v="${esc(v)}">${esc(l)}</button>`).join('');
- frame({badge:badge('🌍 Community decks','🌍 Community decks'),title:'Decks from<br><span class="accent">everyone.</span>',sub:'Made by Knox students and checked for school-friendly words. Add any deck to yours in one tap.'},
-  `<div class="fc-cm">${btn('← My decks','back',{cls:'ghost small'})}
-   <div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcCmSearch" type="search" aria-label="Search the Community" placeholder="Search decks — e.g. cell parts, Spanish verbs…" value="${esc(cm.q)}"></div>
-   <div class="fc-cm-filters"><div class="fc-chips">${chips([['new','Newest'],['used','Most used'],['top','Most liked']],cm.sort,'cm-sort')}</div>
-     <select class="fc-cm-select" id="fcCmSubject" aria-label="Subject"><option value="">All subjects</option>${CM_SUBJECTS.map(x=>`<option${x===cm.subject?' selected':''}>${esc(x)}</option>`).join('')}</select>
-     <select class="fc-cm-select" id="fcCmGrade" aria-label="Grade"><option value="">Any grade</option>${CM_GRADES.filter(x=>x!=='Any').map(x=>`<option${x===cm.grade?' selected':''}>${esc(x)}</option>`).join('')}</select></div>
-   ${cm.busy?'<p class="fc-note">Loading decks…</p>':cm.err?`<p class="fc-note">${esc(cm.err)}</p>`:cm.list.length?`<div class="fc-grid fc-cm-grid">${cm.list.map((d,i)=>`<button type="button" class="fc-deck fc-cm-card" data-flavor="${FLAVORS[i%4]}" data-action="cm-open" data-id="${esc(d.id)}">
+ const sorts=[['new','Newest'],['used','Most used'],['top','Most liked']];
+ frame({badge:'<span class="fc-badge">🌍 Community decks</span>',title:'Decks from <span class="accent">everyone.</span>',sub:'Made by Knox students and checked for school-friendly words. Add any deck to yours in one tap.'},
+  `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
+   <div class="fc-cm">
+   <div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcCmSearch" type="search" aria-label="Search Community decks" placeholder="Search — e.g. cell parts, Spanish verbs…" value="${esc(cm.q)}"></div>
+   <div class="fc-cm-filters">
+     <div class="fc-chips">${sorts.map(([v,l])=>chip(l,'cm-sort',cm.sort===v,`data-v="${v}"`)).join('')}</div>
+     <select class="fc-input fc-cm-select" id="fcCmSubject" aria-label="Subject"><option value="">All subjects</option>${CM_SUBJECTS.map(x=>`<option${x===cm.subject?' selected':''}>${esc(x)}</option>`).join('')}</select>
+     <select class="fc-input fc-cm-select" id="fcCmGrade" aria-label="Grade"><option value="">Any grade</option>${CM_GRADES.filter(x=>x!=='Any').map(x=>`<option${x===cm.grade?' selected':''}>${esc(x)}</option>`).join('')}</select>
+   </div>
+   ${cm.busy?`<div class="fc-empty"><h2>Loading decks…</h2></div>`
+    :cm.err?`<div class="fc-empty"><h2>Community decks didn’t load</h2><p class="fc-sub">${esc(cm.err)}</p><div class="fc-toolbar">${btn('Try again','cm-retry',{cls:'primary small'})}</div></div>`
+    :cm.list.length?`<div class="fc-grid">${cm.list.map((d,i)=>`<article class="fc-deck" data-flavor="${FLAVORS[i%4]}">
       <div class="fc-deck-top"><div class="fc-deck-icon" aria-hidden="true">${ICONS[i%4]}</div><div style="min-width:0"><h2 class="fc-deck-name">${esc(d.title)}</h2>
-      <div class="fc-pills"><span class="fc-pill">${esc(d.subject)}</span><span class="fc-pill">${esc(d.grade)}</span><span class="fc-pill">${d.cardCount} cards</span>${d.checked?'<span class="fc-pill done">✓ Checked by Knox</span>':''}</div></div></div>
-      ${d.desc?`<p class="fc-cm-desc">${esc(d.desc)}</p>`:d.preview?.length?`<p class="fc-cm-desc">${esc(d.preview.join(' · '))}</p>`:''}
-      <span class="fc-cm-meta">${d.mine?'Yours':'By a Knox student'} · added ${d.adds} time${d.adds===1?'':'s'} · ♥ ${d.likes}</span></button>`).join('')}</div>`
-     :`<div class="fc-empty"><h2>${cm.q||cm.subject||cm.grade?'No decks match that':'No decks here yet'}</h2><p class="fc-sub">${cm.q||cm.subject||cm.grade?'Try a different word or subject.':'Be the first: open one of your decks and press Publish.'}</p></div>`}
+      <div class="fc-pills"><span class="fc-pill">${d.cardCount} cards</span><span class="fc-pill">${esc(d.subject)}</span>${d.checked?'<span class="fc-pill done">✓ Checked</span>':''}</div></div></div>
+      <p class="fc-cm-desc">${esc(d.desc||d.preview?.join(' · ')||'')}</p>
+      <div class="fc-deck-actions">${btn('Open','cm-open',{cls:'primary small',attrs:`data-id="${esc(d.id)}"`})}${btn('Add to my decks','cm-quick-add',{cls:'small',attrs:`data-id="${esc(d.id)}"`})}</div>
+      <p class="fc-cm-meta">${esc(d.grade)}${d.mine?' · Yours':''} · ${d.adds} added · ♥ ${d.likes}</p></article>`).join('')}</div>`
+    :`<div class="fc-empty"><h2>${cm.q||cm.subject||cm.grade?'No decks match that':'No decks here yet'}</h2><p class="fc-sub">${cm.q||cm.subject||cm.grade?'Try a different word, subject or grade.':'Be the first: open Share on one of your decks and pick Publish to Community.'}</p></div>`}
    <p class="fc-note">See something wrong or not school-friendly? Open the deck and press Report. 3 reports take a deck down until we check it.</p></div>`,true);
  if(!cm.busy&&!cm.err&&!cm.list.length&&!cm.loadedOnce){cm.loadedOnce=true;cmLoad();}
 }
+async function cmFetch(id){const {deck}=await cmApi('GET',null,'&id='+encodeURIComponent(id));return deck;}
 async function cmOpen(id){
- try{const {deck}=await cmApi('GET',null,'&id='+encodeURIComponent(id));cm.deck=deck;}catch(e){message(e.message);return;}
+ try{cm.deck=await cmFetch(id);}catch(e){message(e.message);return;}
  const d=cm.deck;
- frame({badge:badge('🌍 Community deck','🌍 Community deck'),title:esc(d.title),sub:`${esc(d.subject)} · ${esc(d.grade)} · ${d.cardCount} cards${d.checked?' · ✓ Checked by Knox':''}${d.desc?`<br>${esc(d.desc)}`:''}`},
-  `<div class="fc-cm">${btn('← Community','cm-home',{cls:'ghost small'})}
-   <div class="fc-toolbar">${btn('Add to my decks','cm-add',{cls:'primary'})}${btn('Study it now','cm-study')}${btn(`♥ ${d.likes}`,'cm-like',{cls:'ghost'+(d.liked?' on':'')})}${d.mine?btn('Take down','cm-down',{cls:'ghost danger'}):btn('Report','cm-report',{cls:'ghost'})}</div>
-   <div class="fc-cm-cards">${d.cards.slice(0,60).map((c,i)=>`<div class="fc-cm-row"><span class="fc-cm-n">${i+1}</span><div><b>${esc(c.front)}</b><span>${esc(c.back)}</span></div></div>`).join('')}${d.cards.length>60?`<p class="fc-note">…and ${d.cards.length-60} more cards.</p>`:''}</div>
-   <p class="fc-note">${d.mine?'This is your deck.':'Made by a Knox student.'} Added ${d.adds} time${d.adds===1?'':'s'}.</p></div>`,true);
+ frame({badge:'<span class="fc-badge">🌍 Community deck</span>',title:esc(d.title),sub:`${d.cardCount} cards · ${esc(d.subject)} · ${esc(d.grade)}${d.desc?`<br>${esc(d.desc)}`:''}`},
+  `<div class="fc-topbar fc-make-top">${btn('← Community','cm-home',{cls:'ghost'})}</div>
+   <div class="fc-make fc-cm-view">
+     <div class="fc-pills">${d.checked?'<span class="fc-pill done">✓ Checked by Knox</span>':''}<span class="fc-pill">${d.mine?'Your deck':'By a Knox student'}</span><span class="fc-pill">Added ${d.adds} time${d.adds===1?'':'s'}</span></div>
+     <div class="fc-toolbar fc-cm-actions">${btn('＋ Add to my decks','cm-add',{cls:'primary'})}${btn('Study it now','cm-study')}</div>
+     <span class="fc-field-label">The cards</span>
+     <ol class="fc-cm-cards">${d.cards.slice(0,60).map((c,i)=>`<li data-n="${i+1}"><b>${esc(c.front)}</b><span>${esc(c.back)}</span></li>`).join('')}</ol>
+     ${d.cards.length>60?`<p class="fc-note">…and ${d.cards.length-60} more cards.</p>`:''}
+     <div class="fc-cm-foot">${btn(`♥ ${d.likes}`,'cm-like',{cls:'ghost small'+(d.liked?' on':'')})}${d.mine?btn('Take it down','cm-down',{cls:'ghost small danger'}):btn('Report','cm-report',{cls:'ghost small danger'})}</div>
+   </div>`,true);
 }
-function cmAdd(){
- const d=cm.deck;if(!d)return null;
+function cmAdd(d=cm.deck){
+ if(!d)return null;
  let clean;try{clean=validateDeck({title:d.title,cards:d.cards});}catch{message('That deck couldn’t be added.');return null;}
  const copy={id:crypto.randomUUID(),title:clean.title,cards:clean.cards};
  if(!save([copy,...decks]))return null;
@@ -990,25 +1001,33 @@ function cmAdd(){
  return copy;
 }
 function cmPublishView(deck,needsFix=null){
- cm.pub={id:deck.id,subject:cm.pub?.id===deck.id?cm.pub.subject:'',grade:cm.pub?.id===deck.id?cm.pub.grade:'',desc:cm.pub?.id===deck.id?cm.pub.desc:''};
- frame({badge:badge('🌍 Publish','🌍 Publish'),title:`Publish <span class="accent">${esc(deck.title)}</span>`,sub:'Anyone can find it in Community decks and add it to theirs. Your name is never shown, and your own photos stay private.'},
-  `<div class="fc-cm fc-cm-pub">${btn('← My decks','back',{cls:'ghost small'})}
-   ${needsFix?`<div class="fc-cm-fix"><b>Knox found ${needsFix.length} card${needsFix.length===1?'':'s'} that look${needsFix.length===1?'s':''} wrong</b>${needsFix.map(w=>`<div class="fc-cm-row"><span class="fc-cm-n">${w.i+1}</span><div><b>${esc(deck.cards[w.i]?.front||'')} → ${esc(deck.cards[w.i]?.back||'')}</b><span>${esc(w.reason)}</span></div></div>`).join('')}
-     <div class="fc-toolbar">${btn('Fix my cards','edit',{cls:'primary',attrs:`data-id="${esc(deck.id)}"`})}${btn('Publish anyway','cm-publish-go',{cls:'ghost',attrs:`data-id="${esc(deck.id)}" data-ignore="1"`})}</div><p class="fc-note">Publishing anyway is okay if you’re sure — it just won’t get the “Checked by Knox” badge.</p></div>`:''}
-   <label class="fc-cm-field"><span>Subject</span><select id="fcPubSubject"><option value="">Pick a subject</option>${CM_SUBJECTS.map(x=>`<option${x===cm.pub.subject?' selected':''}>${esc(x)}</option>`).join('')}</select></label>
-   <label class="fc-cm-field"><span>Grade</span><select id="fcPubGrade">${CM_GRADES.map(x=>`<option${x===(cm.pub.grade||'High school')?' selected':''}>${esc(x)}</option>`).join('')}</select></label>
-   <label class="fc-cm-field"><span>Short description (optional)</span><textarea id="fcPubDesc" maxlength="200" rows="2" placeholder="e.g. Unit 3 vocab for 9th grade biology">${esc(cm.pub.desc)}</textarea></label>
-   <label class="fc-cm-check"><input type="checkbox" id="fcPubOk"><span>It’s school-friendly and has no personal info (no names, links or numbers)</span></label>
-   ${needsFix?'':`<div class="fc-toolbar">${btn('Publish','cm-publish-go',{cls:'primary',attrs:`data-id="${esc(deck.id)}"`})}</div>`}
-   <p class="fc-note">Knox checks the words and looks for wrong answers first, so this takes a few seconds. Up to 10 decks a day.</p></div>`,true);
+ if(cm.pub?.id!==deck.id)cm.pub={id:deck.id,subject:'',grade:'High school',desc:'',ok:false};
+ const P=cm.pub;
+ frame({badge:'<span class="fc-badge">🌍 Publish to Community</span>',title:`Share <span class="accent">${esc(deck.title)}</span> with everyone.`,sub:'Anyone can find it in Community decks and add it to theirs. Your name is never shown, and your own photos stay private.'},
+  `<div class="fc-topbar fc-make-top">${btn('← Decks','back',{cls:'ghost'})}</div>
+   <div class="fc-make">
+   ${needsFix?`<div class="fc-cm-fix"><b>Knox found ${needsFix.length} card${needsFix.length===1?'':'s'} that look${needsFix.length===1?'s':''} wrong</b>
+     <ol class="fc-cm-cards">${needsFix.map(w=>`<li data-n="${w.i+1}"><b>${esc(deck.cards[w.i]?.front||'')} → ${esc(deck.cards[w.i]?.back||'')}</b><span>${esc(w.reason)}</span></li>`).join('')}</ol>
+     <div class="fc-toolbar">${btn('Fix my cards','edit',{cls:'primary small',attrs:`data-id="${esc(deck.id)}"`})}${btn('Publish anyway','cm-publish-go',{cls:'small',attrs:`data-id="${esc(deck.id)}" data-ignore="1"`})}</div>
+     <p class="fc-note">Publishing anyway is fine if you’re sure — it just won’t get the “Checked by Knox” badge.</p></div>`:''}
+   <span class="fc-field-label">Subject</span>
+   <div class="fc-chips">${CM_SUBJECTS.map(x=>chip(esc(x),'cm-pub-subject',P.subject===x,`data-v="${esc(x)}"`)).join('')}</div>
+   <span class="fc-field-label" style="margin-top:16px">Grade</span>
+   <div class="fc-chips">${CM_GRADES.map(x=>chip(esc(x),'cm-pub-grade',P.grade===x,`data-v="${esc(x)}"`)).join('')}</div>
+   <label class="fc-field-label" for="fcPubDesc" style="margin-top:16px">What’s it for? (optional)</label>
+   <textarea class="fc-textarea" id="fcPubDesc" rows="2" maxlength="200" placeholder="e.g. Unit 3 vocab for 9th grade biology">${esc(P.desc)}</textarea>
+   <label class="fc-switch"><input type="checkbox" id="fcPubOk"${P.ok?' checked':''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>It’s school-friendly</b><small>No bad words, and no personal info — no names, links or phone numbers.</small></span></label>
+   ${needsFix?'':`<div class="fc-toolbar" style="margin-top:20px">${btn('🌍 Publish','cm-publish-go',{cls:'primary',attrs:`data-id="${esc(deck.id)}"`})}</div>`}
+   <p class="fc-cost">Knox checks the words and looks for wrong answers first, so this takes a few seconds · up to 10 decks a day.</p>
+   </div>`,true);
 }
 async function cmPublish(b){
  const deck=decks.find(x=>x.id===b.dataset.id);if(!deck)return;
  if(!window.currentUser){window.openAuthModal?.('signup');return;}
- const subject=panel.querySelector('#fcPubSubject')?.value||cm.pub?.subject||'',grade=panel.querySelector('#fcPubGrade')?.value||cm.pub?.grade||'Any',desc=panel.querySelector('#fcPubDesc')?.value??cm.pub?.desc??'';
- cm.pub={...cm.pub,subject,grade,desc};
+ const P=cm.pub||{};P.desc=panel.querySelector('#fcPubDesc')?.value??P.desc??'';P.ok=panel.querySelector('#fcPubOk')?.checked??P.ok;
+ const subject=P.subject||'',grade=P.grade||'Any',desc=P.desc;
  if(!subject){message('Pick a subject first.');return;}
- const ok=panel.querySelector('#fcPubOk');if(ok&&!ok.checked){message('Tick the box to promise it’s school-friendly first.');return;}
+ if(!b.dataset.ignore&&!P.ok){message('Turn on “It’s school-friendly” first.');return;}
  if(deck.cards.length<3){message('Add at least 3 cards before publishing.');return;}
  const label=b.textContent;b.disabled=true;b.textContent='Checking…';
  try{
@@ -1020,6 +1039,9 @@ async function cmPublish(b){
   message(e.message);b.disabled=false;b.textContent=label;
  }
 }
+// Clicking anywhere else closes a deck's Share menu.
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.fc-share-menu, [data-action="share"]'))panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());});
 panel.addEventListener('change',e=>{if(e.target.id==='fcCmSubject'){cm.subject=e.target.value;cmLoad();}else if(e.target.id==='fcCmGrade'){cm.grade=e.target.value;cmLoad();}});
 panel.addEventListener('keydown',e=>{if(e.target.id==='fcCmSearch'&&e.key==='Enter'){cm.q=e.target.value.trim().slice(0,60);cmLoad();}});
 panel.addEventListener('click',async e=>{
@@ -1034,6 +1056,9 @@ panel.addEventListener('click',async e=>{
  else if(a==='cm-report'){if(!(await knoxConfirm({title:'Report this deck?',body:'Report it if something in it isn’t school-friendly or is badly wrong. 3 reports take it down until we check it.',ok:'Report',cancel:'Cancel',danger:true})))return;await cmApi('POST',{action:'report',id:cm.deck.id,reason:'student report'});b.textContent='Reported — thanks';b.disabled=true;}
  else if(a==='cm-down'){if(!(await knoxConfirm({title:'Take this deck down?',body:'It leaves Community decks. Your own copy stays in My decks.',ok:'Take down',cancel:'Keep it',danger:true})))return;await cmApi('POST',{action:'unpublish',id:cm.deck.id});cm.list=[];cm.loadedOnce=false;cmHome();}
  else if(a==='cm-publish'){const d=decks.find(x=>x.id===b.dataset.id);if(d)cmPublishView(d);}
+ else if(a==='cm-pub-subject'||a==='cm-pub-grade'){const d=decks.find(x=>x.id===cm.pub?.id);if(!d)return;cm.pub.desc=panel.querySelector('#fcPubDesc')?.value??cm.pub.desc;cm.pub.ok=panel.querySelector('#fcPubOk')?.checked??cm.pub.ok;cm.pub[a==='cm-pub-subject'?'subject':'grade']=b.dataset.v;b.parentElement.querySelectorAll('.fc-chip').forEach(c=>c.classList.toggle('on',c===b));}
+ else if(a==='cm-quick-add'){const d=await cmFetch(b.dataset.id);const c=cmAdd(d);if(c){b.textContent='Added ✓';b.disabled=true;message(`“${c.title}” is in your decks now.`,'ok');}}
+ else if(a==='cm-retry'){cm.loadedOnce=false;cmLoad();}
  else if(a==='cm-publish-go')await cmPublish(b);
  }catch(err){if(err.status===401)window.openAuthModal?.('signup');else message(err.message);}
 });
@@ -1064,7 +1089,13 @@ panel.addEventListener('click',async e=>{
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}
  if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
  if(action==='export')exportView(decks.filter(d=>d.id===id));
- if(action==='share'){const d=decks.find(x=>x.id===id);if(d)shareDeck(d,b);}
+ if(action==='share'){
+  // A little menu: a link to send, or publish it to Community decks.
+  const card=b.closest('.fc-deck'),open=card?.querySelector('.fc-share-menu');
+  panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());
+  if(card&&!open){card.insertAdjacentHTML('beforeend',`<div class="fc-share-menu" role="menu">${btn('🔗 Copy a link','share-link',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}${btn('🌍 Publish to Community','cm-publish',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}</div>`);card.querySelector('.fc-share-menu .fc-btn')?.focus();}
+ }
+ if(action==='share-link'){panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());const d=decks.find(x=>x.id===id);if(d)shareDeck(d,b);}
  if(action==='export-all')exportView(decks);
  if(action==='export-json'&&exportTarget){exportData(exportTarget);message('Saved a Knox backup (.json).','ok');}
  if(action==='export-csv'&&exportTarget){exportCsv(exportTarget);message('Saved a spreadsheet (.csv).','ok');}

@@ -26,3 +26,7 @@ html[data-theme="dark"]:not(.knox-seasonal) .ksim-beta { background: rgba(242,18
 
 .ksim-lab { margin-left: auto; min-height: 44px; padding: 0 16px; border-radius: 14px; border: 2px solid #B98500; background: #FFC800; color: #3D2800; font: 900 15px Nunito, sans-serif; box-shadow: 0 3px 0 #B98500; cursor: pointer; }
 .ksim-badge .kk-ic { width: 18px; height: 18px; }
+
+/* Drawn play/pause/reset icons (no system emoji) */
+.ksim-actions .sl-pi { width: 14px; height: 14px; flex-shrink: 0; }
+.ksim-play, .ksim-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }

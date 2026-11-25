@@ -83,7 +83,7 @@ test('Flashcards Community: decks are moderated, fact-checked, anonymous, photo-
   assert.match(d, /reports >= HIDE_AT \? \{ hidden: true \}/);
   assert.doesNotMatch(d, /displayName|email:/);
   assert.match(fc, /By a Knox student/);
-  assert.match(fc, /data-action="cm-open"/);
+  assert.match(fc, /'cm-open'/);
   assert.match(fc, /'cm-publish'/);
   assert.match(admin, /decoded\.uid !== ADMIN \|\| decoded\.email_verified !== true/);
   assert.match(me, /route === "deck-community"\) return deckCommunity/);
