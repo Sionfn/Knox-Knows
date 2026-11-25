@@ -501,7 +501,7 @@
         const top = Math.max(K * 1.15, ...(s.logistic ? logi : expo).map(v => v * 1.1));
         const ch = chart(g, c, 0, s.years, 0, Math.min(top, K * 3), 48); ch.axes('generations', 'population');
         if (s.logistic && !c.ghost) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = c.red; g.lineWidth = 2; g.beginPath(); g.moveTo(ch.L, ch.Y(K)); g.lineTo(ch.R, ch.Y(K)); g.stroke(); g.restore(); label(g, c, 'carrying capacity', ch.R - 4, ch.Y(K) - 10, c.red, 'right', 11); }
-        if (s.both && s.logistic) ch.plot(y => expo[Math.round(y)], c.light, 2, 0, show);
+        if (s.both && s.logistic) ch.plot(y => { const i = Math.floor(y), f = y - i; return expo[i] + ((expo[i + 1] ?? expo[i]) - expo[i]) * f; }, c.light, 2, 0, show); // smooth, like the main curve
         ch.plot(y => { const i = Math.floor(y), f = y - i; return main[i] + ((main[i + 1] ?? main[i]) - main[i]) * f; }, c.ghost ? c.light : c.green, 3, 0, show);
         const half = logi.findIndex(v => v >= K / 2);
         return `After ${s.years} generations: ${fmt(main[main.length - 1], 0)}${s.logistic ? ` (levels off near ${fmt(K)})${half > 0 ? ` · reaches half of it at generation ${half}` : ''}` : ' (no limit, so it keeps exploding)'}${s.both && s.logistic ? ` · unlimited growth would be ${fmt(expo[expo.length - 1], 0)}` : ''}`;
