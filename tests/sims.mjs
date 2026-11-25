@@ -79,3 +79,12 @@ test('catch-up race: the time unit is the one in the speeds (mph → hours), and
   assert.match(ask, /time= is the time unit inside the speeds \(mph → h, m\/s → s\), never the unit of your answer/);
   assert.match(readFileSync(new URL('../simlab.js', import.meta.url), 'utf8'), /s\.time === 'h' && catchT < 1 \? ` \(\$\{fmt\(catchT \* 60, 0\)\} min\)`/);
 });
+
+test('a "Citation (MLA):" line becomes a citation box with a Copy button (italics kept)', () => {
+  const html = context.renderAnswerHtml('Here is your citation:\n\nCitation (MLA): “Evidence.” *NASA Science*, National Aeronautics and Space Administration, 1 Oct. 2026, science.nasa.gov/climate-change/evidence/. Accessed 25 Nov. 2026.', 'answer');
+  assert.match(html, /<div class="knox-citation">/);
+  assert.match(html, /<span class="kcit-label">MLA citation<\/span>/);
+  assert.match(html, /class="kcit-copy"/);
+  assert.match(html, /<em>NASA Science<\/em>/);
+  assert.doesNotMatch(html, /Citation \(MLA\):/);
+});

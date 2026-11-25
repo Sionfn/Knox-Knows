@@ -2143,6 +2143,11 @@ test('Smart search: a "Sources:" line Knox writes folds into the sources card (e
   res = response();
   await handler(askRequest({ question: 'Give me an MLA citation for the Declaration of Independence', webSearch: true }), res);
   assert.match(res.body.answer, /Sources:\n"Declaration of Independence\." National Archives, 2023/, 'a citation with text is kept');
+
+  text = 'Here is your citation.\n\nCitation (MLA): "Evidence." *NASA Science*, 1 Oct. 2026, [science.nasa.gov/climate-change/evidence/](https://science.nasa.gov/climate-change/evidence/). Accessed 25 Nov. 2026. ([science.nasa.gov](https://science.nasa.gov/climate-change/evidence/))';
+  res = response();
+  await handler(askRequest({ question: 'Give me an MLA citation for an article about climate change', webSearch: true }), res);
+  assert.match(res.body.answer, /^Citation \(MLA\): "Evidence\." \*NASA Science\*, 1 Oct\. 2026, science\.nasa\.gov\/climate-change\/evidence\/\. Accessed 25 Nov\. 2026\.$/m, 'a citation line is plain text: no chip, no link markup');
 });
 
 test('Smart search: fact questions must search (not math), the card shows pages Knox looked at, and refused options retry plainly', async () => {
