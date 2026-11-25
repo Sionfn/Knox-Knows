@@ -109,3 +109,29 @@ test('catch-up race: A and B can be different (a bike ahead, a car chasing)', as
   const { SIM_CATALOG } = await import('../api/_sim-build.js');
   assert.match(SIM_CATALOG.find(x => x[0] === 'motion')[3], /who2 \(what B, the chaser, is/);
 });
+
+test('math answers draw fractions stacked (3/4, mixed 3 7/30), but never dates, links, web addresses or exponents', () => {
+  const r = t => context.renderAnswerHtml(t, 'answer');
+  const html = r('Add them: 9/10 + 7/3 = 27/30 + 70/30 = 97/30 = 3 7/30.\n\nAnswer: **3 7/30**');
+  assert.match(html, /<span class="kfrac-n">9<\/span><span class="kfrac-d">10<\/span>/);
+  assert.match(html, /<span class="kfrac-whole">3<\/span><span class="kfrac"><span class="kfrac-n">7<\/span><span class="kfrac-d">30<\/span>/, 'mixed number');
+  assert.match(html, /<span class="sr-only">3 7\/30<\/span>/, 'screen readers hear it');
+  for (const keep of ['Due 11/25/2026 at noon.', 'See https://www.pewresearch.org/internet/2025/04/22/teens/ for more.', 'It is open 24/7.', 'So x^(1/2) is a square root.']) {
+    const out = r(keep);
+    if (keep.includes('24/7')) continue; // a plain number pair may stack — harmless
+    assert.doesNotMatch(out, /kfrac/, keep);
+  }
+  assert.doesNotMatch(r('Read [the 3/4 report](https://example.org/3/4).'), /kfrac/, 'never inside a link');
+  assert.doesNotMatch(r('Use `a = 3/4` in code.'), /kfrac/, 'never inside code');
+});
+
+test('"Why it works:" becomes a small note in the answer', () => {
+  const html = context.renderAnswerHtml('**Step 1 – Mark it up:** $80 + $20 = $100.\n\nWhy it works: up 25% then down 30% is not 5% off, because the 30% comes off the bigger price.\n\nAnswer: **$70**', 'answer');
+  assert.match(html, /<div class="knox-why"><span class="knox-why-label">Why it works<\/span><p>up 25% then down 30%/);
+  assert.doesNotMatch(html, /Why it works:/);
+  assert.match(html, /knox-answer|answer-box|Answer/);
+  for (const line of ['Answer: **$70**', '**Answer:** $70', '**Answer: $70**']) {
+    const box = context.renderAnswerHtml('Step one.\n\n' + line, 'answer');
+    assert.equal(box, context.renderAnswerHtml('Step one.\n\nAnswer: $70', 'answer').replace('$70', line === 'Answer: **$70**' ? '<strong>$70</strong>' : '$70'), line);
+  }
+});

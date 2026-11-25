@@ -712,7 +712,42 @@
   let pendingUpsell = null; // a plan note that stays while you're on the page
   let host = null, tab = 'home', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
-  function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
+  // Like Flashcards: coming back to Simulations starts on the Lab home (fresh),
+  // and anything you'd lose — a sim Knox just built, or your own scene with
+  // changes — asks before you leave it.
+  let guard = null, fromCard = null; // guard() → true while leaving would lose something
+  const unsaved = () => { try { return !!guard?.(); } catch (_) { return false; } };
+  async function okToLeave(kind = 'leave') {
+    if (!unsaved()) return true;
+    const yes = await ask(kind === 'back'
+      ? { title: 'Discard your changes?', body: 'Your simulation has changes that aren’t saved yet. If you go back now, they’ll be lost.', ok: 'Discard', cancel: 'Keep editing', danger: true }
+      : { title: 'Leave without saving?', body: 'Your simulation has changes that aren’t saved yet. If you leave now, they’ll be lost.', ok: 'Leave', cancel: 'Keep editing', danger: true });
+    if (yes) guard = null;
+    return !!yes;
+  }
+  function show(h, fresh) {
+    host = h; editor?.stop(); editor = null; closeMenu();
+    if (fresh) { tab = 'home'; pendingUpsell = null; buildMsg = ''; if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } }
+    renderHome(); openPendingShare();
+  }
+  // Open in Lab (from an Ask Knox or Learn answer): straight to the sim — no
+  // Lab home flashing first — with a way back to the answer.
+  function openIn(h, id, vals, meta = {}, card = null) {
+    host = h; editor?.stop(); editor = null; closeMenu();
+    tab = 'home'; pendingUpsell = null; if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; }
+    if (!T[id]) { renderHome(); return; }
+    fromCard = card; open(id, vals, meta);
+  }
+  function backToAnswer() {
+    const card = fromCard;
+    editor?.stop(); editor = null; guard = null; fromCard = null;
+    if (history.state?.knoxSection === 'sims') history.back();
+    else {
+      window.closeSims?.();
+      document.querySelectorAll('.sidebar-quicknav-link').forEach(el => el.classList.toggle('sidebar-nav-active', (el.dataset.nav || el.dataset.mobileNav) === (window._learnModeActive ? 'learn' : 'chat')));
+    }
+    setTimeout(() => { if (card?.isConnected) card.scrollIntoView({ block: 'center' }); }, 90);
+  }
   function costLine() {
     const t = tier();
     return t === 'mega' ? '💎 Mega Knox — up to 100 Knox builds a day, every simulation and setting, unlimited saves and Compare runs.'
@@ -759,6 +794,7 @@
 
   function renderHome(keepScroll) {
     if (!host) return;
+    guard = null; fromCard = null; // the editor is gone
     const top = host.scrollTop;
     const saved = readSaved();
     if (!['home', 'build', 'community'].includes(tab)) tab = tab === 'play' ? 'community' : 'home';
@@ -852,11 +888,11 @@
       const r = await fetch('/api/me?route=sim-build', { method: 'POST', signal: ctl.signal, headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, kind: buildOpts.kind, level: buildOpts.level === 'Any' ? '' : buildOpts.level, steps: buildOpts.steps, compare: buildOpts.compare }) });
       const j = await r.json().catch(() => ({}));
       if (buildCtl !== ctl || tab !== 'build') return; // cancelled, or you went somewhere else
-      if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain, steps: j.sim.steps }); return; }
+      if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain, steps: j.sim.steps, fromBuild: true }); return; }
       if (!r.ok || !j.sim || !T[j.sim.type]) throw Object.assign(new Error(j.error || 'Knox couldn’t build that one. Try saying it another way.'), { upgrade: j.upgrade });
       buildBusy = false;
       if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.();
-      open(j.sim.type, j.sim.values, { title: j.sim.title, explain: j.sim.explain, prompt, steps: j.sim.steps, compare: j.sim.compare ? { values: j.sim.compare, label: j.sim.compareLabel } : null });
+      open(j.sim.type, j.sim.values, { title: j.sim.title, explain: j.sim.explain, prompt, fromBuild: true, steps: j.sim.steps, compare: j.sim.compare ? { values: j.sim.compare, label: j.sim.compareLabel } : null });
     } catch (e) {
       if (buildCtl !== ctl || e.name === 'AbortError') return;
       buildBusy = false; buildMsg = esc(e.message) + (e.upgrade && !window.knoxNativeApp ? ' <button type="button" class="sl-link" data-upgrade>See plans</button>' : ''); renderHome();
@@ -982,6 +1018,7 @@
       tier: tier(), explain: meta.explain, backLabel: backLabel(),
       examples: meta.examples ? [['blank', 'Hit the target'], ['ramp', 'Ramp race'], ['spring', 'Bouncy spring'], ['crash', 'Collisions']] : null,
       onExample: id => openBuilder(STARTERS[id]?.()),
+      canLeave: () => okToLeave('back'),
       onBack: () => { editor = null; renderHome(); },
       onSave: sc => saveSim({ type: 'custom', values: sc, title: sc.title }, meta),
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
@@ -990,6 +1027,10 @@
       extraFoot: stepsBox(meta.steps) + communityFoot(meta.community),
     });
     editor = { stop: b.stop, click: () => {} };
+    // Your own scene: changed since it opened (or Knox just built it) → unsaved.
+    // Someone else's Community scene is only being played with.
+    const snap = JSON.stringify(b.scene());
+    guard = meta.community && !meta.community.mine ? (meta.fromBuild ? () => true : null) : () => !!meta.fromBuild || JSON.stringify(b.scene()) !== snap;
   }
 
   // ── The editor ───────────────────────────────────────────────────────────
@@ -998,6 +1039,7 @@
     if (!canUse(id) && !meta.fromAnswer) { tab = 'community'; pendingUpsell = ['plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`]; renderHome(); return; }
     editor?.stop(); setWay(''); pendingUpsell = null;
     editor = makeEditor(id, cleanValues(id, vals), meta);
+    guard = meta.fromBuild ? () => true : null; // a sim Knox just built isn't saved yet
   }
   // Share: the whole setup travels inside the link (squeezed when the browser
   // can), so nothing is stored on a server. Opening it shows the same setup.
@@ -1115,7 +1157,7 @@
     playBtn?.addEventListener('click', () => setPlaying(!playing));
     el.querySelector('.ksim-reroll')?.addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; t = 0; setPlaying(true); });
     el.querySelector('.ksim-back').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = done(); draw(); });
-    el.querySelector('.ksim-lab').addEventListener('click', () => { setPlaying(false); const values = { ...s }; window.openSims?.(); setTimeout(() => open(id, values, { title: meta.title || def.title, fromAnswer: true }), 60); });
+    el.querySelector('.ksim-lab').addEventListener('click', () => { setPlaying(false); const values = { ...s }; window.openSims?.(h => openIn(h, id, values, { title: meta.title || def.title, fromAnswer: true }, el)); });
     new ResizeObserver(() => { if (!playing && el.isConnected) draw(); }).observe(canvas);
     draw();
     return true;
@@ -1139,7 +1181,7 @@
     const shareBtn = `<span class="sl-menu-wrap">${B(`Share <svg class="sl-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`, `data-menu="share"${meta.community ? ' data-nopub="1"' : ''} aria-haspopup="menu" aria-expanded="false"`, 'small')}</span>`;
     host.innerHTML = fill(`<div class="fc-wrap sl-ed">
       ${head(`${ki(def.icon, false)} ${esc(def.group)}`, accentLast(title), meta.explain ? esc(meta.explain) : `${esc(def.blurb)} — move the sliders and watch what happens.`)}
-      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
+      ${topbar(fromCard ? `<span class="sl-backs">${B('← Back to answer', 'data-answer', 'ghost')}${B(backLabel(), 'data-back', 'ghost')}</span>` : B(backLabel(), 'data-back', 'ghost'), `${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
       <div class="sl-main">
         <div class="sl-stage sl-box"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
           <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>Compare</span>${tier() === 'mega' ? '' : '<span class="fc-plus-tag mega" title="Mega Knox">💎 Mega</span>'}`, `data-compare aria-pressed="${!!ghost}"`, 'small' + (tier() === 'mega' ? '' : ' locked') + (ghost ? ' sl-on' : ''))}</div>
@@ -1251,7 +1293,8 @@
           document.querySelector('.sidebar-quicknav-link[data-nav="chat"]')?.click(); window.closeSims?.();
           setTimeout(() => { const input = document.getElementById('appChatInput'); if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); } }, 120);
         }
-        else if (b.matches('[data-back]')) { ed.stop(); editor = null; renderHome(); }
+        else if (b.matches('[data-back]')) okToLeave('back').then(ok => { if (ok) { ed.stop(); editor = null; renderHome(); } });
+        else if (b.matches('[data-answer]')) backToAnswer();
         else if (b.matches('[data-publish]')) { const values = { ...s }, m = { ...meta, title }; publishSim({ type: id, values, title }, () => { tab = tab === 'community' ? 'home' : tab; open(id, values, m); }); }
         else if (b.matches('[data-share]')) shareSim({ type: id, values: { ...s }, title }, b);
         else if (b.matches('[data-full]')) { const st = $('.sl-stage', host); if (document.fullscreenElement) document.exitFullscreen?.(); else st.requestFullscreen?.().catch(() => {}); }
@@ -1307,5 +1350,5 @@
   });
   window.addEventListener('knox-plan-changed', () => { if (host && !editor && host.isConnected) renderHome(); });
 
-  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), mini, templates: Object.keys(T), cleanValues };
+  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), openIn, unsaved, canLeave: () => okToLeave('leave'), mini, templates: Object.keys(T), cleanValues };
 })();

@@ -1794,6 +1794,17 @@
       text-transform: uppercase;
     }
     html[data-theme="dark"] .knox-final-answer-label { color: #74D4FF; }
+    /* Stacked fractions in answers (stackFractions) */
+    .kfrac-vis { display: inline-flex; align-items: center; gap: .14em; vertical-align: middle; }
+    .kfrac { display: inline-flex; flex-direction: column; align-items: center; font-size: .8em; line-height: 1.12; margin: 0 .08em; font-variant-numeric: lining-nums tabular-nums; }
+    .kfrac-n { border-bottom: 1.6px solid currentColor; padding: 0 .2em .05em; }
+    .kfrac-d { padding: .05em .2em 0; }
+    /* "Why it works:" — the idea behind the steps (Knox purple, like Learn) */
+    .knox-why { margin: 0 20px 16px; padding: 10px 14px; border: 2px solid var(--purple); border-radius: 14px; background: var(--purple-light); box-shadow: 0 3px 0 var(--purple-dark); }
+    .knox-why-label { display: block; margin-bottom: 2px; font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; color: var(--purple-dark); }
+    html[data-theme="dark"] .knox-why-label { color: #CE82FF; }
+    .knox-why p { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.55; color: var(--text); }
+    @media (max-width: 600px) { .knox-why { margin: 0 15px 15px; } }
     /* Citation box (Knox green): ready to paste into a Works Cited page */
     .knox-citation { margin: 0 20px 18px; padding: 10px 14px 12px; border: 2px solid var(--green); border-radius: 14px; background: var(--green-light); box-shadow: 0 3px 0 var(--green-dark); }
     .kcit-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
@@ -5917,7 +5928,23 @@ function formatInline(text) {
       .replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s()<>]+)\)/g, '<a class="knox-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       // *Title* → italics, only around words, so 5*2*3 and 2 * 3 stay math.
-      .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).join('');
+      .replace(/(^|[\s(“‘])\*(?=[A-Za-z])([^*\n]*?[^\s*])\*(?=$|[\s.,;:!?)”’—–-])/g, '$1<em>$2</em>')).map((html, index) => index % 2 ? html : stackFractions(html)).join('');
+}
+
+// Math fractions drawn stacked, like a textbook: 3/4, and mixed numbers like
+// 3 7/30. Only plain numbers, and never inside links, code, dates (11/25/2026),
+// web addresses (…/2025/04/…) or exponents like x^(1/2). Screen readers hear "3 7/30".
+function stackFractions(html) {
+  let inLink = 0;
+  const frac = (n, d, whole) => '<span class="kfrac-wrap"><span class="sr-only">' + (whole ? whole + ' ' : '') + n + '/' + d + '</span><span class="kfrac-vis" aria-hidden="true">' +
+    (whole ? '<span class="kfrac-whole">' + whole + '</span>' : '') + '<span class="kfrac"><span class="kfrac-n">' + n + '</span><span class="kfrac-d">' + d + '</span></span></span></span>';
+  return String(html).split(/(<[^>]+>)/g).map(seg => {
+    if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inLink++; else if (/^<\/a>/i.test(seg)) inLink = Math.max(0, inLink - 1); return seg; }
+    if (inLink) return seg;
+    // One pass, so a fraction is drawn once (never re-read inside its own spans).
+    return seg.replace(/(?<![\w\/.:%&#;^-])(?<!\^\()(?:(\d{1,4}) (?=\d{1,4}\/))?(\d{1,5})\/(\d{1,5})(?![\w\/%]|\.\w|-\w|,\d)/g,
+      (m, w, n, d) => +d > 0 && !(n === '24' && d === '7') ? (w && +n < +d ? frac(n, d, w) : (w ? w + ' ' : '') + frac(n, d)) : m);
+  }).join('');
 }
 
 // Give numbered steps the same visual hierarchy regardless of whether a
@@ -7601,9 +7628,13 @@ function renderAnswerHtml(text, kind = 'answer') {
         '<pre><code>' + escHtml(code.join('\n')) + '</code></pre></div>';
       continue;
     }
+    const why = /^(?:\*\*)?Why it works:(?:\*\*)?\s*(.{5,600})$/i.exec(line);
+    if (why && kind !== 'learn') { closeList(); flush(); html += '<div class="knox-why"><span class="knox-why-label">Why it works</span><p>' + formatInline(why[1]) + '</p></div>'; continue; }
     const citation = /^(?:[-*•]\s+)?Citation(?:\s*\(([^)\n]{2,24})\))?:\s*(.{5,1200})$/i.exec(line);
     if (citation) { closeList(); flush(); html += citationBox(citation[1], citation[2]); continue; }
-    const result = /^Answer:\s*(.{1,1200})$/i.exec(line);
+    // "Answer: x", "**Answer:** x" and "**Answer: x**" all get the box.
+    const result = /^(\*\*)?Answer:(\*\*)?\s*(.{1,1200})$/i.exec(line);
+    if (result) result[1] = result[1] && !result[2] ? result[3].replace(/\*\*$/, '') : result[3];
     if (result && kind !== 'learn') {
       closeList();
       if (!html && i === 0 && lines.length > 1) firstAnswer = result[1];
@@ -7937,6 +7968,7 @@ window.addEventListener('pagehide', () => {
   async function leavePanels() {
     window.closeCalc?.();
     if (document.body.classList.contains('knox-flashcards') && window.closeFlashcards && !(await window.closeFlashcards())) return false;
+    if (window.simsCanLeave && !(await window.simsCanLeave())) return false; // an unsaved sim
     window.closeSims?.();
     return true;
   }
