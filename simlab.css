@@ -5,28 +5,32 @@
    Flashcards wears green and Learn wears purple. This file adds the few
    things Flashcards doesn't have (the picture box, sliders, challenges). */
 
-/* ── Knox yellow ── */
+/* ── Colors: Lab yellow, and each way's own color on its pages (like Flashcards' data-way) ── */
 #simsPanel, .sl-modal {
-  --fc-acc: #FFC800; --fc-acc-dark: #B98500; --fc-acc-light: #FFF4C2; --sl-ink: #7A5400; --sl-edge: #D9A300;
+  --fc-acc: #FFC800; --fc-acc-dark: #B98500; --fc-acc-light: #FFF4C2; --sl-ink: #7A5400;
+  --sl-btn: #FFC800; --sl-btn-edge: #D9A300; --sl-btn-ledge: #B98500; --sl-btn-ink: #3D2800; --sl-accent: #F0A800;
+  --bdg-c: #FFC800; --bdg-i: #8A6300; --bdg-t: #FFF4C2;
   /* older names used by the drawings */
   --sl: #F2B705; --sl-d: #B98500; --sl-l: #FFF4C2;
 }
-html[data-theme="dark"] #simsPanel, html[data-theme="dark"] .sl-modal { --fc-acc-light: rgba(255, 200, 0, .16); --sl-ink: #FFD45C; --sl-l: rgba(255, 200, 0, .14); }
-#simsPanel .kx-wrap, .sl-modal .kx-wrap { --kx-acc: #FFC800; --kx-acc-dark: #B98500; --kx-acc-light: var(--fc-acc-light); --kx-ink: var(--sl-ink); }
-#simsPanel .fc-badge { --bdg: #FFC800; --bdg-ink: #8A6300; --bdg-tint: #FFF4C2; }
-html.knox-seasonal #simsPanel .fc-badge { --bdg: #E0B04A; --bdg-ink: #7A5400; --bdg-tint: #FBEFCB; }
-#simsPanel .fc-title .accent { color: #F0A800; }
-html[data-theme="dark"] #simsPanel .fc-title .accent { color: #FFC800; }
-html.knox-seasonal #simsPanel .fc-title .accent { color: #C98A00 !important; }
-/* Yellow buttons get Knox's dark-brown writing (like Mega and the blind bags), in capitals like every main button. */
-#simsPanel .fc-btn.primary, .sl-modal .fc-btn.primary { background: #FFC800; border-color: var(--sl-edge); color: #3D2800; box-shadow: 0 4px 0 #B98500; }
-#simsPanel .fc-btn.primary:hover, .sl-modal .fc-btn.primary:hover { box-shadow: 0 6px 0 #B98500; }
-#simsPanel .fc-btn.primary:active, .sl-modal .fc-btn.primary:active { box-shadow: 0 1px 0 #B98500; }
-#simsPanel .fc-btn.primary .kk-ic { color: #3D2800 !important; }
-/* …except inside a sim card, where the main button wears the card's own color (like decks). */
-#simsPanel .fc-deck .fc-btn.primary { background: var(--chip); border-color: var(--chip-ledge); color: #fff; box-shadow: 0 4px 0 var(--chip-ledge); }
-#simsPanel .fc-deck .fc-btn.primary:hover { box-shadow: 0 6px 0 var(--chip-ledge); }
-#simsPanel .fc-deck .fc-btn.primary .kk-ic { color: #fff !important; }
+#simsPanel[data-way="build"], .sl-modal[data-way="build"] { --fc-acc: var(--orange); --fc-acc-dark: var(--orange-dark); --fc-acc-light: var(--orange-light); --sl-ink: var(--orange-dark);
+  --sl-btn: var(--orange); --sl-btn-edge: var(--orange-dark); --sl-btn-ledge: var(--orange-dark); --sl-btn-ink: #fff; --sl-accent: var(--orange); --bdg-c: var(--orange); --bdg-i: var(--orange-dark); --bdg-t: var(--orange-light); }
+#simsPanel[data-way="make"], .sl-modal[data-way="make"] { --fc-acc: var(--green); --fc-acc-dark: var(--green-dark); --fc-acc-light: var(--green-light); --sl-ink: var(--green-dark);
+  --sl-btn: var(--green); --sl-btn-edge: var(--green-dark); --sl-btn-ledge: var(--green-dark); --sl-btn-ink: #fff; --sl-accent: var(--green); --bdg-c: var(--green); --bdg-i: var(--green-dark); --bdg-t: var(--green-light); }
+#simsPanel[data-way="community"], .sl-modal[data-way="community"] { --fc-acc: var(--blue); --fc-acc-dark: var(--blue-dark); --fc-acc-light: var(--blue-light); --sl-ink: var(--blue-dark);
+  --sl-btn: var(--blue); --sl-btn-edge: var(--blue-dark); --sl-btn-ledge: var(--blue-dark); --sl-btn-ink: #fff; --sl-accent: var(--blue); --bdg-c: var(--blue); --bdg-i: var(--blue-dark); --bdg-t: var(--blue-light); }
+html[data-theme="dark"] #simsPanel:not([data-way]), html[data-theme="dark"] #simsPanel[data-way=""], html[data-theme="dark"] .sl-modal { --fc-acc-light: rgba(255, 200, 0, .16); --sl-l: rgba(255, 200, 0, .14); --sl-accent: #FFC800; }
+html[data-theme="dark"] #simsPanel, html[data-theme="dark"] .sl-modal { --sl-ink: var(--fc-acc); }
+#simsPanel .kx-wrap, .sl-modal .kx-wrap { --kx-acc: var(--fc-acc); --kx-acc-dark: var(--fc-acc-dark); --kx-acc-light: var(--fc-acc-light); --kx-ink: var(--sl-ink); }
+#simsPanel .fc-badge { --bdg: var(--bdg-c); --bdg-ink: var(--bdg-i); --bdg-tint: var(--bdg-t); }
+html.knox-seasonal #simsPanel:not([data-way]) .fc-badge, html.knox-seasonal #simsPanel[data-way=""] .fc-badge { --bdg: #E0B04A; --bdg-ink: #7A5400; --bdg-tint: #FBEFCB; }
+#simsPanel .fc-title .accent { color: var(--sl-accent); }
+html.knox-seasonal #simsPanel .fc-title .accent { color: var(--sl-accent) !important; }
+/* Main buttons in the page's color, in capitals (yellow ones get Knox's dark-brown writing, like Mega's). */
+#simsPanel .fc-btn.primary, .sl-modal .fc-btn.primary { background: var(--sl-btn); border-color: var(--sl-btn-edge); color: var(--sl-btn-ink); box-shadow: 0 4px 0 var(--sl-btn-ledge); }
+#simsPanel .fc-btn.primary:hover, .sl-modal .fc-btn.primary:hover { box-shadow: 0 6px 0 var(--sl-btn-ledge); }
+#simsPanel .fc-btn.primary:active, .sl-modal .fc-btn.primary:active { box-shadow: 0 1px 0 var(--sl-btn-ledge); }
+#simsPanel .fc-btn.primary .kk-ic { color: var(--sl-btn-ink) !important; }
 #simsPanel .fc-chip.on { color: var(--sl-ink); }
 #simsPanel .fc-btn.ghost:hover { color: var(--sl-ink); }
 
@@ -124,7 +128,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 .sl-field > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .sl-field output { color: var(--text); font-size: 13.5px; letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .sl-field[hidden], .sl-toggle[hidden] { display: none; }
-.sl-field input[type=range] { width: 100%; margin: 2px 0 0; accent-color: #FFC800; }
+.sl-field input[type=range] { width: 100%; margin: 2px 0 0; accent-color: var(--fc-acc); }
 .sl-field input[type=text], .sl-text input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none; box-shadow: 0 2px 0 var(--border); outline: none; }
 .sl-text input { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-weight: 800; }
 .sl-field input[type=text]:focus, .sl-text input:focus { border-color: var(--fc-acc); }
@@ -134,7 +138,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 .sl-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .sl-sw { position: relative; flex-shrink: 0; width: 42px; height: 24px; box-sizing: border-box; border-radius: 999px; background: var(--border); transition: background .15s; }
 .sl-sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s; }
-.sl-toggle input:checked + .sl-sw { background: #FFC800; }
+.sl-toggle input:checked + .sl-sw { background: var(--fc-acc); }
 .sl-toggle input:checked + .sl-sw::after { transform: translateX(18px); }
 .sl-toggle input:focus-visible + .sl-sw { outline: 3px solid var(--blue); outline-offset: 2px; }
 .locked { opacity: .55; cursor: not-allowed; }
@@ -233,7 +237,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 .sb-examples .fc-field-label { margin: 0 4px 0 2px; color: var(--sl-ink); }
 /* Knox's sticker and student lines on Community cards */
 .sl-pick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.sl-knox { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 3px; border-radius: 999px; border: 1.5px solid #FFC800; background: var(--fc-acc-light); color: var(--sl-ink); font-size: 11px; font-weight: 900; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+.sl-knox { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 3px; border-radius: 999px; border: 1.5px solid #FFC800; background: #FFF4C2; color: #7A5400; font-size: 11px; font-weight: 900; letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .sl-knox img { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; }
 .sl-by { font-size: 11.5px; font-weight: 800; color: var(--text-light); }
 .sl-cm-sec { max-width: 960px; margin: 0 auto 26px; }
@@ -241,5 +245,32 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 .sl-sec-head h2 { margin: 0; font-size: 18px; font-weight: 900; color: var(--text); }
 .sl-sec-head .fc-chips { margin-left: auto; }
 /* "Saved" note, like Flashcards' */
-#simsPanel .fc-toast.ok { border-color: #FFC800; box-shadow: 0 3px 0 #B98500; }
+#simsPanel .fc-toast.ok { border-color: var(--fc-acc); box-shadow: 0 3px 0 var(--fc-acc-dark); }
 @media (max-width: 720px) { .sl-sec-head .fc-chips { margin-left: 0; width: 100%; } }
+html[data-theme="dark"] .sl-knox { background: rgba(255, 200, 0, .16); color: #FFD45C; }
+
+/* Share and ⋯ menus (the Knox dropdown's look) */
+.sl-menu-wrap { position: relative; display: inline-flex; }
+.kx-menu.sl-menu { left: auto; right: 0; min-width: 220px; width: max-content; }
+.sl-menu .kx-opt { gap: 10px; justify-content: flex-start; }
+.sl-menu .kx-opt .kk-ic { width: 18px; height: 18px; }
+.sl-menu .kx-opt.sl-danger { color: var(--red); }
+.sl-chev { width: 14px; height: 14px; margin-left: -2px; transition: transform .15s; }
+.sl-menu-wrap.is-open .sl-chev { transform: rotate(180deg); }
+/* My sims: Knox cards with a small ⋯ button */
+.sl-card-wrap { position: relative; min-width: 0; display: flex; }
+.sl-card-wrap > .sl-pick { flex: 1; padding-right: 52px; }
+.sl-dots-wrap { position: absolute; top: 12px; right: 12px; }
+.sl-dots { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+.sl-dots svg { width: 18px; height: 18px; fill: currentColor; }
+.sl-dots:hover, .sl-menu-wrap.is-open .sl-dots { color: var(--text); border-color: var(--text-light); }
+/* Knox's step-by-step working (Mega) */
+.sl-steps { margin-top: 14px; padding: 14px 16px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream); }
+.sl-steps ol { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.sl-steps li { font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--text); }
+/* Plan-locked settings (open the plans, like Flashcards') */
+.sl-switch-locked { width: 100%; background: var(--surface); text-align: left; font: inherit; color: var(--text); opacity: .75; }
+.sl-switch-locked .fc-plus-tag { margin-left: 4px; }
+/* A tool that's switched on (Compare): lit in the page's color, same size */
+#simsPanel .fc-btn.sl-on { border-color: var(--fc-acc); background: var(--fc-acc-light); color: var(--sl-ink); box-shadow: 0 3px 0 var(--fc-acc-dark); }
+#simsPanel .fc-plus-tag { white-space: nowrap; display: inline-block; }

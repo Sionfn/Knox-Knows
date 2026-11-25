@@ -688,6 +688,10 @@
   const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list.slice(0, 200))); return true; } catch (_) { return false; } };
 
   // ── The page ─────────────────────────────────────────────────────────────
+  // Knox builds it settings (like Flashcards' Make with Knox options).
+  const buildOpts = { kind: 'auto', level: 'Any', steps: false, compare: false };
+  const LEVELS = ['Any', 'Elementary', 'Middle school', 'High school', 'College'];
+  const planTag = t => t === 'mega' ? '<span class="fc-plus-tag mega">💎 Mega</span>' : '<span class="fc-plus-tag">⚡ Plus</span>';
   let host = null, tab = 'home', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
   function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
@@ -720,7 +724,7 @@
   function ask({ title, body = '', input = null, ok = 'OK', cancel = 'Cancel', danger = false }) {
     return new Promise(resolve => {
       const prev = document.activeElement, wrap = document.createElement('div');
-      wrap.className = 'fc-modal sl-modal'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'slModalTitle');
+      wrap.className = 'fc-modal sl-modal'; wrap.dataset.way = host?.closest('#simsPanel')?.dataset.way || ''; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'slModalTitle');
       wrap.innerHTML = `<div class="fc-modal-card"><img src="/knox-logo-square.jpg" alt=""><h2 id="slModalTitle">${esc(title)}</h2>${body ? `<p>${esc(body)}</p>` : ''}
         ${input != null ? `<input class="sl-input sl-modal-input" type="text" maxlength="40" value="${esc(input)}" aria-label="Name">` : ''}
         <div class="fc-modal-actions"><button type="button" class="fc-btn" data-r="0">${esc(cancel)}</button><button type="button" class="fc-btn ${danger ? 'danger-solid' : 'primary'}" data-r="1">${esc(ok)}</button></div></div>`;
@@ -751,6 +755,13 @@
           <textarea id="slPrompt" class="sl-input sl-textarea" maxlength="500" placeholder="e.g. A basketball thrown at 8 m/s at 50° from 2 m up — does it reach a hoop 5 m away?">${esc(lastPrompt)}</textarea>
           <span class="fc-field-label sl-label-gap">Try one</span>
           <div class="fc-chips fc-examples">${EXAMPLES.map(e => chipB(esc(e), `data-example="${esc(e)}"`)).join('')}</div>
+          <div class="fc-make-opts">
+            <div><span class="fc-field-label">What kind?</span><div class="fc-chips">${[['auto', 'Let Knox pick'], ['ready', 'Ready-made'], ['scratch', 'From scratch']].map(([v, l]) => v === 'scratch' && !paid() ? chipB(`${l} ${planTag('plus')}`, 'data-upgrade title="Knox Plus builds scenes from scratch"') : chipB(l, `data-bopt="kind" data-v="${v}"`, buildOpts.kind === v)).join('')}</div></div>
+            <div><span class="fc-field-label">Grade level</span><div class="fc-chips">${LEVELS.map(l => l !== 'Any' && !paid() ? chipB(`${l} ${planTag('plus')}`, 'data-upgrade title="Knox Plus picks a grade level"') : chipB(l, `data-bopt="level" data-v="${l}"`, buildOpts.level === l)).join('')}</div></div>
+          </div>
+          ${[['steps', 'Step-by-step explanation', 'Knox works it out with your numbers, one step at a time.'], ['compare', 'Compare two setups', 'Knox adds a second run to compare — like Earth vs the Moon.']].map(([k, t, sub]) => tier() === 'mega'
+            ? `<label class="fc-switch"><input type="checkbox" data-bswitch="${k}"${buildOpts[k] ? ' checked' : ''}><span class="fc-switch-track" aria-hidden="true"></span><span><b>${t}</b><small>${sub}</small></span></label>`
+            : `<button type="button" class="fc-switch sl-switch-locked" data-upgrade><span class="fc-switch-track" aria-hidden="true"></span><span><b>${t} ${planTag('mega')}</b><small>${sub}</small></span></button>`).join('')}
           ${buildMsg ? `<p class="sl-msg" role="status">${buildMsg}</p>` : ''}
           <div class="fc-toolbar" style="margin-top:20px">${B(`${ki('spark', false)} Build it${tier() === 'free' ? ' · 2 credits' : ''}`, 'data-build', 'primary')}</div>
           <p class="fc-note" style="margin-top:14px">Knox can make mistakes — check the numbers before you use them for homework.</p>
@@ -796,17 +807,19 @@
         <div class="fc-toolbar fc-toolbar-quiet">${B(`${PI.dice} Surprise me`, 'data-surprise', 'ghost small')}</div>
         <p class="fc-sync-note">Your sims save on this device${max === Infinity ? '' : ` · ${saved.length} of ${max} saved`}.</p>
         <div style="height:22px"></div>
-        ${saved.length ? `<div class="fc-grid">${saved.map((x, i) => `<article class="fc-deck" data-flavor="${flavorOf(x.type)}">
-            <div class="fc-deck-top"><div class="fc-deck-icon" aria-hidden="true">${ki(iconOf(x.type), false)}</div><div style="min-width:0"><h2 class="fc-deck-name">${esc(x.title)}</h2>
-            <div class="fc-pills"><span class="fc-pill">${esc(kindOf(x.type))}</span><span class="fc-pill">${new Date(x.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span></div></div></div>
-            <div class="fc-deck-actions">${B(`${PI.play} Open`, `data-saved="${i}"`, 'primary small')}${B('Share', `data-share-saved="${i}"`, 'small')}</div>
-            <div class="fc-deck-more">${B('Rename', `data-rename="${i}"`, 'ghost small')}${B('Delete', `data-unsave="${i}"`, 'ghost small danger')}</div></article>`).join('')}</div>`
+        ${saved.length ? `<section class="sl-cm-sec sl-mine"><div class="sl-sec-head"><h2>My sims</h2><span class="fc-pill">${saved.length}</span></div>
+            <div class="sl-picks">${saved.map((x, i) => `<div class="sl-card-wrap">${pick(`data-saved="${i}"`, flavorOf(x.type), iconOf(x.type), esc(x.title), `${esc(kindOf(x.type))} · ${new Date(x.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`)}
+              <span class="sl-menu-wrap sl-dots-wrap"><button type="button" class="sl-dots" data-menu="saved" data-i="${i}" aria-haspopup="menu" aria-expanded="false" aria-label="More for ${esc(x.title)}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/></svg></button></span></div>`).join('')}</div></section>`
           : `<div class="fc-empty fc-empty-start"><img src="/knox-logo-square.jpg" alt=""><div><h2>Your first simulation starts here.</h2><p class="fc-sub">Pick a way above. When you press Save, it shows up here.</p></div></div>`}
         </div>`;
     }
+    setWay(tab === 'build' ? 'build' : tab === 'community' ? 'community' : '');
     host.innerHTML = fill(html);
     host.scrollTop = keepScroll ? top : 0;
   }
+  // Like Flashcards: a page you reach from a way card wears that card's color
+  // (Knox builds it orange, Make your own green, Community blue); the rest is Lab yellow.
+  function setWay(way) { const panel = host?.closest('#simsPanel'); if (panel) panel.dataset.way = way; }
 
   async function build() {
     const box = $('#slPrompt', host), prompt = (box?.value || '').trim(); lastPrompt = prompt;
@@ -817,14 +830,14 @@
     const ctl = new AbortController(); buildCtl = ctl;
     buildBusy = true; buildMsg = ''; renderHome();
     try {
-      const r = await fetch('/api/me?route=sim-build', { method: 'POST', signal: ctl.signal, headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+      const r = await fetch('/api/me?route=sim-build', { method: 'POST', signal: ctl.signal, headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, kind: buildOpts.kind, level: buildOpts.level === 'Any' ? '' : buildOpts.level, steps: buildOpts.steps, compare: buildOpts.compare }) });
       const j = await r.json().catch(() => ({}));
       if (buildCtl !== ctl || tab !== 'build') return; // cancelled, or you went somewhere else
-      if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain }); return; }
+      if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain, steps: j.sim.steps }); return; }
       if (!r.ok || !j.sim || !T[j.sim.type]) throw Object.assign(new Error(j.error || 'Knox couldn’t build that one. Try saying it another way.'), { upgrade: j.upgrade });
       buildBusy = false;
       if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.();
-      open(j.sim.type, j.sim.values, { title: j.sim.title, explain: j.sim.explain, prompt });
+      open(j.sim.type, j.sim.values, { title: j.sim.title, explain: j.sim.explain, prompt, steps: j.sim.steps, compare: j.sim.compare ? { values: j.sim.compare, label: j.sim.compareLabel } : null });
     } catch (e) {
       if (buildCtl !== ctl || e.name === 'AbortError') return;
       buildBusy = false; buildMsg = esc(e.message) + (e.upgrade && !window.knoxNativeApp ? ' <button type="button" class="sl-link" data-upgrade>See plans</button>' : ''); renderHome();
@@ -848,6 +861,18 @@
     catch (e) { community.error = e.message; }
     community.busy = false; if (tab === 'community' && !editor) renderHome(true);
   }
+  // Sorting re-orders what's on screen right away, then quietly fetches that sort's list.
+  function sortCommunity() { const k = community.sort === 'top' ? 'likes' : community.sort === 'played' ? 'plays' : 'createdAt'; community.list = [...community.list].sort((a, b) => (b[k] || 0) - (a[k] || 0)); }
+  async function refreshCommunity() {
+    const sort = community.sort;
+    try {
+      const list = (await communityApi('GET', null, '&sort=' + sort)).sims || [];
+      if (community.sort !== sort) return;
+      const same = list.length === community.list.length && list.every((x, i) => x.id === community.list[i].id && x.plays === community.list[i].plays && x.likes === community.list[i].likes);
+      community.list = list; community.loaded = true; community.error = '';
+      if (!same && tab === 'community' && !editor && !pub) renderHome(true);
+    } catch (_) {}
+  }
   async function openCommunity(id) {
     try {
       const { sim } = await communityApi('GET', null, '&id=' + encodeURIComponent(id));
@@ -857,30 +882,53 @@
     } catch (e) { community.note = e.message; tab = 'community'; renderHome(true); }
   }
   // Publish: a small form over the page (title, a short description, a promise).
-  function publishSim(item, btn) {
+  // Publish to Community: its own page, like Flashcards' (not a pop-up).
+  let pub = null;
+  function publishSim(item, back) {
     if (!window.currentUser) { window.openAuthModal?.('signup'); return; }
-    const prev = document.activeElement, box = document.createElement('div');
-    box.className = 'fc-modal sl-modal'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'slPubT');
-    box.innerHTML = `<div class="fc-modal-card sl-pub"><img src="/knox-logo-square.jpg" alt=""><h2 id="slPubT">Publish to Community sims</h2><p>Anyone can find it and play with it. Your name is never shown.</p>
-      <label class="fc-field-label" for="slPubTitle">Title</label><input id="slPubTitle" type="text" class="sl-input sl-pub-title" maxlength="40" value="${esc(item.title || '')}">
-      <label class="fc-field-label" for="slPubDesc">What should people try? <span class="sl-opt">(optional)</span></label><textarea id="slPubDesc" class="sl-input sl-textarea sl-pub-desc" maxlength="200" rows="3" placeholder="e.g. Can you get the ball into the hoop on the Moon?"></textarea>
-      <label class="fc-switch"><input type="checkbox" class="sl-pub-ok"><span class="fc-switch-track" aria-hidden="true"></span><span><b>It’s school-friendly</b><small>No names, links, phone numbers or anything personal.</small></span></label>
-      <p class="sl-msg" hidden></p>
-      <div class="fc-modal-actions"><button type="button" class="fc-btn" data-pub-cancel>Cancel</button><button type="button" class="fc-btn primary" data-pub-go>Publish</button></div></div>`;
-    document.body.append(box); box.querySelector('.sl-pub-title').focus();
-    const msg = box.querySelector('.sl-msg'), close = () => { box.remove(); prev?.focus?.({ preventScroll: true }); };
-    box.addEventListener('click', async e => {
-      if (e.target === box || e.target.closest('[data-pub-cancel]')) { close(); return; }
-      const go = e.target.closest('[data-pub-go]'); if (!go) return;
-      if (!box.querySelector('.sl-pub-ok').checked) { msg.textContent = 'Turn on “It’s school-friendly” first.'; msg.hidden = false; return; }
-      go.disabled = true; go.textContent = 'Checking…'; msg.hidden = true;
-      try {
-        await communityApi('POST', { action: 'publish', sim: { type: item.type, values: item.values, title: box.querySelector('.sl-pub-title').value, desc: box.querySelector('.sl-pub-desc').value } });
-        close(); community.loaded = false; if (btn?.isConnected) { btn.textContent = 'Published ✓'; setTimeout(() => { if (btn.isConnected) btn.textContent = 'Publish'; }, 2400); }
-      } catch (err) { msg.textContent = err.message; msg.hidden = false; go.disabled = false; go.textContent = 'Publish'; }
-    });
-    box.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    editor?.stop(); editor = null; pub = { item, back }; setWay('');
+    host.innerHTML = fill(`<div class="fc-wrap sl-wrap">${head(`${ki('globe', false)} Publish to Community`, `Share <span class="accent">${esc(item.title || 'your sim')}</span> with everyone.`, 'Anyone can find it in Community and play it. Your name is never shown.')}
+      ${topbar(B('← Back', 'data-pub-back', 'ghost'))}
+      <div class="fc-make sl-box">
+        <label class="fc-field-label" for="slPubTitle">Title</label>
+        <input id="slPubTitle" type="text" class="sl-input" maxlength="40" value="${esc(item.title || '')}">
+        <label class="fc-field-label" for="slPubDesc" style="margin-top:16px">What should people try? <span class="sl-opt">(optional)</span></label>
+        <textarea id="slPubDesc" class="sl-input sl-textarea" rows="2" maxlength="200" placeholder="e.g. Can you get the ball into the hoop on the Moon?"></textarea>
+        <label class="fc-switch"><input type="checkbox" id="slPubOk"><span class="fc-switch-track" aria-hidden="true"></span><span><b>It’s school-friendly</b><small>No bad words, and no personal info — no names, links or phone numbers.</small></span></label>
+        <p class="sl-msg" id="slPubMsg" hidden></p>
+        <div class="fc-toolbar" style="margin-top:20px">${B(`${ki('globe', false)} Publish`, 'data-pub-go', 'primary')}</div>
+        <p class="fc-note" style="margin-top:14px">Knox checks the words first, so this takes a few seconds · up to 10 a day.</p>
+      </div></div>`);
+    host.scrollTop = 0;
   }
+  async function publishGo(b) {
+    if (!pub) return;
+    const msg = $('#slPubMsg', host), say = t => { msg.textContent = t; msg.hidden = false; };
+    if (!$('#slPubOk', host)?.checked) { say('Turn on “It’s school-friendly” first.'); return; }
+    b.disabled = true; b.textContent = 'Checking…'; msg.hidden = true;
+    try {
+      await communityApi('POST', { action: 'publish', sim: { type: pub.item.type, values: pub.item.values, title: $('#slPubTitle', host).value, desc: $('#slPubDesc', host).value } });
+      pub = null; community.loaded = false; community.sort = 'new'; tab = 'community'; renderHome();
+      toast('Published! It’s in Community now.');
+    } catch (err) { say(err.message); b.disabled = false; b.innerHTML = fill(`${ki('globe', false)} Publish`); }
+  }
+
+  // Small Knox menus (the dropdown's look) for Share and a sim card's ⋯.
+  function closeMenu() { host?.querySelectorAll('.sl-menu').forEach(m => { const w = m.parentElement; w?.classList.remove('is-open'); w?.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false'); m.remove(); }); }
+  function openMenu(btn, items) {
+    const wrap = btn.closest('.sl-menu-wrap'); if (!wrap) return;
+    const was = wrap.classList.contains('is-open'); closeMenu(); if (was) return;
+    const m = document.createElement('div'); m.className = 'kx-menu sl-menu'; m.setAttribute('role', 'menu');
+    m.innerHTML = fill(items.filter(Boolean).map(([label, attrs, cls = '']) => `<button type="button" class="kx-opt ${cls}" role="menuitem" ${attrs}><span>${label}</span></button>`).join(''));
+    wrap.append(m); wrap.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true');
+    const box = host.getBoundingClientRect(), r = m.getBoundingClientRect(); if (r.bottom > box.bottom - 8) m.classList.add('up');
+    m.querySelector('.kx-opt')?.focus({ preventScroll: true });
+  }
+  document.addEventListener('pointerdown', e => { if (host && !e.target.closest('.sl-menu-wrap')) closeMenu(); }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && host?.querySelector('.sl-menu')) { const t = host.querySelector('.sl-menu-wrap.is-open [aria-expanded]'); closeMenu(); t?.focus(); } });
+
+  // Mega "Step-by-step explanation": Knox's working, under the picture.
+  const stepsBox = steps => Array.isArray(steps) && steps.length ? `<div class="sl-steps"><span class="fc-field-label">How Knox worked it out</span><ol>${steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>` : '';
   const communityFoot = c => c ? `<div class="fc-cm-foot sl-cm-foot"><span class="fc-pill">${c.mine ? 'Yours' : 'By a Knox student'}</span><span class="sl-flex"></span>${B(`♥ ${c.likes}`, `data-clike="${c.id}"`, 'ghost small' + (c.liked ? ' on' : ''))}${c.mine ? B('Take it down', `data-cdown="${c.id}"`, 'ghost small danger') : B('Report', `data-creport="${c.id}"`, 'ghost small danger')}</div>` : '';
   async function communityAction(b) {
     try {
@@ -910,6 +958,7 @@
   function openBuilder(scene, meta = {}) {
     if (!window.knoxSimBuilder) return;
     editor?.stop();
+    setWay('make');
     const b = window.knoxSimBuilder.mount(host, scene, {
       tier: tier(), explain: meta.explain, backLabel: backLabel(),
       examples: meta.examples ? [['blank', 'Hit the target'], ['ramp', 'Ramp race'], ['spring', 'Bouncy spring'], ['crash', 'Collisions']] : null,
@@ -918,8 +967,8 @@
       onSave: sc => saveSim({ type: 'custom', values: sc, title: sc.title }, meta),
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
       // Someone else's Community sim isn't yours to publish again (Save keeps a copy).
-      onPublish: meta.community && !meta.community.mine ? null : (sc, btn) => publishSim({ type: 'custom', values: sc, title: sc.title }, btn),
-      extraFoot: communityFoot(meta.community),
+      onPublish: meta.community && !meta.community.mine ? null : sc => publishSim({ type: 'custom', values: sc, title: sc.title }, () => openBuilder(sc, meta)),
+      extraFoot: stepsBox(meta.steps) + communityFoot(meta.community),
     });
     editor = { stop: b.stop, click: () => {} };
   }
@@ -928,7 +977,7 @@
   function open(id, vals, meta = {}) {
     if (!T[id]) return;
     if (!canUse(id)) { tab = 'community'; renderHome(); upsell('plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`); return; }
-    editor?.stop();
+    editor?.stop(); setWay('');
     editor = makeEditor(id, cleanValues(id, vals), meta);
   }
   // Share: the whole setup travels inside the link (squeezed when the browser
@@ -952,9 +1001,8 @@
       if (url.length > 7000) throw new Error('too long');
       if (navigator.share && /Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) await navigator.share({ title: item.title || 'Knox simulation', url }).catch(() => {});
       else await navigator.clipboard.writeText(url);
-      btn.textContent = 'Link copied ✓';
-    } catch (_) { btn.textContent = 'Couldn’t share that one'; }
-    setTimeout(() => { if (btn.isConnected) btn.textContent = 'Share'; }, 2200);
+      toast('Link copied — send it to anyone.');
+    } catch (_) { toast('Couldn’t share that one.'); }
   }
   // A shared link: open it once the Lab is on screen.
   let pendingShare = (() => { try { return new URLSearchParams(location.search).get('sim') || ''; } catch (_) { return ''; } })();
@@ -999,6 +1047,9 @@
   function makeEditor(id, s, meta) {
     const def = T[id], params = paramsOf(id), basic = params.filter(p => !p.more), more = params.filter(p => p.more);
     let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0, ghost = null, seed = (Math.random() * 1e9) | 0, title = meta.title || def.title, moreOpen = paid();
+    // Mega "Compare two setups": Knox's second run starts faded behind yours.
+    let ghostLabel = 'your saved setup';
+    if (meta.compare?.values && tier() === 'mega') { ghost = cleanValues(id, { ...s, ...meta.compare.values }); ghostLabel = meta.compare.label || 'the second setup'; }
     const ctl = p => {
       const v = s[p.k], lock = p.more && !paid();
       if (p.type === 'text') return `<label class="sl-field sl-text${lock ? ' locked' : ''}"><span>${esc(p.label)}</span><input type="text" data-k="${p.k}" value="${esc(v)}" spellcheck="false" autocomplete="off" maxlength="200"${lock ? ' disabled' : ''}></label>`;
@@ -1008,14 +1059,16 @@
       return `<label class="sl-field${lock ? ' locked' : ''}"${hide}><span>${esc(p.label)} <output data-out="${p.k}">${esc(unitFmt(p, v))}</output></span><input type="range" data-k="${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${v}"${lock ? ' disabled' : ''}></label>`;
     };
     const presets = def.presets || [];
+    const shareBtn = `<span class="sl-menu-wrap">${B(`Share <svg class="sl-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`, `data-menu="share"${meta.community ? ' data-nopub="1"' : ''} aria-haspopup="menu" aria-expanded="false"`, 'small')}</span>`;
     host.innerHTML = fill(`<div class="fc-wrap sl-ed">
       ${head(`${ki(def.icon, false)} ${esc(def.group)}`, accentLast(title), meta.explain ? esc(meta.explain) : `${esc(def.blurb)} — move the sliders and watch what happens.`)}
-      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${B('Share', 'data-share', 'small')}${meta.community ? '' : B('Publish', 'data-publish', 'small')}${B('Save', 'data-save', 'primary small')}`)}
+      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
       <div class="sl-main">
         <div class="sl-stage sl-box"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
-          <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>${ghost ? 'Stop comparing' : 'Compare'}</span>${tier() === 'mega' ? '' : '<span class="sl-tag mega" title="Mega Knox">💎</span>'}`, 'data-compare', 'small' + (tier() === 'mega' ? '' : ' locked'))}</div>
+          <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>Compare</span>${tier() === 'mega' ? '' : '<span class="sl-tag mega" title="Mega Knox">💎</span>'}`, `data-compare aria-pressed="${!!ghost}"`, 'small' + (tier() === 'mega' ? '' : ' locked') + (ghost ? ' sl-on' : ''))}</div>
           ${B(PI.full, 'data-full aria-label="Full screen" title="Full screen"', 'small sl-icon-btn sl-full')}
           <p class="sl-readout" aria-live="polite"></p><div class="sb-table" hidden></div>
+          ${stepsBox(meta.steps)}
           ${communityFoot(meta.community)}</div>
         <div class="sl-controls sl-box">
           ${CHALLENGES[id] ? `<div class="sl-sec"><span class="fc-field-label">Challenges</span><div class="sl-chal">${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div></div>` : ''}
@@ -1043,7 +1096,7 @@
         if (ghost) { g.save(); g.globalAlpha = .4; def.draw.call(def, g, ghost, { ...c, s: ghost, ghost: true }, t); g.restore(); }
         text = def.draw.call(def, g, s, c, t);
       } catch (e) { text = 'That setup can’t be drawn — try different numbers.'; }
-      readout.textContent = (ghost ? 'Faded = your saved setup · ' : '') + (text || '');
+      readout.textContent = (ghost ? `Faded = ${ghostLabel} · ` : '') + (text || '');
       checkChallenges();
     }
     // A challenge you meet lights up with confetti (once).
@@ -1114,7 +1167,7 @@
         }
         else if (b.matches('[data-compare]')) {
           if (tier() !== 'mega') { upsell('mega', 'Compare keeps a faded copy of one setup while you change the other — a 💎 Mega Knox tool.'); return; }
-          ghost = ghost ? null : { ...s }; b.firstChild.textContent = ghost ? 'Stop comparing' : 'Compare'; draw();
+          ghost = ghost ? null : { ...s }; ghostLabel = 'your saved setup'; b.classList.toggle('sl-on', !!ghost); b.setAttribute('aria-pressed', String(!!ghost)); draw();
         }
         else if (b.matches('[data-save]')) saveSim({ type: id, values: { ...s }, title }, meta);
         else if (b.matches('[data-ask]')) {
@@ -1126,7 +1179,7 @@
           setTimeout(() => { const input = document.getElementById('appChatInput'); if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); } }, 120);
         }
         else if (b.matches('[data-back]')) { ed.stop(); editor = null; renderHome(); }
-        else if (b.matches('[data-publish]')) publishSim({ type: id, values: { ...s }, title }, b);
+        else if (b.matches('[data-publish]')) { const values = { ...s }, m = { ...meta, title }; publishSim({ type: id, values, title }, () => { tab = tab === 'community' ? 'home' : tab; open(id, values, m); }); }
         else if (b.matches('[data-share]')) shareSim({ type: id, values: { ...s }, title }, b);
         else if (b.matches('[data-full]')) { const st = $('.sl-stage', host); if (document.fullscreenElement) document.exitFullscreen?.(); else st.requestFullscreen?.().catch(() => {}); }
         else if (b.matches('[data-table]')) {
@@ -1147,13 +1200,20 @@
     if (b.matches('[data-close-upsell]')) { b.closest('.sl-upsell')?.remove(); return; }
     if (b.matches('[data-upgrade]')) { window.goToPricing?.(); return; }
     if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
+    if (b.closest('.sl-menu')) setTimeout(closeMenu); // a menu item: do it, then close the menu
+    if (b.dataset.menu === 'share') { const inBuilder = !!b.closest('.sb'); openMenu(b, [['🔗 Copy a link', inBuilder ? 'data-sb="share"' : 'data-share'], b.dataset.nopub ? null : ['🌍 Publish to Community', inBuilder ? 'data-sb="publish"' : 'data-publish']]); return; }
+    if (b.dataset.menu === 'saved') { const i = b.dataset.i; openMenu(b, [['🔗 Copy a link', `data-share-saved="${i}"`], ['🌍 Publish to Community', `data-publish-saved="${i}"`], ['✏️ Rename', `data-rename="${i}"`], ['🗑️ Delete', `data-unsave="${i}"`, 'sl-danger']]); return; }
+    if (b.matches('[data-pub-back]')) { const p = pub; pub = null; p?.back?.(); return; }
+    if (b.matches('[data-pub-go]')) { publishGo(b); return; }
+    if (b.dataset.publishSaved != null) { const x = readSaved()[+b.dataset.publishSaved]; if (x) publishSim(x, () => { tab = 'home'; renderHome(); }); return; }
     if (editor) { editor.click(b); return; }
-    if (b.dataset.tab) { if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
+    if (b.dataset.tab) { pub = null; if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
     if (b.matches('[data-allknox]')) { community.allKnox = true; renderHome(true); return; }
-    if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; community.error = ''; loadCommunity(); return; }
+    if (b.dataset.csort) { community.sort = b.dataset.csort; sortCommunity(); renderHome(true); refreshCommunity(); return; }
     if (b.matches('[data-cretry]')) { community.error = ''; loadCommunity(); return; }
     if (b.dataset.csim) { openCommunity(b.dataset.csim); return; }
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
+    if (b.dataset.bopt) { buildOpts[b.dataset.bopt] = b.dataset.v; lastPrompt = $('#slPrompt', host)?.value || lastPrompt; renderHome(true); return; }
     if (b.matches('[data-build]')) { build(); return; }
     if (b.matches('[data-build-cancel]')) { buildCtl?.abort(); buildCtl = null; buildBusy = false; renderHome(); $('#slPrompt', host)?.focus(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }
@@ -1165,7 +1225,7 @@
     if (b.matches('[data-surprise]')) { const ids = ORDER.filter(canUse); open(ids[Math.floor(Math.random() * ids.length)]); return; }
   });
   document.addEventListener('keydown', e => { if (host && e.target.id === 'slPrompt' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) build(); });
-  document.addEventListener('change', e => { if (host && e.target.id === 'slCmGroup') { community.group = e.target.value; renderHome(true); } });
+  document.addEventListener('change', e => { if (host && e.target.dataset?.bswitch) { buildOpts[e.target.dataset.bswitch] = e.target.checked; return; } if (host && e.target.id === 'slCmGroup') { community.group = e.target.value; renderHome(true); } });
   // Community search filters as you type (the box keeps its focus and place).
   document.addEventListener('input', e => {
     if (!host || e.target.id !== 'slCmSearch') return;

@@ -1,7 +1,14 @@
 // api/_sim-build.js — "Knox builds it" in the Simulation Lab (simlab.js).
 // Reached through /api/me?route=sim-build (Vercel's function limit).
 //
-// POST { prompt } → { sim: { type, values, title, explain }, creditsLeft? }
+// POST { prompt, kind?, level?, steps?, compare? }
+//   → { sim: { type, values, title, explain, steps?, compare?, compareLabel? }, creditsLeft? }
+//
+// Settings (like Flashcards' "Make with Knox" options, checked here too):
+//   kind     auto | ready (a built-in sim) | scratch (a custom scene — Plus/Mega)
+//   level    a grade level for the explanation and numbers — Plus/Mega
+//   steps    Knox works it out step by step with your numbers — Mega
+//   compare  Knox adds a second setup to compare (a faded run) — Mega
 //
 // The student describes what they want to see ("a ball kicked off a 20 m cliff
 // at 15 m/s on the Moon"); the model only PICKS one of Knox's built-in
@@ -54,6 +61,7 @@ export default async function simBuild(req, res, { db, auth }) {
   let uid;
   try { uid = (await auth.verifyIdToken(h.slice(7))).uid; } catch { return res.status(401).json({ error: "Please sign in again." }); }
   const prompt = String(req.body?.prompt || "").replace(/\s+/g, " ").trim().slice(0, 500);
+  const LEVELS = ["Elementary", "Middle school", "High school", "College"];
   if (prompt.length < 3) return res.status(400).json({ error: "Tell Knox what you want to see." });
 
   const userRef = db.collection("users").doc(uid);
@@ -94,6 +102,17 @@ export default async function simBuild(req, res, { db, auth }) {
   }).catch(() => {});
 
   const allowed = tier === "free" ? SIM_CATALOG.filter(s => s[1]) : SIM_CATALOG;
+  // Settings the plan includes (anything else is quietly left out).
+  const kind = tier !== "free" && req.body?.kind === "scratch" ? "scratch" : req.body?.kind === "ready" ? "ready" : "auto";
+  const level = tier !== "free" && LEVELS.includes(req.body?.level) ? req.body.level : "";
+  const wantSteps = tier === "mega" && req.body?.steps === true, wantCompare = tier === "mega" && req.body?.compare === true;
+  const extra = [
+    kind === "ready" ? "Use one of the built-in simulations above (not custom)." : "",
+    kind === "scratch" ? 'BUILD a custom scene (type "custom") instead of a built-in simulation.' : "",
+    level ? `The student is in ${level === "College" ? "college" : level.toLowerCase()}: write "explain" for that level and keep the numbers right for it.` : "",
+    wantSteps ? 'Also add "steps": 3 to 6 short strings that work the problem out step by step with the student\'s numbers (plain-text formulas like "time = 2 × 25 × sin 45° ÷ 9.81 = 3.6 s").' : "",
+    wantCompare ? 'For a built-in simulation, also add "compare": {setting: value} — a second setup that is interesting to compare (change one or two settings, like a different planet, angle or rate), and "compareLabel": 2 to 5 words naming it (like "on the Moon").' : "",
+  ].filter(Boolean).join("\n");
   const system = `You set up an interactive simulation in Knox Knows, a homework app for students. You can ONLY pick one of these built-in simulations and fill in its settings — never write code.
 ${allowed.map(([type, , what, keys]) => `- ${type}: ${what}. Settings: ${keys}`).join("\n")}
 ${tier === "free" ? "" : `- custom: when none of those fits, BUILD a scene from pieces instead (physics setups: ramps, collisions, springs, targets, races, bouncing, orbits without gravity, Rube Goldberg ideas). Put it in "scene":
@@ -105,7 +124,7 @@ ${tier === "free" ? "" : `- custom: when none of those fits, BUILD a scene from 
    "goal": {"obj": ball id, "target": target id} (optional)}
   Keep it under 15 objects and inside the width.`}
 Reply with JSON only: {"type": one type above, "values": {setting: number or word}, "title": a short friendly title (max 40 characters), "explain": one or two short sentences telling the student what to try (move which slider, what to watch for)}.
-Use the numbers from the student's request. Leave out settings you don't need. If nothing fits, pick the closest one and say in "explain" what it shows instead. Never use bad language; keep it school-friendly.`;
+Use the numbers from the student's request. Leave out settings you don't need. If nothing fits, pick the closest one and say in "explain" what it shows instead. Never use bad language; keep it school-friendly.${extra ? "\n" + extra : ""}`;
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -117,25 +136,31 @@ Use the numbers from the student's request. Leave out settings you don't need. I
     const out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}");
     const type = String(out.type || "").toLowerCase();
     const clean = s => String(s || "").replace(/[<>]/g, "").slice(0, 240);
+    const stepsOf = o => wantSteps && Array.isArray(o.steps) ? { steps: o.steps.slice(0, 6).map(x => clean(x).slice(0, 200)).filter(Boolean) } : {};
     // A custom scene (Plus and Mega): plain data the Lab checks again field by field (simbuilder.js clean()).
     if (type === "custom" && tier !== "free" && out.scene && typeof out.scene === "object") {
       const json = JSON.stringify(out.scene);
       if (json.length > 12000) throw new Error("scene too big");
       const scene = JSON.parse(json.replace(/[<>]/g, ""));
       scene.title = clean(out.title).slice(0, 40);
-      return res.status(200).json({ sim: { type: "custom", scene, title: scene.title, explain: clean(out.explain) }, ...(charge.kind === "free" ? { creditsLeft: charge.remaining } : {}) });
+      return res.status(200).json({ sim: { type: "custom", scene, title: scene.title, explain: clean(out.explain), ...stepsOf(out) }, ...(charge.kind === "free" ? { creditsLeft: charge.remaining } : {}) });
     }
     if (!allowed.some(s => s[0] === type)) throw new Error("bad type");
-    const values = {};
-    for (const [k, v] of Object.entries(out.values && typeof out.values === "object" ? out.values : {}).slice(0, 20)) {
-      if (!/^[a-z0-9_]{1,12}$/i.test(k)) continue;
-      if ((k === "eq" || k === "eq2") && typeof v === "string") { if (/^[a-z0-9\s.+\-*\/^()=,]{1,120}$/i.test(v)) values[k] = v; continue; }
-      if (typeof v === "number" && Number.isFinite(v)) values[k] = v;
-      else if (typeof v === "boolean") values[k] = v ? 1 : 0;
-      else if (typeof v === "string" && /^[a-z0-9.\-]{1,16}$/i.test(v)) values[k] = v.toLowerCase();
-    }
+    const valuesOf = obj => {
+      const values = {};
+      for (const [k, v] of Object.entries(obj && typeof obj === "object" ? obj : {}).slice(0, 20)) {
+        if (!/^[a-z0-9_]{1,12}$/i.test(k)) continue;
+        if ((k === "eq" || k === "eq2") && typeof v === "string") { if (/^[a-z0-9\s.+\-*\/^()=,]{1,120}$/i.test(v)) values[k] = v; continue; }
+        if (typeof v === "number" && Number.isFinite(v)) values[k] = v;
+        else if (typeof v === "boolean") values[k] = v ? 1 : 0;
+        else if (typeof v === "string" && /^[a-z0-9.\-]{1,16}$/i.test(v)) values[k] = v.toLowerCase();
+      }
+      return values;
+    };
+    const values = valuesOf(out.values), compare = wantCompare && out.compare ? valuesOf(out.compare) : null;
     return res.status(200).json({
-      sim: { type, values, title: clean(out.title).slice(0, 40), explain: clean(out.explain) },
+      sim: { type, values, title: clean(out.title).slice(0, 40), explain: clean(out.explain), ...stepsOf(out),
+        ...(compare && Object.keys(compare).length ? { compare, compareLabel: clean(out.compareLabel).slice(0, 40) || "the second setup" } : {}) },
       ...(charge.kind === "free" ? { creditsLeft: charge.remaining } : {}),
     });
   } catch (e) {
