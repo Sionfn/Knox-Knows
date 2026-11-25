@@ -251,7 +251,7 @@ function home(query=''){
       ${way('create','green','✏️','Create your own','Type your own cards, add pictures, or paste a list.')}
       ${way('import','blue','📥','Import cards','Bring in cards you’ve already made — from Excel, Google Sheets, another study app or a Knox backup.')}
     </div>
-    <div class="fc-toolbar fc-toolbar-quiet">${btn('🌍 Community decks','cm-home',{cls:'small fc-cm-entry'})}${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
+    <div class="fc-toolbar fc-toolbar-quiet">${btn('🌍 Community decks','cm-home',{cls:'small primary fc-cm-entry'})}${btn(isPlus()?'Try a sample deck':`Try a sample deck · ${DECK_COST} credits`,'sample',{cls:'ghost small'})}${btn('Export all','export-all',{cls:'ghost small',attrs:decks.length?'':'disabled'})}</div>
     <p class="fc-sync-note">${window.currentUser?'☁️ Your decks save to your account, so they follow you to any device.':'Sign in to keep your decks on every device.'}</p>
     ${decks.length?`<div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcSearch" type="search" aria-label="Find a deck" placeholder="Find a deck…" value="${esc(query)}"></div>`:'<div style="height:14px"></div>'}
     <div class="fc-grid" id="fcDecks"></div>
