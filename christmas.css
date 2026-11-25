@@ -101,7 +101,7 @@ body.app-sidebar-collapsed .sidebar-top > .xmas-lights-mini { display: none !imp
    the content, so Ask Knox and Learn stay exactly where they are in Light.) */
 
 /* Snow caps on Knox's cards (app + landing) */
-html.knox-christmas :is(.suggestion-chip, .fc-way, .fc-deck, .pt-card, .kp-family, .kl-mode-card, .kl-card, .kl-review, details.faq-item, .kl-platform, .sidebar-extension-card, .bs-tile, .fc-quiz-q) {
+html.knox-christmas :is(.suggestion-chip, .sl-pick, .fc-way, .fc-deck, .pt-card, .kp-family, .kl-mode-card, .kl-card, .kl-review, details.faq-item, .kl-platform, .sidebar-extension-card, .bs-tile, .fc-quiz-q) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14' preserveAspectRatio='none'%3E%3Cpath d='M0 0H24V6Q18 13 12 7Q6 13 0 6Z' fill='%23fff'/%3E%3Cpath d='M0 6Q6 13 12 7Q18 13 24 6' fill='none' stroke='%23D3E4F0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 24px 13px;
 }
 html.knox-christmas #pricing .kp-family { background-color: var(--surface); }
@@ -222,4 +222,4 @@ html.knox-xmas-night .xmas-flake.is-flake svg g { stroke: #DCEBFA; }
 /* Snow caps and section edges stay white (frosting on dark cards) */
 html.knox-xmas-night .kb-fox { border-color: var(--orange); }
 /* Christmas night: Dark's card backgrounds would drop the snow caps; keep them. */
-html.knox-christmas[data-theme="dark"] :is(.suggestion-chip, .fc-way, .fc-deck, .kl-card, .kl-review, .sidebar-extension-card, .bs-tile, .fc-quiz-q) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14' preserveAspectRatio='none'%3E%3Cpath d='M0 0H24V6Q18 13 12 7Q6 13 0 6Z' fill='%23fff'/%3E%3Cpath d='M0 6Q6 13 12 7Q18 13 24 6' fill='none' stroke='%23D3E4F0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 24px 13px; }
+html.knox-christmas[data-theme="dark"] :is(.suggestion-chip, .sl-pick, .fc-way, .fc-deck, .kl-card, .kl-review, .sidebar-extension-card, .bs-tile, .fc-quiz-q) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14' preserveAspectRatio='none'%3E%3Cpath d='M0 0H24V6Q18 13 12 7Q6 13 0 6Z' fill='%23fff'/%3E%3Cpath d='M0 6Q6 13 12 7Q18 13 24 6' fill='none' stroke='%23D3E4F0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 24px 13px; }

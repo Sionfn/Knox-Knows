@@ -25,6 +25,10 @@
     dice: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8.2 8.2h.01M15.8 8.2h.01M12 12h.01M8.2 15.8h.01M15.8 15.8h.01" stroke-width="3.4"/></svg>',
   };
   const sp = u => /^[°%]/.test(u) ? '' : ' '; // 45°, 30%, but 20 m/s
+  // Flashcards' pieces (flashcards.css), so the builder looks like the rest of Knox.
+  const escH = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const B = (label, attrs = '', cls = '') => `<button type="button" class="fc-btn ${cls}" ${attrs}>${label}</button>`;
+  const accentLast = t => { const w = escH(t).trim().split(/\s+/); return w.length > 1 ? `${w.slice(0, -1).join(' ')} <span class="accent">${w[w.length - 1]}</span>` : `<span class="accent">${w[0]}</span>`; };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? clamp(n, lo, hi) : d; };
@@ -161,23 +165,23 @@
     const propDef = (obj, prop) => obj === 'world' ? WORLD_PROPS.find(p => p[0] === prop) : PROPS[objOf(obj)?.kind]?.find(p => p[0] === prop);
     const valOf = (obj, prop) => obj === 'world' ? (prop === 'gravity' ? gravityOf(sc.world) : sc.world[prop]) : objOf(obj)?.[prop];
     function setVal(obj, prop, v) { if (obj === 'world') { if (prop === 'gravity') sc.world.gravity = v; else sc.world[prop] = v; } else { const o = objOf(obj); if (o) o[prop] = v; } dirty(); }
-    const upsell = text => { host.querySelector('.sb-upsell')?.remove(); host.querySelector('.sb')?.insertAdjacentHTML('afterbegin', `<div class="sl-upsell sb-upsell">⚡ <span>${text}</span>${window.knoxNativeApp ? '' : '<button type="button" class="sl-btn sm" data-sb="upgrade">See plans</button>'}<button type="button" class="sl-x" data-sb="close-upsell" aria-label="Close">✕</button></div>`); };
+    const upsell = text => { host.querySelector('.sb-upsell')?.remove(); host.querySelector('.sl-topbar')?.insertAdjacentHTML('afterend', (window.KI?.fill || (x => x))(`<div class="sl-note sl-upsell sb-upsell" role="status">⚡<p>${text}</p>${window.knoxNativeApp ? '' : B('See plans', 'data-sb="upgrade"', 'primary small')}<button type="button" class="sl-x" data-sb="close-upsell" aria-label="Close">✕</button></div>`)); };
 
-    host.innerHTML = `<div class="sl-ed sb">
-      <div class="sl-top"><button type="button" class="sl-back" data-sb="back">← Simulation Lab</button>
-        <input class="sl-title" value="${esc(sc.title)}" maxlength="40" aria-label="Name">
-        <div class="sl-top-btns">${opts.extraButtons || ''}<button type="button" class="sl-btn ghost sm" data-sb="share">Share</button>${opts.onPublish ? '<button type="button" class="sl-btn ghost sm" data-sb="publish">Publish</button>' : ''}<button type="button" class="sl-btn sm" data-sb="save">Save</button></div></div>
-      ${opts.explain ? `<div class="sl-explain">${ki('spark')}<span>${esc(opts.explain)}</span></div>` : ''}
-      <div class="sb-add" role="toolbar" aria-label="Add">${Object.entries(KINDS).map(([k, d]) => `<button type="button" class="sl-chip" data-add="${k}">+ ${d.name}</button>`).join('')}</div>
+    host.innerHTML = `<div class="fc-wrap sl-ed sb">
+      <header class="fc-head"><div class="fc-badges"><span class="fc-badge">${ki('pencil', false)} Make your own</span></div><h1 class="fc-title" tabindex="-1">${accentLast(sc.title)}</h1><p class="fc-sub">Drag things to move them and drag a ball’s arrow to aim it. Tap anything to change it, then press Play.</p></header>
+      <div class="fc-topbar sl-topbar">${B('← Simulation Lab', 'data-sb="back"', 'ghost')}<div class="fc-topbar-right">${B('Share', 'data-sb="share"', 'small')}${opts.onPublish ? B('Publish', 'data-sb="publish"', 'small') : ''}${B('Save', 'data-sb="save"', 'primary small')}</div></div>
+      ${opts.explain ? `<div class="sl-note">${ki('spark', false)}<p>${esc(opts.explain)}</p></div>` : ''}
+      <div class="sb-add" role="toolbar" aria-label="Add"><span class="fc-field-label">Add</span>${Object.entries(KINDS).map(([k, d]) => `<button type="button" class="fc-chip" data-add="${k}">+ ${d.name}</button>`).join('')}</div>
       <div class="sl-main">
-        <div class="sl-stage">
+        <div class="sl-stage sl-box">
           <div class="sb-sliders"></div>
           <canvas class="sl-canvas sb-canvas" aria-label="Your simulation. Drag things to move them; drag a ball's arrow to aim it."></canvas>
-          <div class="sl-play"><button type="button" class="sl-btn sm sl-playbtn" data-sb="play">${PI.play} Play</button><button type="button" class="sl-btn ghost sm" data-sb="reset">${PI.restart} Back to start</button><span class="sb-goal" aria-live="polite"></span></div>
+          <div class="sl-play">${B(`${PI.play} Play`, 'data-sb="play"', 'primary small sl-playbtn')}${B(`${PI.restart} Back to start`, 'data-sb="reset"', 'small')}<span class="sb-goal" aria-live="polite"></span></div>
           <p class="sl-readout sb-read" aria-live="polite"></p>
           <div class="sb-graphs"></div>
+          ${opts.extraFoot || ''}
         </div>
-        <div class="sl-controls sb-side"></div>
+        <div class="sl-controls sl-box sb-side"></div>
       </div></div>`;
     host.scrollTop = 0;
     const canvas = host.querySelector('.sb-canvas'), g = canvas.getContext('2d'), side = host.querySelector('.sb-side');
@@ -241,7 +245,7 @@
     function drawGraphs(s) {
       const box = host.querySelector('.sb-graphs');
       if (!sc.graphs.length) { box.innerHTML = ''; return; }
-      if (box.children.length !== sc.graphs.length) box.innerHTML = sc.graphs.map((gr, i) => `<div class="sb-graph"><div class="sb-graph-top"><b></b><button type="button" class="sl-chip" data-sb="table" data-i="${i}">Data table</button><button type="button" class="sl-x" data-sb="ungraph" data-i="${i}" aria-label="Remove graph">✕</button></div><canvas></canvas><div class="sb-table" hidden></div></div>`).join('');
+      if (box.children.length !== sc.graphs.length) box.innerHTML = sc.graphs.map((gr, i) => `<div class="sb-graph"><div class="sb-graph-top"><b></b><button type="button" class="fc-chip" data-sb="table" data-i="${i}">Data table</button><button type="button" class="sl-x" data-sb="ungraph" data-i="${i}" aria-label="Remove graph">✕</button></div><canvas></canvas><div class="sb-table" hidden></div></div>`).join('');
       sc.graphs.forEach((gr, i) => {
         const el = box.children[i], o = objOf(gr.obj), tr = TRACK.find(x => x[0] === gr.prop), cv = el.querySelector('canvas'), gg = cv.getContext('2d');
         el.querySelector('b').textContent = `${o?.name || '?'} — ${tr[1]} (${tr[2]}) over time`;
@@ -276,20 +280,20 @@
           <div class="sb-colors">${COLORS.map(c => `<button type="button" class="sb-color${c === o.color ? ' on' : ''}" style="--c:${c}" data-color="${c}" aria-label="Color ${c}"></button>`).join('')}</div>
           ${props.map(([p, label, min, max, unit]) => field(label, `class="sb-range" data-p="${p}" min="${min}" max="${max}" step="${(max - min) > 50 ? 1 : .1}"`, o[p], unit)).join('')}
           ${KINDS[o.kind].dyn ? `<label class="sl-toggle"><input type="checkbox" class="sb-in" data-p="fixed"${o.fixed ? ' checked' : ''}><span class="sl-sw" aria-hidden="true"></span><span>Pinned in place</span></label>` : ''}
-          ${o.kind === 'spring' ? `<label class="sl-field"><span>Attached to</span><select class="sb-in" data-p="to"><option value="">Nothing yet</option>${sc.objects.filter(x => KINDS[x.kind].dyn).map(x => `<option value="${x.id}"${x.id === o.to ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>` : ''}
-          ${o.kind === 'target' ? `<label class="sl-field"><span>Goal: get this into the target</span><select class="sb-in" data-p="goal"><option value="">No goal</option>${sc.objects.filter(x => KINDS[x.kind].dyn).map(x => `<option value="${x.id}"${sc.goal?.target === o.id && sc.goal.obj === x.id ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>` : ''}
-          <div class="sb-row">${props.length ? `<button type="button" class="sl-btn ghost sm" data-sb="add-slider">+ Slider for…</button>` : ''}${KINDS[o.kind].dyn ? '<button type="button" class="sl-btn ghost sm" data-sb="add-graph">+ Graph</button>' : ''}<button type="button" class="sl-btn ghost sm" data-sb="dup">Copy</button><button type="button" class="sl-btn ghost sm sb-del" data-sb="delete">Delete</button></div>
+          ${o.kind === 'spring' ? `<label class="sl-field"><span>Attached to</span><select class="sb-in kx-select" data-p="to"><option value="">Nothing yet</option>${sc.objects.filter(x => KINDS[x.kind].dyn).map(x => `<option value="${x.id}"${x.id === o.to ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>` : ''}
+          ${o.kind === 'target' ? `<label class="sl-field"><span>Goal: get this into the target</span><select class="sb-in kx-select" data-p="goal"><option value="">No goal</option>${sc.objects.filter(x => KINDS[x.kind].dyn).map(x => `<option value="${x.id}"${sc.goal?.target === o.id && sc.goal.obj === x.id ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>` : ''}
+          <div class="sb-row">${props.length ? `<button type="button" class="fc-btn small" data-sb="add-slider">+ Slider for…</button>` : ''}${KINDS[o.kind].dyn ? '<button type="button" class="fc-btn small" data-sb="add-graph">+ Graph</button>' : ''}<button type="button" class="fc-btn small" data-sb="dup">Copy</button><button type="button" class="sl-btn ghost sm sb-del" data-sb="delete">Delete</button></div>
           <div class="sb-pick" hidden></div></div>`;
       } else h += `<div class="sb-sec sb-hint"><b>Tap something to change it</b><span>Or add a ball, ramp, spring or target from the row above the picture.</span></div>`;
       const w = sc.world;
       h += `<div class="sb-sec"><div class="sb-sec-top"><b>World</b></div>
-        <label class="sl-field"><span>Gravity</span><select class="sb-world" data-w="planet">${Object.entries(PLANETS).map(([k, [gv, n]]) => `<option value="${k}"${k === w.planet && w.gravity == null ? ' selected' : ''}>${n}${gv ? ` (${gv} m/s²)` : ''}</option>`).join('')}${w.gravity != null ? `<option value="custom" selected>Custom (${fmt(w.gravity)} m/s²)</option>` : ''}</select></label>
+        <label class="sl-field"><span>Gravity</span><select class="sb-world kx-select" data-w="planet">${Object.entries(PLANETS).map(([k, [gv, n]]) => `<option value="${k}"${k === w.planet && w.gravity == null ? ' selected' : ''}>${n}${gv ? ` (${gv} m/s²)` : ''}</option>`).join('')}${w.gravity != null ? `<option value="custom" selected>Custom (${fmt(w.gravity)} m/s²)</option>` : ''}</select></label>
         ${field('Air resistance', 'class="sb-world" data-w="air" min="0" max="1" step=".05"', w.air)}
         ${field('Bounciness', 'class="sb-world" data-w="bounce" min="0" max="1" step=".05"', w.bounce)}
         ${field('Friction', 'class="sb-world" data-w="friction" min="0" max="1" step=".05"', w.friction)}
         ${field('How wide the view is', 'class="sb-world" data-w="width" min="5" max="200" step="1"', w.width, 'm')}
-        <button type="button" class="sl-btn ghost sm" data-sb="world-slider">+ Slider for gravity, air or bounce</button></div>
-        <p class="sl-cost">Your plan: up to ${lim.objects} things, ${lim.sliders} slider${lim.sliders === 1 ? '' : 's'} and ${lim.graphs} graph${lim.graphs === 1 ? '' : 's'}.${tier === 'mega' ? '' : tier === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.'}</p>`;
+        <button type="button" class="fc-btn small" data-sb="world-slider">+ Slider for gravity, air or bounce</button></div>
+        <p class="fc-note sl-plan">Your plan: up to ${lim.objects} things, ${lim.sliders} slider${lim.sliders === 1 ? '' : 's'} and ${lim.graphs} graph${lim.graphs === 1 ? '' : 's'}.${tier === 'mega' ? '' : tier === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.'}</p>`;
       side.innerHTML = window.KI?.fill ? window.KI.fill(h) : h;
     }
     function renderSliders() {
@@ -364,26 +368,26 @@
       else if (act === 'add-slider' || act === 'world-slider') {
         const pick = side.querySelector('.sb-pick'), list = act === 'world-slider' ? WORLD_PROPS : PROPS[objOf(sel).kind], obj = act === 'world-slider' ? 'world' : sel;
         if (sc.sliders.length >= lim.sliders) { upsell(`Up to ${lim.sliders} slider${lim.sliders === 1 ? '' : 's'} on your plan. ${tier === 'free' ? '⚡ Knox Plus gets 6.' : '💎 Mega Knox gets 12.'}`); return; }
-        const html = `<span class="sl-label">Make a slider for:</span>${list.map(([p, l]) => `<button type="button" class="sl-chip" data-sb="slide-pick" data-obj="${obj}" data-prop="${p}">${esc(l)}</button>`).join('')}`;
+        const html = `<span class="fc-field-label">Make a slider for:</span>${list.map(([p, l]) => `<button type="button" class="fc-chip" data-sb="slide-pick" data-obj="${obj}" data-prop="${p}">${esc(l)}</button>`).join('')}`;
         if (pick && act === 'add-slider') { pick.innerHTML = html; pick.hidden = false; } else { b.insertAdjacentHTML('afterend', `<div class="sb-pick">${html}</div>`); }
       }
       else if (act === 'slide-pick') { const d = propDef(b.dataset.obj, b.dataset.prop); if (!sc.sliders.some(s => s.obj === b.dataset.obj && s.prop === b.dataset.prop)) sc.sliders.push({ obj: b.dataset.obj, prop: b.dataset.prop, min: d[2], max: d[3] }); renderSliders(); renderSide(); }
       else if (act === 'unslide') { sc.sliders.splice(+b.dataset.i, 1); renderSliders(); }
       else if (act === 'add-graph') {
         if (sc.graphs.length >= lim.graphs) { upsell(`Up to ${lim.graphs} graph${lim.graphs === 1 ? '' : 's'} on your plan. ${tier === 'free' ? '⚡ Knox Plus gets 3.' : '💎 Mega Knox gets 6.'}`); return; }
-        const pick = side.querySelector('.sb-pick'); pick.innerHTML = `<span class="sl-label">Graph this over time:</span>${TRACK.map(([p, l]) => `<button type="button" class="sl-chip" data-sb="graph-pick" data-prop="${p}">${esc(l)}</button>`).join('')}`; pick.hidden = false;
+        const pick = side.querySelector('.sb-pick'); pick.innerHTML = `<span class="fc-field-label">Graph this over time:</span>${TRACK.map(([p, l]) => `<button type="button" class="fc-chip" data-sb="graph-pick" data-prop="${p}">${esc(l)}</button>`).join('')}`; pick.hidden = false;
       }
       else if (act === 'graph-pick') { sc.graphs.push({ obj: sel, prop: b.dataset.prop }); host.querySelector('.sb-graphs').innerHTML = ''; renderSide(); draw(); }
       else if (act === 'ungraph') { sc.graphs.splice(+b.dataset.i, 1); host.querySelector('.sb-graphs').innerHTML = ''; draw(); }
       else if (act === 'table') {
         const box = b.closest('.sb-graph').querySelector('.sb-table'), { head, rows } = tableFor(+b.dataset.i);
         if (!box.hidden) { box.hidden = true; return; }
-        box.innerHTML = `<div class="sb-table-top"><button type="button" class="sl-btn ghost sm" data-sb="copy" data-i="${b.dataset.i}">Copy for a spreadsheet</button></div><table><thead><tr>${head.map(x => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>`; box.hidden = false;
+        box.innerHTML = `<div class="sb-table-top"><button type="button" class="fc-btn small" data-sb="copy" data-i="${b.dataset.i}">Copy for a spreadsheet</button></div><table><thead><tr>${head.map(x => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>`; box.hidden = false;
       }
       else if (act === 'copy') { const { head, rows } = tableFor(+b.dataset.i), tsv = [head, ...rows].map(r => r.join('\t')).join('\n'); navigator.clipboard?.writeText(tsv).then(() => { b.textContent = 'Copied ✓'; }, () => { b.textContent = 'Couldn’t copy'; }); }
-      else if (act === 'save') { sc.title = (host.querySelector('.sl-title')?.value || sc.title).trim() || 'My simulation'; if (opts.onSave?.(clean(sc)) !== false) { b.textContent = 'Saved ✓'; setTimeout(() => { if (b.isConnected) b.textContent = 'Save'; }, 1600); } }
+      else if (act === 'save') Promise.resolve(opts.onSave?.(clean(sc))).then(name => { if (!name) return; sc.title = String(name).slice(0, 40); const h = host.querySelector('.fc-title'); if (h) h.innerHTML = accentLast(sc.title); if (b.isConnected) { b.textContent = 'Saved ✓'; setTimeout(() => { if (b.isConnected) b.textContent = 'Save'; }, 1600); } });
       else if (act === 'share') opts.onShare?.(clean(sc), b);
-      else if (act === 'publish') { sc.title = (host.querySelector('.sl-title')?.value || sc.title).trim() || 'My simulation'; opts.onPublish?.(clean(sc), b); }
+      else if (act === 'publish') opts.onPublish?.(clean(sc), b);
       else if (act === 'back') { stop(); opts.onBack?.(); }
       else if (act === 'upgrade') window.goToPricing?.();
       else if (act === 'close-upsell') b.closest('.sb-upsell')?.remove();

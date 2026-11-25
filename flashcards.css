@@ -373,7 +373,7 @@ html[data-theme="dark"]:not(.knox-seasonal) .fc-plus-tag.mega { color:#FFD45C; }
 html.native-app .fc-face { --fc-h:clamp(220px, calc(100dvh - 420px), 500px); } /* no top bar in the app */
 
 /* ── Quiz me: multiple choice + Match (Dec 1) ── */
-.fc-deck-actions { flex-wrap:wrap; }
+.fc-deck-actions { flex-wrap:wrap; row-gap:12px; } /* room above Quiz me, even while it lifts on hover */
 /* Quiz me: its own row under Review due / Practice all, in the deck's color. */
 .fc-deck .fc-quiz-btn { flex:1 1 100%; background:var(--chip-tint); border-color:var(--chip); color:var(--chip-ledge); box-shadow:0 3px 0 var(--chip); }
 .fc-deck .fc-quiz-btn:hover { box-shadow:0 5px 0 var(--chip); }
@@ -459,8 +459,12 @@ html[data-theme="dark"] .fc-match.ans.sel { color:var(--green); }
 .fc-cm-fix .fc-cm-cards li { background: var(--surface); }
 .fc-btn.on { border-color: #E5383B; color: #E5383B; }
 /* Community decks entry (in the small row under the ways) and the Share menu on a deck */
-.fc-cm-entry { border-color: #A560F2 !important; color: #7C3AED !important; background: color-mix(in srgb, #A560F2 10%, var(--surface)) !important; box-shadow: 0 3px 0 #7C3AED !important; }
-html[data-theme="dark"] .fc-cm-entry { color: #CE82FF !important; }
+/* A real Knox sticker button: solid purple, white capitals, darker edge (like Learn's buttons). */
+.fc-btn.fc-cm-entry { background: var(--purple, #A560F2); border-color: var(--purple-dark, #7C3AED); color: #fff; box-shadow: 0 4px 0 var(--purple-dark, #7C3AED); text-transform: uppercase; letter-spacing: .03em; }
+.fc-btn.fc-cm-entry:hover { box-shadow: 0 6px 0 var(--purple-dark, #7C3AED); }
+.fc-btn.fc-cm-entry:active { box-shadow: 0 1px 0 var(--purple-dark, #7C3AED); }
+.fc-btn.fc-cm-entry .kk-ic { color: #fff !important; }
+.fc-toolbar-quiet .fc-cm-entry { margin-right: 6px; }
 .fc-deck { position: relative; }
 .fc-share-menu { position: absolute; right: 14px; bottom: 48px; z-index: 5; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; border-radius: 14px; border: 2px solid var(--chip); background: var(--surface); box-shadow: 0 4px 0 var(--chip-ledge), 0 12px 28px rgba(0, 0, 0, .14); }
 .fc-share-menu .fc-btn { justify-content: flex-start; white-space: nowrap; }
