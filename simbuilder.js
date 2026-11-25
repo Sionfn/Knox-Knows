@@ -16,6 +16,15 @@
    window.knoxSimBuilder = { mount(host, scene, opts), clean(scene), blank(), LIMITS } */
 (function () {
   'use strict';
+  // Play-bar icons (drawn here, so no system emoji ever shows).
+  const PI = {
+    play: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8a1 1 0 0 0 1.5.86l11.8-7.4a1 1 0 0 0 0-1.72L8.5 3.74A1 1 0 0 0 7 4.6Z" fill="currentColor"/></svg>',
+    pause: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/><rect x="13.9" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/></svg>',
+    restart: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg>',
+    full: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    dice: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8.2 8.2h.01M15.8 8.2h.01M12 12h.01M8.2 15.8h.01M15.8 15.8h.01" stroke-width="3.4"/></svg>',
+  };
+  const sp = u => /^[°%]/.test(u) ? '' : ' '; // 45°, 30%, but 20 m/s
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? clamp(n, lo, hi) : d; };
@@ -157,14 +166,14 @@
     host.innerHTML = `<div class="sl-ed sb">
       <div class="sl-top"><button type="button" class="sl-back" data-sb="back">← Simulation Lab</button>
         <input class="sl-title" value="${esc(sc.title)}" maxlength="40" aria-label="Name">
-        <div class="sl-top-btns">${opts.extraButtons || ''}<button type="button" class="sl-btn ghost sm" data-sb="share">Share</button><button type="button" class="sl-btn ghost sm" data-sb="publish">Publish</button><button type="button" class="sl-btn sm" data-sb="save">Save</button></div></div>
+        <div class="sl-top-btns">${opts.extraButtons || ''}<button type="button" class="sl-btn ghost sm" data-sb="share">Share</button>${opts.onPublish ? '<button type="button" class="sl-btn ghost sm" data-sb="publish">Publish</button>' : ''}<button type="button" class="sl-btn sm" data-sb="save">Save</button></div></div>
       ${opts.explain ? `<div class="sl-explain">${ki('spark')}<span>${esc(opts.explain)}</span></div>` : ''}
       <div class="sb-add" role="toolbar" aria-label="Add">${Object.entries(KINDS).map(([k, d]) => `<button type="button" class="sl-chip" data-add="${k}">+ ${d.name}</button>`).join('')}</div>
       <div class="sl-main">
         <div class="sl-stage">
           <div class="sb-sliders"></div>
           <canvas class="sl-canvas sb-canvas" aria-label="Your simulation. Drag things to move them; drag a ball's arrow to aim it."></canvas>
-          <div class="sl-play"><button type="button" class="sl-btn" data-sb="play">▶ Play</button><button type="button" class="sl-btn ghost" data-sb="reset">↺ Back to start</button><span class="sb-goal" aria-live="polite"></span></div>
+          <div class="sl-play"><button type="button" class="sl-btn sm sl-playbtn" data-sb="play">${PI.play} Play</button><button type="button" class="sl-btn ghost sm" data-sb="reset">${PI.restart} Back to start</button><span class="sb-goal" aria-live="polite"></span></div>
           <p class="sl-readout sb-read" aria-live="polite"></p>
           <div class="sb-graphs"></div>
         </div>
@@ -257,7 +266,7 @@
     // The side panel: world settings, the selected thing, sliders and graphs.
     function renderSide() {
       const o = sel ? objOf(sel) : null;
-      const field = (label, attrs, val, unit = '') => `<label class="sl-field"><span>${esc(label)} <output>${fmt(val)}${unit ? ' ' + esc(unit) : ''}</output></span><input type="range" ${attrs} value="${val}"></label>`;
+      const field = (label, attrs, val, unit = '') => `<label class="sl-field"><span>${esc(label)} <output>${fmt(val)}${unit ? sp(unit) + esc(unit) : ''}</output></span><input type="range" ${attrs} value="${val}"></label>`;
       let h = '';
       if (o) {
         const props = PROPS[o.kind];
@@ -285,7 +294,7 @@
     }
     function renderSliders() {
       const box = host.querySelector('.sb-sliders');
-      box.innerHTML = sc.sliders.map((s, i) => { const d = propDef(s.obj, s.prop), v = valOf(s.obj, s.prop), name = s.obj === 'world' ? 'World' : objOf(s.obj)?.name; return `<label class="sl-field sb-slider"><span>${esc(name)} · ${esc(d[1])} <output>${fmt(v)}${d[4] ? ' ' + esc(d[4]) : ''}</output><button type="button" class="sb-unslide" data-sb="unslide" data-i="${i}" aria-label="Remove slider">✕</button></span><input type="range" class="sb-live" data-i="${i}" min="${s.min}" max="${s.max}" step="${(s.max - s.min) > 50 ? 1 : .1}" value="${v}"></label>`; }).join('');
+      box.innerHTML = sc.sliders.map((s, i) => { const d = propDef(s.obj, s.prop), v = valOf(s.obj, s.prop), name = s.obj === 'world' ? 'World' : objOf(s.obj)?.name; return `<label class="sl-field sb-slider"><span>${esc(name)} · ${esc(d[1])} <output>${fmt(v)}${d[4] ? sp(d[4]) + esc(d[4]) : ''}</output><button type="button" class="sb-unslide" data-sb="unslide" data-i="${i}" aria-label="Remove slider">✕</button></span><input type="range" class="sb-live" data-i="${i}" min="${s.min}" max="${s.max}" step="${(s.max - s.min) > 50 ? 1 : .1}" value="${v}"></label>`; }).join('');
       box.hidden = !sc.sliders.length;
     }
     const redraw = () => { draw(); };
@@ -293,7 +302,7 @@
 
     // Play.
     function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; const s = getSim(); t = Math.min(s.end, t + dt); draw(); if (t >= s.end) { setPlaying(false); return; } raf = requestAnimationFrame(frame); }
-    function setPlaying(on) { playing = on; cancelAnimationFrame(raf); const b = host.querySelector('[data-sb="play"]'); if (b) b.textContent = on ? '⏸ Pause' : t > 0 && t < (sim?.end || 0) ? '▶ Keep going' : '▶ Play'; if (on) { if (t >= getSim().end) { t = 0; cheered = false; } last = performance.now(); raf = requestAnimationFrame(frame); } }
+    function setPlaying(on) { playing = on; cancelAnimationFrame(raf); const b = host.querySelector('[data-sb="play"]'); if (b) b.innerHTML = on ? `${PI.pause} Pause` : t > 0 && t < (sim?.end || 0) ? `${PI.play} Keep going` : `${PI.play} Play`; if (on) { if (t >= getSim().end) { t = 0; cheered = false; } last = performance.now(); raf = requestAnimationFrame(frame); } }
 
     // Pointer: pick, drag, aim.
     function hit(px, py) {
@@ -324,7 +333,7 @@
     // Inputs.
     host.addEventListener('input', e => {
       const el = e.target;
-      if (el.classList.contains('sb-live')) { const s = sc.sliders[+el.dataset.i]; setVal(s.obj, s.prop, Number(el.value)); const out = el.parentElement.querySelector('output'); const d = propDef(s.obj, s.prop); if (out) out.textContent = fmt(Number(el.value)) + (d[4] ? ' ' + d[4] : ''); t = 0; cheered = false; setPlaying(false); draw(); return; }
+      if (el.classList.contains('sb-live')) { const s = sc.sliders[+el.dataset.i]; setVal(s.obj, s.prop, Number(el.value)); const out = el.parentElement.querySelector('output'); const d = propDef(s.obj, s.prop); if (out) out.textContent = fmt(Number(el.value)) + (d[4] ? sp(d[4]) + d[4] : ''); t = 0; cheered = false; setPlaying(false); draw(); return; }
       if (el.classList.contains('sb-range')) { const o = objOf(sel); if (!o) return; o[el.dataset.p] = Number(el.value); const out = el.parentElement.querySelector('output'); if (out) out.textContent = fmt(Number(el.value)); dirty(); renderSliders(); draw(); return; }
       if (el.classList.contains('sb-world') && el.type === 'range') { sc.world[el.dataset.w] = Number(el.value); const out = el.parentElement.querySelector('output'); if (out) out.textContent = fmt(Number(el.value)) + (el.dataset.w === 'width' ? ' m' : ''); dirty(); draw(); return; }
       if (el.classList.contains('sb-in') && el.type === 'text') { const o = objOf(sel); if (o) { o[el.dataset.p] = el.value.replace(/[<>]/g, '').slice(0, el.dataset.p === 'text' ? 60 : 24); draw(); renderSliders(); } return; }

@@ -437,35 +437,30 @@ html[data-theme="dark"] .fc-match.ans.sel { color:var(--green); }
 }
 @media (prefers-reduced-motion:reduce) { .fc-match.miss { animation:none; } }
 
-/* Community decks (flashcards.js cm*) */
-.fc-cm { display: flex; flex-direction: column; gap: 12px; }
-.fc-cm > .fc-btn.small:first-child { align-self: flex-start; }
-.fc-cm-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.fc-cm-filters .fc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.fc-cm .fc-chip { padding: 7px 12px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-.fc-cm .fc-chip.on { border-color: #A560F2; background: color-mix(in srgb, #A560F2 14%, var(--surface)); color: #7C3AED; }
-html[data-theme="dark"] .fc-cm .fc-chip.on { color: #CE82FF; }
-.fc-cm-select, .fc-cm-field select, .fc-cm-field textarea { padding: 8px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 800; }
-.fc-cm-card { text-align: left; font: inherit; color: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
-.fc-cm-desc { margin: 0; font-size: 13px; font-weight: 700; color: var(--text-light); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.fc-cm-meta { margin-top: auto; font-size: 12px; font-weight: 800; color: var(--text-light); }
-.fc-cm-cards { display: flex; flex-direction: column; gap: 6px; }
-.fc-cm-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
-.fc-cm-row b { display: block; font-size: 14px; font-weight: 900; color: var(--text); }
-.fc-cm-row span:not(.fc-cm-n) { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 700; color: var(--text-light); }
-.fc-cm-n { flex-shrink: 0; min-width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: color-mix(in srgb, #A560F2 16%, var(--surface)); color: #7C3AED; font-size: 12px; font-weight: 900; }
-.fc-cm-pub { max-width: 560px; margin: 0 auto; width: 100%; }
-.fc-cm-field { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; font-weight: 900; color: var(--text); }
-.fc-cm-check { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; font-weight: 800; color: var(--text); }
-.fc-cm-check input { width: 20px; height: 20px; margin-top: 1px; accent-color: #A560F2; }
-.fc-cm-fix { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 16px; border: 2px solid #FFC800; background: color-mix(in srgb, #FFC800 12%, var(--surface)); }
-.fc-cm-fix > b { font-size: 15px; font-weight: 900; color: var(--text); }
+/* Community decks (flashcards.js cm*): the same parts as the rest of Flashcards. */
+.fc-wrap.center:has(.fc-cm, .fc-make) { margin: 0 auto auto; }
+.fc-cm .fc-search-wrap { margin: 8px auto 14px; }
+.fc-cm-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 0 auto 22px; }
+.fc-cm-filters .fc-chips { margin: 0; }
+#flashcardsPanel .fc-cm-select { width: auto; min-width: 150px; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+.fc-cm-desc { margin: -4px 0 0; min-height: 2.7em; font-size: 13px; font-weight: 700; color: var(--text-light); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fc-cm-meta { margin: -6px 0 0; font-size: 12px; font-weight: 800; color: var(--text-light); }
+.fc-cm-view .fc-pills { margin-bottom: 14px; }
+.fc-cm-actions { justify-content: flex-start; margin-bottom: 20px; }
+.fc-cm-cards { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fc-cm-cards li { position: relative; padding: 10px 12px 10px 46px; border-radius: 14px; border: 2px solid var(--border); background: var(--cream); }
+.fc-cm-cards li::before { content: attr(data-n); position: absolute; left: 10px; top: 10px; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--border); font-size: 12px; font-weight: 900; color: var(--text-light); }
+.fc-cm-cards li b { display: block; font-size: 14.5px; font-weight: 900; color: var(--text); line-height: 1.35; }
+.fc-cm-cards li span { display: block; margin-top: 3px; font-size: 13.5px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
+.fc-cm-foot { display: flex; justify-content: flex-end; gap: 6px; margin-top: 16px; padding-top: 12px; border-top: 2px solid var(--border); }
+.fc-cm-fix { margin-bottom: 20px; padding: 14px; border-radius: 16px; border: 2px solid #FFC800; background: color-mix(in srgb, #FFC800 12%, var(--surface)); }
+.fc-cm-fix > b { display: block; font-size: 15px; font-weight: 900; color: var(--text); }
+.fc-cm-fix .fc-toolbar { justify-content: flex-start; margin-top: 12px; }
+.fc-cm-fix .fc-cm-cards li { background: var(--surface); }
 .fc-btn.on { border-color: #E5383B; color: #E5383B; }
-/* Community pages sit at the top like the home (not floated to the middle when short). */
-.fc-wrap.center:has(.fc-cm) { margin: 0 auto auto; }
-.fc-cm > .fc-btn.small:first-child { margin-bottom: -4px; }
-.fc-cm .fc-search-wrap { max-width: 860px; width: 100%; margin: 0 auto; }
-.fc-cm .fc-search-wrap input { width: 100%; }
-.fc-cm-filters { max-width: 860px; width: 100%; margin: 0 auto; justify-content: flex-start; }
-.fc-cm > .fc-grid, .fc-cm > .fc-empty, .fc-cm > .fc-note, .fc-cm > .fc-toolbar, .fc-cm > .fc-cm-cards { max-width: 860px; width: 100%; margin-left: auto; margin-right: auto; }
-.fc-cm > .fc-btn.small:first-child { max-width: 860px; margin-left: max(0px, calc((100% - 860px) / 2)); }
+/* Community decks entry (in the small row under the ways) and the Share menu on a deck */
+.fc-cm-entry { border-color: #A560F2 !important; color: #7C3AED !important; background: color-mix(in srgb, #A560F2 10%, var(--surface)) !important; box-shadow: 0 3px 0 #7C3AED !important; }
+html[data-theme="dark"] .fc-cm-entry { color: #CE82FF !important; }
+.fc-deck { position: relative; }
+.fc-share-menu { position: absolute; right: 14px; bottom: 48px; z-index: 5; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; border-radius: 14px; border: 2px solid var(--chip); background: var(--surface); box-shadow: 0 4px 0 var(--chip-ledge), 0 12px 28px rgba(0, 0, 0, .14); }
+.fc-share-menu .fc-btn { justify-content: flex-start; white-space: nowrap; }

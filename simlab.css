@@ -1,7 +1,7 @@
 /* simlab.css — the Simulation Lab (simlab.js). Knox look: flat colors, 2px
    borders with a bottom edge; Simulations' own color is Knox gold. */
-#simsPanel { --sl: #F2B705; --sl-d: #B98500; --sl-ink: #8A6300; --sl-l: #FFF4CC; }
-html[data-theme="dark"] #simsPanel { --sl-ink: #FFD45C; --sl-l: rgba(242, 183, 5, .14); }
+#simsPanel, .sl-pub-wrap { --sl: #F2B705; --sl-d: #B98500; --sl-ink: #8A6300; --sl-l: #FFF4CC; }
+html[data-theme="dark"] #simsPanel, html[data-theme="dark"] .sl-pub-wrap { --sl-ink: #FFD45C; --sl-l: rgba(242, 183, 5, .14); }
 .sl-wrap, .sl-ed { max-width: 1040px; margin: 0 auto; padding-bottom: 28px; }
 .sl-wrap { max-width: 860px; }
 .sl-head { text-align: center; margin: 6px 0 16px; }
@@ -12,10 +12,6 @@ html[data-theme="dark"] #simsPanel { --sl-ink: #FFD45C; --sl-l: rgba(242, 183, 5
 html[data-theme="dark"] .sl-head h2 span { color: var(--sl); }
 .sl-head p { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-light); }
 
-.sl-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 16px; }
-.sl-tab { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 46px; padding: 8px 10px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14.5px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 var(--border); }
-.sl-tab .kk-ic { width: 18px; height: 18px; }
-.sl-tab.on { border-color: var(--sl); background: var(--sl-l); color: var(--sl-ink); box-shadow: 0 3px 0 var(--sl-d); }
 
 .sl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 14px; border: 2px solid var(--sl-d); background: var(--sl); color: #3D2800; font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 var(--sl-d); white-space: nowrap; }
 .sl-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--sl-d); }
@@ -109,7 +105,7 @@ html[data-theme="dark"] .sl-back { color: var(--sl); }
 .sl-field select { padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; }
 .sl-toggle { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; }
 .sl-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.sl-sw { position: relative; flex-shrink: 0; width: 40px; height: 24px; border-radius: 999px; border: 2px solid var(--border); background: var(--gray, #E5E5E5); transition: background .15s; }
+.sl-sw { position: relative; flex-shrink: 0; width: 40px; height: 24px; box-sizing: border-box; border-radius: 999px; border: 2px solid var(--border); background: var(--border); transition: background .15s; }
 .sl-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .15); transition: transform .15s; }
 .sl-toggle input:checked + .sl-sw { background: var(--sl); border-color: var(--sl-d); }
 .sl-toggle input:checked + .sl-sw::after { transform: translateX(16px); }
@@ -124,19 +120,20 @@ html[data-theme="dark"] .sl-back { color: var(--sl); }
   .sl-canvas { height: 300px; }
 }
 @media (max-width: 520px) {
-  .sl-tabs { gap: 6px; } .sl-tab { font-size: 12.5px; flex-direction: column; gap: 3px; min-height: 56px; }
   .sl-head h2 { font-size: 23px; }
   .sl-grid { grid-template-columns: 1fr 1fr; } .sl-tile { min-height: 104px; padding: 12px; }
   .sl-top-btns { width: 100%; } .sl-top-btns .sl-btn { flex: 1; }
 }
 
 /* ── Make your own (simbuilder.js) ── */
-.sl-tabs { grid-template-columns: repeat(4, 1fr); }
 .sl-make-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; padding: 14px 16px; border-radius: 20px; border: 2px solid var(--sl); background: var(--sl-l); }
 .sl-make-hero b { display: block; font-size: 16px; font-weight: 900; color: var(--text); }
 .sl-make-hero span:not(.sl-ico) { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 700; color: var(--text-light); line-height: 1.45; }
 .sl-make-hero .sl-ico { width: 46px; height: 46px; background: var(--surface); }
-.sl-make-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.sl-make-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.sl-make-hero > div { flex: 1; min-width: 0; }
+.sl-make-hero > .sl-btn { flex-shrink: 0; }
+.sl-sub { margin: 22px 0 12px; font-size: 16px; font-weight: 900; color: var(--text); }
 .sb-add { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; padding: 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); box-shadow: 0 3px 0 var(--border); }
 .sb-add .sl-chip { border-color: var(--sl); color: var(--sl-ink); font-weight: 900; }
 .sb-canvas { height: 420px; cursor: grab; touch-action: none; }
@@ -179,7 +176,7 @@ html[data-theme="dark"] .sl-back { color: var(--sl); }
 .sb-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 20px; }
 .sb-confetti i { position: absolute; top: -12px; left: var(--x); width: 9px; height: 13px; border-radius: 3px; background: var(--c); animation: sbFall var(--d) ease-in forwards; }
 @keyframes sbFall { to { transform: translateY(520px) rotate(540deg); opacity: 0; } }
-@media (max-width: 860px) { .sb-canvas { height: 320px; } .sl-tabs { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 860px) { .sb-canvas { height: 320px; } }
 
 /* Challenges */
 .sl-chal { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 14px; border: 2px solid var(--sl); background: var(--sl-l); }
@@ -201,8 +198,6 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
 .sl-stage .sb-table { margin-top: 8px; }
 
 /* Community */
-.sl-tabs { grid-template-columns: repeat(5, 1fr); }
-.sl-tab { font-size: 13.5px; }
 .sl-cmeta { margin-top: auto; padding-top: 6px; font-size: 11.5px; font-weight: 800; color: var(--text-light); }
 .sl-btn.on { border-color: #E5383B; color: #E5383B; }
 .sl-pub-wrap { position: fixed; inset: 0; z-index: 10090; display: grid; place-items: center; padding: 16px; background: rgba(20, 16, 14, .45); }
@@ -212,7 +207,6 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
 .sl-pub input[type=text], .sl-pub textarea { padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; resize: vertical; }
 .sl-pub-btns { display: flex; justify-content: flex-end; gap: 8px; }
 .sl-msg[hidden] { display: none; }
-@media (max-width: 860px) { .sl-tabs { grid-template-columns: repeat(3, 1fr); } }
 
 /* Home: the ways in (like Flashcards), full width so nothing changes size */
 .sl-wrap, .sl-ed { width: 100%; box-sizing: border-box; }
@@ -230,9 +224,6 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
 .sl-way-icon .kk-ic { width: 26px; height: 26px; color: #fff; stroke: #fff; }
 .sl-section h3 { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--text); }
 .sl-all { margin-top: 10px; }
-.sl-page-head { display: flex; align-items: center; gap: 12px; margin: 6px 0 14px; }
-.sl-page-head h2 { margin: 0; font-size: 26px; font-weight: 900; color: var(--text); }
-.sl-page-head .sl-way-icon { margin: 0; width: 42px; height: 42px; }
 .sl-wrap > .sl-back { margin-bottom: 4px; }
 @media (max-width: 600px) { .sl-ways { grid-template-columns: 1fr; } .sl-way { min-height: 0; } }
 
@@ -263,3 +254,65 @@ html[data-theme="dark"] #simsPanel .sl-way-icon .kk-ic { color: var(--c); stroke
 #simsPanel .sl-tile b { font-size: 15px; }
 #simsPanel .sl-tile .sl-tag { top: 14px; right: 14px; }
 #simsPanel .sl-filters { margin-bottom: 18px; }
+
+/* Community: search + filters (same as the Flashcards Community) */
+.sl-search { position: relative; max-width: 440px; margin: 0 auto 14px; }
+.sl-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-light); pointer-events: none; }
+.sl-search input { width: 100%; box-sizing: border-box; padding: 12px 14px 12px 42px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; box-shadow: 0 2px 0 var(--border); outline: none; }
+.sl-search input:focus { border-color: var(--sl); box-shadow: 0 2px 0 var(--sl-d); }
+.sl-filter-gap { flex-basis: 100%; height: 0; }
+.sl-empty .sl-btn { margin-top: 10px; }
+.sl-cm-note { max-width: 860px; margin: 0 auto 14px; }
+#simsPanel .sl-wrap > .sl-search { max-width: 440px; }
+#simsPanel .sl-wrap > .sl-cost { max-width: 620px; }
+@media (max-width: 760px) {
+  .sl-make-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .sl-make-hero { flex-wrap: wrap; }
+  .sl-make-hero > .sl-btn { width: 100%; }
+  .sl-filters { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin-left: -16px !important; margin-right: -16px !important; padding: 0 16px 4px; }
+  .sl-filters::-webkit-scrollbar { display: none; }
+  .sl-filters .sl-chip { flex-shrink: 0; }
+  .sl-filter-gap { flex-basis: 6px; flex-shrink: 0; }
+}
+
+/* Play bar: drawn icons, one row of small buttons */
+.sl-pi { width: 15px; height: 15px; flex-shrink: 0; }
+.sl-play { align-items: center; gap: 8px; }
+.sl-play .sl-btn.sm { min-height: 38px; }
+.sl-play .sl-icon-btn { width: 38px; padding: 0; }
+.sl-play .sl-icon-btn .sl-pi { width: 17px; height: 17px; }
+.sl-play .sl-btn .sl-tag { margin-left: 2px; }
+.sl-playbtn { min-width: 96px; }
+
+/* Phones: the ways in, like the Flashcards home (rows; compact 2×2 once you have saved sims) */
+@media (max-width: 720px) {
+  #simsPanel .sl-ways { grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
+  #simsPanel .sl-way { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+  #simsPanel .sl-way-icon { margin: 0; }
+  #simsPanel .sl-way > span:last-child { flex-basis: 100%; }
+  #simsPanel .sl-ways.has-sims { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #simsPanel .sl-ways.has-sims .sl-way { flex-direction: column; flex-wrap: nowrap; align-items: center; text-align: center; padding: 12px 6px 14px; gap: 6px; }
+  #simsPanel .sl-ways.has-sims .sl-way b { font-size: 13.5px; line-height: 1.2; }
+  #simsPanel .sl-ways.has-sims .sl-way > span:last-child { display: none; }
+  #simsPanel .sl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  #simsPanel .sl-tile { padding: 14px; min-height: 0; }
+  #simsPanel .sl-tile .sl-ico { width: 40px; height: 40px; margin-bottom: 6px; }
+  #simsPanel .sl-tile b { font-size: 14.5px; }
+  #simsPanel .sl-tile .sl-tag { top: 10px; right: 10px; }
+}
+@media (max-width: 720px) {
+  .sl-play { gap: 8px; }
+  .sl-play .sl-btn { flex: 1 1 auto; }
+  .sl-play .sl-icon-btn { display: none; } /* phones can't put a part of the page full screen */
+  .sl-play .sb-goal { flex-basis: 100%; margin: 2px 0 0; text-align: center; }
+  .sl-top { gap: 6px 10px; }
+  .sl-top .sl-title { font-size: 18px; padding: 6px 8px; }
+}
+
+/* Publish window: same fields as the rest of the Lab */
+.sl-pub .sl-field > span { font-size: 13px; font-weight: 900; color: var(--text); }
+.sl-pub input[type=text]:focus, .sl-pub textarea:focus { outline: none; border-color: var(--sl); }
+.sl-pub .sl-toggle { align-items: flex-start; padding: 12px 14px; border: 2px solid var(--border); border-radius: 16px; line-height: 1.4; }
+.sl-pub .sl-toggle .sl-sw { margin-top: 1px; }
+.sl-by { align-self: center; padding: 5px 10px; border-radius: 999px; background: var(--sl-l); color: var(--sl-ink); font-size: 12px; font-weight: 900; white-space: nowrap; }
+.sl-top-btns { flex-wrap: wrap; align-items: center; }

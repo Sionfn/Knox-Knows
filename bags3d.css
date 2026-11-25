@@ -129,10 +129,12 @@
 .kb3-left b { font-weight: 900; }
 .kb3-left .kk-ic { width: 18px; height: 18px; }
 .kb3-stage.is-light .kb3-left { background: #FFFFFF; border-color: #E5E5E5; color: #3C3C3C; box-shadow: 0 3px 0 #E5E5E5; }
-/* Keep the hanging decorations clear of the buttons and the bags-left pill. */
-.kb3-scene .xmas-wreath, .kb3-scene .xmas-baubles, .kb3-scene .xmas-stocking { top: 74px; }
-.kb3-scene .xmas-wreath { left: 2%; width: 84px; }
-.kb3-scene .xmas-baubles { right: 2%; width: 150px; }
-.kb3-scene .xmas-stocking { right: calc(2% + 160px); }
+/* The decorations hang from the very top (strings attached), beside the
+   bags-left pill and the sound/close buttons instead of under them. */
+.kb3-scene .xmas-wreath, .kb3-scene .xmas-baubles, .kb3-scene .xmas-stocking { top: 0; }
+.kb3-scene .xmas-wreath { left: 196px; width: 84px; }
+.kb3-scene .xmas-baubles { right: 124px; width: 150px; }
+.kb3-scene .xmas-stocking { right: 290px; }
+@media (max-width: 760px) { .kb3-scene .xmas-wreath, .kb3-scene .xmas-stocking { display: none; } .kb3-scene .xmas-baubles { right: 116px; width: 120px; } }
 /* Every look uses the app's own background color: light, dark, Fall, Christmas or Christmas night. */
 .kb3-stage { background: var(--cream, #0D1626); }

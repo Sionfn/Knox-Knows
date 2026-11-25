@@ -10,7 +10,7 @@
 //   publicSims/{id}  { type, values, title, desc, uid, createdAt, plays, likes, reports, hidden }
 //   publicSims/{id}/marks/{uid}  { liked, reported }
 //
-//   GET  ?sort=new|top                → { sims: [{ id, type, title, desc, plays, likes, createdAt, mine }] }
+//   GET  ?sort=new|played|top         → { sims: [{ id, type, title, desc, plays, likes, createdAt, mine }] }
 //   GET  ?id=<id>                     → { sim: { id, type, values, title, desc, plays, likes, liked } }
 //   POST { action: 'publish', sim: { type, values, title, desc } }   (signed in) → { id }
 //   POST { action: 'play' | 'like' | 'report' | 'unpublish', id }
@@ -61,7 +61,7 @@ export default async function simCommunity(req, res, { db, auth }) {
       const mark = uid ? await col.doc(id).collection("marks").doc(uid).get() : null;
       return res.status(200).json({ sim: { id, type: d.type, values: d.values, title: d.title, desc: d.desc, plays: d.plays || 0, likes: d.likes || 0, liked: !!mark?.data()?.liked, mine: d.uid === uid } });
     }
-    const sort = req.query?.sort === "top" ? "likes" : "createdAt";
+    const sort = req.query?.sort === "top" ? "likes" : req.query?.sort === "played" ? "plays" : "createdAt";
     // One-field ordering (no composite index needed); hidden ones are skipped here.
     const snap = await col.orderBy(sort, "desc").limit(120).get();
     return res.status(200).json({ sims: snap.docs.filter(d => !d.data().hidden).slice(0, 60).map(d => { const x = d.data(); return { id: d.id, type: x.type, title: x.title, desc: x.desc, plays: x.plays || 0, likes: x.likes || 0, createdAt: x.createdAt, mine: x.uid === uid }; }) });

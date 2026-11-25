@@ -6,6 +6,14 @@
    template and starting numbers; it never writes code. */
 (function () {
   'use strict';
+  // Play-bar icons (drawn here, so no system emoji ever shows).
+  const PI = {
+    play: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.6v14.8a1 1 0 0 0 1.5.86l11.8-7.4a1 1 0 0 0 0-1.72L8.5 3.74A1 1 0 0 0 7 4.6Z" fill="currentColor"/></svg>',
+    pause: '<svg class="sl-pi" viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/><rect x="13.9" y="4" width="4.6" height="16" rx="1.6" fill="currentColor"/></svg>',
+    restart: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/></svg>',
+    full: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    dice: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8.2 8.2h.01M15.8 8.2h.01M12 12h.01M8.2 15.8h.01M15.8 15.8h.01" stroke-width="3.4"/></svg>',
+  };
   const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
   const fmt = (n, dp = 2) => { const r = Math.round(n * 10 ** dp) / 10 ** dp; return Object.is(r, -0) ? '0' : String(r); };
   const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -153,7 +161,7 @@
     el.innerHTML = `<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">${window.KI ? window.KI('sliders', { tint: false }) : ''}</span><span><b>Try it yourself</b><small>${tpl.title}</small></span></div>
       <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
       <div class="ksim-controls">${tpl.sliders.map(([k, label, lo, hi, step]) => `<label class="ksim-slider"><span><span>${label}</span><b data-out="${k}"></b></span><input type="range" min="${lo}" max="${hi}" step="${step}" value="${state[k]}" data-k="${k}"></label>`).join('')}</div>
-      <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? '🎲 Run again' : '▶ Play'}</button>` : ''}<button type="button" class="ksim-reset">↺ Reset</button>${window.knoxSimLab ? '<button type="button" class="ksim-lab">Open in Lab →</button>' : ''}</div>`;
+      <div class="ksim-actions">${tpl.play || tpl.roll ? `<button type="button" class="ksim-play">${tpl.roll ? `${PI.dice} Run again` : `${PI.play} Play`}</button>` : ''}<button type="button" class="ksim-reset">${PI.restart} Reset</button>${window.knoxSimLab ? '<button type="button" class="ksim-lab">Open in Lab →</button>' : ''}</div>`;
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout');
     let anim = 0, pos = null, stop = () => { cancelAnimationFrame(anim); anim = 0; };
     const render = t => {
@@ -183,7 +191,7 @@
     // Play ↔ Pause: Pause freezes it where it is, Play carries on from there,
     // and after the end Play starts over.
     const playBtn = el.querySelector('.ksim-play');
-    const label = running => { if (playBtn && !tpl.roll) { playBtn.textContent = running ? '❚❚ Pause' : '▶ Play'; playBtn.setAttribute('aria-pressed', String(running)); } };
+    const label = running => { if (playBtn && !tpl.roll) { playBtn.innerHTML = running ? `${PI.pause} Pause` : `${PI.play} Play`; playBtn.setAttribute('aria-pressed', String(running)); } };
     stop = () => { cancelAnimationFrame(anim); anim = 0; label(false); };
     playBtn?.addEventListener('click', () => {
       if (tpl.roll) { tpl.counts = null; render(); return; }
