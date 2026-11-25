@@ -72,3 +72,10 @@ test('with a sim, Knox uses the Lab\'s exact gravity so the answer matches the s
   const lab = readFileSync(new URL('../simlab.js', import.meta.url), 'utf8');
   assert.match(lab, /earth: \[9\.81, 'Earth'\], moon: \[1\.62, 'Moon'\], mars: \[3\.71, 'Mars'\], jupiter: \[24\.79, 'Jupiter'\], sun: \[274, 'The Sun'\], pluto: \[0\.62, 'Pluto'\]/);
 });
+
+test('catch-up race: the time unit is the one in the speeds (mph → hours), and short times also show in minutes', async () => {
+  const { SIM_CATALOG } = await import('../api/_sim-build.js');
+  assert.match(SIM_CATALOG.find(x => x[0] === 'motion')[3], /time unit inside the SPEEDS: mph or km\/h → h/);
+  assert.match(ask, /time= is the time unit inside the speeds \(mph → h, m\/s → s\), never the unit of your answer/);
+  assert.match(readFileSync(new URL('../simlab.js', import.meta.url), 'utf8'), /s\.time === 'h' && catchT < 1 \? ` \(\$\{fmt\(catchT \* 60, 0\)\} min\)`/);
+});

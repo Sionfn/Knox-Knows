@@ -2118,6 +2118,71 @@ test('Smart search: every plan can search with sources (Ask Knox and Learn); the
   assert.equal(res.code, 400);
 });
 
+test('Smart search: a "Sources:" line Knox writes folds into the sources card (each page once); citations with text stay', async () => {
+  const { db, store } = memoryDb();
+  let text = '';
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.endsWith('/responses')) return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [{ type: 'message', content: [{ type: 'output_text', text, annotations: [{ type: 'url_citation', url: 'https://www.archives.gov/founding-docs/declaration', title: 'Declaration of Independence | National Archives' }] }] }] }) };
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'Plain answer.' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  text = 'It was adopted on July 4, 1776 ([archives.gov](https://www.archives.gov/founding-docs/declaration)).\n\nSources: [National Archives: The Declaration](https://www.archives.gov/founding-docs/declaration) · [National Archives: How It Happened](https://www.archives.gov/founding-docs/declaration-history)';
+  let res = response();
+  await handler(askRequest({ question: 'When was the Declaration of Independence signed?', webSearch: true }), res);
+  assert.equal(res.code, 200);
+  assert.doesNotMatch(res.body.answer, /^Sources:/m, 'no separate Sources line');
+  assert.match(res.body.answer, /\(\[archives\.gov\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration\)\)/, 'the inline chip stays');
+  const card = res.body.answer.split('🌐 Searched the web\n')[1];
+  assert.equal(card.match(/declaration\)/g).length, 1, 'each page once');
+  assert.match(card, /\[National Archives: How It Happened\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)/, 'the extra page joins the card');
+
+  text = 'Here is your citation.\n\nSources:\n"Declaration of Independence." National Archives, 2023, [archives.gov](https://www.archives.gov/founding-docs/declaration).';
+  res = response();
+  await handler(askRequest({ question: 'Give me an MLA citation for the Declaration of Independence', webSearch: true }), res);
+  assert.match(res.body.answer, /Sources:\n"Declaration of Independence\." National Archives, 2023/, 'a citation with text is kept');
+});
+
+test('Smart search: fact questions must search (not math), the card shows pages Knox looked at, and refused options retry plainly', async () => {
+  const { db, store } = memoryDb();
+  const calls = []; let refuse = false;
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    calls.push({ url, body });
+    if (url.endsWith('/responses')) {
+      if (refuse && body.include) return { ok: false, status: 400, text: async () => 'Unknown parameter: include' };
+      return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [
+        { type: 'web_search_call', status: 'completed', action: { type: 'search', query: 'declaration signed', sources: [{ type: 'url', url: 'https://www.archives.gov/founding-docs/declaration-history' }, { type: 'url', url: 'https://www.history.com/topics/declaration' }] } },
+        { type: 'message', content: [{ type: 'output_text', text: 'It was signed on August 2, 1776.', annotations: [] }] }] }) };
+    }
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'Plain answer.' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  const ask = async question => { calls.length = 0; const res = response(); await handler(askRequest({ question, webSearch: true }), res); return { res, search: calls.find(c => c.url.endsWith('/responses')) }; };
+
+  let { res, search } = await ask('When was the Declaration of Independence signed?');
+  assert.equal(search.body.tool_choice, 'required', 'a clear fact question must search');
+  assert.deepEqual(search.body.include, ['web_search_call.action.sources']);
+  assert.equal(res.body.webSearch, 'used');
+  assert.match(res.body.answer, /🌐 Searched the web\n- \[archives\.gov — Declaration history\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)\n- \[history\.com — Declaration\]/, 'the pages it looked at show in the card');
+
+  ({ search } = await ask('A bus leaves at 40 mph and a car follows 10 miles behind at 55 mph. When did the car catch up?'));
+  assert.equal(search.body.tool_choice, undefined, 'math word problems are not forced');
+  ({ search } = await ask('Explain photosynthesis simply'));
+  assert.equal(search.body.tool_choice, undefined, 'Knox decides for everything else');
+
+  refuse = true;
+  ({ res } = await ask('Who wrote the Declaration of Independence?'));
+  const tries = calls.filter(c => c.url.endsWith('/responses'));
+  assert.equal(tries.length, 2, 'retried once');
+  assert.equal(tries[1].body.include, undefined); assert.equal(tries[1].body.tool_choice, undefined);
+  assert.equal(res.code, 200); assert.equal(res.body.webSearch, 'used');
+});
+
 test('Learn search: a lesson reply that searched keeps its sources, listed last', async () => {
   const { db, store } = memoryDb();
   const lesson = JSON.stringify({ body: 'The Treaty of Paris was signed in 1783.', question: 'Why did it matter for the new country?', choices: [], goals: ['American Revolution'], part: 1, practiceIndex: 0, assessment: 'new', reviewFocus: '', keyIdea: '', graph: '', visual: '', video: '', recap: '', watchOut: '', topic: 'History', sim: '' });
