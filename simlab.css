@@ -92,8 +92,8 @@ html[data-theme="dark"] .sl-pick-circle { color: var(--chip); }
 .sl-box { min-width: 0; box-sizing: border-box; background: var(--surface); border: 2px solid var(--border); border-radius: 24px; box-shadow: 0 4px 0 var(--border); padding: 16px; }
 .sl-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 /* The picture stays in view while you scroll through a long list of settings. */
-.sl-stage { position: sticky; top: 0; }
-.sl-canvas { display: block; width: 100%; height: clamp(220px, calc(100dvh / var(--kz, 1) - 500px), 400px); border-radius: 16px; background: var(--cream); }
+.sl-stage { position: relative; }
+.sl-canvas { display: block; width: 100%; height: clamp(300px, calc(100dvh / var(--kz, 1) - 420px), 540px); border-radius: 16px; background: var(--cream); }
 html[data-theme="dark"] .sl-canvas { background: rgba(255, 255, 255, .03); }
 .sl-play { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .sl-play .fc-btn.small { min-height: 38px; }
@@ -158,7 +158,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 /* ── Make your own (simbuilder.js) ── */
 .sb-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
 .sb-add .fc-field-label { margin: 0 4px 0 2px; }
-.sb-canvas { height: clamp(220px, calc(100dvh / var(--kz, 1) - 560px), 380px); cursor: grab; touch-action: none; }
+.sb-canvas { height: clamp(300px, calc(100dvh / var(--kz, 1) - 430px), 540px); cursor: grab; touch-action: none; }
 .sb-canvas:active { cursor: grabbing; }
 .sb-sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 16px; margin: 0 0 12px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream); }
 .sb-sliders[hidden], .sb-sliders:empty { display: none; }
@@ -204,7 +204,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 @media (max-width: 1000px) { .sl-picks { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sl-main { grid-template-columns: minmax(0, 1fr) 290px; } }
 @media (max-width: 860px) {
   .sl-main { grid-template-columns: 1fr; }
-  .sl-stage { position: static; }
+  .sl-stage { position: relative; }
   .sl-canvas { height: 300px; }
   .sb-canvas { height: 320px; }
 }
@@ -274,15 +274,9 @@ html[data-theme="dark"] .sl-knox { background: rgba(255, 200, 0, .16); color: #F
 #simsPanel .fc-btn .fc-plus-tag { margin-left: 2px; }
 #simsPanel .sl-more .fc-plus-tag { margin-left: 0; }
 
-/* ── Sim screens: the picture on top, settings in rows underneath ──
-   On laptops the picture stays pinned at the top while you scroll the
-   settings, so you always see what a slider does. */
+/* ── Sim screens: a big picture on top, settings in rows underneath (the page scrolls normally) ── */
 .sl-main { grid-template-columns: minmax(0, 1fr) !important; gap: 16px; }
-.sl-stage { position: static; }
-@media (min-width: 861px) and (min-height: 640px) {
-  .sl-stage { position: sticky; top: 0; z-index: 3; }
-  .sl-stage::after { content: ""; position: absolute; left: -24px; right: -24px; bottom: -18px; height: 16px; background: var(--cream); z-index: -1; }
-}
+.sl-stage { position: relative; }
 .sl-controls { gap: 22px; padding: 20px 22px; }
 .sl-controls > .sl-sec > .sl-group, .sl-controls > .sl-more-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px 28px; align-items: end; }
 .sl-controls > .sl-more-box[hidden] { display: none; }

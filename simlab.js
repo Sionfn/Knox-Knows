@@ -1062,7 +1062,7 @@
     const shareBtn = `<span class="sl-menu-wrap">${B(`Share <svg class="sl-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`, `data-menu="share"${meta.community ? ' data-nopub="1"' : ''} aria-haspopup="menu" aria-expanded="false"`, 'small')}</span>`;
     host.innerHTML = fill(`<div class="fc-wrap sl-ed">
       ${head(`${ki(def.icon, false)} ${esc(def.group)}`, accentLast(title), meta.explain ? esc(meta.explain) : `${esc(def.blurb)} — move the sliders and watch what happens.`)}
-      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
+      ${topbar(B(backLabel(), 'data-back', 'ghost'), `${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
       <div class="sl-main">
         <div class="sl-stage sl-box"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
           <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>Compare</span>${tier() === 'mega' ? '' : '<span class="fc-plus-tag mega" title="Mega Knox">💎 Mega</span>'}`, `data-compare aria-pressed="${!!ghost}"`, 'small' + (tier() === 'mega' ? '' : ' locked') + (ghost ? ' sl-on' : ''))}</div>
