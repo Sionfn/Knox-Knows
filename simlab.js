@@ -40,7 +40,7 @@
     full: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
     dice: '<svg class="sl-pi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><path d="M8.2 8.2h.01M15.8 8.2h.01M12 12h.01M8.2 15.8h.01M15.8 15.8h.01" stroke-width="3.4"/></svg>',
   };
-  const tag = t => t === 'mega' ? '<span class="sl-tag mega">💎 Mega</span>' : '<span class="sl-tag">⚡ Plus</span>';
+  const tag = t => t === 'mega' ? '<span class="fc-plus-tag mega">💎 Mega</span>' : '<span class="fc-plus-tag">⚡ Plus</span>';
 
   // ── Shared bits ──────────────────────────────────────────────────────────
   const PLANETS = { earth: [9.81, 'Earth'], moon: [1.62, 'Moon'], mars: [3.71, 'Mars'], jupiter: [24.79, 'Jupiter'], sun: [274, 'The Sun'], pluto: [0.62, 'Pluto'] };
@@ -782,8 +782,7 @@
       html = `<div class="fc-wrap sl-wrap">${head(`${ki('globe', false)} Community`, `Sims from <span class="accent">everyone.</span>`, 'Knox’s own simulations — each with challenges — and ones Knox students made. Play any of them.')}
         ${topbar(backBtn)}
         <div class="fc-cm">
-        ${searchBox('slCmSearch', 'Search simulations', 'Search — e.g. moon, pendulum, savings…', community.q)}
-        <div class="fc-cm-filters"><select class="sl-input sl-select kx-select" data-kx="pill" id="slCmGroup" aria-label="Subject"><option value="All">Every subject</option>${[...GROUPS, 'Made from scratch'].map(g => `<option${community.group === g ? ' selected' : ''}>${g}</option>`).join('')}</select></div>
+        <div class="sl-filter-row">${searchBox('slCmSearch', 'Search simulations', 'Search — e.g. moon, pendulum, savings…', community.q)}<select class="sl-input sl-select kx-select" data-kx="pill" id="slCmGroup" aria-label="Subject"><option value="All">Every subject</option>${[...GROUPS, 'Made from scratch'].map(g => `<option${community.group === g ? ' selected' : ''}>${g}</option>`).join('')}</select></div>
         ${community.note ? `<p class="sl-msg" role="status">${esc(community.note)}</p>` : ''}
         ${community.group === 'Made from scratch' ? '' : `<section class="sl-cm-sec"><div class="sl-sec-head"><h2>Made by Knox</h2><span class="fc-pill">${knox.length}</span></div>
           ${knox.length ? `<div class="sl-picks">${knoxShown.map(knoxCard).join('')}</div>${knoxShown.length < knox.length ? `<div class="fc-toolbar" style="margin-top:16px">${B(`Show all ${knox.length}`, 'data-allknox', 'small')}</div>` : ''}` : empty('None of Knox’s match that', 'Try a different word or subject.')}</section>`}
@@ -815,6 +814,7 @@
     }
     setWay(tab === 'build' ? 'build' : tab === 'community' ? 'community' : '');
     host.innerHTML = fill(html);
+    window.knoxSelect?.enhance(host);
     host.scrollTop = keepScroll ? top : 0;
   }
   // Like Flashcards: a page you reach from a way card wears that card's color
@@ -932,7 +932,7 @@
   const communityFoot = c => c ? `<div class="fc-cm-foot sl-cm-foot"><span class="fc-pill">${c.mine ? 'Yours' : 'By a Knox student'}</span><span class="sl-flex"></span>${B(`♥ ${c.likes}`, `data-clike="${c.id}"`, 'ghost small' + (c.liked ? ' on' : ''))}${c.mine ? B('Take it down', `data-cdown="${c.id}"`, 'ghost small danger') : B('Report', `data-creport="${c.id}"`, 'ghost small danger')}</div>` : '';
   async function communityAction(b) {
     try {
-      if (b.dataset.clike) { const r = await communityApi('POST', { action: 'like', id: b.dataset.clike }); b.textContent = `♥ ${r.likes}`; b.classList.toggle('on', r.liked); community.loaded = false; }
+      if (b.dataset.clike) { const r = await communityApi('POST', { action: 'like', id: b.dataset.clike }); b.innerHTML = fill(`♥ ${r.likes}`); b.classList.toggle('on', r.liked); community.loaded = false; }
       else if (b.dataset.creport) { if (!await ask({ title: 'Report this simulation?', body: 'Tell us if it has something that isn’t school-friendly. 3 reports take it down until a person checks it.', ok: 'Report', danger: true })) return; await communityApi('POST', { action: 'report', id: b.dataset.creport, reason: 'student report' }); b.textContent = 'Reported — thanks'; b.disabled = true; }
       else if (b.dataset.cdown) { if (!await ask({ title: 'Take it down?', body: 'It leaves Community sims. It stays on your Lab home if you saved it.', ok: 'Take it down', danger: true })) return; await communityApi('POST', { action: 'unpublish', id: b.dataset.cdown }); b.textContent = 'Taken down'; b.disabled = true; community.loaded = false; }
     } catch (e) { if (!window.currentUser) window.openAuthModal?.('signup'); else upsellNote(e.message); }
@@ -1065,20 +1065,21 @@
       ${topbar(B(backLabel(), 'data-back', 'ghost'), `${B(`${ki('think', false)} Ask Knox`, 'data-ask', 'small')}${shareBtn}${B('Save', 'data-save', 'primary small')}`)}
       <div class="sl-main">
         <div class="sl-stage sl-box"><canvas class="sl-canvas" aria-label="${esc(def.title)} simulation"></canvas>
-          <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>Compare</span>${tier() === 'mega' ? '' : '<span class="sl-tag mega" title="Mega Knox">💎</span>'}`, `data-compare aria-pressed="${!!ghost}"`, 'small' + (tier() === 'mega' ? '' : ' locked') + (ghost ? ' sl-on' : ''))}</div>
+          <div class="sl-play">${def.anim ? `${B(`${PI.play} Play`, 'data-play', 'primary small sl-playbtn')}${B(`${PI.restart} Restart`, 'data-restart', 'small')}` : ''}${id === 'probability' ? B(`${PI.dice} New run`, 'data-reroll', 'small') : ''}${B('Randomize', 'data-random', 'small')}${B('Reset', 'data-reset', 'small')}${def.table ? B('Data table', 'data-table', 'small') : ''}${B(`<span>Compare</span>${tier() === 'mega' ? '' : '<span class="fc-plus-tag mega" title="Mega Knox">💎 Mega</span>'}`, `data-compare aria-pressed="${!!ghost}"`, 'small' + (tier() === 'mega' ? '' : ' locked') + (ghost ? ' sl-on' : ''))}</div>
           ${B(PI.full, 'data-full aria-label="Full screen" title="Full screen"', 'small sl-icon-btn sl-full')}
-          <p class="sl-readout" aria-live="polite"></p><div class="sb-table" hidden></div>
-          ${stepsBox(meta.steps)}
-          ${communityFoot(meta.community)}</div>
+          <p class="sl-readout" aria-live="polite"></p><div class="sb-table" hidden></div></div>
         <div class="sl-controls sl-box">
-          ${CHALLENGES[id] ? `<div class="sl-sec"><span class="fc-field-label">Challenges</span><div class="sl-chal">${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div></div>` : ''}
-          ${presets.length ? `<div class="sl-sec"><span class="fc-field-label">Try one</span><div class="fc-chips">${presets.map(([n], i) => chipB(esc(n), `data-preset="${i}"`)).join('')}</div></div>` : ''}
           <div class="sl-sec"><span class="fc-field-label">Settings</span><div class="sl-group">${basic.map(ctl).join('')}</div></div>
           ${more.length ? `<button type="button" class="sl-more${moreOpen ? ' open' : ''}" data-more aria-expanded="${moreOpen}"><span>More settings</span>${paid() ? '' : tag('plus')}<svg class="sl-more-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           <div class="sl-group sl-more-box"${moreOpen ? '' : ' hidden'}>${more.map(ctl).join('')}</div>` : ''}
+          <div class="sl-pair">${presets.length ? `<div class="sl-sec"><span class="fc-field-label">Try one</span><div class="fc-chips">${presets.map(([n], i) => chipB(esc(n), `data-preset="${i}"`)).join('')}</div></div>` : ''}
+          ${CHALLENGES[id] ? `<div class="sl-sec"><span class="fc-field-label">Challenges</span><div class="sl-chal">${CHALLENGES[id].map(([txt], i) => `<div class="sl-chal-row${doneSet().has(id + i) ? ' done' : ''}" data-ch="${i}"><span class="sl-chal-box" aria-hidden="true"></span><span>${esc(txt)}</span></div>`).join('')}</div></div>` : ''}</div>
+          ${stepsBox(meta.steps)}
+          ${communityFoot(meta.community)}
         </div>
       </div>
       <p class="fc-note">Tip: double-click a setting’s name to put it back where it started.</p></div>`);
+    window.knoxSelect?.enhance(host);
     host.scrollTop = 0;
     const canvas = $('.sl-canvas', host), g = canvas.getContext('2d'), readout = $('.sl-readout', host);
     const colors = () => {

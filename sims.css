@@ -30,3 +30,30 @@ html[data-theme="dark"]:not(.knox-seasonal) .ksim-beta { background: rgba(242,18
 /* Drawn play/pause/reset icons (no system emoji) */
 .ksim-actions .sl-pi { width: 14px; height: 14px; flex-shrink: 0; }
 .ksim-play, .ksim-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* ── Knox look, in the Simulation Lab's yellow (a sim in an answer is a piece of the Lab) ──
+   Same parts as the Lab: a card with a colored border + edge, an icon circle, capitals on
+   the main button (yellow with Knox's dark-brown writing), white sticker buttons beside it. */
+.knox-sim { --ks: #FFC800; --ks-edge: #D9A300; --ks-ledge: #B98500; --ks-tint: #FFF4C2; --ks-ink: #7A5400;
+  border-color: var(--ks); box-shadow: 0 4px 0 var(--ks-ledge); padding: 16px; }
+html[data-theme="dark"] .knox-sim { --ks-tint: rgba(255, 200, 0, .16); --ks-ink: #FFD45C; }
+.ksim-badge { width: 44px; height: 44px; border-radius: 50%; background: var(--ks-tint); border: 3px solid var(--ks); box-shadow: 0 3px 0 var(--ks); color: var(--ks-ink); box-sizing: border-box; }
+.ksim-badge .kk-ic { width: 20px; height: 20px; color: inherit !important; }
+.ksim-head b { font-size: 15px; text-transform: uppercase; letter-spacing: .02em; }
+.ksim-slider { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+.ksim-slider b { color: var(--text); font-size: 13.5px; letter-spacing: 0; }
+.ksim-slider input { background: linear-gradient(to right, var(--ks) var(--p, 50%), var(--border, #E8DCCB) var(--p, 50%)); }
+.ksim-slider input::-webkit-slider-thumb { border-color: var(--ks); box-shadow: 0 2px 0 var(--ks-ledge); }
+.ksim-slider input::-moz-range-thumb { border-color: var(--ks); box-shadow: 0 2px 0 var(--ks-ledge); }
+.ksim-slider input:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ks) 40%, transparent); }
+.ksim-actions { flex-wrap: wrap; align-items: center; }
+.ksim-play, .ksim-reset, .ksim-lab { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; margin: 0; padding: 0 16px; border-radius: 14px; font: 900 14px Nunito, sans-serif; cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.ksim-play { border: 2px solid var(--ks-edge); background: var(--ks); color: #3D2800; box-shadow: 0 4px 0 var(--ks-ledge); text-transform: uppercase; letter-spacing: .03em; }
+.ksim-play:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--ks-ledge); }
+.ksim-play:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ks-ledge); }
+.ksim-play .kk-ic, .ksim-play .sl-pi { color: #3D2800; }
+.ksim-reset, .ksim-lab { border: 2px solid var(--border, #E8DCCB); background: var(--surface, #fff); color: var(--text); box-shadow: 0 3px 0 var(--border, #E8DCCB); }
+.ksim-reset:hover, .ksim-lab:hover { transform: translateY(-2px); box-shadow: 0 5px 0 var(--border, #E8DCCB); }
+.ksim-reset:active, .ksim-lab:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--border, #E8DCCB); }
+.ksim-lab { margin-left: auto; }
+@media (max-width: 480px) { .ksim-lab { margin-left: 0; flex: 1 1 100%; } .ksim-play, .ksim-reset { flex: 1; } }

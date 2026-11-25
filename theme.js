@@ -331,7 +331,6 @@
   const PINE = (x, s, c = '#1FA45A', d = '#157A41') => `<g transform="translate(${x} 0) scale(${s})"><rect x="-6" y="78" width="12" height="14" rx="3" fill="#A5673A"/><path d="M0 0 26 36H-26Z M0 22 32 62H-32Z M0 44 38 84H-38Z" fill="${c}" stroke="${d}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-12 18 0 12 12 18M-16 42 0 35 16 42M-20 66 0 58 20 66" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/></g>`;
   const XMAS_PINES = `<svg class="xmas-pines" viewBox="-40 -6 230 100" aria-hidden="true" focusable="false">${PINE(0, 1)}${PINE(78, .78, '#28B565', '#157A41')}${PINE(140, .6)}</svg>`;
   const XMAS_SNOWMAN = '<svg class="xmas-snowman" viewBox="0 -18 110 168" aria-hidden="true" focusable="false"><g fill="#FFFFFF" stroke="#D3E4F0" stroke-width="3.5"><circle cx="55" cy="112" r="34"/><circle cx="55" cy="66" r="24"/><circle cx="55" cy="32" r="18"/></g><rect x="38" y="4" width="34" height="8" rx="3" fill="#3C3C3C"/><rect x="43" y="-14" width="24" height="20" rx="3" fill="#3C3C3C"/><rect x="43" y="-2" width="24" height="5" fill="#E5383B"/><circle cx="48" cy="29" r="2.6" fill="#3C3C3C"/><circle cx="62" cy="29" r="2.6" fill="#3C3C3C"/><path d="M55 34l16 4-16 3Z" fill="#FF8A3D" stroke="#CC5500" stroke-width="1.5" stroke-linejoin="round"/><path d="M33 48c14 7 30 7 44 0l3 8c-16 8-34 8-50 0Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M66 52l6 20 8-3-5-17" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><g fill="#3C3C3C"><circle cx="55" cy="60" r="2.6"/><circle cx="55" cy="72" r="2.6"/><circle cx="55" cy="104" r="2.6"/></g><path d="M31 66 8 52M79 66l22-12" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/></svg>';
-  const SANTA_HAT = '<svg class="xmas-hat" viewBox="0 0 44 36" aria-hidden="true" focusable="false"><path d="M4 26C8 10 22 2 34 6l6 14-6 2C30 14 22 14 18 26Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><rect x="2" y="24" width="24" height="9" rx="4.5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/><circle cx="38" cy="22" r="5" fill="#FFFFFF" stroke="#E6DCD8" stroke-width="2"/></svg>';
   // A wreath (top left), candy canes and a stocking.
   const XMAS_WREATH = (() => { let leaves = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, x = 60 + Math.cos(a) * 38, y = 60 + Math.sin(a) * 38; leaves += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="15" ry="9" transform="rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${i % 2 ? '#1FA45A' : '#28B565'}" stroke="#157A41" stroke-width="2.5"/>`; } return `<svg class="xmas-wreath" viewBox="0 -44 120 194" aria-hidden="true" focusable="false"><path d="M60 -44v64" stroke="#C9B8B2" stroke-width="2"/>${leaves}<g stroke-width="2.5"><circle cx="30" cy="44" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="92" cy="52" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="40" cy="94" r="5.5" fill="#FFC800" stroke="#D9A300"/><circle cx="86" cy="92" r="5.5" fill="#E5383B" stroke="#B3202A"/><circle cx="60" cy="24" r="5" fill="#1CB0F6" stroke="#0A85C2"/></g><path d="M60 98c-14-12-30-8-24 4s24-4 24-4c14-12 30-8 24 4s-24-4-24-4Z" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/><path d="M54 100l-8 30 10-6 4 10 2-34M66 100l8 30-10-6-4 10-2-34" fill="#E5383B" stroke="#B3202A" stroke-width="2.5" stroke-linejoin="round"/></svg>`; })();
   // White canes with red stripes (the stripes are short dashes along the cane).
@@ -360,12 +359,10 @@
       host.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true">${XMAS_NIGHT_SKY}<div class="xmas-snow-local">${snow(FEW_LEAVES ? 16 : 30)}</div>${XMAS_WREATH}${XMAS_BAUBLES}${XMAS_STOCKING}<div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
       addLights(host.querySelector(':scope > .xmas-deco'), host.id !== 'welcomeScreen'); // a shorter string under the landing header
     }
-    // The landing's last section: Knox in a Santa hat, snow and the snowy ground.
+    // The landing's last section: snow and the snowy ground.
     const fin = document.querySelector('.kl-final');
     if (fin && !fin.querySelector(':scope > .xmas-deco')) {
       fin.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 12 : 24)}</div><div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
-      const img = fin.querySelector('.kl-wrap > img');
-      if (img && !img.parentElement.classList.contains('xmas-hat-wrap')) { const w = document.createElement('span'); w.className = 'xmas-hat-wrap'; img.before(w); w.append(img); w.insertAdjacentHTML('afterbegin', SANTA_HAT); }
     }
     // Landing sections: snow falls in every one, so there's snow wherever you scroll.
     document.querySelectorAll('section.kl-section:not(#home):not(.kl-final)').forEach(sec => {
@@ -378,7 +375,6 @@
     document.querySelectorAll('section.kl-section:not(#home)').forEach(sec => { if (!sec.querySelector(':scope > .xmas-edge')) sec.insertAdjacentHTML('afterbegin', '<div class="xmas-edge" aria-hidden="true"></div>'); });
     // Shorter lights under the sidebar logo and the landing header.
     document.querySelectorAll('.sidebar-top').forEach(el => addLights(el, true)); // the drooping string under the logo bar
-    document.querySelectorAll('.sidebar-logo-link, .header-logo').forEach(a => { if (!a.querySelector('.xmas-hat')) a.insertAdjacentHTML('afterbegin', SANTA_HAT); });
   }
   // "Christmas mode is here" tip (app welcome screen, December, dismissible).
   function christmasTip() {
