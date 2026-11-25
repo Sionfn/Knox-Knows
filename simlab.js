@@ -1069,6 +1069,10 @@
     const seed = (Math.random() * 1e9) | 0;
     let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0;
     const dur = () => def.duration ? def.duration.call(def, s) : 4;
+    // Open on the finished picture (a whole population curve, all the coin flips…);
+    // Play replays it from the start. Swinging/looping sims start at the beginning.
+    const done = () => def.anim && !def.loop ? dur() : def.anim ? 0 : null;
+    t = done();
     function draw() {
       const w = canvas.clientWidth || 320, h = Math.round(Math.min(300, Math.max(200, w * .5))), d = Math.min(2, devicePixelRatio || 1);
       canvas.style.height = h + 'px';
@@ -1090,9 +1094,9 @@
       if (playBtn) playBtn.innerHTML = on ? `${PI.pause} Pause` : `${PI.play} Play`;
       if (on) { if (t >= dur() && !def.loop) t = 0; last = performance.now(); raf = requestAnimationFrame(frame); }
     }
-    el.addEventListener('input', e => { const k = e.target.dataset?.k; if (!k) return; s[k] = Number(e.target.value); if (def.anim && !def.loop && !playing) t = 0; draw(); });
+    el.addEventListener('input', e => { const k = e.target.dataset?.k; if (!k) return; s[k] = Number(e.target.value); if (def.anim && !def.loop && !playing) t = dur(); draw(); });
     playBtn?.addEventListener('click', () => setPlaying(!playing));
-    el.querySelector('.ksim-reset').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = def.anim ? 0 : null; draw(); });
+    el.querySelector('.ksim-reset').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = done(); draw(); });
     el.querySelector('.ksim-lab').addEventListener('click', () => { setPlaying(false); const values = { ...s }; window.openSims?.(); setTimeout(() => open(id, values, { title: meta.title || def.title, fromAnswer: true }), 60); });
     new ResizeObserver(() => { if (!playing && el.isConnected) draw(); }).observe(canvas);
     draw();
@@ -1193,7 +1197,7 @@
       s[k] = p.type === 'toggle' ? e.target.checked : p.type === 'select' || p.type === 'text' ? e.target.value : Number(e.target.value);
       if (p.type === 'text') for (const q of params) if (q.show) { const el = host.querySelector(`[data-k="${q.k}"]`)?.closest('.sl-field'); if (el) el.hidden = !q.show(s); }
       const o = host.querySelector(`[data-out="${k}"]`); if (o) o.textContent = unitFmt(p, s[k]);
-      if (def.anim && !playing && k !== 'speedx') t = def.loop ? t : 0;
+      if (def.anim && !playing && k !== 'speedx') t = def.loop ? t : dur(); // the new result right away
       draw();
     };
     host.addEventListener('input', onInput); host.addEventListener('change', onInput);
