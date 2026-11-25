@@ -497,6 +497,9 @@
     .sa-size button[aria-pressed="true"] { border-color: var(--orange); background: var(--orange-light); color: var(--orange-dark); box-shadow: 0 2px 0 var(--orange-dark); }
     html[data-theme="dark"] .sa-size button[aria-pressed="true"] { color: var(--orange); }
     @media (max-width: 420px) { .sa-row { flex-wrap: wrap; } .sa-lang { max-width: none; width: 100%; } }
+    .sa-row .kx-wrap { width: auto; flex-shrink: 0; max-width: 46%; }
+    .sa-row .kx-sel { min-height: 38px; padding: 7px 10px 7px 12px; font-size: 13px; border-radius: 11px; }
+    @media (max-width: 420px) { .sa-row .kx-wrap { max-width: none; width: 100%; } }
     /* On/off switch (Account & Plan → Sound effects) */
     .sa-switch { position: relative; flex-shrink: 0; width: 50px; height: 30px; padding: 0; border-radius: 999px; border: 2px solid var(--border); background: var(--gray, #E5E5E5); cursor: pointer; transition: background .15s, border-color .15s; }
     .sa-switch span { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.18); transition: transform .15s; }
@@ -2738,6 +2741,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <link rel="stylesheet" href="/bags3d.css">
 <link rel="stylesheet" href="/sims.css">
 <link rel="stylesheet" href="/simlab.css">
+<link rel="stylesheet" href="/knox-select.css">
 <script src="/knox-sound.js" defer></script>
 <script src="/flamefest.js" defer></script>
 <script src="/advent.js" defer></script>
@@ -2751,6 +2755,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <script src="/sims.js" defer></script>
 <script src="/simbuilder.js" defer></script>
 <script src="/simlab.js" defer></script>
+<script src="/knox-select.js" defer></script>
 <link rel="stylesheet" href="/gift.css">
 <script src="/gift.js" defer></script>
 <script src="/payment-status.js" defer></script>
@@ -5632,7 +5637,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
     // Answers: language + text size (same as the iPhone app).
     const ans = document.createElement('div'); ans.className = 'settings-answers';
     ans.innerHTML = '<span class="settings-label">Answers</span>' +
-      '<label class="sa-row"><span class="sa-copy"><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select class="sa-lang" aria-label="Knox answers in"></select></label>' +
+      '<label class="sa-row"><span class="sa-copy"><b>Knox answers in</b><small>Auto answers in the language you ask in.</small></span><select class="sa-lang kx-select" aria-label="Knox answers in"></select></label>' +
       '<div class="sa-row"><span class="sa-copy"><b>Answer text size</b><small>Makes Knox’s answers and lessons easier to read.</small></span><div class="sa-size" role="group" aria-label="Answer text size"><button type="button" data-size="0">Aa Standard</button><button type="button" data-size="1" class="big">Aa Larger</button></div></div>';
     const langSel = ans.querySelector('.sa-lang');
     KNOX_LANGS.forEach(([v, label]) => { const o = document.createElement('option'); o.value = v; o.textContent = v === 'auto' ? 'Auto' : label; o.title = label; langSel.appendChild(o); });

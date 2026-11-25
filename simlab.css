@@ -1,318 +1,228 @@
-/* simlab.css — the Simulation Lab (simlab.js). Knox look: flat colors, 2px
-   borders with a bottom edge; Simulations' own color is Knox gold. */
-#simsPanel, .sl-pub-wrap { --sl: #F2B705; --sl-d: #B98500; --sl-ink: #8A6300; --sl-l: #FFF4CC; }
-html[data-theme="dark"] #simsPanel, html[data-theme="dark"] .sl-pub-wrap { --sl-ink: #FFD45C; --sl-l: rgba(242, 183, 5, .14); }
-.sl-wrap, .sl-ed { max-width: 1040px; margin: 0 auto; padding-bottom: 28px; }
-.sl-wrap { max-width: 860px; }
-.sl-head { text-align: center; margin: 6px 0 16px; }
-.sl-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; border: 2px solid var(--sl); background: var(--sl-l); color: var(--sl-ink); font-size: 12.5px; font-weight: 900; }
-.sl-badge .kk-ic { width: 16px; height: 16px; }
-.sl-head h2 { margin: 10px 0 4px; font-size: 28px; font-weight: 900; color: var(--text); }
-.sl-head h2 span { color: var(--sl-d); }
-html[data-theme="dark"] .sl-head h2 span { color: var(--sl); }
-.sl-head p { margin: 0; font-size: 15px; font-weight: 700; color: var(--text-light); }
+/* simlab.css — the Simulation Lab (simlab.js, simbuilder.js).
+   The Lab is built from Flashcards' own parts (flashcards.css: .fc-head,
+   .fc-ways, .fc-deck, .fc-make, .fc-chip, .fc-btn, .fc-modal…) so it looks
+   like the rest of Knox. Only its color changes: Knox yellow, the way
+   Flashcards wears green and Learn wears purple. This file adds the few
+   things Flashcards doesn't have (the picture box, sliders, challenges). */
 
+/* ── Knox yellow ── */
+#simsPanel, .sl-modal {
+  --fc-acc: #FFC800; --fc-acc-dark: #B98500; --fc-acc-light: #FFF4C2; --sl-ink: #7A5400; --sl-edge: #D9A300;
+  /* older names used by the drawings */
+  --sl: #F2B705; --sl-d: #B98500; --sl-l: #FFF4C2;
+}
+html[data-theme="dark"] #simsPanel, html[data-theme="dark"] .sl-modal { --fc-acc-light: rgba(255, 200, 0, .16); --sl-ink: #FFD45C; --sl-l: rgba(255, 200, 0, .14); }
+#simsPanel .kx-wrap, .sl-modal .kx-wrap { --kx-acc: #FFC800; --kx-acc-dark: #B98500; --kx-acc-light: var(--fc-acc-light); --kx-ink: var(--sl-ink); }
+#simsPanel .fc-badge { --bdg: #FFC800; --bdg-ink: #8A6300; --bdg-tint: #FFF4C2; }
+html.knox-seasonal #simsPanel .fc-badge { --bdg: #E0B04A; --bdg-ink: #7A5400; --bdg-tint: #FBEFCB; }
+#simsPanel .fc-title .accent { color: #F0A800; }
+html[data-theme="dark"] #simsPanel .fc-title .accent { color: #FFC800; }
+html.knox-seasonal #simsPanel .fc-title .accent { color: #C98A00 !important; }
+/* Yellow buttons get Knox's dark-brown writing (like Mega and the blind bags), in capitals like every main button. */
+#simsPanel .fc-btn.primary, .sl-modal .fc-btn.primary { background: #FFC800; border-color: var(--sl-edge); color: #3D2800; box-shadow: 0 4px 0 #B98500; }
+#simsPanel .fc-btn.primary:hover, .sl-modal .fc-btn.primary:hover { box-shadow: 0 6px 0 #B98500; }
+#simsPanel .fc-btn.primary:active, .sl-modal .fc-btn.primary:active { box-shadow: 0 1px 0 #B98500; }
+#simsPanel .fc-btn.primary .kk-ic { color: #3D2800 !important; }
+/* …except inside a sim card, where the main button wears the card's own color (like decks). */
+#simsPanel .fc-deck .fc-btn.primary { background: var(--chip); border-color: var(--chip-ledge); color: #fff; box-shadow: 0 4px 0 var(--chip-ledge); }
+#simsPanel .fc-deck .fc-btn.primary:hover { box-shadow: 0 6px 0 var(--chip-ledge); }
+#simsPanel .fc-deck .fc-btn.primary .kk-ic { color: #fff !important; }
+#simsPanel .fc-chip.on { color: var(--sl-ink); }
+#simsPanel .fc-btn.ghost:hover { color: var(--sl-ink); }
 
-.sl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 14px; border: 2px solid var(--sl-d); background: var(--sl); color: #3D2800; font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 var(--sl-d); white-space: nowrap; }
-.sl-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--sl-d); }
-.sl-btn[disabled] { opacity: .65; cursor: default; }
-.sl-btn.sm { padding: 7px 12px; font-size: 13px; }
-.sl-btn.ghost { background: var(--surface); color: var(--text); border-color: var(--border); box-shadow: 0 3px 0 var(--border); }
-.sl-btn.ghost.locked { opacity: .8; }
-.sl-btn .kk-ic { width: 17px; height: 17px; }
-.sl-chip { padding: 6px 11px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
-.sl-chip:hover { border-color: var(--sl); }
-.sl-chip.on { border-color: var(--sl); background: var(--sl-l); color: var(--sl-ink); }
-.sl-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, #58CC02 16%, var(--surface)); color: #3E8F00; font-size: 10.5px; font-weight: 900; white-space: nowrap; }
+/* ── The page: same scroller and spacing as Flashcards ── */
+#simsPanel .nb-scroll.bs-scroll { display: flex; flex-direction: column; padding: clamp(18px, 3vw, 40px) clamp(16px, 3vw, 40px) 48px !important; }
+#simsPanel button { font-family: inherit; cursor: pointer; }
+#simsPanel :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+#simsPanel .fc-title:focus { outline: none; }
+.sl-topbar { max-width: 640px; width: 100%; margin: 0 auto 12px; }
+.sl-wrap:has(.sl-picks:not(.two), .fc-cm) .sl-topbar { max-width: 960px; }
+.sl-ed .sl-topbar { max-width: none; }
+.fc-topbar-right { flex-wrap: wrap; justify-content: flex-end; }
+.sl-flex { flex: 1; }
+
+/* Fields (the same as Flashcards' inputs) */
+.sl-input { width: 100%; min-width: 0; box-sizing: border-box; padding: 12px 14px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; box-shadow: 0 2px 0 var(--border); outline: none; transition: border-color .15s, box-shadow .15s; }
+.sl-input:focus { border-color: var(--fc-acc); box-shadow: 0 2px 0 var(--fc-acc-light); }
+.sl-textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
+.sl-label-gap { margin-top: 18px; }
+.fc-examples .fc-chip { text-align: left; }
+.sl-search input { padding-left: 42px; }
+.sl-opt { text-transform: none; letter-spacing: 0; font-weight: 700; }
+.sl-msg { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--red, #E5383B) 10%, var(--surface)); color: var(--text); font-size: 13.5px; font-weight: 800; }
+.sl-msg[hidden] { display: none; }
+.fc-cm > .sl-msg { max-width: 640px; margin: 0 auto 16px; }
+.sl-link { border: none; background: none; padding: 0; color: var(--sl-ink); font: inherit; font-weight: 900; text-decoration: underline; cursor: pointer; }
+.sl-spin { width: 15px; height: 15px; border-radius: 50%; border: 2.5px solid rgba(61, 40, 0, .3); border-top-color: #3D2800; animation: slSpin .8s linear infinite; }
+@keyframes slSpin { to { transform: rotate(360deg); } }
+.sl-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, #58CC02 16%, var(--surface)); color: #3E8F00; font-size: 10.5px; font-weight: 900; white-space: nowrap; letter-spacing: 0; text-transform: none; }
 .sl-tag.mega { background: color-mix(in srgb, #1CB0F6 16%, var(--surface)); color: #0A85C2; }
 html[data-theme="dark"] .sl-tag { color: #8EE04A; }
 html[data-theme="dark"] .sl-tag.mega { color: #6FD0FF; }
-.sl-cost { margin: 14px 2px 0; font-size: 12.5px; font-weight: 700; line-height: 1.45; color: var(--text-light); text-align: center; }
-.sl-label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 900; color: var(--text); }
-.sl-msg { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--red, #E5383B) 10%, var(--surface)); color: var(--text); font-size: 13.5px; font-weight: 800; }
-.sl-link { border: none; background: none; padding: 0; color: var(--sl-d); font: inherit; font-weight: 900; text-decoration: underline; cursor: pointer; }
+.sl-pi { width: 15px; height: 15px; flex-shrink: 0; }
+.sl-x { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
 
-/* Knox builds it */
-.sl-build { padding: 16px; border-radius: 20px; border: 2px solid var(--sl); background: var(--surface); box-shadow: 0 4px 0 var(--sl-d); }
-.sl-prompt { width: 100%; min-height: 96px; resize: vertical; box-sizing: border-box; padding: 12px 14px; border-radius: 14px; border: 2px solid var(--border); background: var(--cream, var(--surface)); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; line-height: 1.45; }
-.sl-prompt:focus { outline: none; border-color: var(--sl); }
-.sl-examples { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
-.sl-build-row { display: flex; justify-content: flex-end; }
-.sl-go { min-width: 150px; font-size: 15px; padding: 12px 20px; }
-.sl-spin { width: 15px; height: 15px; border-radius: 50%; border: 2.5px solid rgba(61, 40, 0, .3); border-top-color: #3D2800; animation: slSpin .8s linear infinite; }
-@keyframes slSpin { to { transform: rotate(360deg); } }
+/* A Knox note (Knox's explanation, plan notes): yellow edge, soft yellow inside */
+.sl-note { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--fc-acc); background: var(--fc-acc-light); color: var(--text); font-size: 14px; font-weight: 700; line-height: 1.45; }
+.sl-note > p { flex: 1; min-width: 0; margin: 0; }
+.sl-note > .kk-ic { width: 20px; height: 20px; flex-shrink: 0; }
+.sl-wrap > .sl-note { max-width: 640px; margin-left: auto; margin-right: auto; }
 
-/* Playground */
-.sl-filters { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 12px; }
-.sl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.sl-tile { --c: #F2B705; --cd: #B98500; position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 14px; min-height: 112px; text-align: left; border-radius: 18px; border: 2px solid var(--c); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 4px 0 var(--cd); transition: transform .12s; }
-.sl-tile:hover { transform: translateY(-2px); }
-.sl-tile b { font-size: 15px; font-weight: 900; }
-.sl-tile small { font-size: 12.5px; font-weight: 700; color: var(--text-light); line-height: 1.35; }
-.sl-tile .sl-tag { position: absolute; top: 10px; right: 10px; }
-.sl-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--c, #F2B705) 16%, var(--surface)); margin-bottom: 4px; flex-shrink: 0; }
-.sl-ico .kk-ic { width: 22px; height: 22px; }
-.sl-tile.g-math { --c: #1CB0F6; --cd: #0A85C2; }
-.sl-tile.g-physics { --c: #FF6B00; --cd: #CC5500; }
-.sl-tile.g-money { --c: #1FA45A; --cd: #157A41; }
-.sl-tile.g-chance { --c: #A560F2; --cd: #7C3AED; }
-.sl-tile.g-biology { --c: #14B8A6; --cd: #0E8A7D; }
-.sl-tile.g-chemistry { --c: #E5383B; --cd: #B3202A; }
-.sl-tile.g-earth { --c: #58CC02; --cd: #3E8F00; }
+/* ── Pick cards: the Learn page's cards (icon circle, capitals, small line) ── */
+.sl-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 960px; width: 100%; margin: 0 auto; }
+.sl-picks.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
+.sl-pick { --chip: var(--orange); --chip-ledge: var(--orange-dark); --chip-tint: var(--orange-light); --chip-ink: var(--orange);
+  position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 16px; border-radius: 20px; border: 2px solid var(--chip); background: var(--surface); color: var(--text); text-align: left; box-shadow: 0 4px 0 var(--chip-ledge); transition: transform .15s, box-shadow .15s; }
+.sl-pick[data-flavor="blue"]   { --chip: var(--blue);   --chip-ledge: var(--blue-dark);   --chip-tint: var(--blue-light);   --chip-ink: var(--blue); }
+.sl-pick[data-flavor="green"]  { --chip: var(--green);  --chip-ledge: var(--green-dark);  --chip-tint: var(--green-light);  --chip-ink: var(--green-dark); }
+.sl-pick[data-flavor="purple"] { --chip: var(--purple); --chip-ledge: var(--purple-dark); --chip-tint: var(--purple-light); --chip-ink: var(--purple-dark); }
+.sl-pick:hover { transform: translateY(-3px); box-shadow: 0 7px 0 var(--chip-ledge); }
+.sl-pick:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--chip-ledge); }
+.sl-pick-circle { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--chip-tint); border: 3px solid var(--chip); box-shadow: 0 3px 0 var(--chip); color: var(--chip-ink); box-sizing: border-box; }
+.sl-pick-circle .kk-ic { width: 24px; height: 24px; color: inherit !important; }
+html[data-theme="dark"] .sl-pick-circle { color: var(--chip); }
+.sl-pick-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.sl-pick-text b { font-size: 15px; font-weight: 900; line-height: 1.25; text-transform: uppercase; letter-spacing: .02em; color: var(--text); }
+.sl-pick-text small { font-size: 12.5px; font-weight: 700; line-height: 1.4; color: var(--text-light); }
+.sl-pick .sl-tag { position: absolute; top: 10px; right: 10px; }
+.sl-filters { justify-content: center; margin: 0 auto 20px; max-width: 960px; }
 
-/* My sims */
-.sl-saved { display: flex; flex-direction: column; gap: 8px; }
-.sl-save-row { display: flex; align-items: center; gap: 8px; }
-.sl-save-open { flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: 0 3px 0 var(--border); }
-.sl-save-open b { display: block; font-size: 14.5px; font-weight: 900; }
-.sl-save-open small { font-size: 12px; font-weight: 700; color: var(--text-light); }
-.sl-save-open .sl-ico { margin: 0; }
-.sl-x { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); font: inherit; font-weight: 900; cursor: pointer; }
-.sl-empty { display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 28px 16px; border-radius: 18px; border: 2px dashed var(--border); text-align: center; }
-.sl-empty b { font-size: 16px; font-weight: 900; color: var(--text); }
-.sl-empty span { font-size: 13.5px; font-weight: 700; color: var(--text-light); }
-
-/* Upsell */
-.sl-upsell { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--sl); background: var(--sl-l); color: var(--text); font-size: 13.5px; font-weight: 800; }
-.sl-upsell > span { flex: 1; min-width: 180px; }
-
-/* The editor */
-.sl-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 12px; }
-.sl-back { border: none; background: none; padding: 6px 2px; color: var(--sl-d); font: inherit; font-size: 14px; font-weight: 900; cursor: pointer; }
-html[data-theme="dark"] .sl-back { color: var(--sl); }
-.sl-title { flex: 1; min-width: 160px; padding: 8px 12px; border-radius: 12px; border: 2px solid transparent; background: none; color: var(--text); font: inherit; font-size: 20px; font-weight: 900; }
-.sl-title:hover, .sl-title:focus { border-color: var(--border); outline: none; background: var(--surface); }
-.sl-top-btns { display: flex; gap: 8px; }
-.sl-explain { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; border: 2px solid var(--sl); background: var(--sl-l); color: var(--text); font-size: 14px; font-weight: 700; line-height: 1.45; }
-.sl-explain .kk-ic { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
-.sl-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
-.sl-stage { padding: 12px; border-radius: 20px; border: 2px solid var(--border); background: var(--surface); box-shadow: 0 4px 0 var(--border); }
-.sl-canvas { display: block; width: 100%; height: 380px; border-radius: 14px; background: color-mix(in srgb, var(--sl) 4%, var(--surface)); }
-.sl-play { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.sl-readout { margin: 10px 2px 2px; font-size: 14px; font-weight: 800; line-height: 1.5; color: var(--text); }
-.sl-controls { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 20px; border: 2px solid var(--sl); background: var(--surface); box-shadow: 0 4px 0 var(--sl-d); max-height: calc(100vh - 170px); overflow: auto; }
-.sl-presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.sl-presets .sl-label { margin: 0 4px 0 0; }
-.sl-group { display: flex; flex-direction: column; gap: 12px; }
-.sl-group[hidden] { display: none; } /* display:flex would beat [hidden] */
-.sl-field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 800; color: var(--text); }
-.sl-field > span { display: flex; justify-content: space-between; gap: 8px; }
+/* ── The sim screen ── */
+.sl-box { min-width: 0; box-sizing: border-box; background: var(--surface); border: 2px solid var(--border); border-radius: 24px; box-shadow: 0 4px 0 var(--border); padding: 16px; }
+.sl-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+/* The picture stays in view while you scroll through a long list of settings. */
+.sl-stage { position: sticky; top: 0; }
+.sl-canvas { display: block; width: 100%; height: 380px; border-radius: 16px; background: var(--cream); }
+html[data-theme="dark"] .sl-canvas { background: rgba(255, 255, 255, .03); }
+.sl-play { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.sl-play .fc-btn.small { min-height: 38px; }
+/* Full screen sits in the picture's corner, out of the button row. */
+#simsPanel .sl-full { position: absolute !important; top: 26px; right: 26px; z-index: 2; width: 38px; min-height: 38px !important; padding: 0 !important; }
+.sl-full .sl-pi { width: 17px; height: 17px; }
+.sl-stage:fullscreen .sl-full { top: 28px; right: 28px; }
+.sl-play .sl-tag { margin-left: 2px; }
+.sl-playbtn { min-width: 100px; }
+.fc-btn.locked { opacity: .8; }
+.sl-readout { margin: 12px 2px 0; font-size: 14px; font-weight: 800; line-height: 1.5; color: var(--text); }
+.sl-cm-foot { align-items: center; margin-top: 14px; }
+.sl-controls { display: flex; flex-direction: column; gap: 18px; padding: 18px; }
+.sl-sec { display: flex; flex-direction: column; }
+.sl-sec > .fc-field-label { margin-bottom: 10px; }
+.sl-group { display: flex; flex-direction: column; gap: 14px; }
+.sl-group[hidden] { display: none; }
+/* Challenges: a plain checklist */
+.sl-chal { display: flex; flex-direction: column; gap: 8px; }
+.sl-chal-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; font-weight: 800; color: var(--text); line-height: 1.4; }
+.sl-chal-box { flex-shrink: 0; width: 20px; height: 20px; box-sizing: border-box; border-radius: 7px; border: 2px solid var(--border); background: var(--surface); display: grid; place-items: center; box-shadow: 0 2px 0 var(--border); }
+.sl-chal-row.done .sl-chal-box { background: var(--green); border-color: var(--green-dark); box-shadow: 0 2px 0 var(--green-dark); }
+.sl-chal-row.done .sl-chal-box::after { content: ""; width: 9px; height: 5px; margin-top: -2px; border-left: 3px solid #fff; border-bottom: 3px solid #fff; transform: rotate(-45deg); }
+.sl-chal-row.done > span:last-child { color: var(--text-light); text-decoration: line-through; text-decoration-thickness: 2px; }
+.sl-chal-row.now > span:last-child { color: var(--green-dark); text-decoration: none; }
+html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green); }
+/* Settings: small capital labels, the number on the right */
+.sl-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: .05em; }
+.sl-field > span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sl-field output { color: var(--text); font-size: 13.5px; letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .sl-field[hidden], .sl-toggle[hidden] { display: none; }
-.sl-text input { padding: 9px 11px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 800; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
-.sl-text input:focus { outline: none; border-color: var(--sl); }
-.sl-field output { color: var(--sl-ink); font-weight: 900; white-space: nowrap; }
-.sl-field input[type=range] { width: 100%; accent-color: var(--sl); }
-.sl-field select { padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 800; }
-.sl-toggle { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; color: var(--text); cursor: pointer; }
+.sl-field input[type=range] { width: 100%; margin: 2px 0 0; accent-color: #FFC800; }
+.sl-field input[type=text], .sl-text input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none; box-shadow: 0 2px 0 var(--border); outline: none; }
+.sl-text input { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-weight: 800; }
+.sl-field input[type=text]:focus, .sl-text input:focus { border-color: var(--fc-acc); }
+.sl-field .kx-wrap { text-transform: none; letter-spacing: 0; }
+.sl-field .kx-sel { min-height: 40px; font-size: 13.5px; }
+.sl-toggle { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 800; color: var(--text); cursor: pointer; }
 .sl-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.sl-sw { position: relative; flex-shrink: 0; width: 40px; height: 24px; box-sizing: border-box; border-radius: 999px; border: 2px solid var(--border); background: var(--border); transition: background .15s; }
-.sl-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .15); transition: transform .15s; }
-.sl-toggle input:checked + .sl-sw { background: var(--sl); border-color: var(--sl-d); }
-.sl-toggle input:checked + .sl-sw::after { transform: translateX(16px); }
-.sl-toggle input:focus-visible + .sl-sw { outline: 3px solid var(--sl); outline-offset: 2px; }
+.sl-sw { position: relative; flex-shrink: 0; width: 42px; height: 24px; box-sizing: border-box; border-radius: 999px; background: var(--border); transition: background .15s; }
+.sl-sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s; }
+.sl-toggle input:checked + .sl-sw { background: #FFC800; }
+.sl-toggle input:checked + .sl-sw::after { transform: translateX(18px); }
+.sl-toggle input:focus-visible + .sl-sw { outline: 3px solid var(--blue); outline-offset: 2px; }
 .locked { opacity: .55; cursor: not-allowed; }
-.sl-more { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 900; cursor: pointer; }
-.sl-more > span:last-child { margin-left: auto; transition: transform .15s; }
-.sl-more.open > span:last-child { transform: rotate(180deg); }
-@media (max-width: 860px) {
-  .sl-main { grid-template-columns: 1fr; }
-  .sl-controls { max-height: none; }
-  .sl-canvas { height: 300px; }
-}
-@media (max-width: 520px) {
-  .sl-head h2 { font-size: 23px; }
-  .sl-grid { grid-template-columns: 1fr 1fr; } .sl-tile { min-height: 104px; padding: 12px; }
-  .sl-top-btns { width: 100%; } .sl-top-btns .sl-btn { flex: 1; }
-}
-
-/* ── Make your own (simbuilder.js) ── */
-.sl-make-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; padding: 14px 16px; border-radius: 20px; border: 2px solid var(--sl); background: var(--sl-l); }
-.sl-make-hero b { display: block; font-size: 16px; font-weight: 900; color: var(--text); }
-.sl-make-hero span:not(.sl-ico) { display: block; margin-top: 2px; font-size: 13.5px; font-weight: 700; color: var(--text-light); line-height: 1.45; }
-.sl-make-hero .sl-ico { width: 46px; height: 46px; background: var(--surface); }
-.sl-make-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.sl-make-hero > div { flex: 1; min-width: 0; }
-.sl-make-hero > .sl-btn { flex-shrink: 0; }
-.sl-sub { margin: 22px 0 12px; font-size: 16px; font-weight: 900; color: var(--text); }
-.sb-add { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; padding: 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); box-shadow: 0 3px 0 var(--border); }
-.sb-add .sl-chip { border-color: var(--sl); color: var(--sl-ink); font-weight: 900; }
-.sb-canvas { height: 420px; cursor: grab; touch-action: none; }
-.sb-canvas:active { cursor: grabbing; }
-.sb-sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 14px; margin: 0 0 10px; padding: 10px 12px; border-radius: 14px; background: var(--sl-l); }
-.sb-sliders[hidden] { display: none; }
-.sb-slider > span { align-items: center; }
-.sb-unslide { margin-left: 4px; width: 20px; height: 20px; padding: 0; border-radius: 50%; border: none; background: none; color: var(--text-light); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
-.sb-goal { align-self: center; margin-left: auto; font-size: 13.5px; font-weight: 900; color: var(--text-light); }
-.sb-goal.won { color: #1FA45A; }
-.sb-graphs { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-.sb-graph { padding: 10px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); }
-.sb-graph-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.sb-graph-top b { flex: 1; font-size: 13px; font-weight: 900; color: var(--text); }
-.sb-graph-top .sl-x { width: 28px; height: 28px; }
-.sb-graph canvas { display: block; width: 100%; height: 150px; }
-.sb-table { margin-top: 8px; max-height: 220px; overflow: auto; border-radius: 10px; border: 2px solid var(--border); }
+.sl-more { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 8px 14px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 900; box-shadow: 0 2px 0 var(--border); cursor: pointer; }
+.sl-more > span:first-child { flex: 1; text-align: left; }
+.sl-more-chev { width: 16px; height: 16px; color: var(--text-light); transition: transform .15s; }
+.sl-more.open .sl-more-chev { transform: rotate(180deg); }
+/* Data table + full screen + confetti */
+.sb-table { margin-top: 10px; max-height: 240px; overflow: auto; border-radius: 14px; border: 2px solid var(--border); }
 .sb-table[hidden] { display: none; }
-.sb-table-top { position: sticky; top: 0; padding: 6px; background: var(--surface); border-bottom: 2px solid var(--border); }
+.sb-table-top { position: sticky; top: 0; z-index: 1; padding: 6px; background: var(--surface); border-bottom: 2px solid var(--border); }
 .sb-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-weight: 700; color: var(--text); }
-.sb-table th, .sb-table td { padding: 5px 10px; text-align: right; border-bottom: 1px solid var(--border); }
-.sb-table th { position: sticky; top: 44px; background: var(--sl-l); font-weight: 900; }
-.sb-sec { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
-.sb-sec:last-of-type { border-bottom: none; }
-.sb-sec-top { display: flex; align-items: center; justify-content: space-between; }
-.sb-sec-top b { font-size: 15px; font-weight: 900; color: var(--text); }
-.sb-sec-top .sl-x { width: 28px; height: 28px; }
-.sb-hint b { font-size: 14px; font-weight: 900; color: var(--text); }
-.sb-hint span { font-size: 13px; font-weight: 700; color: var(--text-light); line-height: 1.4; }
-.sb-in[type=text], .sb-sec select { padding: 8px 10px; border-radius: 11px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; font-weight: 800; }
-.sb-colors { display: flex; flex-wrap: wrap; gap: 6px; }
-.sb-color { width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 3px solid var(--surface); background: var(--c); box-shadow: 0 0 0 2px var(--border); cursor: pointer; }
-.sb-color.on { box-shadow: 0 0 0 3px var(--text); }
-.sb-row { display: flex; flex-wrap: wrap; gap: 6px; }
-.sb-del { color: #E5383B !important; }
-.sb-pick { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border-radius: 12px; background: var(--sl-l); }
-.sb-pick[hidden] { display: none; }
-.sb-pick .sl-label { width: 100%; margin: 0; }
-.sl-stage { position: relative; }
-.sb-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 20px; }
+.sb-table th, .sb-table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+.sb-table th { position: sticky; top: 50px; background: var(--fc-acc-light); font-weight: 900; }
+.sl-stage:fullscreen { display: flex; flex-direction: column; padding: 18px; border-radius: 0; background: var(--surface); }
+.sl-stage:fullscreen .sl-canvas { flex: 1; height: auto; }
+.sb-confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px; }
 .sb-confetti i { position: absolute; top: -12px; left: var(--x); width: 9px; height: 13px; border-radius: 3px; background: var(--c); animation: sbFall var(--d) ease-in forwards; }
 @keyframes sbFall { to { transform: translateY(520px) rotate(540deg); opacity: 0; } }
-@media (max-width: 860px) { .sb-canvas { height: 320px; } }
 
-/* Challenges */
-.sl-chal { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 14px; border: 2px solid var(--sl); background: var(--sl-l); }
-.sl-chal .sl-label { display: flex; align-items: center; gap: 6px; margin: 0; }
-.sl-chal .sl-label .kk-ic { width: 16px; height: 16px; }
-.sl-chal-row { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; font-weight: 800; color: var(--text); line-height: 1.35; }
-.sl-chal-box { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; border: 2px solid var(--sl-d); background: var(--surface); display: grid; place-items: center; }
-.sl-chal-row.done .sl-chal-box { background: #1FA45A; border-color: #157A41; }
-.sl-chal-row.done .sl-chal-box::after { content: "✓"; color: #fff; font-size: 12px; font-weight: 900; line-height: 1; }
-.sl-chal-row.done > span:last-child { color: var(--text-light); text-decoration: line-through; text-decoration-thickness: 2px; }
-.sl-chal-row.now > span:last-child { color: #157A41; text-decoration: none; }
-html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: #58CC02; }
+/* ── Make your own (simbuilder.js) ── */
+.sb-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
+.sb-add .fc-field-label { margin: 0 4px 0 2px; }
+.sb-canvas { height: 420px; cursor: grab; touch-action: none; }
+.sb-canvas:active { cursor: grabbing; }
+.sb-sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 16px; margin: 0 0 12px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream); }
+.sb-sliders[hidden], .sb-sliders:empty { display: none; }
+.sb-slider > span { align-items: center; }
+.sb-unslide { margin-left: 4px; width: 20px; height: 20px; padding: 0; border-radius: 50%; border: none; background: none; color: var(--text-light); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; }
+.sb-goal { margin-left: auto; font-size: 13.5px; font-weight: 900; color: var(--text-light); }
+.sb-goal.won { color: var(--green-dark); }
+.sb-graphs { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.sb-graphs:empty { display: none; }
+.sb-graph { padding: 12px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); }
+.sb-graph-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sb-graph-top b { flex: 1; font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: .05em; }
+.sb-graph-top .sl-x { width: 28px; height: 28px; }
+.sb-graph canvas { display: block; width: 100%; height: 150px; }
+.sb-sec { display: flex; flex-direction: column; gap: 12px; padding-bottom: 18px; border-bottom: 2px solid var(--border); }
+.sb-sec:last-of-type { border-bottom: none; padding-bottom: 0; }
+.sb-sec-top { display: flex; align-items: center; justify-content: space-between; }
+.sb-sec-top b { font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: .06em; }
+.sb-sec-top .sl-x { width: 28px; height: 28px; }
+.sb-hint { gap: 4px; }
+.sb-hint b { font-size: 15px; font-weight: 900; color: var(--text); }
+.sb-hint span { font-size: 13px; font-weight: 700; color: var(--text-light); line-height: 1.45; }
+.sb-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-color { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 3px solid var(--surface); background: var(--c); box-shadow: 0 0 0 2px var(--border); cursor: pointer; }
+.sb-color.on { box-shadow: 0 0 0 3px var(--text); }
+.sb-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-del { color: var(--red) !important; }
+.sb-pick { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream); }
+.sb-pick[hidden] { display: none; }
+.sb-pick .fc-field-label { width: 100%; margin: 0; }
+.sl-plan { margin: 0; text-align: left; }
 
-.sl-guide { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; border: 2px dashed var(--sl); background: var(--surface); font-size: 13.5px; font-weight: 700; color: var(--text); line-height: 1.45; }
-.sl-guide b:first-child { font-weight: 900; }
-.sl-guide span { flex: 1; min-width: 220px; }
-.sl-stage:fullscreen { display: flex; flex-direction: column; padding: 18px; background: var(--surface); }
-.sl-stage:fullscreen .sl-canvas { flex: 1; height: auto; }
-.sl-stage .sb-table { margin-top: 8px; }
+/* ── Pop-ups (Flashcards' card) ── */
+.sl-modal .sl-input { margin: 0 0 16px; text-align: left; }
+.sl-pub { max-width: 460px; text-align: left !important; }
+.sl-pub > img, .sl-pub > h2, .sl-pub > p { text-align: center; }
+.sl-pub > img { display: block; margin: 0 auto 12px; }
+.sl-pub .fc-field-label { display: block; text-align: left; }
+.sl-pub .fc-switch { margin: 0 0 16px; }
+.sl-pub .sl-msg { margin: 0 0 14px; }
 
-/* Community */
-.sl-cmeta { margin-top: auto; padding-top: 6px; font-size: 11.5px; font-weight: 800; color: var(--text-light); }
-.sl-btn.on { border-color: #E5383B; color: #E5383B; }
-.sl-pub-wrap { position: fixed; inset: 0; z-index: 10090; display: grid; place-items: center; padding: 16px; background: rgba(20, 16, 14, .45); }
-.sl-pub { width: min(460px, 100%); display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 22px; border: 2px solid #F2B705; background: var(--surface); box-shadow: 0 6px 0 #B98500, 0 24px 60px rgba(0, 0, 0, .3); }
-.sl-pub h3 { margin: 0; font-size: 20px; font-weight: 900; color: var(--text); }
-.sl-pub > p { margin: -6px 0 0; font-size: 13.5px; font-weight: 700; color: var(--text-light); }
-.sl-pub input[type=text], .sl-pub textarea { padding: 10px 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; resize: vertical; }
-.sl-pub-btns { display: flex; justify-content: flex-end; gap: 8px; }
-.sl-msg[hidden] { display: none; }
-
-/* Home: the ways in (like Flashcards), full width so nothing changes size */
-.sl-wrap, .sl-ed { width: 100%; box-sizing: border-box; }
-.sl-ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
-.sl-way { --c: #FF6B00; --cd: #CC5500; --cl: color-mix(in srgb, var(--c) 14%, var(--surface)); display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px; min-height: 150px; text-align: left; border-radius: 22px; border: 2px solid var(--c); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; box-shadow: 0 5px 0 var(--cd); transition: transform .12s; }
-.sl-way:hover { transform: translateY(-3px); }
-.sl-way b { font-size: 19px; font-weight: 900; }
-.sl-way > span:last-child { font-size: 13.5px; font-weight: 700; color: var(--text-light); line-height: 1.45; }
-.sl-way[data-flavor="blue"], .sl-way-icon[data-flavor="blue"] { --c: #1CB0F6; --cd: #0A85C2; }
-.sl-way[data-flavor="green"], .sl-way-icon[data-flavor="green"] { --c: #1FA45A; --cd: #157A41; }
-.sl-way[data-flavor="purple"], .sl-way-icon[data-flavor="purple"] { --c: #A560F2; --cd: #7C3AED; }
-.sl-way-icon[data-flavor="orange"] { --c: #FF6B00; --cd: #CC5500; }
-.sl-way-icon[data-flavor="gold"] { --c: #F2B705; --cd: #B98500; }
-.sl-way-icon { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; background: var(--c, #F2B705); color: #fff; box-shadow: 0 3px 0 var(--cd, #B98500); margin-bottom: 4px; }
-.sl-way-icon .kk-ic { width: 26px; height: 26px; color: #fff; stroke: #fff; }
-.sl-section h3 { margin: 0 0 10px; font-size: 18px; font-weight: 900; color: var(--text); }
-.sl-all { margin-top: 10px; }
-.sl-wrap > .sl-back { margin-bottom: 4px; }
-@media (max-width: 600px) { .sl-ways { grid-template-columns: 1fr; } .sl-way { min-height: 0; } }
-
-/* ── Same sizing and spacing as the Flashcards home (measured from .fc-*) ── */
-#simsPanel .nb-scroll.bs-scroll { padding: 40px 40px 48px !important; }
-#simsPanel .sl-wrap { max-width: 960px; padding-bottom: 0; }
-#simsPanel .sl-head { margin: 0 0 28px; }
-#simsPanel .sl-badge { gap: 6px; padding: 7px 18px; border-width: 2px; font-size: 14px; font-weight: 800; line-height: 1.3; box-shadow: 0 3px 0 var(--sl-d), 0 0 26px rgba(242, 183, 5, .22); margin-bottom: 18px; }
-#simsPanel .sl-badge .kk-ic { width: 17px; height: 17px; }
-#simsPanel .sl-head h2 { margin: 0 0 12px; font-size: 40px; font-weight: 900; line-height: 42px; letter-spacing: -.8px; }
-#simsPanel .sl-head p { max-width: 480px; margin: 0 auto; font-size: 16px; font-weight: 700; line-height: 1.55; }
-#simsPanel .sl-ways { max-width: 860px; margin: 0 auto 28px; gap: 14px; }
-#simsPanel .sl-way { padding: 16px 16px 18px; min-height: 176px; border-radius: 20px; border-width: 3px; gap: 6px; box-shadow: 0 5px 0 var(--cd); }
-#simsPanel .sl-way b { font-size: 16px; font-weight: 900; }
-#simsPanel .sl-way > span:last-child { font-size: 13px; font-weight: 700; line-height: 1.45; }
-#simsPanel .sl-way-icon { width: 42px; height: 42px; border-radius: 50%; border: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: none; margin: 0 0 4px; box-sizing: border-box; }
-#simsPanel .sl-way-icon .kk-ic { width: 21px; height: 21px; color: var(--cd); stroke: var(--cd); }
-html[data-theme="dark"] #simsPanel .sl-way-icon .kk-ic { color: var(--c); stroke: var(--c); }
-#simsPanel .sl-section, #simsPanel .sl-build, #simsPanel .sl-make, #simsPanel .sl-wrap > .sl-grid, #simsPanel .sl-wrap > .sl-filters, #simsPanel .sl-wrap > .sl-cost, #simsPanel .sl-wrap > .sl-empty, #simsPanel .sl-saved { max-width: 860px; margin-left: auto; margin-right: auto; }
-#simsPanel .sl-section h3 { font-size: 16px; }
-#simsPanel .sl-wrap > .sl-back { display: block; max-width: 860px; margin: -8px auto 8px; text-align: left; width: 100%; }
-@media (max-width: 760px) { #simsPanel .nb-scroll.bs-scroll { padding: 24px 16px 40px !important; } #simsPanel .sl-head h2 { font-size: 30px; line-height: 34px; } }
-/* Sim tiles = Flashcards deck cards: 2px border, 20px corners, 4px edge, 18px padding, 16px grid gap */
-#simsPanel .sl-grid { gap: 16px; }
-#simsPanel .sl-tile { border-radius: 20px; padding: 18px; gap: 4px; }
-#simsPanel .sl-tile .sl-ico { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); box-shadow: 0 3px 0 var(--c); margin-bottom: 8px; box-sizing: border-box; }
-#simsPanel .sl-tile .sl-ico .kk-ic { width: 22px; height: 22px; }
-#simsPanel .sl-tile b { font-size: 15px; }
-#simsPanel .sl-tile .sl-tag { top: 14px; right: 14px; }
-#simsPanel .sl-filters { margin-bottom: 18px; }
-
-/* Community: search + filters (same as the Flashcards Community) */
-.sl-search { position: relative; max-width: 440px; margin: 0 auto 14px; }
-.sl-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--text-light); pointer-events: none; }
-.sl-search input { width: 100%; box-sizing: border-box; padding: 12px 14px 12px 42px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; box-shadow: 0 2px 0 var(--border); outline: none; }
-.sl-search input:focus { border-color: var(--sl); box-shadow: 0 2px 0 var(--sl-d); }
-.sl-filter-gap { flex-basis: 100%; height: 0; }
-.sl-empty .sl-btn { margin-top: 10px; }
-.sl-cm-note { max-width: 860px; margin: 0 auto 14px; }
-#simsPanel .sl-wrap > .sl-search { max-width: 440px; }
-#simsPanel .sl-wrap > .sl-cost { max-width: 620px; }
-@media (max-width: 760px) {
-  .sl-make-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .sl-make-hero { flex-wrap: wrap; }
-  .sl-make-hero > .sl-btn { width: 100%; }
-  .sl-filters { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin-left: -16px !important; margin-right: -16px !important; padding: 0 16px 4px; }
+/* ── Tablets and phones ── */
+@media (max-width: 1000px) { .sl-picks { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sl-main { grid-template-columns: minmax(0, 1fr) 290px; } }
+@media (max-width: 860px) {
+  .sl-main { grid-template-columns: 1fr; }
+  .sl-stage { position: static; }
+  .sl-canvas { height: 300px; }
+  .sb-canvas { height: 320px; }
+}
+@media (max-width: 720px) {
+  .sl-picks, .sl-picks.two { grid-template-columns: 1fr; gap: 12px; }
+  .sl-pick { padding: 16px 14px; }
+  .sl-pick-circle { width: 48px; height: 48px; }
+  .sl-filters { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin: 0 -16px 18px; padding: 0 16px 4px; }
   .sl-filters::-webkit-scrollbar { display: none; }
-  .sl-filters .sl-chip { flex-shrink: 0; }
-  .sl-filter-gap { flex-basis: 6px; flex-shrink: 0; }
-}
-
-/* Play bar: drawn icons, one row of small buttons */
-.sl-pi { width: 15px; height: 15px; flex-shrink: 0; }
-.sl-play { align-items: center; gap: 8px; }
-.sl-play .sl-btn.sm { min-height: 38px; }
-.sl-play .sl-icon-btn { width: 38px; padding: 0; }
-.sl-play .sl-icon-btn .sl-pi { width: 17px; height: 17px; }
-.sl-play .sl-btn .sl-tag { margin-left: 2px; }
-.sl-playbtn { min-width: 96px; }
-
-/* Phones: the ways in, like the Flashcards home (rows; compact 2×2 once you have saved sims) */
-@media (max-width: 720px) {
-  #simsPanel .sl-ways { grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
-  #simsPanel .sl-way { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; }
-  #simsPanel .sl-way-icon { margin: 0; }
-  #simsPanel .sl-way > span:last-child { flex-basis: 100%; }
-  #simsPanel .sl-ways.has-sims { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  #simsPanel .sl-ways.has-sims .sl-way { flex-direction: column; flex-wrap: nowrap; align-items: center; text-align: center; padding: 12px 6px 14px; gap: 6px; }
-  #simsPanel .sl-ways.has-sims .sl-way b { font-size: 13.5px; line-height: 1.2; }
-  #simsPanel .sl-ways.has-sims .sl-way > span:last-child { display: none; }
-  #simsPanel .sl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  #simsPanel .sl-tile { padding: 14px; min-height: 0; }
-  #simsPanel .sl-tile .sl-ico { width: 40px; height: 40px; margin-bottom: 6px; }
-  #simsPanel .sl-tile b { font-size: 14.5px; }
-  #simsPanel .sl-tile .sl-tag { top: 10px; right: 10px; }
-}
-@media (max-width: 720px) {
-  .sl-play { gap: 8px; }
-  .sl-play .sl-btn { flex: 1 1 auto; }
-  .sl-play .sl-icon-btn { display: none; } /* phones can't put a part of the page full screen */
+  .sl-filters .fc-chip { flex-shrink: 0; }
+  .sl-ed .sl-topbar { flex-wrap: wrap; }
+  .sl-ed .fc-topbar-right { width: 100%; flex-wrap: nowrap; }
+  .sl-ed .fc-topbar-right .fc-btn { flex: 1; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
+  .sl-ed .fc-topbar-right .fc-btn:not(.primary) .kk-ic { display: none; }
+  .sl-play .fc-btn { flex: 1 1 auto; }
+  #simsPanel .sl-full { display: none; } /* phones can't put part of a page full screen */
   .sl-play .sb-goal { flex-basis: 100%; margin: 2px 0 0; text-align: center; }
-  .sl-top { gap: 6px 10px; }
-  .sl-top .sl-title { font-size: 18px; padding: 6px 8px; }
+  .sl-box { padding: 12px; border-radius: 20px; }
+  .sl-controls { padding: 16px; }
+  .sb-add .fc-field-label { width: 100%; }
 }
-
-/* Publish window: same fields as the rest of the Lab */
-.sl-pub .sl-field > span { font-size: 13px; font-weight: 900; color: var(--text); }
-.sl-pub input[type=text]:focus, .sl-pub textarea:focus { outline: none; border-color: var(--sl); }
-.sl-pub .sl-toggle { align-items: flex-start; padding: 12px 14px; border: 2px solid var(--border); border-radius: 16px; line-height: 1.4; }
-.sl-pub .sl-toggle .sl-sw { margin-top: 1px; }
-.sl-by { align-self: center; padding: 5px 10px; border-radius: 999px; background: var(--sl-l); color: var(--sl-ink); font-size: 12px; font-weight: 900; white-space: nowrap; }
-.sl-top-btns { flex-wrap: wrap; align-items: center; }

@@ -962,8 +962,8 @@ function cmHome(){
    <div class="fc-search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="fc-search" id="fcCmSearch" type="search" aria-label="Search Community decks" placeholder="Search — e.g. cell parts, Spanish verbs…" value="${esc(cm.q)}"></div>
    <div class="fc-cm-filters">
      <div class="fc-chips">${sorts.map(([v,l])=>chip(l,'cm-sort',cm.sort===v,`data-v="${v}"`)).join('')}</div>
-     <select class="fc-input fc-cm-select" id="fcCmSubject" aria-label="Subject"><option value="">All subjects</option>${CM_SUBJECTS.map(x=>`<option${x===cm.subject?' selected':''}>${esc(x)}</option>`).join('')}</select>
-     <select class="fc-input fc-cm-select" id="fcCmGrade" aria-label="Grade"><option value="">Any grade</option>${CM_GRADES.filter(x=>x!=='Any').map(x=>`<option${x===cm.grade?' selected':''}>${esc(x)}</option>`).join('')}</select>
+     <select class="fc-input fc-cm-select kx-select" data-kx="pill" id="fcCmSubject" aria-label="Subject"><option value="">All subjects</option>${CM_SUBJECTS.map(x=>`<option${x===cm.subject?' selected':''}>${esc(x)}</option>`).join('')}</select>
+     <select class="fc-input fc-cm-select kx-select" data-kx="pill" id="fcCmGrade" aria-label="Grade"><option value="">Any grade</option>${CM_GRADES.filter(x=>x!=='Any').map(x=>`<option${x===cm.grade?' selected':''}>${esc(x)}</option>`).join('')}</select>
    </div>
    ${cm.busy?`<div class="fc-empty"><h2>Loading decks…</h2></div>`
     :cm.err?`<div class="fc-empty"><h2>Community decks didn’t load</h2><p class="fc-sub">${esc(cm.err)}</p><div class="fc-toolbar">${btn('Try again','cm-retry',{cls:'primary small'})}</div></div>`
