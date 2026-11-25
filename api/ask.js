@@ -828,7 +828,7 @@ function cleanLatexAnswer(text) {
 // web_search tool, and the model searches only when the question needs it, so
 // Knox checks real pages and links its sources instead of telling the student
 // to go look it up. A search costs no more credits than any other question.
-const WEB_SEARCH_INSTRUCTION = 'You can search the web. Search only when the answer depends on facts you should check: quotes, dates, statistics, current events, real people or works, or sources and citations (essays and research). Do not search for math, problems you can work out, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Link every page you use as a Markdown link [title](url). Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
+const WEB_SEARCH_INSTRUCTION = 'You can search the web. Search only when the answer depends on facts you should check: quotes, dates, statistics, current events, real people or works, or sources and citations (essays and research). Do not search for math, problems you can work out, or explaining standard school concepts; just answer those. When the student needs to credit or cite something, find the real source and give its details (author, title, publisher or site, date, link) plus a ready-to-use citation in the style they ask for (MLA if they do not say). Cite each page right after the fact it supports, as a Markdown link (the app shows these as small chips), and do NOT add a separate Sources list or line at the end: the app lists every page you used in a sources card. (When the student asks for citations, still write each ready-to-use citation in your answer.) Never tell them to go to a library or search it themselves instead of searching; if you truly cannot find something, say what you searched and what you found. Never invent a source, author or link. Make sure every citation\'s publisher or organization matches the page you link. For essays and research, add a short plain-language sentence on why or how (the cause or context behind a fact) so the student can explain it, not just quote it. Give measurements in the units the student uses first (U.S. customary like inches and miles, unless they use metric), with the other unit in parentheses. Use a different source for each fact when you can. Keep Knox\'s normal answer style.';
 // Learn (Dec 1): the same smart search, inside a lesson. Facts only — never to
 // solve the student's problem for them — and the reply stays lesson JSON.
 const LEARN_WEB_SEARCH_INSTRUCTION = 'You can search the web. In this lesson, search only when the step depends on facts you should check: dates, quotes, statistics, real people, events, places, works, or a science fact you are not sure of. Never search for math or to work out the student\'s problem, and never hand over an answer they have not reached yet. Keep replying in the knox_learn_reply JSON. Do not paste links into body; the app lists the pages you used as sources.';
@@ -861,6 +861,19 @@ function toResponsesInput(messages) {
   }));
 }
 
+// Knox sometimes still ends with its own "Sources: [a](…) · [b](…)" line. Those
+// links join the sources card instead, so each page shows once (citations with
+// text, like MLA, are left alone — only a line made of nothing but links folds).
+function foldSourcesLine(text, sources) {
+  const m = /\n+[ \t]*(?:[*_]{1,2})?sources?(?:[*_]{1,2})?[ \t]*:?[ \t]*(?:[*_]{1,2})?[ \t]*\n?((?:[ \t]*(?:[-*•·|,][ \t]*)?\[[^\]\n]+\]\(https?:\/\/[^\s()]+\)[ \t]*[·|,]?[ \t]*\n?)+)\s*$/i.exec(text);
+  if (!m) return text;
+  for (const [, title, url] of m[1].matchAll(/\[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)/g)) {
+    if (sources.length >= 8 || sources.some(x => x.url === url)) continue;
+    sources.push({ title: title.replace(/[\[\]()\s]+/g, ' ').trim().slice(0, 140) || url, url });
+  }
+  return text.slice(0, m.index).trimEnd();
+}
+
 // Returns { text, sources, usage }, or null so the caller answers without search.
 async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format, effort } = {}) {
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -889,7 +902,8 @@ async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format,
     if (!title) { try { title = new URL(note.url).hostname; } catch { continue; } }
     sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
   }
-  return { text, sources: sources.slice(0, 8), usage: data.usage };
+  const kept = sources.slice(0, 8);
+  return { text: format ? text : foldSourcesLine(text, kept), sources: kept, usage: data.usage };
 }
 
 // ── Discord bot ─────────────────────────────────────────────────────────────

@@ -2118,6 +2118,33 @@ test('Smart search: every plan can search with sources (Ask Knox and Learn); the
   assert.equal(res.code, 400);
 });
 
+test('Smart search: a "Sources:" line Knox writes folds into the sources card (each page once); citations with text stay', async () => {
+  const { db, store } = memoryDb();
+  let text = '';
+  const fetch = async (url, options) => {
+    const body = JSON.parse(options.body);
+    if (url.endsWith('/responses')) return { ok: true, json: async () => ({ status: 'completed', usage: {}, output: [{ type: 'message', content: [{ type: 'output_text', text, annotations: [{ type: 'url_citation', url: 'https://www.archives.gov/founding-docs/declaration', title: 'Declaration of Independence | National Archives' }] }] }] }) };
+    const classifier = /Classify the LATEST user message/.test(body.messages?.[0]?.content || '');
+    return { ok: true, json: async () => ({ choices: [{ message: { content: classifier ? 'SUBSTANTIVE' : 'Plain answer.' }, finish_reason: 'stop' }] }) };
+  };
+  const handler = await load('api/ask.js', { db, fetch });
+  store.set('users/u1', { plan: 'max' });
+  text = 'It was adopted on July 4, 1776 ([archives.gov](https://www.archives.gov/founding-docs/declaration)).\n\nSources: [National Archives: The Declaration](https://www.archives.gov/founding-docs/declaration) · [National Archives: How It Happened](https://www.archives.gov/founding-docs/declaration-history)';
+  let res = response();
+  await handler(askRequest({ question: 'When was the Declaration of Independence signed?', webSearch: true }), res);
+  assert.equal(res.code, 200);
+  assert.doesNotMatch(res.body.answer, /^Sources:/m, 'no separate Sources line');
+  assert.match(res.body.answer, /\(\[archives\.gov\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration\)\)/, 'the inline chip stays');
+  const card = res.body.answer.split('🌐 Searched the web\n')[1];
+  assert.equal(card.match(/declaration\)/g).length, 1, 'each page once');
+  assert.match(card, /\[National Archives: How It Happened\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)/, 'the extra page joins the card');
+
+  text = 'Here is your citation.\n\nSources:\n"Declaration of Independence." National Archives, 2023, [archives.gov](https://www.archives.gov/founding-docs/declaration).';
+  res = response();
+  await handler(askRequest({ question: 'Give me an MLA citation for the Declaration of Independence', webSearch: true }), res);
+  assert.match(res.body.answer, /Sources:\n"Declaration of Independence\." National Archives, 2023/, 'a citation with text is kept');
+});
+
 test('Learn search: a lesson reply that searched keeps its sources, listed last', async () => {
   const { db, store } = memoryDb();
   const lesson = JSON.stringify({ body: 'The Treaty of Paris was signed in 1783.', question: 'Why did it matter for the new country?', choices: [], goals: ['American Revolution'], part: 1, practiceIndex: 0, assessment: 'new', reviewFocus: '', keyIdea: '', graph: '', visual: '', video: '', recap: '', watchOut: '', topic: 'History', sim: '' });
