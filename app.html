@@ -5879,7 +5879,7 @@ function formatInline(text) {
 function drawPowersRoots(html) {
   let inLink = 0;
   const POW = /(?<=[\w)\]π°])\^(\((?:[^()]|\([^()]*\))+\)|[−-]?\d+(?:\.\d+)?|[A-Za-zπ])/g;
-  const ROOT = /√(\((?:[^()]|\([^()]*\))+\)|\d+(?:\.\d+)?|[A-Za-z](?![A-Za-z]))/g;
+  const ROOT = /√(\((?:[^()]|\([^()]*\))+\)|\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|[A-Za-z](?![A-Za-z]))/g; // √3,033 keeps its comma
   return String(html).split(/(<[^>]+>)/g).map(seg => {
     if (seg.startsWith('<')) { if (/^<a[\s>]/i.test(seg)) inLink++; else if (/^<\/a>/i.test(seg)) inLink = Math.max(0, inLink - 1); return seg; }
     if (inLink || !/[\^√]/.test(seg)) return seg;
