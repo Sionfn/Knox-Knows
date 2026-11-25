@@ -105,7 +105,7 @@
     '🦅': 'crown', '📚': 'book', '🍎': 'apple', '🧬': 'dna', '🏛': 'columns', '🫀': 'heart', '📥': 'inbox',
     '📤': 'outbox', '📊': 'chart', '📋': 'clip', '🖼': 'image', '📎': 'paperclip', '☁': 'cloud', '🗑': 'trash',
     '✏': 'pencil', '☀': 'sun', '🌙': 'moon', '🧮': 'calc', '🎛': 'sliders', '💰': 'tag', '⏰': 'clock', '🔒': 'lock', '🆓': 'spark',
-    '✍': 'pencil', '⌨': 'keyboard', '🎟': 'ticket', '🐾': 'paw', '💳': 'card', '❌': 'xcircle', '😕': 'frown', '✂': 'scissors', '🎲': 'dice', '🔗': 'link',
+    '✍': 'pencil', '⌨': 'keyboard', '🎟': 'ticket', '🐾': 'paw', '💳': 'card', '❌': 'xcircle', '😕': 'frown', '✂': 'scissors', '🎲': 'dice', '🔗': 'link', '♥': 'heartRed',
   };
   // Line icons get a color of their own where there's no better one around.
   const TINT = { sliders: '#B98500', cap: '#7C3AED', leaf: '#C2571A', bulb: '#E0A100', camera: '#1CB0F6', doc: '#1CB0F6', note: '#7C3AED', target: '#FF4B4B', brain: '#EC4899', video: '#FF4B4B', cards: '#58CC02', calc: '#1CB0F6', rocket: '#FF6B00', spark: '#F2A900', warn: '#E0A100', moon: '#7C3AED', sun: '#F2A900', snowDay: '#E5383B', snowNight: '#1CB0F6', apple: '#E5484D', heart: '#E5484D', dna: '#58CC02', flask: '#14B8A6', logs: '#A0622D', clock: '#FF6B00', grimace: '#FF4B4B', pencil: '#7C3AED', xcircle: '#FF4B4B', frown: '#FF4B4B', paw: '#FF6B00', ticket: '#FF6B00', card: '#1CB0F6', scissors: '#FF6B00' };

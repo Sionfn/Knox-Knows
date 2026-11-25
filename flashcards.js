@@ -1052,7 +1052,7 @@ panel.addEventListener('click',async e=>{
  else if(a==='cm-open')await cmOpen(b.dataset.id);
  else if(a==='cm-add'){const c=cmAdd();if(c){home();message(`“${c.title}” is in your decks now.`,'ok');}}
  else if(a==='cm-study'){const c=cmAdd();if(c)start(c.id,false);}
- else if(a==='cm-like'){const r=await cmApi('POST',{action:'like',id:cm.deck.id});b.textContent=`♥ ${r.likes}`;b.classList.toggle('on',r.liked);}
+ else if(a==='cm-like'){const r=await cmApi('POST',{action:'like',id:cm.deck.id});b.innerHTML=(window.KI?.fill||(x=>x))(`♥ ${r.likes}`);b.classList.toggle('on',r.liked);}
  else if(a==='cm-report'){if(!(await knoxConfirm({title:'Report this deck?',body:'Report it if something in it isn’t school-friendly or is badly wrong. 3 reports take it down until we check it.',ok:'Report',cancel:'Cancel',danger:true})))return;await cmApi('POST',{action:'report',id:cm.deck.id,reason:'student report'});b.textContent='Reported — thanks';b.disabled=true;}
  else if(a==='cm-down'){if(!(await knoxConfirm({title:'Take this deck down?',body:'It leaves Community decks. Your own copy stays in My decks.',ok:'Take down',cancel:'Keep it',danger:true})))return;await cmApi('POST',{action:'unpublish',id:cm.deck.id});cm.list=[];cm.loadedOnce=false;cmHome();}
  else if(a==='cm-publish'){const d=decks.find(x=>x.id===b.dataset.id);if(d)cmPublishView(d);}

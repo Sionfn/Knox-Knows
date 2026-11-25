@@ -38,6 +38,7 @@ html.knox-seasonal #simsPanel .fc-title .accent { color: var(--sl-accent) !impor
 #simsPanel .nb-scroll.bs-scroll { display: flex; flex-direction: column; padding: clamp(18px, 3vw, 40px) clamp(16px, 3vw, 40px) 48px !important; }
 #simsPanel button { font-family: inherit; cursor: pointer; }
 #simsPanel :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+#simsPanel :is(input:not([type=range]):not([type=checkbox]), textarea):focus-visible { outline: none; }
 #simsPanel .fc-title:focus { outline: none; }
 .sl-topbar { max-width: 640px; width: 100%; margin: 0 auto 12px; }
 .sl-wrap:has(.sl-picks:not(.two), .fc-cm) .sl-topbar { max-width: 960px; }
@@ -59,10 +60,6 @@ html.knox-seasonal #simsPanel .fc-title .accent { color: var(--sl-accent) !impor
 .sl-link { border: none; background: none; padding: 0; color: var(--sl-ink); font: inherit; font-weight: 900; text-decoration: underline; cursor: pointer; }
 .sl-spin { width: 15px; height: 15px; border-radius: 50%; border: 2.5px solid rgba(61, 40, 0, .3); border-top-color: #3D2800; animation: slSpin .8s linear infinite; }
 @keyframes slSpin { to { transform: rotate(360deg); } }
-.sl-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, #58CC02 16%, var(--surface)); color: #3E8F00; font-size: 10.5px; font-weight: 900; white-space: nowrap; letter-spacing: 0; text-transform: none; }
-.sl-tag.mega { background: color-mix(in srgb, #1CB0F6 16%, var(--surface)); color: #0A85C2; }
-html[data-theme="dark"] .sl-tag { color: #8EE04A; }
-html[data-theme="dark"] .sl-tag.mega { color: #6FD0FF; }
 .sl-pi { width: 15px; height: 15px; flex-shrink: 0; }
 .sl-x { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); color: var(--text-light); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
 
@@ -76,11 +73,11 @@ html[data-theme="dark"] .sl-tag.mega { color: #6FD0FF; }
 .sl-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 960px; width: 100%; margin: 0 auto; }
 .sl-picks.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
 .sl-pick { --chip: var(--orange); --chip-ledge: var(--orange-dark); --chip-tint: var(--orange-light); --chip-ink: var(--orange);
-  position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 16px; border-radius: 20px; border: 2px solid var(--chip); background: var(--surface); color: var(--text); text-align: left; box-shadow: 0 4px 0 var(--chip-ledge); transition: background .15s, transform .1s, box-shadow .1s; }
+  position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 16px; border-radius: 20px; border: 2px solid var(--chip); background: var(--surface); color: var(--text); text-align: left; box-shadow: 0 4px 0 var(--chip-ledge); transition: background-color .15s, transform .1s, box-shadow .1s; }
 .sl-pick[data-flavor="blue"]   { --chip: var(--blue);   --chip-ledge: var(--blue-dark);   --chip-tint: var(--blue-light);   --chip-ink: var(--blue); }
 .sl-pick[data-flavor="green"]  { --chip: var(--green);  --chip-ledge: var(--green-dark);  --chip-tint: var(--green-light);  --chip-ink: var(--green-dark); }
 .sl-pick[data-flavor="purple"] { --chip: var(--purple); --chip-ledge: var(--purple-dark); --chip-tint: var(--purple-light); --chip-ink: var(--purple-dark); }
-.sl-pick:hover { transform: none; background: color-mix(in srgb, var(--chip) 7%, var(--surface)); }
+.sl-pick:hover { transform: none; background-color: color-mix(in srgb, var(--chip) 7%, var(--surface)); }
 .sl-pick:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--chip-ledge); }
 .sl-pick-circle { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--chip-tint); border: 3px solid var(--chip); box-shadow: 0 3px 0 var(--chip); color: var(--chip-ink); box-sizing: border-box; }
 .sl-pick-circle .kk-ic { width: 24px; height: 24px; color: inherit !important; }
@@ -88,7 +85,7 @@ html[data-theme="dark"] .sl-pick-circle { color: var(--chip); }
 .sl-pick-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .sl-pick-text b { font-size: 15px; font-weight: 900; line-height: 1.25; text-transform: uppercase; letter-spacing: .02em; color: var(--text); }
 .sl-pick-text small { font-size: 12.5px; font-weight: 700; line-height: 1.4; color: var(--text-light); }
-.sl-pick .sl-tag { position: absolute; top: 10px; right: 10px; }
+.sl-pick > .fc-plus-tag { position: absolute; top: 10px; right: 14px; margin: 0; }
 .sl-filters { justify-content: center; margin: 0 auto 20px; max-width: 960px; }
 
 /* ── The sim screen ── */
@@ -96,7 +93,7 @@ html[data-theme="dark"] .sl-pick-circle { color: var(--chip); }
 .sl-main { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 /* The picture stays in view while you scroll through a long list of settings. */
 .sl-stage { position: sticky; top: 0; }
-.sl-canvas { display: block; width: 100%; height: clamp(240px, calc(100dvh / var(--kz, 1) - 450px), 420px); border-radius: 16px; background: var(--cream); }
+.sl-canvas { display: block; width: 100%; height: clamp(220px, calc(100dvh / var(--kz, 1) - 500px), 400px); border-radius: 16px; background: var(--cream); }
 html[data-theme="dark"] .sl-canvas { background: rgba(255, 255, 255, .03); }
 .sl-play { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .sl-play .fc-btn.small { min-height: 38px; }
@@ -104,7 +101,6 @@ html[data-theme="dark"] .sl-canvas { background: rgba(255, 255, 255, .03); }
 #simsPanel .sl-full { position: absolute !important; top: 26px; right: 26px; z-index: 2; width: 38px; min-height: 38px !important; padding: 0 !important; }
 .sl-full .sl-pi { width: 17px; height: 17px; }
 .sl-stage:fullscreen .sl-full { top: 28px; right: 28px; }
-.sl-play .sl-tag { margin-left: 2px; }
 .sl-playbtn { min-width: 100px; }
 .fc-btn.locked { opacity: .8; }
 .sl-readout { margin: 12px 2px 0; font-size: 14px; font-weight: 800; line-height: 1.5; color: var(--text); }
@@ -162,7 +158,7 @@ html[data-theme="dark"] .sl-chal-row.now > span:last-child { color: var(--green)
 /* ── Make your own (simbuilder.js) ── */
 .sb-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
 .sb-add .fc-field-label { margin: 0 4px 0 2px; }
-.sb-canvas { height: clamp(240px, calc(100dvh / var(--kz, 1) - 520px), 440px); cursor: grab; touch-action: none; }
+.sb-canvas { height: clamp(220px, calc(100dvh / var(--kz, 1) - 560px), 380px); cursor: grab; touch-action: none; }
 .sb-canvas:active { cursor: grabbing; }
 .sb-sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 16px; margin: 0 0 12px; padding: 12px 14px; border-radius: 16px; border: 2px solid var(--border); background: var(--cream); }
 .sb-sliders[hidden], .sb-sliders:empty { display: none; }
@@ -274,3 +270,41 @@ html[data-theme="dark"] .sl-knox { background: rgba(255, 200, 0, .16); color: #F
 /* A tool that's switched on (Compare): lit in the page's color, same size */
 #simsPanel .fc-btn.sl-on { border-color: var(--fc-acc); background: var(--fc-acc-light); color: var(--sl-ink); box-shadow: 0 3px 0 var(--fc-acc-dark); }
 #simsPanel .fc-plus-tag { white-space: nowrap; display: inline-block; }
+/* Plan tags: Knox's one style (flashcards.css .fc-plus-tag) */
+#simsPanel .fc-btn .fc-plus-tag { margin-left: 2px; }
+#simsPanel .sl-more .fc-plus-tag { margin-left: 0; }
+
+/* ── Sim screens: the picture on top, settings in rows underneath ──
+   On laptops the picture stays pinned at the top while you scroll the
+   settings, so you always see what a slider does. */
+.sl-main { grid-template-columns: minmax(0, 1fr) !important; gap: 16px; }
+.sl-stage { position: static; }
+@media (min-width: 861px) and (min-height: 640px) {
+  .sl-stage { position: sticky; top: 0; z-index: 3; }
+  .sl-stage::after { content: ""; position: absolute; left: -24px; right: -24px; bottom: -18px; height: 16px; background: var(--cream); z-index: -1; }
+}
+.sl-controls { gap: 22px; padding: 20px 22px; }
+.sl-controls > .sl-sec > .sl-group, .sl-controls > .sl-more-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px 28px; align-items: end; }
+.sl-controls > .sl-more-box[hidden] { display: none; }
+.sl-controls .sl-group > .sl-text { grid-column: 1 / -1; }
+.sl-controls .sl-toggle { min-height: 40px; }
+.sl-controls > .sl-more { width: auto; min-width: 240px; align-self: flex-start; }
+.sl-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px 32px; align-items: start; }
+.sl-pair:empty { display: none; }
+.sl-controls > .sl-steps { margin-top: 0; }
+.sl-controls > .sl-cm-foot { margin-top: 0; }
+/* Make your own: the thing you tapped and the world side by side */
+.sb-side { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 22px 32px; align-items: start; }
+.sb-side .sb-sec { border-bottom: none; padding-bottom: 0; }
+.sb-side .sl-plan { grid-column: 1 / -1; }
+.sb-results:not(:has(.sb-graph, .sl-steps, .fc-cm-foot)) { display: none; }
+.sb-results > .sb-graphs { margin-top: 0; }
+/* Community: search and subject in one row */
+.sl-filter-row { display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 640px; margin: 8px auto 22px; }
+.sl-filter-row .fc-search-wrap { flex: 1; min-width: 0; max-width: none; margin: 0; }
+.sl-filter-row .kx-wrap.pill .kx-sel { min-height: 46px; }
+@media (max-width: 560px) { .sl-filter-row { flex-wrap: wrap; } .sl-filter-row .kx-wrap.pill { width: 100%; } .sl-filter-row .kx-wrap.pill .kx-sel { width: 100%; } }
+
+/* The Lab never scrolls sideways (only up and down). */
+#simsPanel .nb-scroll.bs-scroll { overflow-x: hidden; overscroll-behavior: contain; }
+#simsPanel .fc-wrap { min-width: 0; }

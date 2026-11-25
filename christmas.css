@@ -114,10 +114,7 @@ html.knox-christmas .fall-tip { border-color: var(--orange); }
   html.knox-christmas #welcomeScreen > .fall-tip { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); margin: 0; width: max-content; max-width: calc(100% - 32px); z-index: 3; }
 }
 
-/* Knox's logo in the sidebar and the landing header wears a Santa hat. */
-html.knox-christmas .sidebar-logo-link, html.knox-christmas .header-logo { position: relative; }
-html.knox-christmas .xmas-hat { display: block; }
-.xmas-hat { display: none; position: absolute; width: 22px; height: 18px; top: -9px; left: 9px; transform: rotate(-18deg); pointer-events: none; z-index: 2; }
+.xmas-hat { display: none !important; position: absolute; width: 22px; height: 18px; top: -9px; left: 9px; transform: rotate(-18deg); pointer-events: none; z-index: 2; }
 html.knox-christmas #main-header { border-bottom-color: var(--orange-dark); }
 
 /* ── Landing hero: decorations stay clear of the text and the iPhone tour ── */
@@ -136,11 +133,10 @@ html.knox-christmas section.kl-section { position: relative; }
 html.knox-christmas .xmas-edge { display: block; position: absolute; top: 0; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14' preserveAspectRatio='none'%3E%3Cpath d='M0 0H24V6Q18 13 12 7Q6 13 0 6Z' fill='%23fff'/%3E%3Cpath d='M0 6Q6 13 12 7Q18 13 24 6' fill='none' stroke='%23D3E4F0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-size: 28px 16px; }
 html.knox-christmas #pricing.kl-pricing :is(.pt-card, .kp-family) { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14' preserveAspectRatio='none'%3E%3Cpath d='M0 0H24V6Q18 13 12 7Q6 13 0 6Z' fill='%23fff'/%3E%3Cpath d='M0 6Q6 13 12 7Q18 13 24 6' fill='none' stroke='%23D3E4F0' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: top left; background-size: 24px 13px; }
 
-/* The last "Stop guessing" section: Knox in a Santa hat, snow and a snowy
+/* The last "Stop guessing" section: snow and a snowy
    ground with pines, the tree, a snowman and presents (theme.js). */
 html.knox-christmas .kl-final { position: relative; overflow: hidden; padding-bottom: 190px; }
 .xmas-hat-wrap { position: relative; display: inline-block; }
-html.knox-christmas .kl-final .xmas-hat { width: 58px; height: 48px; top: -26px; left: -6px; }
 html.knox-christmas .kl-final .xmas-deco .xmas-ground { height: 170px; }
 @media (max-width: 900px) { html.knox-christmas .kl-final { padding-bottom: 130px; } }
 html.knox-christmas .kl-final > :not(.xmas-deco):not(.xmas-edge) { position: relative; z-index: 1; }
@@ -161,8 +157,6 @@ html.knox-christmas section.kl-section > .kl-wrap { position: relative; z-index:
 .xmas-snow-sec.xmas-run .xmas-flake { animation-play-state: running; }
 @keyframes xmasFallSec { from { transform: translate(0, 0) rotate(0); } 50% { transform: translate(var(--drift), calc(var(--fall, 800px) * .5)) rotate(160deg); } to { transform: translate(calc(var(--drift) * -.4), calc(var(--fall, 800px) + 40px)) rotate(320deg); } }
 @media (prefers-reduced-motion: reduce) { .xmas-snow-sec .xmas-flake { animation: none; top: var(--rest); } }
-/* Knox's fox on the welcome badge wears a little Santa hat too. */
-html.knox-christmas .kb-fox-wrap::after { content: ""; position: absolute; width: 16px; height: 13px; top: -7px; left: -3px; transform: rotate(-18deg); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'%3E%3Cpath d='M4 26C8 10 22 2 34 6l6 14-6 2C30 14 22 14 18 26Z' fill='%23E5383B' stroke='%23B3202A' stroke-width='2.5' stroke-linejoin='round'/%3E%3Crect x='2' y='24' width='24' height='9' rx='4.5' fill='%23fff' stroke='%23E6DCD8' stroke-width='2'/%3E%3Ccircle cx='38' cy='22' r='5' fill='%23fff' stroke='%23E6DCD8' stroke-width='2'/%3E%3C/svg%3E") no-repeat center / contain; pointer-events: none; }
 
 /* ── Christmas night (html.knox-christmas.knox-xmas-night, built on Dark) ──
    A night-blue sky, moonlit snow, softly glowing lights, a moon and stars.

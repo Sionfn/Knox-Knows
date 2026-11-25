@@ -178,14 +178,16 @@
           <canvas class="sl-canvas sb-canvas" aria-label="Your simulation. Drag things to move them; drag a ball's arrow to aim it."></canvas>
           <div class="sl-play">${B(`${PI.play} Play`, 'data-sb="play"', 'primary small sl-playbtn')}${B(`${PI.restart} Back to start`, 'data-sb="reset"', 'small')}<span class="sb-goal" aria-live="polite"></span></div>
           <p class="sl-readout sb-read" aria-live="polite"></p>
-          <div class="sb-graphs"></div>
-          ${opts.extraFoot || ''}
         </div>
         <div class="sl-controls sl-box sb-side"></div>
+        <div class="sl-box sb-results"><div class="sb-graphs"></div>${opts.extraFoot || ''}</div>
       </div></div>`;
     host.scrollTop = 0;
     const canvas = host.querySelector('.sb-canvas'), g = canvas.getContext('2d'), side = host.querySelector('.sb-side');
-    const view = () => { const W = canvas.clientWidth, H = canvas.clientHeight, sc_ = W / sc.world.width, ground = H - 26; return { W, H, k: sc_, X: x => 10 + x * sc_, Y: y => ground - y * sc_, wx: px => (px - 10) / sc_, wy: py => (ground - py) / sc_ }; };
+    // How high the scene reaches (meters), so a short picture still shows all of it.
+    const sceneTop = () => sc.objects.reduce((m, o) => Math.max(m, o.kind === 'ball' ? o.y + o.r : o.kind === 'box' ? o.y + o.w : o.kind === 'ramp' ? o.y + Math.max(0, o.len * Math.sin(o.angle * Math.PI / 180)) : o.kind === 'wall' ? o.len : o.y + 1), 0);
+    let heldK = null; // the zoom holds still while you drag something
+    const view = () => { const W = canvas.clientWidth, H = canvas.clientHeight, fit = Math.min(W / sc.world.width, (H - 50) / Math.max(4, sceneTop() + 1.5)), sc_ = drag ? (heldK ??= fit) : (heldK = null, fit), ground = H - 26; return { W, H, k: sc_, X: x => 10 + x * sc_, Y: y => ground - y * sc_, wx: px => (px - 10) / sc_, wy: py => (ground - py) / sc_ }; };
     function size() { const d = Math.min(2, devicePixelRatio || 1); canvas.width = canvas.clientWidth * d; canvas.height = canvas.clientHeight * d; g.setTransform(d, 0, 0, d, 0, 0); }
 
     function draw() {
@@ -295,6 +297,7 @@
         <button type="button" class="fc-btn small" data-sb="world-slider">+ Slider for gravity, air or bounce</button></div>
         <p class="fc-note sl-plan">Your plan: up to ${lim.objects} things, ${lim.sliders} slider${lim.sliders === 1 ? '' : 's'} and ${lim.graphs} graph${lim.graphs === 1 ? '' : 's'}.${tier === 'mega' ? '' : tier === 'plus' ? ' 💎 Mega Knox: 50 things, 12 sliders, 6 graphs.' : ' ⚡ Knox Plus: 20 things, 6 sliders, 3 graphs.'}</p>`;
       side.innerHTML = window.KI?.fill ? window.KI.fill(h) : h;
+      window.knoxSelect?.enhance(side);
     }
     function renderSliders() {
       const box = host.querySelector('.sb-sliders');
