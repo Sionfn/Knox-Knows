@@ -5836,7 +5836,7 @@ function formatInline(text) {
     : escHtml(part)
       // [title](https://…) → a link (web search sources). Escaped first, so the URL can't break out.
       // ([site.com](https://…)) is a web search citation: a small quiet chip.
-      .replace(/\(\[((?:[a-z0-9-]+\.)+[a-z]{2,})\]\((https?:\/\/[^\s()<>]+)\)\)/gi, '<a class="knox-cite" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\(\[((?:[a-z0-9-]+\.)+[a-z]{2,})\]\((https?:\/\/[^\s()<>]+)\)\)/gi, (m, host, href) => '<a class="knox-cite" href="' + href + '" target="_blank" rel="noopener noreferrer">' + siteName(host) + '</a>')
       .replace(/\[([^\]\n]{1,200})\]\((https?:\/\/[^\s()<>]+)\)/g, '<a class="knox-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       // *Title* → italics, only around words, so 5*2*3 and 2 * 3 stay math.
@@ -7408,11 +7408,21 @@ function learnPlanHtml(x) {
     }).join('') + '</ol></details>';
 }
 
+// A site's name for chips and the sources card. Server names like
+// "prod-01-asg-www-climate.woc.noaa.gov" show as the real site ("noaa.gov");
+// normal ones ("science.nasa.gov", "guides.loc.gov") stay as they are.
+function siteName(host) {
+  const h = String(host).toLowerCase().replace(/^www\./, ''), parts = h.split('.');
+  const machine = parts.length >= 4 || /\d/.test(parts[0]) || /^(?:prod|stage|staging|dev|cdn|origin|edge|www\d*)[-.]|-(?:prod|stage|www)\b/.test(parts[0]);
+  if (!machine || parts.length <= 2) return h;
+  const twoPart = /^(?:co|com|org|gov|ac|edu|net)\.[a-z]{2}$/.test(parts.slice(-2).join('.')); // bbc.co.uk, abc.net.au
+  return parts.slice(twoPart ? -3 : -2).join('.');
+}
 // Answers and Learn replies that searched end with a 🌐 Searched the web list (api/ask.js):
 // shown as a sources card instead of plain text.
 function webSourcesHtml(list) {
   const items = [...list.matchAll(/^- \[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)$/gm)].map(([, title, url]) => {
-    const site = (/^https?:\/\/(?:www\.)?([^/?#:@]+)/i.exec(url) || [])[1];
+    const site = siteName((/^https?:\/\/(?:www\.)?([^/?#:@]+)/i.exec(url) || [])[1] || '');
     if (!site) return '';
     return '<a class="kws-item" href="' + escHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
       '<span class="kws-site">' + escHtml(site) + '</span><span class="kws-title">' + escHtml(title) + '</span>' +
