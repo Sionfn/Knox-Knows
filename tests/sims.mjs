@@ -147,6 +147,7 @@ test('math answers draw powers and square roots like a textbook, never inside li
   const root = f('σ = √(910/6) ≈ 12.32 and h = √144');
   assert.match(root, /<span class="krad">√<span class="krad-in"><span class="kfrac-wrap">.*910.*6.*<\/span><\/span> ≈ 12\.32/);
   assert.match(root, /<span class="krad">√<span class="krad-in">144<\/span><\/span>/);
+  assert.match(f('c = √3,033 ≈ 55.07'), /√<span class="krad-in">3,033<\/span><\/span> ≈ 55\.07/);
   assert.match(f('(−b ± √(b² − 4ac))/2a'), /√<span class="krad-in">b² − 4ac<\/span><\/span>\)\/2a/);
   assert.doesNotMatch(f('see [a^b](https://x.com/a^b)'), /kpow/);
   assert.doesNotMatch(f('`x^2` in code'), /kpow/);

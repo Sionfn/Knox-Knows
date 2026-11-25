@@ -50,6 +50,8 @@
   const DROPS = { ball: ['Ball', .01, '#FF8A3D'], rock: ['Rock', .002, '#8C8C8C'], apple: ['Apple', .006, '#E5383B'], skydiver: ['Skydiver', .004, '#1CB0F6'], feather: ['Feather', 1.5, '#FFE7A8'] };
   const MOVERS = ['car', 'runner', 'person', 'train', 'bike', 'plane', 'boat', 'dog', 'bus', 'truck'];
 
+  // A nice 1/2/5 step whose labels are at least `minPx` apart (small cards get fewer labels).
+  const labelStep = (pxPerUnit, minPx = 44) => { if (!(pxPerUnit > 0)) return 1; let st = 10 ** Math.floor(Math.log10(minPx / pxPerUnit)); for (const m of [1, 2, 5, 10]) if (st * m * pxPerUnit >= minPx) return st * m; return st * 10; };
   // A chart in world coordinates.
   function chart(g, c, x0, x1, y0, y1, pad = 34, axisX) {
     const L = pad + 8, R = c.w - 14, T = 14, B = c.h - pad;
@@ -423,7 +425,7 @@
         if (!c.ghost) {
           g.fillStyle = c.ground; g.fillRect(0, Y(0), c.w, c.h - Y(0));
           if (s.height > 0) { g.fillStyle = c.cliff; g.fillRect(0, Y(s.height), X(0), Y(0) - Y(s.height)); }
-          if (c.s.grid !== false) { g.save(); g.strokeStyle = c.grid; g.lineWidth = 1; const step = Math.pow(10, Math.floor(Math.log10(Math.max(maxX, maxY) / 3))); for (let x = 0; x <= maxX; x += step) { g.beginPath(); g.moveTo(X(x), Y(0)); g.lineTo(X(x), 8); g.stroke(); label(g, c, fmt(x, 0) + ' m', X(x), Y(0) + 12, c.light, 'center', 10); } g.restore(); }
+          if (c.s.grid !== false) { g.save(); g.strokeStyle = c.grid; g.lineWidth = 1; const step = labelStep(Math.abs(X(1) - X(0)), 46); for (let x = 0; x <= maxX + 1e-9; x += step) { g.beginPath(); g.moveTo(X(x), Y(0)); g.lineTo(X(x), 8); g.stroke(); label(g, c, fmt(x, step < 1 ? 1 : 0) + ' m', X(x), Y(0) + 12, c.light, 'center', 10); } g.restore(); }
         }
         const now = t == null ? m.end : Math.min(t, m.end), p = m.at(now);
         g.save(); g.strokeStyle = c.ghost ? c.light : c.orange; g.lineWidth = 2.5; g.setLineDash(s.trail ? [] : [2, 6]); g.beginPath();
@@ -1095,9 +1097,11 @@
     blank: () => window.knoxSimBuilder.blank(),
     empty: () => ({ title: 'My simulation', world: { planet: 'earth', air: 0, bounce: .5, friction: .3, width: 40 }, objects: [] }),
     ramp: () => ({ title: 'Ramp race', world: { planet: 'earth', air: 0, bounce: .3, friction: .2, width: 40 }, objects: [
-      { id: 'r1', kind: 'ramp', x: 2, y: 14, len: 16, angle: -40, color: '#1CB0F6', name: 'Steep ramp' }, { id: 'r2', kind: 'ramp', x: 2, y: 6, len: 20, angle: -15, color: '#A560F2', name: 'Gentle ramp' },
-      { id: 'a', kind: 'ball', x: 2.6, y: 14.9, r: .6, mass: 1, color: '#FF6B00', name: 'Ball A' }, { id: 'b', kind: 'ball', x: 2.6, y: 6.9, r: .6, mass: 1, color: '#1FA45A', name: 'Ball B' },
-      { id: 'w', kind: 'wall', x: 38, len: 4, color: '#3C3C3C', name: 'Finish' }], sliders: [{ obj: 'r1', prop: 'angle', min: -70, max: -5 }], graphs: [{ obj: 'a', prop: 'speed' }] }),
+      // A fair race: both start 4 m up, roll down a steep or a gentle ramp, then the same 4 m to the Finish wall in the middle.
+      // (The ramps never overlap, so neither ball can get stuck under the other ramp.)
+      { id: 'r1', kind: 'ramp', x: 11.23, y: 4, len: 6.22, angle: -40, color: '#1CB0F6', name: 'Steep ramp' }, { id: 'r2', kind: 'ramp', x: 24, y: 0, len: 15.45, angle: 15, color: '#A560F2', name: 'Gentle ramp' },
+      { id: 'a', kind: 'ball', x: 11.8, y: 4.4, r: .6, mass: 1, color: '#FF6B00', name: 'Ball A' }, { id: 'b', kind: 'ball', x: 38.3, y: 4.5, r: .6, mass: 1, color: '#1FA45A', name: 'Ball B' },
+      { id: 'w', kind: 'wall', x: 20, len: 4, color: '#3C3C3C', name: 'Finish' }], sliders: [{ obj: 'r1', prop: 'angle', min: -70, max: -20 }], graphs: [{ obj: 'a', prop: 'speed' }, { obj: 'b', prop: 'speed' }] }),
     spring: () => ({ title: 'Bouncy spring', world: { planet: 'earth', air: .1, bounce: .5, friction: .3, width: 20 }, objects: [
       { id: 's', kind: 'spring', x: 10, y: 14, k: 40, rest: 4, to: 'm', color: '#A560F2', name: 'Spring' }, { id: 'm', kind: 'box', x: 10, y: 6, w: 1.4, mass: 2, color: '#1CB0F6', name: 'Block' }],
       sliders: [{ obj: 's', prop: 'k', min: 5, max: 200 }, { obj: 'm', prop: 'mass', min: .5, max: 10 }], graphs: [{ obj: 'm', prop: 'y' }] }),
