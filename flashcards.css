@@ -308,7 +308,7 @@ html[data-theme="dark"] .fc-dropzone { background:transparent; color:var(--blue)
   display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:left; padding:16px 16px 18px; border-radius:20px; border:3px solid var(--chip); background:var(--surface); color:var(--text); font:inherit; cursor:pointer; box-shadow:0 5px 0 var(--chip-ledge); transition:transform .12s, box-shadow .12s; }
 .fc-way[data-flavor="green"] { --chip:var(--green); --chip-ledge:var(--green-dark); --chip-tint:var(--green-light); }
 .fc-way[data-flavor="blue"]  { --chip:var(--blue);  --chip-ledge:var(--blue-dark);  --chip-tint:var(--blue-light); }
-.fc-way:hover  { background-color:color-mix(in srgb, var(--chip) 7%, var(--surface)); } /* cards stay still on hover; buttons lift */
+.fc-way:hover  { transform:translateY(-2px); box-shadow:0 7px 0 var(--chip-ledge); }
 .fc-way:active { transform:translateY(3px);  box-shadow:0 2px 0 var(--chip-ledge); }
 .fc-way-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:21px; background:var(--chip-tint); border:3px solid var(--chip); margin-bottom:4px; }
 .fc-way b { font-size:16px; font-weight:900; }

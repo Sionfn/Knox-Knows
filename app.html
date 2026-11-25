@@ -1496,7 +1496,7 @@
       border: 2px solid var(--chip);
       border-radius: 20px;
       padding: 18px 16px;
-      transition: transform 0.1s, box-shadow 0.1s, background-color 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
       box-shadow: 0 4px 0 var(--chip-ledge);
       display: flex; align-items: center; gap: 14px;
       text-align: left;
@@ -1507,7 +1507,7 @@
     .suggestion-chip[data-flavor="blue"]   { --chip: var(--blue);   --chip-ledge: var(--blue-dark); }
     .suggestion-chip[data-flavor="green"]  { --chip: var(--green);  --chip-ledge: var(--green-dark); }
     .suggestion-chip[data-flavor="purple"] { --chip: var(--purple); --chip-ledge: var(--purple-dark); }
-    .suggestion-chip:hover  { background-color: color-mix(in srgb, var(--chip) 7%, var(--surface)); } /* cards stay still on hover; buttons lift */
+    .suggestion-chip:hover  { transform: translateY(-3px); box-shadow: 0 7px 0 var(--chip-ledge); }
     .suggestion-chip:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--chip-ledge); }
 
     .chip-circle {
