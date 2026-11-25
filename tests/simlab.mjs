@@ -119,9 +119,11 @@ test('Right triangles: a Lab sim for the Pythagorean theorem (ladders, ramps, mi
   const tri = SIM_CATALOG.find(s => s[0] === 'triangle');
   assert.ok(tri, 'the server offers it');
   assert.match(tri[2], /Pythagorean theorem \(ladders/);
-  assert.match(tri[3], /find \(c = find the long side from both legs, b = find a missing leg/);
+  assert.match(tri[3], /find \(c = the long side from both legs; b = the height, from c and a; a = the bottom, from c and b/);
   assert.match(lab, /triangle: \{\n      group: 'Math', icon: 'triangle', title: 'Right triangles'/);
-  assert.match(lab, /solve\(s\) \{ if \(s\.find === 'b'\) return s\.c > s\.a \? \{ A: s\.a, B: Math\.sqrt\(s\.c \* s\.c - s\.a \* s\.a\), C: s\.c \} : null; return \{ A: s\.a, B: s\.b, C: Math\.hypot\(s\.a, s\.b\) \}; \}/);
+  assert.match(lab, /if \(s\.find === 'b'\) return s\.c > s\.a \? \{ A: s\.a, B: Math\.sqrt\(s\.c \* s\.c - s\.a \* s\.a\), C: s\.c \} : null;/);
+  assert.match(lab, /if \(s\.find === 'a'\) return s\.c > s\.b \? \{ A: Math\.sqrt\(s\.c \* s\.c - s\.b \* s\.b\), B: s\.b, C: s\.c \} : null;/);
+  assert.match(lab, /\['Ladder: 25 ft long, 24 ft up', \{ find: 'a', b: 24, c: 25, scene: 'ladder', unit: 'ft' \}\]/);
   assert.match(lab, /\['Ladder: 13 ft long, 5 ft out', \{ find: 'b', a: 5, c: 13, scene: 'ladder', unit: 'ft' \}\]/);
   assert.match(lab, /triangle: \[\['Make every side a whole number \(but not 3, 4, 5\)'/);
   assert.match(lab, /T\.triangle\.table = s =>/);
