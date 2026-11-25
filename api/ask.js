@@ -884,6 +884,18 @@ const aboutTopic = (url, question) => {
   return words.some(w => where.includes(w));
 };
 
+// Is this citation's page already in the card? Same address, same site (an
+// article and its PDF), or a card title the citation repeats (a report and its
+// doi.org link) — so 3 citations make 3 sources, not 5.
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+const wordsOf = t => (String(t).toLowerCase().split(/\s[|–—-]\s/)[0].match(/[a-z0-9]{4,}/g) || []);
+function sameSource(card, url, cite) {
+  if (card.url.replace(/\/$/, '') === url.replace(/\/$/, '') || (hostOf(card.url) && hostOf(card.url) === hostOf(url))) return true;
+  if (card.fromCite) return false; // only pages Knox cited in its answer count as "the same report"
+  const w = wordsOf(card.title), text = String(cite).toLowerCase();
+  return w.length >= 2 && w.filter(x => text.includes(x)).length / w.length >= .8;
+}
+
 // Clear fact questions are always checked on the web (Knox decides for the rest).
 // Math word problems ("when does the car catch up?") aren't forced.
 const MUST_CHECK = /\b(?:when (?:was|were|did)|what year|which year|in what year|who (?:was|were|wrote|invented|discovered|said|won|founded|created|painted|signed|first)|(?:mla|apa|chicago)(?: style)?|citations?|cite|works cited|bibliography|find (?:me )?(?:a |some )?sources?|latest|in the news|this (?:week|month|year)|right now|currently|population of)\b/i;
@@ -1521,9 +1533,9 @@ export default async function handler(req, res) {
       const hit = /(https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,}\/[^\s<>()]*[^\s<>().,;]|(?:[a-z0-9-]+\.)+[a-z]{2,}(?=[\s.,;]*$))/i.exec(cite);
       if (!hit || (!hit[1] && !hit[2].includes('/') && !/^www\./i.test(hit[2]))) continue;
       const url = (hit[1] || 'https://') + hit[2];
-      if (searched.sources.length >= 8 || searched.sources.some(x => x.url.replace(/\/$/, '') === url.replace(/\/$/, ''))) continue;
-      const title = (/[“"]([^”"\n]{3,140})[”"]/.exec(cite)?.[1] || titleFromUrl(url)).replace(/[\[\]()]+/g, ' ').trim().replace(/[.,;:]+$/, ''); // “Title.” → Title
-      searched.sources.push({ title: title.slice(0, 140), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
+      if (searched.sources.length >= 8 || searched.sources.some(x => sameSource(x, url, cite))) continue;
+      const title = (/[“"]([^”"\n]{3,140})[”"]/.exec(cite)?.[1] || /\*([^*\n]{3,140})\*/.exec(cite)?.[1] || titleFromUrl(url)).replace(/[\[\]()]+/g, ' ').trim().replace(/[.,;:]+$/, ''); // “Title.” → Title
+      searched.sources.push({ title: title.slice(0, 140), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29'), fromCite: true });
     }
     const sourcesList = searched?.sources.length ? '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n') : '';
     if (sourcesList && !(learnMode && !casual)) answer = answer.trim() + sourcesList;
