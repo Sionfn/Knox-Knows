@@ -159,7 +159,7 @@
     const tier = opts.tier || 'free', lim = LIMITS[tier];
     const ac = new AbortController(), on = { signal: ac.signal }; // everything below is removed when you leave
     let sc = clean(scene || blank()), sim = null, t = 0, playing = false, raf = 0, last = 0, sel = null, drag = null, cheered = false;
-    const dirty = () => { sim = null; };
+    const dirty = () => { sim = null; const ex = host.querySelector('.sb-examples'); if (ex) ex.hidden = sc.objects.length > 0; };
     const getSim = () => sim || (sim = simulate(sc));
     const objOf = id => sc.objects.find(o => o.id === id);
     const propDef = (obj, prop) => obj === 'world' ? WORLD_PROPS.find(p => p[0] === prop) : PROPS[objOf(obj)?.kind]?.find(p => p[0] === prop);
@@ -168,9 +168,9 @@
     const upsell = text => { host.querySelector('.sb-upsell')?.remove(); host.querySelector('.sl-topbar')?.insertAdjacentHTML('afterend', (window.KI?.fill || (x => x))(`<div class="sl-note sl-upsell sb-upsell" role="status">⚡<p>${text}</p>${window.knoxNativeApp ? '' : B('See plans', 'data-sb="upgrade"', 'primary small')}<button type="button" class="sl-x" data-sb="close-upsell" aria-label="Close">✕</button></div>`)); };
 
     host.innerHTML = `<div class="fc-wrap sl-ed sb">
-      <header class="fc-head"><div class="fc-badges"><span class="fc-badge">${ki('pencil', false)} Make your own</span></div><h1 class="fc-title" tabindex="-1">${accentLast(sc.title)}</h1><p class="fc-sub">Drag things to move them and drag a ball’s arrow to aim it. Tap anything to change it, then press Play.</p></header>
-      <div class="fc-topbar sl-topbar">${B('← Simulation Lab', 'data-sb="back"', 'ghost')}<div class="fc-topbar-right">${B('Share', 'data-sb="share"', 'small')}${opts.onPublish ? B('Publish', 'data-sb="publish"', 'small') : ''}${B('Save', 'data-sb="save"', 'primary small')}</div></div>
-      ${opts.explain ? `<div class="sl-note">${ki('spark', false)}<p>${esc(opts.explain)}</p></div>` : ''}
+      <header class="fc-head"><div class="fc-badges"><span class="fc-badge">${ki('pencil', false)} Make your own</span></div><h1 class="fc-title" tabindex="-1">${accentLast(sc.title)}</h1><p class="fc-sub">${opts.explain ? esc(opts.explain) : 'Drag things to move them and drag a ball’s arrow to aim it. Tap anything to change it, then press Play.'}</p></header>
+      <div class="fc-topbar sl-topbar">${B(escH(opts.backLabel || '← Simulation Lab'), 'data-sb="back"', 'ghost')}<div class="fc-topbar-right">${B('Share', 'data-sb="share"', 'small')}${opts.onPublish ? B('Publish', 'data-sb="publish"', 'small') : ''}${B('Save', 'data-sb="save"', 'primary small')}</div></div>
+      ${opts.examples ? `<div class="sb-examples"${sc.objects.length ? ' hidden' : ''}><span class="fc-field-label">Or start from an example</span>${opts.examples.map(([id, name]) => `<button type="button" class="fc-chip" data-sb="example" data-ex="${id}">${escH(name)}</button>`).join('')}</div>` : ''}
       <div class="sb-add" role="toolbar" aria-label="Add"><span class="fc-field-label">Add</span>${Object.entries(KINDS).map(([k, d]) => `<button type="button" class="fc-chip" data-add="${k}">+ ${d.name}</button>`).join('')}</div>
       <div class="sl-main">
         <div class="sl-stage sl-box">
@@ -302,7 +302,7 @@
       box.hidden = !sc.sliders.length;
     }
     const redraw = () => { draw(); };
-    const restart = () => { t = 0; cheered = false; setPlaying(false); renderSliders(); draw(); };
+    const restart = () => { dirty(); t = 0; cheered = false; setPlaying(false); renderSliders(); draw(); };
 
     // Play.
     function frame(now) { const dt = Math.min(.05, (now - last) / 1000); last = now; const s = getSim(); t = Math.min(s.end, t + dt); draw(); if (t >= s.end) { setPlaying(false); return; } raf = requestAnimationFrame(frame); }
@@ -385,10 +385,11 @@
         box.innerHTML = `<div class="sb-table-top"><button type="button" class="fc-btn small" data-sb="copy" data-i="${b.dataset.i}">Copy for a spreadsheet</button></div><table><thead><tr>${head.map(x => `<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</tbody></table>`; box.hidden = false;
       }
       else if (act === 'copy') { const { head, rows } = tableFor(+b.dataset.i), tsv = [head, ...rows].map(r => r.join('\t')).join('\n'); navigator.clipboard?.writeText(tsv).then(() => { b.textContent = 'Copied ✓'; }, () => { b.textContent = 'Couldn’t copy'; }); }
-      else if (act === 'save') Promise.resolve(opts.onSave?.(clean(sc))).then(name => { if (!name) return; sc.title = String(name).slice(0, 40); const h = host.querySelector('.fc-title'); if (h) h.innerHTML = accentLast(sc.title); if (b.isConnected) { b.textContent = 'Saved ✓'; setTimeout(() => { if (b.isConnected) b.textContent = 'Save'; }, 1600); } });
+      else if (act === 'save') opts.onSave?.(clean(sc)); // the Lab saves it and takes you home
       else if (act === 'share') opts.onShare?.(clean(sc), b);
       else if (act === 'publish') opts.onPublish?.(clean(sc), b);
       else if (act === 'back') { stop(); opts.onBack?.(); }
+      else if (act === 'example') { stop(); opts.onExample?.(b.dataset.ex); }
       else if (act === 'upgrade') window.goToPricing?.();
       else if (act === 'close-upsell') b.closest('.sb-upsell')?.remove();
     }, on);
