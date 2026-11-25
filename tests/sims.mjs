@@ -88,3 +88,13 @@ test('a "Citation (MLA):" line becomes a citation box with a Copy button (italic
   assert.match(html, /<em>NASA Science<\/em>/);
   assert.doesNotMatch(html, /Citation \(MLA\):/);
 });
+
+test('site names: server names show as the real site; normal names stay', () => {
+  const html = context.renderAnswerHtml('Temps are rising ([prod-01-asg-www-climate.woc.noaa.gov](https://prod-01-asg-www-climate.woc.noaa.gov/news)). Ice too ([science.nasa.gov](https://science.nasa.gov/x)).\n\n🌐 Searched the web\n- [Climate change](https://prod-01-asg-www-climate.woc.noaa.gov/news)\n- [Titanic](https://guides.loc.gov/titanic)\n- [BBC](https://www.bbc.co.uk/news/science)', 'answer');
+  assert.match(html, />noaa\.gov<\/a>/);
+  assert.match(html, />science\.nasa\.gov<\/a>/);
+  assert.match(html, /<span class="kws-site">noaa\.gov<\/span>/);
+  assert.match(html, /<span class="kws-site">guides\.loc\.gov<\/span>/);
+  assert.match(html, /<span class="kws-site">bbc\.co\.uk<\/span>/);
+  assert.match(html, /href="https:\/\/prod-01-asg-www-climate\.woc\.noaa\.gov\/news"/, 'the link itself is unchanged');
+});
