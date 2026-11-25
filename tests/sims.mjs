@@ -98,3 +98,14 @@ test('site names: server names show as the real site; normal names stay', () => 
   assert.match(html, /<span class="kws-site">bbc\.co\.uk<\/span>/);
   assert.match(html, /href="https:\/\/prod-01-asg-www-climate\.woc\.noaa\.gov\/news"/, 'the link itself is unchanged');
 });
+
+test('Graph your own fits y to where the graphs turn and cross (x³ − 3x isn\'t squashed flat)', () => {
+  const lab = readFileSync(new URL('../simlab.js', import.meta.url), 'utf8');
+  assert.match(lab, /turnsOrMeets \? Math\.max\(\.\.\.keys\) \* 2\.5/);
+});
+test('catch-up race: A and B can be different (a bike ahead, a car chasing)', async () => {
+  const lab = readFileSync(new URL('../simlab.js', import.meta.url), 'utf8');
+  assert.match(lab, /select\('who2', 'Who is chasing \(B\)'/);
+  const { SIM_CATALOG } = await import('../api/_sim-build.js');
+  assert.match(SIM_CATALOG.find(x => x[0] === 'motion')[3], /who2 \(what B, the chaser, is/);
+});

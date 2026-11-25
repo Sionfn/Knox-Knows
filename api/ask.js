@@ -845,7 +845,7 @@ const SIM_LINES = SIM_CATALOG.map(([type, , what, keys]) => `Sim: ${type} | key=
 const SIM_GRAVITY = 'When you add a sim that uses gravity, use exactly the gravity the sims use in your own math too: Earth 9.81 m/s², Moon 1.62, Mars 3.71, Jupiter 24.79, Sun 274, Pluto 0.62 (never 9.8 or 10), so your numbers match the sim to the decimal.';
 const SIM_INSTRUCTION = 'Simulations are ON. Only when a hands-on simulation would genuinely help the student understand THIS math or science answer, end your reply with exactly ONE extra line "Sim: <type> | key=value, key=value" (plain numbers or single words; leave out keys you don\'t need). The sims:\n' +
   SIM_LINES.join('\n') + '\n' +
-  SIM_GRAVITY + ' Use the numbers from the student\'s problem as the starting values. For projectile, include item= (what is launched) when the problem names it; for motion, include who=, and time= is the time unit inside the speeds (mph → h, m/s → s), never the unit of your answer. Never add a sim for writing, history, small talk, or when a picture would not help. Do not mention or describe the Sim line — the app shows it as a card. Keep the normal answer complete without it.';
+  SIM_GRAVITY + ' Use the numbers from the student\'s problem as the starting values. For projectile, include item= (what is launched) when the problem names it; for motion, include who= (what A, the one ahead, is) and who2= (what B, the chaser, is) when they differ, and time= is the time unit inside the speeds (mph → h, m/s → s), never the unit of your answer. Never add a sim for writing, history, small talk, or when a picture would not help. Do not mention or describe the Sim line — the app shows it as a card. Keep the normal answer complete without it.';
 
 // Learn: the same templates, as the JSON "sim" field, and never a shortcut to the answer.
 const SIM_LEARN_INSTRUCTION = 'Simulations are ON. You may set the JSON field "sim" to ONE simulation when moving sliders would genuinely help the student understand the idea of the current step (otherwise sim is ""). Write it as "type | key=value, ..." using only these sims:\n' +
@@ -1493,6 +1493,15 @@ export default async function handler(req, res) {
     // A citation line is pasted into a Works Cited page as is: no chips or link markup in it.
     answer = answer.replace(/^([ \t]*(?:[-*•][ \t]+)?Citation(?:[ \t]*\([^)\n]{2,24}\))?:[ \t]*)(.+)$/gim, (m, head, body) =>
       head + body.replace(/[ \t]*\(\[[^\]\n]+\]\(https?:\/\/[^\s()]+\)\)/g, '').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)/g, '$1').trimEnd());
+    // Pages named in citations are sources too: they join the card ("3 MLA sources" → 3 pages).
+    if (searched) for (const [, cite] of answer.matchAll(/^[ \t]*(?:[-*•][ \t]+)?Citation(?:[ \t]*\([^)\n]{2,24}\))?:[ \t]*(.+)$/gim)) {
+      const hit = /(https?:\/\/)?((?:[a-z0-9-]+\.)+[a-z]{2,}\/[^\s<>()]*[^\s<>().,;]|(?:[a-z0-9-]+\.)+[a-z]{2,}(?=[\s.,;]*$))/i.exec(cite);
+      if (!hit || (!hit[1] && !hit[2].includes('/') && !/^www\./i.test(hit[2]))) continue;
+      const url = (hit[1] || 'https://') + hit[2];
+      if (searched.sources.length >= 8 || searched.sources.some(x => x.url.replace(/\/$/, '') === url.replace(/\/$/, ''))) continue;
+      const title = (/[“"]([^”"\n]{3,140})[”"]/.exec(cite)?.[1] || titleFromUrl(url)).replace(/[\[\]()]+/g, ' ').trim().replace(/[.,;:]+$/, ''); // “Title.” → Title
+      searched.sources.push({ title: title.slice(0, 140), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
+    }
     const sourcesList = searched?.sources.length ? '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n') : '';
     if (sourcesList && !(learnMode && !casual)) answer = answer.trim() + sourcesList;
 
