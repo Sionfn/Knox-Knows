@@ -242,7 +242,7 @@
         const r = s.rate / 100, f = n => s.start * Math.pow(1 + r, n), lin = n => s.start + s.start * r * n;
         const show = t == null ? s.steps : clamp(t / 3, 0, 1) * s.steps;
         const ymax = Math.max(f(0), f(s.steps), s.linear ? lin(s.steps) : 0) * 1.1, ymin = Math.min(0, s.linear ? lin(s.steps) : 0);
-        const ch = chart(g, c, 0, s.steps, ymin, ymax, 42); ch.axes('steps', 'amount');
+        const pad = s.steps * .03, ch = chart(g, c, -pad, s.steps, ymin, ymax, 42, -pad); ch.axes('steps', 'amount'); // a little room so the first dot clears the amount labels
         if (s.linear) ch.plot(lin, c.green, 2, 0, show);
         ch.plot(f, c.ghost ? c.light : c.orange, 3, 0, show);
         if (s.points && !c.ghost) for (let n = 0; n <= Math.floor(show); n++) ch.dot(n, f(n), c.orange, 4);
@@ -482,7 +482,8 @@
         if (!c.ghost) count.forEach((n, i) => {
           g.fillStyle = [c.orange, c.blue, c.green, c.purple, c.red, c.yellow][i % 6]; g.fillRect(L + i * bw + bw * .15, B - n / top * H, bw * .7, n / top * H);
           if (s.expect) { g.save(); g.setLineDash([5, 4]); g.strokeStyle = c.text; g.lineWidth = 2; const ey = B - prob(i) * s.trials / top * H; g.beginPath(); g.moveTo(L + i * bw + 4, ey); g.lineTo(L + (i + 1) * bw - 4, ey); g.stroke(); g.restore(); }
-          label(g, c, name(i), L + i * bw + bw / 2, B + 12, c.text, 'center', 11); if (n) label(g, c, String(n), L + i * bw + bw / 2, B - n / top * H - 9, c.light, 'center', 10);
+          const above = Math.min(B - n / top * H, s.expect ? B - prob(i) * s.trials / top * H : Infinity); // above the bar or the expected line, whichever is higher
+          label(g, c, name(i), L + i * bw + bw / 2, B + 12, c.text, 'center', 11); if (n) label(g, c, String(n), L + i * bw + bw / 2, above - 9, c.light, 'center', 10);
         });
         const best = count.indexOf(Math.max(...count));
         return `${done} of ${s.trials} ${s.kind === 'coin' ? 'flips' : 'rolls'} · ${count.map((n, i) => `${name(i)}: ${done ? fmt(n / done * 100, 1) : 0}%`).slice(0, 6).join(', ')}${faces > 6 ? '…' : ''} · expected ${s.kind === 'twodice' ? '7 is the most likely sum (6 of 36 ways)' : `${fmt(100 / sides, 1)}% each`}${done ? ` · most so far: ${name(best)}` : ''} · more tries get closer to the odds`;
@@ -1064,9 +1065,9 @@
     el.innerHTML = fill(`<div class="ksim-head"><span class="ksim-badge" aria-hidden="true">${ki(def.icon, false)}</span><span><b>Try it yourself</b><small>${esc(meta.title || def.title)}</small></span></div>
       <canvas class="ksim-canvas" role="img"></canvas><p class="ksim-readout" aria-live="polite"></p>
       ${sliders.length ? `<div class="ksim-controls">${sliders.map(p => `<label class="ksim-slider"><span><span>${esc(p.label)}</span><b data-out="${p.k}"></b></span><input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${s[p.k]}" data-k="${p.k}"></label>`).join('')}</div>` : ''}
-      <div class="ksim-actions">${def.anim ? `<button type="button" class="ksim-play">${PI.play} Play</button>` : ''}<button type="button" class="ksim-reset">${PI.restart} Reset</button><button type="button" class="ksim-lab">Open in Lab →</button></div>`);
+      <div class="ksim-actions">${def.anim ? `<button type="button" class="ksim-play">${PI.play} Play</button>` : ''}${id === 'probability' ? `<button type="button" class="ksim-reset ksim-reroll">${PI.dice} New run</button>` : ''}<button type="button" class="ksim-reset ksim-back">${PI.restart} Reset</button><button type="button" class="ksim-lab">Open in Lab →</button></div>`);
     const canvas = el.querySelector('canvas'), g = canvas.getContext('2d'), out = el.querySelector('.ksim-readout'), playBtn = el.querySelector('.ksim-play');
-    const seed = (Math.random() * 1e9) | 0;
+    let seed = (Math.random() * 1e9) | 0;
     let t = def.anim ? 0 : null, playing = false, raf = 0, last = 0;
     const dur = () => def.duration ? def.duration.call(def, s) : 4;
     // Open on the finished picture (a whole population curve, all the coin flips…);
@@ -1096,7 +1097,8 @@
     }
     el.addEventListener('input', e => { const k = e.target.dataset?.k; if (!k) return; s[k] = Number(e.target.value); if (def.anim && !def.loop && !playing) t = dur(); draw(); });
     playBtn?.addEventListener('click', () => setPlaying(!playing));
-    el.querySelector('.ksim-reset').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = done(); draw(); });
+    el.querySelector('.ksim-reroll')?.addEventListener('click', () => { seed = (Math.random() * 1e9) | 0; t = 0; setPlaying(true); });
+    el.querySelector('.ksim-back').addEventListener('click', () => { Object.assign(s, start); for (const p of sliders) { const i = el.querySelector(`[data-k="${p.k}"]`); if (i) i.value = s[p.k]; } setPlaying(false); t = done(); draw(); });
     el.querySelector('.ksim-lab').addEventListener('click', () => { setPlaying(false); const values = { ...s }; window.openSims?.(); setTimeout(() => open(id, values, { title: meta.title || def.title, fromAnswer: true }), 60); });
     new ResizeObserver(() => { if (!playing && el.isConnected) draw(); }).observe(canvas);
     draw();
