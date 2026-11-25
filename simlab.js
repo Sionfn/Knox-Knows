@@ -688,7 +688,7 @@
   const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list.slice(0, 200))); return true; } catch (_) { return false; } };
 
   // ── The page ─────────────────────────────────────────────────────────────
-  let host = null, tab = 'home', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '';
+  let host = null, tab = 'home', filter = 'All', editor = null, buildBusy = false, buildMsg = '', lastPrompt = '', buildCtl = null;
   const EXAMPLES = ['A soccer ball kicked at 25 m/s off a 30 m cliff', 'Dropping a feather and a rock on the Moon', 'Saving $50 a month at 7% for 30 years', 'Rolling two dice 1000 times', 'Where y = 2x + 1 and y = -x + 7 cross', 'A 3 m pendulum on Mars', 'How fast rabbits grow with limited food'];
   function show(h) { host = h; editor?.stop(); editor = null; renderHome(); openPendingShare(); }
   function costLine() {
@@ -738,7 +738,9 @@
     const saved = readSaved();
     if (tab === 'mine') tab = 'home';
     let html;
-    if (tab === 'build') {
+    if (tab === 'build' && buildBusy) {
+      html = `<div class="fc-wrap center sl-wrap"><div class="fc-loading"><img src="/knox-logo-square.jpg" alt=""><h2>Knox is building your simulation…</h2><p class="fc-sub">This usually takes 5–20 seconds.</p><div class="fc-dots"><span></span><span></span><span></span></div><div class="fc-toolbar" style="margin-top:18px">${B('Cancel', 'data-build-cancel', 'ghost small')}</div></div></div>`;
+    } else if (tab === 'build') {
       html = `<div class="fc-wrap sl-wrap">${head(`${ki('spark', false)} Knox builds it`, `Tell Knox what you want to <span class="accent">see.</span>`, 'Knox picks the right simulation and fills in your numbers. You can change everything after.')}
         ${topbar(backBtn)}
         <div class="fc-make sl-box">
@@ -747,7 +749,7 @@
           <span class="fc-field-label sl-label-gap">Try one</span>
           <div class="fc-chips fc-examples">${EXAMPLES.map(e => chipB(esc(e), `data-example="${esc(e)}"`)).join('')}</div>
           ${buildMsg ? `<p class="sl-msg" role="status">${buildMsg}</p>` : ''}
-          <div class="fc-toolbar" style="margin-top:20px">${B(buildBusy ? '<span class="sl-spin" aria-hidden="true"></span> Knox is building…' : `${ki('spark', false)} Build it${tier() === 'free' ? ' · 2 credits' : ''}`, `data-build${buildBusy ? ' disabled' : ''}`, 'primary')}</div>
+          <div class="fc-toolbar" style="margin-top:20px">${B(`${ki('spark', false)} Build it${tier() === 'free' ? ' · 2 credits' : ''}`, 'data-build', 'primary')}</div>
           <p class="fc-note" style="margin-top:14px">Knox can make mistakes — check the numbers before you use them for homework.</p>
         </div>
         <p class="fc-note">${costLine()}</p></div>`;
@@ -805,7 +807,7 @@
           ${way('play', 'blue', 'sliders', 'Playground', `${ORDER.length} ready-made simulations with challenges — math, physics, chemistry and more.`)}
           ${way('make', 'green', 'pencil', 'Make your own', 'Build one from scratch with balls, ramps, springs, targets, sliders and graphs.')}
         </div>
-        <div class="fc-toolbar fc-toolbar-quiet">${B(`${ki('globe', false)} Community sims`, 'data-tab="community"', 'small fc-cm-entry')}${B('Surprise me', 'data-surprise', 'ghost small')}</div>
+        <div class="fc-toolbar fc-toolbar-quiet">${B(`${ki('globe', false)} Community sims`, 'data-tab="community"', 'small primary fc-cm-entry')}${B('Surprise me', 'data-surprise', 'ghost small')}</div>
         <p class="fc-sync-note">Your sims save on this device${max === Infinity ? '' : ` · ${saved.length} of ${max} saved`}.</p>
         <div style="height:22px"></div>
         ${saved.length ? `<div class="fc-grid">${saved.map((x, i) => `<article class="fc-deck" data-flavor="${flavorOf(x.type)}">
@@ -825,16 +827,20 @@
     if (prompt.length < 3) { buildMsg = 'Tell Knox what you want to see first.'; renderHome(); return; }
     const user = window.currentUser;
     if (!user?.getIdToken) { window.openAuthModal?.('signup'); buildMsg = 'Sign in so Knox can build it for you.'; renderHome(); return; }
+    // The Flashcards loading screen while Knox builds it (Cancel stops waiting).
+    const ctl = new AbortController(); buildCtl = ctl;
     buildBusy = true; buildMsg = ''; renderHome();
     try {
-      const r = await fetch('/api/me?route=sim-build', { method: 'POST', headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+      const r = await fetch('/api/me?route=sim-build', { method: 'POST', signal: ctl.signal, headers: { Authorization: 'Bearer ' + await user.getIdToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
       const j = await r.json().catch(() => ({}));
+      if (buildCtl !== ctl || tab !== 'build') return; // cancelled, or you went somewhere else
       if (r.ok && j.sim?.type === 'custom' && j.sim.scene) { buildBusy = false; if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.(); openBuilder(j.sim.scene, { explain: j.sim.explain }); return; }
       if (!r.ok || !j.sim || !T[j.sim.type]) throw Object.assign(new Error(j.error || 'Knox couldn’t build that one. Try saying it another way.'), { upgrade: j.upgrade });
       buildBusy = false;
       if (typeof j.creditsLeft === 'number') window.knoxRefreshPlan?.();
       open(j.sim.type, j.sim.values, { title: j.sim.title, explain: j.sim.explain, prompt });
     } catch (e) {
+      if (buildCtl !== ctl || e.name === 'AbortError') return;
       buildBusy = false; buildMsg = esc(e.message) + (e.upgrade && !window.knoxNativeApp ? ' <button type="button" class="sl-link" data-upgrade>See plans</button>' : ''); renderHome();
     }
   }
@@ -1148,7 +1154,7 @@
     if (b.matches('[data-upgrade]')) { window.goToPricing?.(); return; }
     if (b.dataset.clike || b.dataset.creport || b.dataset.cdown) { communityAction(b); return; }
     if (editor) { editor.click(b); return; }
-    if (b.dataset.tab) { tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
+    if (b.dataset.tab) { if (buildBusy) { buildCtl?.abort(); buildCtl = null; buildBusy = false; } tab = b.dataset.tab; buildMsg = ''; community.note = ''; renderHome(); return; }
     if (b.dataset.filter) { filter = b.dataset.filter; renderHome(true); return; }
     if (b.dataset.csort) { community.sort = b.dataset.csort; community.loaded = false; community.error = ''; loadCommunity(); return; }
     if (b.dataset.cgroup) { community.group = b.dataset.cgroup; renderHome(true); return; }
@@ -1156,6 +1162,7 @@
     if (b.dataset.csim) { openCommunity(b.dataset.csim); return; }
     if (b.dataset.example) { const box = $('#slPrompt', host); if (box) { box.value = b.dataset.example; lastPrompt = box.value; box.focus(); } return; }
     if (b.matches('[data-build]')) { build(); return; }
+    if (b.matches('[data-build-cancel]')) { buildCtl?.abort(); buildCtl = null; buildBusy = false; renderHome(); $('#slPrompt', host)?.focus(); return; }
     if (b.dataset.open) { open(b.dataset.open); return; }
     if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values) : open(x.type, x.values, { title: x.title }); return; }
     if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.()); return; }

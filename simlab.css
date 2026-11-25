@@ -72,11 +72,11 @@ html[data-theme="dark"] .sl-tag.mega { color: #6FD0FF; }
 .sl-picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; max-width: 960px; width: 100%; margin: 0 auto; }
 .sl-picks.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 640px; }
 .sl-pick { --chip: var(--orange); --chip-ledge: var(--orange-dark); --chip-tint: var(--orange-light); --chip-ink: var(--orange);
-  position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 16px; border-radius: 20px; border: 2px solid var(--chip); background: var(--surface); color: var(--text); text-align: left; box-shadow: 0 4px 0 var(--chip-ledge); transition: transform .15s, box-shadow .15s; }
+  position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 16px; border-radius: 20px; border: 2px solid var(--chip); background: var(--surface); color: var(--text); text-align: left; box-shadow: 0 4px 0 var(--chip-ledge); transition: background .15s, transform .1s, box-shadow .1s; }
 .sl-pick[data-flavor="blue"]   { --chip: var(--blue);   --chip-ledge: var(--blue-dark);   --chip-tint: var(--blue-light);   --chip-ink: var(--blue); }
 .sl-pick[data-flavor="green"]  { --chip: var(--green);  --chip-ledge: var(--green-dark);  --chip-tint: var(--green-light);  --chip-ink: var(--green-dark); }
 .sl-pick[data-flavor="purple"] { --chip: var(--purple); --chip-ledge: var(--purple-dark); --chip-tint: var(--purple-light); --chip-ink: var(--purple-dark); }
-.sl-pick:hover { transform: translateY(-3px); box-shadow: 0 7px 0 var(--chip-ledge); }
+.sl-pick:hover { transform: none; background: color-mix(in srgb, var(--chip) 7%, var(--surface)); }
 .sl-pick:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--chip-ledge); }
 .sl-pick-circle { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--chip-tint); border: 3px solid var(--chip); box-shadow: 0 3px 0 var(--chip); color: var(--chip-ink); box-sizing: border-box; }
 .sl-pick-circle .kk-ic { width: 24px; height: 24px; color: inherit !important; }

@@ -459,11 +459,11 @@ html[data-theme="dark"] .fc-match.ans.sel { color:var(--green); }
 .fc-cm-fix .fc-cm-cards li { background: var(--surface); }
 .fc-btn.on { border-color: #E5383B; color: #E5383B; }
 /* Community decks entry (in the small row under the ways) and the Share menu on a deck */
-/* A real Knox sticker button: solid purple, white capitals, darker edge (like Learn's buttons). */
-.fc-btn.fc-cm-entry { background: var(--purple, #A560F2); border-color: var(--purple-dark, #7C3AED); color: #fff; box-shadow: 0 4px 0 var(--purple-dark, #7C3AED); text-transform: uppercase; letter-spacing: .03em; }
-.fc-btn.fc-cm-entry:hover { box-shadow: 0 6px 0 var(--purple-dark, #7C3AED); }
-.fc-btn.fc-cm-entry:active { box-shadow: 0 1px 0 var(--purple-dark, #7C3AED); }
-.fc-btn.fc-cm-entry .kk-ic { color: #fff !important; }
+/* Community decks: the page's own main button (Flashcards green; the Lab's is yellow). */
+#flashcardsPanel .fc-btn.fc-cm-entry { background: var(--green); border-color: var(--green-dark); box-shadow: 0 4px 0 var(--green-dark); }
+#flashcardsPanel .fc-btn.fc-cm-entry:hover { box-shadow: 0 6px 0 var(--green-dark); }
+#flashcardsPanel .fc-btn.fc-cm-entry:active { box-shadow: 0 1px 0 var(--green-dark); }
+.fc-btn.fc-cm-entry .kk-ic { color: inherit !important; }
 .fc-toolbar-quiet .fc-cm-entry { margin-right: 6px; }
 .fc-deck { position: relative; }
 .fc-share-menu { position: absolute; right: 14px; bottom: 48px; z-index: 5; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; border-radius: 14px; border: 2px solid var(--chip); background: var(--surface); box-shadow: 0 4px 0 var(--chip-ledge), 0 12px 28px rgba(0, 0, 0, .14); }
