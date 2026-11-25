@@ -412,7 +412,7 @@
         lane(c.h * .35, pa, c.orange, 'A'); lane(c.h * .68, pb, c.blue, 'B');
         if (Number.isFinite(catchT) && now >= catchT && !c.ghost) { const x = L + W * (s.head + s.a * catchT) / far; g.save(); g.setLineDash([5, 5]); g.strokeStyle = c.green; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x, 12); g.lineTo(x, c.h - 12); g.stroke(); g.restore(); label(g, c, 'caught up!', x, c.h - 10, c.green); }
         const who = s.who ? s.who[0].toUpperCase() + s.who.slice(1) : '';
-        return `${who} A starts ${fmt(s.head)} ${s.unit} ahead going ${fmt(s.a)} ${s.unit}/${s.time}; ${who} B chases at ${fmt(s.b)} · ${Number.isFinite(catchT) ? `B catches up after ${fmt(catchT, 2)} ${s.time}, ${fmt(s.b * catchT, 1)} ${s.unit} from the start (gap ÷ speed difference = ${fmt(s.head)} ÷ ${fmt(s.b - s.a)})` : 'B is not faster, so B never catches up'}`;
+        return `${who} A starts ${fmt(s.head)} ${s.unit} ahead going ${fmt(s.a)} ${s.unit}/${s.time}; ${who} B chases at ${fmt(s.b)} · ${Number.isFinite(catchT) ? `B catches up after ${fmt(catchT, 2)} ${s.time}${s.time === 'h' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} min)` : s.time === 'min' && catchT < 1 ? ` (${fmt(catchT * 60, 0)} s)` : ''}, ${fmt(s.b * catchT, 1)} ${s.unit} from the start (gap ÷ speed difference = ${fmt(s.head)} ÷ ${fmt(s.b - s.a)})` : 'B is not faster, so B never catches up'}`;
       },
     },
     ohm: {
