@@ -2156,6 +2156,13 @@ test('Smart search: a "Sources:" line Knox writes folds into the sources card (e
   assert.match(cards, /\[Social Media and Youth Mental Health\]\(https:\/\/www\.hhs\.gov\/surgeongeneral\/social-media\/index\.html\)/, 'a page named only in a citation joins the card');
   assert.match(cards, /\[Health Advisory on Social Media Use in Adolescence\]\(https:\/\/www\.apa\.org\/topics\/social-media\/health-advisory\)/, 'even without https://');
   assert.equal(cards.match(/founding-docs\/declaration\)/g).length, 1, 'no page twice');
+
+  // A citation for a page the card already has (its PDF on the same site, or the same report via doi.org) adds nothing.
+  text = 'Two sources ([archives.gov](https://www.archives.gov/founding-docs/declaration)).\n\nCitation (MLA): *Declaration of Independence: A Transcription.* National Archives, https://www.archives.gov/files/declaration.pdf.\n\nCitation (MLA): *Declaration of Independence National Archives.* 2024, https://doi.org/10.17226/27396.';
+  res = response();
+  await handler(askRequest({ question: 'Give me 2 MLA sources about the Declaration', webSearch: true }), res);
+  const two = res.body.answer.split('🌐 Searched the web\n')[1];
+  assert.equal((two.match(/^- /gm) || []).length, 1, 'same site or same title → not listed again: ' + two);
 });
 
 test('Smart search: fact questions must search (not math), the card shows pages Knox looked at, and refused options retry plainly', async () => {
