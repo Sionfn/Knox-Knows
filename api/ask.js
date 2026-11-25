@@ -1503,6 +1503,8 @@ export default async function handler(req, res) {
     answer = cleanLatexAnswer(learnMode && !casual ? decodeLearnOutput(answer, lessonState) : answer);
     // Sources go after the LaTeX cleanup so nothing in a link gets rewritten.
     // A citation line is pasted into a Works Cited page as is: no chips or link markup in it.
+    // A Sim line Knox ran onto the end of another line (e.g. the Answer line) goes on its own line.
+    answer = answer.replace(/([^\n])[ \t]+(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*\|[^\n]{0,180}?)[ \t]*$/gim, '$1\n\nSim: $2');
     answer = answer.replace(/^([ \t]*(?:[-*•][ \t]+)?Citation(?:[ \t]*\([^)\n]{2,24}\))?:[ \t]*)(.+)$/gim, (m, head, body) =>
       head + body.replace(/[ \t]*\(\[[^\]\n]+\]\(https?:\/\/[^\s()]+\)\)/g, '').replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)/g, '$1').trimEnd());
     // Pages named in citations are sources too: they join the card ("3 MLA sources" → 3 pages).

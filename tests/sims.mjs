@@ -174,3 +174,14 @@ test('the Knox prompt asks for a Check line, shortcut tips, both standard deviat
   assert.match(ask, /list each squared difference's value/);
   assert.match(ask, /end with the line "All answers:" followed by one bullet per problem/);
 });
+
+test('a Sim line Knox runs onto the end of the Answer line still becomes the card (and leaves the answer clean)', () => {
+  const html = context.renderAnswerHtml('Use h = ½gt².\n\nAnswer: **About 3.50 seconds** Sim: freefall | height=60, planet=earth, drag=0, item=ball', 'answer');
+  assert.match(html, /<div class="knox-sim" data-sim="freefall \| height=60, planet=earth, drag=0, item=ball"><\/div>/);
+  assert.match(html, /<div class="knox-final-answer"><span class="knox-final-answer-label">Answer<\/span><span><strong>About 3\.50 seconds<\/strong><\/span><\/div>/);
+  assert.doesNotMatch(html, /Sim:/);
+  // Prose that merely mentions "Sim:" without a spec is left alone.
+  assert.doesNotMatch(context.renderAnswerHtml('The game is called Sim: City.', 'answer'), /knox-sim/);
+  const ask = readFileSync(new URL('../api/ask.js', import.meta.url), 'utf8');
+  assert.match(ask, /A Sim line Knox ran onto the end of another line/);
+});

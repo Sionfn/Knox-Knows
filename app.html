@@ -7501,7 +7501,9 @@ function renderAnswerHtml(text, kind = 'answer') {
   // Mega "Simulations": one "Sim: type | key=value, …" line becomes a hands-on card (sims.js),
   // in Ask Knox answers and (Dec 1) Learn replies.
   {
-    const sim = /^[ \t]*(?:[-*•][ \t]+)?(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*(?:\|[^\n]{0,180})?)[ \t]*$/im.exec(text);
+    // Its own line, or (when Knox runs it onto the end of the Answer line) the end of a line — then it needs the "|".
+    const sim = /^[ \t]*(?:[-*•][ \t]+)?(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*(?:\|[^\n]{0,180})?)[ \t]*$/im.exec(text)
+      || /[ \t]+(?:\*\*)?Sim:(?:\*\*)?[ \t]*([a-z]+[ \t]*\|[^\n]{0,180}?)[ \t]*$/im.exec(text);
     if (sim) { text = (text.slice(0, sim.index) + text.slice(sim.index + sim[0].length)).replace(/\n{3,}/g, '\n\n').trim(); simCard = '<div class="knox-sim" data-sim="' + escHtml(sim[1].trim()) + '"></div>'; }
   }
   // Sources (Ask Knox and, from Dec 1, Learn) come last in the reply text.
