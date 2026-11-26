@@ -4144,9 +4144,24 @@ html.knox-fit-short #home h1 + p + div { margin-top: 18px !important; }
     if (e.key === 'Escape') { closeLoginModal(); return; }
     if (e.key !== 'Enter' || e.shiftKey) return;
     if (e.target.tagName === 'TEXTAREA') return;
+    if (e.target.closest?.('button, a')) return; // Enter on a button (Continue with Google…) presses that button
     if (document.getElementById('forgotForm')?.style.display !== 'none') { e.preventDefault(); window.handleForgotPassword?.(); }
     else if (document.getElementById('signupForm')?.style.display !== 'none') { e.preventDefault(); window.handleEmailSignUp?.(); }
     else if (document.getElementById('signinForm')?.style.display !== 'none') { e.preventDefault(); window.handleEmailSignIn?.(); }
+  });
+
+
+  // Keep Tab / Shift+Tab inside the open sign-in dialog (never behind it).
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const box = document.getElementById('loginModal')?.classList.contains('open') ? document.querySelector('#loginModal .login-panel') : null;
+    if (!box) return;
+    const items = [...box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(el => !el.disabled && el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1], at = document.activeElement;
+    if (!box.contains(at)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (e.shiftKey && at === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
   });
 
   // Fill the phone menu's profile row (or Log in / Sign up) from the header account.

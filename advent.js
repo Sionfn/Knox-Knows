@@ -119,7 +119,7 @@
       bagsPanel() +
       `<div class="adv-grid">${doors.map(door).join('')}</div>` +
       (state.giftCode ? `<p class="adv-gift">🎁 Your Mega Knox week for a friend: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a></p>` : '') +
-      `<p class="adv-note">Ask Knox a question or do a Learn step from December 1–25 to open that day’s door. Claim by December 31, Anywhere on Earth (UTC−12). Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
+      `<p class="adv-note">Ask Knox a question or do a Learn step from December 1–25 to open that day’s door. Open your doors by December 31. Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
     card.innerHTML = ki(card.innerHTML);
   }
   // Your blind bags live here: every door has one, and you tear them open

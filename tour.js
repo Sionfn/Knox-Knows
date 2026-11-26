@@ -181,7 +181,8 @@
 
   // New accounts: wait until the app is on screen with nothing else open.
   // Includes the account loading screen: starting under it showed the tour on a blank page.
-  function busy() { return document.body.classList.contains('app-auth-pending') || [...document.querySelectorAll('.modal-backdrop, .ff-modal')].some(el => getComputedStyle(el).display !== 'none') || document.body.classList.contains('knox-flashcards'); }
+  // Also waits while the Advent Calendar, blind bags, the bag opening or a Knox pop-up is open.
+  function busy() { return document.body.classList.contains('app-auth-pending') || [...document.querySelectorAll('.modal-backdrop, .ff-modal, .adv-wrap, .kb-wrap, .kb3-stage, .fc-modal, .sl-modal')].some(el => getComputedStyle(el).display !== 'none') || document.body.classList.contains('knox-flashcards'); }
   function maybeStart() {
     const u = window.currentUser;
     const forced = /[?&]tour=1\b/.test(location.search);
@@ -204,7 +205,7 @@
     (function check() {
       if (!waiting || gen !== readyGen) return;
       if (!busy()) return start(opts);
-      if (++tries < 40) setTimeout(check, 500); else { waiting = false; dispatchEvent(new Event('knox-tour-done')); }
+      if (++tries < 600) setTimeout(check, 500); else { waiting = false; dispatchEvent(new Event('knox-tour-done')); } // waits up to 5 minutes for the calendar etc. to close
     })();
   }
   addEventListener('knox-auth-changed', () => setTimeout(() => {
