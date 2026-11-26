@@ -55,5 +55,9 @@ test('the Calculator has a Graph mode, wired to Ask Knox, Learn and Learn graphs
   assert.match(app, /window\.KnoxCalc\.graph\(list\)/);
   assert.match(lab, /window\.knoxSimLab = \{[^}]*parseMath/);
   assert.match(css, /\.kc-wrap \.kc-screen\[hidden\]/);
+  // The whole Graph card fits the window (no page wiggle), and the equation boxes have room between them.
+  assert.match(css, /--kg-h: clamp\(260px, calc\(100vh \/ var\(--kz, 1\) - 322px\), 640px\)/);
+  assert.match(css, /\.kg-stage \{ position: relative; min-width: 0; height: var\(--kg-h\);/);
+  assert.match(css, /\.kg-rows \{ display: flex; flex-direction: column; gap: 10px; \}/);
   assert.match(css, /@media \(max-width: 820px\) \{\n  \.kg \{ grid-template-columns: minmax\(0, 1fr\); \}/);
 });

@@ -201,8 +201,11 @@
     // The background is the app's own: in Christmas mode the same scene as the
     // home screen (lights, wreath, baubles, stocking, snowy hills, tree,
     // snowman, presents, snow; the moon and stars at night), on the app's colors.
-    const root = document.documentElement, xmas = root.classList.contains('knox-christmas');
-    stage.classList.toggle('is-light', root.getAttribute('data-theme') !== 'dark');
+    // The bags are the Christmas series, so the stage always shows it — in any
+    // look (Light or Dark too), the night version (moon, stars) in Dark.
+    const root = document.documentElement, xmas = true, night = root.getAttribute('data-theme') === 'dark';
+    stage.classList.toggle('is-light', !night);
+    stage.classList.toggle('is-night', night);
     if (xmas && window.knoxXmasScene) { stage.classList.add('is-xmas'); const sc = document.createElement('div'); sc.className = 'kb3-scene'; sc.setAttribute('aria-hidden', 'true'); stage.prepend(sc); }
     document.body.append(stage);
     if (stage.classList.contains('is-xmas')) window.knoxXmasScene(stage.querySelector('.kb3-scene'));
@@ -342,7 +345,7 @@
     // Pointer: the bag tilts toward it. Hold (click, press the trackpad or touch)
     // on the dotted line and drag across: the tear starts on the side you start
     // from and follows you. Let go early and it settles back.
-    let px = .5, py = .5, tear = 0, tearing = false, pressed = false, dir = 0, startX = 0, minX = 0, maxX = 0, lastCrinkle = 0;
+    let px = .5, py = .5, tear = 0, tearing = false, pressed = false, dir = 0, side = 1, startX = 0, minX = 0, maxX = 0, lastCrinkle = 0;
     let torn = false, autoTear = 0, dropT = 0, t0 = performance.now();
     const band = line => Math.max(70, (line.x2 - line.x1) * .45);
     const setTear = v => { tear = v; stage.style.setProperty('--tear', v.toFixed(3)); if (v - lastCrinkle >= .09) { lastCrinkle = v; SFX.crinkle(); buzz(4); } };
@@ -352,7 +355,9 @@
       if (Math.abs(y - line.y) > band(line) || x < line.x1 - 60 || x > line.x2 + 60) return;
       window.knoxSound?.unlock?.();
       pressed = tearing = true; dir = 0; startX = minX = maxX = x; lastCrinkle = 0; setTear(0);
-      stage.classList.add('is-tearing'); stage.classList.remove('dir-left');
+      // Start on the side you pressed (pressing the right half starts the tear from the right).
+      side = x > (line.x1 + line.x2) / 2 ? -1 : 1;
+      stage.classList.add('is-tearing'); stage.classList.toggle('dir-left', side < 0);
       try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
     };
     const onMove = e => {
@@ -373,12 +378,15 @@
     };
     canvas.addEventListener('pointerdown', onDown); stage.addEventListener('pointermove', onMove); addEventListener('pointerup', onUp); addEventListener('pointercancel', onUp);
     const tearBtn = stage.querySelector('.kb3-tear-btn');
-    const startAutoTear = () => { if (torn || dropT < 1 || autoTear) return; window.knoxSound?.unlock?.(); autoTear = performance.now(); dir = 1; lastCrinkle = 0; tearing = true; stage.classList.add('is-tearing'); stage.classList.remove('dir-left'); };
+    const startAutoTear = () => { if (torn || dropT < 1 || autoTear) return; window.knoxSound?.unlock?.(); autoTear = performance.now(); dir = side = 1; lastCrinkle = 0; tearing = true; stage.classList.add('is-tearing'); stage.classList.remove('dir-left'); };
     tearBtn.addEventListener('click', startAutoTear);
     // How many bags are left (when you have more than one).
     const leftEl = document.createElement('span'); leftEl.className = 'kb3-left'; leftEl.setAttribute('aria-live', 'polite'); stage.append(leftEl);
-    const updateLeft = () => { const n = typeof bagsLeft === 'function' ? bagsLeft() : null; leftEl.hidden = !n || n === 1; leftEl.innerHTML = n ? `${window.KI ? window.KI('bag', { tint: false }) : ''}<b>${n === Infinity ? '∞' : n}</b> bag${n === 1 ? '' : 's'} to open` : ''; };
+    let packPic = window.knoxBags?.bagPicture?.() || '';
+    const packHtml = () => packPic ? `<img class="kb3-left-pack" src="${packPic}" alt="">` : '';
+    const updateLeft = () => { const n = typeof bagsLeft === 'function' ? bagsLeft() : null; leftEl.hidden = !n || n === 1; leftEl.innerHTML = n ? `${packHtml()}<b>${n === Infinity ? '∞' : n}</b> bag${n === 1 ? '' : 's'} to open` : ''; };
     updateLeft();
+    if (!packPic) bagImage().then(u => { if (u) { packPic = u; updateLeft(); } }).catch(() => {});
     stage.querySelector('.kb3-close').addEventListener('click', () => end('close'));
     const onKey = e => { if (e.key === 'Escape') end('close'); };
     addEventListener('keydown', onKey);
@@ -448,7 +456,7 @@
       // "Tear it open": the same tear, from the left, on its own.
       if (autoTear && !torn) { setTear(Math.min(1, (now - autoTear) / 560)); if (tear >= 1) rip(); }
       vf += ((torn ? 1 : tear) - vf) * (torn ? .5 : .3);
-      if (!rippedAt) peelStrip(vf, dir || 1);
+      if (!rippedAt) peelStrip(vf, dir || side);
       const lw = Math.max(.001, vf) * BW;
       leak.scale.x = lw; leak.position.x = (dir < 0 ? 1 : -1) * (BW / 2 - lw / 2);
       leakMat.opacity = Math.min(1, vf * 2.4) * (burstAt ? Math.max(0, 1 - (now - burstAt) / 250) : 1);

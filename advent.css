@@ -37,7 +37,7 @@
 .adv-prize { font-size: 26px; line-height: 1; }
 .adv-prize .kk-ic { width: 28px; height: 28px; }
 /* Missed: frosty */
-.adv-door.is-missed { background: #EEF4F9; border-color: #D3E2EE; color: #8FA7BB; cursor: help; }
+.adv-door.is-missed { background: #EEF4F9; border-color: #D3E2EE; color: #8FA7BB; cursor: default; }
 /* Door 25: the big gold present */
 .adv-door.is-big.is-later, .adv-door.is-big.is-today { border: 2px solid #F2B705; background: #FFF8DC; color: #B98500; box-shadow: 0 3px 0 #D9A300; border-style: solid; }
 .adv-door.is-big.is-ready { background: #FFC800; border-color: #D9A300; box-shadow: 0 4px 0 #B98500; color: #7A5400; }

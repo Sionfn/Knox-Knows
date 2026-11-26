@@ -364,8 +364,9 @@
     if (fin && !fin.querySelector(':scope > .xmas-deco')) {
       fin.insertAdjacentHTML('afterbegin', `<div class="xmas-deco" aria-hidden="true"><div class="xmas-snow-local">${snow(FEW_LEAVES ? 12 : 24)}</div><div class="xmas-ground">${XMAS_HILLS}${XMAS_PINES}${XMAS_TREE}${XMAS_CANES}${XMAS_SNOWMAN}${XMAS_GIFTS}</div></div>`);
     }
-    // Landing sections: snow falls in every one, so there's snow wherever you scroll.
-    document.querySelectorAll('section.kl-section:not(#home):not(.kl-final)').forEach(sec => {
+    // Landing sections: snow falls in nearly every one, so there's snow wherever you scroll.
+    // Not in Pricing or the FAQ: their small print stays easy to read.
+    document.querySelectorAll('section.kl-section:not(#home):not(.kl-final):not(#pricing):not(#faq)').forEach(sec => {
       if (sec.querySelector(':scope > .xmas-snow-sec')) return;
       sec.insertAdjacentHTML('afterbegin', `<div class="xmas-snow-sec" aria-hidden="true">${snow(FEW_LEAVES ? 12 : 26)}</div>`);
       const layer = sec.firstElementChild;
