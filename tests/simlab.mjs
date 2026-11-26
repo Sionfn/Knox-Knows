@@ -27,12 +27,12 @@ test('Simulation Lab: plans like Flashcards, and Knox builds through /api/me', (
   assert.match(src('app.html'), /<script src="\/simlab\.js" defer><\/script>/);
 });
 
-test('Wallpaper stickers: extra background layers behind the content, per background, with plan limits', () => {
+test('Wallpaper stickers are gone (Dec 2026): no sticker menu or layer, and old saved ones are cleared', () => {
   const bg = src('mode-bg.js'), css = src('mode-bg.css');
-  assert.match(bg, /const STICKER_MAX = \{ free: 3, plus: 6, mega: 12 \};/);
-  assert.match(css, /background:var\(--mb-stk, none\), var\(--mb-paint\), var\(--mb-bg\) !important;/);
-  assert.match(bg, /window\.knoxFlameFest\?\.styles\?\.\(\)/);
-  assert.match(src('flamefest.js'), /styles: \(\) => \(state && state\.flameStyles\) \|\| \['classic'\]/);
+  assert.doesNotMatch(bg, /STICKER_MAX|stickersRow|paintStickers|ktm-stk/);
+  assert.doesNotMatch(css, /--mb-stk|ktm-stk/);
+  assert.match(bg, /if \(v && v\.stickers\) \{ delete v\.stickers;/);
+  assert.match(css, /background:var\(--mb-paint\), var\(--mb-bg\) !important;/);
 });
 
 test('Graph your own: the math reader reads what students type and never runs code', async () => {

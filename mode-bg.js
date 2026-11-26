@@ -7,9 +7,7 @@
 //   plus { custom: { 'light|ask|home': { color } } } for Mega Knox's own color;
 //   Mega's own photos live in IndexedDB ('knoxModeBg' › 'photos', same key).
 // mode-bg.css paints body[data-mb] behind whatever is showing.
-// Stickers: Knox stickers and your flames placed on a background (any plan:
-// Free 3, Knox Plus 6, Mega Knox 12 per background), saved per background in
-// { stickers: { 'light|ask|home': [{ id, x, y, s }] } } (x, y in %, s in px).
+// (Wallpaper stickers were removed for Dec 2026; old saved ones are cleared below.)
 (function () {
   const KEY = 'knoxModeBg.v1';
   const PARTS = [['ask', 'Ask Knox'], ['learn', 'Learn'], ['cards', 'Flashcards'], ['calc', 'Calculator'], ['sims', 'Simulations']];
@@ -19,6 +17,7 @@
     dark:  [['classic', 'Classic'], ['dark', 'Dark'], ['orange', 'Ember'], ['purple', 'Galaxy'], ['green', 'Forest'], ['blue', 'Ocean'], ['yellow', 'Gold'], ['red', 'Berry']],
   };
   const $ = id => document.getElementById(id);
+  try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); if (v && v.stickers) { delete v.stickers; localStorage.setItem(KEY, JSON.stringify(v)); } } catch (_) {}
   const read = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
   const theme = () => document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   // What is on screen now.
@@ -103,7 +102,6 @@
         if (b.dataset.mb !== 'photo') b.dataset.mb = 'custom';
       } else b.dataset.mb = 'custom';
     } else if (b.dataset.mb !== k) b.dataset.mb = k;
-    paintStickers();
     render();
   }
 
@@ -121,7 +119,7 @@
         '<button type="button" data-screen="chat" aria-pressed="' + (s === 'chat') + '">Knox chat</button></div>' : '') +
       '<div class="ktm-swatches" role="group" aria-label="Background for ' + name + (TWO_SCREENS[p] ? (s === 'chat' ? ' chat' : ' home screen') : '') + '">' +
       LOOKS[t].map(([k, n]) => '<button type="button" class="ktm-sw" data-mb="' + k + '" aria-pressed="' + (k === cur) + '" title="' + n + '"><span class="ktm-sw-art" aria-hidden="true"></span>' + n + '</button>').join('') +
-      '</div>' + customRow(t, p, s, cur === 'custom') + stickersRow(t, p, s, cur) +
+      '</div>' + customRow(t, p, s, cur === 'custom') +
       '<p class="ktm-note">Saved for ' + (t === 'dark' ? 'Dark' : 'Light') + ' mode. Each part keeps its own.</p>';
     window.knoxPlaceThemeMenu?.();
   }
@@ -187,61 +185,12 @@
     }
     apply();
   }
-  // ── Stickers ──
-  const FLAME_PATH = (o, i, e) => '<path d="M12 2c1 3.2 5.5 5.6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.6 1.3-4.4 2.6-5.6.2 1.7 1 2.8 2.1 3.2C10.6 7.8 11 4.6 12 2Z" fill="' + o + '" stroke="' + e + '" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 12.5c1.2 1.3 2.6 2.4 2.6 4.3a2.6 2.6 0 0 1-5.2 0c0-1.4.8-2.4 1.6-3 .1.6.4 1 .9 1.2.1-1 .1-1.7.1-2.5Z" fill="' + i + '"/>';
-  const FLAME_COLORS = { classic: ['#FF7A1A', '#FFD23F', '#D9530B'], purple: ['#A855F7', '#E9C3FF', '#7C3AED'], blue: ['#2BA8F2', '#BDE8FF', '#0A78C2'], gold: ['#F2B705', '#FFF1A8', '#B98500'], slime: ['#58CC02', '#D7FFB0', '#3E8F00'], diamond: ['#7FE3FF', '#FFFFFF', '#1CB0F6'], galaxy: ['#8B4FFF', '#FF7AD9', '#3A1C8F'], frost: ['#BDE8FF', '#FFFFFF', '#5BA8D6'], ruby: ['#E5383B', '#FFB3B5', '#8A1F22'] };
-  const ICON_STICKERS = ['star', 'heartRed', 'snowflake', 'tree', 'gift', 'crown', 'trophy', 'gem', 'coin', 'bolt', 'party', 'bag'];
-  const STICKER_MAX = { free: 3, plus: 6, mega: 12 };
-  const stkTier = () => mega() ? 'mega' : window.userTier === 'plus' ? 'plus' : 'free';
-  const svgOf = id => {
-    let svg = id.startsWith('flame:') ? (FLAME_COLORS[id.slice(6)] ? '<svg viewBox="0 0 24 24">' + FLAME_PATH(...FLAME_COLORS[id.slice(6)]) + '</svg>' : '') : (window.KI ? window.KI(id, { tint: false }) : '');
-    return svg.replace(/<svg\b[^>]*viewBox="([^"]+)"[^>]*>/, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="$1" width="96" height="96">');
-  };
-  const uriCache = {};
-  const uriOf = id => uriCache[id] || (uriCache[id] = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgOf(id)));
-  const stickersOf = key => { const v = (read().stickers || {})[key]; return Array.isArray(v) ? v.filter(x => x && typeof x.id === 'string').slice(0, 12) : []; };
-  function saveStickers(key, list) { const all = read(); all.stickers = Object.assign({}, all.stickers, { [key]: list }); try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (_) {} }
-  const ownedFlames = () => { const own = window.knoxFlameFest?.styles?.() || ['classic']; return Object.keys(FLAME_COLORS).filter(f => own.includes(f)); };
-  // Paint the stickers for what's on screen (extra background layers; mode-bg.css).
-  function paintStickers() {
-    const list = stickersOf(slot(theme(), part(), screen())), b = document.body;
-    if (!list.length) { b.style.removeProperty('--mb-stk'); return; }
-    b.style.setProperty('--mb-stk', list.map(st => 'url("' + uriOf(st.id) + '") ' + st.x + '% ' + st.y + '% / ' + st.s + 'px ' + st.s + 'px no-repeat').join(', '));
-  }
-  function stickersRow(t, p, s, look) {
-    const key = slot(t, p, s), list = stickersOf(key), max = STICKER_MAX[stkTier()], open = !!pick.stkOpen;
-    let html = '<div class="ktm-stk"><button type="button" class="ktm-stk-toggle" aria-expanded="' + open + '">Stickers <small>' + list.length + ' of ' + max + '</small><span class="ktm-stk-arrow" aria-hidden="true">▾</span></button>';
-    if (!open) return html + '</div>';
-    const sel = pick.stkSel != null && list[pick.stkSel] ? pick.stkSel : null;
-    html += '<div class="ktm-stk-prev" data-mb="' + (look === 'custom' || look === 'photo' ? 'classic' : look) + '" aria-label="Sticker preview: drag to move">' +
-      list.map((st, i) => '<img src="' + uriOf(st.id) + '" alt="" data-i="' + i + '" class="' + (i === sel ? 'sel' : '') + '" style="left:' + st.x + '%;top:' + st.y + '%;width:' + Math.round(st.s / 3.2) + 'px">').join('') + '</div>' +
-      '<div class="ktm-stk-tools"' + (sel == null ? ' hidden' : '') + '><button type="button" data-stk-tool="smaller">Smaller</button><button type="button" data-stk-tool="bigger">Bigger</button><button type="button" data-stk-tool="front">To front</button><button type="button" class="danger" data-stk-tool="remove">Remove</button></div>' +
-      '<div class="ktm-stk-pick" role="group" aria-label="Add a sticker">' + [...ICON_STICKERS, ...ownedFlames().map(f => 'flame:' + f)].map(id => '<button type="button" data-stk-add="' + id + '" title="Add"' + (list.length >= max ? ' disabled' : '') + '><img src="' + uriOf(id) + '" alt=""></button>').join('') + '</div>' +
-      '<small class="ktm-stk-hint">Tap one to add it, then drag it in the box. ' + (list.length >= max ? (stkTier() === 'mega' ? 'That’s the most for one background.' : 'That’s the most on your plan — ' + (stkTier() === 'free' ? '⚡ Knox Plus gets 6, 💎 Mega 12.' : '💎 Mega Knox gets 12.')) : 'Free 3 · ⚡ Plus 6 · 💎 Mega 12 per background. Earn more flames to get them as stickers.') + '</small>';
-    return html + '</div>';
-  }
-  function addSticker(id) {
-    const key = slot(theme(), pick.part, pick.screen), list = stickersOf(key);
-    if (list.length >= STICKER_MAX[stkTier()]) return;
-    list.push({ id, x: 20 + Math.round(Math.random() * 60), y: 20 + Math.round(Math.random() * 60), s: 96 });
-    saveStickers(key, list); pick.stkSel = list.length - 1; paintStickers(); render();
-  }
-  function stickerTool(tool) {
-    const key = slot(theme(), pick.part, pick.screen), list = stickersOf(key), i = pick.stkSel; if (i == null || !list[i]) return;
-    if (tool === 'remove') { list.splice(i, 1); pick.stkSel = null; }
-    else if (tool === 'front') { list.unshift(list.splice(i, 1)[0]); pick.stkSel = 0; } // the first layer is drawn on top
-    else list[i].s = Math.min(220, Math.max(40, list[i].s + (tool === 'bigger' ? 24 : -24)));
-    saveStickers(key, list); paintStickers(); render();
-  }
   window.knoxModeBgMenu = function (menu) {
     if (!section) {
       section = document.createElement('div');
       section.className = 'ktm-bg';
       section.addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;
-        if (b.classList.contains('ktm-stk-toggle')) { pick.stkOpen = !pick.stkOpen; render(); return; }
-        if (b.dataset.stkAdd) { addSticker(b.dataset.stkAdd); return; }
-        if (b.dataset.stkTool) { stickerTool(b.dataset.stkTool); return; }
         if (b.dataset.part) { pick.part = b.dataset.part; pick.screen = b.dataset.part === part() ? screen() : 'home'; render(); return; }
         if (b.dataset.screen) { pick.screen = b.dataset.screen; render(); return; }
         if (b.classList.contains('ktm-sw')) { save(theme(), pick.part, pick.screen, b.dataset.mb); apply(); return; }
@@ -269,23 +218,6 @@
         const key = slot(theme(), pick.part, pick.screen);
         shrink(e.target.files[0]).then(blob => photos.put(key, blob)).then(() => { saveCustom(key, { photo: true }); apply(); })
           .catch(() => { const n = section.querySelector('.ktm-note'); if (n) n.textContent = 'That photo couldn’t be used. Try a JPG or PNG.'; });
-      });
-      // Drag a sticker around the little preview; the page follows live.
-      section.addEventListener('pointerdown', e => {
-        const img = e.target.closest('.ktm-stk-prev img'); if (!img) return;
-        e.preventDefault();
-        const box = img.parentElement, i = +img.dataset.i, key = slot(theme(), pick.part, pick.screen);
-        pick.stkSel = i; section.querySelectorAll('.ktm-stk-prev img').forEach(x => x.classList.toggle('sel', +x.dataset.i === i));
-        const tools = section.querySelector('.ktm-stk-tools'); if (tools) tools.hidden = false;
-        const move = ev => {
-          const r = box.getBoundingClientRect(), list = stickersOf(key), st = list[i]; if (!st) return;
-          st.x = Math.round(Math.min(100, Math.max(0, (ev.clientX - r.left) / r.width * 100)));
-          st.y = Math.round(Math.min(100, Math.max(0, (ev.clientY - r.top) / r.height * 100)));
-          img.style.left = st.x + '%'; img.style.top = st.y + '%';
-          saveStickers(key, list); paintStickers();
-        };
-        const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
-        addEventListener('pointermove', move); addEventListener('pointerup', up);
       });
       menu.append(section);
     }

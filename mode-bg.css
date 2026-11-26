@@ -42,9 +42,8 @@ body[data-mb] {
     radial-gradient(circle at calc(100% - var(--mb-x1)) var(--mb-x1), var(--mb-c1) 0 var(--mb-r1), var(--mb-g1) var(--mb-r1), transparent calc(var(--mb-r1) + var(--mb-glow))),
     radial-gradient(circle at var(--mb-x2) calc(100% - var(--mb-x2)), var(--mb-c2) 0 var(--mb-r2), var(--mb-g2) var(--mb-r2), transparent calc(var(--mb-r2) + var(--mb-glow)));
 }
-/* Stickers (mode-bg.js) are extra background layers on top: always behind the content. */
-body[data-mb] #chatColumn, body[data-mb] #flashcardsPanel, body[data-mb] #notesPanel, body[data-mb] #simsPanel { background:var(--mb-stk, none), var(--mb-paint), var(--mb-bg) !important; }
-body[data-mb="photo"] #chatColumn, body[data-mb="photo"] #flashcardsPanel, body[data-mb="photo"] #notesPanel, body[data-mb="photo"] #simsPanel { background:var(--mb-stk, none), linear-gradient(var(--mb-veil), var(--mb-veil)), var(--mb-photo) center / cover no-repeat, var(--mb-bg) !important; }
+body[data-mb] #chatColumn, body[data-mb] #flashcardsPanel, body[data-mb] #notesPanel, body[data-mb] #simsPanel { background:var(--mb-paint), var(--mb-bg) !important; }
+body[data-mb="photo"] #chatColumn, body[data-mb="photo"] #flashcardsPanel, body[data-mb="photo"] #notesPanel, body[data-mb="photo"] #simsPanel { background:linear-gradient(var(--mb-veil), var(--mb-veil)), var(--mb-photo) center / cover no-repeat, var(--mb-bg) !important; }
 body[data-mb] #appLayout, body[data-mb] #inputOuter, body[data-mb] #inputArea { background:var(--mb-bg) !important; }
 body[data-mb] #welcomeScreen, body[data-mb] #chatThread { background:transparent !important; }
 body[data-mb] #welcomeScreen::before, body[data-mb] #welcomeScreen::after, body[data-mb] .fc-decor { display:none !important; }
@@ -119,23 +118,4 @@ html[data-theme="dark"] .knox-theme-menu .ktm-lock { background:rgba(255,200,0,.
 .knox-theme-menu .ktm-lock .ktm-see-mega { width:auto; align-self:flex-start; padding:5px 10px; border-radius:9px; background:#FFC800; color:#3D2800; font-size:12px; font-weight:900; box-shadow:0 2px 0 #B98500; }
 .knox-theme-menu .ktm-bg { max-width:264px; }
 
-/* ── Stickers ── */
-.knox-theme-menu .ktm-stk { margin:6px 8px 2px; }
-.knox-theme-menu .ktm-stk-toggle { display:flex; align-items:center; gap:8px; width:100%; padding:8px 10px; border-radius:12px; border:2px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; font-weight:900; }
-.knox-theme-menu .ktm-stk-toggle small { font-weight:800; color:var(--text-light); }
-.knox-theme-menu .ktm-stk-toggle .ktm-stk-arrow { margin-left:auto; transition:transform .15s; }
-.knox-theme-menu .ktm-stk-toggle[aria-expanded="true"] .ktm-stk-arrow { transform:rotate(180deg); }
-.ktm-stk-prev { position:relative; height:132px; margin-top:8px; border-radius:12px; border:2px solid var(--border); overflow:hidden; touch-action:none;
   background: radial-gradient(circle at 88% 10%, var(--mb-c1) 0 34px, var(--mb-g1) 34px, transparent 35px), radial-gradient(circle at 8% 92%, var(--mb-c2) 0 26px, var(--mb-g2) 26px, transparent 27px), var(--mb-bg); }
-.ktm-stk-prev img { position:absolute; transform:translate(-50%, -50%); cursor:grab; user-select:none; -webkit-user-drag:none; filter:drop-shadow(0 2px 0 rgba(0,0,0,.18)); }
-.ktm-stk-prev img.sel { outline:2px dashed var(--orange); outline-offset:3px; border-radius:6px; }
-.ktm-stk-prev img:active { cursor:grabbing; }
-.ktm-stk-hint { display:block; margin:5px 2px 0; font-size:11px; font-weight:700; color:var(--text-light); line-height:1.35; }
-.knox-theme-menu .ktm-stk-tools { display:flex; gap:5px; margin-top:6px; }
-.knox-theme-menu .ktm-stk-tools button { flex:1; width:auto; padding:6px 4px; border-radius:10px; border:2px solid var(--border); background:var(--surface); color:var(--text); font-size:12px; font-weight:900; justify-content:center; }
-.knox-theme-menu .ktm-stk-tools button.danger { color:var(--red, #E5383B); }
-.knox-theme-menu .ktm-stk-pick { display:grid; grid-template-columns:repeat(6, 1fr); gap:5px; margin-top:8px; }
-.knox-theme-menu .ktm-stk-pick button { display:grid; place-items:center; width:auto; height:36px; padding:0; border-radius:10px; border:2px solid var(--border); background:var(--surface); }
-.knox-theme-menu .ktm-stk-pick button:hover { border-color:var(--orange); }
-.knox-theme-menu .ktm-stk-pick button[disabled] { opacity:.45; }
-.knox-theme-menu .ktm-stk-pick img { width:22px; height:22px; }
