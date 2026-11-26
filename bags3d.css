@@ -138,3 +138,22 @@
 @media (max-width: 760px) { .kb3-scene .xmas-wreath, .kb3-scene .xmas-stocking { display: none; } .kb3-scene .xmas-baubles { right: 116px; width: 120px; } }
 /* Every look uses the app's own background color: light, dark, Fall, Christmas or Christmas night. */
 .kb3-stage { background: var(--cream, #0D1626); }
+
+/* The bags are the Christmas series: the stage always shows the app's real
+   Christmas scene (theme.js knoxXmasScene, christmas.css), even when the app
+   is in Light or Dark — and its night version (moon, stars) in Dark. */
+.kb3-stage.is-xmas .xmas-deco { display: block; position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.kb3-stage.is-xmas .xmas-deco > .xmas-lights-host { display: block; position: absolute; top: 0; left: 0; right: 0; }
+.kb3-stage.is-night .xmas-night-sky { display: block; position: absolute; inset: 0; }
+.kb3-stage.is-night .xmas-hills .xh-back { fill: #5D7593; }
+.kb3-stage.is-night .xmas-hills .xh-mid { fill: #C9D7E6; stroke: #A9BDD3; }
+.kb3-stage.is-night .xmas-hills .xh-front { fill: #E8EFF7; stroke: #C2D2E3; }
+.kb3-stage.is-night .xmas-lights > path { stroke: #7FA08A; }
+.kb3-stage.is-night .xmas-lights .xb { filter: drop-shadow(0 0 5px rgba(255, 235, 180, .6)); }
+.kb3-stage.is-night .xmas-baubles path, .kb3-stage.is-night .xmas-wreath > path:first-child, .kb3-stage.is-night .xmas-stocking > path:first-child { stroke: #7C8DA3; }
+.kb3-stage.is-night .xmas-flake { border-color: #FFFFFF; }
+.kb3-stage.is-night .xmas-flake.is-flake svg g { stroke: #DCEBFA; }
+.kb3-stage.is-night.is-xmas { background: #0D1626; }
+/* "∞ bags to open": the real Knox pack, not an icon */
+.kb3-left-pack { width: 18px; height: 25px; object-fit: contain; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .25)); }
+.kb3-scene .xmas-moon { left: 6%; top: 104px; width: 52px; } /* under the bag counter, clear of the wreath */
