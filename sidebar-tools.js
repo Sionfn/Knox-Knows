@@ -26,7 +26,6 @@
   const btnFor = (nav, sel) => nav && nav.querySelector(':scope > ' + sel.split(', ').join(', :scope > '));
   const usable = b => !!b && !b.classList.contains('fc-locked');
   const iconOf = b => (b && b.querySelector('.sq-icon') ? b.querySelector('.sq-icon').outerHTML : '');
-  const mega = k => (k === 'sims' ? ' <small>💎 Mega</small>' : '');
   // The tools this nav is hiding that can actually be opened right now.
   const hiddenIn = nav => { const pick = chosen(); return TOOLS.filter(([k, , sel]) => !pick.includes(k) && usable(btnFor(nav, sel))); };
 
@@ -80,7 +79,7 @@
         hiddenIn(nav).map(([k, name, sel]) => {
           const b = btnFor(nav, sel), cur = b.classList.contains('sidebar-nav-active');
           return '<button type="button" class="st-row st-go" data-go="' + k + '"' + (cur ? ' aria-current="true"' : '') + '>' +
-            iconOf(b) + '<span class="st-name">' + name + mega(k) + '</span>' + (cur ? '<span class="st-open">Open</span>' : '') + '</button>';
+            iconOf(b) + '<span class="st-name">' + name + '</span>' + (cur ? '<span class="st-open">Open</span>' : '') + '</button>';
         }).join('') +
         '<button type="button" class="st-editlink" data-edit>Edit your tools</button>';
       return;
@@ -90,8 +89,8 @@
     pop.innerHTML = '<div class="st-title">Your sidebar</div><p class="st-sub">Pick the ' + MAX + ' tools you want to see.</p>' +
       TOOLS.map(([k, name, sel]) => {
         const on = pick.includes(k);
-        return '<button type="button" class="st-row' + (k === 'sims' ? ' st-mega' : '') + '" data-tool="' + k + '" aria-pressed="' + on + '"' + (!on && full ? ' aria-disabled="true"' : '') + '>' +
-          iconOf(btnFor(nav, sel)) + '<span class="st-name">' + name + mega(k) + '</span><span class="st-check" aria-hidden="true">' + (on ? '✓' : '') + '</span></button>';
+        return '<button type="button" class="st-row" data-tool="' + k + '" aria-pressed="' + on + '"' + (!on && full ? ' aria-disabled="true"' : '') + '>' +
+          iconOf(btnFor(nav, sel)) + '<span class="st-name">' + name + '</span><span class="st-check" aria-hidden="true">' + (on ? '✓' : '') + '</span></button>';
       }).join('') +
       '<p class="st-note">' + (full ? 'To add another, take one off first.' : 'You can show up to ' + MAX + '.') + '</p>';
   }

@@ -45,14 +45,23 @@ export async function countQuestionForBags(db, uid, clientDay) {
 }
 const inAdvent = day => day >= ADVENT_START && day <= ADVENT_END;
 const addDays = (day, n) => new Date(Date.parse(day) + n * 86400000).toISOString().slice(0, 10);
-export async function advanceStudyStreak(db, uid, clientDay) {
+export async function advanceStudyStreak(db, uid, clientDay, { earnsAdvent = true } = {}) {
   const ref = db.collection('users').doc(uid);
   const today = studyDay(clientDay);
   await db.runTransaction(async tx => {
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() : {};
     const last = data.streakLastDay;
-    if (last === today) return;
+    // A review may already have lit today's streak. An Ask or Learn turn
+    // can still earn today's Advent door without increasing the streak twice.
+    if (last === today) {
+      if (earnsAdvent && inAdvent(today)) {
+        const adv = data.advent || {};
+        const days = Array.isArray(adv.days) ? adv.days : [];
+        if (!days.includes(today)) tx.set(ref, { advent: { ...adv, days: [...days, today].sort() } }, { merge: true });
+      }
+      return;
+    }
     // A last day beyond tomorrow (UTC) can't be real — treat it as no streak.
     const lastValid = typeof last === 'string' && DAY_KEY.test(last) && last <= utcDayKey(1);
     if (lastValid && last > today) return; // never move a streak backwards
@@ -78,10 +87,10 @@ export async function advanceStudyStreak(db, uid, clientDay) {
       savedDays.filter(inFlameFest).forEach(d => shieldDays.add(d));
       update.flameFest = { ...fest, days: [...days].sort(), shielded: [...shieldDays].sort() };
     }
-    if (inAdvent(today) || savedDays.some(inAdvent)) {
+    if ((earnsAdvent && inAdvent(today)) || savedDays.some(inAdvent)) {
       const adv = data.advent && typeof data.advent === 'object' ? data.advent : {};
       const days = new Set(Array.isArray(adv.days) ? adv.days : []);
-      if (inAdvent(today)) days.add(today);
+      if (earnsAdvent && inAdvent(today)) days.add(today);
       savedDays.filter(inAdvent).forEach(d => days.add(d)); // a Flame Shield keeps that day's door too
       update.advent = { ...adv, days: [...days].sort() };
     }

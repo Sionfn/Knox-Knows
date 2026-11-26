@@ -2963,7 +2963,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
           })();
           if (!window.knoxFlameFestWindow()) rot.querySelectorAll('.sidebar-flame-card, .ff-dot').forEach(function(el) { el.remove(); });
           // The Advent Calendar card leads in December (advent.js); the preview and ?advent=demo show it any time.
-          var adventOn = new Date().getMonth() === 11 || /preview|localhost|127\.0\.0\.1/.test(location.hostname) || /[?&]advent=demo/.test(location.search);
+          var adventOn = (new Date() >= new Date(2026, 11, 1) && Date.now() < Date.parse('2027-01-01T12:00:00Z')) || /preview|localhost|127\.0\.0\.1/.test(location.hostname) || /[?&]advent=demo/.test(location.search);
           try { adventOn = adventOn || sessionStorage.getItem('knoxAdventDemo') === '1'; } catch (e) {}
           if (!adventOn) rot.querySelectorAll('.sidebar-advent-card, .adv-dot').forEach(function(el) { el.remove(); });
           if (!rot.querySelector('.sidebar-extension-card.is-active')) {
@@ -7299,7 +7299,7 @@ function parseLearnExtras(text) {
   out.clean = body;
   return out;
 }
-window.knoxLearnClean = text => { const x = parseLearnExtras(String(text).replace(/^[ \t]*Sim:.*$/gim, '').replace(/\n*🌐 Searched the web\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+\s*$/, '')); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
+window.knoxLearnClean = text => { const x = parseLearnExtras(String(text).replace(/^[ \t]*Sim:.*$/gim, '').replace(/(?:\n*(?:🌐 Searched the web|🔗 Links in this answer)\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)+\s*$/, '')); return [x.clean, x.keyIdea ? 'Key idea: ' + x.keyIdea : '', x.separateQuestion ? x.question : '', x.graph ? 'Graph: ' + x.graph : '', x.recap ? 'What you learned: ' + x.recap : '', x.watch ? 'Watch out: ' + x.watch : ''].filter(Boolean).join('\n\n'); };
 const LEARN_HELP = {
   hint:    ['💡', 'Hint', 'Can I get a hint?'],
   stuck:   ['🤔', 'I’m stuck', 'I’m stuck — can you make this step smaller?'],
@@ -7494,7 +7494,7 @@ function siteName(host) {
 }
 // Answers and Learn replies that searched end with a 🌐 Searched the web list (api/ask.js):
 // shown as a sources card instead of plain text.
-function webSourcesHtml(list) {
+function webSourcesHtml(list, heading) {
   const items = [...list.matchAll(/^- \[([^\]\n]+)\]\((https?:\/\/[^\s()]+)\)$/gm)].map(([, title, url]) => {
     const site = siteName((/^https?:\/\/(?:www\.)?([^/?#:@]+)/i.exec(url) || [])[1] || '');
     if (!site) return '';
@@ -7503,7 +7503,7 @@ function webSourcesHtml(list) {
       '<svg class="kws-arrow" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>';
   }).filter(Boolean);
   if (!items.length) return '';
-  return '<div class="knox-web-sources"><div class="kws-head"><span class="kws-icon" aria-hidden="true">' + (window.KI ? window.KI('globe', { tint: false }) : '') + '</span>Searched the web<small>' +
+  return '<div class="knox-web-sources"><div class="kws-head"><span class="kws-icon" aria-hidden="true">' + (window.KI ? window.KI('globe', { tint: false }) : '') + '</span>' + escHtml(heading) + '<small>' +
     items.length + ' source' + (items.length === 1 ? '' : 's') + '</small></div>' + items.join('') + '</div>';
 }
 
@@ -7519,8 +7519,13 @@ function renderAnswerHtml(text, kind = 'answer') {
     if (sim) { text = (text.slice(0, sim.index) + text.slice(sim.index + sim[0].length)).replace(/\n{3,}/g, '\n\n').trim(); simCard = '<div class="knox-sim" data-sim="' + escHtml(sim[1].trim()) + '"></div>'; }
   }
   // Sources (Ask Knox and, from Dec 1, Learn) come last in the reply text.
-  const web = /\n*🌐 Searched the web\n((?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)\s*$/.exec(text);
-  if (web) { text = text.slice(0, web.index); webSources = webSourcesHtml(web[1]); }
+  const section = /\n*(?:🌐 (Searched the web)|🔗 (Links in this answer))\n((?:- \[[^\]\n]+\]\(https?:\/\/[^\s()]+\)\n?)+)\s*$/;
+  for (let i = 0; i < 2; i++) {
+    const web = section.exec(text);
+    if (!web) break;
+    text = text.slice(0, web.index);
+    webSources = webSourcesHtml(web[3], web[1] || web[2]) + webSources;
+  }
   const learnX = kind === 'learn' ? parseLearnExtras(text) : null;
   if (learnX) text = learnX.clean;
   const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
