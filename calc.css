@@ -245,8 +245,8 @@ html[data-theme="dark"]:not(.knox-seasonal) .kc-act-ask { color:var(--orange); }
 .kg-dot.off { background: transparent; }
 .kg-in { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 16px; font-weight: 800; padding: 4px 2px; outline: none; }
 .kg-in::placeholder { color: var(--text-light); opacity: .7; }
-.kg-x { width: 28px; height: 28px; border-radius: 9px; border: 0; background: transparent; color: var(--text-light); font-size: 20px; font-weight: 800; line-height: 1; }
-.kg-x:hover { background: var(--cream-warm); color: var(--text); }
+.kg-x { width: 28px; height: 28px; border-radius: 9px; border: 0; background: transparent; color: var(--c); font-size: 20px; font-weight: 900; line-height: 1; } /* the equation's own color */
+.kg-x:hover, .kg-x:focus-visible { background: color-mix(in srgb, var(--c) 15%, var(--surface)); color: var(--c); outline: none; }
 .kg-err { grid-column: 1 / -1; margin: 0; font-size: 12px; font-weight: 800; color: var(--red, #E5383B); line-height: 1.35; }
 .kg-err:empty { display: none; }
 .kg-add { border: 2px dashed var(--border); border-radius: 14px; background: transparent; color: var(--text-light); font-size: 13.5px; font-weight: 900; padding: 10px; }

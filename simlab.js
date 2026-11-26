@@ -941,8 +941,7 @@
         ${community.group === 'Made from scratch' ? '' : `<section class="sl-cm-sec"><div class="sl-sec-head"><h2>Made by Knox</h2><span class="fc-pill">${knox.length}</span></div>
           ${knox.length ? `<div class="sl-picks">${knoxShown.map(knoxCard).join('')}</div>${knoxShown.length < knox.length ? `<div class="fc-toolbar" style="margin-top:16px">${B(`Show all ${knox.length}`, 'data-allknox', 'small')}</div>` : ''}` : empty('None of Knox’s match that', 'Try a different word or subject.')}</section>`}
         <section class="sl-cm-sec"><div class="sl-sec-head"><h2>Made by students</h2><div class="fc-chips">${sorts.map(([v, l]) => chipB(l, `data-csort="${v}"`, community.sort === v)).join('')}</div></div>
-        ${community.busy ? empty('Loading sims…', 'Getting the newest ones.')
-          : community.error ? empty('Student sims didn’t load', esc(community.error), B('Try again', 'data-cretry', 'primary small'))
+        ${community.error && !community.busy ? empty('Student sims didn’t load', esc(community.error), B('Try again', 'data-cretry', 'primary small'))
           : shown.length ? `<div class="sl-picks">${shown.map(studentCard).join('')}</div>`
           : community.list.length ? empty('No student sims match that', 'Try a different word or subject.')
           : empty('No student sims yet', 'Be the first: open a simulation, set it up, and press Publish.')}</section>

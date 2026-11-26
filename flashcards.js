@@ -976,8 +976,7 @@ function cmHome(){
      <select class="fc-input fc-cm-select kx-select" data-kx="pill" id="fcCmSubject" aria-label="Subject"><option value="">All subjects</option>${CM_SUBJECTS.map(x=>`<option${x===cm.subject?' selected':''}>${esc(x)}</option>`).join('')}</select>
      <select class="fc-input fc-cm-select kx-select" data-kx="pill" id="fcCmGrade" aria-label="Grade"><option value="">Any grade</option>${CM_GRADES.filter(x=>x!=='Any').map(x=>`<option${x===cm.grade?' selected':''}>${esc(x)}</option>`).join('')}</select>
    </div>
-   ${cm.busy?`<div class="fc-empty"><h2>Loading decks…</h2></div>`
-    :cm.err?`<div class="fc-empty"><h2>Community decks didn’t load</h2><p class="fc-sub">${esc(cm.err)}</p><div class="fc-toolbar">${btn('Try again','cm-retry',{cls:'primary small'})}</div></div>`
+   ${cm.err&&!cm.busy?`<div class="fc-empty"><h2>Community decks didn’t load</h2><p class="fc-sub">${esc(cm.err)}</p><div class="fc-toolbar">${btn('Try again','cm-retry',{cls:'primary small'})}</div></div>`
     :cm.list.length?`<div class="fc-grid">${cm.list.map((d,i)=>`<article class="fc-deck" data-flavor="${FLAVORS[i%4]}">
       <div class="fc-deck-top"><div class="fc-deck-icon" aria-hidden="true">${ICONS[i%4]}</div><div style="min-width:0"><h2 class="fc-deck-name">${esc(d.title)}</h2>
       <div class="fc-pills"><span class="fc-pill">${d.cardCount} cards</span><span class="fc-pill">${esc(d.subject)}</span>${d.checked?'<span class="fc-pill done">✓ Checked</span>':''}</div></div></div>
