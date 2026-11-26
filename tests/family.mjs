@@ -34,3 +34,9 @@ test('family fields are server-only and the route is reachable', () => {
   assert.match(f, /members\.length >= FAMILY_SEATS - 1/);
   assert.match(f, /if \(owner === me\)/);
 });
+
+test('the Family plan waits for January: its card is hidden on the landing page and checkout stays off without its prices', () => {
+  assert.match(src('index.html'), /<div class="kp-family reveal" id="familyPlan" hidden>/);
+  assert.match(src('landing.css'), /#pricing \.kp-family\[hidden\] \{ display: none !important; \}/);
+  assert.match(src('api/create-checkout-session.js'), /plan === FAMILY_PLAN && \['monthly', 'yearly'\]\.includes\(billing\)\) return res\.status\(503\)/);
+});

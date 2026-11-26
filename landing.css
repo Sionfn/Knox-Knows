@@ -1064,3 +1064,6 @@ html[data-theme="dark"] #flashcards.kl-section::before { background: rgba(88, 20
 html[data-theme="dark"] #streaks.kl-section::before { background: rgba(255, 107, 0, .15); } html[data-theme="dark"] #streaks.kl-section::after { background: rgba(255, 75, 75, .13); }
 html[data-theme="dark"] #pricing .kp-bg i { background: rgba(28, 176, 246, .13); }
 html[data-theme="dark"] #pricing .kp-bg .b3 { background: rgba(88, 204, 2, .1); } html[data-theme="dark"] #pricing .kp-bg .b4 { background: rgba(255, 200, 0, .09); }
+
+/* The Family plan card waits for January (index.html: #familyPlan hidden). */
+#pricing .kp-family[hidden] { display: none !important; }
