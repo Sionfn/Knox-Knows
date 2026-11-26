@@ -155,6 +155,16 @@
       `<li><button type="button" class="kc-hist-item" data-h="${i}"><span class="kc-hist-expr">${pretty(h.expr)} =</span><b>${esc(h.result)}</b></button></li>`).join('') + '</ol>';
   }
   function render() {
+    // Graph mode (calc-graph.js): the grapher takes the card's place; History rests.
+    const graph = st.mode === 'graph' && !!window.KnoxGraph;
+    root.querySelector('.kc-layout').classList.toggle('kc-graphing', graph);
+    root.querySelector('.kc-card').classList.toggle('kc-is-graph', graph);
+    for (const el of root.querySelectorAll('.kc-screen, .kc-pads, .kc-actions, .kc-history')) el.hidden = graph;
+    const box = root.querySelector('.kc-graph-host'); box.hidden = !graph;
+    root.querySelector('.kc-title').innerHTML = graph ? 'Graph <span class="accent">anything.</span>' : 'Crunch the <span class="accent">numbers.</span>';
+    root.querySelector('.kc-sub').textContent = graph ? 'Type an equation and watch it draw. Let Knox explain the why.' : 'Work it out here. Let Knox explain the why.';
+    root.querySelectorAll('.kc-mode').forEach(b => { const on = b.dataset.mode === st.mode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    if (graph) { if (!box.firstChild) window.KnoxGraph.mount(box, { send: sendText }); else window.KnoxGraph.show(); return; }
     root.querySelector('.kc-screen-inner').innerHTML = screenHtml();
     const sciBox = root.querySelector('.kc-sci');
     sciBox.hidden = st.mode !== 'sci';
@@ -189,9 +199,10 @@
         <div class="kc-cardbar">
           <button type="button" class="kc-back" data-k="back">← Back to chat</button>
           <div class="kc-modes" role="group" aria-label="Calculator type">
-            <button type="button" class="kc-mode" data-mode="basic">Basic</button><button type="button" class="kc-mode" data-mode="sci">Scientific</button>
+            <button type="button" class="kc-mode" data-mode="basic">Basic</button><button type="button" class="kc-mode" data-mode="sci">Scientific</button><button type="button" class="kc-mode" data-mode="graph">Graph</button>
           </div>
         </div>
+        <div class="kc-graph-host" hidden></div>
         <div class="kc-screen"><div class="kc-screen-inner"></div></div>
         <div class="kc-pads">
           <div class="kc-sci" hidden></div>
@@ -228,7 +239,10 @@
     if (!st.done) return;
     const answer = M.format(st.done.value), line = `${st.done.expr} = ${answer}`;
     if (k === 'copy') { navigator.clipboard?.writeText(answer).then(() => toast('Copied ' + answer), () => toast('Couldn’t copy — select the answer instead')); return; }
-    const text = k === 'send' ? line : `Can you explain how to work out ${st.done.expr}? I got ${answer}.`;
+    sendText(k === 'send' ? line : `Can you explain how to work out ${st.done.expr}? I got ${answer}.`, k);
+  }
+  // Send text to Ask Knox ('send') or Learn ('explain') — the calculator's buttons and the grapher's.
+  function sendText(text, k) {
     if(window.knoxMobile){window.knoxMobile.calculatorDraft(k==='send'?'chat':'learn',text);return;}
     // Each button goes where its color says: Explain it → Learn (purple) teaches
     // the steps, Send to Knox → Ask Knox (orange). Already there? Stay in that chat.
@@ -248,6 +262,7 @@
   // Keyboard: only while the calculator is open and you're not typing elsewhere.
   document.addEventListener('keydown', e => {
     if (!document.getElementById('calcModal')?.classList.contains('open')) return;
+    if (st.mode === 'graph') return; // the grapher has its own keys
     if (e.ctrlKey || e.metaKey || e.altKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     const map = { '+': 'op:+', '-': 'op:−', '*': 'op:×', 'x': 'op:×', '/': 'op:÷', '^': 'op:^', '(': 'in:(', ')': 'in:)', '%': 'in:%', '!': 'in:!', '.': 'in:.', ',': 'in:.',
       Enter: 'equals', '=': 'equals', Backspace: 'del', Delete: 'clear', p: 'in:π' };
@@ -263,6 +278,8 @@
   window.KnoxCalc = {
     onOpen() { st.error = ''; render(); root.querySelector('.kc-title')?.focus({ preventScroll: true }); },
     press, state: st,
+    // Open the Calculator on Graph with these equations (a Learn graph's "Open in Calculator").
+    graph(list) { st.mode = 'graph'; store.set('knoxCalcMode', 'graph'); window.openCalc?.(); render(); window.KnoxGraph?.set(list); },
   };
   render();
 })();

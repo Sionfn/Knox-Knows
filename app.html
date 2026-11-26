@@ -1722,6 +1722,9 @@
     html[data-theme="dark"]:not(.knox-seasonal) .msg-knox-bubble:has(> .knox-response-heading.learn) .knox-response-body li > strong:first-child { color: var(--purple-on-tint); }
     .learn-graph { max-width: 600px; padding: 10px 10px 8px; border-radius: 16px; border: 2px solid var(--border); background: var(--surface); }
     .learn-graph svg { display: block; width: 100%; height: auto; }
+    .learn-graph .lg-open { margin-left: auto; border: 2px solid var(--blue); border-radius: 10px; padding: 4px 10px; background: var(--surface); color: var(--blue-dark); font: inherit; font-size: 12.5px; font-weight: 900; box-shadow: 0 2px 0 var(--blue-dark); cursor: pointer; }
+    html[data-theme="dark"] .learn-graph .lg-open { color: var(--blue); }
+    .learn-graph .lg-open:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--blue-dark); }
     .learn-graph .lg-grid line { stroke: var(--border); stroke-width: 1; opacity: .7; }
     .learn-graph .lg-axes line { stroke: var(--text-light); stroke-width: 1.6; }
     .learn-graph .lg-labels text { fill: var(--text-light); font-size: 11px; font-weight: 700; font-family: inherit; }
@@ -3267,6 +3270,7 @@ html .msg-knox-bubble .knox-final-answer strong { color: inherit; }
 <div class="calc-modal" id="calcModal">
   <div class="kc-wrap" id="kcRoot"></div>
 </div>
+<script src="/calc-graph.js"></script>
 <script src="/calc.js"></script>
 
 
@@ -7483,9 +7487,17 @@ function learnGraphHtml(spec) {
     '<defs><clipPath id="lgClip"><rect x="' + L + '" y="8" width="' + (W - L - 8) + '" height="' + (H - B - 8) + '"/></clipPath></defs>' +
     '<g class="lg-grid">' + grid + '</g><g class="lg-axes">' + axes + '</g><g class="lg-labels">' + labels + '</g>' +
     '<g class="lg-curves" clip-path="url(#lgClip)">' + curves + '</g></svg>' +
-    '<figcaption>' + fns.map((f, i) => '<span><i style="background:' + GRAPH_COLORS[i] + '"></i>' + escHtml(f.label) + '</span>').join('') + '</figcaption></figure>';
+    '<figcaption>' + fns.map((f, i) => '<span><i style="background:' + GRAPH_COLORS[i] + '"></i>' + escHtml(f.label) + '</span>').join('') +
+    // Dec 2026: play with it in the Calculator's Graph mode (calc-graph.js).
+    '<button type="button" class="lg-open" data-graph="' + escHtml(JSON.stringify(fns.map(f => f.label))) + '">Open in Calculator →</button>' +
+    '</figcaption></figure>';
 }
 window.learnGraphHtml = learnGraphHtml;
+document.addEventListener('click', e => {
+  const b = e.target.closest('.lg-open'); if (!b || !window.KnoxCalc?.graph) return;
+  let list = []; try { list = JSON.parse(b.dataset.graph || '[]'); } catch (_) {}
+  window.KnoxCalc.graph(list);
+});
 
 // Teaching cards above the buttons: the key idea, a graph, a short video.
 function learnTeachHtml(x) {

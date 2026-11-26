@@ -108,7 +108,9 @@
   // ── A safe math reader (for "Graph your own"): turns what a student types
   // into a tree and evaluates it — never eval(), never code.
   const FUNCS = { sin: Math.sin, cos: Math.cos, tan: Math.tan, asin: Math.asin, acos: Math.acos, atan: Math.atan, sqrt: Math.sqrt, abs: Math.abs, ln: Math.log, log: Math.log10, exp: Math.exp, floor: Math.floor, ceil: Math.ceil, round: Math.round };
-  function parseMath(src) {
+  // Degrees (the Calculator's Graph mode can read sin, cos and tan in degrees).
+  const D = Math.PI / 180, DEG_FUNCS = { sin: v => Math.sin(v * D), cos: v => Math.cos(v * D), tan: v => Math.tan(v * D), asin: v => Math.asin(v) / D, acos: v => Math.acos(v) / D, atan: v => Math.atan(v) / D };
+  function parseMath(src, opts = {}) {
     const text = String(src || '').replace(/\s+/g, '').replace(/^y=/i, '').replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/²/g, '^2').replace(/³/g, '^3').replace(/π/g, 'pi');
     if (!text) throw new Error('Type an equation, like y = 2x + 1');
     const toks = []; let i = 0;
@@ -140,7 +142,8 @@
     };
     const tree = expr(); if (p < out.length) throw new Error('Knox couldn’t read the end of that equation');
     const vars = new Set(); (function walk(n) { if (!n) return; if (n.v) vars.add(n.v); walk(n.a); walk(n.b); })(tree);
-    const ev = (n, env) => n.n != null ? n.n : n.v ? (env[n.v] ?? 0) : n.f ? FUNCS[n.f](ev(n.a, env)) : n.op === 'neg' ? -ev(n.a, env)
+    const fn = name => (opts.deg && DEG_FUNCS[name]) || FUNCS[name];
+    const ev = (n, env) => n.n != null ? n.n : n.v ? (env[n.v] ?? 0) : n.f ? fn(n.f)(ev(n.a, env)) : n.op === 'neg' ? -ev(n.a, env)
       : n.op === '+' ? ev(n.a, env) + ev(n.b, env) : n.op === '-' ? ev(n.a, env) - ev(n.b, env) : n.op === '*' ? ev(n.a, env) * ev(n.b, env) : n.op === '/' ? ev(n.a, env) / ev(n.b, env) : Math.pow(ev(n.a, env), ev(n.b, env));
     return { vars, f: env => ev(tree, env) };
   }
@@ -1451,5 +1454,5 @@
   });
   window.addEventListener('knox-plan-changed', () => { if (host && !editor && host.isConnected) renderHome(); });
 
-  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), openIn, unsaved, canLeave: () => okToLeave('leave'), mini, templates: Object.keys(T), cleanValues };
+  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), openIn, parseMath, unsaved, canLeave: () => okToLeave('leave'), mini, templates: Object.keys(T), cleanValues };
 })();
