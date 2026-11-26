@@ -1,7 +1,6 @@
 // advent.js — the Knox Advent Calendar (December 2026 study event).
 //
-// 25 doors, December 1–25. Studying on a day (a question, a Learn step or a
-// Flashcards review; a Flame Shield covers a missed day) unlocks that day's
+// 25 doors, December 1–25. An Ask Knox answer or a Learn step unlocks that day’s
 // door, and opening it gives its surprise: bonus questions, Flame Shields,
 // the ❄️ Frost and ❤️ Ruby flames, and the big present behind door 25. Every
 // door also has a little winter fact or study tip. The server
@@ -19,7 +18,7 @@
   const preview = /preview|localhost|127\.0\.0\.1/.test(location.hostname);
   // Before December the preview shows the demo, so the calendar can be tried.
   const today = () => demo ? '2026-12-09' : localDay();
-  const season = () => { const t = localDay(); return t >= '2026-12-01' && t <= '2026-12-31'; };
+  const season = () => localDay() >= '2026-12-01' && Date.now() < Date.parse('2027-01-01T12:00:00Z');
   if (preview && !season()) demo = true;
   const active = () => demo || season();
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -55,30 +54,36 @@
   ];
 
   // ── Data ────────────────────────────────────────────────────────────────
-  let state = null, loading = false, error = '', busy = 0;
+  let state = null, error = '', busy = 0;
+  let account = new AbortController();
   function demoState() {
     const studied = [1, 2, 3, 5, 6, 7, 8, 9], opened = [1, 2, 3, 5, 6, 7];
     const label = n => ({ 6: '🛡️ Flame Shield', 7: '❄️ Frost Flame', 13: '+10 bonus questions + 🛡️ Flame Shield', 17: '❤️ Ruby Flame', 20: '🛡️ Flame Shield', 24: '+15 bonus questions + 🛡️ Flame Shield', 25: '🎁 5 days of Mega Knox' }[n] || '+5 bonus questions') + ' + 🛍️ Blind bag';
     return { demo: true, tier: 'free', shields: 1, giftCode: '', doors: Array.from({ length: 25 }, (_, k) => { const n = k + 1; return { n, day: `2026-12-${pad(n)}`, studied: studied.includes(n), opened: opened.includes(n), label: label(n) }; }) };
   }
-  async function api(method, body) {
+  async function api(method, body, signal = account.signal) {
     const user = window.currentUser;
     if (!user?.getIdToken) throw new Error('Sign in to open your Advent Calendar.');
     const token = await user.getIdToken();
+    signal.throwIfAborted();
     const test = (() => { try { return sessionStorage.getItem('knoxFlameTest') === '1'; } catch (e) { return false; } })();
     const r = await fetch('/api/flame-fest' + (method === 'GET' ? '?event=advent' : ''), {
-      method, headers: { 'Authorization': 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}), ...(test ? { 'X-Knox-Flame-Test': '1' } : {}) },
+      method, signal, headers: { 'Authorization': 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}), ...(test ? { 'X-Knox-Flame-Test': '1' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const j = await r.json().catch(() => ({}));
+    signal.throwIfAborted();
     if (!r.ok) throw new Error(j.error || 'The Advent Calendar is busy right now. Please try again.');
     return j;
   }
   async function load() {
     if (demo) { state = state?.demo ? state : demoState(); return; }
-    loading = true; error = ''; render();
-    try { state = await api('GET'); } catch (e) { error = e.message; }
-    loading = false;
+    const signal = account.signal, screen = wrap;
+    error = ''; render();
+    try {
+      const data = await api('GET', undefined, signal);
+      if (!signal.aborted && wrap === screen) state = data;
+    } catch (e) { if (!signal.aborted && wrap === screen) error = e.message; }
   }
 
   // ── The calendar ─────────────────────────────────────────────────────────
@@ -114,7 +119,7 @@
       bagsPanel() +
       `<div class="adv-grid">${doors.map(door).join('')}</div>` +
       (state.giftCode ? `<p class="adv-gift">🎁 Your Mega Knox week for a friend: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a></p>` : '') +
-      `<p class="adv-note">Study any day in December (ask a question, do a Learn step or review flashcards) to open that day’s door. Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
+      `<p class="adv-note">Ask Knox a question or do a Learn step from December 1–25 to open that day’s door. Open your doors by December 31. Missed a day? A 🛡️ Flame Shield saves it.${state.demo ? ' <b>Demo:</b> pretend it’s December 9. Nothing is saved.' : ''}</p>`;
     card.innerHTML = ki(card.innerHTML);
   }
   // Your blind bags live here: every door has one, and you tear them open
@@ -131,8 +136,22 @@
       <div class="adv-bagbtns"><button type="button" class="adv-btn adv-btn-bag" data-open-bag${n ? '' : ' disabled'}>🛍️ Open a bag</button><button type="button" class="adv-bags" data-bags>My collection</button></div>
     </div>`;
   }
-  const refreshBags = () => window.knoxBags?.status?.().then(s => { bags = s; render(); }).catch(() => {});
-  const openBagHere = () => window.knoxBags?.openHere?.({ done: s => { if (s) bags = s; render(); wrap?.querySelector('[data-open-bag]:not([disabled]), .adv-x')?.focus(); }, pic: () => render() });
+  function refreshBags() {
+    const signal = account.signal;
+    window.knoxBags?.status?.().then(s => { if (!signal.aborted) { bags = s; render(); } }).catch(() => {});
+  }
+  function openBagHere() {
+    const screen = wrap;
+    window.knoxBags?.openHere?.({
+      done: s => {
+        if (wrap !== screen) return;
+        if (s) bags = s;
+        render();
+        wrap?.querySelector('[data-open-bag]:not([disabled]), .adv-x')?.focus();
+      },
+      pic: () => { if (wrap === screen) render(); },
+    });
+  }
   const head = () => `<button type="button" class="adv-x" data-close aria-label="Close">✕</button><div class="adv-head"><span class="adv-badge">🎄 December event</span><h2 id="advTitle">Knox <span>Advent Calendar</span></h2><p>A surprise behind every door. Door 25 is the big present!</p></div>`;
 
   // The prize card after a door opens (or when you look at an opened one).
@@ -156,19 +175,28 @@
     const btn = wrap.querySelector(`[data-door="${n}"]`);
     const nudge = t => { const note = wrap.querySelector('.adv-note'); if (note) { note.textContent = t; note.classList.add('adv-flash'); setTimeout(() => note.classList.remove('adv-flash'), 1200); } };
     if (s === 'later') { nudge(`Door ${n} opens on December ${n}. Come back then!`); return; }
-    if (s === 'today') { nudge('Ask Knox a question, do a Learn step or review flashcards today, then come back to open this door.'); return; }
+    if (s === 'today') { nudge('Ask Knox a question or do a Learn step today, then come back to open this door.'); return; }
     if (s === 'missed') { nudge(`You didn’t study on December ${n}, so this door stays shut. A 🛡️ Flame Shield saves a missed day next time.`); return; }
+    const screen = wrap, signal = account.signal;
     busy = n;
     btn?.classList.add('is-opening');
     try {
       if (demo) { await new Promise(r => setTimeout(r, 450)); d.opened = true; }
-      else { state = await api('POST', { advent: 'open', door: n }); window.knoxRefreshPlan?.(); window.knoxFlameFest?.applyFlameStyle?.(state.flameStyle); }
+      else {
+        const data = await api('POST', { advent: 'open', door: n }, signal);
+        if (signal.aborted) return;
+        state = data;
+        window.knoxRefreshPlan?.();
+        window.knoxFlameFest?.applyFlameStyle?.(state.flameStyle);
+      }
+      if (signal.aborted || wrap !== screen) return;
       const fresh = state.doors[n - 1];
       render(); refreshBags();
       reveal(fresh, true);
       window.knoxSound?.play('reward');
-    } catch (e) { btn?.classList.remove('is-opening'); nudge(e.message); }
-    busy = 0;
+    } catch (e) {
+      if (!signal.aborted && wrap === screen) { btn?.classList.remove('is-opening'); nudge(e.message); }
+    } finally { if (!signal.aborted) busy = 0; }
   }
 
   // ── Open / close ─────────────────────────────────────────────────────────
@@ -190,11 +218,20 @@
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     document.body.append(wrap);
     render(); refreshBags(); window.knoxBagStage?.preload?.();
-    await load(); render();
+    const screen = wrap;
+    await load();
+    if (wrap !== screen) return;
+    render();
     wrap?.querySelector('.adv-door.is-ready, .adv-x')?.focus();
   }
   function close() { if (!wrap) return; wrap.remove(); wrap = null; lastFocus?.focus?.(); }
-  addEventListener('knox-auth-changed', () => { state = null; close(); syncCards(); });
+  addEventListener('knox-auth-changed', () => {
+    account.abort();
+    account = new AbortController();
+    state = bags = null;
+    error = ''; busy = 0;
+    close(); syncCards();
+  });
 
   // ── Where it shows up ────────────────────────────────────────────────────
   // The promo cards (app.html) only show while the calendar is on.

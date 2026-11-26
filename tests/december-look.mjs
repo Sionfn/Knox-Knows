@@ -24,3 +24,14 @@ test('badges never show a ? cursor; the landing keeps its colors in Dark; no sno
   assert.match(theme, /section\.kl-section:not\(#home\):not\(\.kl-final\):not\(#pricing\):not\(#faq\)/);
   for (const html of [index, app]) assert.equal((html.match(/<svg class="kk-ic kk-family"[^]*?<\/svg>/)[0].match(/<circle /g) || []).length, 4, 'four students');
 });
+
+test('launch fixes from the Codex audit: Coming soon App Store, keyboard-safe sign-in, tour waits for the Advent Calendar, lazy videos with less motion, Learn input', () => {
+  const landing = src('landing.js'), index = src('index.html'), app = src('app.html'), tour = src('tour.js');
+  assert.match(landing, /var APP_STORE_URL = '';/);
+  assert.match(index, /if \(e\.target\.closest\?\.\('button, a'\)\) return;/);
+  for (const page of [index, app]) assert.match(page, /Keep Tab \/ Shift\+Tab inside the open sign-in dialog/);
+  assert.match(tour, /\.adv-wrap, \.kb-wrap, \.kb3-stage/);
+  assert.match(landing, /if \(reduced\) return; \/\/ less motion: the poster stays/);
+  assert.match(app, /input\.placeholder = learn \? \(home \? 'What do you want to learn\?'/);
+  assert.doesNotMatch(src('advent.js'), /Anywhere on Earth/);
+});

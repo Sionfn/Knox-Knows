@@ -64,11 +64,12 @@ test('blind bags: the published odds are the real odds (Golden Knox 1 in 100), a
   assert.match(bags, /\$\{oddsHtml\(\)\}/);
 });
 
-test('blind bags: a ladder of collection rewards (credits for Free and Plus, Flame Shields for Mega), claimed on the server', () => {
+test('blind bags: a ladder of collection rewards (credits for Free, Flame Shields for Plus and Mega), claimed on the server', () => {
   const ff = src('api/flame-fest.js'), bags = src('bags.js');
   assert.match(ff, /\["open", "trade", "claim", "reward"\]\.includes\(body\.bags\)/);
-  assert.match(ff, /\["eleven", 11, null, "11\/12", 50, 100, 4\]/);
-  assert.match(ff, /doc\(prizeTier\(\(await tx\.get\(userRef\)\)\.data\(\) \|\| \{\}\) === "plus" \? "plusBank" : "bank"\)/);
+  assert.match(ff, /\["eleven", 11, null, "11\/12", 50, 4\]/);
+  assert.match(ff, /plus: shieldReward, mega: shieldReward/);
+  assert.doesNotMatch(ff, /plusBank/);
   assert.match(ff, /if \(row\.claimed\) return \{ error: "You already claimed this reward\."/);
   assert.match(ff, /if \(!row\.ready\) return/);
   assert.match(bags, /bags: 'reward', reward: id/);

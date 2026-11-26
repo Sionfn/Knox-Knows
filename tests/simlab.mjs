@@ -65,7 +65,7 @@ test('Community: published sims are moderated, anonymous, reportable, and never 
   assert.match(c, /omni-moderation-latest/);
   assert.match(c, /const HIDE_AT = 3;/);
   assert.match(c, /reports >= HIDE_AT \? \{ hidden: true \}/);
-  assert.match(c, /if \(CONTACT\.test\(text\)\)/);
+  assert.match(c, /texts\.some\(value => CONTACT\.test\(value\)\)/);
   assert.doesNotMatch(c, /displayName|email:/);
   assert.match(lab, /By a Knox student/);
   assert.match(src('api/me.js'), /route === "sim-community"\) return simCommunity\(req, res, \{ db, auth: adminAuth \}\)/);
@@ -99,7 +99,7 @@ test('Simulation Lab works like Flashcards: opens on its home, asks before losin
   // Knox-built sims and changed scenes of your own ask first — sidebar, Back button, the Lab's back button.
   assert.match(lab, /title: 'Leave without saving\?'/);
   assert.match(lab, /title: 'Discard your changes\?'/);
-  assert.match(lab, /guard = meta\.fromBuild \? \(\) => true : null;/);
+  assert.match(lab, /guard = editor\.dirty;/);
   assert.match(lab, /prompt, fromBuild: true/);
   assert.match(notes, /if \(await simsCanLeave\(\)\) \{ closeSims\(\); nav\.click\(\); \}/);
   assert.match(app, /if \(window\.simsCanLeave && !\(await window\.simsCanLeave\(\)\)\) return false;/);

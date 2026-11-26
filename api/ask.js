@@ -944,11 +944,15 @@ async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format,
     return null;
   }
   const sources = [];
+  const webUrls = new Set();
+  for (const item of data.output || []) if (item.type === 'web_search_call') {
+    for (const source of item.action?.sources || []) if (typeof source?.url === 'string') webUrls.add(source.url.replace(/\(/g, '%28').replace(/\)/g, '%29'));
+  }
   for (const part of parts) for (const note of part.annotations || []) {
     if (note.type !== 'url_citation' || !/^https?:\/\/[^\s]+$/.test(note.url || '') || sources.some(s => s.url === note.url)) continue;
     let title = String(note.title || '').replace(/[\[\]()\s]+/g, ' ').trim();
     if (!title) { try { title = new URL(note.url).hostname; } catch { continue; } }
-    sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29') });
+    sources.push({ title: title.slice(0, 140), url: note.url.replace(/\(/g, '%28').replace(/\)/g, '%29'), searched: true });
   }
   const kept = sources.slice(0, 8), folded = format ? text : foldSourcesLine(text, kept);
   // Pages Knox linked in its own words (not marked as citations) are its sources too.
@@ -968,7 +972,8 @@ async function webSearchAnswer(messages, model, tokenLimit, timeoutMs, { format,
       }
     }
   }
-  return { text: folded, sources: kept, usage: data.usage };
+  for (const source of kept) source.searched ||= webUrls.has(source.url);
+  return { text: folded, sources: kept, webUrls, usage: data.usage };
 }
 
 // ── Discord bot ─────────────────────────────────────────────────────────────
@@ -1339,7 +1344,7 @@ export default async function handler(req, res) {
       }))
     : history.slice(-40);
   // Knox's earlier source lists stay on screen but aren't sent back (they'd only cost tokens).
-  const SOURCES_TAIL = /\n*🌐 Searched the web\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+\s*$/;
+  const SOURCES_TAIL = /(?:\n*(?:🌐 Searched the web|🔗 Links in this answer)\n(?:- \[[^\]\n]+\]\([^\s()]+\)\n?)+)+\s*$/;
   for (const msg of recentHistory) {
     if (msg.role && msg.content) {
       messages.push({ role: msg.role, content: msg.role === 'assistant' && typeof msg.content === 'string' ? msg.content.replace(SOURCES_TAIL, '') : msg.content });
@@ -1537,9 +1542,14 @@ export default async function handler(req, res) {
       const url = (hit[1] || 'https://') + hit[2];
       if (searched.sources.length >= 8 || searched.sources.some(x => sameSource(x, url, cite))) continue;
       const title = (/[“"]([^”"\n]{3,140})[”"]/.exec(cite)?.[1] || /\*([^*\n]{3,140})\*/.exec(cite)?.[1] || titleFromUrl(url)).replace(/[\[\]()]+/g, ' ').trim().replace(/[.,;:]+$/, ''); // “Title.” → Title
-      searched.sources.push({ title: title.slice(0, 140), url: url.replace(/\(/g, '%28').replace(/\)/g, '%29'), fromCite: true });
+      const link = url.replace(/\(/g, '%28').replace(/\)/g, '%29');
+      searched.sources.push({ title: title.slice(0, 140), url: link, searched: searched.webUrls.has(link), fromCite: true });
     }
-    const sourcesList = searched?.sources.length ? '\n\n🌐 Searched the web\n' + searched.sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n') : '';
+    const sourceSection = (label, sources) => sources.length
+      ? '\n\n' + label + '\n' + sources.map(source => '- [' + source.title + '](' + source.url + ')').join('\n')
+      : '';
+    const sourcesList = searched ? sourceSection('🌐 Searched the web', searched.sources.filter(s => s.searched)) +
+      sourceSection('🔗 Links in this answer', searched.sources.filter(s => !s.searched)) : '';
     if (sourcesList && !(learnMode && !casual)) answer = answer.trim() + sourcesList;
 
     if (learnMode && !casual) Object.assign(lessonState, correctedLessonState(answer, lessonState));
@@ -1612,7 +1622,7 @@ export default async function handler(req, res) {
       catch (err) { console.error('Blind bag count failed:', err?.message); }
     }
     return res.status(200).json({ answer, video, plan, isCasual: casual, model: modelToUse, usage: data.usage,
-      webSearch: searched?.sources.length ? 'used' : undefined });
+      webSearch: searched?.sources.some(s => s.searched) ? 'used' : undefined });
 
   } catch (err) {
     console.error("Ask error:", err.message);

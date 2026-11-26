@@ -52,13 +52,13 @@ function memoryDb() {
   let failTransactions = false;
   let transactionTail = Promise.resolve();
   const ref = path => ({
-    path,
+    path, id: path.split('/').at(-1),
     collection(name) { return collection(`${path}/${name}`); },
     async get() { return snapshot(path); },
     async set(value, options) { write(path, value, options); },
   });
   const collection = path => ({ doc(id) { return ref(`${path}/${id}`); } });
-  const snapshot = path => ({ exists: store.has(path), data: () => store.get(path) });
+  const snapshot = path => ({ exists: store.has(path), data: () => store.get(path), ref: ref(path) });
   const write = (path, value, options) => {
     const next = options?.merge ? { ...store.get(path), ...value } : value;
     store.set(path, next);
@@ -2137,6 +2137,7 @@ test('Smart search: a "Sources:" line Knox writes folds into the sources card (e
   assert.match(res.body.answer, /\(\[archives\.gov\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration\)\)/, 'the inline chip stays');
   const card = res.body.answer.split('🌐 Searched the web\n')[1];
   assert.equal(card.match(/declaration\)/g).length, 1, 'each page once');
+  assert.match(card, /🔗 Links in this answer\n- \[National Archives: How It Happened\]/);
   assert.match(card, /\[National Archives: How It Happened\]\(https:\/\/www\.archives\.gov\/founding-docs\/declaration-history\)/, 'the extra page joins the card');
 
   text = 'Here is your citation.\n\nSources:\n"Declaration of Independence." National Archives, 2023, [archives.gov](https://www.archives.gov/founding-docs/declaration).';
@@ -2220,7 +2221,8 @@ test('Smart search: the card shows the pages Knox cites in its words, never unre
   text = 'Starship caught its upper stage on November 14 ([Space.com](https://www.space.com/spacex-starship-catch); [CBS News](https://www.cbsnews.com/news/spacex-starship-flight/)).';
   let res = response();
   await handler(askRequest({ question: "What's the latest news about SpaceX?", webSearch: true }), res);
-  const card = res.body.answer.split('🌐 Searched the web\n')[1];
+  const card = res.body.answer.split('🔗 Links in this answer\n')[1];
+  assert.doesNotMatch(res.body.answer, /🌐 Searched the web/);
   assert.match(card, /\[Spacex starship catch\]\(https:\/\/www\.space\.com\/spacex-starship-catch\)/, 'a bare site name gets the page\'s own name (the card shows the site above it)');
   assert.match(card, /\[CBS News\]\(https:\/\/www\.cbsnews\.com\/news\/spacex-starship-flight\/\)/);
   assert.doesNotMatch(card, /axios|nvidia/i, 'unrelated pages it only looked at stay out');
@@ -2291,4 +2293,119 @@ test('Binder notes: save, list, open, edit and delete your own notes; never anot
   assert.equal((await amy({ action: 'delete', id })).code, 200);
   assert.equal((await amy({ action: 'get', id })).code, 404);
   assert.equal((await amy({ action: 'nope' })).code, 400);
+});
+
+
+test('Advent eligibility follows a successful answer even after a Flashcards streak, and the cutoff matches December 31 UTC−12', async () => {
+  const { db, store } = memoryDb();
+  const date = fakeDate('2026-12-06T19:00:00Z');
+  const event = await load('api/flame-fest.js', { db, date });
+  let res = response();
+  await event(ffReq('POST', { studied: 'flashcards', localDay: '2026-12-06' }), res);
+  assert.equal(store.get('users/u1').streakLastDay, '2026-12-06');
+  res = response();
+  await event(ffReq('POST', { advent: 'open', door: 6 }), res);
+  assert.equal(res.code, 403);
+  const ask = await load('api/ask.js', { db, date, fetch: askFetch() });
+  res = response();
+  await ask(askRequest({ question: 'Solve 2x = 8', localDay: '2026-12-06' }), res);
+  assert.equal(res.code, 200);
+  assert.deepEqual(plain(store.get('users/u1').advent.days), ['2026-12-06']);
+  assert.equal(store.get('users/u1').streakCount, 1);
+
+  const lastHour = await load('api/flame-fest.js', { db, date: fakeDate('2027-01-01T11:59:59Z') });
+  res = response();
+  await lastHour(ffReq('POST', { advent: 'open', door: 6 }), res);
+  assert.equal(res.code, 200);
+  const closed = await load('api/flame-fest.js', { db, date: fakeDate('2027-01-01T12:00:00Z') });
+  res = response();
+  await closed(ffReq('POST', { advent: 'open', door: 6 }), res);
+  assert.equal(res.code, 410);
+});
+
+test('Plus blind-bag rewards award usable shields once and leave credit balances alone', async () => {
+  const { db, store } = memoryDb();
+  store.set('users/u1', { plan: 'super', flameShields: 2, knoxBags: { got: { elf: 1 } } });
+  const handler = await load('api/flame-fest.js', { db });
+  const request = ffReq('POST', { bags: 'reward', reward: 'first' });
+  let res = response();
+  await handler(request, res);
+  assert.equal(res.code, 200);
+  assert.match(res.body.label, /Flame Shield/);
+  assert.equal(store.get('users/u1').flameShields, 3);
+  assert.equal(store.has('users/u1/usage/plusBank'), false);
+  res = response();
+  await handler(request, res);
+  assert.equal(res.code, 409);
+  assert.equal(store.get('users/u1').flameShields, 3);
+});
+
+test('deck links stay on preview, omit uploaded images by default, and revoke for the owner only', async () => {
+  const { db, store } = memoryDb();
+  const env = { VERCEL_ENV: 'preview', VERCEL_URL: 'knox-audit-preview.vercel.app' };
+  const owner = await load('api/_share-deck.js', { db, env });
+  const other = await load('api/_share-deck.js', { db, env, token: { uid: 'u2' } });
+  const share = { action: 'share', deckId: 'local-deck', title: 'Local shapes', cards: [{ front: 'Sides of a triangle?', back: 'Three', image: 'data:image/png;base64,QUJD' }] };
+  let res = response();
+  await owner(ffReq('POST', share), res);
+  const { id, url } = res.body;
+  assert.equal(url, 'https://knox-audit-preview.vercel.app/deck/' + id);
+  assert.equal(store.get('sharedDecks/' + id).cards[0].image, undefined);
+  res = response();
+  await owner(ffReq('POST', { ...share, includePhotos: true }), res);
+  assert.equal(res.body.id, id);
+  assert.equal(store.get('sharedDecks/' + id).cards[0].image, share.cards[0].image);
+  await other(ffReq('POST', { action: 'unshare', deckId: share.deckId }), response());
+  assert.equal(store.get('sharedDecks/' + id).removed, false);
+  await owner(ffReq('POST', { action: 'unshare', deckId: share.deckId }), response());
+  res = response();
+  await other({ method: 'GET', headers: {}, query: { id } }, res);
+  assert.equal(res.code, 404);
+  assert.equal(store.get('sharedDecks/' + id).cards.length, 0);
+});
+
+test('Community simulations moderate the last field in a long scene and reject incomplete moderation', async () => {
+  const { db, store } = memoryDb();
+  let complete = false, inspected = '';
+  const fetch = async (_, options) => {
+    const { input } = JSON.parse(options.body);
+    inspected = input.join('\n');
+    return { ok: true, json: async () => ({ results: complete ? input.map(() => ({ flagged: false })) : [] }) };
+  };
+  const handler = await load('api/_sim-community.js', { db, fetch });
+  const objects = Array.from({ length: 60 }, (_, i) => ({
+    id: 'label' + i, kind: 'label', x: i, y: i, color: '#1FA45A',
+    text: i === 59 ? 'Last scene label' : 'Predict the effect of changing the mass and the angle. '.repeat(3)
+  }));
+  const values = { title: 'Classroom lab', world: { planet: 'earth' }, objects, sliders: [], graphs: [], goal: null };
+  const body = { action: 'publish', sim: { type: 'custom', title: 'Classroom Lab', values } };
+  let res = response();
+  await handler(ffReq('POST', body), res, { db, auth: { verifyIdToken: async () => ({ uid: 'u1' }) } });
+  assert.equal(res.code, 503);
+  assert.ok(![...store.keys()].some(k => k.startsWith('publicSims/')));
+  complete = true;
+  res = response();
+  await handler(ffReq('POST', body), res, { db, auth: { verifyIdToken: async () => ({ uid: 'u1' }) } });
+  assert.equal(res.code, 200);
+  assert.ok(inspected.length > 8000);
+  assert.match(inspected, /Last scene label$/);
+});
+
+test('Community decks earn the fact-check badge only when the entire deck was included', async () => {
+  const { db } = memoryDb();
+  const fetch = async (url, options) => {
+    const payload = JSON.parse(options.body);
+    const result = url.endsWith('/moderations') ? { results: payload.input.map(() => ({ flagged: false })) }
+      : { choices: [{ message: { content: '{"wrong":[]}' } }] };
+    return { ok: true, json: async () => result };
+  };
+  const handler = await load('api/_deck-community.js', { db, fetch });
+  const cards = Array.from({ length: 30 }, () => ({ front: 'Describe plant growth.', back: 'Plants use light to grow. '.repeat(80) }));
+  const ctx = { db, auth: { verifyIdToken: async () => ({ uid: 'u1' }) } };
+  for (const count of [3, 30]) {
+    const res = response();
+    await handler(ffReq('POST', { action: 'publish', title: 'Plant science', cards: cards.slice(0, count) }), res, ctx);
+    assert.equal(res.code, 200);
+    assert.equal(res.body.checked, count === 3);
+  }
 });

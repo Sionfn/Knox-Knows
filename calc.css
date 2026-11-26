@@ -286,3 +286,7 @@ html[data-theme="dark"] .kg-slider b { color: var(--blue); }
 }
 /* Graph mode on a screen it fits: the page doesn't scroll (scrolling the list never moves the page). */
 @media (min-width: 821px) { #calcModal:has(.kc-graphing) { overscroll-behavior: contain; } }
+
+/* An imported lesson graph has its own temporary workspace. */
+.kg-import:not([hidden]) { display: grid; gap: 5px; margin-bottom: 8px; font-size: .8rem; font-weight: 800; color: var(--text-light); }
+.kg-import .kg-add { justify-self: start; }

@@ -23,7 +23,8 @@
     sliders: saved?.sliders && typeof saved.sliders === 'object' ? saved.sliders : {},
     deg: !!saved?.deg,
   };
-  const save = () => store.set({ rows: st.rows.map(r => ({ text: r.text, hidden: !!r.hidden })), sliders: st.sliders, deg: st.deg });
+  let originalGraph = null;
+  const save = () => !originalGraph && store.set({ rows: st.rows.map(r => ({ text: r.text, hidden: !!r.hidden })), sliders: st.sliders, deg: st.deg });
   const HOME = { cx: 0, cy: 0, k: 0 }; // k 0 = "fit about −10…10 across"
   let view = { ...HOME }, active = 0, pin = null, host = null, canvas = null, g = null, send = null, compiled = [], lastFocus = null, raf = 0;
 
@@ -69,16 +70,22 @@
     for (let i = 0; i < 70; i++) { const fc = f(c), fd = f(d); if (max ? fc > fd : fc < fd) { b = d; d = c; c = b - r * (b - a); } else { a = c; c = d; d = a + r * (b - a); } }
     const x = (a + b) / 2, y = f(x); return Number.isFinite(y) ? { x, y } : null;
   }
-  // Zeros of f in [x0, x1]: sign changes, refined, and never an asymptote (tan, 1/x).
+  // Refine both sign changes and local minima of |f|, including tangencies.
   function zeros(f, x0, x1, n = 900) {
-    const out = [], dx = (x1 - x0) / n; let px = x0, py = f(px);
+    const out = [], dx = (x1 - x0) / n; let px = x0, py = f(px), before = NaN;
     for (let i = 1; i <= n; i++) {
       const x = x0 + i * dx, y = f(x);
       if (Number.isFinite(py) && Number.isFinite(y)) {
         if (py === 0) out.push(px);
         else if (py * y < 0) { const r = bisect(f, px, x, py); if (r != null && Math.abs(f(r)) <= 1e-7 * Math.max(1, Math.abs(py), Math.abs(y))) out.push(r); }
+        else if (Number.isFinite(before) && Math.sign(before) === Math.sign(py) &&
+            Math.sign(y) === Math.sign(py) && Math.abs(py) <= Math.min(Math.abs(before), Math.abs(y)) &&
+            Math.abs(py) < Math.max(Math.abs(before), Math.abs(y))) {
+          const nearest = golden(t => Math.abs(f(t)), px - dx, x, false);
+          if (nearest && nearest.y <= 1e-9 * Math.max(Math.abs(before), Math.abs(y))) out.push(nearest.x);
+        }
       }
-      px = x; py = y;
+      before = py; px = x; py = y;
     }
     if (Number.isFinite(py) && py === 0) out.push(px);
     return out;
@@ -206,8 +213,9 @@
     st.rows.forEach((r, i) => { const el = host.querySelector(`[data-row="${i}"] .kg-err`); if (el) el.textContent = compiled[i]?.error || ''; host.querySelector(`[data-row="${i}"]`)?.classList.toggle('bad', !!compiled[i]?.error); });
   }
   function renderPanel() {
+    host.querySelector('.kg-import').hidden = !originalGraph;
     host.querySelector('.kg-rows').innerHTML = rowsHtml();
-    host.querySelector('.kg-add').hidden = st.rows.length >= MAX_ROWS;
+    host.querySelector('[data-act="add"]').hidden = st.rows.length >= MAX_ROWS;
     host.querySelector('.kg-sliders').innerHTML = slidersHtml();
     host.querySelector('[data-act="deg"]').textContent = st.deg ? 'Degrees' : 'Radians';
     errors();
@@ -221,6 +229,7 @@
     host = el; send = opts.send || null;
     host.innerHTML = `<div class="kg">
       <div class="kg-side">
+        <div class="kg-import" hidden><span>Graph from Learn</span><button type="button" class="kg-add" data-act="restore">Back to my equations</button></div>
         <div class="kg-rows"></div>
         <button type="button" class="kg-add" data-act="add">+ Add an equation</button>
         <div class="kg-help" aria-label="Math keys">${HELP.map(([l, v]) => `<button type="button" class="kg-hk" data-ins="${esc(v)}" tabindex="-1">${esc(l)}</button>`).join('')}</div>
@@ -250,7 +259,18 @@
   function set(list) {
     const rows = (Array.isArray(list) ? list : [list]).map(t => String(t || '').trim()).filter(Boolean).slice(0, MAX_ROWS);
     if (!rows.length) return;
-    st.rows = rows.map(text => ({ text })); active = 0; pin = null; view = { ...HOME }; save();
+    if (!originalGraph) {
+      originalGraph = { rows: st.rows, sliders: st.sliders, deg: st.deg, view, active, pin };
+      st.sliders = { ...st.sliders };
+    }
+    st.rows = rows.map(text => ({ text })); active = 0; pin = null; view = { ...HOME };
+    show();
+  }
+  function restoreGraph() {
+    if (!originalGraph) return;
+    ({ view, active, pin } = originalGraph);
+    Object.assign(st, { rows: originalGraph.rows, sliders: originalGraph.sliders, deg: originalGraph.deg });
+    originalGraph = null;
     show();
   }
   function insert(text) {
@@ -316,7 +336,8 @@
       const hk = e.target.closest('[data-ins]'); if (hk) { insert(hk.dataset.ins); return; }
       const b = e.target.closest('[data-act]'); if (!b) return;
       const act = b.dataset.act, row = b.closest('[data-row]'), i = row ? +row.dataset.row : -1;
-      if (act === 'add') addRow();
+      if (act === 'restore') restoreGraph();
+      else if (act === 'add') addRow();
       else if (act === 'remove') { st.rows.splice(i, 1); if (!st.rows.length) st.rows.push({ text: '' }); active = Math.min(active, st.rows.length - 1); pin = null; recompile(); renderPanel(); save(); redraw(); }
       else if (act === 'toggle') { st.rows[i].hidden = !st.rows[i].hidden; pin = null; renderPanel(); save(); redraw(); }
       else if (act === 'zin' || act === 'zout') { const { W, H } = geom(); zoomAt(act === 'zin' ? 1.5 : 1 / 1.5, W / 2, H / 2); }

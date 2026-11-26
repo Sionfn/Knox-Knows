@@ -95,7 +95,6 @@ function prizeTier(d) {
 }
 const pick = (r, tier) => (tier === "mega" && r.mega) || (tier === "free" ? r.free : r.plus);
 const FREE_STARTING_BALANCE = 10; // keep in sync with api/ask.js
-const PLUS_STARTING_BALANCE = 50; // Knox Plus credits (api/_plans.js BANKS.plus.start)
 const DAY_MS = 86400000;
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -140,7 +139,7 @@ function status(data, tester = false) {
 // Mega (already unlimited) get Flame Shields and looks on the big doors.
 // GET ?event=advent → { event, tier, doors: [{ n, day, studied, opened, label }], shields, flameStyle, flameStyles, giftCode }
 // POST { advent: 'open', door: n } → same, plus { opened: n }
-const ADVENT = { name: "Advent Calendar", start: ADVENT_START, end: ADVENT_END, openUntil: "2026-12-31" };
+const ADVENT = { name: "Advent Calendar", start: ADVENT_START, end: ADVENT_END, openUntil: "2026-12-31", closesAt: "2027-01-01T12:00:00Z" };
 const adventDay = n => `2026-12-${String(n).padStart(2, "0")}`;
 const BIG = {
   6:  { free: { gives: { shields: 1 }, label: "🛡️ Flame Shield" }, plus: { gives: { shields: 1 }, label: "🛡️ Flame Shield" }, mega: { gives: { shields: 2 }, label: "🛡️🛡️ 2 Flame Shields" } },
@@ -194,18 +193,18 @@ const BAG_SERIES = [
 // The odds per bag, shown on the bags screen (bags.js ODDS matches): Golden Knox is 1 in 100.
 const RARITY_ODDS = { common: 64, rare: 25, epic: 10, secret: 1 };
 // Collection rewards: a prize at 1, 3, 6, 9 and 11 of the 12 figures (plus the
-// collect-all reward at 12). Free and Plus get bonus credits (Plus more, into its
-// own daily bank); Mega is unlimited, so it gets Flame Shields.
+// collect-all reward at 12). Free gets bonus credits; Plus and Mega get Flame Shields.
 const BAG_REWARDS = [
-  ["first", 1, null, "1/12", 5, 10, 1],
-  ["three", 3, null, "3/12", 10, 20, 1],
-  ["six", 6, null, "6/12", 20, 40, 2],
-  ["nine", 9, null, "9/12", 30, 60, 3],
-  ["eleven", 11, null, "11/12", 50, 100, 4],
-].map(([id, need, set, title, free, plus, shields]) => ({ id, need, set, title,
-  free: { gives: { bonus: free }, label: `+${free} bonus credits` },
-  plus: { gives: { bonus: plus }, label: `+${plus} bonus credits` },
-  mega: { gives: { shields }, label: shields > 1 ? `🛡️ ${shields} Flame Shields` : "🛡️ Flame Shield" } }));
+  ["first", 1, null, "1/12", 5, 1],
+  ["three", 3, null, "3/12", 10, 1],
+  ["six", 6, null, "6/12", 20, 2],
+  ["nine", 9, null, "9/12", 30, 3],
+  ["eleven", 11, null, "11/12", 50, 4],
+].map(([id, need, set, title, free, shields]) => {
+  const shieldReward = { gives: { shields }, label: shields > 1 ? `🛡️ ${shields} Flame Shields` : "🛡️ Flame Shield" };
+  return { id, need, set, title, free: { gives: { bonus: free }, label: `+${free} bonus credits` },
+    plus: shieldReward, mega: shieldReward };
+});
 function bagRewards(got, claimed, tier) {
   const owned = BAG_SERIES.filter(c => got[c.id]).length;
   return BAG_REWARDS.map(r => {
@@ -276,9 +275,8 @@ export default async function handler(req, res) {
       const giftCode = body.bags === "claim" ? newGiftCode().slice(0, 8) : "";
       const giftRef = giftCode ? db.collection("giftCodes").doc(giftCode) : null;
       const out = await db.runTransaction(async tx => {
-        // Bonus credits land in the plan's own bank (Plus has its own, 50 a day).
-        const bankRef = userRef.collection("usage").doc(prizeTier((await tx.get(userRef)).data() || {}) === "plus" ? "plusBank" : "bank");
-        const [snap, taken, bank] = await Promise.all([tx.get(userRef), giftRef ? tx.get(giftRef) : null, body.bags === "reward" ? tx.get(bankRef) : null]);
+        const bankRef = userRef.collection("usage").doc("bank");
+        const [snap, taken] = await Promise.all([tx.get(userRef), giftRef ? tx.get(giftRef) : null]);
         const data = snap.exists ? snap.data() : {};
         const st = bagStatus(data), kb = data.knoxBags && typeof data.knoxBags === "object" ? data.knoxBags : {};
         let next = { ...kb, got: { ...st.got }, unopened: st.unopened }, extra = {}, result = {};
@@ -301,9 +299,9 @@ export default async function handler(req, res) {
           if (g.shields) extra.flameShields = base.shields + g.shields;
           if (g.megaDays) extra.megaUntil = Math.max(now, Number(data.megaUntil) || 0) + g.megaDays * DAY_MS;
           if (g.bonus) {
-            const b = bank?.exists ? bank.data() : {};
-            const start = bankRef.id === "plusBank" ? PLUS_STARTING_BALANCE : FREE_STARTING_BALANCE;
-            tx.set(bankRef, { balance: (typeof b.balance === "number" ? b.balance : start) + g.bonus, lastRegenAt: b.lastRegenAt || now, updatedAt: new Date().toISOString() }, { merge: true });
+            const bank = await tx.get(bankRef);
+            const b = bank.exists ? bank.data() : {};
+            tx.set(bankRef, { balance: (typeof b.balance === "number" ? b.balance : FREE_STARTING_BALANCE) + g.bonus, lastRegenAt: b.lastRegenAt || now, updatedAt: new Date().toISOString() }, { merge: true });
           }
           result = { reward: r.id, label: row.label };
         } else if (body.bags === "trade") {
@@ -335,7 +333,7 @@ export default async function handler(req, res) {
       const n = Number(body.door);
       if (!Number.isInteger(n) || n < 1 || n > 25) return res.status(400).json({ error: "That door doesn't exist." });
       const day = adventDay(n), now = utcDay();
-      if (!tester && now > ADVENT.openUntil) return res.status(410).json({ error: "The Advent Calendar closed on December 31." });
+      if (!tester && Date.now() >= Date.parse(ADVENT.closesAt)) return res.status(410).json({ error: "The Advent Calendar has closed." });
       // The day's own date (a day of slack for time zones).
       if (!tester && day > addDays(now, 1)) return res.status(403).json({ error: `Door ${n} opens on December ${n}.` });
       const bankRef = userRef.collection("usage").doc("bank");
@@ -374,7 +372,7 @@ export default async function handler(req, res) {
     // A Flashcards review session lights today's flame (and keeps the streak),
     // the same as asking Knox a question.
     if (body.studied === "flashcards") {
-      await advanceStudyStreak(db, uid, body.localDay);
+      await advanceStudyStreak(db, uid, body.localDay, { earnsAdvent: false });
       const snap = await userRef.get();
       return send(snap.exists ? snap.data() : {});
     }

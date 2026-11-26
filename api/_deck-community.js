@@ -47,7 +47,15 @@ async function anyFlagged(texts) {
 }
 // Knox looks for cards that are simply wrong (not style or spelling).
 async function factCheck(title, subject, cards) {
-  const list = cards.slice(0, FACT_CHECK_MAX).map((c, i) => `${i + 1}. ${c.front} → ${c.back}`).join("\n").slice(0, 40000);
+  const lines = [];
+  let length = 0;
+  for (const [i, card] of cards.slice(0, FACT_CHECK_MAX).entries()) {
+    const line = `${i + 1}. ${card.front} → ${card.back}`;
+    if (length + line.length + 1 > 40000) break;
+    lines.push(line);
+    length += line.length + 1;
+  }
+  const list = lines.join("\n");
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: "gpt-6-luna", response_format: { type: "json_object" }, max_completion_tokens: 3000,
@@ -57,7 +65,9 @@ async function factCheck(title, subject, cards) {
   });
   if (!r.ok) throw new Error("fact check " + r.status);
   const out = JSON.parse((await r.json()).choices?.[0]?.message?.content || "{}");
-  return (Array.isArray(out.wrong) ? out.wrong : []).map(w => ({ i: Math.floor(Number(w.n)) - 1, reason: clean(w.reason, 200) })).filter(w => w.i >= 0 && w.i < cards.length).slice(0, 30);
+  if (!Array.isArray(out.wrong)) throw new Error("Incomplete fact check response");
+  const wrong = out.wrong.map(w => ({ i: Math.floor(Number(w.n)) - 1, reason: clean(w.reason, 200) })).filter(w => w.i >= 0 && w.i < lines.length).slice(0, 30);
+  return { wrong, complete: lines.length === cards.length };
 }
 
 export default async function deckCommunity(req, res, { db, auth }) {
@@ -108,7 +118,7 @@ export default async function deckCommunity(req, res, { db, auth }) {
     catch (e) { console.error("deck-community moderation:", e.message); return res.status(503).json({ error: "Publishing is busy right now. Please try again in a minute." }); }
     let checked = false;
     if (!body.ignoreFacts) {
-      try { const wrong = await factCheck(deck.title, subject, deck.cards); if (wrong.length) return res.status(409).json({ needsFix: wrong }); checked = deck.cards.length <= FACT_CHECK_MAX; }
+      try { const { wrong, complete } = await factCheck(deck.title, subject, deck.cards); if (wrong.length) return res.status(409).json({ needsFix: wrong }); checked = complete; }
       catch (e) { console.error("deck-community fact check:", e.message); } // a slow check doesn't block publishing; it just goes up without the badge
     }
     const capRef = db.collection("users").doc(uid).collection("usage").doc("deckPublish"), ref = col.doc(newId());

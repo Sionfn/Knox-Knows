@@ -80,11 +80,15 @@
   // A sim Knox just built, or your own scene with changes: ask before leaving it.
   const simsCanLeave = async () => simsPanel.hidden || !window.knoxSimLab?.canLeave || await window.knoxSimLab.canLeave();
   window.simsCanLeave = simsCanLeave;
-  function closeSims() { document.body.classList.remove('knox-bsims'); simsPanel.hidden = true; }
+  function closeSims() {
+    if (!simsPanel.hidden) window.knoxSimLab?.close?.();
+    document.body.classList.remove('knox-bsims');
+    simsPanel.hidden = true;
+  }
   window.closeSims = closeSims;
   window.openSims = then => openBinder('sims', then);
   // Plan or account changes: redraw so the lock matches.
-  window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) simsHome(); });
+  window.addEventListener('knox-auth-changed', () => { if (!simsPanel.hidden) { window.knoxSimLab?.close?.(); simsHome(true); } });
   window.addEventListener('knox-plan-changed', () => { if (!simsPanel.hidden && !simsView.querySelector('.sl-ed')) simsHome(); });
   // Simulations has its own sidebar button (Notes and the Binder strip are gone).
   const SIMS_ICON = '<span class="sq-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 17c3-9 11-9 14 0"/><circle cx="12" cy="9" r="2.2"/></svg></span>';

@@ -29,19 +29,54 @@ const TYPES = new Set([...SIM_CATALOG.map(s => s[0]), "custom"]);
 // No ways to reach someone: links, emails, phone numbers, @handles.
 const CONTACT = /(https?:\/\/|www\.|\.(com|net|org|gg|io|me|co)\b|@[a-z0-9_]{3,}|[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(\d[\s.-]?){7,})/i;
 
-// Every bit of text a sim shows: title, description, names, labels, equations.
+const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
+const scalar = value => typeof value === "boolean" || Number.isFinite(value) ||
+  (typeof value === "string" && value.length <= 200);
+const fields = (value, names) => record(value) &&
+  Object.entries(value).every(([key, data]) => names.includes(key) && scalar(data));
+const rows = (value, max, names) => Array.isArray(value) && value.length <= max && value.every(row => fields(row, names));
+const kinds = new Set(["ball", "box", "ramp", "wall", "spring", "target", "label"]);
+
+function validValues(type, values) {
+  if (!record(values)) return false;
+  if (type !== "custom") return Object.keys(values).length <= 64 && Object.values(values).every(scalar);
+  return Object.keys(values).every(key => ["title", "world", "objects", "sliders", "graphs", "goal"].includes(key)) &&
+    typeof values.title === "string" && values.title.length <= 40 &&
+    fields(values.world, ["planet", "gravity", "air", "bounce", "friction", "width"]) &&
+    rows(values.objects, 60, ["id", "kind", "x", "y", "color", "name", "r", "w", "mass", "speed", "dir", "fixed", "len", "angle", "k", "rest", "to", "text"]) &&
+    values.objects.every(piece => kinds.has(piece.kind)) &&
+    rows(values.sliders, 12, ["obj", "prop", "min", "max"]) &&
+    rows(values.graphs, 6, ["obj", "prop"]) &&
+    (values.goal === null || fields(values.goal, ["obj", "target"]));
+}
+
 function textOf(sim) {
   const out = [sim.title, sim.desc];
-  (function walk(v, depth) { if (depth > 6 || v == null) return; if (typeof v === "string") out.push(v); else if (Array.isArray(v)) v.forEach(x => walk(x, depth + 1)); else if (typeof v === "object") Object.values(v).forEach(x => walk(x, depth + 1)); })(sim.values, 0);
-  return out.filter(Boolean).join("\n").slice(0, 8000);
+  function walk(value) {
+    if (typeof value === "string") out.push(value);
+    else if (value && typeof value === "object") Object.values(value).forEach(walk);
+  }
+  walk(sim.values);
+  return out.filter(Boolean);
 }
-async function flagged(text) {
-  const r = await fetch("https://api.openai.com/v1/moderations", {
+async function flagged(texts) {
+  const chunks = [];
+  let chunk = "";
+  for (const value of texts) {
+    if (chunk.length + value.length + 1 > 3000) { chunks.push(chunk); chunk = ""; }
+    chunk += (chunk ? "\n" : "") + value;
+  }
+  if (chunk) chunks.push(chunk);
+  const response = await fetch("https://api.openai.com/v1/moderations", {
     method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "omni-moderation-latest", input: text }), signal: AbortSignal.timeout(10000),
+    body: JSON.stringify({ model: "omni-moderation-latest", input: chunks }), signal: AbortSignal.timeout(10000),
   });
-  if (!r.ok) throw new Error("moderation " + r.status);
-  return !!(await r.json()).results?.some(x => x.flagged);
+  if (!response.ok) throw new Error("moderation " + response.status);
+  const { results } = await response.json();
+  if (results?.length !== chunks.length || results.some(item => typeof item?.flagged !== "boolean")) {
+    throw new Error("Incomplete moderation response");
+  }
+  return results.some(item => item.flagged);
 }
 
 export default async function simCommunity(req, res, { db, auth }) {
@@ -85,9 +120,10 @@ export default async function simCommunity(req, res, { db, auth }) {
     const json = JSON.stringify(sim.values ?? {});
     if (json.length > 20000) return res.status(413).json({ error: "That simulation is too big to publish." });
     const values = JSON.parse(json.replace(/[<>]/g, ""));
-    const text = textOf({ title, desc, values });
-    if (CONTACT.test(text)) return res.status(400).json({ error: "Take out links, emails, phone numbers and @names — the Community is just for simulations." });
-    try { if (await flagged(text)) return res.status(400).json({ error: "Some words in it aren't allowed in the Community. Change the title, description or names and try again." }); }
+    if (!validValues(type, values)) return res.status(400).json({ error: "This simulation has unsupported settings. Open and save it again before publishing." });
+    const texts = textOf({ title, desc, values });
+    if (texts.some(value => CONTACT.test(value))) return res.status(400).json({ error: "Take out links, emails, phone numbers and @names — the Community is just for simulations." });
+    try { if (await flagged(texts)) return res.status(400).json({ error: "Some words in it aren't allowed in the Community. Change the title, description or names and try again." }); }
     catch (e) { console.error("sim-community moderation:", e.message); return res.status(503).json({ error: "Publishing is busy right now. Please try again in a minute." }); }
     const capRef = db.collection("users").doc(uid).collection("usage").doc("simPublish");
     const newRef = col.doc(newId());

@@ -779,18 +779,33 @@ async function open(){if(!canSee())return false;if(dirty&&!(await confirmLeave()
 window.openFlashcards=open; // lets /app?open=flashcards reopen this section after a refresh
 // Share a deck by link (knoxknowsapp.com/deck/<id>): anyone with it can see the deck, add it to their
 // own decks, or open it in the iPhone app. Sharing the same deck again keeps the same link.
+async function shareDeckRequest(user,body){
+ const token=await user.getIdToken();
+ if(window.currentUser?.uid!==user.uid)throw Error('Your account changed. Please try again.');
+ const response=await fetch('/api/me?route=share-deck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(body)});
+ const data=await response.json().catch(()=>({}));
+ if(window.currentUser?.uid!==user.uid)throw Error('Your account changed. Please try again.');
+ if(!response.ok)throw Error(data.error||'The deck link couldn’t be updated. Please try again.');
+ return data;
+}
 async function shareDeck(d,b){
  const user=window.currentUser;if(!user?.getIdToken){window.openAuthModal?.('signup');return;}
+ const includePhotos=d.cards.some(c=>c.image?.startsWith('data:'));
+ if(includePhotos&&!await knoxConfirm({title:'Share your uploaded photos?',body:'Anyone with the link can see and copy the cards and photos. You can turn off the link from Share at any time.',ok:'Share with photos',cancel:'Cancel'}))return;
+ if(window.currentUser?.uid!==user.uid||identity!==key())return;
  const label=b.textContent;b.disabled=true;b.textContent='Sharing…';
  try{
-  const token=await user.getIdToken();
   const cards=d.cards.map(c=>({front:c.front,back:c.back,...(c.image?{image:c.image}:{}),...(c.imageCredit?{imageCredit:c.imageCredit}:{})}));
-  const r=await fetch('/api/me?route=share-deck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({action:'share',deckId:d.id,title:d.title,cards})});
-  const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw Error(j.error||'The deck couldn’t be shared. Please try again.');
-  if(navigator.share&&/iPhone|iPad|Android/i.test(navigator.userAgent)){try{await navigator.share({title:d.title,text:'Study my Knox Knows flashcards: '+d.title,url:j.url});}catch{}}
-  else{await navigator.clipboard.writeText(j.url);message('Link copied! Anyone with it can add “'+d.title+'” to their decks.','ok');}
- }catch(err){message(err.message||'The deck couldn’t be shared. Please try again.');}
+  const data=await shareDeckRequest(user,{action:'share',deckId:d.id,title:d.title,cards,includePhotos});
+  if(!data.url)throw Error('Knox couldn’t make a link. Please try again.');
+  const url=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&data.id?new URL('/deck/'+data.id,location.origin).href:data.url;
+  if(navigator.share&&/iPhone|iPad|Android/i.test(navigator.userAgent)){try{await navigator.share({title:d.title,text:'Study my Knox Knows flashcards: '+d.title,url});}catch{}}
+  else{await navigator.clipboard.writeText(url);if(window.currentUser?.uid===user.uid)message('Link copied! Anyone with it can add “'+d.title+'” to their decks.','ok');}
+ }catch(err){if(window.currentUser?.uid===user.uid)message(err.message||'The deck couldn’t be shared. Please try again.');}
  finally{b.disabled=false;b.textContent=label;}
+}
+async function stopSharing(id, user){
+ if(user?.getIdToken)await shareDeckRequest(user,{action:'unshare',deckId:id});
 }
 // A deck someone shared by link (/deck/<id> → Add to my decks → /app?add_deck=<id>): your own copy.
 window.addSharedDeck=async function(id){
@@ -1097,15 +1112,31 @@ panel.addEventListener('click',async e=>{
  if(action==='remove'){picker=null;editing.cards.splice(+b.dataset.index,1);if(!editing.cards.length)editing.cards.push({front:'',back:''});dirty=true;renderRows();}
  if(action==='bulk'){const cards=parsePasted(panel.querySelector('#fcBulk').value);const existing=editing.cards.filter(c=>c.front.trim()||c.back.trim());validateDeck({title:editing.title||'Draft',cards:[...existing,...cards]});editing.cards=[...existing,...cards];dirty=true;renderEditor();message(`Added ${cards.length} card${cards.length===1?'':'s'}.`,'ok');}
  if(action==='save'){const before=editing.cards.length;editing.cards=editing.cards.filter(c=>c.front.trim()||c.back.trim());if(editing.cards.length&&editing.cards.length!==before)renderEditor();if(!editing.cards.length){editing.cards=[{front:'',back:''}];renderEditor();throw Error('Add at least one card with a question and an answer.');}const valid=validateDeck(editing);const next={...editing,title:valid.title,cards:editing.cards.map((c,i)=>({...valid.cards[i],...c,front:valid.cards[i].front,back:valid.cards[i].back}))};const exists=decks.some(d=>d.id===next.id);if(save(exists?decks.map(d=>d.id===next.id?next:d):[...decks,next])){home();message('Deck saved. Ready when you are!','ok');}}
- if(action==='delete'&&await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and all its study progress. Export it first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true})){if(save(decks.filter(d=>d.id!==id)))home();}
+ if(action==='delete'){
+  const user=window.currentUser, owner=identity;
+  if(!await knoxConfirm({title:'Delete this deck?',body:'This removes the deck and its study progress, and turns off any link you shared for it. Export first if you want a backup.',ok:'Delete deck',cancel:'Keep it',danger:true}))return;
+  if(owner!==key())return;
+  b.disabled=true;
+  try{await stopSharing(id,user);if(owner===key()&&save(decks.filter(d=>d.id!==id)))home();}
+  catch(err){if(owner===key())message(err.message||'Knox couldn’t turn off the shared link. Try again before deleting.');}
+  finally{b.disabled=false;}
+ }
  if(action==='export')exportView(decks.filter(d=>d.id===id));
  if(action==='share'){
   // A little menu: a link to send, or publish it to Community decks.
   const card=b.closest('.fc-deck'),open=card?.querySelector('.fc-share-menu');
   panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());
-  if(card&&!open){card.insertAdjacentHTML('beforeend',`<div class="fc-share-menu" role="menu">${btn('🔗 Copy a link','share-link',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}${btn('🌍 Publish to Community','cm-publish',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}</div>`);card.querySelector('.fc-share-menu .fc-btn')?.focus();}
+  if(card&&!open){card.insertAdjacentHTML('beforeend',`<div class="fc-share-menu" role="menu">${btn('🔗 Copy a link','share-link',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}${window.currentUser?btn('Stop sharing','share-stop',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`}):''}${btn('🌍 Publish to Community','cm-publish',{cls:'ghost small',attrs:`data-id="${esc(id)}" role="menuitem"`})}</div>`);card.querySelector('.fc-share-menu .fc-btn')?.focus();}
  }
  if(action==='share-link'){panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());const d=decks.find(x=>x.id===id);if(d)shareDeck(d,b);}
+ if(action==='share-stop'){
+  panel.querySelectorAll('.fc-share-menu').forEach(m=>m.remove());
+  const user=window.currentUser;
+  if(!user||!await knoxConfirm({title:'Stop sharing this deck?',body:'Anyone with the link will lose access. Copies already saved by others stay in their own decks.',ok:'Stop sharing',danger:true}))return;
+  if(window.currentUser?.uid!==user.uid)return;
+  await stopSharing(id,user);
+  if(window.currentUser?.uid===user.uid)message('The shared link is off.','ok');
+ }
  if(action==='export-all')exportView(decks);
  if(action==='export-json'&&exportTarget){const ok=await exportData(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a Knox backup (.json).','ok');}
  if(action==='export-csv'&&exportTarget){const ok=await exportCsv(exportTarget);if(!window.knoxNativeApp || ok)message(window.knoxNativeApp?'Share sheet closed. Your decks remain in Knox.':'Saved a spreadsheet (.csv).','ok');}

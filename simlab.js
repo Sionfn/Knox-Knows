@@ -304,7 +304,7 @@
         const X = x => ox + (x - x0) * k, Y = y => c.h - oy - (y - y0) * k;
         const path = (poly, fill, stroke, lw = 2.5) => { g.beginPath(); poly.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); } };
         // A grid of whole units (or a nice step), lined up with the corner.
-        if (s.grid) { const step = [.5, 1, 2, 5, 10, 20, 50, 100].find(v => v * k >= 18) || 100, sp = step * k; g.save(); g.strokeStyle = c.grid; g.lineWidth = 1; g.beginPath(); for (let x = X(0) % sp; x < c.w; x += sp) { g.moveTo(x, 0); g.lineTo(x, c.h); } for (let y = Y(0) % sp; y < c.h; y += sp) { g.moveTo(0, y); g.lineTo(c.w, y); } g.stroke(); g.restore(); }
+        if (s.grid && Number.isFinite(k) && k > 0) { const step = [.5, 1, 2, 5, 10, 20, 50, 100].find(v => v * k >= 18) || 100, sp = step * k; g.save(); g.strokeStyle = c.grid; g.lineWidth = 1; g.beginPath(); for (let x = X(0) % sp; x < c.w; x += sp) { g.moveTo(x, 0); g.lineTo(x, c.h); } for (let y = Y(0) % sp; y < c.h; y += sp) { g.moveTo(0, y); g.lineTo(c.w, y); } g.stroke(); g.restore(); }
         g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
         if (s.squares) { g.globalAlpha = .16; path(sqA, c.blue); path(sqB, c.red); path(sqC, c.orange); g.globalAlpha = 1; path(sqA, null, c.blue, 2); path(sqB, null, c.red, 2); path(sqC, null, c.orange, 2); }
         const ground = () => { g.fillStyle = c.ground; g.fillRect(0, Y(0), c.w, c.h - Y(0)); g.strokeStyle = c.axis; g.lineWidth = 2; g.beginPath(); g.moveTo(0, Y(0)); g.lineTo(c.w, Y(0)); g.stroke(); };
@@ -632,7 +632,7 @@
       },
     },
     ph: {
-      group: 'Chemistry', icon: 'flask', title: 'Acids & bases (pH)', blurb: 'Mix them and watch the pH', 
+      group: 'Chemistry', icon: 'flask', title: 'Acids & bases (pH)', blurb: 'Mix them and watch the pH',
       params: [range('va', 'Acid added', 0, 100, 1, 50, 'mL'), range('ca', 'Acid strength', .01, 1, .01, .1, 'M'), range('vb', 'Base added', 0, 100, 1, 20, 'mL'), range('cb', 'Base strength', .01, 1, .01, .1, 'M'), select('ind', 'Indicator colors', [['universal', 'Universal indicator'], ['phenol', 'Phenolphthalein (pink above 8.2)'], ['litmus', 'Litmus']], 'universal')],
       presets: [['Neutralize it', { va: 50, ca: .1, vb: 50, cb: .1 }], ['Strong acid', { va: 50, ca: 1, vb: 0 }], ['Lots of base', { va: 10, vb: 90, cb: .5 }]],
       draw(g, s, c) {
@@ -708,7 +708,7 @@
       },
     },
     supply: {
-      group: 'Money', icon: 'tag', title: 'Supply & demand', blurb: 'Where price settles', 
+      group: 'Money', icon: 'tag', title: 'Supply & demand', blurb: 'Where price settles',
       params: [range('d0', 'Demand: price when no one buys', 20, 200, 1, 120, '$'), range('ds', 'Demand: how fast buyers drop off', .2, 3, .1, 1), range('s0', 'Supply: lowest price sellers take', 0, 100, 1, 20, '$'), range('ss', 'Supply: how fast sellers add', .2, 3, .1, 1),
         range('ceil', 'Price limit (a ceiling, 0 = none)', 0, 200, 1, 0, '$', true), toggle('area', 'Shade the money spent', true)],
       presets: [['Popular new toy', { d0: 180 }], ['Cheaper to make', { s0: 0, ss: .5 }], ['Price limit', { ceil: 50 }]],
@@ -802,7 +802,7 @@
   // ── Saved sims (this device, per account) ────────────────────────────────
   const saveKey = () => 'knoxSimLab.v1:' + (window.currentUser?.uid || 'guest');
   const readSaved = () => { try { const v = JSON.parse(localStorage.getItem(saveKey()) || '[]'); return Array.isArray(v) ? v : []; } catch (_) { return []; } };
-  const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list.slice(0, 200))); return true; } catch (_) { return false; } };
+  const writeSaved = list => { try { localStorage.setItem(saveKey(), JSON.stringify(list)); return true; } catch (_) { return false; } };
 
   // ── The page ─────────────────────────────────────────────────────────────
   // Knox builds it settings (like Flashcards' Make with Knox options).
@@ -819,11 +819,13 @@
   const unsaved = () => { try { return !!guard?.(); } catch (_) { return false; } };
   async function okToLeave(kind = 'leave') {
     if (!unsaved()) return true;
+    const active = editor, owner = saveKey();
     const yes = await ask(kind === 'back'
       ? { title: 'Discard your changes?', body: 'Your simulation has changes that aren’t saved yet. If you go back now, they’ll be lost.', ok: 'Discard', cancel: 'Keep editing', danger: true }
       : { title: 'Leave without saving?', body: 'Your simulation has changes that aren’t saved yet. If you leave now, they’ll be lost.', ok: 'Leave', cancel: 'Keep editing', danger: true });
-    if (yes) guard = null;
-    return !!yes;
+    if (!yes || active !== editor || owner !== saveKey()) return false;
+    guard = null;
+    return true;
   }
   function show(h, fresh) {
     host = h; editor?.stop(); editor = null; closeMenu();
@@ -838,9 +840,15 @@
     if (!T[id]) { renderHome(); return; }
     fromCard = card; open(id, vals, meta);
   }
-  function backToAnswer() {
-    const card = fromCard;
-    editor?.stop(); editor = null; guard = null; fromCard = null;
+  function close() {
+    editor?.stop(); editor = null; guard = null; fromCard = null; pub = null;
+    buildCtl?.abort(); buildCtl = null; buildBusy = false;
+    closeMenu();
+  }
+  async function backToAnswer() {
+    const card = fromCard, active = editor;
+    if (!await okToLeave('back') || editor !== active) return;
+    close();
     if (history.state?.knoxSection === 'sims') history.back();
     else {
       window.closeSims?.();
@@ -894,7 +902,7 @@
 
   function renderHome(keepScroll) {
     if (!host) return;
-    guard = null; fromCard = null; // the editor is gone
+    editor?.stop(); editor = null; guard = null; fromCard = null;
     const top = host.scrollTop;
     const saved = readSaved();
     if (!['home', 'build', 'community'].includes(tab)) tab = tab === 'play' ? 'community' : 'home';
@@ -1040,7 +1048,11 @@
   let pub = null;
   function publishSim(item, back) {
     if (!window.currentUser) { window.openAuthModal?.('signup'); return; }
-    editor?.stop(); editor = null; pub = { item, back }; setWay('');
+    const needsSave = unsaved(), card = fromCard;
+    editor?.stop(); editor = null;
+    guard = needsSave ? () => true : null;
+    pub = { item, back: () => { fromCard = card; back(); } };
+    setWay('');
     host.innerHTML = fill(`<div class="fc-wrap sl-wrap">${head(`${ki('globe', false)} Publish to Community`, `Share <span class="accent">${esc(item.title || 'your sim')}</span> with everyone.`, 'Anyone can find it in Community and play it. Your name is never shown.')}
       ${topbar(B('← Back', 'data-pub-back', 'ghost'))}
       <div class="fc-make sl-box">
@@ -1060,11 +1072,16 @@
     const msg = $('#slPubMsg', host), say = t => { msg.textContent = t; msg.hidden = false; };
     if (!$('#slPubOk', host)?.checked) { say('Turn on “It’s school-friendly” first.'); return; }
     b.disabled = true; b.textContent = 'Checking…'; msg.hidden = true;
+    const current = pub;
     try {
-      await communityApi('POST', { action: 'publish', sim: { type: pub.item.type, values: pub.item.values, title: $('#slPubTitle', host).value, desc: $('#slPubDesc', host).value } });
-      pub = null; community.loaded = false; community.sort = 'new'; tab = 'community'; renderHome();
+      await communityApi('POST', { action: 'publish', sim: { type: current.item.type, values: current.item.values, title: $('#slPubTitle', host).value, desc: $('#slPubDesc', host).value } });
+      community.loaded = false;
+      if (pub !== current) return;
+      pub = null;
+      if (unsaved()) current.back();
+      else { community.sort = 'new'; tab = 'community'; renderHome(); }
       toast('Published! It’s in Community now.');
-    } catch (err) { say(err.message); b.disabled = false; b.innerHTML = fill(`${ki('globe', false)} Publish`); }
+    } catch (err) { if (pub === current) { say(err.message); b.disabled = false; b.innerHTML = fill(`${ki('globe', false)} Publish`); } }
   }
 
   // Small Knox menus (the dropdown's look) for Share and a sim card's ⋯.
@@ -1124,7 +1141,7 @@
       onSave: sc => saveSim({ type: 'custom', values: sc, title: sc.title }, meta),
       onShare: (sc, btn) => shareSim({ type: 'custom', values: sc, title: sc.title }, btn),
       // Someone else's Community sim isn't yours to publish again (Save keeps a copy).
-      onPublish: meta.community && !meta.community.mine ? null : sc => publishSim({ type: 'custom', values: sc, title: sc.title }, () => openBuilder(sc, meta)),
+      onPublish: meta.community && !meta.community.mine ? null : sc => publishSim({ type: 'custom', values: sc, title: sc.title }, () => openBuilder(sc, { ...meta, fromBuild: unsaved() })),
       extraFoot: stepsBox(meta.steps) + communityFoot(meta.community),
     });
     editor = { stop: b.stop, click: () => {} };
@@ -1140,7 +1157,7 @@
     if (!canUse(id) && !meta.fromAnswer) { tab = 'community'; pendingUpsell = ['plus', `${T[id].title} is in ⚡ Knox Plus — every simulation and all the settings.`]; renderHome(); return; }
     editor?.stop(); setWay(''); pendingUpsell = null;
     editor = makeEditor(id, cleanValues(id, vals), meta);
-    guard = meta.fromBuild ? () => true : null; // a sim Knox just built isn't saved yet
+    guard = editor.dirty;
   }
   // Share: the whole setup travels inside the link (squeezed when the browser
   // can), so nothing is stored on a server. Opening it shows the same setup.
@@ -1178,23 +1195,27 @@
   // Save (like a Flashcards deck): a new sim gets a name, one you opened from
   // the home is updated in place; then back to the Lab home with a "Saved" note.
   async function saveSim(item, meta = {}) {
+    const owner = saveKey(), active = editor;
     const list = readSaved(), i = meta.savedAt ? list.findIndex(x => x.at === meta.savedAt) : -1, max = SAVE_MAX[tier()];
     if (i < 0 && list.length >= max) { upsell(tier() === 'plus' ? 'mega' : 'plus', `You’ve saved ${max} — that’s the limit on your plan. Delete one on the Simulation Lab home, or upgrade to save more.`); return null; }
     let name = (item.title || '').trim().slice(0, 40) || 'My simulation';
     if (i < 0) { name = await ask({ title: 'Save this simulation', body: 'Give it a name — it shows up on your Simulation Lab home.', input: name, ok: 'Save' }); if (!name) return null; }
+    if (owner !== saveKey() || active !== editor) return null;
     const now = readSaved(), j = i < 0 ? -1 : now.findIndex(x => x.at === meta.savedAt);
+    if (j < 0 && now.length >= SAVE_MAX[tier()]) { toast('Your plan’s save limit has been reached.', false); return null; }
     const entry = { type: item.type, values: item.type === 'custom' ? { ...item.values, title: name } : item.values, title: name, at: j >= 0 ? now[j].at : Date.now() };
     if (j >= 0) now.splice(j, 1);
-    now.unshift(entry); writeSaved(now);
+    now.unshift(entry);
+    if (!writeSaved(now)) { toast('This browser couldn’t save your simulation. Keep it open and try freeing up space, or copy its link.', false); return null; }
     editor?.stop(); editor = null; tab = 'home'; renderHome();
     toast(j >= 0 ? 'Saved your changes.' : `Saved “${name}”. Open it here any time.`);
     return name;
   }
   let toastEl = null, toastTimer = 0;
-  function toast(text) {
+  function toast(text, ok = true) {
     const panel = host?.parentElement; if (!panel) return;
     if (!toastEl || !toastEl.isConnected) { toastEl = document.createElement('div'); toastEl.className = 'fc-toast'; toastEl.setAttribute('role', 'status'); toastEl.addEventListener('click', () => toastEl.classList.remove('show')); panel.append(toastEl); }
-    toastEl.textContent = text; toastEl.className = 'fc-toast show ok';
+    toastEl.textContent = text; toastEl.className = 'fc-toast show' + (ok ? ' ok' : '');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl?.classList.remove('show'), 3500);
   }
 
@@ -1305,7 +1326,9 @@
     const colors = simColors;
     function size() { const w = canvas.clientWidth, h = canvas.clientHeight, d = Math.min(2, devicePixelRatio || 1); canvas.width = w * d; canvas.height = h * d; g.setTransform(d, 0, 0, d, 0, 0); }
     function draw() {
-      const c = { w: canvas.clientWidth, h: canvas.clientHeight, s, seed, ...colors() };
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (w < 1 || h < 1) return;
+      const c = { w, h, s, seed, ...colors() };
       g.clearRect(0, 0, c.w, c.h);
       let text = '';
       try {
@@ -1369,8 +1392,10 @@
     const ro = new ResizeObserver(() => { size(); draw(); }); ro.observe(canvas);
     size(); draw();
     if (def.anim) setPlaying(true);
+    const baseline = JSON.stringify(s);
     const ed = {
-      stop() { cancelAnimationFrame(raf); ro.disconnect(); host.removeEventListener('input', onInput); host.removeEventListener('change', onInput); host.removeEventListener('dblclick', onDbl); },
+      dirty: () => (!meta.community || meta.community.mine) && (!!meta.fromBuild || JSON.stringify(s) !== baseline),
+      stop() { clearTimeout(chTimer); cancelAnimationFrame(raf); ro.disconnect(); host.removeEventListener('input', onInput); host.removeEventListener('change', onInput); host.removeEventListener('dblclick', onDbl); },
       click(b) {
         if (b.matches('[data-play]')) setPlaying(!playing);
         else if (b.matches('[data-restart]')) { t = 0; setPlaying(true); }
@@ -1393,12 +1418,16 @@
             .map(p => `${p.label}: ${p.type === 'toggle' ? (s[p.k] ? 'on' : 'off') : p.type === 'select' ? (p.options.find(o => o[0] === s[p.k])?.[1] || s[p.k]) : fmt(s[p.k]) + (p.unit ? ' ' + p.unit : '')}`).join(', ');
           const q = `I'm playing with the "${def.title}" simulation (${desc}). It shows: ${readout.textContent}. Can you explain what's happening and why?`;
           // A new Ask Knox chat with the question ready to send.
-          document.querySelector('.sidebar-quicknav-link[data-nav="chat"]')?.click(); window.closeSims?.();
-          setTimeout(() => { const input = document.getElementById('appChatInput'); if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); } }, 120);
+          okToLeave().then(ok => {
+            if (!ok || editor !== ed) return;
+            document.querySelector('.sidebar-quicknav-link[data-nav="chat"]')?.click();
+            window.closeSims?.();
+            setTimeout(() => { const input = document.getElementById('appChatInput'); if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); } }, 120);
+          });
         }
         else if (b.matches('[data-back]')) okToLeave('back').then(ok => { if (ok) { ed.stop(); editor = null; renderHome(); } });
         else if (b.matches('[data-answer]')) backToAnswer();
-        else if (b.matches('[data-publish]')) { const values = { ...s }, m = { ...meta, title }; publishSim({ type: id, values, title }, () => { tab = tab === 'community' ? 'home' : tab; open(id, values, m); }); }
+        else if (b.matches('[data-publish]')) { const values = { ...s }, m = { ...meta, title, fromBuild: ed.dirty() }; publishSim({ type: id, values, title }, () => { tab = tab === 'community' ? 'home' : tab; open(id, values, m); }); }
         else if (b.matches('[data-share]')) shareSim({ type: id, values: { ...s }, title }, b);
         else if (b.matches('[data-full]')) { const st = $('.sl-stage', host); if (document.fullscreenElement) document.exitFullscreen?.(); else st.requestFullscreen?.().catch(() => {}); }
         else if (b.matches('[data-table]')) {
@@ -1438,8 +1467,28 @@
     if (b.dataset.open) { open(b.dataset.open); return; }
     if (b.dataset.saved != null) { const x = readSaved()[+b.dataset.saved]; if (x) x.type === 'custom' ? openBuilder(x.values, { savedAt: x.at }) : open(x.type, x.values, { title: x.title, savedAt: x.at }); return; }
     if (b.dataset.make) { openBuilder(STARTERS[b.dataset.make]?.(), { examples: b.dataset.make === 'empty' }); return; }
-    if (b.dataset.unsave != null) { const x = readSaved()[+b.dataset.unsave]; if (!x) return; ask({ title: `Delete “${x.title}”?`, body: 'It’s removed from this device. This can’t be undone.', ok: 'Delete', danger: true }).then(yes => { if (!yes) return; const list = readSaved(), at = list.findIndex(y => y.at === x.at && y.title === x.title); if (at >= 0) { list.splice(at, 1); writeSaved(list); } renderHome(true); }); return; }
-    if (b.dataset.rename != null) { const i = +b.dataset.rename, x = readSaved()[i]; if (!x) return; ask({ title: 'Rename', input: x.title, ok: 'Save' }).then(name => { if (!name) return; const list = readSaved(); if (list[i]) { list[i].title = name; if (list[i].type === 'custom' && list[i].values) list[i].values.title = name; writeSaved(list); } renderHome(true); }); return; }
+    if (b.dataset.unsave != null || b.dataset.rename != null) {
+      const owner = saveKey(), removing = b.dataset.unsave != null;
+      const saved = readSaved()[+(removing ? b.dataset.unsave : b.dataset.rename)];
+      if (!saved) return;
+      const prompt = removing
+        ? { title: `Delete “${saved.title}”?`, body: 'It’s removed from this device. This can’t be undone.', ok: 'Delete', danger: true }
+        : { title: 'Rename', input: saved.title, ok: 'Save' };
+      ask(prompt).then(answer => {
+        if (!answer || saveKey() !== owner) return;
+        const list = readSaved(), at = list.findIndex(x => x.at === saved.at);
+        if (at < 0) return;
+        if (removing) list.splice(at, 1);
+        else {
+          const item = list[at];
+          item.title = answer;
+          if (item.type === 'custom') item.values.title = answer;
+        }
+        if (!writeSaved(list)) { toast('This browser couldn’t update your saved simulations.', false); return; }
+        renderHome(true);
+      });
+      return;
+    }
     if (b.dataset.shareSaved != null) { const x = readSaved()[+b.dataset.shareSaved]; if (x) shareSim(x, b); return; }
     if (b.matches('[data-surprise]')) { const ids = ORDER.filter(canUse); open(ids[Math.floor(Math.random() * ids.length)]); return; }
   });
@@ -1453,5 +1502,5 @@
   });
   window.addEventListener('knox-plan-changed', () => { if (host && !editor && host.isConnected) renderHome(); });
 
-  window.knoxSimLab = { show, open: (type, values, meta) => open(type, values, meta), openIn, parseMath, unsaved, canLeave: () => okToLeave('leave'), mini, templates: Object.keys(T), cleanValues };
+  window.knoxSimLab = { show, close, open: (type, values, meta) => open(type, values, meta), openIn, parseMath, unsaved, canLeave: () => okToLeave('leave'), mini, templates: Object.keys(T), cleanValues };
 })();

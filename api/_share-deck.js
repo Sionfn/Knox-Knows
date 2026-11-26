@@ -13,6 +13,14 @@ import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
 
 const SITE = "https://www.knoxknowsapp.com";
+const PREVIEW = "knoxknowspreview.vercel.app";
+function shareOrigin(req) {
+  if (process.env.VERCEL_ENV !== "preview") return SITE;
+  const host = req.headers.host;
+  if (host === PREVIEW) return `https://${PREVIEW}`;
+  const deployment = process.env.VERCEL_URL;
+  return /^[a-z0-9-]+\.vercel\.app$/.test(deployment || "") ? `https://${deployment}` : `https://${PREVIEW}`;
+}
 const SHARE_ID = /^[A-Za-z0-9]{12}$/;
 const DECK_ID = /^[A-Za-z0-9_-]{1,80}$/;
 const IMAGE_URL = /^https:\/\/(upload|thumb)\.wikimedia\.org\/[^\s"'<>]+$/;
@@ -26,7 +34,7 @@ const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 const newId = () => Array.from(crypto.randomBytes(12), b => ALPHABET[b % ALPHABET.length]).join("");
 
 // The same checks as flashcards-core.js validateDeck, plus pictures.
-export function cleanDeck(title, cards) {
+export function cleanDeck(title, cards, { includePhotos = true } = {}) {
   const t = text(title, 100);
   if (!t) throw Object.assign(new Error("Give the deck a title before sharing it."), { status: 400 });
   if (!Array.isArray(cards) || !cards.length) throw Object.assign(new Error("Add a card before sharing this deck."), { status: 400 });
@@ -35,7 +43,7 @@ export function cleanDeck(title, cards) {
     if (!front || !back) return null;
     const card = { front, back };
     const img = typeof c.image === "string" ? c.image : "";
-    if (img && img.length <= 200000 && (IMAGE_URL.test(img) || IMAGE_DATA.test(img))) {
+    if (img && img.length <= 200000 && (IMAGE_URL.test(img) || (includePhotos && IMAGE_DATA.test(img)))) {
       card.image = img;
       const credit = text(c.imageCredit, 200);
       if (credit) card.imageCredit = credit;
@@ -69,7 +77,6 @@ export default async function shareDeck(req, res) {
       const snap = await db.collection("sharedDecks").doc(id).get();
       const d = snap.exists ? snap.data() : null;
       if (!d || d.removed) return res.status(404).json({ error: "This deck isn’t shared anymore." });
-      res.setHeader("Cache-Control", "public, max-age=30");
       return res.status(200).json({ deck: { id, title: d.title, cards: d.cards || [], cardCount: (d.cards || []).length, by: d.by || "", updatedAt: d.updatedAt || 0 } });
     } catch (err) {
       console.error("share-deck get failed", err);
@@ -94,16 +101,24 @@ export default async function shareDeck(req, res) {
 
   try {
     if (body.action === "unshare") {
-      const link = await mine.get();
-      if (link.exists && SHARE_ID.test(link.data().shareId || "")) {
-        await db.collection("sharedDecks").doc(link.data().shareId).set({ removed: true, cards: [], updatedAt: Date.now() }, { merge: true });
-        await mine.delete();
-      }
+      await db.runTransaction(async tx => {
+        const link = await tx.get(mine);
+        if (!link.exists) return;
+        const id = link.data().shareId;
+        if (SHARE_ID.test(id || "")) {
+          const ref = db.collection("sharedDecks").doc(id);
+          const shared = await tx.get(ref);
+          if (shared.exists && shared.data().owner === uid) {
+            tx.set(ref, { removed: true, cards: [], updatedAt: Date.now() }, { merge: true });
+          }
+        }
+        tx.delete(mine);
+      });
       return res.status(200).json({ ok: true });
     }
 
     if (body.action !== "share") return res.status(400).json({ error: "Unknown action." });
-    const deck = cleanDeck(body.title, body.cards);
+    const deck = cleanDeck(body.title, body.cards, { includePhotos: body.includePhotos === true });
     const now = Date.now(), day = new Date(now).toISOString().slice(0, 10);
     const shareId = await db.runTransaction(async tx => {
       const link = await tx.get(mine);
@@ -126,7 +141,7 @@ export default async function shareDeck(req, res) {
       tx.set(limitRef, { day, count: used + 1 });
       return id;
     });
-    return res.status(200).json({ id: shareId, url: `${SITE}/deck/${shareId}` });
+    return res.status(200).json({ id: shareId, url: `${shareOrigin(req)}/deck/${shareId}` });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ error: err.message });
     console.error("share-deck failed", err);

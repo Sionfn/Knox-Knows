@@ -181,9 +181,10 @@
   const buzz = p => { try { navigator.vibrate?.(p); } catch (_) {} };
 
   // ── The stage ───────────────────────────────────────────────────────────
-  async function play({ result, onReveal, bagsLeft }) {
+  async function play({ result, onReveal, bagsLeft, signal }) {
     window.knoxSound?.unlock?.(); // we're inside the "Open a bag" click: let sound start (if it's on)
     const THREE = await loadThree();
+    signal?.throwIfAborted();
     const stage = document.createElement('div');
     stage.className = 'kb3-stage';
     stage.setAttribute('role', 'dialog'); stage.setAttribute('aria-modal', 'true'); stage.setAttribute('aria-label', 'Open your blind bag');
@@ -520,6 +521,8 @@
       if (!torn) placeTearline();
       renderer.render(scene, camera);
     }
+    const onAbort = () => end('account');
+    signal?.addEventListener('abort', onAbort, { once: true });
     raf = requestAnimationFrame(frame);
     tearBtn.focus({ preventScroll: true });
 
@@ -543,6 +546,8 @@
     }
     function end(how, err) {
       if (ended) return; ended = true;
+      signal?.removeEventListener('abort', onAbort);
+      if (how === 'account') stage.remove();
       cancelAnimationFrame(raf); removeEventListener('resize', size); removeEventListener('pointerup', onUp); removeEventListener('pointercancel', onUp); removeEventListener('keydown', onKey);
       stage.classList.add('is-leaving');
       setTimeout(() => { renderer.dispose(); stage.remove(); }, 220);

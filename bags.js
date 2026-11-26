@@ -73,15 +73,18 @@
 
   // ── Data ────────────────────────────────────────────────────────────────
   let state = null, error = '', busy = false;
+  let account = new AbortController();
   // Testing: the preview's demo has unlimited bags (∞), so every figure and animation can be tried.
   const demoState = () => ({ demo: true, unlimited: true, unopened: 99, got: { elf: 1, snowman: 2, reindeer: 1, cocoa: 3, skater: 1 }, dupes: 3, complete: false, claimed: false, giftCode: '', questions: 6 });
-  async function api(method, body) {
+  async function api(method, body, signal = account.signal) {
     const user = window.currentUser;
     if (!user?.getIdToken) throw new Error('Sign in to open blind bags.');
     const token = await user.getIdToken();
+    signal.throwIfAborted();
     const test = (() => { try { return sessionStorage.getItem('knoxFlameTest') === '1'; } catch (e) { return false; } })();
-    const r = await fetch('/api/flame-fest' + (method === 'GET' ? '?event=bags' : ''), { method, headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}), ...(test ? { 'X-Knox-Flame-Test': '1' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const r = await fetch('/api/flame-fest' + (method === 'GET' ? '?event=bags' : ''), { method, signal, headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}), ...(test ? { 'X-Knox-Flame-Test': '1' } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const j = await r.json().catch(() => ({}));
+    signal.throwIfAborted();
     if (!r.ok) throw new Error(j.error || 'Blind bags are busy right now. Please try again.');
     return j;
   }
@@ -96,7 +99,11 @@
   }
   async function load() {
     if (demo) { state = state || demoState(); demoRewards(); return; }
-    try { state = await api('GET'); error = ''; } catch (e) { error = e.message; }
+    const signal = account.signal;
+    try {
+      const data = await api('GET', undefined, signal);
+      if (!signal.aborted) { state = data; error = ''; }
+    } catch (e) { if (!signal.aborted) error = e.message; }
   }
   // The odds per bag (the server's RARITY_ODDS): Golden Knox is 1 in 100.
   // Within a rarity, one you're missing comes before a duplicate.
@@ -153,13 +160,14 @@
   }
   async function claimReward(id) {
     if (busy) return; busy = true;
+    const signal = account.signal;
     try {
       if (demo) { state.rewardsClaimed = { ...(state.rewardsClaimed || {}), [id]: true }; demoRewards(); }
-      else { state = await api('POST', { bags: 'reward', reward: id }); window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
+      else { const data = await api('POST', { bags: 'reward', reward: id }, signal); if (signal.aborted) return; state = data; window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
       render(); window.knoxSound?.play('reward');
       const r = state.rewards.find(x => x.id === id); toast(`🎁 ${r ? r.label : 'Reward'} — it’s yours!`);
-    } catch (e) { toast(e.message); }
-    busy = false;
+    } catch (e) { if (!signal.aborted) toast(e.message); }
+    finally { if (!signal.aborted) busy = false; }
   }
   function reward(owned) {
     if (state.claimed) return `<div class="kb-reward done">🏆 <span>Collection complete! ${state.giftCode ? `Your Mega month to gift: <a href="/redeem?code=${esc(state.giftCode)}" target="_blank" rel="noopener">knoxknowsapp.com/redeem?code=${esc(state.giftCode)}</a>` : '30 days of Mega Knox, the Collector badge and the Golden Flame are yours.'}</span></div>`;
@@ -170,27 +178,30 @@
   // burst in its rarity color, marked NEW! or Duplicate.
   async function openBag() {
     if (busy || !state?.unopened) return;
+    const signal = account.signal, screen = wrap;
     busy = true;
     // The full experience: the 3D bag you swipe open (bags3d.js). Without WebGL
     // or with reduced motion, the simple opening below.
     if (window.knoxBagStage?.supported()) {
       // Called only once the bag is torn (closing before that keeps the bag).
       const pick = async () => {
+        signal.throwIfAborted();
         let got;
         if (demo) {
           const fig = demoPick(state.got), isNew = !state.got[fig.id];
           state.got[fig.id] = (state.got[fig.id] || 0) + 1; if (!state.unlimited) state.unopened--; state.dupes += isNew ? 0 : 1;
           state.complete = SERIES.every(c => state.got[c.id]); demoRewards();
           got = { figure: fig.id, isNew };
-        } else { const res = await api('POST', { bags: 'open' }); state = res; got = res; }
+        } else { const res = await api('POST', { bags: 'open' }, signal); signal.throwIfAborted(); state = res; got = res; }
         const c = SERIES.find(x => x.id === got.figure);
         return { figure: c.id, isNew: got.isNew, rarity: c.rarity, name: esc(c.name), art: figure(c.id), more: state.unopened > 0 };
       };
       try {
-        await window.knoxBagStage.play({ result: pick, bagsLeft: () => state?.unlimited ? Infinity : state?.unopened || 0, onReveal: (how, err) => {
+        await window.knoxBagStage.play({ signal, result: pick, bagsLeft: () => state?.unlimited ? Infinity : state?.unopened || 0, onReveal: (how, err) => {
+          if (signal.aborted) return;
           busy = false; render();
           if (err) (wrap ? toast(err.message) : alert(err.message));
-          if (how === 'again') { setTimeout(openBag, 80); return; }
+          if (how === 'again') { setTimeout(() => { if (!signal.aborted) openBag(); }, 80); return; }
           // Opened from the Advent Calendar: back to the calendar ("My collection" opens the collection on top).
           if (!wrap && afterStage) { const a = afterStage; afterStage = null; a.done?.(state); if (how === 'done') open(); return; }
           wrap?.querySelector('[data-open], .kb-x')?.focus();
@@ -198,7 +209,8 @@
         return;
       } catch (e) { /* 3D couldn't start: fall back to the simple opening */ }
     }
-    if (!wrap) { busy = false; await open(); return; }
+    if (signal.aborted) return;
+    if (!screen || wrap !== screen) { busy = false; if (!screen) await open(); return; }
     const bag = wrap.querySelector('.kb-bag');
     bag.classList.add('is-shaking');
     let got;
@@ -208,12 +220,13 @@
         state.got[fig.id] = (state.got[fig.id] || 0) + 1; if (!state.unlimited) state.unopened--; state.dupes += isNew ? 0 : 1;
         state.complete = SERIES.every(c => state.got[c.id]); demoRewards();
         got = { figure: fig.id, isNew };
-      } else { const res = await api('POST', { bags: 'open' }); got = res; state = res; }
-    } catch (e) { bag.classList.remove('is-shaking'); busy = false; toast(e.message); return; }
+      } else { const res = await api('POST', { bags: 'open' }, signal); signal.throwIfAborted(); got = res; state = res; }
+    } catch (e) { bag.classList.remove('is-shaking'); if (!signal.aborted) { busy = false; if (wrap === screen) toast(e.message); } return; }
     await wait(reduce() ? 0 : 700);
     bag.classList.remove('is-shaking'); bag.classList.add('is-torn');
     await wait(reduce() ? 0 : 450);
-    reveal(SERIES.find(c => c.id === got.figure), got.isNew);
+    if (signal.aborted) return;
+    if (wrap === screen) reveal(SERIES.find(c => c.id === got.figure), got.isNew);
     busy = false;
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -237,20 +250,22 @@
   }
   async function trade() {
     if (busy) return; busy = true;
+    const signal = account.signal;
     try {
       if (demo) { let left = 3; for (const c of [...SERIES].reverse()) while (left && state.got[c.id] > 1) { state.got[c.id]--; left--; } state.dupes -= 3; state.unopened++; }
-      else state = await api('POST', { bags: 'trade' });
+      else { const data = await api('POST', { bags: 'trade' }, signal); if (signal.aborted) return; state = data; }
       render(); toast('Traded 3 duplicates for a new bag! 🛍️');
-    } catch (e) { toast(e.message); }
-    busy = false;
+    } catch (e) { if (!signal.aborted) toast(e.message); }
+    finally { if (!signal.aborted) busy = false; }
   }
   async function claim() {
     if (busy) return; busy = true;
+    const signal = account.signal;
     try {
-      if (demo) { state.claimed = true; } else { state = await api('POST', { bags: 'claim' }); window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
+      if (demo) { state.claimed = true; } else { const data = await api('POST', { bags: 'claim' }, signal); if (signal.aborted) return; state = data; window.knoxRefreshPlan?.(); window.loadStreak?.(window.currentUser?.uid); }
       render(); toast('🏆 Collector reward claimed!');
-    } catch (e) { toast(e.message); }
-    busy = false;
+    } catch (e) { if (!signal.aborted) toast(e.message); }
+    finally { if (!signal.aborted) busy = false; }
   }
   function toast(t) {
     const n = wrap?.querySelector('.kb-note'); if (!n) return;
@@ -273,22 +288,39 @@
     wrap.addEventListener('keydown', e => { if (e.key === 'Escape' && !wrap.querySelector('.kb-reveal')) close(); });
     document.body.append(wrap);
     window.knoxBagStage?.preload?.(); preloadFigs(); loadBagPic(); // get the 3D bag and the figures ready while the collection loads
-    render(); await load(); render();
+    const screen = wrap;
+    render(); await load();
+    if (wrap !== screen) return;
+    render();
     wrap?.querySelector('[data-open]:not([disabled]), .kb-x')?.focus();
   }
   function close() { if (!wrap) return; wrap.remove(); wrap = null; lastFocus?.focus?.(); }
   // For the Advent Calendar screen: your bags (count, collection) and opening
   // one right there with the 3D bag; you land back on the calendar after.
-  async function status() { if (!window.currentUser && !demo) return null; if (!state) await load(); await loadBagPic()?.catch(() => {}); return state; }
+  async function status() {
+    if (!window.currentUser && !demo) return null;
+    const signal = account.signal;
+    if (!state) await load();
+    await loadBagPic()?.catch(() => {});
+    return signal.aborted ? null : state;
+  }
   async function openHere({ done, pic } = {}) {
     if (!window.currentUser && !demo) { window.openAuthModal?.('signup'); return; }
     if (busy) return;
+    const signal = account.signal;
     if (!state) await load();
+    if (signal.aborted) return;
     if (!state?.unopened) { done?.(state); return; }
-    if (!window.knoxBagStage?.supported()) { await open(); openBag(); return; } // the simple opening lives on the bags screen
+    if (!window.knoxBagStage?.supported()) { await open(); if (!signal.aborted) openBag(); return; } // the simple opening lives on the bags screen
     afterStage = { done, pic }; openBag();
   }
   const bagPicture = () => bagPicUrl;
-  addEventListener('knox-auth-changed', () => { state = null; close(); });
+  addEventListener('knox-auth-changed', () => {
+    account.abort();
+    account = new AbortController();
+    state = afterStage = null;
+    error = ''; busy = false;
+    close();
+  });
   window.knoxBags = { open, close, figure, series: SERIES, status, openHere, bagPicture, loadBagPic };
 })();

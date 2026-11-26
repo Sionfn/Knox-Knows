@@ -6,7 +6,9 @@
 
   // The App Store link (Knox Knows, app id 6833644500). Every App Store button
   // uses it. Emptying it turns the buttons back into "Coming soon to the App Store".
-  var APP_STORE_URL = 'https://apps.apple.com/app/id6833644500';
+  // Empty until the app is public on the App Store (id 6833644500 is still in review): then
+  // set it to 'https://apps.apple.com/app/id6833644500'.
+  var APP_STORE_URL = '';
 
   // Opening the page always starts at the top, so the hero is never half under the
   // header (browsers bring back an old scroll spot on reload). Links to a section
@@ -96,13 +98,13 @@
     nextBtn.addEventListener('click', function () { go(at + 1); });
     document.addEventListener('visibilitychange', sync);
     mark(0);
-    whenSeen(tour, function () { inView = true; tv.preload = 'auto'; sync(); }, function () { inView = false; sync(); }, 0.25);
+    whenSeen(tour, function () { inView = true; if (!reduced) tv.preload = 'auto'; sync(); }, function () { inView = false; sync(); }, 0.25); // with less motion it loads when you tap a step
   }
 
   // A looping recording that plays only while it's on screen.
   var loopWhenSeen = function (v) {
     if (!v) return;
-    if (reduced) { v.preload = 'auto'; return; }
+    if (reduced) return; // less motion: the poster stays, nothing downloads
     whenSeen(v, function () { v.preload = 'auto'; var p = v.play(); if (p && p.catch) p.catch(function () {}); }, function () { v.pause(); }, 0.3);
   };
 

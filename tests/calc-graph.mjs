@@ -44,6 +44,14 @@ test('special points: intercepts, highs and lows, crossings — never an asympto
   assert.ok(sinPts.some(p => p.kind === 'high point' && near(p.x, Math.PI / 2, 1e-5) && p.y === 1));
 });
 
+test('special points include off-grid tangencies and reject a near miss', () => {
+  const tangent = x => (x - .123) ** 2;
+  const points = G.specialPoints(tangent, -10, 10, [{ kind: 'y', f: () => 0 }]);
+  const at = points.find(p => p.x === .123 && p.y === 0);
+  assert.equal(at.kind, 'x-intercept · low point · crossing');
+  assert.ok(!G.specialPoints(x => tangent(x) + .0001, -10, 10).some(p => p.kind.includes('x-intercept')));
+});
+
 test('the Calculator has a Graph mode, wired to Ask Knox, Learn and Learn graphs', () => {
   const calc = src('calc.js'), app = src('app.html'), css = src('calc.css');
   assert.match(calc, /<button type="button" class="kc-mode" data-mode="graph">Graph<\/button>/);
